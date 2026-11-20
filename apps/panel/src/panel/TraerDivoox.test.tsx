@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DondeFuncionaWeb, TraerDivoox } from './TraerDivoox';
+import { TraerDivoox } from './TraerDivoox';
 
-/** C-DISPONIBLE-MUNDO (todos los países): la web dice dónde funciona y deja pedir la ciudad. */
+/** C-DISPONIBLE-MUNDO (todos los países): la web deja pedir la ciudad (sin enumerar dónde funciona). */
 afterEach(() => {
   vi.unstubAllGlobals();
   localStorage.clear();
@@ -16,28 +16,6 @@ const responder = (cuerpo: unknown, estado = 200) =>
   });
 
 describe('disponible en todo el mundo (web)', () => {
-  it('al crear la cuenta dice dónde ya funciona y que puede registrarse igual', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        responder({
-          paises: [
-            {
-              codigo: 'US',
-              nombre: { es: 'Estados Unidos', en: 'United States' },
-              ciudades: ['Miami'],
-            },
-          ],
-          proximas: [],
-        }),
-      ),
-    );
-    render(<DondeFuncionaWeb idioma="es" />);
-    const linea = await screen.findByTestId('donde-funciona');
-    expect(linea.textContent).toContain('Miami (Estados Unidos)');
-    expect(linea.textContent).toContain('Crea tu cuenta igual');
-  });
-
   it('el restaurante fuera de cobertura pide su ciudad y ve la confirmación en la misma pantalla', async () => {
     const llamadas: { url: string; cuerpo: Record<string, unknown> }[] = [];
     vi.stubGlobal(

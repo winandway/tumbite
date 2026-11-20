@@ -14,10 +14,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "es",
   "ruta": "ordering/where-divoox-works",
-  "titulo": "¿Dónde funciona Divoox? Avísame cuando llegue",
-  "resumen": "Cualquier persona, en cualquier país, puede crear su cuenta. La app te dice en qué ciudades ya funciona Divoox y, si la tuya todavía no, te avisa por correo el día que llegue.",
+  "titulo": "¿Divoox llega a mi zona? Avísame cuando llegue",
+  "resumen": "Cualquier persona, en cualquier país, puede crear su cuenta. Si Divoox todavía no llega a tu zona, la app te lo dice y te avisa por correo el día que llegue.",
   "preguntas": [
-   "¿En qué ciudades funciona Divoox?",
+   "¿Divoox llega a mi zona?",
    "¿Cómo me entero cuando Divoox llegue a mi ciudad?"
   ],
   "pasos": [
@@ -25,7 +25,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Si ves «Todavía no llegamos a tu zona», escribe tu ciudad y tu país en «Avísame cuando llegue».",
    "Toca el botón. Te escribimos al correo de tu cuenta el día que abramos."
   ],
-  "cuerpo": "Al crear la cuenta ves la lista de países y ciudades donde Divoox ya reparte. Tu cuenta sirve desde el primer día en cualquiera de ellas. Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad, te muestra dónde sí estamos y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta. Cada aviso cuenta: abrimos primero en las ciudades donde más personas y más restaurantes nos lo piden."
+  "cuerpo": "Creas tu cuenta una sola vez y te sirve en cualquier lugar donde Divoox esté disponible. Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta. Cada aviso cuenta: abrimos primero en las ciudades donde más personas y más restaurantes nos lo piden."
  },
  {
   "idioma": "es",
@@ -2504,10 +2504,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "en",
   "ruta": "ordering/where-divoox-works",
-  "titulo": "Where does Divoox work? Notify me when it arrives",
-  "resumen": "Anyone, in any country, can create an account. The app tells you which cities Divoox already works in and, if yours isn’t one yet, emails you the day it arrives.",
+  "titulo": "Is Divoox in my area? Notify me when it arrives",
+  "resumen": "Anyone, in any country, can create an account. If Divoox isn’t in your area yet, the app tells you and emails you the day it arrives.",
   "preguntas": [
-   "Which cities does Divoox work in?",
+   "Is Divoox available in my area?",
    "How do I find out when Divoox comes to my city?"
   ],
   "pasos": [
@@ -2515,7 +2515,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If you see “We’re not in your area yet,” type your city and country under “Notify me when it arrives.”",
    "Tap the button. We’ll write to your account’s email the day we open."
   ],
-  "cuerpo": "When you create your account you see the list of countries and cities where Divoox already delivers. Your account works from day one in any of them. When you enter an address we don’t reach yet, the app tells you clearly, shows you where we already are and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email. Every request counts: we open first in the cities where the most people and restaurants ask."
+  "cuerpo": "You create your account once and it works anywhere Divoox is available. When you enter an address we don’t reach yet, the app tells you clearly and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email. Every request counts: we open first in the cities where the most people and restaurants ask."
  },
  {
   "idioma": "en",

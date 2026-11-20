@@ -228,18 +228,18 @@ const es: SeccionDocs[] = [
     guias: [
       {
         id: 'where-divoox-works',
-        titulo: '¿Dónde funciona Divoox? Avísame cuando llegue',
+        titulo: '¿Divoox llega a mi zona? Avísame cuando llegue',
         resumen:
-          'Cualquier persona, en cualquier país, puede crear su cuenta. La app te dice en qué ciudades ya funciona Divoox y, si la tuya todavía no, te avisa por correo el día que llegue.',
+          'Cualquier persona, en cualquier país, puede crear su cuenta. Si Divoox todavía no llega a tu zona, la app te lo dice y te avisa por correo el día que llegue.',
         explicacion: [
-          'Al crear la cuenta ves la lista de países y ciudades donde Divoox ya reparte. Tu cuenta sirve desde el primer día en cualquiera de ellas.',
-          'Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad, te muestra dónde sí estamos y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta.',
+          'Creas tu cuenta una sola vez y te sirve en cualquier lugar donde Divoox esté disponible.',
+          'Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta.',
           'Cada aviso cuenta: abrimos primero en las ciudades donde más personas y más restaurantes nos lo piden.',
         ],
         capturas: [
           {
             src: '/docs/cliente-avisame-es.webp',
-            alt: 'App de Divoox con el aviso «Todavía no llegamos a tu zona», la ciudad donde ya funciona y el formulario «Avísame cuando llegue».',
+            alt: 'App de Divoox con el aviso «Todavía no llegamos a tu zona» y el formulario «Avísame cuando llegue».',
             pie: 'Si todavía no llegamos, te anotas ahí mismo con tu ciudad.',
           },
           {
@@ -249,7 +249,7 @@ const es: SeccionDocs[] = [
           },
         ],
         preguntas: [
-          '¿En qué ciudades funciona Divoox?',
+          '¿Divoox llega a mi zona?',
           '¿Cómo me entero cuando Divoox llegue a mi ciudad?',
         ],
         pasos: [
@@ -1692,7 +1692,7 @@ const es: SeccionDocs[] = [
           'Puedes registrar tu restaurante desde cualquier país. Si Divoox todavía no reparte en tu ciudad, lo pides con un toque y abrimos primero donde más restaurantes nos lo piden.',
         explicacion: [
           'El registro no se limita por país: creas tu cuenta, cargas los datos de tu restaurante, tu menú y tus fotos, y todo queda listo para el día de la apertura.',
-          'Al crear la cuenta te decimos en qué ciudades ya funciona Divoox. Si la dirección de tu local queda fuera de esas ciudades, en «Mi restaurante» aparece la tarjeta «Quiero traer Divoox a mi ciudad». Escribes tu ciudad y tu país, la envías y nuestro equipo te escribe.',
+          'Si la dirección de tu local queda en una zona donde Divoox todavía no llega, en «Mi restaurante» aparece la tarjeta «Quiero traer Divoox a mi ciudad». Escribes tu ciudad y tu país, la envías y nuestro equipo te escribe.',
           'En esa misma pantalla, la foto de tu restaurante se sube desde tus archivos o se toma en el momento con «Tomar foto»: en el celular abre la cámara y en la computadora, la cámara web.',
         ],
         capturas: [
@@ -5087,7 +5087,7 @@ const es: SeccionDocs[] = [
           'Con ese dinero se compra un arranque completo: una flota propia de 25 a 50 motos para que ningún pedido se quede sin repartidor, repartidores entrenados en seguridad vial, higiene y trato al cliente, una tablet lista para cada restaurante con el menú cargado en dos idiomas, y la búsqueda de los primeros clientes con lista de espera y promociones de lanzamiento.',
           'Una ciudad grande se puede dividir en varias zonas, cada una con su propia franquicia. El franquiciado tiene su panel con los números de su territorio: pedidos, ventas, restaurantes, repartidores e incidencias, y ve solo lo suyo. El valor de cada franquicia depende del tamaño de su territorio.',
           'El dueño de la franquicia puede trabajar con managers de su equipo: cada uno entra al mismo panel con su propio correo, supervisa los pedidos y atiende las incidencias de su territorio.',
-          'Si escribes tu dirección en Divoox y todavía no llegamos ahí, la app te dice en qué ciudades ya estamos y qué zonas abren pronto.',
+          'Si escribes tu dirección en Divoox y todavía no llegamos ahí, la app te lo dice y te ofrece avisarte el día que lleguemos.',
         ],
         capturas: [
           {
@@ -5680,18 +5680,18 @@ const en: SeccionDocs[] = [
     guias: [
       {
         id: 'where-divoox-works',
-        titulo: 'Where does Divoox work? Notify me when it arrives',
+        titulo: 'Is Divoox in my area? Notify me when it arrives',
         resumen:
-          'Anyone, in any country, can create an account. The app tells you which cities Divoox already works in and, if yours isn’t one yet, emails you the day it arrives.',
+          'Anyone, in any country, can create an account. If Divoox isn’t in your area yet, the app tells you and emails you the day it arrives.',
         explicacion: [
-          'When you create your account you see the list of countries and cities where Divoox already delivers. Your account works from day one in any of them.',
-          'When you enter an address we don’t reach yet, the app tells you clearly, shows you where we already are and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email.',
+          'You create your account once and it works anywhere Divoox is available.',
+          'When you enter an address we don’t reach yet, the app tells you clearly and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email.',
           'Every request counts: we open first in the cities where the most people and restaurants ask.',
         ],
         capturas: [
           {
             src: '/docs/cliente-avisame-en.webp',
-            alt: 'The Divoox app with the notice “We’re not in your area yet,” the city where it already works and the “Notify me when it arrives” form.',
+            alt: 'The Divoox app with the notice “We’re not in your area yet” and the “Notify me when it arrives” form.',
             pie: 'If we’re not there yet, you sign up right there with your city.',
           },
           {
@@ -5701,7 +5701,7 @@ const en: SeccionDocs[] = [
           },
         ],
         preguntas: [
-          'Which cities does Divoox work in?',
+          'Is Divoox available in my area?',
           'How do I find out when Divoox comes to my city?',
         ],
         pasos: [
@@ -7129,7 +7129,7 @@ const en: SeccionDocs[] = [
           'You can register your restaurant from any country. If Divoox doesn’t deliver in your city yet, you ask with one tap and we open first where the most restaurants ask.',
         explicacion: [
           'Sign-up isn’t limited by country: you create your account, add your restaurant details, your menu and your photos, and everything is ready for opening day.',
-          'When you create the account we tell you which cities Divoox already works in. If your store’s address is outside those cities, the “Bring Divoox to my city” card appears in “My restaurant.” You type your city and country, send it and our team writes to you.',
+          'If your store’s address is in an area Divoox doesn’t reach yet, the “Bring Divoox to my city” card appears in “My restaurant.” You type your city and country, send it and our team writes to you.',
           'On that same screen, your restaurant photo can be uploaded from your files or taken on the spot with “Take photo”: on a phone it opens the camera and on a computer, the webcam.',
         ],
         capturas: [
@@ -10506,7 +10506,7 @@ const en: SeccionDocs[] = [
           'That money buys a complete launch: our own fleet of 25 to 50 motorbikes so no order goes without a driver, drivers trained in road safety, food hygiene, and customer service, a ready-to-use tablet for every restaurant with the menu in two languages, and finding the first customers with a waitlist and launch promotions.',
           'A large city can be split into several zones, each with its own franchise. The franchisee gets a dashboard with their territory’s numbers: orders, sales, restaurants, drivers, and incidents, and sees only their own. Each franchise is priced by the size of its territory.',
           'The franchise owner can work with managers from their team: each one signs in to the same dashboard with their own email, oversees orders, and handles incidents in their territory.',
-          'If you enter your address in Divoox and we’re not there yet, the app tells you which cities we’re already in and which zones are opening soon.',
+          'If you enter your address in Divoox and we’re not there yet, the app tells you and offers to notify you the day we arrive.',
         ],
         capturas: [
           {

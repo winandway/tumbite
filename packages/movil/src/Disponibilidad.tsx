@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Text } from './diseno';
 import { View } from 'react-native';
 import {
-  type Disponibilidad,
   ErrorApi,
   correoEjemplo,
   type Idioma,
   MARCA,
   enIdioma,
-  fraseDisponibilidad,
   useBorrador,
 } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
@@ -17,16 +15,14 @@ import { useSesion } from './sesion';
 import { Boton, Campo, e } from './ui';
 
 /**
- * C-DISPONIBLE-MUNDO (10 nov 2026) — todos los países. Dos piezas únicas para las tres apps:
- * «Dónde ya funciona Divoox» y «Avísame cuando llegue» (para el restaurante: «Quiero traer Divoox
- * a mi ciudad»). El registro nunca se limita por país: solo se informa y se ofrece anotarse.
+ * C-DISPONIBLE-MUNDO (10 nov 2026) — todos los países. «Avísame cuando llegue» (para el restaurante:
+ * «Quiero traer Divoox a mi ciudad»). El registro nunca se limita por país.
+ * C-SIN-LISTA-DE-CIUDADES (19 nov 2026, orden de Richard): aquí NO se enumeran las ciudades ni los
+ * países donde Divoox funciona. La app es universal; solo se dice, por la ubicación de cada quien,
+ * «aún no llegamos a tu zona» y se ofrece avisarle.
  */
 const T = {
   es: {
-    yaFunciona: 'Divoox ya funciona en: {lista}.',
-    proximas: 'Abrimos pronto en: {lista}.',
-    otraCiudad:
-      '¿Tu ciudad no está? Crea tu cuenta igual: te avisamos apenas lleguemos y tu cuenta ya queda lista.',
     tituloCliente: 'Avísame cuando llegue',
     tituloRestaurante: 'Quiero traer Divoox a mi ciudad',
     introCliente: 'Dinos tu ciudad. Te escribimos el día que Divoox llegue.',
@@ -45,10 +41,6 @@ const T = {
     listoRestaurante: 'Recibido. Nuestro equipo te escribe para llevar Divoox a {ciudad}.',
   },
   en: {
-    yaFunciona: 'Divoox already works in: {lista}.',
-    proximas: 'Opening soon in: {lista}.',
-    otraCiudad:
-      'Don’t see your city? Create your account anyway: we’ll let you know the moment we arrive and your account will be ready.',
     tituloCliente: 'Notify me when it arrives',
     tituloRestaurante: 'Bring Divoox to my city',
     introCliente: 'Tell us your city. We’ll write to you the day Divoox arrives.',
@@ -69,46 +61,6 @@ const T = {
 };
 
 const suave = { color: '#666B73', fontSize: 14 } as const;
-
-/** Lee una vez dónde funciona Divoox. Si falla, no estorba: la pantalla sigue sin la lista. */
-export function useDisponibilidad(): Disponibilidad | null {
-  const { api } = useSesion();
-  const [d, setD] = useState<Disponibilidad | null>(null);
-  useEffect(() => {
-    let vivo = true;
-    api
-      .pedir<Disponibilidad>('GET', '/datos/disponibilidad')
-      .then((r) => {
-        if (vivo) setD(r);
-      })
-      .catch(() => undefined);
-    return () => {
-      vivo = false;
-    };
-  }, [api]);
-  return d;
-}
-
-/** «Divoox ya funciona en: Miami (Estados Unidos)». Va en el registro y junto a la dirección. */
-export function DondeFunciona({
-  idioma,
-  conInvitacion,
-}: {
-  idioma: Idioma;
-  conInvitacion?: boolean;
-}) {
-  const t = enIdioma(T, idioma);
-  const d = useDisponibilidad();
-  if (!d?.paises?.length) return null;
-  const proximas = d.proximas.map((p) => p.ciudad).join(', ');
-  return (
-    <View testID="donde-funciona" accessibilityRole="summary" style={{ gap: 4, marginBottom: 12 }}>
-      <Text style={suave}>{t.yaFunciona.replace('{lista}', fraseDisponibilidad(d, idioma))}</Text>
-      {proximas ? <Text style={suave}>{t.proximas.replace('{lista}', proximas)}</Text> : null}
-      {conInvitacion ? <Text style={suave}>{t.otraCiudad}</Text> : null}
-    </View>
-  );
-}
 
 /**
  * El formulario para quien todavía no tiene Divoox en su ciudad. Guarda correo y ciudad (y, del

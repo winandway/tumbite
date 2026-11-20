@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { DesfileFlota } from './DesfileFlota';
-import { useCiudadesEnVivo } from './ciudadesEnVivo';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
 import { BotonDescargas, BotonGooglePlay, TEXTOS_TIENDAS } from './Tiendas';
-import { MapaCobertura } from './MapaCobertura';
 import { CONTACTO, TEXTOS_SITIO } from './textos';
 
 /**
@@ -31,7 +29,7 @@ const ALT = {
     restaurante:
       'Un repartidor de Divoox recoge un pedido en el mostrador de un restaurante de comida rápida',
     repartidor: 'Repartidora de Divoox en bicicleta por la ciudad',
-    miami: 'Cartel de Divoox en una autopista de Miami',
+    miami: 'Cartel de Divoox en una autopista',
     local: 'Local de Divoox',
     mascota: 'Mascota de Divoox',
   },
@@ -44,7 +42,7 @@ const ALT = {
     servicios: 'Food delivery',
     restaurante: 'A Divoox driver picks up an order at a fast-food restaurant counter',
     repartidor: 'Divoox driver riding a bike through the city',
-    miami: 'Divoox billboard on a Miami highway',
+    miami: 'Divoox billboard on a highway',
     local: 'Divoox storefront',
     mascota: 'Divoox mascot',
   },
@@ -61,7 +59,6 @@ const pantallasReales = (idioma: Idioma) => ({
 export function Landing({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
   const tt = enIdioma(TEXTOS_TIENDAS, idioma);
-  const estadoCiudad = useCiudadesEnVivo();
   const a = enIdioma(ALT, idioma);
   const app = pantallasReales(idioma);
   // El WhatsApp de soporte lo da el servidor (variable del sitio): aparece solo cuando exista.
@@ -77,16 +74,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
       {/* C-DESFILE-FLOTA (4 nov): el desfile de la flota, con el lema de la startup arriba (sin
           nombrar ciudad mientras ninguna está abierta: C-TEXTOS-PUBLICOS, 13 nov). */}
-      <DesfileFlota
-        lema={
-          estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo'
-            ? idioma === 'en'
-              ? 'Now in Miami'
-              : 'Ya estamos en Miami'
-            : t.hero.etiqueta
-        }
-        servicios={a.servicios}
-      />
+      <DesfileFlota lema={t.hero.etiqueta} servicios={a.servicios} />
       <section className="ld-hero">
         <div className="ld-hero-texto">
           <h1>{t.hero.titulo}</h1>
@@ -309,16 +297,6 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           </a>
           <BotonGooglePlay app="driver" texto={tt.driver} />
         </div>
-      </section>
-
-      {/* 5 · Dónde estamos */}
-      <section id="como" className="ld-seccion ld-clara ld-mapa">
-        <div>
-          <span className="ld-etiqueta">{t.mapa.etiqueta}</span>
-          <h2>{t.mapa.titulo}</h2>
-          <p className="ld-entrada">{t.mapa.texto}</p>
-        </div>
-        <MapaCobertura idioma={idioma} />
       </section>
 
       {/* 7 · Preguntas */}
