@@ -13,6 +13,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_DOC_BYTES, estadoDelConductor } from './servicios';
 import { paisDelConductor } from '../paisConductor';
+import { anotarDecisionHumana } from './verificacionConductor';
 import { codigoCiudad } from './superadmin';
 import { porCobrarRegalos } from '../regalosDivoox';
 import { entornoDeHost } from '@tumbite/compartido';
@@ -611,5 +612,13 @@ conductorPapeles.put('/admin/papeles-conductor/:id', async (c) => {
         JSON.stringify({ ...d, venceEn: vence, requisitos }),
       ),
   ]);
+  // C-VERIFICACION-IA: la decisión de la persona queda al lado de lo que dijo la IA.
+  if (doc.tipo === 'licencia_moto' || doc.tipo === 'licencia_conducir')
+    await anotarDecisionHumana(c.env, db, {
+      conductorId: doc.conductor_id,
+      papel: ['licencia'],
+      decision: d.estado,
+      por: admin.id,
+    });
   return c.json({ estado: d.estado, requisitos });
 });

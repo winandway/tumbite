@@ -3151,5 +3151,50 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "correo",
     "motivo",
     "creado_en"
+  ],
+  "plazo_papeles": [
+    "conductor_id",
+    "pais",
+    "empieza_en",
+    "vence_en",
+    "estado",
+    "ultimo_aviso",
+    "origen",
+    "actualizado_en"
+  ],
+  "verificacion_fotos": [
+    "id",
+    "conductor_id",
+    "paso",
+    "clave",
+    "pais",
+    "estado",
+    "motivo",
+    "insistio",
+    "ia_color",
+    "ia_clase",
+    "ia_confianza",
+    "ia_json",
+    "decision",
+    "decidido_por",
+    "decidido_en",
+    "creado_en"
+  ],
+  "verificacion_caras": [
+    "conductor_id",
+    "resultado",
+    "confianza",
+    "color",
+    "comparado_en"
+  ],
+  "verificacion_ia_gasto": [
+    "dia",
+    "microdolares",
+    "llamadas",
+    "fallos"
+  ],
+  "verificacion_avisos": [
+    "conductor_id",
+    "avisado_en"
   ]
 };

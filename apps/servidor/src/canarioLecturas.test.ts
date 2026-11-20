@@ -28,7 +28,8 @@ afterEach(() => vi.unstubAllGlobals());
  * - `sqlite_master` se recorre UNA sola vez por llamada (lo que fija C-LECTURAS-SALUD);
  * - todo lo demás (los datos de verdad) no pasa de 1.150 filas. Antes eran 1.126 de 2.000.
  */
-const TOPE_CANARIO = 1150;
+// +1 (19 nov 2026, C-VERIFICACION-IA): la pieza del canario lee la fila del gasto de IA de hoy.
+const TOPE_CANARIO = 1151;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

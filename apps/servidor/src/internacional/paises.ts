@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { BONO_OFERTA_ABIERTA } from '@tumbite/compartido';
+import {
+  BONO_OFERTA_ABIERTA,
+  PAPELES_PARA_EMPEZAR,
+  PLAZO_DIAS_MAXIMO,
+  politicaPlazoDeFabrica,
+} from '@tumbite/compartido';
 import { esquemaTarifasPais } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
 
@@ -63,6 +68,20 @@ export const esquemaConfigPais = z.object({
    * de siempre (0, 15, 20 y 25 %). Estados Unidos no usa este campo.
    */
   propinasPb: z.array(z.number().int().min(0).max(5000)).min(2).max(4).nullable().optional(),
+  /**
+   * C-PLAZO-PAPELES (Richard, 19 nov 2026): el plazo para subir papeles de los conductores de este
+   * país, lo que se exige para empezar, lo que el país no exige y la aprobación automática por IA
+   * (apagada de fábrica). Sin escribir = la política de fábrica del país (`politicaPlazoDeFabrica`).
+   */
+  plazoPapeles: z
+    .object({
+      dias: z.number().int().min(0).max(PLAZO_DIAS_MAXIMO),
+      paraEmpezar: z.array(z.enum(PAPELES_PARA_EMPEZAR)).max(PAPELES_PARA_EMPEZAR.length),
+      exentos: z.array(z.string().regex(/^[a-z0-9_]{2,40}$/)).max(12),
+      asistente: z.boolean(),
+      aprobacionAutomatica: z.boolean(),
+    })
+    .optional(),
   topes: z
     .object({
       bonoOfertaAbierta: z.number().int().min(0),
@@ -116,6 +135,7 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     comisionPuntoPb: 0,
     tarifas: null,
     propinasPb: null,
+    plazoPapeles: politicaPlazoDeFabrica(pais),
     topes: null,
   };
 }

@@ -112,6 +112,8 @@ import {
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
+import { empezarPlazo, graciaDe } from '../plazoPapeles';
+import { correrPlazoPapeles } from './verificacionConductor';
 import {
   type MotivoSinComida,
   errorSinComida,
@@ -1513,15 +1515,38 @@ export async function conectarRepartidor(
   // base también lo rechaza (repartidores_no_conecta_en_bloque_flex); aquí se dice en palabras.
   if (d.conectado && (await bloqueFlexDe(db, u.id)))
     throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
+  // C-PLAZO-PAPELES (Richard, 19 nov 2026): la cuenta nueva de un país con plazo nace con él, y
+  // dentro del plazo se conecta con lo mínimo que su país pide para empezar.
+  if (d.conectado) await empezarPlazo(c.env, db, u.id, 'registro');
+  const gracia = d.conectado ? await graciaDe(db, u.id) : null;
+  if (
+    gracia?.activa &&
+    gracia.politica.paraEmpezar.includes('cara') &&
+    !(await db
+      .prepare('SELECT 1 FROM kyc WHERE usuario_id = ? AND selfie IS NOT NULL')
+      .bind(u.id)
+      .first())
+  )
+    throw new ErrorDatos(
+      'Tómate la foto de tu cara antes de conectarte. Así te reconoce el pasajero.',
+      'cara',
+      403,
+    );
+  const identidadEnPlazo = Boolean(gracia?.activa) && !gracia?.exigidos.has('identidad');
   // Con el KYC obligatorio encendido, sin verificación aprobada no se reciben pedidos.
-  if (d.conectado && c.env.KYC_OBLIGATORIO === '1' && !(await kycAprobado(db, u.id)))
+  if (
+    d.conectado &&
+    !identidadEnPlazo &&
+    c.env.KYC_OBLIGATORIO === '1' &&
+    !(await kycAprobado(db, u.id))
+  )
     throw new ErrorDatos(
       'Antes de conectarte, verifica tu identidad en «Mis datos y vehículo».',
       'kyc',
       403,
     );
   // G4b (como DoorDash): en carro o moto, licencia y seguro vigentes antes de conectarse.
-  if (d.conectado && (await papelesObligatorios(db))) {
+  if (d.conectado && !gracia?.activa && (await papelesObligatorios(db))) {
     const p = await db
       .prepare(
         'SELECT vehiculo_tipo, licencia_numero, licencia_vence, seguro_poliza, seguro_vence FROM repartidor_datos WHERE usuario_id = ?',
@@ -3220,6 +3245,15 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // ofrece viajes y devuelve a «buscando» los de un conductor sin señal. Sin catch propio: si falla,
   // lo atrapa correrTareas, queda en reloj_tareas y la salud lo ve.
   { nombre: 'operaciones', critica: true, correr: (env, db) => repartirOperaciones(env, db) },
+  // C-PLAZO-PAPELES: recordatorios y vencimientos del plazo de papeles. Corre en la vuelta de cada
+  // hora y solo trabaja una vez al día; escribe una fila por conductor al que hoy le toca aviso.
+  {
+    nombre: 'plazo_papeles',
+    critica: false,
+    cada: 'hora',
+    escriturasEsperadas: 150,
+    correr: (env, db) => correrPlazoPapeles(env, db),
+  },
   // C-CARRO-DINAMICA: el multiplicador de cada ciudad con tarifa dinámica encendida. Escribe como
   // mucho una fila por ciudad y solo cuando cambia (o cada 5 minutos mientras dura un recargo).
   { nombre: 'dinamica', critica: false, correr: (_env, db) => recalcularDinamica(db) },

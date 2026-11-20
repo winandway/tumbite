@@ -19,6 +19,7 @@ import { enviarCorreo } from '../correo';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
+import { anotarDecisionHumana } from './verificacionConductor';
 import { asegurarCodigoRepartidor } from './superadmin';
 import {
   checkrConfigurado,
@@ -816,5 +817,13 @@ kyc.patch('/admin/kyc/:id', async (c) => {
           ? `Hi ${u.nombre},\n\nWe couldn’t approve your verification: ${d.motivo}\n\nPlease take the photos again in the app.`
           : `Hola, ${u.nombre}.\n\nNo pudimos aprobar tu verificación: ${d.motivo}\n\nVuelve a tomar las fotos en la app.`,
   });
+  // C-VERIFICACION-IA: la decisión de la persona queda al lado de lo que dijo la IA.
+  if (u.rol === 'repartidor')
+    await anotarDecisionHumana(c.env, db, {
+      conductorId: id,
+      papel: ['identidad', 'cara'],
+      decision: d.estado,
+      por: admin.id,
+    });
   return c.json({ ok: true });
 });

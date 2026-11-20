@@ -78,6 +78,8 @@ import { fijarAppCiudad } from './ciudadJuego';
 import { saludServicios, saludTarifas, servicios } from './rutas/servicios';
 import { avisameServicio } from './rutas/avisameServicio';
 import { conductorPapeles } from './rutas/conductorPapeles';
+import { verificacionConductor } from './rutas/verificacionConductor';
+import { saludVerificacionIa } from './verificacionIa';
 import { serviciosConectados } from './rutas/serviciosConectados';
 import { tasasReferencia } from './rutas/tasasReferencia';
 import { buscar } from './rutas/buscar';
@@ -467,6 +469,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: camila', e);
       return 'error' as const;
     });
+  // C-VERIFICACION-IA: la verificación de fotos con IA no gasta más que su tope del día.
+  if (c.env.DB)
+    piezas.verificacion_ia = await saludVerificacionIa(c.env, c.env.DB).catch((e: unknown) => {
+      console.error('salud: verificación con IA', e);
+      return 'error' as const;
+    });
   // Disputas (contracargos) sin responder que vencen pronto: rojo para que alguien las atienda.
   if (c.env.DB)
     piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
@@ -715,6 +723,7 @@ fijarAppCiudad(app);
 app.route('/datos', servicios);
 app.route('/datos', avisameServicio);
 app.route('/datos', conductorPapeles);
+app.route('/datos', verificacionConductor);
 app.route('/datos', serviciosConectados);
 app.route('/datos', tasasReferencia);
 app.route('/datos', buscar);

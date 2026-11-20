@@ -4,6 +4,7 @@ import { MENSAJES_EN_REGALOS } from './mensajesEnRegalos';
 import { MENSAJES_EN_AGENTES } from './mensajesEnAgentes';
 import { MENSAJES_EN_BANNERS } from './mensajesEnBanners';
 import { MENSAJES_EN_CAMILA } from './mensajesEnCamila';
+import { MENSAJES_EN_PAPELES } from './mensajesEnPapeles';
 
 /**
  * Los mensajes que el servidor le muestra a la persona, en inglés (el idioma principal de
@@ -61,6 +62,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ...MENSAJES_EN_AGENTES,
   ...MENSAJES_EN_BANNERS,
   ...MENSAJES_EN_CAMILA,
+  ...MENSAJES_EN_PAPELES,
   // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026, bloque propio)
   [
     'Ya cambiaste las paradas de este viaje muchas veces. Si necesitas otro cambio, díselo a tu conductor.',

@@ -4,7 +4,9 @@ import {
   estadoDelConductor,
   evaluarServicio,
   type Servicio,
+  vehiculoEnPlazo,
 } from './rutas/servicios';
+import { graciasDe } from './plazoPapeles';
 import { ErrorDatos } from './validar';
 
 /**
@@ -120,11 +122,16 @@ export async function motivosServicio(
     ]);
     const bloqueados = new Set(bloq.results.map((b) => b.conductor_id));
     const cuenta = new Map(reps.results.map((r) => [r.id, r]));
+    // C-PLAZO-PAPELES: la política del país y el plazo de cada uno, en UNA consulta por lote.
+    const gracias = await graciasDe(db, lote);
+    const vale = (id: string, estado: string | null | undefined) =>
+      estado === 'aprobado' ||
+      Boolean(estado && gracias.get(id)?.activa && vehiculoEnPlazo(estado));
     // Los requisitos que le faltan a cada uno (los del servicio y los de su vehículo), en UNA consulta.
     const filas = lote.map((id) => {
       const r = cuenta.get(id);
-      const aprobado = r?.estado === 'aprobado';
-      return [id, aprobado ? String(r.vehiculo_id) : '-', aprobado ? String(r.tipo) : '-'];
+      const aprobado = Boolean(r?.vehiculo_id) && vale(id, r?.estado);
+      return [id, aprobado ? String(r?.vehiculo_id) : '-', aprobado ? String(r?.tipo) : '-'];
     });
     const valores = filas.map(() => '(?, ?, ?)').join(',');
     const faltan = await db
@@ -180,6 +187,7 @@ export async function motivosServicio(
         requisitosFaltantes: faltan.results.filter((f) => f.cid === id).map((f) => f.requisito),
         versionDriver: Number.MAX_SAFE_INTEGER,
         ingles: false,
+        gracia: gracias.get(id),
       });
       fuera.set(
         id,

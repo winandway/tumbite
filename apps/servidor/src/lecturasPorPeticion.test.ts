@@ -403,7 +403,9 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       ['l1', 54_000],
       // C-PERFIL-PERU (19 nov 2026): +9 por las tres políticas de prepago de Perú sembradas (tres
       // recorridos de `politicas_financieras`, una tabla de pocas filas).
-      ['f1', 497 + 2 * objetosEsquema],
+      // +8 (19 nov 2026, C-PLAZO-PAPELES): cuatro tablas nuevas apuntan a usuarios y el borrado
+      // de una cuenta comprueba cada una (dos lecturas por tabla).
+      ['f1', 505 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       ['migraciones-prueba', 3_000],
       ['f2', 76_000],

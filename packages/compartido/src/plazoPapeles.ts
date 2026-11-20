@@ -1,0 +1,257 @@
+/**
+ * C-PLAZO-PAPELES (19 nov 2026, decisión de Richard) — por país, por configuración.
+ *
+ * «Al crear la cuenta ya lo deja trabajar… le damos un mes para que suba los datos; si al mes no los
+ * sube, la cuenta no le pasa más… se le manda siempre un recordatorio». Cada país tiene su POLÍTICA
+ * (editable en el superadmin, guardada en la configuración del país):
+ *
+ * - `dias`: días de plazo desde que crea la cuenta para subir y aprobar el resto de sus papeles.
+ *   0 = sin plazo: todo aprobado antes de empezar (Estados Unidos, como siempre).
+ * - `paraEmpezar`: lo que SÍ se exige antes del primer viaje aunque haya plazo.
+ * - `exentos`: requisitos del catálogo que ese país no exige nunca (Venezuela no pide antecedentes).
+ * - `asistente`: el conductor sube sus papeles con el asistente de verificación (una horma por foto).
+ * - `aprobacionAutomatica`: la IA aprueba sola lo que viene todo en verde. APAGADA de fábrica.
+ *
+ * Una sola pieza para el servidor, Driver y el panel. Nada de esto vive en condiciones sueltas.
+ */
+
+/** Lo que se puede exigir para empezar. «cara» es la foto de la cara (seguridad del pasajero). */
+export const PAPELES_PARA_EMPEZAR = ['cara', 'identidad', 'licencia', 'seguro'] as const;
+export type PapelParaEmpezar = (typeof PAPELES_PARA_EMPEZAR)[number];
+
+export type PoliticaPlazoPapeles = {
+  dias: number;
+  paraEmpezar: PapelParaEmpezar[];
+  exentos: string[];
+  asistente: boolean;
+  aprobacionAutomatica: boolean;
+};
+
+export const PLAZO_DIAS_MAXIMO = 90;
+
+const SIN_PLAZO: PoliticaPlazoPapeles = {
+  dias: 0,
+  paraEmpezar: [],
+  exentos: [],
+  asistente: false,
+  aprobacionAutomatica: false,
+};
+
+const DE_FABRICA = new Map<string, PoliticaPlazoPapeles>([
+  // Venezuela: trabaja desde que crea la cuenta; 30 días para el resto. Para empezar, solo la foto
+  // de la cara (no es un documento: es seguridad del pasajero).
+  // PENDIENTE (relevo del 19 nov): Richard decidió que en Venezuela NO se exigen antecedentes. Los
+  // `exentos` se llenan (['antecedentes', 'antecedentes_pasajeros']) en el mismo cambio en que la
+  // base los respete (vista `conductores_elegibles` y disparador `habilitaciones_exigen_requisitos`);
+  // antes de eso dejarían a la app diciendo una cosa y a la base otra.
+  [
+    'VE',
+    {
+      dias: 30,
+      paraEmpezar: ['cara'],
+      exentos: [],
+      asistente: true,
+      aprobacionAutomatica: false,
+    },
+  ],
+  // Perú («hay que ser más serios»): licencia y seguro (SOAT) aprobados para empezar; 30 días para el resto.
+  [
+    'PE',
+    {
+      dias: 30,
+      paraEmpezar: ['cara', 'licencia', 'seguro'],
+      exentos: [],
+      asistente: true,
+      aprobacionAutomatica: false,
+    },
+  ],
+]);
+
+export function politicaPlazoDeFabrica(pais: string | null | undefined): PoliticaPlazoPapeles {
+  const p = DE_FABRICA.get((pais ?? '').toUpperCase()) ?? SIN_PLAZO;
+  return { ...p, paraEmpezar: [...p.paraEmpezar], exentos: [...p.exentos] };
+}
+
+/** Qué requisitos del catálogo hay detrás de cada papel «para empezar». */
+const REQUISITOS_DE_PAPEL = new Map<PapelParaEmpezar, readonly string[]>([
+  ['cara', []],
+  ['identidad', ['identidad']],
+  ['licencia', ['licencia', 'licencia_moto']],
+  ['seguro', ['seguro_vehiculo']],
+]);
+
+/** Los requisitos que se exigen aunque el conductor esté dentro de su plazo. */
+export function requisitosParaEmpezar(p: Pick<PoliticaPlazoPapeles, 'paraEmpezar'>): Set<string> {
+  return new Set(p.paraEmpezar.flatMap((x) => [...(REQUISITOS_DE_PAPEL.get(x) ?? [])]));
+}
+
+/** Días a los que se recuerda, contados hacia el final del plazo. */
+export const HITOS_RECORDATORIO = [15, 10, 5, 1] as const;
+
+const DIA_MS = 86_400_000;
+const aFecha = (s: string) => new Date(s.includes('T') ? s : `${s.replace(' ', 'T')}Z`);
+
+/** Días que le quedan (hacia arriba: «te queda 1 día» hasta la última hora). Nunca negativo. */
+export function diasRestantes(venceEn: string, ahora: Date = new Date()): number {
+  return Math.max(0, Math.ceil((aFecha(venceEn).getTime() - ahora.getTime()) / DIA_MS));
+}
+
+/**
+ * El recordatorio que toca hoy: el hito más cercano ya alcanzado que todavía no se avisó. `ultimo`
+ * son los días que quedaban en el último aviso (null = solo el de bienvenida). 0 = el del vencimiento.
+ */
+export function hitoQueToca(dias: number, ultimo: number | null): number | null {
+  if (dias <= 0) return ultimo === 0 ? null : 0;
+  const hito = HITOS_RECORDATORIO.filter((h) => dias <= h).at(-1);
+  if (hito === undefined) return null;
+  return ultimo !== null && ultimo <= hito ? null : hito;
+}
+
+// ───────────────────────── El asistente de verificación ─────────────────────────
+
+/** Una foto por paso. El orden es el del asistente. */
+export const PASOS_VERIFICACION = [
+  'doc_frente',
+  'doc_reverso',
+  'licencia_frente',
+  'licencia_reverso',
+  'seguro',
+  'cara',
+] as const;
+export type PasoVerificacion = (typeof PASOS_VERIFICACION)[number];
+export const esPasoVerificacion = (s: string): s is PasoVerificacion =>
+  (PASOS_VERIFICACION as readonly string[]).includes(s);
+
+/** La horma de cada paso: tarjeta (documento de bolsillo), hoja (póliza) u óvalo (cara). */
+export type Horma = 'tarjeta' | 'hoja' | 'ovalo';
+const HORMAS = new Map<PasoVerificacion, Horma>([
+  ['doc_frente', 'tarjeta'],
+  ['doc_reverso', 'tarjeta'],
+  ['licencia_frente', 'tarjeta'],
+  ['licencia_reverso', 'tarjeta'],
+  ['seguro', 'hoja'],
+  ['cara', 'ovalo'],
+]);
+export const hormaDePaso = (p: PasoVerificacion): Horma => HORMAS.get(p) ?? 'tarjeta';
+
+/** La cara solo se toma en vivo con la cámara: nunca se elige de la galería. */
+export const soloEnVivo = (p: PasoVerificacion) => p === 'cara';
+
+/** A qué papel de «Tus papeles» pertenece cada foto. */
+export type PapelDelConductor = 'identidad' | 'licencia' | 'seguro' | 'cara';
+const PAPEL_DE_PASO = new Map<PasoVerificacion, PapelDelConductor>([
+  ['doc_frente', 'identidad'],
+  ['doc_reverso', 'identidad'],
+  ['licencia_frente', 'licencia'],
+  ['licencia_reverso', 'licencia'],
+  ['seguro', 'seguro'],
+  ['cara', 'cara'],
+]);
+export const papelDePaso = (p: PasoVerificacion): PapelDelConductor =>
+  PAPEL_DE_PASO.get(p) ?? 'identidad';
+
+/** Qué espera la IA ver en cada paso (la misma lista cerrada que se le da al modelo). */
+export const CLASES_DE_FOTO = [
+  'identidad_frente',
+  'identidad_reverso',
+  'licencia_frente',
+  'licencia_reverso',
+  'seguro',
+  'cara',
+  'otra_cosa',
+] as const;
+export type ClaseDeFoto = (typeof CLASES_DE_FOTO)[number];
+const CLASE_DE_PASO = new Map<PasoVerificacion, ClaseDeFoto>([
+  ['doc_frente', 'identidad_frente'],
+  ['doc_reverso', 'identidad_reverso'],
+  ['licencia_frente', 'licencia_frente'],
+  ['licencia_reverso', 'licencia_reverso'],
+  ['seguro', 'seguro'],
+  ['cara', 'cara'],
+]);
+export const claseDePaso = (p: PasoVerificacion): ClaseDeFoto =>
+  CLASE_DE_PASO.get(p) ?? 'otra_cosa';
+
+/** Verde = la IA lo ve bien; amarillo = duda (decide una persona); rojo = no coincide. */
+export type ColorIa = 'verde' | 'amarillo' | 'rojo' | 'sin_ia';
+
+/** Textos del asistente por paso, en los dos idiomas. El documento se llama como en el país. */
+export function textosDePaso(
+  paso: PasoVerificacion,
+  pais: string | null | undefined,
+  ingles: boolean,
+): { titulo: string; guia: string; nombre: string; frase: string } {
+  const pe = (pais ?? '').toUpperCase() === 'PE';
+  const us = (pais ?? '').toUpperCase() === 'US';
+  const doc = ingles ? 'ID' : pe ? 'DNI' : us ? 'identificación' : 'cédula';
+  const Doc = `${doc.charAt(0).toUpperCase()}${doc.slice(1)}`;
+  const seguro = ingles
+    ? pe
+      ? 'SOAT insurance'
+      : 'vehicle insurance'
+    : pe
+      ? 'SOAT'
+      : 'seguro del vehículo';
+  const Seguro = `${seguro.charAt(0).toUpperCase()}${seguro.slice(1)}`;
+  const t = (titulo: string, nombre: string, frase: string, cola = '') => ({
+    titulo,
+    nombre,
+    frase,
+    guia: ingles ? `Fit ${frase} inside the frame${cola}` : `Pon ${frase} dentro del marco${cola}`,
+  });
+  switch (paso) {
+    case 'doc_frente':
+      return ingles
+        ? t('FRONT', `${Doc} (front)`, `the front of your ${doc}`)
+        : t('FRENTE', `${Doc} (frente)`, `el frente de tu ${doc}`);
+    case 'doc_reverso':
+      return ingles
+        ? t('BACK', `${Doc} (back)`, `the back of your ${doc}`)
+        : t('REVERSO', `${Doc} (reverso)`, `el reverso de tu ${doc}`);
+    case 'licencia_frente':
+      return ingles
+        ? t('LICENSE · FRONT', 'License (front)', 'the front of your license')
+        : t('LICENCIA · FRENTE', 'Licencia (frente)', 'el frente de tu licencia');
+    case 'licencia_reverso':
+      return ingles
+        ? t('LICENSE · BACK', 'License (back)', 'the back of your license')
+        : t('LICENCIA · REVERSO', 'Licencia (reverso)', 'el reverso de tu licencia');
+    case 'seguro':
+      return ingles
+        ? t('INSURANCE', Seguro, `your ${seguro}`, ', with the dates visible')
+        : t('SEGURO', Seguro, `tu ${seguro}`, ', con las fechas a la vista');
+    case 'cara':
+      return ingles
+        ? {
+            titulo: 'FACE',
+            nombre: 'Your face',
+            frase: 'a photo of your face',
+            guia: 'Fit your face inside the oval, without a hat or dark glasses',
+          }
+        : {
+            titulo: 'CARA',
+            nombre: 'Tu cara',
+            frase: 'una foto de tu cara',
+            guia: 'Pon tu cara dentro del óvalo, sin gorra ni lentes oscuros',
+          };
+  }
+}
+
+/** Lo que se le dice al momento cuando la foto no es la del paso. */
+export function avisoNoCoincide(
+  vio: ClaseDeFoto,
+  paso: PasoVerificacion,
+  pais: string | null | undefined,
+  ingles: boolean,
+): string {
+  const aqui = textosDePaso(paso, pais, ingles).frase;
+  const pasoDeClase = [...CLASE_DE_PASO.entries()].find(([, c]) => c === vio)?.[0];
+  if (!pasoDeClase)
+    return ingles
+      ? `This doesn’t look right. This step needs ${aqui}. Take it again.`
+      : `Esto no parece lo que va aquí: ${aqui}. Tómala otra vez.`;
+  const parece = textosDePaso(pasoDeClase, pais, ingles).frase;
+  return ingles
+    ? `This looks like ${parece}; this step needs ${aqui}.`
+    : `Esto parece ${parece}; aquí va ${aqui}.`;
+}

@@ -85,6 +85,11 @@ export const esquemaEnv = z.object({
    * aprobado, por modeloGuard). Sin ella, «Generar con IA» se apaga y se sube la imagen a mano.
    */
   FAL_KEY: z.string().min(20).optional(),
+  /** C-VERIFICACION-IA: tope diario de la verificación de fotos con IA, en centavos (200; máximo 1000). */
+  TOPE_VERIFICACION_IA_CENTAVOS: z
+    .string()
+    .regex(/^\d{1,4}$/)
+    .optional(),
   /** C-BANNERS: tope propio de imágenes con IA por día (por defecto y como máximo 30). */
   TOPE_BANNERS_IA_DIA: z
     .string()

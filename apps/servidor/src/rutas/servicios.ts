@@ -50,6 +50,8 @@ const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
  * Moto y Carro NO se pueden encender: no están en SERVICIOS_IMPLEMENTADOS, los disparadores de
  * schema.sql lo exigen y, además, esta fase rechaza encender un servicio que lleva personas.
  */
+import { type Gracia, graciaDe, requisitosConGracia } from '../plazoPapeles';
+import { anotarDecisionHumana } from './verificacionConductor';
 export const servicios = new Hono<{ Bindings: Env; Variables: Variables }>();
 type Db = D1Database;
 
@@ -297,8 +299,13 @@ export function evaluarServicio(e: {
   requisitosFaltantes: string[];
   versionDriver: number;
   ingles: boolean;
+  /** C-PLAZO-PAPELES: la política de su país y, si corre, su plazo para subir papeles. */
+  gracia?: Gracia;
 }): EstadoConductor {
-  const { s, ahora, vehiculo, requisitosFaltantes } = e;
+  const { s, ahora, vehiculo } = e;
+  const enPlazo = Boolean(e.gracia?.activa);
+  // Lo que su país no exige nunca no cuenta; dentro del plazo, solo lo que se pide para empezar.
+  const requisitosFaltantes = requisitosConGracia(e.requisitosFaltantes, e.gracia);
   // El conductor puede conectarse aunque la ciudad aún no tenga tarifa (no le llegará nada hasta
   // que la tenga): C-SERVICIO-SIN-TARIFA solo cambia lo que se le ofrece al cliente.
   const estadoServicio = estadoSinTarifa(s, ahora, false);
@@ -306,11 +313,17 @@ export function evaluarServicio(e: {
   // Comida, compatibilidad: quien ya reparte hoy no tiene fila y sigue habilitado («legado»).
   let habilitacion = h?.estado ?? (s.id === 'comida' ? 'aprobada' : 'sin_solicitar');
   if (habilitacion === 'aprobada' && h?.vence_en && h.vence_en <= ahora) habilitacion = 'vencida';
+  // C-PLAZO-PAPELES: dentro de su plazo trabaja sin esperar la aprobación del equipo. Lo que el
+  // equipo ya le negó o le suspendió sigue negado.
+  if (enPlazo && (habilitacion === 'sin_solicitar' || habilitacion === 'pendiente'))
+    habilitacion = 'aprobada';
   const vehiculoCompatible =
     s.id === 'comida' && !vehiculo
       ? true // Comida hoy no exige vehículo registrado en esta tabla
       : Boolean(
-          vehiculo && vehiculo.estado === 'aprobado' && e.tiposCompatibles.includes(vehiculo.tipo),
+          vehiculo &&
+          (vehiculo.estado === 'aprobado' || (enPlazo && vehiculoEnPlazo(vehiculo.estado))) &&
+          e.tiposCompatibles.includes(vehiculo.tipo),
         );
   const versionOk = e.versionDriver >= versionNum(s.version_min_driver);
   const puedeActivar =
@@ -352,11 +365,17 @@ export function evaluarServicio(e: {
 
 export const ahoraServicios = () => ahoraSql();
 
+/** C-PLAZO-PAPELES: dentro del plazo sirve el vehículo declarado, salvo el que el equipo rechazó. */
+export const vehiculoEnPlazo = (estado: string) =>
+  estado !== 'rechazado' && estado !== 'suspendido' && estado !== 'retirado';
+
 export async function estadoDelConductor(
   db: Db,
   conductorId: string,
   ingles: boolean,
   versionDriver: number,
+  /** C-PLAZO-PAPELES: `sinPlazo` = la regla entera, como si su plazo ya hubiera vencido. */
+  op: { sinPlazo?: boolean } = {},
 ): Promise<{
   vehiculoActivo: {
     id: string;
@@ -392,6 +411,11 @@ export async function estadoDelConductor(
           plazas: number | null;
         }>()
     : null;
+  // C-PLAZO-PAPELES: una lectura más (política del país y su plazo).
+  const leida = await graciaDe(db, conductorId);
+  const gracia: Gracia = op.sinPlazo ? { ...leida, activa: false } : leida;
+  const vale = (v: { estado: string } | null) =>
+    Boolean(v && (v.estado === 'aprobado' || (gracia.activa && vehiculoEnPlazo(v.estado))));
   const [lista, habs, prefs, compat, faltan] = await Promise.all([
     catalogo(db, rep?.zona_id ?? null),
     db
@@ -427,10 +451,10 @@ export async function estadoDelConductor(
       )
       .bind(
         conductorId,
-        vehiculo?.estado === 'aprobado' ? vehiculo.id : '-',
-        vehiculo?.estado === 'aprobado' ? vehiculo.tipo : '-',
+        vehiculo && vale(vehiculo) ? vehiculo.id : '-',
+        vehiculo && vale(vehiculo) ? vehiculo.tipo : '-',
         conductorId,
-        vehiculo?.estado === 'aprobado' ? vehiculo.id : '-',
+        vehiculo && vale(vehiculo) ? vehiculo.id : '-',
       )
       .all<{ servicio_id: string; requisito: string }>(),
   ]);
@@ -452,6 +476,7 @@ export async function estadoDelConductor(
         .map((f) => f.requisito),
       versionDriver,
       ingles,
+      gracia,
     }),
   );
   // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): si un servicio no se puede activar con el vehículo
@@ -989,9 +1014,12 @@ servicios.put('/conductor/vehiculo-activo', async (c) => {
     .first<{ conectado: number }>();
   if (Number(conectado?.conectado) === 1)
     throw new ErrorDatos('Desconéctate antes de cambiar de vehículo.', undefined, 409);
+  let enPlazo = false;
   if (vehiculoId) {
     const v = await miVehiculo(db, u.id, vehiculoId);
-    if (v.estado !== 'aprobado')
+    // C-PLAZO-PAPELES: dentro de su plazo usa el vehículo que declaró, sin esperar la aprobación.
+    enPlazo = (await graciaDe(db, u.id)).activa && vehiculoEnPlazo(v.estado);
+    if (v.estado !== 'aprobado' && !enPlazo)
       throw new ErrorDatos('Ese vehículo todavía no está aprobado.', 'vehiculoId', 409);
   }
   await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
@@ -1003,9 +1031,10 @@ servicios.put('/conductor/vehiculo-activo', async (c) => {
       .prepare(
         `UPDATE repartidores SET vehiculo_activo_id = ?
           WHERE usuario_id = ? AND (? IS NULL OR EXISTS (
-            SELECT 1 FROM vehiculos WHERE id = ? AND conductor_id = ? AND estado = 'aprobado'))`,
+            SELECT 1 FROM vehiculos WHERE id = ? AND conductor_id = ?
+               AND (estado = 'aprobado' OR (? = 1 AND estado NOT IN ('rechazado', 'suspendido', 'retirado')))))`,
       )
-      .bind(vehiculoId, u.id, vehiculoId, vehiculoId, u.id)
+      .bind(vehiculoId, u.id, vehiculoId, vehiculoId, u.id, enPlazo ? 1 : 0)
       .run();
   } catch (e) {
     if (esConductorOcupado(e))
@@ -1428,6 +1457,14 @@ servicios.put('/admin/vehiculos/:id/documentos/:doc', async (c) => {
     ...d,
     venceEn: vence,
   });
+  // C-VERIFICACION-IA: la decisión de la persona queda al lado de lo que dijo la IA.
+  if (antes.tipo === 'seguro')
+    await anotarDecisionHumana(c.env, db, {
+      conductorId: antes.conductor_id,
+      papel: ['seguro'],
+      decision: d.estado,
+      por: admin.id,
+    });
   return c.json({ estado: d.estado });
 });
 
