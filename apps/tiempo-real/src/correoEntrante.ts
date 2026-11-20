@@ -1,4 +1,5 @@
 import PostalMime, { type Email } from 'postal-mime';
+import { enviarEnHilo, type EntornoSalida } from './correoSalida';
 
 /**
  * C-CAMILA-CORREO-HILO (20 nov 2026, pedido de Richard: «que le escriban un correo y le llegue como
@@ -229,4 +230,6 @@ export default {
     // Queda en el registro del Worker (observability) lo que NO tomó Camila, sin su contenido.
     if (!v.atendido) console.warn('correo de Camila: desviado al equipo', v.motivo);
   },
-} satisfies ExportedHandler<EntornoCorreo>;
+  // La salida en hilo (correoSalida.ts): solo el servidor, con el secreto del gerente.
+  fetch: (peticion: Request, env: EntornoCorreo & EntornoSalida) => enviarEnHilo(peticion, env),
+} satisfies ExportedHandler<EntornoCorreo & EntornoSalida>;

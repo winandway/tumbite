@@ -22,6 +22,7 @@ import { type LlamadaModelo, hoy, usarModeloCamila } from './modelo';
  * Todo con correo simulado: ninguna prueba manda un correo ni llama a un modelo de verdad.
  */
 const SECRETO = 's'.repeat(48);
+const HILO_URL = 'https://hilo.ejemplo.com';
 type Enviado = {
   para: string;
   asunto: string;
@@ -40,25 +41,38 @@ function escenario(
   opciones: { fallaElCorreo?: boolean; medir?: boolean } = {},
 ) {
   const enviados: Enviado[] = [];
+  const porElHilo: string[] = [];
   usarTransporteCorreo(
-    async (_u, init) => {
+    async (u, init) => {
+      if (opciones.fallaElCorreo)
+        return new Response(JSON.stringify({ success: false, error: 'El proveedor falló.' }), {
+          status: 502,
+        });
+      // Las respuestas en hilo salen por el Worker «divoox-correo» (con las cabeceras del hilo).
+      if (u.startsWith(HILO_URL)) {
+        const h = JSON.parse(String(init.body)) as {
+          para: string;
+          asunto: string;
+          texto: string;
+          responderA: string;
+          cabeceras: Record<string, string>;
+        };
+        porElHilo.push(u);
+        enviados.push({ ...h });
+        return new Response(JSON.stringify({ ok: true, id: 'h1' }));
+      }
       const c = JSON.parse(String(init.body)) as {
         to: { address: string }[];
         subject: string;
         text: string;
         reply_to: { address: string };
-        headers?: Record<string, string>;
       };
-      if (opciones.fallaElCorreo)
-        return new Response(JSON.stringify({ success: false, error: 'El proveedor falló.' }), {
-          status: 502,
-        });
       enviados.push({
         para: c.to[0]!.address,
         asunto: c.subject,
         texto: c.text,
         responderA: c.reply_to.address,
-        cabeceras: c.headers,
+        cabeceras: undefined,
       });
       return new Response(JSON.stringify({ success: true, message_id: 'm1' }));
     },
@@ -81,6 +95,7 @@ function escenario(
       GEMINI_API_KEY: 'llave-de-prueba-de-gemini-1234',
       GERENTE_SECRETO: SECRETO,
       SITIO_URL: 'https://divoox.com',
+      CORREO_HILO_URL: HILO_URL,
       ...extra,
     },
     opciones.medir
@@ -140,7 +155,7 @@ function escenario(
     if (confirmado) await m.confirmarCorreo(id);
     return { id, correo, token: r.datos.token as string };
   };
-  return { m, enviados, llamadas, llega, contar, conductor, filas: () => cuenta };
+  return { m, enviados, porElHilo, llamadas, llega, contar, conductor, filas: () => cuenta };
 }
 
 describe('C-CAMILA-CORREO-HILO: el correo entra a la conversación y la respuesta sale en el mismo hilo', () => {
@@ -168,6 +183,8 @@ describe('C-CAMILA-CORREO-HILO: el correo entra a la conversación y la respuest
     expect(salida.responderA).toBe(`support+c${clave}@divoox.com`);
     expect(salida.texto).toMatch(/Camila Campos, del equipo de soporte de Divoox/);
     expect(salida.texto.trim().endsWith(PUEDES_RESPONDER.es)).toBe(true);
+    // Salió por la puerta que sí pone las cabeceras del hilo.
+    expect(e.porElHilo).toEqual([`${HILO_URL}/enviar`]);
     expect(salida.texto).not.toMatch(/asistente virtual/i);
   });
 

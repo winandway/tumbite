@@ -11,6 +11,15 @@
   "main": "src/correoEntrante.ts",
   "compatibility_date": "2026-09-01",
   "vars": { "BACKEND_URL": "https://divoox.com", "BUZON_EQUIPO": "soporte@windoce.com" },
-  "workers_dev": false,
+  // La salida en hilo (src/correoSalida.ts): el servidor le pide a este Worker las respuestas que
+  // llevan «In-Reply-To» y «References». Entra solo con el secreto del gerente.
+  "workers_dev": true,
+  "preview_urls": false,
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_sender_addresses": ["support@divoox.com", "support@tumbite.com"],
+    },
+  ],
   "observability": { "enabled": true },
 }

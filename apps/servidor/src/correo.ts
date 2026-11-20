@@ -276,21 +276,42 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
     // las respuestas van al buzón de soporte que sí recibe, salvo que el correo pida otro que reciba.
     reply_to: { address: responderA(correo.responderA) },
   };
-  const mandar = (conHilo: boolean) =>
-    transporte(ENDPOINT, {
+  // C-CAMILA-CORREO-HILO: una respuesta en hilo sale por el Worker «divoox-correo», que sí pone
+  // «In-Reply-To» y «References» (el servicio de correo del sitio no las deja pasar). Si esa puerta
+  // no está o falla, la respuesta sale igual por el camino de siempre, sin ellas: que llegue importa
+  // más que dónde se acomoda.
+  if (hilo && env.CORREO_HILO_URL && env.GERENTE_SECRETO) {
+    const porHilo = await transporte(new URL('/enviar', env.CORREO_HILO_URL).toString(), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${env.GERENTE_SECRETO}`,
+      },
+      body: JSON.stringify({
+        de: cuerpo.from,
+        para: correo.para,
+        asunto: cuerpo.subject,
+        texto: cuerpo.text,
+        html: cuerpo.html,
+        responderA: cuerpo.reply_to.address,
+        cabeceras: hilo,
+      }),
+      signal: AbortSignal.timeout(TIEMPO_CORREO_MS),
+    })
+      .then(async (r) => (r.ok ? ((await r.json()) as { ok?: boolean; id?: string }) : null))
+      .catch(() => null);
+    if (porHilo?.ok) return { ok: true, id: porHilo.id ?? '', rebotado: false };
+  }
+  let res: Response;
+  try {
+    res = await transporte(ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(conHilo && hilo ? { ...cuerpo, headers: hilo } : cuerpo),
+      body: JSON.stringify(cuerpo),
       // C-LLAMADAS-CON-LIMITE: si el servicio de correo no contesta, la petición de la persona no
       // se queda colgada (antes podía esperar para siempre y trabar la entrega).
       signal: AbortSignal.timeout(TIEMPO_CORREO_MS),
     });
-  let res: Response;
-  try {
-    res = await mandar(true);
-    // C-CAMILA-CORREO-HILO: si el servicio no acepta las cabeceras de hilo (pedido mal formado), la
-    // respuesta sale igual, UNA vez más y sin ellas: que llegue importa más que dónde se acomoda.
-    if (hilo && [400, 422].includes(res.status)) res = await mandar(false);
   } catch (e) {
     return falloDeSistema(
       env,

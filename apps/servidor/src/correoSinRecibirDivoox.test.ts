@@ -74,7 +74,7 @@ describe('divoox.com no recibe correo', () => {
   });
 
   it('la única excepción: la dirección de una conversación de Camila, que sí recibe (C-CAMILA-CORREO-HILO)', async () => {
-    const cuerpos: { reply_to?: { address: string }; headers?: Record<string, string> }[] = [];
+    const cuerpos: { reply_to?: { address: string }; headers?: unknown }[] = [];
     usarTransporteCorreo((_e, init) => {
       cuerpos.push(JSON.parse(String(init.body)));
       return Promise.resolve(new Response(JSON.stringify({ success: true, message_id: 'm' })));
@@ -87,15 +87,11 @@ describe('divoox.com no recibe correo', () => {
       asunto: 'a',
       texto: 'b',
       responderA: hilo,
-      // Solo viajan las dos cabeceras de hilo, y solo si son identificadores de correo.
-      cabeceras: {
-        'In-Reply-To': '<abc@buzon.test>',
-        References: '<uno@buzon.test>\r\nBcc: otro@ejemplo.com',
-        Bcc: 'espia@ejemplo.com',
-      },
+      cabeceras: { 'In-Reply-To': '<abc@buzon.test>' },
     });
     expect(cuerpos[0]?.reply_to).toEqual({ address: hilo });
-    expect(cuerpos[0]?.headers).toEqual({ 'In-Reply-To': '<abc@buzon.test>' });
+    // El servicio de correo del sitio no admite cabeceras: nunca se le mandan.
+    expect(cuerpos[0]?.headers).toBeUndefined();
     // Un identificador mal formado, o sin el «+c…», no pasa.
     for (const mala of [`support+c123@${'divoox'}.com`, `support+cualquiera@${'divoox'}.com`]) {
       await enviarCorreo(env, {
@@ -109,27 +105,80 @@ describe('divoox.com no recibe correo', () => {
     }
   });
 
-  it('si el servicio no acepta las cabeceras de hilo, el correo sale igual, una vez más y sin ellas', async () => {
-    const cuerpos: { headers?: Record<string, string> }[] = [];
-    usarTransporteCorreo((_e, init) => {
-      const c = JSON.parse(String(init.body)) as { headers?: Record<string, string> };
-      cuerpos.push(c);
-      return Promise.resolve(
-        c.headers
-          ? new Response(JSON.stringify({ success: false, error: 'invalid_request_schema' }), {
-              status: 400,
-            })
-          : new Response(JSON.stringify({ success: true, message_id: 'm' })),
-      );
-    });
-    const r = await enviarCorreo({ YAD_TOKEN: 'x'.repeat(40) } as never, {
-      de: 'soporte',
+  describe('la respuesta en hilo sale por el Worker que sí pone las cabeceras', () => {
+    const HILO = 'https://hilo.ejemplo.com';
+    const env = {
+      YAD_TOKEN: 'x'.repeat(40),
+      CORREO_HILO_URL: HILO,
+      GERENTE_SECRETO: 'g'.repeat(48),
+    } as never;
+    const correo = {
+      de: 'soporte' as const,
       para: 'cliente@ejemplo.com',
-      asunto: 'a',
+      asunto: 'Re: a',
       texto: 'b',
-      cabeceras: { 'In-Reply-To': '<abc@buzon.test>' },
+      // Solo viajan las dos cabeceras de hilo, y solo si son identificadores de correo.
+      cabeceras: {
+        'In-Reply-To': '<abc@buzon.test>',
+        References: '<uno@buzon.test>\r\nBcc: otro@ejemplo.com',
+        Bcc: 'espia@ejemplo.com',
+      },
+    };
+
+    it('va al Worker con el secreto y solo las cabeceras válidas, y no pasa por el otro servicio', async () => {
+      const llamadas: { url: string; permiso: string | null; cuerpo: Record<string, unknown> }[] =
+        [];
+      usarTransporteCorreo((u, init) => {
+        llamadas.push({
+          url: u,
+          permiso: new Headers(init.headers).get('authorization'),
+          cuerpo: JSON.parse(String(init.body)),
+        });
+        return Promise.resolve(new Response(JSON.stringify({ ok: true, id: 'h1' })));
+      });
+      const r = await enviarCorreo(env, correo);
+      expect(r).toMatchObject({ ok: true, id: 'h1' });
+      expect(llamadas).toHaveLength(1);
+      expect(llamadas[0]?.url).toBe(`${HILO}/enviar`);
+      expect(llamadas[0]?.permiso).toBe(`Bearer ${'g'.repeat(48)}`);
+      expect(llamadas[0]?.cuerpo).toMatchObject({
+        para: 'cliente@ejemplo.com',
+        asunto: 'Re: a',
+        cabeceras: { 'In-Reply-To': '<abc@buzon.test>' },
+      });
     });
-    expect(r.ok).toBe(true);
-    expect(cuerpos.map((c) => Boolean(c.headers))).toEqual([true, false]);
+
+    it('si el Worker falla o no contesta, el correo sale igual por el camino de siempre', async () => {
+      for (const falla of ['estado', 'red'] as const) {
+        const urls: string[] = [];
+        usarTransporteCorreo((u) => {
+          urls.push(u);
+          if (u.startsWith(HILO))
+            return falla === 'red'
+              ? Promise.reject(new Error('sin red'))
+              : Promise.resolve(new Response(JSON.stringify({ ok: false }), { status: 502 }));
+          return Promise.resolve(new Response(JSON.stringify({ success: true, message_id: 'm' })));
+        });
+        const r = await enviarCorreo(env, correo);
+        expect(r).toMatchObject({ ok: true, id: 'm' });
+        expect(urls).toHaveLength(2);
+      }
+    });
+
+    it('un correo sin hilo nunca pasa por el Worker', async () => {
+      const urls: string[] = [];
+      usarTransporteCorreo((u) => {
+        urls.push(u);
+        return Promise.resolve(new Response(JSON.stringify({ success: true, message_id: 'm' })));
+      });
+      await enviarCorreo(env, {
+        de: 'soporte',
+        para: 'cliente@ejemplo.com',
+        asunto: 'a',
+        texto: 'b',
+      });
+      expect(urls).toHaveLength(1);
+      expect(urls[0]).not.toContain(HILO);
+    });
   });
 });

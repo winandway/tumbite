@@ -35,6 +35,24 @@ información». Aplica a todos los países.
    correo en el mismo hilo, firmada con su nombre. Los correos se ven dentro de la conversación con la
    marca «Correo» y, arriba, el asunto.
 
+## Por dónde sale la respuesta en hilo
+
+Para que la respuesta caiga en la misma conversación del buzón de la persona hacen falta las cabeceras
+`In-Reply-To` y `References`. El servicio de correo del sitio (YaDominios) **no las deja pasar**: se
+comprobó el 20 nov 2026 con un correo real, que llegó sin ellas. El envío de Cloudflare sí las admite
+(documentación oficial, «Email headers»), y divoox.com y tumbite.com ya estaban dados de alta ahí.
+
+- Solo las respuestas que van en un hilo salen por el Worker `divoox-correo`
+  (`apps/tiempo-real/src/correoSalida.ts`, puerta `POST /enviar`, enlace `send_email` llamado `EMAIL`).
+  Entra solo con el secreto del gerente, solo manda desde la dirección `support` de los dos dominios y
+  solo pone las dos cabeceras de hilo.
+- El servidor conoce al Worker por la variable `CORREO_HILO_URL` (guardada en el sitio de pruebas y en
+  producción el 20 nov 2026). Sin esa variable, o si el Worker falla, la respuesta sale por el camino
+  de siempre, sin cabeceras: que llegue importa más que dónde se acomoda.
+- Todo el resto del correo de Divoox (bienvenidas, recibos, avisos) sigue por el servicio del sitio.
+- Comprobado en vivo el 20 nov 2026: la respuesta enviada por el Worker cayó en la misma conversación
+  de Gmail que el correo anterior.
+
 ## Registros del dominio (DNS)
 
 **No se añadió ningún registro.** divoox.com ya recibía correo desde el 4 nov 2026 (tres registros MX
