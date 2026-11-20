@@ -323,9 +323,9 @@
       "numero": 35,
       "id": "peru-comision-tarifa-recarga",
       "prioridad": "alta",
-      "titulo": "Perú: elegir la comisión, aprobar la tarifa y el mínimo de la recarga con tarjeta",
-      "para": "Ica ya funciona de punta a punta en el sitio de pruebas, en soles, con Yape y Plin. Falta tu decisión: comisión del 10, 8 o 6 % (está sembrada al 8 %, sin aprobar), la tarifa (propuesta: mototaxi desde 3 soles; carro desde 5) y el mínimo de la recarga con tarjeta (propuesto: 30 soles, porque el procesador se queda cerca del 9 % de esa recarga).",
-      "destraba": "Aprobar la comisión de Perú, que es una de las tres llaves para abrir Ica."
+      "titulo": "Perú: aprobar la tarifa y el mínimo de la recarga con tarjeta (la comisión del 8 % ya quedó decidida)",
+      "para": "Ica ya funciona de punta a punta en el sitio de pruebas, en soles, con Yape y Plin. La comisión ya la decidiste el 19 de noviembre: 8 %. Falta tu decisión sobre la tarifa (propuesta: mototaxi desde 3 soles; carro desde 5) y el mínimo de la recarga con tarjeta (propuesto: 30 soles, porque el procesador se queda cerca del 9 % de esa recarga).",
+      "destraba": "Dejar lista la tarifa y la recarga con tarjeta de Ica; abrir sigue esperando la revisión legal y tu orden."
     },
     {
       "numero": 36,

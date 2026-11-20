@@ -58,3 +58,8 @@ Son recomendaciones, no decisiones: cada una espera el «sí» o el cambio de Ri
 ### Pregunta nueva para el abogado colombiano (19 oct 2026)
 
 El Decreto de agosto de 2026 (Ley 2466) pone a cargo de la plataforma la ARL y el 60 % de salud y pensión del repartidor, calculados sobre lo que la plataforma le paga. En el cobro directo Tumbite no le paga nada al repartidor (el cliente le paga a él): falta saber sobre qué base se liquida y cómo se cobra. Está en el expediente para abogados.
+
+## Perú (Ica)
+
+- **19 nov 2026 — DECIDIDO por Richard: la comisión de Divoox en Ica, Perú, es del 8 %** (saldo prepago de conductores; Moto, Carro y Envíos; en soles). Richard aprobó la CIFRA. No aprobó la revisión legal ni el encendido: la política sigue con la revisión legal pendiente del abogado peruano y Perú sigue apagado para el público.
+- Siguen pendientes de Richard para Perú: la tarifa final de mototaxi y de carro, el contacto del líder de Ica y el mínimo de la recarga con tarjeta (propuesto: 30 soles).

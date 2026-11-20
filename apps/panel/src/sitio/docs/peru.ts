@@ -11,10 +11,13 @@ import type { Captura, Guia } from './guias';
  * la ciudad: `apps/panel/public/docs/recorrido-peru-<nombre>-es.webp`). En inglés la guía dice dónde
  * existe cada cosa y enseña las pantallas de Estados Unidos, que son las que ve quien lee en inglés.
  *
- * Ninguna guía sin capturas: entran en Docs SOLO cuando `PERU_PUBLICADA` es true; `peru.test.ts` se
- * pone en rojo si las capturas existen y la guía no está publicada, o al revés.
+ * C-SOLO-LO-TERMINADO (decisión de Gerencia, 19 nov 2026): Docs no promete lo que el público todavía
+ * no puede usar. Las guías están escritas y con sus capturas, pero quedan OCULTAS mientras Perú esté
+ * apagado en producción: `PERU_PUBLICADA` pasa a true el MISMO día en que Richard encienda Ica (y se
+ * regenera el conocimiento del asistente con `node scripts/camila/generar-docs.mjs`). `peru.test.ts`
+ * no deja publicarlas sin sus capturas.
  */
-export const PERU_PUBLICADA = true;
+export const PERU_PUBLICADA = false;
 
 export const CAPTURAS_PERU = [
   'cliente-pedir',

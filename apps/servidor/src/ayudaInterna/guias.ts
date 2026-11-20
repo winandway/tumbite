@@ -2140,7 +2140,7 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'Perú es su propio sistema. Todo va en soles. El pasajero paga en mano: efectivo, Yape o Plin. No hay tarjeta para el pasajero ni doble moneda.',
       'En producción Perú nace cerrado. Hay tres llaves y las tres hacen falta: la compuerta del país en «Moto · Abrir y aprobar» (pide la solicitud de marca del país y tu contraseña), la comisión del saldo aprobada en Flex · Dinero, Políticas, y la ciudad abierta. Ninguna se enciende sin la orden de Richard.',
-      'La comisión de Perú está sembrada al 8 % y sin aprobar. Mientras no esté aprobada, ningún viaje de Perú descuenta saldo y la recarga con tarjeta no se puede encender.',
+      'La comisión de Perú es del 8 %: Richard aprobó la cifra el 19 de noviembre de 2026. Falta la revisión legal del abogado peruano. Mientras esa revisión no esté aprobada, ningún viaje de Perú descuenta saldo y la recarga con tarjeta no se puede encender.',
       'La ciudad se abre en «Moto · Abrir y aprobar», «Abrir un servicio de viajes en una ciudad». Una ciudad de Perú nace sola en soles, con hora de Lima y la tarifa de mercado. Se abre una vez para Moto y otra para Carro.',
       'El conductor carga su número de Yape o de Plin en su app. Entra en uso a las 24 horas, o antes si lo confirmas tú. Yape y Plin se reciben entre sí: con uno de los dos le llegan los viajes de ambos. Sin número solo recibe viajes en efectivo.',
       'Si el conductor toca «No me llegó», el caso cae en la bandeja de soporte del dinero, en soles, con el viaje y el monto.',
@@ -2189,7 +2189,7 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'Peru is its own system. Everything is in soles. Riders pay in hand: cash, Yape or Plin. There is no rider card payment and no dual currency.',
       'In production Peru starts closed. There are three keys and all three are needed: the country gate in “Moto · Open and approve” (it asks for the country’s trademark filing and your password), the balance commission approved in Flex · Money, Policies, and the city opened. None is turned on without Richard’s order.',
-      'Peru’s commission is seeded at 8% and not approved. Until it is approved, no ride in Peru deducts balance and card top-ups cannot be turned on.',
+      'Peru’s commission is 8%: Richard approved the figure on November 19, 2026. The legal review by the Peruvian lawyer is still pending. Until that review is approved, no ride in Peru deducts balance and card top-ups cannot be turned on.',
       'The city is opened in “Moto · Open and approve,” “Open a ride service in a city.” A city in Peru is created in soles, on Lima time, with the market fare. Open it once for Moto and once for Car.',
       'Drivers add their Yape or Plin number in their app. It goes live after 24 hours, or sooner if you confirm it. Yape and Plin receive from each other: with either one they get rides paid with both. With no number they only get cash rides.',
       'If a driver taps “It didn’t arrive,” the case lands in the money support inbox, in soles, with the ride and the amount.',

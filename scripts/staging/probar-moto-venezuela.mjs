@@ -233,9 +233,14 @@ try {
     casos.push(`el equipo abrió ${CIUDAD.nombre} con un paso del panel`);
   } else casos.push(`${CIUDAD.nombre} ya estaba abierta`);
   const pais = ok(await equipo('GET', '/datos/admin/paises/VE'), 'configuración de Venezuela');
-  if (!pais.config?.recargasPuntoVentaActivas)
+  // El guion recarga en cada vuelta con el MISMO conductor: con el tope de la calle (20 por semana)
+  // se agotaba y el guion se paraba aquí (19 nov 2026). En el sitio de pruebas el tope es el máximo.
+  if (!pais.config?.recargasPuntoVentaActivas || pais.config?.recargasSemanaMax !== 200)
     ok(
-      await equipo('PUT', '/datos/admin/paises/VE', { recargasPuntoVentaActivas: true }),
+      await equipo('PUT', '/datos/admin/paises/VE', {
+        recargasPuntoVentaActivas: true,
+        recargasSemanaMax: 200,
+      }),
       'encender las recargas en puntos de venta',
     );
 
@@ -365,10 +370,19 @@ try {
     await equipo('POST', '/datos/punto-venta/codigos', { monto: RECARGA }),
     'código',
   ).codigo;
-  ok(await yo('POST', '/datos/repartidor/recargar', { codigo }), 'canjear la recarga');
+  const canje = await yo('POST', '/datos/repartidor/recargar', { codigo });
+  // Si aun así llegó al tope de la semana y ya tiene saldo de sobra para los dos viajes, la vuelta
+  // sigue (el tope es una regla del producto, no un fallo): se dice en los casos y no se esconde.
+  const topeSemana = canje.estado === 409 && /semana/.test(String(canje.d.error ?? ''));
+  if (!(topeSemana && previo >= RECARGA)) ok(canje, 'canjear la recarga');
   const recargado = await saldo();
   exigir(recargado.moneda === 'USD', `el saldo debería estar en dólares (${recargado.moneda})`);
-  exigir(recargado.disponible === previo + RECARGA, 'la recarga no llegó completa al saldo');
+  exigir(
+    recargado.disponible === previo + (topeSemana ? 0 : RECARGA),
+    'la recarga no llegó completa al saldo',
+  );
+  if (topeSemana)
+    casos.push('AVISO: el conductor llegó al tope semanal de recargas; siguió con su saldo');
   exigir(
     recargado.carrerasAlcanzan === Math.floor(recargado.disponible / recargado.comisionTipica),
     '«te alcanza para N carreras» no cuadra',

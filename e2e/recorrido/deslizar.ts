@@ -27,3 +27,21 @@ export async function deslizar(p: Page, testID: string, fraccion = 1) {
 export async function tocarPulgar(p: Page, testID: string) {
   await p.getByTestId(`${testID}-pulgar`).filter({ visible: true }).first().click();
 }
+
+/**
+ * Deja al conductor conectado o desconectado y COMPRUEBA que quedó así (19 nov 2026). En el sitio de
+ * pruebas, más lento, un «desliza para desconectarte» sin comprobar se quedaba a medias: el
+ * conductor seguía conectado y el paso siguiente buscaba un deslizador de conectarse que no existía.
+ * Si ya está como se pide, no desliza nada; si el primer intento no prende, lo repite.
+ */
+export async function dejarConectado(p: Page, conectado: boolean) {
+  const quiero = conectado ? 'desconectarme' : 'conectarme';
+  const deslizo = conectado ? 'conectarme' : 'desconectarme';
+  const visible = (id: string) => p.getByTestId(`${id}-pulgar`).filter({ visible: true }).first();
+  await expect(visible(quiero).or(visible(deslizo))).toBeVisible({ timeout: 30_000 });
+  await expect(async () => {
+    if (await visible(quiero).isVisible()) return;
+    await deslizar(p, deslizo);
+    await expect(visible(quiero)).toBeVisible({ timeout: 10_000 });
+  }).toPass({ timeout: 60_000 });
+}

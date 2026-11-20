@@ -60,7 +60,7 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
         run: node scripts/staging/probar-moto.mjs
       - name: Moto en Venezuela de punta a punta (alta, recarga, efectivo, pago móvil, sin saldo)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
@@ -75,7 +75,7 @@ jobs:
           VUELTA_PRUEBAS: rama-peru-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/probar-moto-peru.mjs
       - name: Carro de punta a punta (El Vigía efectivo y pago móvil con comisión del saldo, reserva, Detroit con tarjeta de prueba y propina)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
@@ -98,7 +98,7 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
         run: node scripts/staging/probar-regalo-viaje-real.mjs
       - name: Comida en Venezuela de punta a punta (El Vigía, efectivo, pago móvil, sin saldo, cancelación)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
@@ -113,7 +113,7 @@ jobs:
         run: |
           curl -sS -X POST "$URL_PRUEBAS/datos/interno-stripe/avisos/principal/eventos" -H "x-reloj-secreto: $RELOJ_SECRETO" -w "\nHTTP %{http_code}\n"
       - name: Pruebas S de la Fase 0 dentro del sitio de pruebas (S2–S5, S7, S11)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}

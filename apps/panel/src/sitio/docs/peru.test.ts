@@ -56,13 +56,15 @@ describe('C-PERFIL-PERU: las guías públicas de Perú', () => {
     expect([...usadas].sort()).toEqual([...CAPTURAS_PERU].sort());
   });
 
-  it('se publican en Docs si y solo si sus capturas reales existen', () => {
+  it('sus capturas reales existen, y están en Docs solo si el interruptor está encendido', () => {
     const existen = (['es', 'en'] as const).every((i) =>
       CLAVES.every((k) =>
         (GUIAS_PERU[i][k].capturas ?? []).every((c) => existsSync(join(PUBLICO, c.src))),
       ),
     );
-    expect(PERU_PUBLICADA, 'cambia PERU_PUBLICADA al tomar las capturas').toBe(existen);
+    // Las capturas ya existen; publicar es además una decisión: solo cuando Ica esté encendida.
+    expect(existen, 'faltan capturas: node scripts/recorrido/capturas-peru.mjs').toBe(true);
+    if (PERU_PUBLICADA) expect(existen).toBe(true);
     for (const idioma of ['es', 'en'] as const) {
       const en = (seccion: string, id: string) =>
         DOCS[idioma].find((s) => s.id === seccion)?.guias.some((g) => g.id === id) ?? false;
@@ -81,5 +83,21 @@ describe('C-PERFIL-PERU: las guías públicas de Perú', () => {
     expect(guion).not.toMatch(/tumbite\.idioma', 'en'/);
     const direcciones = [...guion.matchAll(/direccion: '([^']+)'/g)].map((m) => m[1] ?? '');
     expect(direcciones).toEqual(['Plaza Central', 'Avenida Principal 12']);
+  });
+
+  it('mientras Perú esté apagado, ni Docs ni el asistente ni la cobertura hablan de Yape, Plin o Ica', () => {
+    if (PERU_PUBLICADA) return;
+    const docs = JSON.stringify(DOCS).toLowerCase();
+    for (const p of ['yape', 'plin', 'recorrido-peru-']) expect(docs, p).not.toContain(p);
+    const asistente = readFileSync(
+      join(RAIZ, 'apps', 'servidor', 'src', 'camila', 'docsPublicos.ts'),
+      'utf8',
+    ).toLowerCase();
+    for (const p of ['pay-with-yape-or-plin', 'yape']) expect(asistente, p).not.toContain(p);
+    const cobertura = readFileSync(
+      join(RAIZ, 'apps', 'panel', 'src', 'sitio', 'cobertura.ts'),
+      'utf8',
+    );
+    expect(cobertura).not.toMatch(/'Ica'/);
   });
 });

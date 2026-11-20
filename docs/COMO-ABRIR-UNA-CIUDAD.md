@@ -53,6 +53,7 @@ Una ciudad de Perú se abre con el mismo paso de «Moto · Abrir y aprobar». Na
 - El líder de la ciudad vende saldo como punto de venta en soles: se crea el punto con su cuenta y se le carga fondo.
 - Cada conductor carga su Yape o su Plin en Ganancias; el equipo lo confirma (si no, entra en uso a las 24 horas). Sin número solo recibe viajes en efectivo.
 - En el sitio de pruebas todo esto ya está armado: lo hace el guion `scripts/staging/probar-moto-peru.mjs` en cada rama `fase-*`.
+- El mismo día que se encienda Ica en producción se encienden sus guías públicas: `PERU_PUBLICADA = true` en `apps/panel/src/sitio/docs/peru.ts`, `node scripts/camila/generar-docs.mjs`, Ica en `cobertura.ts`, y publicar. Hasta entonces están ocultas.
 
 ## Cómo se comprueba
 
