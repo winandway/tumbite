@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable security/detect-non-literal-fs-filename -- guion de la Mac del equipo: carpetas y nombres fijos del propio guion, sin entrada de terceros */
 // C-PLAZO-PAPELES (20 nov 2026): siembra en el SITIO DE PRUEBAS tres conductores de Venezuela de
 // ejemplo, con fotos de ejemplo NEUTRAS dibujadas aquí (ilustraciones, ninguna persona real), para
 // poder fotografiar las pantallas del superadmin del plazo de papeles. Hace por la API, como la app:
@@ -43,10 +44,12 @@ const avatar = (x, y, s) =>
   `<rect x="${x}" y="${y}" width="${s}" height="${s * 1.2}" rx="14" fill="#c8d0d8"/>
    <circle cx="${x + s / 2}" cy="${y + s * 0.42}" r="${s * 0.2}" fill="#8a929c"/>
    <path d="M ${x + s * 0.12} ${y + s * 1.1} q ${s * 0.38} -${s * 0.52} ${s * 0.76} 0 z" fill="#8a929c"/>`;
-const linea = (x, y, w) => `<rect x="${x}" y="${y}" width="${w}" height="20" rx="8" fill="#b7bec7"/>`;
+const linea = (x, y, w) =>
+  `<rect x="${x}" y="${y}" width="${w}" height="20" rx="8" fill="#b7bec7"/>`;
 const barras = Array.from(
   { length: 46 },
-  (_, i) => `<rect x="${110 + i * 16}" y="300" width="${i % 3 === 0 ? 11 : 6}" height="150" fill="#222"/>`,
+  (_, i) =>
+    `<rect x="${110 + i * 16}" y="300" width="${i % 3 === 0 ? 11 : 6}" height="150" fill="#222"/>`,
 ).join('');
 const IMAGENES = new Map([
   [
@@ -172,7 +175,13 @@ async function sesion(nombre, correo, telefono) {
 const resumen = [];
 const fotos = await dibujarFotos();
 const PERSONAS = [
-  { nombre: 'Andrés Ejemplo', correo: 'ejemplo.andres.vz@ejemplo.com', pasos: 'todo', placa: 'ZZ100201', telefono: '+584125550201' },
+  {
+    nombre: 'Andrés Ejemplo',
+    correo: 'ejemplo.andres.vz@ejemplo.com',
+    pasos: 'todo',
+    placa: 'ZZ100201',
+    telefono: '+584125550201',
+  },
   {
     nombre: 'Sofía Ejemplo',
     correo: 'ejemplo.sofia.vz@ejemplo.com',
@@ -180,7 +189,13 @@ const PERSONAS = [
     placa: 'ZZ100202',
     telefono: '+584125550202',
   },
-  { nombre: 'Mateo Ejemplo', correo: 'ejemplo.mateo.vz@ejemplo.com', pasos: [], placa: null, telefono: '+584125550203' },
+  {
+    nombre: 'Mateo Ejemplo',
+    correo: 'ejemplo.mateo.vz@ejemplo.com',
+    pasos: [],
+    placa: null,
+    telefono: '+584125550203',
+  },
 ];
 for (const p of PERSONAS) {
   const token = await sesion(p.nombre, p.correo, p.telefono);
@@ -219,7 +234,9 @@ for (const p of PERSONAS) {
       token,
       'image/jpeg',
     );
-    colores.push(`${paso}:${r.estado >= 300 ? `ERR ${r.estado} ${r.d.error ?? ''}` : r.d.ia?.color}`);
+    colores.push(
+      `${paso}:${r.estado >= 300 ? `ERR ${r.estado} ${r.d.error ?? ''}` : r.d.ia?.color}`,
+    );
   }
   let enviado = 'no';
   if (p.pasos === 'todo') {

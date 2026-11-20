@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable security/detect-non-literal-fs-filename -- guion de la Mac del equipo: carpetas y nombres fijos del propio guion, sin entrada de terceros */
 // C-PLAZO-PAPELES (20 nov 2026): fotografía en el SITIO DE PRUEBAS las pantallas del superadmin del
 // plazo de papeles, con los conductores de ejemplo que deja sembrar-papeles-capturas.mjs (córrelo
 // antes). Datos neutros: solo ven «… Ejemplo» de la ciudad de pruebas de Caracas.
@@ -19,7 +20,14 @@ import { CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS } from '../docs/ayudaPrivada.mjs
 
 const URL_PRUEBAS = 'https://staging.tumbite.com';
 const CLAVE = process.env.CLAVE_DEMO ?? 'Demo2026!';
-const ENTREGA = join(homedir(), 'Documents', 'Entregas', 'Divoox', 'driver-plazo-de-papeles', 'panel');
+const ENTREGA = join(
+  homedir(),
+  'Documents',
+  'Entregas',
+  'Divoox',
+  'driver-plazo-de-papeles',
+  'panel',
+);
 for (const d of [CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS, join(ENTREGA, 'es'), join(ENTREGA, 'en')])
   mkdirSync(d, { recursive: true });
 
@@ -139,14 +147,13 @@ try {
     await p
       .locator('.papeles-pedir input')
       .first()
-      .fill(
-        idioma === 'en' ? 'It is cut off.' : 'Sale cortado.',
-      );
+      .fill(idioma === 'en' ? 'It is cut off.' : 'Sale cortado.');
     await espera(600);
     await foto('ficha-pedir-de-nuevo', { ayuda: 'pedir', elemento: tarjeta });
     // El borrador del motivo se queda en el navegador: se borra para que no aparezca en las demás.
     await p.evaluate(() => {
-      for (const k of Object.keys(localStorage)) if (k !== 'tumbite.idioma') localStorage.removeItem(k);
+      for (const k of Object.keys(localStorage))
+        if (k !== 'tumbite.idioma') localStorage.removeItem(k);
     });
 
     // 5. Ficha de un conductor a medias.

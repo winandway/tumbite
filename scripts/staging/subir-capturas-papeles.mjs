@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion de la Mac del equipo: carpetas y nombres fijos del propio guion, sin entrada de terceros */
 // C-PLAZO-PAPELES (20 nov 2026): sube al almacén de los sitios las ocho capturas de la guía interna
 // «driver-documents-grace-period» (papeles-{lista,comprobaciones,pedir,politica}-{es,en}.webp).
 // Hace lo mismo que scripts/docs/subir-ayuda-interna.mjs (misma API, misma llave del llavero, mismo
@@ -19,8 +20,7 @@ const elegidos = process.argv[2] ? [process.argv[2]] : Object.keys(SITIOS);
 const archivos = [];
 // SOLO=lista,politica sube solo esas (las que no dependen de la comprobación automática).
 const SOLO = (process.env.SOLO ?? 'lista,comprobaciones,pedir,politica').split(',');
-for (const n of SOLO)
-  for (const i of ['es', 'en']) archivos.push(`papeles-${n}-${i}.webp`);
+for (const n of SOLO) for (const i of ['es', 'en']) archivos.push(`papeles-${n}-${i}.webp`);
 const faltan = archivos.filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {
   console.error(`Faltan capturas en ${CAPTURAS_PRIVADAS}: ${faltan.join(', ')}`);
@@ -77,6 +77,8 @@ for (const sitio of elegidos) {
       writeFileSync(registro, JSON.stringify(hechas, null, 2));
     }
   }
-  console.log(`${sitio}: ${subidas} subidas, ${archivos.length - subidas} sin cambios, de ${archivos.length}`);
+  console.log(
+    `${sitio}: ${subidas} subidas, ${archivos.length - subidas} sin cambios, de ${archivos.length}`,
+  );
 }
 if (fallas) process.exit(1);
