@@ -1,0 +1,45 @@
+name: recorrido-suelto
+# C-RECORRIDO-SUELTO (20 nov 2026): repite UNA sola prueba del recorrido contra el sitio de pruebas,
+# sin publicar nada y sin entrar a la fila «publicar». Sirve para saber en cinco minutos si un paso
+# que falló fue un tropiezo del sitio de pruebas o un fallo real, en vez de repetir los cuarenta
+# minutos de «pruebas-rama». Prueba lo que el sitio de pruebas esté sirviendo en ese momento.
+# Uso: Actions → recorrido-suelto → «Run workflow» con el nombre de la prueba; o subir una rama
+# «suelto-*» (corre el recorrido completo de un pedido en español).
+on:
+  workflow_dispatch:
+    inputs:
+      filtro:
+        description: 'Nombre (o parte) de la prueba del recorrido'
+        required: true
+        default: 'recorrido completo de un pedido \(es\)'
+  push:
+    branches: ['suelto-*']
+
+permissions:
+  contents: read
+
+jobs:
+  recorrido:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - name: Una sola prueba del recorrido en el sitio de pruebas (Stripe en modo prueba)
+        env:
+          RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
+          RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+          FILTRO: ${{ inputs.filtro || 'recorrido completo de un pedido \(es\)' }}
+        run: |
+          npx playwright install --with-deps chromium || npx playwright install chromium
+          npx playwright test -c playwright.recorrido-staging.config.ts -g "$FILTRO"
+      - name: Guardar capturas y rastro si falló
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: recorrido-suelto
+          path: test-results/
+          retention-days: 7
