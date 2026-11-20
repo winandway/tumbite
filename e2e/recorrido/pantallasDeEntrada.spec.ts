@@ -99,7 +99,11 @@ for (const idioma of ['es', 'en'] as const) {
       await p.screenshot({ path: join(DOCS, `cliente-registro-${idioma}.png`) });
     }
     // Borrar hacia atrás se come la barra sin trabarse.
-    await cumple.press('End');
+    // El cursor al final sin depender de la tecla «Fin» (en la Mac no lo mueve).
+    await cumple.focus();
+    await cumple.evaluate((el: HTMLInputElement) =>
+      el.setSelectionRange(el.value.length, el.value.length),
+    );
     for (let i = 0; i < 4; i++) await cumple.press('Backspace');
     await expect(cumple).toHaveValue(en ? '04/15' : '15/04');
     // Una fecha imposible se dice en palabras, sin borrar lo escrito.
