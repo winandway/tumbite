@@ -75,6 +75,12 @@ export type BusquedaInterna = {
   telefono?: string;
   /** En minúscula. Completo (con dominio) se busca exacto; a medias, por comienzo. */
   correo?: string;
+  /**
+   * C-BUSCADOR-SECCIONES (19 nov 2026, Richard no encontraba a un conductor recién registrado por el
+   * comienzo de su correo de Gmail): lo escrito sin «@» y sin espacios también puede ser el comienzo
+   * de un correo («kpr» → «kprado07@gmail.com»). En minúscula; se busca por comienzo.
+   */
+  inicioCorreo?: string;
   /** En mayúscula, sin espacios ni guiones. */
   placa?: string;
   /** En centavos. Solo dentro de los últimos 30 días. */
@@ -96,6 +102,8 @@ const REPARTIDOR = /^[a-z]{2}-(?:[a-z]{1,4}(?:-\d{0,6})?)?$/i;
 const MONTO = /^(?:\$\s?\d{1,7}(?:[.,]\d{1,2})?|\d{1,7}[.,]\d{2})$/;
 const TELEFONO = /^\+?[\d\s().-]+$/;
 const LETRA = /^\p{L}/u;
+/** El comienzo de un correo: empieza por una letra, sin espacios ni «@» (64 letras como mucho). */
+const INICIO_CORREO = /^[a-z][a-z0-9._+-]{0,63}$/i;
 
 function aCentavos(s: string): number {
   const [entero = '0', decimales = ''] = s.replace(/[$\s]/g, '').split(/[.,]/);
@@ -145,6 +153,10 @@ export function interpretarBusqueda(entrada: string): BusquedaInterna {
   if (/^[a-z0-9]{4,8}$/i.test(placa) && /[a-z]/i.test(placa) && /\d/.test(placa))
     b.placa = placa.toUpperCase();
   if (LETRA.test(texto)) b.nombre = textoPlano(texto);
+  // Desde la segunda letra (con una sola, el nombre ya sugiere); si además puede ser un código
+  // («b4», «ab»), desde la tercera: el código manda con una o dos letras y no se lee de más.
+  if (INICIO_CORREO.test(texto) && texto.length >= (b.codigo ? 3 : 2))
+    b.inicioCorreo = texto.toLowerCase();
   return b;
 }
 

@@ -283,7 +283,7 @@ const en: Guia[] = [
     id: 'search-orders-rides-people',
     titulo: 'Finding any order, ride or person',
     resumen:
-      'The search bar at the top of the operations panel finds an order, a ride, a customer, a driver, a restaurant, a vehicle or a ticket from the first letter you type.',
+      'The search bar at the top of the operations panel finds an order, a ride, a customer, a driver, a restaurant, a vehicle, a ticket or any part of the panel from the first letter you type.',
     explicacion: [
       'The search bar is at the top of every screen of Divoox’s operations panel. Press “/” (or Ctrl+K, or ⌘K on a Mac) from anywhere and start typing. There is no button to press: results appear while you type, grouped by what they are: Orders, Rides, Customers, Drivers, Restaurants and stores, Vehicles and Tickets. The sections of the panel show up too, under “Go to”.',
       'You can type almost anything people remember. The short order code, with or without the “#”. The full ID. A name, without worrying about capitals or accents: “jose” finds “José”. A phone number: the last four digits, or the beginning. An email. A license plate. A driver code such as US-NOV-000014. Or an amount, with a dollar sign or decimals; amounts are searched only in the last 30 days, and the screen says so.',
@@ -291,6 +291,10 @@ const en: Guia[] = [
       'When many share the first characters, the ones still in progress come first, with the ones in trouble at the top, then the closed ones, newest first. The group title says how many there are in total (for example “Orders · 312”), and “See all” at the bottom of the group opens Live orders with the same search, where you can keep loading every match.',
       'If nothing matches, the panel says exactly what you searched for and helps you: when a code has a letter that looks like a number (an “O” instead of a zero, an “l” instead of a one), it asks “Did you mean #B4290C?” and one click searches it.',
       'Search looks everywhere, not only at what is on screen: it finds closed orders, orders still awaiting payment, and orders from any city. Each result shows what matched, highlighted. Phone numbers and emails are partly hidden for everyone on the team (for example “+1 ••• ••• 4821”), so you can recognize a person without exposing their data.',
+      'The search bar also takes you to any part of the panel. Type what you are looking for in your own words, in English or Spanish, with or without accents: “kyc”, “documents”, “ID”, “license” or “cédula” take you to Verifications and Approvals; “balance” or “top-ups” to Driver balances; “fares” to Rides; “coupons” to Divoox gifts; “rate” to the bolívar rate; “team” to the Internal team. These suggestions appear first, under “Go to…”, from the first letter, and next to each one you see the word that found it. You only see the parts of the panel your account can open.',
+      'It also finds what people want to do: “add balance”, “change fares”, “create coupon” or “add employee” take you straight to the screen where that is done. And “help” opens this team help.',
+      'People are found in every state, also right after signing up: a driver who just registered in the Driver app appears by the first letters of their email (no “@” needed), their name or their phone. Each account says its state in words: “Not verified” (sent nothing yet), “Documents pending” (waiting for review), “Approved”, “Declined”, “Suspended”, or “Email not confirmed” for a customer. Under a driver, “See their documents” opens their verification directly. A store owner who signed up but has not finished loading the store appears as “Sign-up not finished”, and a Flex business appears with its state (active or paused).',
+      'If nothing matches, the panel never leaves you stuck: under “Maybe you were looking for:” it suggests the parts of the panel with a similar word (a typo such as “verifcation” still finds Verifications), or the everyday sections if nothing is close.',
     ],
     capturas: [
       foto(
@@ -324,6 +328,8 @@ const en: Guia[] = [
       'How do I search for a customer by the last digits of their phone?',
       'Why does a short code show more than one order?',
       'Can I find a closed order or an order from another city?',
+      'How do I find a driver who just signed up, to see their documents?',
+      'How do I get to Verifications by typing “kyc”?',
     ],
     pasos: [
       'Click the search bar, or press “/” or Ctrl+K (⌘K on a Mac) from any screen.',
@@ -334,6 +340,8 @@ const en: Guia[] = [
       'If the panel says it couldn’t find anything, read the suggestion under “Did you mean…?” and click it, or open Live orders from the same box to search the closed ones too.',
       'To force what you are searching for, start with a hint: “tel:” for a phone, “plate:” for a plate, “amount:” for an amount, “email:” for an email or “id:” for an ID. In the panel these hints are typed exactly as written here.',
       'If you see “Amounts are searched in the last 30 days only,” the amount you typed is older: search by code or by name instead.',
+      'To go to a part of the panel, type its name or any word for it (“kyc”, “balance”, “fares”) and choose it under “Go to…”.',
+      'To see a new driver’s documents, type the first letters of their email, name or phone, and choose “See their documents” under their name.',
     ],
     nota: 'Search never changes anything: looking is always safe.',
   },
@@ -718,7 +726,7 @@ const es: Guia[] = [
     id: 'search-orders-rides-people',
     titulo: 'Encontrar cualquier pedido, viaje o persona',
     resumen:
-      'El buscador de arriba del panel de operaciones encuentra un pedido, un viaje, un cliente, un repartidor, un restaurante, un vehículo o un ticket desde la primera letra.',
+      'El buscador de arriba del panel de operaciones encuentra un pedido, un viaje, un cliente, un repartidor, un restaurante, un vehículo, un ticket o cualquier parte del panel desde la primera letra.',
     explicacion: [
       'El buscador está arriba en todas las pantallas del panel de operaciones de Divoox. Presiona «/» (o Ctrl+K, o ⌘K en Mac) desde cualquier lugar y escribe. No hay botón que apretar: los resultados salen mientras escribes, agrupados por tipo: Pedidos, Viajes, Clientes, Repartidores y conductores, Restaurantes y tiendas, Vehículos y Tickets. Las secciones del panel también aparecen, en «Ir a».',
       'Puedes escribir casi cualquier dato que la gente recuerda. El código corto del pedido, con o sin «#». El id completo. Un nombre, sin preocuparte por mayúsculas ni acentos: «jose» encuentra «José». Un teléfono: los últimos cuatro dígitos o el comienzo. Un correo. Una placa. Un código de repartidor como VE-ELV-000003. O un monto, con signo de dólar o decimales; los montos se buscan solo en los últimos 30 días y la pantalla lo dice.',
@@ -726,6 +734,10 @@ const es: Guia[] = [
       'Cuando muchos comparten los primeros caracteres, salen primero los que siguen en curso, con los que están en problemas arriba, y después los cerrados, del más reciente al más viejo. El título del grupo dice cuántos hay en total (por ejemplo «Pedidos · 312»), y «Ver todos», al pie del grupo, abre Pedidos en curso con la misma búsqueda, donde puedes seguir cargando todas las coincidencias.',
       'Si no hay nada, el panel dice exactamente qué buscaste y te ayuda: cuando un código trae una letra que parece un número (una «O» en vez de un cero, una «l» en vez de un uno), pregunta «¿Quisiste decir #B4290C?» y con un clic lo busca.',
       'La búsqueda mira en todas partes, no solo lo que hay en pantalla: encuentra pedidos cerrados, pedidos que siguen esperando pago y pedidos de cualquier ciudad. Cada resultado muestra lo que coincidió, resaltado. Los teléfonos y los correos salen parcialmente tapados para todo el equipo (por ejemplo «+1 ••• ••• 4821»): reconoces a la persona sin exponer sus datos.',
+      'El buscador también te lleva a cualquier parte del panel. Escribe lo que buscas con tus palabras, en español o en inglés, con o sin acentos: «kyc», «verificación», «papeles», «identidad», «cédula» o «licencia» llevan a Verificaciones y a Para aprobar; «saldo» o «recargas», a Saldo de conductores; «tarifas», a Viajes; «cupones», a Regalos Divoox; «tasa», a la tasa del bolívar; «equipo», a Equipo interno. Estas sugerencias salen primero, en «Ir a…», desde la primera letra, y al lado de cada una ves la palabra que la encontró. Solo ves las partes del panel que tu cuenta puede abrir.',
+      'También encuentra lo que quieres hacer: «cargar saldo», «cambiar tarifas», «crear cupón» o «agregar empleado» te llevan directo a la pantalla donde se hace. Y «ayuda» abre esta ayuda del equipo.',
+      'Las personas salen en cualquier estado, también recién registradas: un conductor que acaba de registrarse en la app Driver aparece por las primeras letras de su correo (sin escribir la «@»), por su nombre o por su teléfono. Cada cuenta dice su estado en palabras: «Sin verificar» (todavía no envió nada), «Papeles pendientes» (esperan revisión), «Aprobado», «No aprobado», «Suspendido», o «Correo sin confirmar» en un cliente. Debajo de un conductor, «Ver sus papeles» abre su verificación directo. El dueño de un comercio que se registró y todavía no terminó de cargarlo sale con «Registro sin terminar», y una empresa de Flex sale con su estado (activa o pausada).',
+      'Si no hay resultados, el panel nunca te deja sin salida: en «Quizás buscabas:» te sugiere las partes del panel con una palabra parecida (un error como «verifcacion» igual encuentra Verificaciones) o, si no hay ninguna cerca, las secciones de cada día.',
     ],
     capturas: [
       foto(
@@ -759,6 +771,8 @@ const es: Guia[] = [
       '¿Cómo busco a un cliente por los últimos dígitos de su teléfono?',
       '¿Por qué un código corto muestra más de un pedido?',
       '¿Puedo encontrar un pedido cerrado o de otra ciudad?',
+      '¿Cómo encuentro a un conductor recién registrado para ver sus papeles?',
+      '¿Cómo llego a Verificaciones escribiendo «kyc»?',
     ],
     pasos: [
       'Haz clic en el buscador, o presiona «/» o Ctrl+K (⌘K en Mac) desde cualquier pantalla.',
@@ -769,6 +783,8 @@ const es: Guia[] = [
       'Si el panel dice que no encontró nada, lee la sugerencia de «¿Quisiste decir…?» y haz clic en ella, o abre Pedidos en curso desde el mismo recuadro para buscar también en los cerrados.',
       'Para decirle qué buscas, empieza con una pista: «tel:» para un teléfono, «placa:» para una placa, «monto:» para un monto, «correo:» para un correo o «id:» para un id. En el panel estas pistas se escriben exactamente así.',
       'Si ves «Los montos se buscan solo en los últimos 30 días», el monto que escribiste es más viejo: busca por código o por nombre.',
+      'Para ir a una parte del panel, escribe su nombre o cualquier palabra que la nombre («kyc», «saldo», «tarifas») y elígela en «Ir a…».',
+      'Para ver los papeles de un conductor nuevo, escribe las primeras letras de su correo, su nombre o su teléfono, y elige «Ver sus papeles» debajo de su nombre.',
     ],
     nota: 'Buscar nunca cambia nada: mirar siempre es seguro.',
   },

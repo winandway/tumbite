@@ -121,3 +121,19 @@ describe('C-BUSCADOR-INSTANTANEO · ¿quisiste decir…?', () => {
     expect(quisoDecirCodigo('')).toBeNull();
   });
 });
+
+describe('C-BUSCADOR-SECCIONES · el comienzo de un correo sin «@»', () => {
+  it('desde la segunda letra (desde la tercera si también puede ser un código)', () => {
+    expect(interpretarBusqueda('kp').inicioCorreo).toBe('kp');
+    expect(interpretarBusqueda('KPrado07').inicioCorreo).toBe('kprado07');
+    expect(interpretarBusqueda('lmarin.c').inicioCorreo).toBe('lmarin.c');
+    expect(interpretarBusqueda('k').inicioCorreo).toBeUndefined();
+    // «b4» y «ab» son códigos: el código manda con dos letras; con tres ya también es un correo.
+    expect(interpretarBusqueda('b4').inicioCorreo).toBeUndefined();
+    expect(interpretarBusqueda('abe').inicioCorreo).toBe('abe');
+    // Con espacios, con «@» o empezando por un número no es el comienzo de un correo.
+    expect(interpretarBusqueda('kelly p').inicioCorreo).toBeUndefined();
+    expect(interpretarBusqueda('kp@').inicioCorreo).toBeUndefined();
+    expect(interpretarBusqueda('4821').inicioCorreo).toBeUndefined();
+  });
+});
