@@ -10,6 +10,24 @@ echo "Esperando que $URL sirva la versión $VERSION…"
 for i in $(seq 1 $INTENTOS); do
   if curl -fsS "$URL/?v=$RANDOM" | grep -q "name=\"version\" content=\"$VERSION\""; then
     echo "Pruebas ya sirve $VERSION (tras $((i*15)) s)."
+    # La página y el servidor no cambian a la vez (20 nov 2026): la página ya decía la versión nueva y
+    # el servidor contestó cinco segundos después con el código anterior, y un guion falló por eso.
+    # Se espera a que el servidor diga la misma versión tres veces seguidas (hasta cinco minutos).
+    seguidas=0
+    for j in $(seq 1 60); do
+      if curl -fsS "$URL/datos/salud?v=$RANDOM" | grep -q "\"commit\":\"$VERSION\""; then
+        seguidas=$((seguidas+1))
+        [ "$seguidas" -ge 3 ] && break
+      else
+        seguidas=0
+      fi
+      sleep 5
+    done
+    if [ "$seguidas" -lt 3 ]; then
+      echo "::error::La página sirve $VERSION pero el servidor no la confirmó tres veces seguidas en cinco minutos."
+      exit 1
+    fi
+    echo "El servidor confirma $VERSION."
     ok=1
     for r in / /es /es/how-it-works /how-it-works /llms.txt /panel /app/ /driver/ /privacy /terms /restaurant-terms /driver-terms /delete-account /support /datos/salud /sitemap.xml; do
       code=$(curl -s -o /dev/null -w '%{http_code}' "$URL$r")
