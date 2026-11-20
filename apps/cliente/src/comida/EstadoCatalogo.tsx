@@ -25,8 +25,6 @@ const TEXTOS = {
     abrePronto: 'Tu zona ({area}) abre muy pronto.',
     abreEl: 'Tu zona ({area}) abre el {fecha}.',
     pausada: 'El servicio en tu zona está en pausa por ahora.',
-    yaEstamos: 'Ya estamos en: {lista}.',
-    proximas: 'Próximas aperturas: {lista}.',
   },
   en: {
     zonaVacia: 'No restaurants in your area yet. Coming soon!',
@@ -37,8 +35,6 @@ const TEXTOS = {
     abrePronto: 'Your area ({area}) is opening very soon.',
     abreEl: 'Your area ({area}) opens on {fecha}.',
     pausada: 'Service in your area is paused for now.',
-    yaEstamos: 'We’re already in: {lista}.',
-    proximas: 'Opening soon: {lista}.',
   },
 } as const;
 
@@ -102,6 +98,8 @@ export function EstadoCatalogo({
   );
 }
 
+// C-SIN-LISTA-DE-CIUDADES (19 nov 2026): solo el estado de SU zona; nunca la lista de ciudades o
+// países donde Divoox funciona o abrirá.
 function DetalleCobertura({ cob, t }: { cob: Cobertura; t: ReturnType<typeof textosCatalogo> }) {
   const suave = { color: '#666B73', fontSize: 14 };
   const area = cob.area?.nombre ?? '';
@@ -112,18 +110,6 @@ function DetalleCobertura({ cob, t }: { cob: Cobertura; t: ReturnType<typeof tex
         : t.abrePronto.replace('{area}', area)
       : null,
     cob.estado === 'pausada' ? t.pausada : null,
-    cob.ciudadesActivas.length
-      ? t.yaEstamos.replace('{lista}', cob.ciudadesActivas.map((z) => z.nombre).join(', '))
-      : null,
-    cob.proximas.length
-      ? t.proximas.replace(
-          '{lista}',
-          cob.proximas
-            .slice(0, 5)
-            .map((p) => `${p.area} (${p.ciudad}${p.apertura ? `, ${p.apertura}` : ''})`)
-            .join(' · '),
-        )
-      : null,
   ].filter((x): x is string => Boolean(x));
   return (
     <View testID="catalogo-cobertura" style={{ gap: 4 }}>

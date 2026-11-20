@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
-  type Disponibilidad,
   ErrorApi,
   type Idioma,
   almacenNavegador,
   enIdioma,
-  fraseDisponibilidad,
   useBorrador,
 } from '@tumbite/compartido';
 import { pedir } from './api';
@@ -17,9 +15,6 @@ import { pedir } from './api';
  */
 const T = {
   es: {
-    yaFunciona: 'Divoox ya funciona en: {lista}.',
-    otraCiudad:
-      '¿Tu ciudad no está? Crea tu cuenta igual: te avisamos apenas lleguemos y tu cuenta ya queda lista.',
     titulo: 'Quiero traer Divoox a mi ciudad',
     intro:
       'Tu restaurante ya quedó registrado, pero Divoox todavía no reparte en tu ciudad. Dinos cuál es y abrimos primero donde más restaurantes nos lo piden.',
@@ -32,9 +27,6 @@ const T = {
     empezar: 'Empezar de nuevo',
   },
   en: {
-    yaFunciona: 'Divoox already works in: {lista}.',
-    otraCiudad:
-      'Don’t see your city? Create your account anyway: we’ll let you know the moment we arrive and your account will be ready.',
     titulo: 'Bring Divoox to my city',
     intro:
       'Your restaurant is registered, but Divoox doesn’t deliver in your city yet. Tell us which one and we’ll open first where the most restaurants ask.',
@@ -47,29 +39,6 @@ const T = {
     empezar: 'Start over',
   },
 };
-
-/** «Divoox ya funciona en: Miami (Estados Unidos)», para la pantalla de crear la cuenta. */
-export function DondeFuncionaWeb({ idioma }: { idioma: Idioma }) {
-  const t = enIdioma(T, idioma);
-  const [d, setD] = useState<Disponibilidad | null>(null);
-  useEffect(() => {
-    let vivo = true;
-    pedir<Disponibilidad>('GET', '/datos/disponibilidad')
-      .then((r) => {
-        if (vivo) setD(r);
-      })
-      .catch(() => undefined);
-    return () => {
-      vivo = false;
-    };
-  }, []);
-  if (!d?.paises?.length) return null;
-  return (
-    <p className="suave" data-testid="donde-funciona">
-      {t.yaFunciona.replace('{lista}', fraseDisponibilidad(d, idioma))} {t.otraCiudad}
-    </p>
-  );
-}
 
 export function TraerDivoox({
   idioma,

@@ -5868,3 +5868,12 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Comida en Venezuela (se destapó al arreglar los otros dos):** el restaurante de pruebas había «escuchado» por última vez en una vuelta de otro día y el servidor, con razón, rechazaba el pedido (C-PAUSA-SIN-SENAL). Arreglo en `scripts/staging/probar-comida-venezuela.mjs`: antes de cada pedido el restaurante pregunta por sus pedidos, como hace su app sola.
 - **Un rojo ya no esconde a otro:** en `pruebas-rama.yml` los guiones de Moto en Venezuela, Carro, Comida en Venezuela y las pruebas S corren aunque un guion anterior falle (`!cancelled()`): cada uno tiene sus propias cuentas.
 - **Qué NO tocar:** no volver a deslizar sin comprobar el estado; no subir el tope de recargas fuera del sitio de pruebas.
+
+## C-SIN-LISTA-DE-CIUDADES — ninguna app ni la web enumera dónde funciona Divoox (19 nov 2026, orden de Richard, «sagrada») — todos los países
+
+- **Qué se veía:** en «Crear cuenta» de las tres apps y del panel web: «Divoox ya funciona en: … ¿Tu ciudad no está? Crea tu cuenta igual…». En la portada, el buscador contestaba «Hoy ya funciona en: …», había una sección «Dónde estamos» con el mapa de ciudades y el lema podía decir «Ya estamos en …». En la app de clientes, fuera de zona: «Ya estamos en: …» y «Próximas aperturas: …».
+- **La regla:** una app profesional es universal y no dice dónde está; esa información se da por otro lado. Al que su zona no tiene servicio se le dice, por SU ubicación, «todavía no llegamos a tu zona» y se le ofrece «Avísame cuando llegue». Camila sí puede contestarlo cuando se lo preguntan, y el correo de aviso al llegar a una ciudad se queda.
+- **Arreglo:** se quitaron `DondeFunciona` (apps) y `DondeFuncionaWeb` (panel), la frase del buscador, la sección del mapa y el lema con ciudad de la portada, y las dos líneas de la app de clientes. Docs y lo que lee Camila ya no prometen la lista.
+- **No tocar:** no volver a pintar `fraseDisponibilidad`, `ciudadesActivas` ni ninguna lista de ciudades o países de servicio en pantallas públicas. La ruta `/datos/disponibilidad` sigue existiendo para Camila y el equipo; ninguna pantalla la lee.
+- **Prueba (vista en rojo):** `packages/compartido/src/candadoSinListaDeCiudades.test.ts`.
+- **Punto abierto que decide Richard:** el pie del sitio y las páginas por país y por ciudad (`/country/…`, `/city/…`) también nombran lugares; quitarlas cambia direcciones ya publicadas y el mapa del sitio.

@@ -1,14 +1,7 @@
 import { useState } from 'react';
 import { CampoDireccion } from './CampoDireccion';
 import { Icono } from './Icono';
-import {
-  type Disponibilidad,
-  type Idioma,
-  almacenNavegador,
-  enIdioma,
-  fraseDisponibilidad,
-  useBorrador,
-} from '@tumbite/compartido';
+import { type Idioma, almacenNavegador, enIdioma, useBorrador } from '@tumbite/compartido';
 
 const T = {
   es: {
@@ -19,7 +12,6 @@ const T = {
     dentro: '¡Divoox llega a tu zona! Anótate abajo y te avisamos el día del lanzamiento.',
     fuera:
       'Todavía no llegamos a tu zona. Anótate abajo: cuando haya suficientes vecinos, llegamos.',
-    yaEn: 'Hoy ya funciona en: {lista}.',
     escrito: 'Anótate abajo con tu ciudad y te avisamos cuando lleguemos.',
     sinPermiso: 'No pudimos ver tu ubicación. Escribe tu ciudad abajo y listo.',
     vacio: 'Escribe tu dirección o toca «Usar mi ubicación».',
@@ -31,7 +23,6 @@ const T = {
     buscando: 'Searching…',
     dentro: 'Divoox is coming to your area! Sign up below and we’ll let you know on launch day.',
     fuera: 'We’re not in your area yet. Sign up below: once enough neighbors join, we’ll be there.',
-    yaEn: 'Today it already works in: {lista}.',
     escrito: 'Sign up below with your city and we’ll let you know when we arrive.',
     sinPermiso: 'We couldn’t get your location. Just type your city below.',
     vacio: 'Enter your address or tap “Use my location”.',
@@ -67,14 +58,8 @@ export function Buscador({ idioma }: { idioma: Idioma }) {
         window.location.href = `/app/?lat=${lat}&lng=${lng}${extra}`;
         return;
       }
-      // C-DISPONIBLE-MUNDO: además de invitarlo a anotarse, se le dice dónde ya funciona.
-      const donde = await fetch('/datos/disponibilidad')
-        .then((x) => x.json() as Promise<Disponibilidad>)
-        .then((x) =>
-          x.paises?.length ? ` ${t.yaEn.replace('{lista}', fraseDisponibilidad(x, idioma))}` : '',
-        )
-        .catch(() => '');
-      setMensaje(t.fuera + donde);
+      // C-SIN-LISTA-DE-CIUDADES: se le invita a anotarse, sin enumerar dónde funciona.
+      setMensaje(t.fuera);
       irAlFormulario();
     } catch {
       setMensaje(t.escrito);
