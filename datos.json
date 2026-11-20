@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-20T09:35:07Z",
+  "actualizado": "2026-11-20T17:01:00Z",
   "version": "fe71f3f",
   "ahora": "20 nov: Google aprobó la app de restaurantes (versión 19) y ya está en producción. Las tres apps tienen compilación nueva en prueba interna de Google Play y en TestFlight: las pantallas de entrada ya no dejan a nadie sin salida, el restaurante crea su cuenta desde el teléfono y la puede borrar ahí mismo, la fecha se escribe con el orden de cada país y ninguna pantalla enumera ciudades. El auditor de tiendas dio por apta la de restaurantes (21) para producción de Google Play; las de clientes (56) y conductores (63) siguen aptas con una condición: marcar una casilla de ubicación en la consola de Google Play. En iPhone, la de restaurantes (27) espera a que Apple resuelva el envío que ya tiene en revisión.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-20",
+      "titulo": "El plazo de papeles para conductores ya está en producción",
+      "texto": "Donde el país da plazo para entregar los papeles (Venezuela y Perú, treinta días), el conductor nuevo empieza a trabajar desde el primer día con lo mínimo de su país (en Venezuela, la foto de su cara) y entrega el resto dentro del plazo. En los demás países no cambia nada. El equipo ve desde su panel en qué va cada conductor, puede dar más plazo y pedir que repita una foto. Publicado y comprobado en vivo: el servidor responde con la versión nueva, la verificación de producción salió en verde y el panel publicado ya trae las pantallas. Falta el asistente dentro de la app Driver, que guía la toma de cada foto: lo toma la sesión siguiente, y hasta entonces la foto se toma por la pantalla de verificación de siempre. Aplica a Venezuela y Perú."
+    },
     {
       "fecha": "2026-11-20",
       "titulo": "Camila ya atiende el correo como el chat",
