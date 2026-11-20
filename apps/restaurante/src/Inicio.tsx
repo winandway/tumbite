@@ -47,9 +47,9 @@ import {
   CodigoQR,
   FotoPedido,
   FotosDelPedido,
+  OpcionesCuenta,
   Pantalla,
   TarjetaAvisosWeb,
-  TEXTOS_MOVIL,
   URL_SERVIDOR,
   abrirPanel,
   e,
@@ -357,7 +357,7 @@ const TEXTOS_LOCAL = {
 
 export function Inicio() {
   useKeepAwake(); // La tablet del mostrador no se apaga mientras la app está abierta.
-  const { api, idioma, salir, cambiarIdioma } = useSesion();
+  const { api, idioma, cambiarIdioma } = useSesion();
   const t = enIdioma(T, idioma);
   const tr = textosRest(idioma);
   const { width } = useWindowDimensions();
@@ -377,7 +377,6 @@ export function Inicio() {
     const r = setInterval(() => setAhora(Date.now()), 1000);
     return () => clearInterval(r);
   }, []);
-  const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const alarma = useAudioPlayer(sonidoAlarma);
   const estadoAlarma = useAudioPlayerStatus(alarma);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -517,7 +516,9 @@ export function Inicio() {
           alTocar={() => void abrirPanel(api, URL_SERVIDOR, '/panel')}
         />
         <Boton texto={t.yaLoComplete} alTocar={() => void cargar()} secundario />
-        <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+        {/* Quien creó su cuenta aquí la puede cerrar y BORRAR desde aquí mismo, aunque todavía no
+            haya completado el restaurante (Apple 5.1.1 v; hallazgo del auditor de tiendas, 20 nov 2026). */}
+        <OpcionesCuenta />
       </Pantalla>
     );
   }
