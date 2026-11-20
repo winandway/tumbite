@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
 # Semáforo antes de producción: espera a que el sitio de pruebas sirva la versión recién
-# empujada (hasta 25 minutos; a los 8 minutos le da un empujón a la rama de pruebas si se le
-# pasó la publicación) y exige 200 en las rutas críticas. Rojo = no se publica en producción.
+# empujada (hasta 45 minutos; cada 8 minutos le da un empujón a la rama si la plataforma dejó
+# pasar la publicación) y exige 200 en las rutas críticas. Rojo = no se publica en producción.
+#
+# C-SEMAFORO-INSISTE (20 nov 2026): la plataforma se quedaba en «subiendo el paquete», se rendía
+# a los tres intentos por versión y un solo empujón no alcanzaba: la rama del asistente de Driver
+# nunca llegó a pruebas y nadie supo por qué. Ahora cada empujón es una versión nueva (tres
+# intentos más de la plataforma), se insiste hasta el final y, si aun así falla, se imprime lo
+# que dice el registro de la plataforma (con YAD_LLAVE_SITIO) para no tener que adivinar.
 set -u
 URL="${1%/}"; VERSION="$2"; RAMA="${3:-}"
-INTENTOS="${SEMAFORO_INTENTOS:-100}" # cada 15 s = 25 minutos
-EMPUJON="${SEMAFORO_EMPUJON:-32}"  # a los 8 minutos
+INTENTOS="${SEMAFORO_INTENTOS:-180}" # cada 15 s = 45 minutos
+EMPUJON="${SEMAFORO_EMPUJON:-32}"  # cada 8 minutos
+PAUSA="${SEMAFORO_PAUSA:-15}"
+PAUSA_SERVIDOR="${SEMAFORO_PAUSA_SERVIDOR:-5}"
 echo "Esperando que $URL sirva la versión $VERSION…"
 for i in $(seq 1 $INTENTOS); do
   if curl -fsS "$URL/?v=$RANDOM" | grep -q "name=\"version\" content=\"$VERSION\""; then
-    echo "Pruebas ya sirve $VERSION (tras $((i*15)) s)."
+    echo "Pruebas ya sirve $VERSION (tras $((i*PAUSA)) s)."
     # La página y el servidor no cambian a la vez (20 nov 2026): la página ya decía la versión nueva y
     # el servidor contestó cinco segundos después con el código anterior, y un guion falló por eso.
     # Se espera a que el servidor diga la misma versión tres veces seguidas (hasta cinco minutos).
@@ -21,7 +29,7 @@ for i in $(seq 1 $INTENTOS); do
       else
         seguidas=0
       fi
-      sleep 5
+      sleep "$PAUSA_SERVIDOR"
     done
     if [ "$seguidas" -lt 3 ]; then
       echo "::error::La página sirve $VERSION pero el servidor no la confirmó tres veces seguidas en cinco minutos."
@@ -42,8 +50,10 @@ for i in $(seq 1 $INTENTOS); do
   fi
   # La plataforma a veces deja pasar una publicación (13 oct 2026, dos veces): se le vuelve a
   # avisar con un commit vacío en la misma rama, sin cambiar nada de lo publicado.
-  if [ "$i" = "$EMPUJON" ] && [ -n "$RAMA" ]; then
-    echo "Pruebas sigue sin $VERSION tras 8 minutos: empujón a la rama $RAMA."
+  # Un solo empujón no alcanza (20 nov 2026): la plataforma deja de reintentar a los tres intentos
+  # de una versión. Cada empujón es una versión nueva, así que se repite cada $EMPUJON vueltas.
+  if [ $((i % EMPUJON)) = 0 ] && [ -n "$RAMA" ]; then
+    echo "Pruebas sigue sin $VERSION tras $((i*PAUSA/60)) minutos: empujón a la rama $RAMA."
     # En una carpeta aparte (worktree): no toca lo que el paso siguiente publica en producción.
     TMP="$(mktemp -d)"
     ( git fetch -q origin "$RAMA" && git worktree add -q --detach "$TMP/rama" "origin/$RAMA" \
@@ -52,7 +62,19 @@ for i in $(seq 1 $INTENTOS); do
       && git -C "$TMP/rama" push -q origin "HEAD:$RAMA" ) || echo "::warning::No se pudo dar el empujón a $RAMA."
     git worktree remove --force "$TMP/rama" 2>/dev/null; true
   fi
-  sleep 15
+  sleep "$PAUSA"
 done
-echo "::error::Pruebas no sirvió la versión $VERSION en 25 minutos. No se publica en producción."
+echo "::error::Pruebas no sirvió la versión $VERSION en $((INTENTOS*PAUSA/60)) minutos. No se publica en producción."
+# La causa se lee en el registro de la plataforma, no se adivina.
+if [ -n "${YAD_LLAVE_SITIO:-}" ]; then
+  API="${YAD_API:-https://yapanel.yadominios.com/api/sitio/v1}"
+  echo "Estado del sitio según la plataforma:"
+  curl -s -m 30 -X POST "$API/estado_del_sitio" -H "Authorization: Bearer $YAD_LLAVE_SITIO" \
+    -H 'content-type: application/json' -d '{}' | head -c 1200; echo
+  echo "Últimas líneas del registro de la plataforma:"
+  curl -s -m 30 -X POST "$API/leer_registro" -H "Authorization: Bearer $YAD_LLAVE_SITIO" \
+    -H 'content-type: application/json' -d '{"limite":30}' | head -c 6000; echo
+else
+  echo "Sin YAD_LLAVE_SITIO no se puede leer el registro de la plataforma: míralo en el panel del sitio."
+fi
 exit 1

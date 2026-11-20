@@ -101,8 +101,10 @@ jobs:
 
       - name: Semáforo — pruebas debe servir esta versión y responder 200
         if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          YAD_LLAVE_SITIO: ${{ secrets.YAD_LLAVE_PRUEBAS }}
         run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
-        timeout-minutes: 30
+        timeout-minutes: 50
 
       - name: Paquete de PRODUCCIÓN (revisado; nunca el de pruebas)
         run: bash scripts/empaquetar.sh produccion
@@ -117,5 +119,7 @@ jobs:
       # Después de publicar: producción tiene que servir ESTA versión y su salud (con la pieza
       # «entorno») responder 200. Si no, queda en rojo para actuar de inmediato.
       - name: Semáforo de producción (solo lectura)
+        env:
+          YAD_LLAVE_SITIO: ${{ secrets.YAD_LLAVE_PRODUCCION }}
         run: bash scripts/semaforo.sh "https://divoox.com" "${VERSION:0:7}" yapanel-build
-        timeout-minutes: 30
+        timeout-minutes: 50
