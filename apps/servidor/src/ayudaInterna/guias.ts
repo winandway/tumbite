@@ -2232,6 +2232,112 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// C-CORREGIR-CORREO (20 nov 2026, pedido de Richard): corregir el correo de una cuenta.
+const capCorreo = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `correo-${nombre}-${idioma}.webp`, alt, pie });
+const corregirCorreo: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'fix-account-email',
+    titulo: 'Corregir el correo de una cuenta',
+    resumen:
+      'Cuando alguien escribió mal su correo y no le llega la confirmación, se corrige desde su ficha, en los tres puntos junto al correo: «Corregir correo». Le sale sola la confirmación al correo nuevo y queda en el registro con tu nombre.',
+    explicacion: [
+      'Al lado del correo, la ficha de cada cliente, conductor y restaurante dice cómo está: «Confirmado», «Sin confirmar» o «Rebotó: el buzón no existe o está bloqueado». «Rebotó» quiere decir que el servicio de correo (por ejemplo Gmail) contestó que esa dirección no existe: casi siempre es una letra cambiada.',
+      'Antes de corregir, confirma con la persona el correo bueno, letra por letra. Nunca adivines: si cambias a una dirección equivocada, el enlace le llega a otra persona.',
+      '«Corregir correo» deja la cuenta sin confirmar y le manda sola, al correo nuevo, el mismo enlace de confirmación que manda la app. Mientras escribes, si el dominio parece mal escrito (gmial.com, gmail.con), el panel sugiere el bueno. No deja usar un correo que ya tiene otra cuenta ni uno bloqueado por mala conducta. No cambia su contraseña ni le cierra la sesión.',
+      '«Reenviar confirmación» vuelve a mandar el enlace al correo que ya tiene la cuenta. Si el correo no sale (la dirección no existe o el servicio falló), el panel lo dice con el motivo: nunca dice «enviado» si no salió.',
+      'Cada cambio queda en «Cambios del correo», en la misma ficha: quién lo hizo, cuándo, y el correo de antes y el de ahora con solo las dos primeras letras y el dominio. También queda en el registro de acciones del equipo.',
+      'Lo pueden usar Soporte nivel 2, Supervisor y Total, y solo en las cuentas de su zona de trabajo. Si el segundo factor está encendido, la primera vez pide el código.',
+    ],
+    capturas: [
+      capCorreo(
+        'estado',
+        'es',
+        'La ficha de un cliente con el correo marcado «Rebotó: el buzón no existe o está bloqueado» y el menú de tres puntos abierto con Corregir correo y Reenviar confirmación.',
+        'El estado del correo y las opciones de los tres puntos.',
+      ),
+      capCorreo(
+        'formulario',
+        'es',
+        'El formulario Corregir el correo de la cuenta con un correo mal escrito, la sugerencia «¿Quisiste decir…@gmail.com?» y el motivo escrito.',
+        'Escribe el correo nuevo y el motivo; revisa la sugerencia.',
+      ),
+      capCorreo(
+        'listo',
+        'es',
+        'La ficha después de corregir: el aviso «Correo corregido. Le mandamos el enlace de confirmación.», el estado Sin confirmar y la lista Cambios del correo.',
+        'Listo: el enlace salió y el cambio queda en la línea de tiempo.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo cambio el correo de un cliente que lo escribió mal?',
+      '¿Qué significa «Rebotó» en la ficha?',
+      '¿Cómo le reenvío el correo de confirmación a alguien?',
+    ],
+    pasos: [
+      'Busca la cuenta en el buscador y abre su ficha (cliente, conductor o restaurante).',
+      'Mira el estado al lado del correo. Si dice «Rebotó» o la persona no recibe el correo, confirma con ella el correo bueno, letra por letra.',
+      'Abre los tres puntos junto al correo y elige «Corregir correo».',
+      'Escribe el correo nuevo. Si sale «¿Quisiste decir…?», tócalo solo si coincide con lo que te dijo la persona.',
+      'Escribe el motivo (por ejemplo, «lo pidió por WhatsApp, letra cambiada») y toca «Guardar y mandar la confirmación».',
+      'Dile a la persona que abra el correo «Confirma tu correo de Divoox» y toque el botón. Cuando lo haga, la ficha pasa a «Confirmado».',
+    ],
+    nota: 'Si el correo nuevo también rebota, no insistas: vuelve a confirmar la dirección con la persona.',
+  },
+  en: {
+    id: 'fix-account-email',
+    titulo: 'Fix an account’s email',
+    resumen:
+      'When someone typed their email wrong and the confirmation never arrives, fix it from their page, in the three-dot menu next to the email: “Fix email.” The confirmation goes out to the new email on its own, and the change is logged with your name.',
+    explicacion: [
+      'Next to the email, every customer, driver and restaurant page shows its status: “Confirmed,” “Not confirmed,” or “Bounced: the mailbox doesn’t exist or is blocked.” “Bounced” means the email provider (for example, Gmail) answered that the address doesn’t exist: almost always a mistyped letter.',
+      'Before fixing it, confirm the right email with the person, letter by letter. Never guess: if you change it to the wrong address, the link goes to someone else.',
+      '“Fix email” leaves the account unconfirmed and sends the new email the same confirmation link the app sends. While you type, if the domain looks mistyped (gmial.com, gmail.con), the panel suggests the right one. It won’t take an email another account already uses or one blocked for misconduct. It doesn’t change their password or sign them out.',
+      '“Resend confirmation” sends the link again to the email the account already has. If the email doesn’t go out (the address doesn’t exist or the service failed), the panel says so with the reason: it never says “sent” when it wasn’t.',
+      'Every change shows in “Email changes,” on the same page: who did it, when, and the old and new email showing only the first two letters and the domain. It’s also in the team’s action log.',
+      'Support level 2, Supervisor and Full access can use it, and only on accounts in their work area. If two-step verification is on, it asks for the code the first time.',
+    ],
+    capturas: [
+      capCorreo(
+        'estado',
+        'en',
+        'A customer page with the email marked “Bounced: the mailbox doesn’t exist or is blocked” and the three-dot menu open with Fix email and Resend confirmation.',
+        'The email status and the three-dot options.',
+      ),
+      capCorreo(
+        'formulario',
+        'en',
+        'The Fix the account’s email form with a mistyped email, the “Did you mean …@gmail.com?” suggestion and the reason filled in.',
+        'Type the new email and the reason; check the suggestion.',
+      ),
+      capCorreo(
+        'listo',
+        'en',
+        'The page after the fix: the “Email fixed. We sent the confirmation link.” notice, the Not confirmed status and the Email changes list.',
+        'Done: the link went out and the change is on the timeline.',
+      ),
+    ],
+    preguntas: [
+      'How do I change the email of a customer who typed it wrong?',
+      'What does “Bounced” mean on the page?',
+      'How do I resend the confirmation email to someone?',
+    ],
+    pasos: [
+      'Find the account with search and open its page (customer, driver or restaurant).',
+      'Check the status next to the email. If it says “Bounced” or the person isn’t getting the email, confirm the right email with them, letter by letter.',
+      'Open the three dots next to the email and choose “Fix email.”',
+      'Type the new email. If “Did you mean…?” shows up, tap it only if it matches what the person told you.',
+      'Write the reason (for example, “asked over WhatsApp, one letter off”) and tap “Save and send the confirmation.”',
+      'Tell the person to open the “Confirm your Divoox email” message and tap the button. Once they do, the page shows “Confirmed.”',
+    ],
+    nota: 'If the new email bounces too, don’t keep trying: confirm the address with the person again.',
+  },
+};
+
 /** Las secciones de la ayuda, en el orden del menú lateral. */
 function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
   const g = porId(idioma === 'es' ? es : en);
@@ -2262,6 +2368,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
         de(cambiarCiudad),
+        de(corregirCorreo),
       ],
     },
     {

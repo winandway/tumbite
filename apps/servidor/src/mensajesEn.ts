@@ -1431,6 +1431,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Usa el formato AAAA-MM-DD.', 'Use the format YYYY-MM-DD.'],
   ['Ya existe una cuenta con ese correo.', 'An account with that email already exists.'],
+  // C-CORREGIR-CORREO (20 nov 2026): corregir el correo desde el superadmin.
+  ['Esa cuenta no existe o está suspendida.', 'That account doesn’t exist or is suspended.'],
+  ['Esa cuenta ya tiene ese correo.', 'That account already has that email.'],
+  ['Ese correo está bloqueado por mala conducta.', 'That email is blocked for misconduct.'],
+  ['Esa cuenta ya confirmó su correo.', 'That account already confirmed its email.'],
+  [
+    'Escribe un correo válido, por ejemplo nombre@dominio.com.',
+    'Enter a valid email, for example name@domain.com.',
+  ],
   // C-CORREO-HONESTO (19 nov 2026): el enlace de confirmación que no salió se dice como es.
   [
     'No pudimos entregar el correo: esa dirección no existe o no recibe mensajes. Revisa que esté bien escrita o cambia tu correo.',

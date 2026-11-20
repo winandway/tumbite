@@ -31,6 +31,8 @@ export const PERMISOS_INTERNOS = [
   'clientes.ver',
   'clientes.datos_personales',
   'clientes.suspender',
+  // C-CORREGIR-CORREO (20 nov 2026): corregir el correo de una cuenta y reenviarle la confirmación.
+  'clientes.corregir_correo',
   // Repartidores y conductores
   'repartidores.ver',
   'repartidores.documentos',
@@ -97,6 +99,7 @@ export const PERMISOS_DELICADOS: readonly PermisoInterno[] = [
   'dinero.limites',
   'pedidos.devolver',
   'equipo.gestionar',
+  'clientes.corregir_correo',
 ];
 export function esDelicado(p: string): boolean {
   return (PERMISOS_DELICADOS as readonly string[]).includes(p);
@@ -177,6 +180,7 @@ const SOPORTE_2: readonly PermisoInterno[] = [
   'tickets.plantillas',
   'restaurantes.editar',
   'repartidores.editar',
+  'clientes.corregir_correo',
 ];
 const SUPERVISOR: readonly PermisoInterno[] = [
   ...SOPORTE_2,
@@ -622,6 +626,10 @@ export const NOMBRES_PERMISOS: Record<PermisoInterno, { es: string; en: string }
     en: 'Reveal full phone and email',
   },
   'clientes.suspender': { es: 'Suspender o borrar cuentas', en: 'Suspend or delete accounts' },
+  'clientes.corregir_correo': {
+    es: 'Corregir el correo de una cuenta y reenviar la confirmación',
+    en: 'Fix an account’s email and resend the confirmation',
+  },
   'repartidores.ver': { es: 'Ver repartidores y conductores', en: 'See drivers' },
   'repartidores.documentos': { es: 'Ver documentos', en: 'See documents' },
   'repartidores.editar': { es: 'Editar repartidores y vehículos', en: 'Edit drivers and vehicles' },

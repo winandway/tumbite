@@ -364,17 +364,19 @@ export const CORREO_CAMBIADO_SIN_ENLACE =
   'Cambiamos tu correo, pero no pudimos mandarte el enlace en este momento. Toca «Mandar el enlace otra vez» en unos minutos.';
 
 /** Si el enlace no salió, la petición responde con la verdad (nunca un «enviado» falso). */
-function exigirEnvio(r: ResultadoCorreo, sinEnlace = CORREO_NO_SALIO): void {
+export function exigirEnvio(r: ResultadoCorreo, sinEnlace = CORREO_NO_SALIO): void {
   if (r.ok) return;
   if (r.rebotado) throw new ErrorDatos(CORREO_NO_EXISTE, 'correo', 422);
   throw new ErrorDatos(sinEnlace, undefined, 503);
 }
 
 /** Enlace para confirmar el correo: vence en 2 días, un solo uso. No bloquea entrar. */
-async function mandarConfirmacion(
+export async function mandarConfirmacion(
   env: Env,
   db: D1Database,
   u: { id: string; nombre: string; correo: string; idioma: 'es' | 'en' },
+  /** C-CORREO-HONESTO: la línea de disculpa, solo para un reenvío por un problema nuestro. */
+  disculpa = false,
 ): Promise<ResultadoCorreo> {
   const token = nuevoToken();
   await db
@@ -388,6 +390,7 @@ async function mandarConfirmacion(
     nombre: u.nombre,
     idioma: u.idioma,
     token,
+    disculpa,
   });
 }
 

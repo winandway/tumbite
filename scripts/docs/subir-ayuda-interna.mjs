@@ -55,6 +55,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capCamila\(\s*'([a-z0-9-]+)',\s
 // C-CAMBIAR-CIUDAD-ADMIN: las de «Cambiar la ciudad de un conductor» (capCiudad).
 for (const [, nombre, idioma] of guias.matchAll(/capCiudad\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`ciudad-${nombre}-${idioma}.webp`);
+// C-CORREGIR-CORREO: las de «Corregir el correo de una cuenta» (capCorreo).
+for (const [, nombre, idioma] of guias.matchAll(/capCorreo\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`correo-${nombre}-${idioma}.webp`);
 // C-PERFIL-PERU: las de «Perú: abrir una ciudad» (capPeru).
 for (const [, nombre, idioma] of guias.matchAll(/capPeru\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`peru-${nombre}-${idioma}.webp`);

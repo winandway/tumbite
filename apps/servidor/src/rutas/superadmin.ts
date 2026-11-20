@@ -18,6 +18,8 @@ import { pruebasDisputa } from '../disputas';
 import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
+import { correoRebotado } from '../correo';
+import { CORREO_NO_EXISTE, CORREO_NO_SALIO, exigirEnvio, mandarConfirmacion } from './cuentas';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { accesoDe, alcanceObjetoSql, alcancePedidos, alcanceViajes } from '../accesoInterno';
 
@@ -531,6 +533,8 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       idioma: String(r.idioma),
       alta: String(r.creado_en),
       correoConfirmado: Boolean(r.correo_confirmado_en),
+      correoEstado: await estadoCorreoDe(db, id),
+      historialCorreo: await historialCorreoDe(db, id),
       activo: Number(r.activo ?? 1) === 1,
       ciudad: String(r.ciudad ?? r.zona_id),
       tipo: String(r.tipo),
@@ -715,6 +719,9 @@ superadmin.get('/admin/clientes/:id', async (c) => {
       idioma: String(u.idioma),
       alta: String(u.creado_en),
       correoConfirmado: Boolean(u.correo_confirmado_en),
+      // C-CORREGIR-CORREO: confirmado, sin confirmar o rebotado (el buzón no existe o está bloqueado).
+      correoEstado: await estadoCorreoDe(db, id),
+      historialCorreo: await historialCorreoDe(db, id),
       activo: Number(u.activo ?? 1) === 1,
       ciudad: u.ciudad ? String(u.ciudad) : null,
       notaRepartidores: {
@@ -931,6 +938,15 @@ superadmin.get('/admin/restaurantes/:id', async (c) => {
     restaurante: {
       kyc,
       id: String(r.id),
+      // C-CORREGIR-CORREO: la cuenta del dueño (para corregir su correo desde la ficha).
+      duenoId: String(r.dueno_id),
+      duenoActivo: await db
+        .prepare('SELECT activo FROM usuarios WHERE id = ?')
+        .bind(String(r.dueno_id))
+        .first<{ activo: number }>()
+        .then((x) => Number(x?.activo ?? 1) === 1),
+      correoEstado: await estadoCorreoDe(db, String(r.dueno_id)),
+      historialCorreo: await historialCorreoDe(db, String(r.dueno_id)),
       nombre: String(r.nombre),
       categoria: String(r.categoria ?? ''),
       direccion: String(r.direccion ?? ''),
@@ -1057,6 +1073,196 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
   ]);
   console.warn(`cuenta ${d.activo ? 'reactivada' : 'suspendida'} por soporte`, id, d.motivo);
   return c.json({ activo: d.activo });
+});
+
+/** Correo enmascarado para el registro: las dos primeras letras y el dominio. */
+export function correoEnmascarado(correo: string): string {
+  const [local = '', dominio = ''] = correo.split('@');
+  return `${local.slice(0, 2)}…@${dominio}`;
+}
+
+/**
+ * C-CORREGIR-CORREO (20 nov 2026): el estado del correo de una cuenta para la ficha del superadmin.
+ * «rebotado» sale de la misma lista que usa el canario (`correos_rebotados`).
+ */
+export async function estadoCorreoDe(
+  db: D1Database,
+  usuarioId: string,
+): Promise<'confirmado' | 'sin_confirmar' | 'rebotado'> {
+  const f = await db
+    .prepare(
+      `SELECT correo_confirmado_en AS conf,
+         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo)) AS rebotado
+       FROM usuarios WHERE id = ?`,
+    )
+    .bind(usuarioId)
+    .first<{ conf: string | null; rebotado: number }>();
+  if (f?.conf) return 'confirmado';
+  return Number(f?.rebotado ?? 0) === 1 ? 'rebotado' : 'sin_confirmar';
+}
+
+/** C-CORREGIR-CORREO: los cambios de correo de la cuenta, para la línea de tiempo de la ficha. */
+export async function historialCorreoDe(db: D1Database, usuarioId: string) {
+  const { results } = await db
+    .prepare(
+      `SELECT a.accion, a.antes_json AS antes, a.despues_json AS despues, a.creado_en AS fecha, u.nombre AS quien
+       FROM auditoria_admin a LEFT JOIN usuarios u ON u.id = a.actor_id
+       WHERE a.objeto = ? AND a.accion IN ('correo_corregido', 'confirmacion_reenviada')
+       ORDER BY a.id DESC LIMIT 20`,
+    )
+    .bind(`usuario:${usuarioId}`)
+    .all<{
+      accion: string;
+      antes: string | null;
+      despues: string | null;
+      fecha: string;
+      quien: string | null;
+    }>();
+  const leer = (x: string | null) => {
+    try {
+      return x ? (JSON.parse(x) as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  };
+  return results.map((f) => ({
+    accion: f.accion,
+    fecha: f.fecha,
+    quien: f.quien ?? '—',
+    antes: String(leer(f.antes).correo ?? ''),
+    despues: String(leer(f.despues).correo ?? ''),
+    enviado: leer(f.despues).enviado !== false,
+  }));
+}
+
+const esquemaCorregirCorreo = z.object({
+  correo: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: 'Escribe un correo válido, por ejemplo nombre@dominio.com.' }))
+    .pipe(z.string().max(200)),
+  motivo: z.string().trim().max(300).default(''),
+});
+
+/**
+ * C-CORREGIR-CORREO (20 nov 2026, pedido de Richard): soporte corrige el correo de una cuenta
+ * (cliente, conductor o dueño de restaurante) cuando la persona lo escribió mal y no puede
+ * confirmarlo. La cuenta queda sin confirmar y se le manda sola la confirmación al correo nuevo, por
+ * el mismo camino del producto. Queda en auditoria_admin quién, cuándo y el antes y el después
+ * (enmascarados). No cambia la contraseña ni las sesiones.
+ */
+superadmin.post('/admin/usuarios/:id/correo', async (c) => {
+  const admin = exigir(c, 'admin');
+  const d = await leerCuerpo(c, esquemaCorregirCorreo);
+  const db = base(c);
+  const id = c.req.param('id');
+  const u = await db
+    .prepare(
+      "SELECT id, nombre, correo, idioma FROM usuarios WHERE id = ? AND activo = 1 AND rol IN ('cliente','repartidor','restaurante')",
+    )
+    .bind(id)
+    .first<{ id: string; nombre: string; correo: string; idioma: string }>();
+  if (!u) throw new ErrorDatos('Esa cuenta no existe o está suspendida.', undefined, 404);
+  if (u.correo.toLowerCase() === d.correo)
+    throw new ErrorDatos('Esa cuenta ya tiene ese correo.', 'correo', 409);
+  const otra = await db
+    .prepare('SELECT 1 FROM usuarios WHERE correo = ? AND id <> ?')
+    .bind(d.correo, id)
+    .first();
+  if (otra) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
+  const bloqueado = await db
+    .prepare("SELECT 1 FROM bloqueos_identidad WHERE tipo = 'correo' AND valor = ?")
+    .bind(correoCanonico(d.correo))
+    .first();
+  if (bloqueado)
+    throw new ErrorDatos('Ese correo está bloqueado por mala conducta.', 'correo', 409);
+  if (await correoRebotado(c.env, d.correo)) throw new ErrorDatos(CORREO_NO_EXISTE, 'correo', 422);
+  await db
+    .prepare('UPDATE usuarios SET correo = ?, correo_confirmado_en = NULL WHERE id = ?')
+    .bind(d.correo, id)
+    .run();
+  const envio = await mandarConfirmacion(c.env, db, {
+    id,
+    nombre: u.nombre,
+    correo: d.correo,
+    idioma: u.idioma === 'en' ? 'en' : 'es',
+  });
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(
+      admin.id,
+      'correo_corregido',
+      `usuario:${id}`,
+      JSON.stringify({ correo: correoEnmascarado(u.correo) }),
+      JSON.stringify({
+        correo: correoEnmascarado(d.correo),
+        enviado: envio.ok,
+        motivo: d.motivo,
+      }),
+    )
+    .run();
+  return c.json({
+    ok: true,
+    correoEnviado: envio.ok,
+    aviso: envio.ok ? null : envio.rebotado ? CORREO_NO_EXISTE : CORREO_NO_SALIO,
+    estado: await estadoCorreoDe(db, id),
+  });
+});
+
+/** C-CORREGIR-CORREO: reenviar la confirmación desde la ficha (el mismo camino que la app). */
+superadmin.post('/admin/usuarios/:id/confirmacion', async (c) => {
+  const admin = exigir(c, 'admin');
+  // Con «disculpa», el correo lleva arriba la línea de disculpa (solo si el problema fue nuestro).
+  const d = await leerCuerpo(c, z.object({ disculpa: z.boolean().default(false) }));
+  const db = base(c);
+  const id = c.req.param('id');
+  const u = await db
+    .prepare(
+      "SELECT id, nombre, correo, idioma, correo_confirmado_en FROM usuarios WHERE id = ? AND activo = 1 AND rol IN ('cliente','repartidor','restaurante')",
+    )
+    .bind(id)
+    .first<{
+      id: string;
+      nombre: string;
+      correo: string;
+      idioma: string;
+      correo_confirmado_en: string | null;
+    }>();
+  if (!u) throw new ErrorDatos('Esa cuenta no existe o está suspendida.', undefined, 404);
+  if (u.correo_confirmado_en)
+    throw new ErrorDatos('Esa cuenta ya confirmó su correo.', undefined, 409);
+  const envio = await mandarConfirmacion(
+    c.env,
+    db,
+    {
+      id,
+      nombre: u.nombre,
+      correo: u.correo,
+      idioma: u.idioma === 'en' ? 'en' : 'es',
+    },
+    d.disculpa,
+  );
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(
+      admin.id,
+      'confirmacion_reenviada',
+      `usuario:${id}`,
+      null,
+      JSON.stringify({
+        correo: correoEnmascarado(u.correo),
+        enviado: envio.ok,
+        disculpa: d.disculpa,
+      }),
+    )
+    .run();
+  exigirEnvio(envio);
+  return c.json({ ok: true, estado: await estadoCorreoDe(db, id) });
 });
 
 /**
