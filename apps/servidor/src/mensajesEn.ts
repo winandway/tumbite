@@ -1439,6 +1439,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese correo está bloqueado por mala conducta.', 'That email is blocked for misconduct.'],
   ['Esa cuenta ya confirmó su correo.', 'That account already confirmed its email.'],
   [
+    'Esta cuenta ya confirmó su correo; el cambio lo hace la persona desde su app.',
+    'This account already confirmed its email; the person changes it from their app.',
+  ],
+  [
+    'Ya mandamos 3 correos a esta cuenta en la última hora. Espera un rato antes de volver a intentarlo.',
+    'We already sent 3 emails to this account in the last hour. Wait a while before trying again.',
+  ],
+  ['El correo de esa cuenta no tiene rebote.', 'That account’s email has no bounce.'],
+  [
     'Escribe un correo válido, por ejemplo nombre@dominio.com.',
     'Enter a valid email, for example name@domain.com.',
   ],

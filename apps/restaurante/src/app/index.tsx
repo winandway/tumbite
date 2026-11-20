@@ -4,7 +4,10 @@ import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 import { textosRest } from '../piezas/textos';
 
-/** Portada del acceso con el diseño aprobado: logotipo «Restaurante», «Inicia sesión». */
+/**
+ * Portada del acceso con el diseño aprobado: logotipo «Restaurante». El título («Entrar» o «Crear
+ * cuenta») lo pone la pantalla de acceso (C-RESTAURANTE-DESDE-EL-TELEFONO).
+ */
 function Portada() {
   const { idioma } = useSesion();
   const t = textosRest(idioma);
@@ -19,13 +22,6 @@ function Portada() {
       <Text style={{ fontWeight: '800', fontSize: 20, color: C.secundario, marginTop: -6 }}>
         {t.restaurante}
       </Text>
-      <Text
-        accessibilityRole="header"
-        style={{ fontWeight: '800', fontSize: 26, color: C.secundario, marginTop: 22 }}
-      >
-        {t.iniciaSesion}
-      </Text>
-      <Text style={{ color: '#666B73', fontSize: 15, marginTop: 4 }}>{t.accede}</Text>
     </View>
   );
 }
@@ -46,5 +42,5 @@ export default function Entrada() {
       </View>
     );
   }
-  return usuario ? <Inicio /> : <Acceso portada={<Portada />} />;
+  return usuario ? <Inicio /> : <Acceso rolRegistro="restaurante" portada={<Portada />} />;
 }

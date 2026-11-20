@@ -2364,7 +2364,22 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/recorrido-restaurante-registro-es.webp',
             alt: 'Formulario para crear la cuenta de restaurante en el panel de Divoox, con tu nombre, correo, celular y contraseña.',
-            pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
+            pie: 'El restaurante crea su cuenta en el panel web o desde la app, como prefiera.',
+          },
+          {
+            src: '/docs/recorrido-app-restaurante-app-entrar-es.webp',
+            alt: 'Pantalla de entrar de la app Divoox Restaurants con el enlace «Crear cuenta de restaurante» y «¿Necesitas ayuda?».',
+            pie: 'Desde el celular: en la app, toca «Crear cuenta de restaurante».',
+          },
+          {
+            src: '/docs/recorrido-app-restaurante-app-crear-cuenta-es.webp',
+            alt: 'Formulario «Crear cuenta» de la app Divoox Restaurants en el celular, con nombre, correo, celular y contraseña, y la flecha «Volver a entrar».',
+            pie: 'Creas la cuenta en el teléfono, sin necesidad de una computadora.',
+          },
+          {
+            src: '/docs/recorrido-app-restaurante-app-completar-es.webp',
+            alt: 'App Divoox Restaurants después de crear la cuenta, con el botón «Completar mi restaurante».',
+            pie: 'Al entrar, «Completar mi restaurante» abre tu ficha ahí mismo.',
           },
           {
             src: '/docs/recorrido-restaurante-ficha-es.webp',
@@ -2383,7 +2398,7 @@ const es: SeccionDocs[] = [
           '¿Cómo abro y cierro mi restaurante?',
         ],
         pasos: [
-          'Entra a divoox.com, toca «Panel» y crea tu cuenta de restaurante con tu correo.',
+          'Desde el celular: abre la app Divoox Restaurants, toca «Crear cuenta de restaurante» y crea tu cuenta con tu correo. Después toca «Completar mi restaurante». Desde la computadora: entra a divoox.com, toca «Panel» y crea tu cuenta ahí.',
           'En «Mi restaurante» completa el nombre, el tipo de comida, el teléfono y la dirección. Usa «Usar la ubicación de esta computadora» si estás en el local.',
           'Sube una foto de portada: una foto clara y con buena luz vende más. La reducimos solos para que cargue rápido.',
           'Guarda. Tu restaurante queda «en revisión»: nuestro equipo lo aprueba y te avisamos por correo.',
@@ -5143,7 +5158,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Una cuenta para pedir, otra para tu restaurante y otra para repartir. Cada una en un minuto.',
         explicacion: [
-          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en el panel, desde la computadora. Quien reparte se registra en la app Divoox Driver.',
+          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver.',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
         ],
         capturas: [
@@ -5155,7 +5170,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/recorrido-restaurante-registro-es.webp',
             alt: 'Formulario para crear la cuenta de restaurante en el panel de Divoox, con tu nombre, correo, celular y contraseña.',
-            pie: 'El restaurante crea su cuenta en el panel, desde la computadora.',
+            pie: 'El restaurante crea su cuenta en el panel web o desde la app, como prefiera.',
           },
           {
             src: '/docs/recorrido-repartidor-registro-es.webp',
@@ -7797,7 +7812,22 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/recorrido-restaurante-registro-en.webp',
             alt: 'Form to create a restaurant account in the Divoox dashboard, with your name, email, phone, and password.',
-            pie: 'Restaurants create their account in the dashboard, from a computer.',
+            pie: 'Restaurants create their account in the web dashboard or in the app.',
+          },
+          {
+            src: '/docs/recorrido-app-restaurante-app-entrar-en.webp',
+            alt: 'Sign-in screen of the Divoox Restaurants app with the “Create a restaurant account” link and “Need help?”.',
+            pie: 'From your phone: in the app, tap “Create a restaurant account.”',
+          },
+          {
+            src: '/docs/recorrido-app-restaurante-app-crear-cuenta-en.webp',
+            alt: '“Create account” form in the Divoox Restaurants app on a phone, with name, email, mobile phone and password, and the “Back to sign in” arrow.',
+            pie: 'You create the account on your phone. No computer needed.',
+          },
+          {
+            src: '/docs/recorrido-app-restaurante-app-completar-en.webp',
+            alt: 'The Divoox Restaurants app right after creating the account, with the “Complete my restaurant” button.',
+            pie: 'Once you’re in, “Complete my restaurant” opens your profile right there.',
           },
           {
             src: '/docs/recorrido-restaurante-ficha-en.webp',
@@ -7816,7 +7846,7 @@ const en: SeccionDocs[] = [
           'How do I open and close my restaurant?',
         ],
         pasos: [
-          'Go to divoox.com, tap “Dashboard,” and create a restaurant account with your email.',
+          'From your phone: open the Divoox Restaurants app, tap “Create a restaurant account” and sign up with your email. Then tap “Complete my restaurant.” From a computer: go to divoox.com, tap “Dashboard,” and create your account there.',
           'Under Profile → “Start delivering” you see the four steps and which one is missing: your details and vehicle, your ID and photo, the background check, and your payout account. Each step opens with a tap.',
           'In “My restaurant,” fill in the name, cuisine, phone, and address. Use “Use this computer’s location” if you’re at the restaurant.',
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
@@ -10563,7 +10593,7 @@ const en: SeccionDocs[] = [
         resumen:
           'One account to order, one for your restaurant, and one to deliver. Each takes a minute.',
         explicacion: [
-          'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the dashboard, from a computer. Drivers sign up in the Divoox Driver app.',
+          'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
         ],
         capturas: [
@@ -10575,7 +10605,7 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/recorrido-restaurante-registro-en.webp',
             alt: 'Form to create a restaurant account in the Divoox dashboard, with your name, email, phone, and password.',
-            pie: 'Restaurants create their account in the dashboard, from a computer.',
+            pie: 'Restaurants create their account in the web dashboard or in the app.',
           },
           {
             src: '/docs/recorrido-repartidor-registro-en.webp',

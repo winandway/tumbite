@@ -9,12 +9,13 @@ describe('C-PLANILLA-PEDIDOS en el panel', () => {
 
   it('el enlace lleva el rango que escribió el restaurante', async () => {
     render(<PlanillaPedidos idioma="es" />);
-    const desde = screen.getByLabelText('Desde (AAAA-MM-DD)');
+    const desde = screen.getByLabelText('Desde');
     await userEvent.clear(desde);
-    await userEvent.type(desde, '2026-10-01');
-    const hasta = screen.getByLabelText('Hasta (AAAA-MM-DD)');
+    // C-FECHA-MODERNA: solo números; la región de la prueba es Estados Unidos (mes/día/año).
+    await userEvent.type(desde, '10012026');
+    const hasta = screen.getByLabelText('Hasta');
     await userEvent.clear(hasta);
-    await userEvent.type(hasta, '2026-10-31');
+    await userEvent.type(hasta, '10312026');
     expect(screen.getByRole('link', { name: 'Descargar planilla' })).toHaveAttribute(
       'href',
       '/datos/mi-restaurante/pedidos/planilla?desde=2026-10-01&hasta=2026-10-31',

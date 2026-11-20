@@ -37,7 +37,13 @@ import {
 import { pasaTurnstile } from '../turnstile';
 import { leerAccesoInterno } from '../accesoInterno';
 import { limiteIntentos } from '../seguridad';
-import { correoRebotado, enviarCorreo, esCorreoDePrueba, type ResultadoCorreo } from '../correo';
+import {
+  REBOTE_VIGENTE,
+  correoRebotado,
+  enviarCorreo,
+  esCorreoDePrueba,
+  type ResultadoCorreo,
+} from '../correo';
 import { correoDeConfirmacion } from '../avisos';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -633,7 +639,7 @@ cuentas.get('/perfil', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en, sms_consentido_en,
-         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo)) AS rebotado
+         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo) AND r.creado_en > ${REBOTE_VIGENTE}) AS rebotado
        FROM usuarios WHERE id = ?`,
     )
     .bind(u.id)

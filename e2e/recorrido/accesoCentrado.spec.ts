@@ -18,7 +18,8 @@ for (const [nombre, ancho] of [
     const boton = await p.locator('.acceso button[type="submit"]').boundingBox();
     const centro = boton!.x + boton!.width / 2;
     const enlaces = p.locator('.acceso > .enlace');
-    await expect(enlaces).toHaveCount(2);
+    // Tres desde el 19 nov 2026: se sumó «¿Necesitas ayuda?» (C-AYUDA-A-LA-VISTA).
+    await expect(enlaces).toHaveCount(3);
     for (const enlace of await enlaces.all()) {
       // El centro del texto, no el de la caja: se mide con un rango sobre el contenido.
       const medio = await enlace.evaluate((el) => {

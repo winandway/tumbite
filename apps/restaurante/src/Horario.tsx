@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ErrorApi, type Turno, enIdioma, useBorrador } from '@tumbite/compartido';
-import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
+import {
+  C,
+  Campo,
+  CampoFecha,
+  alSalirTelefono,
+  almacenTelefono,
+  e,
+  useSesion,
+  Text,
+} from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
 /**
@@ -21,7 +30,7 @@ const T = {
     guardado: 'Horario guardado.',
     cierres: 'Festivos y cierres',
     cierresAyuda: 'Ese día apareces cerrado aunque esté en tu horario.',
-    fecha: 'Fecha (AAAA-MM-DD)',
+    fecha: 'Fecha',
     motivo: 'Motivo (solo lo ve tu equipo)',
     agregar: 'Agregar cierre',
     volver: 'Volver',
@@ -38,7 +47,7 @@ const T = {
     guardado: 'Hours saved.',
     cierres: 'Holidays and closures',
     cierresAyuda: 'That day you show as closed even if it’s within your hours.',
-    fecha: 'Date (YYYY-MM-DD)',
+    fecha: 'Date',
     motivo: 'Reason (only your team sees it)',
     agregar: 'Add closure',
     volver: 'Back',
@@ -176,12 +185,11 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
           </View>
         </Tarjeta>
       ))}
-      <Campo
+      <CampoFecha
         etiqueta={t.fecha}
-        value={b.valores.fecha}
-        onChangeText={(v) => b.cambiar('fecha', v)}
-        placeholder="2026-12-25"
-        maxLength={10}
+        valor={b.valores.fecha}
+        cambiar={(v) => b.cambiar('fecha', v)}
+        idioma={idioma}
       />
       <Campo
         etiqueta={t.motivo}

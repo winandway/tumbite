@@ -1,5 +1,5 @@
 import { type Idioma, almacenNavegador, enIdioma, useBorrador } from '@tumbite/compartido';
-import { Campo } from './CampoClave';
+import { CampoFecha } from './CampoFecha';
 
 /**
  * C-PLANILLA-PEDIDOS (2 nov 2026), como el reporte de pedidos de Uber Eats Manager: descarga los
@@ -10,16 +10,16 @@ const T = {
     titulo: 'Descargar tus pedidos',
     ayuda:
       'Una planilla (CSV) con cada pedido del rango: fecha, estado, artículos, lo que vendiste, la comisión y lo que recibes. Se abre en Excel, Numbers o Google Sheets.',
-    desde: 'Desde (AAAA-MM-DD)',
-    hasta: 'Hasta (AAAA-MM-DD)',
+    desde: 'Desde',
+    hasta: 'Hasta',
     descargar: 'Descargar planilla',
   },
   en: {
     titulo: 'Download your orders',
     ayuda:
       'A spreadsheet (CSV) with every order in the range: date, status, items, what you sold, the commission and what you receive. It opens in Excel, Numbers or Google Sheets.',
-    desde: 'From (YYYY-MM-DD)',
-    hasta: 'To (YYYY-MM-DD)',
+    desde: 'From',
+    hasta: 'To',
     descargar: 'Download spreadsheet',
   },
 };
@@ -41,8 +41,18 @@ export function PlanillaPedidos({ idioma }: { idioma: Idioma }) {
       <h2>{t.titulo}</h2>
       <p className="pista">{t.ayuda}</p>
       <div className="flex-inline">
-        <Campo etiqueta={t.desde} valor={v.desde} cambiar={(x) => b.cambiar('desde', x)} />
-        <Campo etiqueta={t.hasta} valor={v.hasta} cambiar={(x) => b.cambiar('hasta', x)} />
+        <CampoFecha
+          etiqueta={t.desde}
+          valor={v.desde}
+          cambiar={(x) => b.cambiar('desde', x)}
+          idioma={idioma}
+        />
+        <CampoFecha
+          etiqueta={t.hasta}
+          valor={v.hasta}
+          cambiar={(x) => b.cambiar('hasta', x)}
+          idioma={idioma}
+        />
       </div>
       <div className="fila-botones">
         <a

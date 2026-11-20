@@ -14,7 +14,7 @@ const T = {
     titulo: 'Festivos y cierres',
     ayuda:
       'Los días que marques aquí tu restaurante aparece cerrado aunque estén dentro de tu horario (Navidad, vacaciones, un cierre por obras). No hace falta tocar el horario.',
-    fecha: 'Fecha (AAAA-MM-DD)',
+    fecha: 'Fecha',
     motivo: 'Motivo (lo ve solo tu equipo)',
     agregar: 'Agregar cierre',
     quitar: 'Quitar',
@@ -25,7 +25,7 @@ const T = {
     titulo: 'Holidays and closures',
     ayuda:
       'On the days you mark here your restaurant shows as closed even if they fall within your hours (Christmas, vacation, a closure for repairs). No need to touch the schedule.',
-    fecha: 'Date (YYYY-MM-DD)',
+    fecha: 'Date',
     motivo: 'Reason (only your team sees it)',
     agregar: 'Add closure',
     quitar: 'Remove',

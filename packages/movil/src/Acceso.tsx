@@ -1,7 +1,7 @@
 import { abrirPagina } from './PaginaEnApp';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Text } from './diseno';
-import { BackHandler, Platform, Pressable, ScrollView, View } from 'react-native';
+import { BackHandler, Keyboard, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
@@ -18,12 +18,14 @@ import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
 import { SugerenciaCorreo } from './SugerenciaCorreo';
 import { FranjaPruebas } from './FranjaPruebas';
+import { CampoFecha } from './CampoFecha';
 import { CasillaSms } from './CasillaSms';
 import { Boton, C, Campo, CampoClave, Pantalla, e, useAcentoApp } from './ui';
 import { COLOR } from './tokens';
 import { SelectorIdioma } from './SelectorIdioma';
 import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile';
 import { mensajeSinCasilla } from './accesoErrores';
+import { EncabezadoVolver, useVolverDelSistema } from './VolverAEntrar';
 
 const INICIAL = {
   nombre: '',
@@ -37,8 +39,10 @@ const INICIAL = {
 };
 
 /**
- * Entrar y crear cuenta. Si `rolRegistro` no viene, la app solo deja entrar
- * (la del restaurante: las cuentas se crean en el panel web).
+ * Entrar y crear cuenta, para las tres apps. C-SIN-CALLEJON y C-RESTAURANTE-DESDE-EL-TELEFONO
+ * (19 nov 2026, Richard): desde «Crear cuenta» siempre se vuelve a «Entrar» (flecha arriba, enlace
+ * arriba y al final, y el gesto del sistema); la app del restaurante también crea su cuenta aquí;
+ * y en las dos pantallas hay «¿Necesitas ayuda?» sin tener que iniciar sesión.
  */
 export function Acceso({
   rolRegistro,
@@ -47,7 +51,7 @@ export function Acceso({
   modoInicial = 'entrar',
   seguirMirando,
 }: {
-  rolRegistro?: 'cliente' | 'repartidor';
+  rolRegistro?: 'cliente' | 'repartidor' | 'restaurante';
   pideCumple?: boolean;
   /**
    * Portada propia (logotipo, título): la usa solo la app del restaurante con su diseño blanco.
@@ -81,6 +85,13 @@ export function Acceso({
     alSalir: alSalirTelefono,
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
+  // Volver de «Crear cuenta» a «Entrar». Cada modo tiene su borrador: lo escrito no se pierde al ir
+  // y volver.
+  const aEntrar = useCallback(() => {
+    setError(null);
+    setModo('entrar');
+  }, []);
+  const gestoVolver = useVolverDelSistema(modo === 'registro', aEntrar);
   // C-APP-DE-PRUEBAS-VISIBLE: si entrar falla y la causa probable es la app equivocada (la de
   // pruebas con una cuenta real, o la de la tienda con una cuenta de prueba), se orienta. Sale de
   // la app y de lo escrito, nunca del servidor: no revela si la cuenta existe.
@@ -162,7 +173,7 @@ export function Acceso({
     acento === 'logistica' ? COLOR.logistica : rolRegistro ? C.primario : COLOR.negro;
   const marco = (cuerpo: ReactNode) =>
     portada ? (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} {...gestoVolver}>
         <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8 }}>
           <View style={{ backgroundColor: fondoIdioma, borderRadius: 999, paddingHorizontal: 4 }}>
             <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
@@ -179,12 +190,16 @@ export function Acceso({
           }}
           keyboardShouldPersistTaps="handled"
         >
+          {registro ? <EncabezadoVolver texto={t.volverAEntrar} alVolver={aEntrar} /> : null}
           {portada}
           {cuerpo}
         </ScrollView>
       </SafeAreaView>
     ) : (
-      <Pantalla titulo={registro ? t.crearCuenta : t.entrar} volver={seguirMirando}>
+      <Pantalla
+        titulo={registro ? t.crearCuenta : t.entrar}
+        volver={registro ? aEntrar : seguirMirando}
+      >
         {cuerpo}
       </Pantalla>
     );
@@ -205,7 +220,22 @@ export function Acceso({
           style={{ color: '#666B73', fontSize: 15, marginBottom: 12 }}
           accessibilityRole="header"
         >
-          {rolRegistro === 'repartidor' ? t.cuentaDe.repartidor : t.cuentaDe.cliente}
+          {rolRegistro === 'repartidor'
+            ? t.cuentaDe.repartidor
+            : rolRegistro === 'restaurante'
+              ? t.cuentaDe.restaurante
+              : t.cuentaDe.cliente}
+        </Text>
+      ) : null}
+      {/* C-SIN-CALLEJON: quien ya tiene cuenta lo ve arriba, sin bajar por todo el formulario. */}
+      {registro ? (
+        <Text
+          testID="ya-tengo-cuenta-arriba"
+          style={[e.enlace, { textAlign: 'left', marginTop: 0, marginBottom: 12 }]}
+          onPress={aEntrar}
+          accessibilityRole="button"
+        >
+          {t.yaTengo}
         </Text>
       ) : null}
       {/* C-APP-DE-PRUEBAS-VISIBLE: la app de pruebas lo dice antes de pedir la cuenta. */}
@@ -266,12 +296,17 @@ export function Acceso({
         />
       )}
       {registro && pideCumple && (
-        <Campo
+        // C-FECHA-MODERNA: opcional de verdad; vacía o a medias no impide crear la cuenta.
+        <CampoFecha
           etiqueta={t.cumple}
-          value={v.fechaNacimiento}
-          onChangeText={(x) => cambiar('fechaNacimiento', x)}
-          placeholder="2000-01-31"
+          valor={v.fechaNacimiento}
+          cambiar={(x) => cambiar('fechaNacimiento', x)}
+          idioma={idioma}
+          sinFuturo
+          // Al completar el año se guarda el teclado numérico: los términos y el botón quedan a la vista.
+          alCompletar={() => Keyboard.dismiss()}
           error={errorDe('fechaNacimiento')}
+          testID="registro-cumple"
         />
       )}
       <CampoClave
@@ -324,15 +359,17 @@ export function Acceso({
             <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
               {t.terminos}
             </Text>
-            {rolRegistro === 'repartidor' ? (
+            {rolRegistro === 'repartidor' || rolRegistro === 'restaurante' ? (
               <>
                 ,{' '}
                 <Text
                   style={e.enlaceLinea}
-                  onPress={() => abrir('/driver-terms')}
+                  onPress={() =>
+                    abrir(rolRegistro === 'repartidor' ? '/driver-terms' : '/restaurant-terms')
+                  }
                   accessibilityRole="link"
                 >
-                  {t.terminosRepartidores}
+                  {rolRegistro === 'repartidor' ? t.terminosRepartidores : t.terminosRestaurantes}
                 </Text>
               </>
             ) : null}{' '}
@@ -372,6 +409,7 @@ export function Acceso({
       ) : null}
       {rolRegistro ? (
         <Text
+          testID={modo === 'entrar' ? 'ir-a-crear-cuenta' : 'ya-tengo-cuenta'}
           style={e.enlace}
           onPress={() => {
             setError(null);
@@ -379,11 +417,22 @@ export function Acceso({
           }}
           accessibilityRole="button"
         >
-          {modo === 'entrar' ? t.noTengo : t.yaTengo}
+          {modo === 'entrar'
+            ? rolRegistro === 'restaurante'
+              ? t.crearCuentaRestaurante
+              : t.noTengo
+            : t.yaTengo}
         </Text>
-      ) : (
-        <Text style={[e.enlace, { textDecorationLine: 'none' }]}>{t.soloPanel}</Text>
-      )}
+      ) : null}
+      {/* C-AYUDA-A-LA-VISTA: soporte sin tener que iniciar sesión, en entrar y en crear cuenta. */}
+      <Text
+        testID="acceso-ayuda"
+        style={e.enlace}
+        onPress={() => abrir('/support')}
+        accessibilityRole="link"
+      >
+        {t.necesitasAyuda}
+      </Text>
       {seguirMirando ? (
         <Text style={e.enlace} onPress={seguirMirando} accessibilityRole="button">
           {t.seguirMirando}

@@ -11,6 +11,7 @@ import {
   e,
   useSesion,
   Text,
+  CampoFecha,
 } from '@tumbite/movil';
 
 const T = {
@@ -33,7 +34,7 @@ const T = {
     licencia: 'Tu licencia de conducir',
     licenciaNumero: 'Número de licencia',
     licenciaEstado: 'Estado o país que la emitió',
-    vence: 'Vence (AAAA-MM-DD)',
+    vence: 'Fecha de vencimiento',
     seguro: 'Tu seguro',
     aseguradora: 'Aseguradora',
     poliza: 'Número de póliza',
@@ -60,7 +61,7 @@ const T = {
     licencia: 'Your driver’s license',
     licenciaNumero: 'License number',
     licenciaEstado: 'Issuing state or country',
-    vence: 'Expires (YYYY-MM-DD)',
+    vence: 'Expiration date',
     seguro: 'Your insurance',
     aseguradora: 'Insurer',
     poliza: 'Policy number',
@@ -135,6 +136,16 @@ export function MisDatos() {
       {...extra}
     />
   );
+  // C-FECHA-MODERNA: las fechas, con la casilla única (barras solas, orden del país).
+  const fecha = (clave: 'licenciaVence' | 'seguroVence') => (
+    <CampoFecha
+      etiqueta={t.vence}
+      valor={clave === 'licenciaVence' ? v.licenciaVence : v.seguroVence}
+      cambiar={(x) => b.cambiar(clave, x)}
+      idioma={idioma}
+      error={errorDe(clave)}
+    />
+  );
   const conMotor =
     v.vehiculoTipo === 'carro' || v.vehiculoTipo === 'moto' || v.vehiculoTipo === 'scooter';
 
@@ -207,11 +218,11 @@ export function MisDatos() {
           <Text style={estilo.sub}>{t.licencia}</Text>
           {campo('licenciaNumero', t.licenciaNumero, { autoCapitalize: 'characters' })}
           {campo('licenciaEstado', t.licenciaEstado)}
-          {campo('licenciaVence', t.vence, { placeholder: '2030-12-31' })}
+          {fecha('licenciaVence')}
           <Text style={estilo.sub}>{t.seguro}</Text>
           {campo('seguroAseguradora', t.aseguradora)}
           {campo('seguroPoliza', t.poliza)}
-          {campo('seguroVence', t.vence, { placeholder: '2030-12-31' })}
+          {fecha('seguroVence')}
         </>
       ) : null}
       {error && !error.campo ? (
