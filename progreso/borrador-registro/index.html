@@ -1518,8 +1518,6 @@
           '<svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor"><path d="M1 3l4 4 4-4z"/></svg>',
         camara:
           '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2.5h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.4"/></svg>',
-        archivo:
-          '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 19h14"/></svg>',
         pin: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 005 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
         mas: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
       };
@@ -1562,7 +1560,6 @@
         elige: L('Elige al menos una opción.', 'Choose at least one option.'),
         faltaFoto: L('Falta la foto.', 'The photo is missing.'),
         tomar: L('Tomar foto', 'Take photo'),
-        subir: L('Subir desde archivos', 'Upload a file'),
         fotoLista: L('Foto lista', 'Photo ready'),
         repetir: L('Toca un botón para repetirla.', 'Tap a button to retake it.'),
         sinFoto: L(
@@ -2158,6 +2155,11 @@
           'Así te la vamos a pedir. Se toma en un momento.',
           'This is what we’ll ask for. It takes a moment.',
         ),
+        // C-PAPELES-SOLO-CAMARA (Richard, 20 nov 2026): toda foto de verificación se toma en vivo.
+        soloCamara: L(
+          'Se toma en vivo, con la cámara de la app.',
+          'It’s taken live, with the app’s camera.',
+        ),
         seVeBien: L('¿Se ve completa y se lee bien?', 'Is it complete and easy to read?'),
         usar: L('Usar esta', 'Use this one'),
         repetir: L('Repetir', 'Retake'),
@@ -2383,7 +2385,7 @@
         const lado = c.lado ? `<div class="lado-doc">${x(TX[c.lado])}</div>` : '';
         if (!v)
           return `${lado}${horma}<p class="pista centro" style="margin:0 0 16px">${x(TX.asiTeLaPido)}</p>
-            <div class="dos"><button type="button" class="boton" data-a="foto-camara">${ICONO.camara} ${x(T.tomar)}</button><button type="button" class="boton borde" data-a="foto-subir">${ICONO.archivo} ${x(T.subir)}</button></div>`;
+            <button type="button" class="boton" data-a="foto-camara">${ICONO.camara} ${x(T.tomar)}</button><p class="pista centro" style="margin:10px 0 0">${x(TX.soloCamara)}</p>`;
         if (v === 'prueba')
           return ui.aviso
             ? `${lado}${horma}<div class="aviso-foto" role="alert">${x(ui.aviso === 'mal' ? c.mal : TX.borrosa)}</div>
@@ -3279,7 +3281,7 @@
           ui.cam = false;
           return pintar();
         }
-        if (acc === 'foto-disparo' || acc === 'foto-subir') {
+        if (acc === 'foto-disparo') {
           v[d.llave] = 'prueba';
           ui.cam = false;
           ui.error = '';
@@ -3288,8 +3290,11 @@
           return pintar();
         }
         if (acc === 'foto-repetir') {
+          // «Repetir» vuelve siempre a la cámara.
           delete v[d.llave];
           ui.aviso = '';
+          ui.cam = true;
+          ui.error = '';
           guardar();
           return pintar();
         }

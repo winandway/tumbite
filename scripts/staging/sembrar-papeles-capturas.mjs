@@ -229,7 +229,7 @@ for (const p of PERSONAS) {
   for (const paso of pasos) {
     const r = await pedir(
       'POST',
-      `/datos/conductor/verificacion/foto/${paso}?origen=${paso === 'cara' ? 'camara' : 'archivos'}`,
+      `/datos/conductor/verificacion/foto/${paso}?origen=camara`,
       new Uint8Array(fotos.get(paso)),
       token,
       'image/jpeg',

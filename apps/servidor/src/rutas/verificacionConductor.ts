@@ -185,6 +185,17 @@ export async function estadoVerificacion(db: D1Database, conductorId: string) {
 const ingles = (c: { req: { header: (n: string) => string | undefined } }, idioma: string) =>
   (c.req.header('x-idioma') ?? idioma) === 'en';
 
+/** El rechazo de una foto que no salió de la cámara de la app, en el idioma de la cuenta. */
+export function fotoSoloEnVivo(paso: PasoVerificacion, en: boolean): string {
+  if (paso === 'cara')
+    return en
+      ? 'Your face photo is taken live, with the camera. It can’t be picked from your files.'
+      : 'La foto de tu cara se toma en vivo, con la cámara. No se puede elegir de tus archivos.';
+  return en
+    ? 'Verification photos are taken live, with the app’s camera. They can’t be uploaded from your files.'
+    : 'Las fotos de verificación se toman en vivo, con la cámara de la app. No se pueden subir desde tus archivos.';
+}
+
 // ───────────────────────── El conductor ─────────────────────────
 
 verificacionConductor.get('/conductor/verificacion', async (c) => {
@@ -210,7 +221,7 @@ verificacionConductor.get('/conductor/verificacion', async (c) => {
       return {
         paso,
         papel: papelDePaso(paso),
-        soloEnVivo: soloEnVivo(paso),
+        soloEnVivo: soloEnVivo(paso, g.politica.asistente),
         foto: f
           ? {
               id: f.id,
@@ -233,13 +244,6 @@ verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
   const u = exigir(c, 'repartidor');
   const paso = c.req.param('paso');
   if (!esPasoVerificacion(paso)) throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
-  // La cara solo en vivo: la app dice de dónde salió y aquí no se acepta la de archivos.
-  if (soloEnVivo(paso) && c.req.query('origen') !== 'camara')
-    throw new ErrorDatos(
-      'La foto de tu cara se toma en vivo, con la cámara. No se puede elegir de tus archivos.',
-      'cara',
-      422,
-    );
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
   if (bytes.byteLength > MAX_FOTO_BYTES)
@@ -264,6 +268,15 @@ verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
       .first<{ n: number }>(),
   ]);
   if (!e.pasos.includes(paso)) throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
+  // C-PAPELES-SOLO-CAMARA: con asistente, toda foto de verificación se toma en vivo; sin él, solo la
+  // cara. `origen` lo declara la app (barrera razonable, no infalsificable); la IA, que avisa si es la
+  // foto de una pantalla o de otra foto, y la revisión del equipo son las barreras siguientes.
+  if (soloEnVivo(paso, g.politica.asistente) && c.req.query('origen') !== 'camara')
+    throw new ErrorDatos(
+      fotoSoloEnVivo(paso, ingles(c, u.idioma)),
+      paso === 'cara' ? 'cara' : 'foto',
+      422,
+    );
   const papel = e.papeles.find((p) => p.papel === papelDePaso(paso));
   if (papel?.estado === 'aprobado')
     throw new ErrorDatos('Ese papel ya está aprobado. No hace falta cambiarlo.', undefined, 409);

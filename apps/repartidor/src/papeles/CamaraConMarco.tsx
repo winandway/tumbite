@@ -1,5 +1,12 @@
 import { useRef, useState } from 'react';
-import { ActivityIndicator, type LayoutRectangle, Pressable, View } from 'react-native';
+import {
+  ActivityIndicator,
+  type LayoutRectangle,
+  Linking,
+  Platform,
+  Pressable,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
@@ -20,6 +27,13 @@ const T = {
     tomar: 'Tomar la foto',
     permiso: 'Para tomar la foto, Divoox Driver necesita usar la cámara.',
     permitir: 'Permitir la cámara',
+    bloqueada:
+      'La cámara está bloqueada para Divoox Driver. Abre los ajustes del teléfono, entra en Divoox Driver, activa «Cámara» y vuelve aquí. Las fotos de verificación solo se toman con la cámara.',
+    bloqueadaWeb:
+      'La cámara está bloqueada en este navegador. Toca el candado junto a la dirección, permite la cámara y vuelve a abrir este paso. Las fotos de verificación solo se toman con la cámara.',
+    ajustes: 'Abrir los ajustes',
+    sinCamara:
+      'No pudimos abrir la cámara. Cierra las otras apps que la estén usando y vuelve a intentar. Las fotos de verificación solo se toman con la cámara.',
     fallo: 'No se pudo tomar la foto. Intenta otra vez.',
   },
   en: {
@@ -27,6 +41,13 @@ const T = {
     tomar: 'Take the photo',
     permiso: 'To take the photo, Divoox Driver needs to use the camera.',
     permitir: 'Allow camera',
+    bloqueada:
+      'The camera is blocked for Divoox Driver. Open your phone’s settings, go to Divoox Driver, turn on “Camera” and come back here. Verification photos can only be taken with the camera.',
+    bloqueadaWeb:
+      'The camera is blocked in this browser. Tap the lock next to the address, allow the camera and open this step again. Verification photos can only be taken with the camera.',
+    ajustes: 'Open settings',
+    sinCamara:
+      'We couldn’t open the camera. Close any other app using it and try again. Verification photos can only be taken with the camera.',
     fallo: 'The photo couldn’t be taken. Try again.',
   },
 };
@@ -62,6 +83,8 @@ export function CamaraConMarco({
   const [lista, setLista] = useState(false);
   const [tomando, setTomando] = useState(false);
   const [error, setError] = useState('');
+  // C-PAPELES-SOLO-CAMARA: sin permiso o sin cámara se explica cómo darlo; nunca se ofrecen archivos.
+  const bloqueada = Boolean(permiso && !permiso.granted && permiso.canAskAgain === false);
   const redonda = esRedonda(paso);
   const proporcion = proporcionDeHorma(paso);
 
@@ -112,6 +135,7 @@ export function CamaraConMarco({
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             facing={redonda ? 'front' : 'back'}
             onCameraReady={() => setLista(true)}
+            onMountError={() => setError(t.sinCamara)}
           />
         ) : null}
         <SafeAreaView style={{ flex: 1 }}>
@@ -231,10 +255,28 @@ export function CamaraConMarco({
           <View style={{ flex: 1 }} />
           {permiso && !permiso.granted ? (
             <View style={{ padding: 20, gap: 10, zIndex: 3 }}>
-              <Text style={{ color: '#FFFFFF', textAlign: 'center', fontSize: 15 }}>
-                {t.permiso}
+              <Text
+                testID={bloqueada ? 'camara-bloqueada' : 'camara-permiso'}
+                style={{ color: '#FFFFFF', textAlign: 'center', fontSize: 15, lineHeight: 21 }}
+              >
+                {bloqueada ? (Platform.OS === 'web' ? t.bloqueadaWeb : t.bloqueada) : t.permiso}
               </Text>
-              <Boton texto={t.permitir} alTocar={() => void pedirPermiso()} />
+              {bloqueada ? (
+                Platform.OS === 'web' ? null : (
+                  <Boton
+                    texto={t.ajustes}
+                    icono="settings-outline"
+                    alTocar={() =>
+                      void Linking.openSettings().catch((x: unknown) =>
+                        console.warn('papeles: no se abrieron los ajustes', x),
+                      )
+                    }
+                    testID="camara-ajustes"
+                  />
+                )
+              ) : (
+                <Boton texto={t.permitir} alTocar={() => void pedirPermiso()} />
+              )}
             </View>
           ) : (
             <View style={{ alignItems: 'center', paddingBottom: 28, zIndex: 3 }}>

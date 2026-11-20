@@ -1,8 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
-import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import { type Api, ErrorApi, type PasoVerificacion } from '@tumbite/compartido';
 import {
   Boton,
@@ -42,8 +40,7 @@ const T = {
     paso: (i: number, n: number) => `Paso ${i} de ${n}`,
     asi: 'Así te la vamos a pedir. Se toma en un momento.',
     tomar: 'Tomar foto',
-    subir: 'Subir desde archivos',
-    soloCamara: 'Tu cara se toma en vivo, con la cámara.',
+    soloCamara: 'Se toma en vivo, con la cámara de la app.',
     seVe: '¿Se ve completa y se lee bien?',
     seVeCara: 'Así quedará tu foto de perfil.',
     usar: 'Usar esta',
@@ -60,7 +57,6 @@ const T = {
     consentimiento:
       'Usamos la foto de tu cara para comprobar que el documento es tuyo y como tu foto de perfil. La ve el equipo de Divoox y los pasajeros de tus viajes; no se vende ni se comparte.',
     acepto: 'Acepto y sigo',
-    permisoArchivos: 'Necesitamos permiso para ver tus fotos.',
     papeles: 'Revisa tus papeles',
     papelesAyuda: 'Toca cualquiera para repetirla. Cuando todo esté bien, envíalos.',
     enviar: 'Enviar a revisión',
@@ -87,8 +83,7 @@ const T = {
     paso: (i: number, n: number) => `Step ${i} of ${n}`,
     asi: 'This is what we’ll ask for. It takes a moment.',
     tomar: 'Take photo',
-    subir: 'Upload from files',
-    soloCamara: 'Your face is taken live, with the camera.',
+    soloCamara: 'It’s taken live, with the app’s camera.',
     seVe: 'Is it complete and easy to read?',
     seVeCara: 'This will be your profile photo.',
     usar: 'Use this one',
@@ -105,7 +100,6 @@ const T = {
     consentimiento:
       'We use your face photo to confirm the document is yours and as your profile photo. The Divoox team and the riders on your trips see it; it isn’t sold or shared.',
     acepto: 'I agree, continue',
-    permisoArchivos: 'We need permission to see your photos.',
     papeles: 'Review your documents',
     papelesAyuda: 'Tap any photo to retake it. When everything looks right, send them.',
     enviar: 'Send for review',
@@ -196,13 +190,11 @@ export function AsistentePapeles({
     return abrirEn === 'revisar' || !falta ? { tipo: 'revisar' } : { tipo: 'paso', paso: falta };
   });
   const { uriDe, poner } = useMiniaturas(api, v);
-  const [nueva, setNueva] = useState<{ uri: string; origen: 'camara' | 'archivos' } | null>(null);
+  // C-PAPELES-SOLO-CAMARA: toda foto sale de la cámara de la app; nunca de los archivos.
+  const [nueva, setNueva] = useState<{ uri: string } | null>(null);
   const [aviso, setAviso] = useState('');
   const [recien, setRecien] = useState<PasoVerificacion | null>(null);
   const [camara, setCamara] = useState(false);
-  const [recambio, setRecambio] = useState(false);
-  // De dónde salió la última foto subida: «Repetir» tras un aviso vuelve por el mismo camino.
-  const [ultimoOrigen, setUltimoOrigen] = useState<'camara' | 'archivos'>('camara');
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
 
@@ -211,7 +203,6 @@ export function AsistentePapeles({
     setNueva(null);
     setAviso('');
     setError('');
-    setRecambio(false);
     setPantalla(p);
   };
   const fallo = (x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x));
@@ -229,33 +220,6 @@ export function AsistentePapeles({
     }
   }
 
-  async function deArchivos() {
-    setError('');
-    const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permiso.granted) return setError(t.permisoArchivos);
-    // NXT-4z: el iPhone entrega JPEG y no HEIC, que el servidor no acepta.
-    const r = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      preferredAssetRepresentationMode:
-        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-    });
-    const foto = r.canceled ? null : r.assets[0];
-    if (!foto) return;
-    try {
-      const chica = await manipulateAsync(
-        foto.uri,
-        foto.width > 1400 ? [{ resize: { width: 1400 } }] : [],
-        { compress: 0.72, format: SaveFormat.JPEG },
-      );
-      setAviso('');
-      setRecambio(false);
-      setNueva({ uri: chica.uri, origen: 'archivos' });
-    } catch (x) {
-      fallo(x);
-    }
-  }
-
   /** «Usar esta»: recién aquí la foto sube. El servidor contesta al momento lo que vio la IA. */
   async function usar(paso: PasoVerificacion) {
     if (!nueva || ocupado) return;
@@ -265,12 +229,10 @@ export function AsistentePapeles({
       const blob = await (await fetch(nueva.uri)).blob();
       const r = await api.subirFotoCon<{ ia?: { color?: string; aviso?: string } }>(
         blob,
-        `/datos/conductor/verificacion/foto/${paso}?origen=${nueva.origen}`,
+        `/datos/conductor/verificacion/foto/${paso}?origen=camara`,
       );
       poner(paso, nueva.uri);
-      setUltimoOrigen(nueva.origen);
       setNueva(null);
-      setRecambio(false);
       setRecien(paso);
       const nuevo = await recargar();
       const dice = avisoDeLaIa(r.ia);
@@ -567,36 +529,17 @@ export function AsistentePapeles({
   const sigue = siguientePaso(v, paso);
   const uri = nueva?.uri ?? uriDe(dato);
   const anchoHorma = redonda ? (momento === 'horma' ? 170 : 184) : 260;
+  const abrirCamara = () => {
+    setError('');
+    setCamara(true);
+  };
+  // C-PAPELES-SOLO-CAMARA: un solo camino, la cámara de la app; nunca la galería ni los archivos.
   const botonesTomar = (
     <>
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <View style={{ flex: 1 }}>
-          <Boton
-            texto={t.tomar}
-            icono="camera-outline"
-            alTocar={() => {
-              setError('');
-              setCamara(true);
-            }}
-            testID="papeles-tomar"
-          />
-        </View>
-        {dato.soloEnVivo ? null : (
-          <View style={{ flex: 1 }}>
-            <Boton
-              texto={t.subir}
-              alTocar={() => void deArchivos()}
-              secundario
-              testID="papeles-subir"
-            />
-          </View>
-        )}
-      </View>
-      {dato.soloEnVivo ? (
-        <Text style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 13 }}>
-          {t.soloCamara}
-        </Text>
-      ) : null}
+      <Boton texto={t.tomar} icono="camera-outline" alTocar={abrirCamara} testID="papeles-tomar" />
+      <Text style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 13 }}>
+        {t.soloCamara}
+      </Text>
     </>
   );
   return marco(
@@ -749,7 +692,11 @@ export function AsistentePapeles({
               />
               <Boton
                 texto={t.repetir}
-                alTocar={() => setNueva(null)}
+                icono="camera-outline"
+                alTocar={() => {
+                  setNueva(null);
+                  abrirCamara();
+                }}
                 secundario
                 testID="papeles-repetir"
               />
@@ -776,12 +723,8 @@ export function AsistentePapeles({
               </View>
               <Boton
                 texto={t.repetir}
-                icono={ultimoOrigen === 'archivos' ? undefined : 'camera-outline'}
-                alTocar={() =>
-                  ultimoOrigen === 'archivos' && !dato.soloEnVivo
-                    ? void deArchivos()
-                    : setCamara(true)
-                }
+                icono="camera-outline"
+                alTocar={abrirCamara}
                 testID="papeles-repetir"
               />
               <Pressable
@@ -830,7 +773,7 @@ export function AsistentePapeles({
               {cambiable ? (
                 <Pressable
                   testID="papeles-cambiar"
-                  onPress={() => (dato.soloEnVivo ? setCamara(true) : setRecambio(true))}
+                  onPress={abrirCamara}
                   accessibilityRole="button"
                   style={{ alignSelf: 'center', padding: 8 }}
                 >
@@ -843,7 +786,6 @@ export function AsistentePapeles({
                   {t.aprobada}
                 </Text>
               )}
-              {recambio && cambiable ? botonesTomar : null}
             </>
           ) : null}
           {textoError}
@@ -869,9 +811,8 @@ export function AsistentePapeles({
           alCerrar={() => setCamara(false)}
           alTomar={(foto) => {
             setCamara(false);
-            setRecambio(false);
             setAviso('');
-            setNueva({ uri: foto.uri, origen: 'camara' });
+            setNueva({ uri: foto.uri });
           }}
         />
       ) : null}

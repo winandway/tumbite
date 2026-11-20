@@ -98,15 +98,11 @@ describe('candado: ninguna casilla de imagen sin cámara', () => {
       .filter((f) => {
         if (f.endsWith('elegirCapturas.ts')) return false;
         const s = readFileSync(f, 'utf8');
-        // C-ASISTENTE-DRIVER: el asistente de papeles ofrece la cámara con su propia pieza, la
-        // cámara con marco dentro de la app (CamaraConMarco, con CameraView), a la vista.
-        const conMarco =
-          /from '\.\/CamaraConMarco'/.test(s) &&
-          /<CamaraConMarco\b/.test(s) &&
-          /<CameraView\b/.test(readFileSync(join(f, '..', 'CamaraConMarco.tsx'), 'utf8'));
+        // C-PAPELES-SOLO-CAMARA: el asistente de papeles de Driver ya no abre la galería (solo la
+        // cámara con marco), así que no necesita excepción aquí; su propio candado está en
+        // apps/repartidor/src/papeles/logica.test.ts.
         return (
           /launchImageLibraryAsync/.test(s) &&
-          !conMarco &&
           !/fotoConCamara\(|fotoConOrigen\(|capturasConCamara\(/.test(s)
         );
       });

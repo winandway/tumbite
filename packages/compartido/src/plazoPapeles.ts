@@ -137,8 +137,21 @@ const HORMAS = new Map<PasoVerificacion, Horma>([
 ]);
 export const hormaDePaso = (p: PasoVerificacion): Horma => HORMAS.get(p) ?? 'tarjeta';
 
-/** La cara solo se toma en vivo con la cámara: nunca se elige de la galería. */
-export const soloEnVivo = (p: PasoVerificacion) => p === 'cara';
+/**
+ * C-PAPELES-SOLO-CAMARA (20 nov 2026, Richard: «la licencia se le tiene que tomar una foto real con
+ * la cámara. No es para subir un archivo. La cara es foto real»). ¿Esta foto solo se acepta tomada en
+ * vivo con la cámara de la app?
+ *
+ * - En los países con asistente (`politica.asistente`), TODAS las fotos de verificación: cara,
+ *   documento, licencia y seguro. Nada se elige de los archivos del teléfono.
+ * - Sin asistente (Estados Unidos, verificación de siempre), solo la cara.
+ *
+ * La única pieza que lo decide: el servidor la usa para rechazar y la app para no ofrecer archivos.
+ * El servidor lo comprueba con lo que la app DECLARA (`?origen=camara`): es una barrera razonable,
+ * no una prueba imposible de falsear. La segunda barrera es la IA, que avisa si la foto parece una
+ * foto de otra foto o de una pantalla, y la última es la persona del equipo que la revisa.
+ */
+export const soloEnVivo = (p: PasoVerificacion, asistente: boolean) => asistente || p === 'cara';
 
 /** A qué papel de «Tus papeles» pertenece cada foto. */
 export type PapelDelConductor = 'identidad' | 'licencia' | 'seguro' | 'cara';

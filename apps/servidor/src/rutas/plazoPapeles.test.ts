@@ -1,14 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   CIUDAD_PRUEBAS_VENEZUELA as CCS,
+  PASOS_VERIFICACION,
   avisoNoCoincide,
   diasRestantes,
   hitoQueToca,
   politicaPlazoDeFabrica,
+  soloEnVivo,
 } from '@tumbite/compartido';
 import { ORIGEN_CCS, abrirCaracas, subirA } from '../pruebas/motoVe';
 import { mundo } from '../pruebas/ayuda';
 import { recordarPlazos } from '../plazoPapeles';
+import { fotoSoloEnVivo } from './verificacionConductor';
 import {
   type LlamadaIa,
   SALIDA_MAXIMA_GEMINI,
@@ -266,6 +269,49 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
     const sinPermiso = await c.foto('cara');
     expect(sinPermiso.estado).toBe(409);
     expect(sinPermiso.datos.campo).toBe('consentimiento');
+  });
+
+  it('C-PAPELES-SOLO-CAMARA: con asistente, NINGUNA foto se acepta desde archivos (cada paso), en el idioma de la cuenta', async () => {
+    const c = await conductorNuevo();
+    await c.moto();
+    await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true });
+    const ia = modelo(() => lectura('identidad_frente'));
+    const pasos = (await c.yo('GET', '/datos/conductor/verificacion')).datos.pasos as {
+      paso: string;
+      soloEnVivo: boolean;
+    }[];
+    expect(pasos.map((p) => p.paso).sort()).toEqual([...PASOS_VERIFICACION].sort());
+    expect(pasos.every((p) => p.soloEnVivo)).toBe(true);
+    for (const { paso } of pasos) {
+      for (const origen of ['archivos', 'galeria', '']) {
+        const r = await c.foto(paso, origen);
+        expect(r.estado, `${paso} ${origen}`).toBe(422);
+        expect(r.datos.error, paso).toBe(
+          paso === 'cara'
+            ? 'Your face photo is taken live, with the camera. It can’t be picked from your files.'
+            : 'Verification photos are taken live, with the app’s camera. They can’t be uploaded from your files.',
+        );
+      }
+    }
+    // Nada se guardó ni se le enseñó a la IA.
+    expect(ia.llamadas).toBe(0);
+    const n = await c.m.DB.prepare('SELECT count(*) AS n FROM verificacion_fotos').first<{
+      n: number;
+    }>();
+    expect(n?.n).toBe(0);
+    expect(fotoSoloEnVivo('licencia_frente', false)).toBe(
+      'Las fotos de verificación se toman en vivo, con la cámara de la app. No se pueden subir desde tus archivos.',
+    );
+    // Tomada con la cámara, sí entra.
+    expect((await c.foto('licencia_frente', 'camara')).estado).toBe(201);
+  });
+
+  it('C-PAPELES-SOLO-CAMARA: sin asistente (Estados Unidos) solo la cara exige la cámara, como siempre', () => {
+    expect(politicaPlazoDeFabrica('US').asistente).toBe(false);
+    expect(PASOS_VERIFICACION.filter((p) => soloEnVivo(p, false))).toEqual(['cara']);
+    expect(PASOS_VERIFICACION.every((p) => soloEnVivo(p, true))).toBe(true);
+    expect(soloEnVivo('cara', politicaPlazoDeFabrica('PE').asistente)).toBe(true);
+    expect(soloEnVivo('seguro', politicaPlazoDeFabrica('PE').asistente)).toBe(true);
   });
 
   it('la IA avisa al momento si la foto no es la del paso, y deja insistir', async () => {

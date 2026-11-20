@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -146,8 +146,37 @@ describe('C-ASISTENTE-DRIVER: nada se envía solo', () => {
     expect(codigo.match(/subirFotoCon/g)?.length).toBe(1);
     expect(codigo.match(/void usar\(paso\)/g)?.length).toBe(1);
   });
-  it('la cara no ofrece «Subir desde archivos»', () => {
-    expect(codigo).toContain('dato.soloEnVivo ? null');
+});
+
+describe('C-PAPELES-SOLO-CAMARA: toda foto de verificación se toma en vivo con la cámara', () => {
+  const carpeta = __dirname;
+  const fuentes = readdirSync(carpeta)
+    .filter((n) => /\.tsx?$/.test(n) && !/\.test\./.test(n))
+    .map((n) => ({ n, s: readFileSync(join(carpeta, n), 'utf8') }));
+  const asistente = readFileSync(join(carpeta, 'AsistentePapeles.tsx'), 'utf8');
+  it('ninguna pieza del asistente abre la galería, los archivos ni un selector de documentos', () => {
+    const puertas =
+      /launchImageLibraryAsync|requestMediaLibraryPermissionsAsync|getDocumentAsync|expo-document-picker|selectorDeCapturas|type="file"|papeles-subir|Subir desde archivos|Upload from files/;
+    expect(fuentes.length).toBeGreaterThanOrEqual(4);
+    expect(fuentes.filter((f) => puertas.test(f.s)).map((f) => f.n)).toEqual([]);
+  });
+  it('la foto siempre sube declarada como tomada con la cámara', () => {
+    const subidas = [...asistente.matchAll(/verificacion\/foto\/\$\{paso\}\?origen=([a-z]+)/g)];
+    expect(subidas.map((m) => m[1])).toEqual(['camara']);
+    expect(asistente).not.toMatch(/origen: 'archivos'|'archivos'/);
+  });
+  it('«Tomar foto», «Repetir» y «Cambiar esta foto» abren la cámara', () => {
+    expect(asistente).toContain('testID="papeles-tomar"');
+    expect(asistente.match(/alTocar=\{abrirCamara\}/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(asistente).toContain('onPress={abrirCamara}');
+    const repetirVista = asistente.slice(asistente.indexOf("momento === 'vista_previa'"));
+    expect(repetirVista.slice(0, 900)).toMatch(/setNueva\(null\);\s*abrirCamara\(\);/);
+  });
+  it('sin permiso se explica cómo darlo y, en el teléfono, se abren los ajustes', () => {
+    const camara = readFileSync(join(carpeta, 'CamaraConMarco.tsx'), 'utf8');
+    expect(camara).toContain('canAskAgain === false');
+    expect(camara).toContain('Linking.openSettings()');
+    expect(camara).toContain('onMountError');
   });
 });
 
