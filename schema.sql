@@ -2487,9 +2487,14 @@ INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, 
 -- conductor le rinda más que en inDrive). Nacen SIN la revisión aprobada: no rigen hasta que Richard dé
 -- el permiso comercial y legal y confirme el porcentaje en el panel (Finanzas → Políticas).
 INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada, revision_legal_nota, motivo) VALUES
-  ('prepago-pe-ride', 'Moto · conductores · PE', 'ride', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Propuesta del 8 % para Ica (inDrive ronda el 10 %): con una recarga de 10 soles rinde unos 125 soles de carreras. SIN aprobar: la comisión y el permiso comercial y legal del prepago en Perú los da Richard; hasta entonces no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU'),
-  ('prepago-pe-car', 'Carro · conductores · PE', 'car', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Propuesta del 8 % para Ica (inDrive ronda el 10 %): con una recarga de 10 soles rinde unos 125 soles de carreras. SIN aprobar: la comisión y el permiso comercial y legal del prepago en Perú los da Richard; hasta entonces no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU'),
-  ('prepago-pe-express', 'Envíos · conductores · PE', 'express', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Propuesta del 8 % para Ica (inDrive ronda el 10 %): con una recarga de 10 soles rinde unos 125 soles de carreras. SIN aprobar: la comisión y el permiso comercial y legal del prepago en Perú los da Richard; hasta entonces no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU');
+  ('prepago-pe-ride', 'Moto · conductores · PE', 'ride', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Comisión del 8 % APROBADA por Richard el 19 nov 2026 (decisión de negocio; inDrive ronda el 10 %): una recarga de 10 soles rinde unos 125 soles de carreras. La revisión legal del prepago en Perú sigue PENDIENTE del abogado peruano: hasta que se apruebe, la política no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU'),
+  ('prepago-pe-car', 'Carro · conductores · PE', 'car', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Comisión del 8 % APROBADA por Richard el 19 nov 2026 (decisión de negocio; inDrive ronda el 10 %): una recarga de 10 soles rinde unos 125 soles de carreras. La revisión legal del prepago en Perú sigue PENDIENTE del abogado peruano: hasta que se apruebe, la política no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU'),
+  ('prepago-pe-express', 'Envíos · conductores · PE', 'express', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Comisión del 8 % APROBADA por Richard el 19 nov 2026 (decisión de negocio; inDrive ronda el 10 %): una recarga de 10 soles rinde unos 125 soles de carreras. La revisión legal del prepago en Perú sigue PENDIENTE del abogado peruano: hasta que se apruebe, la política no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU');
+
+-- La cifra del 8 % la aprobó Richard el 19 nov 2026. Esto solo pone al día la nota en las bases que ya
+-- tenían la propuesta; NO toca revision_legal_aprobada (sigue pendiente del abogado peruano).
+UPDATE politicas_financieras SET revision_legal_nota = 'Comisión del 8 % APROBADA por Richard el 19 nov 2026 (decisión de negocio; inDrive ronda el 10 %): una recarga de 10 soles rinde unos 125 soles de carreras. La revisión legal del prepago en Perú sigue PENDIENTE del abogado peruano: hasta que se apruebe, la política no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.'
+  WHERE id IN ('prepago-pe-ride', 'prepago-pe-car', 'prepago-pe-express') AND revision_legal_nota LIKE 'Propuesta del 8 %';
 
 -- Interruptor público de lanzamiento por ciudad (F17): la web dice «Ya estamos» o «Muy pronto»
 -- según esta tabla. Sin fila, manda la lista de la web (todas «muy pronto»).
@@ -4755,3 +4760,26 @@ CREATE TABLE IF NOT EXISTS regalos_en_revision (
 CREATE INDEX IF NOT EXISTS regalos_en_revision_pendientes ON regalos_en_revision(creado_en) WHERE estado = 'pendiente';
 CREATE INDEX IF NOT EXISTS regalos_en_revision_conductor ON regalos_en_revision(conductor_id) WHERE estado = 'pendiente';
 CREATE INDEX IF NOT EXISTS regalos_en_revision_rechazados ON regalos_en_revision(codigo, cliente_id) WHERE estado = 'rechazado' AND bloquea_pasajero = 1;
+
+-- C-CORREO-HONESTO (19 nov 2026, todos los países): los fallos del correo quedan escritos en la base
+-- para que el canario los vea en cualquier instancia (antes vivían solo en la memoria de una).
+-- Solo se escribe cuando algo falla (nunca por cada envío) y se guardan como mucho 200.
+-- tipo: «sistema» (token, cupo agotado, proveedor caído) o «cupo» (el día pasó del 80 % del cupo).
+-- El motivo nunca lleva direcciones de correo.
+CREATE TABLE IF NOT EXISTS correo_fallos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tipo TEXT NOT NULL CHECK (tipo IN ('sistema', 'cupo')),
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS correo_fallos_tipo ON correo_fallos(tipo, creado_en);
+
+-- C-CORREO-HONESTO: direcciones que no existen o que el proveedor bloqueó por rebote. No se les
+-- vuelve a escribir (cuidan la reputación del dominio y el cupo) y la app le dice a la persona que
+-- revise o cambie su correo, en vez de «Te lo mandamos otra vez».
+CREATE TABLE IF NOT EXISTS correos_rebotados (
+  correo TEXT PRIMARY KEY,
+  motivo TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS correos_rebotados_creado ON correos_rebotados(creado_en);
