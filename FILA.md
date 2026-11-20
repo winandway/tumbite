@@ -14,6 +14,7 @@
 
 ## Correo de confirmación honesto (19 nov 2026, emergencia) — todos los países
 
+- [ ] [para: revisor-calidad] Revisar después de publicado (fue emergencia) el cambio C-CORREO-HONESTO y C-CORREO-SUGERENCIA: servidor del correo, canario, pantalla «Confirma tu correo», registro y Configuración. Todos los países.
 - [ ] [para: desarrollador] Enterarse del rebote asíncrono (550 5.1.1 de Gmail llega después del envío): pedir a YaDominios que «leer_correos» o la respuesta del envío refleje el rebote, o leer `emailSendingAdaptive` de la zona divoox.com desde el reloj de Cloudflare con una llave de solo lectura, y marcar `correos_rebotados` sin esperar a que la persona toque «Mandar el enlace otra vez». Medir el costo antes. Todos los países.
 - [ ] [para: desarrollador] Captura nueva para la guía «Confirma tu correo» (es: El Vigía; en: Novi) con el aviso en rojo «No pudimos entregar el correo a esta dirección» (C-CORREO-HONESTO); hoy la guía lo describe en texto con las capturas de antes. Todos los países.
 - [ ] [para: desarrollador] El sitio de pruebas gasta la mayor parte del cupo diario de correos compartido con producción (avisos al equipo «Restaurante nuevo», «Nuevo ticket», «Pedido sin repartidor» que dispara el recorrido). Que los avisos al equipo disparados por cuentas del recorrido no salgan desde el sitio de pruebas, sin quitar las alarmas reales. Todos los países.
