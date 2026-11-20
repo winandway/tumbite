@@ -256,6 +256,7 @@ for (const r of [
   '/terms',
   '/restaurant-terms',
   '/driver-terms',
+  '/promo-terms',
   '/delete-account',
   '/support',
   '/sms-consent',

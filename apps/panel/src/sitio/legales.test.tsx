@@ -185,3 +185,23 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     expect(PRIVACIDAD.en.actualizado).toContain('November 19, 2026');
   });
 });
+
+describe('C-PROMO-CONDICIONES: las condiciones de la promoción del primer viaje', () => {
+  it('existen en los dos idiomas, con el tope de viajes, lo que cubre y hasta cuándo', async () => {
+    const { CONDICIONES_PROMO } = await import('./legales');
+    for (const idioma of ['es', 'en'] as const) {
+      const d = CONDICIONES_PROMO[idioma];
+      const texto = JSON.stringify(d);
+      expect(d.secciones.length).toBeGreaterThanOrEqual(6);
+      expect(texto).toContain('125');
+      expect(texto).toMatch(/2 dólares|2 US dollars/);
+      expect(texto).toMatch(/31 de diciembre de 2026|December 31, 2026/);
+      expect(d.idiomaQueRige).toBeTruthy();
+    }
+  });
+
+  it('no nombra ciudades: la app dice dónde está vigente (C-SIN-LISTA-DE-CIUDADES)', async () => {
+    const { CONDICIONES_PROMO } = await import('./legales');
+    expect(JSON.stringify(CONDICIONES_PROMO)).not.toMatch(/Vigía|Tucaní|Mérida|Miami|Novi/);
+  });
+});

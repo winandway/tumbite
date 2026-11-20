@@ -2676,6 +2676,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "presupuesto",
     "bienvenida",
     "tope_diario_conductor",
+    "usos_maximos",
     "activo",
     "apagado_motivo",
     "agotado_en",

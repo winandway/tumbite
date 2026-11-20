@@ -202,6 +202,8 @@ const camposCupon = {
   presupuesto: z.number().int().min(100).max(TOPES_REGALO.presupuestoMaximo),
   bienvenida: z.boolean(),
   topeDiarioConductor: z.number().int().min(1).max(TOPES_REGALO.topeDiarioConductorMaximo),
+  // C-CUPON-USOS: a cuántas personas les alcanza como mucho (vacío = solo manda el presupuesto).
+  usosMaximos: z.number().int().min(1).max(100_000).nullable(),
 };
 const esquemaCupon = z.object({
   ...camposCupon,
@@ -209,6 +211,7 @@ const esquemaCupon = z.object({
   venceEn: camposCupon.venceEn.default(null),
   bienvenida: camposCupon.bienvenida.default(false),
   topeDiarioConductor: camposCupon.topeDiarioConductor.default(6),
+  usosMaximos: camposCupon.usosMaximos.default(null),
 });
 const esquemaCambioCupon = z
   .object(camposCupon)
@@ -273,8 +276,8 @@ regalosDivoox.post('/admin/regalos-divoox', async (c) => {
   // Nace APAGADO: lo enciende una persona del equipo cuando todo está listo.
   await db
     .prepare(
-      `INSERT INTO cupones_divoox (codigo, nombre_es, nombre_en, tipo, valor, moneda, servicios, zonas, vence_en, presupuesto, bienvenida, tope_diario_conductor, activo, apagado_motivo, creado_por)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'manual', ?)`,
+      `INSERT INTO cupones_divoox (codigo, nombre_es, nombre_en, tipo, valor, moneda, servicios, zonas, vence_en, presupuesto, bienvenida, tope_diario_conductor, usos_maximos, activo, apagado_motivo, creado_por)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'manual', ?)`,
     )
     .bind(
       codigo,
@@ -289,6 +292,7 @@ regalosDivoox.post('/admin/regalos-divoox', async (c) => {
       d.presupuesto,
       d.bienvenida ? 1 : 0,
       d.topeDiarioConductor,
+      d.usosMaximos,
       u.id,
     )
     .run();
@@ -318,7 +322,15 @@ regalosDivoox.patch('/admin/regalos-divoox/:codigo', async (c) => {
       'zonas',
       422,
     );
-  const restante = nuevo.presupuesto - actual.gastado - actual.apartado;
+  // C-CUPON-USOS: sin cupo de usos el cupón está tan agotado como sin presupuesto.
+  const sinCupo = nuevo.usosMaximos != null && actual.usosTomados >= nuevo.usosMaximos;
+  if (d.activo === true && sinCupo)
+    throw new ErrorDatos(
+      'Este cupón ya llegó a su tope de usos. Súbele el tope para encenderlo.',
+      'usosMaximos',
+      409,
+    );
+  const restante = sinCupo ? 0 : nuevo.presupuesto - actual.gastado - actual.apartado;
   if (d.activo === true && restante <= 0)
     throw new ErrorDatos(
       'Este cupón no tiene presupuesto. Súbele el presupuesto para encenderlo.',
@@ -340,7 +352,7 @@ regalosDivoox.patch('/admin/regalos-divoox/:codigo', async (c) => {
   await db
     .prepare(
       `UPDATE cupones_divoox SET nombre_es = ?, nombre_en = ?, tipo = ?, valor = ?, moneda = ?, servicios = ?, zonas = ?, vence_en = ?,
-         presupuesto = ?, bienvenida = ?, tope_diario_conductor = ?, activo = ?, apagado_motivo = ?,
+         presupuesto = ?, bienvenida = ?, tope_diario_conductor = ?, usos_maximos = ?, activo = ?, apagado_motivo = ?,
          agotado_en = CASE WHEN ? = 'agotado' THEN COALESCE(agotado_en, datetime('now')) ELSE NULL END,
          actualizado_en = datetime('now') WHERE codigo = ?`,
     )
@@ -356,6 +368,7 @@ regalosDivoox.patch('/admin/regalos-divoox/:codigo', async (c) => {
       nuevo.presupuesto,
       nuevo.bienvenida ? 1 : 0,
       nuevo.topeDiarioConductor,
+      nuevo.usosMaximos ?? null,
       activo ? 1 : 0,
       motivo,
       motivo,

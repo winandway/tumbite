@@ -9,6 +9,7 @@ export const PAGINAS = {
   terms: '/terms',
   restaurantTerms: '/restaurant-terms',
   driverTerms: '/driver-terms',
+  promoTerms: '/promo-terms',
   deleteAccount: '/delete-account',
   support: '/support',
   smsConsent: '/sms-consent',

@@ -610,6 +610,7 @@ const RUTAS_PUBLICAS = new Set([
   '/terms',
   '/restaurant-terms',
   '/driver-terms',
+  '/promo-terms',
   '/delete-account',
   '/support',
   '/sms-consent',

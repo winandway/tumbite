@@ -122,6 +122,10 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
   ],
   ['Esa invitación ya no está pendiente.', 'That invitation is no longer pending.'],
   [
+    'Este cupón ya llegó a su tope de usos. Súbele el tope para encenderlo.',
+    'This coupon has reached its use limit. Raise the limit to turn it on.',
+  ],
+  [
     'No encontramos a ese líder. Tiene que estar registrado en Divoox Driver con ese correo o celular.',
     'We couldn’t find that leader. They must be registered in Divoox Driver with that email or cell phone.',
   ],

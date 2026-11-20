@@ -33,6 +33,9 @@ const T = {
     apartado: 'En viajes en curso',
     queda: 'Queda',
     usos: (n: number) => (n === 1 ? '1 uso cobrado' : `${n} usos cobrados`),
+    usosMaximos: 'Tope de personas que pueden usarlo (vacío = solo el presupuesto)',
+    quedanUsos: (quedan: number, de: number) =>
+      `Lo tomaron ${de - quedan} de ${de} personas · quedan ${quedan}`,
     porUso: (m: string) => `Cubre hasta ${m} por uso`,
     gratisHasta: (m: string) => `Viaje gratis hasta ${m}`,
     bienvenida: 'Bienvenida: se aplica solo en la primera operación, sin código',
@@ -137,6 +140,9 @@ const T = {
     apartado: 'In trips in progress',
     queda: 'Left',
     usos: (n: number) => (n === 1 ? '1 paid use' : `${n} paid uses`),
+    usosMaximos: 'Limit of people who can use it (empty = budget only)',
+    quedanUsos: (quedan: number, de: number) =>
+      `Taken by ${de - quedan} of ${de} people · ${quedan} left`,
     porUso: (m: string) => `Covers up to ${m} per use`,
     gratisHasta: (m: string) => `Free trip up to ${m}`,
     bienvenida: 'Welcome: applies on the first trip or order only, no code needed',
@@ -246,6 +252,8 @@ type Cupon = {
   apartado: number;
   restante: number;
   usos: number;
+  usosMaximos: number | null;
+  usosQuedan: number | null;
 };
 type Conductor = {
   conductorId: string;
@@ -319,6 +327,7 @@ const INICIAL = {
   presupuesto: '',
   bienvenida: false,
   topeDiario: '6',
+  usosMaximos: '',
 };
 
 export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
@@ -373,6 +382,7 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
         presupuesto: aCentavos(b.valores.presupuesto),
         bienvenida: b.valores.bienvenida,
         topeDiarioConductor: Number(b.valores.topeDiario || 6),
+        usosMaximos: b.valores.usosMaximos ? Number(b.valores.usosMaximos) : null,
       });
       await b.limpiar();
       setOk(t.creado);
@@ -568,6 +578,17 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
             max="20"
             value={b.valores.topeDiario}
             onChange={(e) => b.cambiar('topeDiario', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          {t.usosMaximos}
+          <input
+            type="number"
+            inputMode="numeric"
+            min="1"
+            data-testid="regalo-usos-maximos"
+            value={b.valores.usosMaximos}
+            onChange={(e) => b.cambiar('usosMaximos', e.target.value)}
           />
         </label>
         <label className="casilla-fila">
@@ -854,6 +875,11 @@ function TarjetaCupon({
           : t.porUso(dinero(c.valor, c.moneda))}{' '}
         · {t.usos(c.usos)}
       </p>
+      {c.usosMaximos != null && c.usosQuedan != null ? (
+        <p data-testid="regalo-quedan-usos">
+          <strong>{t.quedanUsos(c.usosQuedan, c.usosMaximos)}</strong>
+        </p>
+      ) : null}
       <p>{c.bienvenida ? t.bienvenida : t.conCodigo}</p>
       <p>
         {t.servicios}: {c.servicios.map((s) => de(t.nombresServicio, s)).join(', ')} · {t.ciudades}:{' '}

@@ -863,11 +863,123 @@ export const SOPORTE: Record<Idioma, DocumentoLegal> = {
 // ─────────────────────── El inglés es el que rige ───────────────────────
 // Divoox es una empresa de EE.UU. y el inglés es su idioma principal (regla de Richard, 13 oct
 // 2026). En los acuerdos, la versión en inglés es la que vale; la española es una traducción.
+/**
+ * C-PROMO-CONDICIONES (20 nov 2026): las condiciones de la promoción «primer viaje de regalo», la
+ * página que citan los comerciales («Aplican condiciones: divoox.com»). No nombra ciudades
+ * (C-SIN-LISTA-DE-CIUDADES): la app dice dónde está vigente al mostrar el regalo.
+ */
+export const CONDICIONES_PROMO: Record<Idioma, DocumentoLegal> = {
+  es: {
+    titulo: 'Condiciones de la promoción «Primer viaje de regalo»',
+    actualizado: 'Actualizado: 20 de noviembre de 2026',
+    intro:
+      'Estas son las condiciones del regalo de primer viaje en Divoox Moto. Se suman a los Términos de uso.',
+    secciones: [
+      {
+        titulo: '1. Dónde y hasta cuándo',
+        parrafos: [
+          'La promoción vale en las ciudades donde la app te muestra el regalo al crear tu cuenta, desde el 23 de noviembre de 2026 y hasta que se entreguen 125 viajes de regalo o hasta el 31 de diciembre de 2026, lo que ocurra primero. Cuando se acaba, el regalo deja de aparecer en la app.',
+        ],
+      },
+      {
+        titulo: '2. Para quién',
+        parrafos: [
+          'Un viaje de regalo por persona, para cuentas nuevas con teléfono verificado. Una cuenta por persona y por teléfono.',
+        ],
+      },
+      {
+        titulo: '3. Qué cubre',
+        parrafos: [
+          'Divoox cubre hasta 2 dólares de tu primer viaje en moto. Si el viaje cuesta más, pagas la diferencia al conductor, en efectivo o por pago móvil. La app te muestra cuánto cubre el regalo y cuánto pagas tú antes de pedir.',
+        ],
+      },
+      {
+        titulo: '4. Cómo se usa',
+        parrafos: [
+          'El regalo aparece en la app al crear tu cuenta y se aplica solo al pedir tu primer viaje. No se cambia por dinero ni se transfiere a otra persona.',
+          'Si el viaje se cancela, el regalo vuelve a tu cuenta mientras la promoción siga vigente.',
+        ],
+      },
+      {
+        titulo: '5. Uso indebido',
+        parrafos: [
+          'Divoox puede anular los regalos obtenidos con cuentas duplicadas, viajes simulados o cualquier otro uso indebido.',
+        ],
+      },
+      {
+        titulo: '6. Dónde está la app',
+        parrafos: [
+          'Por ahora la app está disponible para Android en Google Play. También puedes usarla desde el navegador de tu celular.',
+        ],
+      },
+      {
+        titulo: '7. Ayuda',
+        parrafos: [`¿Dudas? Escríbenos desde la app o en ${SITIO}/es/support.`],
+      },
+    ],
+  },
+  en: {
+    titulo: '“First ride on us” promotion terms',
+    actualizado: 'Last updated: November 20, 2026',
+    intro:
+      'These are the terms of the first-ride gift on Divoox Moto. They are in addition to the Terms of Use.',
+    secciones: [
+      {
+        titulo: '1. Where and until when',
+        parrafos: [
+          'The promotion is valid in the cities where the app shows you the gift when you create your account, from November 23, 2026 until 125 gift rides have been given or until December 31, 2026, whichever comes first. When it ends, the gift no longer appears in the app.',
+        ],
+      },
+      {
+        titulo: '2. Who it is for',
+        parrafos: [
+          'One gift ride per person, for new accounts with a verified phone number. One account per person and per phone.',
+        ],
+      },
+      {
+        titulo: '3. What it covers',
+        parrafos: [
+          'Divoox covers up to 2 US dollars of your first motorcycle ride. If the ride costs more, you pay the difference to the driver, in cash or by mobile payment. The app shows how much the gift covers and how much you pay before you request.',
+        ],
+      },
+      {
+        titulo: '4. How it works',
+        parrafos: [
+          'The gift appears in the app when you create your account and is applied automatically when you request your first ride. It cannot be exchanged for cash or transferred to someone else.',
+          'If the ride is canceled, the gift returns to your account while the promotion is still running.',
+        ],
+      },
+      {
+        titulo: '5. Misuse',
+        parrafos: [
+          'Divoox may void gifts obtained with duplicate accounts, simulated rides or any other misuse.',
+        ],
+      },
+      {
+        titulo: '6. Where to get the app',
+        parrafos: [
+          'For now the app is available for Android on Google Play. You can also use it from your phone’s browser.',
+        ],
+      },
+      {
+        titulo: '7. Help',
+        parrafos: [`Questions? Write to us from the app or at ${SITIO}/support.`],
+      },
+    ],
+  },
+};
+
 const RIGE = {
   es: 'Esta es una traducción de cortesía. Si hay alguna diferencia, rige la versión en inglés.',
   en: 'This English version is the governing version. Any translation is provided for convenience only.',
 };
-for (const doc of [PRIVACIDAD, TERMINOS, TERMINOS_RESTAURANTES, TERMINOS_REPARTIDORES]) {
+for (const doc of [
+  PRIVACIDAD,
+  TERMINOS,
+  TERMINOS_RESTAURANTES,
+  TERMINOS_REPARTIDORES,
+  CONDICIONES_PROMO,
+]) {
   doc.es.idiomaQueRige = RIGE.es;
   doc.en.idiomaQueRige = RIGE.en;
 }

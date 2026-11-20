@@ -35,6 +35,7 @@ import {
   SOPORTE,
   TERMINOS,
   TERMINOS_REPARTIDORES,
+  CONDICIONES_PROMO,
   TERMINOS_RESTAURANTES,
 } from './sitio/legales';
 import { Sitio } from './sitio/Sitio';
@@ -57,6 +58,7 @@ const LEGALES = new Map([
   ['/terms', TERMINOS],
   ['/restaurant-terms', TERMINOS_RESTAURANTES],
   ['/driver-terms', TERMINOS_REPARTIDORES],
+  ['/promo-terms', CONDICIONES_PROMO],
   ['/delete-account', BORRAR_CUENTA],
   ['/support', SOPORTE],
 ]);

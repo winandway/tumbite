@@ -3874,6 +3874,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## C-CUPON-USOS y C-PROMO-CONDICIONES (20 nov 2026, orden de Gerencia para El Vigía) — todos los países
+
+- **Qué faltaba:** el comercial promete el regalo «a las primeras 125 personas», pero el cupón solo tenía tope en dólares: con viajes baratos el presupuesto alcanzaba para más gente y la frase no quedaba exacta. Tampoco existía la página de condiciones que citan los comerciales.
+- **Tope por usos:** columna nueva `cupones_divoox.usos_maximos` (en `schema.sql` y en `COLUMNAS` de `esquema.ts`; NULL = solo manda el presupuesto). `apps/servidor/src/regalosDivoox.ts`: `SQL_HAY_CUPO` va en tres sitios: los candidatos (el regalo deja de mostrarse), el `INSERT` que aparta (el mismo paso atómico del presupuesto) y el apagado y reencendido automáticos. Cuenta lo apartado y lo cobrado; un uso liberado devuelve su cupo. El canario `regalos` no cambió (sumarle esta cuenta pasaba su presupuesto de lecturas, C-LECTURAS-SALUD): el tope lo garantiza el paso atómico y lo vigila el reporte del superadmin. El superadmin escribe el tope al crear o editar (`usosMaximos`) y ve «Lo tomaron N de M personas · quedan K»; sin cupo no se puede encender a mano.
+- **Condiciones:** página pública `/promo-terms` y `/es/promo-terms` (`CONDICIONES_PROMO` en `apps/panel/src/sitio/legales.ts`), enlazada desde el pie y desde la guía de Docs de códigos de regalo, en el mapa del sitio y en el verificador de producción. No nombra ciudades (C-SIN-LISTA-DE-CIUDADES): la app dice dónde está vigente.
+- **Candado:** `apps/servidor/src/rutas/regalosDivoox.test.ts` («C-CUPON-USOS», dos pruebas; vistas en rojo anulando `SQL_HAY_CUPO`), `apps/panel/src/panel/SuperRegalosDivoox.test.tsx`, `apps/panel/src/sitio/legales.test.tsx` («C-PROMO-CONDICIONES»).
+- **Qué NO tocar y qué falta:** el cupón VIGIA sigue APAGADO y con su presupuesto de siempre; ponerle el tope de 125, el presupuesto y encenderlo es decisión de Richard. Si cambia el número de personas, el monto o las fechas, se cambia el texto de la página en el mismo trabajo.
+
 ## C-LIDER-INVITADO (20 nov 2026, orden de Gerencia para El Vigía) — todos los países
 
 - **Qué faltaba:** una línea solo se podía crear si su líder ya tenía cuenta de conductor; si no, el panel respondía «No encontramos a ese líder» y no había salida. En producción no había ninguna línea creada por eso.

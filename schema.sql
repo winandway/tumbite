@@ -4145,6 +4145,8 @@ CREATE TABLE IF NOT EXISTS cupones_divoox (
   presupuesto INTEGER NOT NULL CHECK (presupuesto > 0),
   bienvenida INTEGER NOT NULL DEFAULT 0,
   tope_diario_conductor INTEGER NOT NULL DEFAULT 6,
+  -- C-CUPON-USOS: cuántas personas pueden usarlo como mucho (NULL = solo manda el presupuesto).
+  usos_maximos INTEGER,
   activo INTEGER NOT NULL DEFAULT 0,
   apagado_motivo TEXT,
   agotado_en TEXT,

@@ -433,6 +433,81 @@ describe('C-CUPON-DIVOOX (candado): ni un centavo más que el presupuesto', () =
     expect(suma?.s).toBe(1_000);
   });
 
+  it('C-CUPON-USOS: con tope de 3 usos el cuarto se rechaza aunque sobre presupuesto, y un uso liberado devuelve su cupo', async () => {
+    const e = await escenario();
+    await crear(e, { presupuesto: 5_000, usosMaximos: 3 });
+    await encender(e);
+    const apartar = async (i: number) => {
+      const p = await pasajero(e);
+      await p.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+      return apartarRegalo(e.m.DB, {
+        clienteId: p.id,
+        servicio: 'moto',
+        zonaId: ZONA,
+        moneda: 'USD',
+        base: 200,
+        aparato: `a:${p.aparato}`,
+        operacionId: `op-usos-${i}`,
+        pais: 'US',
+      });
+    };
+    const montos = [];
+    for (let i = 0; i < 4; i++) montos.push((await apartar(i))?.monto ?? 0);
+    expect(montos).toEqual([200, 200, 200, 0]);
+    const ver = async () =>
+      (await e.m.llamar('GET', '/datos/admin/regalos-divoox', undefined, e.admin.token)).datos
+        .cupones[0];
+    expect(await ver()).toMatchObject({
+      usosMaximos: 3,
+      usosTomados: 3,
+      usosQuedan: 0,
+      activo: false,
+      agotado: true,
+    });
+    // Encenderlo a mano sin cupo no se puede; subiendo el tope, sí.
+    const sinCupo = await e.m.llamar(
+      'PATCH',
+      '/datos/admin/regalos-divoox/VIGIA',
+      { activo: true },
+      e.admin.token,
+    );
+    expect(sinCupo.estado).toBe(409);
+    expect(sinCupo.datos.campo).toBe('usosMaximos');
+    const subido = await e.m.llamar(
+      'PATCH',
+      '/datos/admin/regalos-divoox/VIGIA',
+      { usosMaximos: 4 },
+      e.admin.token,
+    );
+    expect(subido.datos.cupon).toMatchObject({ usosQuedan: 1, activo: true });
+    expect((await apartar(5))?.monto).toBe(200);
+    expect((await apartar(6))?.monto ?? 0).toBe(0);
+    expect(await saludRegalos(e.m.DB)).toBe('ok');
+  });
+
+  it('C-CUPON-USOS: veinte apartados a la vez contra un tope de 5 usos nunca pasan de 5', async () => {
+    const e = await escenario();
+    await crear(e, { presupuesto: 50_000, usosMaximos: 5 });
+    await encender(e);
+    const intentos = await Promise.all(
+      Array.from({ length: 20 }, async (_, i) => {
+        const p = await pasajero(e);
+        await p.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+        return apartarRegalo(e.m.DB, {
+          clienteId: p.id,
+          servicio: 'moto',
+          zonaId: ZONA,
+          moneda: 'USD',
+          base: 200,
+          aparato: `a:${p.aparato}`,
+          operacionId: `op-tope-${i}`,
+          pais: 'US',
+        });
+      }),
+    );
+    expect(intentos.filter(Boolean)).toHaveLength(5);
+  });
+
   it('el canario se pone en rojo si un cupón aparece gastado de más', async () => {
     const e = await escenario();
     await crear(e, { presupuesto: 300 });

@@ -192,6 +192,7 @@ export function Pie({
           <Enlace a="/terms">{t.terminos}</Enlace>
           <Enlace a="/restaurant-terms">{t.terminosRestaurantes}</Enlace>
           <Enlace a="/driver-terms">{t.terminosRepartidores}</Enlace>
+          <Enlace a="/promo-terms">{t.condicionesPromo}</Enlace>
           <Enlace a="/delete-account">{t.borrarCuenta}</Enlace>
           <Enlace a="/support">{t.soporte}</Enlace>
           <Enlace a="/sms-consent">

@@ -71,6 +71,8 @@ type FilaCuponDivoox = {
   presupuesto: number;
   bienvenida: number;
   tope_diario_conductor: number;
+  usos_maximos?: number | null;
+  tomados?: number;
   activo: number;
   apagado_motivo: string | null;
   agotado_en: string | null;
@@ -118,6 +120,17 @@ async function yaUsoDivoox(db: D1Database, clienteId: string) {
 const SQL_GASTADO =
   "(SELECT COALESCE(SUM(u.monto), 0) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado <> 'liberado')";
 
+/**
+ * C-CUPON-USOS (20 nov 2026): el cupón puede llevar un tope por número de usos («las primeras 125
+ * personas»). Cuenta lo apartado y lo cobrado, igual que el presupuesto: un uso liberado devuelve su
+ * cupo. Sin tope (NULL) solo manda el presupuesto.
+ */
+const SQL_USOS_TOMADOS =
+  "(SELECT COUNT(*) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado <> 'liberado')";
+const SQL_HAY_CUPO = `(c.usos_maximos IS NULL OR ${SQL_USOS_TOMADOS} < c.usos_maximos)`;
+const deCupon = (sql: string) =>
+  sql.replaceAll('c.codigo', 'cupones_divoox.codigo').replaceAll('c.usos_maximos', 'usos_maximos');
+
 type Contexto = {
   clienteId: string;
   servicio: string;
@@ -149,6 +162,7 @@ async function candidatos(db: D1Database, p: Contexto, soloCodigo?: string) {
                            AND (x.cliente_id = ?4 OR x.telefono = ?5 OR x.aparato = ?6))
           AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rr WHERE rr.codigo = c.codigo AND rr.estado = 'rechazado' AND rr.bloquea_pasajero = 1
                            AND (rr.cliente_id = ?4 OR rr.telefono = ?5 OR rr.aparato = ?6))
+          AND ${SQL_HAY_CUPO}
           AND (?7 = '' OR c.codigo = ?7)`,
     )
     .bind(
@@ -226,7 +240,8 @@ export async function apartarRegalo(
            SELECT ?1, c.codigo, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, c.moneda FROM cupones_divoox c
             WHERE c.codigo = ?10 AND c.activo = 1 AND (c.vence_en IS NULL OR c.vence_en > datetime('now'))
               AND ?9 > 0 AND ?9 <= ${TOPES_REGALO.valorMaximo}
-              AND ${SQL_GASTADO} + ?9 <= c.presupuesto`,
+              AND ${SQL_GASTADO} + ?9 <= c.presupuesto
+              AND ${SQL_HAY_CUPO}`,
         )
         .bind(
           id,
@@ -244,7 +259,8 @@ export async function apartarRegalo(
       db
         .prepare(
           `UPDATE cupones_divoox SET activo = 0, apagado_motivo = 'agotado', agotado_en = datetime('now'), actualizado_en = datetime('now')
-            WHERE codigo = ? AND activo = 1 AND ${SQL_GASTADO.replaceAll('c.codigo', 'cupones_divoox.codigo')} >= presupuesto`,
+            WHERE codigo = ? AND activo = 1
+              AND (${SQL_GASTADO.replaceAll('c.codigo', 'cupones_divoox.codigo')} >= presupuesto OR NOT ${deCupon(SQL_HAY_CUPO)})`,
         )
         .bind(c.codigo),
     ]);
@@ -300,7 +316,8 @@ async function reencenderRecuperados(db: D1Database) {
     .prepare(
       `UPDATE cupones_divoox SET activo = 1, apagado_motivo = NULL, agotado_en = NULL, actualizado_en = datetime('now')
         WHERE activo = 0 AND apagado_motivo = 'agotado'
-          AND ${SQL_GASTADO.replaceAll('c.codigo', 'cupones_divoox.codigo')} < presupuesto`,
+          AND ${SQL_GASTADO.replaceAll('c.codigo', 'cupones_divoox.codigo')} < presupuesto
+          AND ${deCupon(SQL_HAY_CUPO)}`,
     )
     .run();
 }
@@ -977,6 +994,7 @@ export type DatosCupon = {
   presupuesto: number;
   bienvenida: boolean;
   topeDiarioConductor: number;
+  usosMaximos?: number | null;
 };
 
 /** Los topes del código: el panel no los puede pasar. */
@@ -1034,6 +1052,11 @@ export const aCuponAdmin = (c: FilaCuponDivoox) => {
     apartado,
     restante: Math.max(0, Number(c.presupuesto) - gastado - apartado),
     usos: Number(c.usos ?? 0),
+    /** C-CUPON-USOS: el tope de personas, cuántas lo tomaron (apartado o cobrado) y cuántas quedan. */
+    usosMaximos: c.usos_maximos == null ? null : Number(c.usos_maximos),
+    usosTomados: Number(c.tomados ?? 0),
+    usosQuedan:
+      c.usos_maximos == null ? null : Math.max(0, Number(c.usos_maximos) - Number(c.tomados ?? 0)),
     creadoEn: c.creado_en,
   };
 };
@@ -1044,7 +1067,8 @@ export async function listarCupones(db: D1Database) {
       `SELECT c.*,
          (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'cobrado') AS gastado,
          (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'apartado') AS apartado,
-         (SELECT COUNT(*) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'cobrado') AS usos
+         (SELECT COUNT(*) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'cobrado') AS usos,
+         ${SQL_USOS_TOMADOS} AS tomados
          FROM cupones_divoox c WHERE COALESCE(c.creado_por, '') <> 'referidos'
          ORDER BY c.activo DESC, c.creado_en DESC LIMIT 100`,
     )

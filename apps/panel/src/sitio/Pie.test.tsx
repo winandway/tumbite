@@ -88,6 +88,7 @@ describe('pie de página y páginas por lugar', () => {
       '/terms',
       '/restaurant-terms',
       '/driver-terms',
+      '/promo-terms',
       '/delete-account',
       '/support',
       // C-SMS-CONSENTIMIENTO (9 nov 2026): cómo se aceptan los SMS.

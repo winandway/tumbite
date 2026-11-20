@@ -667,6 +667,7 @@ const es: SeccionDocs[] = [
           'Cada regalo se usa una sola vez por persona, por número de celular y por teléfono. Necesitas tener tu número de celular en tu cuenta.',
           'Si cancelas el viaje o el pedido no sale, el regalo vuelve a quedar disponible para la próxima vez. Los regalos tienen un presupuesto: cuando se acaba, el código deja de funcionar.',
           'Tu conductor recibe lo que cubrió el regalo directamente de Divoox: no pierde nada por llevarte.',
+          'Algunos regalos son por tiempo limitado o para un número de personas. Las condiciones de la promoción «Primer viaje de regalo» están en divoox.com/es/promo-terms.',
         ],
         capturas: [
           {
@@ -6176,6 +6177,7 @@ const en: SeccionDocs[] = [
           'Each gift can be used once per person, per cell number and per phone. You need your cell number in your account.',
           'If you cancel the ride or the order doesn’t go through, the gift is available again next time. Gifts have a budget: when it runs out, the code stops working.',
           'Your driver gets what the gift covered straight from Divoox: they lose nothing by taking you.',
+          'Some gifts run for a limited time or for a set number of people. The terms of the “First ride on us” promotion are at divoox.com/promo-terms.',
         ],
         capturas: [
           {
