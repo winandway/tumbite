@@ -1461,27 +1461,11 @@ BEGIN
 END;
 -- Nadie aprueba una habilitación si a la persona le falta un requisito obligatorio de nivel
 -- «conductor» (los del vehículo se comprueban con el vehículo activo al ofrecer y al aceptar).
--- C-PLAZO-PAPELES (19 nov 2026): lo que la política de cada país dice de cada requisito, en una forma
--- que la base puede leer (la vista `conductores_elegibles` y los disparadores de abajo). `exento` = ese
--- país no lo exige nunca; `para_empezar` = se exige aunque el conductor esté dentro de su plazo. La
--- llena el servidor desde la configuración del país (apps/servidor/src/esquemaPlazo.ts); nunca a mano.
-CREATE TABLE IF NOT EXISTS politica_requisitos (
-  pais TEXT NOT NULL,
-  requisito TEXT NOT NULL,
-  regla TEXT NOT NULL CHECK (regla IN ('exento', 'para_empezar')),
-  PRIMARY KEY (pais, requisito, regla)
-);
--- El requisito que el país del conductor declara exento no frena la habilitación (C-PLAZO-PAPELES).
--- Las bases que ya tenían estos dos disparadores los cambian al arrancar (esquemaPlazo.ts).
 CREATE TRIGGER IF NOT EXISTS habilitaciones_exigen_requisitos
 BEFORE UPDATE OF estado ON habilitaciones
 WHEN NEW.estado = 'aprobada' AND EXISTS (
   SELECT 1 FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
    WHERE sr.servicio_id = NEW.servicio_id AND sr.obligatorio = 1 AND rd.nivel = 'conductor'
-     AND NOT EXISTS (SELECT 1 FROM politica_requisitos x
-                       JOIN repartidores r ON r.usuario_id = NEW.conductor_id
-                       JOIN zonas z ON z.id = r.zona_id
-                      WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -1494,10 +1478,6 @@ BEFORE INSERT ON habilitaciones
 WHEN NEW.estado = 'aprobada' AND EXISTS (
   SELECT 1 FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
    WHERE sr.servicio_id = NEW.servicio_id AND sr.obligatorio = 1 AND rd.nivel = 'conductor'
-     AND NOT EXISTS (SELECT 1 FROM politica_requisitos x
-                       JOIN repartidores r ON r.usuario_id = NEW.conductor_id
-                       JOIN zonas z ON z.id = r.zona_id
-                      WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -4803,71 +4783,3 @@ CREATE TABLE IF NOT EXISTS correos_rebotados (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS correos_rebotados_creado ON correos_rebotados(creado_en);
-
--- C-PLAZO-PAPELES (19 nov 2026, decisión de Richard; por país, por configuración): el plazo de cada
--- conductor para subir sus papeles. Sin fila = sin plazo (los que ya existían conservan su estado).
--- Dentro del plazo trabaja con lo mínimo; al vencer deja de recibir viajes (no se borra nada) y
--- vuelve solo cuando el equipo aprueba lo que faltaba. `ultimo_aviso`: días que quedaban en el
--- último recordatorio enviado (15, 10, 5, 1 o 0 = el del vencimiento).
-CREATE TABLE IF NOT EXISTS plazo_papeles (
-  conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
-  pais TEXT NOT NULL,
-  empieza_en TEXT NOT NULL DEFAULT (datetime('now')),
-  vence_en TEXT NOT NULL,
-  estado TEXT NOT NULL DEFAULT 'en_plazo' CHECK (estado IN ('en_plazo', 'completo', 'vencido')),
-  ultimo_aviso INTEGER,
-  origen TEXT NOT NULL DEFAULT 'registro' CHECK (origen IN ('registro', 'equipo')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS plazo_papeles_vence ON plazo_papeles(estado, vence_en);
-
--- C-VERIFICACION-ASISTENTE y C-VERIFICACION-IA (19 nov 2026): una fila por foto del asistente de
--- verificación (documento por delante y por detrás, licencia por delante y por detrás, seguro y
--- cara). `estado`: vigente (la que vale hoy), reemplazada (tomó otra) o repetir (el equipo la pidió
--- de nuevo, con `motivo`). Lo que dijo la IA queda al lado (`ia_*`) y, cuando una persona decide,
--- su decisión (`decision`): de ahí sale el porcentaje de acierto por país y por tipo de foto.
--- La IA nunca rechaza en definitiva: solo adelanta. `insistio` = la persona la usó pese al aviso.
-CREATE TABLE IF NOT EXISTS verificacion_fotos (
-  id TEXT PRIMARY KEY,
-  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
-  paso TEXT NOT NULL CHECK (paso IN ('doc_frente', 'doc_reverso', 'licencia_frente', 'licencia_reverso', 'seguro', 'cara')),
-  clave TEXT NOT NULL,
-  pais TEXT NOT NULL DEFAULT '',
-  estado TEXT NOT NULL DEFAULT 'vigente' CHECK (estado IN ('vigente', 'reemplazada', 'repetir')),
-  motivo TEXT NOT NULL DEFAULT '',
-  insistio INTEGER NOT NULL DEFAULT 0,
-  ia_color TEXT NOT NULL DEFAULT 'sin_ia' CHECK (ia_color IN ('verde', 'amarillo', 'rojo', 'sin_ia')),
-  ia_clase TEXT NOT NULL DEFAULT '',
-  ia_confianza INTEGER,
-  ia_json TEXT NOT NULL DEFAULT '',
-  decision TEXT NOT NULL DEFAULT '' CHECK (decision IN ('', 'aprobado', 'rechazado')),
-  decidido_por TEXT,
-  decidido_en TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS verificacion_fotos_conductor ON verificacion_fotos(conductor_id, paso, estado);
-CREATE INDEX IF NOT EXISTS verificacion_fotos_acierto ON verificacion_fotos(pais, paso) WHERE decision != '';
-
--- La comparación de la cara en vivo con la foto del documento (una fila por conductor: la última).
-CREATE TABLE IF NOT EXISTS verificacion_caras (
-  conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
-  resultado TEXT NOT NULL CHECK (resultado IN ('misma', 'distinta', 'dudoso', 'sin_ia')),
-  confianza INTEGER,
-  color TEXT NOT NULL DEFAULT 'sin_ia' CHECK (color IN ('verde', 'amarillo', 'rojo', 'sin_ia')),
-  comparado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- C-VERIFICACION-IA-TOPE: lo gastado cada día en verificar fotos con IA, en millonésimas de dólar.
--- Se mira ANTES de cada llamada; al llegar al tope del día las fotos pasan a revisión de una persona.
-CREATE TABLE IF NOT EXISTS verificacion_ia_gasto (
-  dia TEXT PRIMARY KEY,
-  microdolares INTEGER NOT NULL DEFAULT 0,
-  llamadas INTEGER NOT NULL DEFAULT 0,
-  fallos INTEGER NOT NULL DEFAULT 0
-);
-
--- «Verificamos tus documentos» se manda UNA vez: aquí queda a quién ya se le avisó.
-CREATE TABLE IF NOT EXISTS verificacion_avisos (
-  conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
-  avisado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
