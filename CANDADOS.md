@@ -5844,7 +5844,7 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 
 - **Público:** `apps/panel/src/sitio/docs/peru.ts`: pagar con Yape o Plin, cobrar con Yape o Plin, recargar con tarjeta y los papeles de Perú, en español e inglés. Capturas REALES solo en español (`scripts/recorrido/capturas-peru.mjs`, servidor local, mapa sin rótulos, ciudad «de ejemplo», celular 900 000 000); el inglés enseña las pantallas de Estados Unidos (C-CAPTURAS-POR-IDIOMA). `peru.test.ts` las publica si y solo si las capturas existen.
 - **Interno:** la guía «Perú: abrir una ciudad…» en `apps/servidor/src/ayudaInterna/guias.ts`, con capturas privadas (`scripts/recorrido/capturas-peru-interno.mjs`, compuerta cerrada como en producción).
-- **Web:** en la cobertura, Perú lista a Ica como primera ciudad y sigue sin fecha.
+- **Web:** la cobertura NO nombra a Ica mientras Perú esté apagado (ver la viñeta siguiente).
 - **Ocultas mientras Perú esté apagado (decisión de Gerencia, 19 nov 2026, C-SOLO-LO-TERMINADO):** `PERU_PUBLICADA = false` en `peru.ts`. Las cuatro guías no salen en Docs, ni en el mapa del sitio, ni en lo que sabe el asistente, y la cobertura no nombra a Ica. El día que Richard encienda Ica: poner `PERU_PUBLICADA = true`, correr `node scripts/camila/generar-docs.mjs`, poner a Ica en `cobertura.ts` y publicar. `peru.test.ts` vigila las dos cosas: que las capturas existan y que, apagado, nada público hable de Yape, Plin o Ica.
 
 ## C-GANANCIAS-EN-MANO — el total del conductor suma lo cobrado en mano (19 nov 2026) — Venezuela y Perú
