@@ -21,6 +21,8 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
+import { AsistentePapeles } from './papeles/AsistentePapeles';
+import { TusPapeles, usePapeles } from './papeles/TusPapeles';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -656,7 +658,10 @@ export function Inicio() {
     | 'miEquipo'
     | 'miLinea'
     | 'ayuda'
+    | 'papeles'
   >('inicio');
+  // C-ASISTENTE-DRIVER: los papeles del conductor (asistente de verificación y «Tus papeles»).
+  const papeles = usePapeles(api);
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
   const ts = textosServicios(idioma);
@@ -2285,6 +2290,19 @@ export function Inicio() {
         />
       </SafeAreaView>
     );
+  // C-ASISTENTE-DRIVER: el asistente ocupa toda la pantalla (un paso por foto, como el borrador).
+  if (vista === 'papeles' && papeles.v)
+    return (
+      <AsistentePapeles
+        v={papeles.v}
+        recargar={papeles.recargar}
+        alSalir={() => {
+          void papeles.recargar();
+          setVista('inicio');
+        }}
+        alAyuda={() => setVista('ayuda')}
+      />
+    );
   if (vista === 'alta')
     return lienzo(
       'perfil',
@@ -3348,6 +3366,10 @@ export function Inicio() {
       {/* C-SALDO-EN-INICIO: el saldo prepago (donde el país lo usa), con aviso si se acaba. */}
       {!estado?.activo ? (
         <SaldoInicio saldo={prepago} idioma={idioma} alRecargar={() => setVista('billetera')} />
+      ) : null}
+      {/* C-ASISTENTE-DRIVER: «Tus papeles», con los días que le quedan. Con un pedido en curso no estorba. */}
+      {!estado?.activo ? (
+        <TusPapeles api={api} v={papeles.v} idioma={idioma} alAbrir={() => setVista('papeles')} />
       ) : null}
       {mensajes}
       {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}

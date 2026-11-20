@@ -220,6 +220,25 @@ export function crearApi(op: OpcionesApi) {
     /** Cabeceras de más (C-CAMILA-FALLOS: la ficha del chat de la web, x-camila-visita). */
     cabeceras: Record<string, string> = {},
   ): Promise<{ url: string; adjunto?: string }> {
+    const datos = await enviarFoto(foto, ruta, cabeceras);
+    // C-CAMILA-REPORTE-CONVERSADO: la captura del chat vuelve con su id («adjunto»), no con una dirección.
+    return { url: datos?.url ?? '', ...(datos?.adjunto ? { adjunto: String(datos.adjunto) } : {}) };
+  }
+
+  /**
+   * C-VERIFICACION-ASISTENTE: sube una foto y devuelve TODO lo que contestó el servidor (el
+   * asistente de papeles necesita lo que vio la IA al momento: `ia.color` y `ia.aviso`).
+   */
+  async function subirFotoCon<T>(foto: Blob, ruta: string): Promise<T> {
+    return (await enviarFoto(foto, ruta, {})) as T;
+  }
+
+  type RespuestaFoto = { url?: string; adjunto?: string; error?: string; campo?: string };
+  async function enviarFoto(
+    foto: Blob,
+    ruta: string,
+    cabeceras: Record<string, string>,
+  ): Promise<RespuestaFoto | null> {
     const headers: Record<string, string> = {
       ...cabeceras,
       accept: 'application/json',
@@ -247,12 +266,7 @@ export function crearApi(op: OpcionesApi) {
         0,
       );
     }
-    const datos = (await res.json().catch(() => null)) as {
-      url?: string;
-      adjunto?: string;
-      error?: string;
-      campo?: string;
-    } | null;
+    const datos = (await res.json().catch(() => null)) as RespuestaFoto | null;
     // C-FOTO-ENTREGA-IPHONE: si el servidor dijo que sí, la foto subió (algunas rutas no devuelven
     // su dirección); antes eso salía como «No se pudo subir la foto.» con la foto ya guardada.
     if (token && esSesionTerminada(res, datos)) op.alSesionTerminada?.(token);
@@ -265,8 +279,7 @@ export function crearApi(op: OpcionesApi) {
         res.status,
         datos?.campo,
       );
-    // C-CAMILA-REPORTE-CONVERSADO: la captura del chat vuelve con su id («adjunto»), no con una dirección.
-    return { url: datos?.url ?? '', ...(datos?.adjunto ? { adjunto: String(datos.adjunto) } : {}) };
+    return datos;
   }
 
   /**
@@ -307,6 +320,7 @@ export function crearApi(op: OpcionesApi) {
   return {
     pedir,
     subirFoto,
+    subirFotoCon,
     subirArchivo,
     verFoto,
     registro: (d: DatosRegistro) => pedir<RespuestaSesion>('POST', '/datos/cuentas/registro', d),
