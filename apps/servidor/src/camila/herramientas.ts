@@ -4,6 +4,7 @@ import { enviarCorreo } from '../correo';
 import { correosEquipo } from '../avisosEquipo';
 import { saldoLibro } from '../internacional/libro';
 import { darRegaloConductorNuevo } from '../saldoConductores';
+import { graciaDe } from '../plazoPapeles';
 import { estadoDelConductor } from '../rutas/servicios';
 import { formatearMonto } from '@tumbite/compartido';
 import { buscarGuias, respuestaDeGuia } from './buscadorDocs';
@@ -217,6 +218,17 @@ export async function darRegaloArranque(c: Contexto): Promise<ResultadoHerramien
     .prepare("SELECT 1 FROM habilitaciones WHERE conductor_id = ? AND estado = 'aprobada' LIMIT 1")
     .bind(d.id)
     .first();
+  // C-PLAZO-PAPELES: dentro del plazo nadie «aprueba» al conductor; el regalo le llega solo la primera
+  // vez que se conecta con la foto de su cara. Camila lo dice así y no lo da por otra vía.
+  if (!aprobada && (await graciaDe(c.db, d.id)).activa)
+    return {
+      ok: false,
+      texto: t(
+        c.idioma,
+        'Estás dentro de tu plazo para entregar los papeles. Si tu ciudad tiene el regalo de arranque encendido, te llega solo la primera vez que te conectes con la foto de tu cara ya tomada. Se da una sola vez.',
+        'You are within your deadline to submit your documents. If your city has the starter gift turned on, it arrives on its own the first time you go online with the photo of your face already taken. It is given only once.',
+      ),
+    };
   if (!aprobada)
     return {
       ok: false,

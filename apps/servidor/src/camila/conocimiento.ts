@@ -100,8 +100,33 @@ export const CONOCIMIENTO_DOCS: readonly EntradaDocs[] = [
       'bonus',
       'saldo gratis',
     ],
-    es: 'Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez, cuando tu cuenta queda aprobada, y solo mientras tu ciudad tenga ese regalo encendido.',
-    en: 'When you start, Divoox may give you a starter gift: balance for your first trips. It is given only once, when your account is approved, and only while your city has that gift turned on.',
+    es: 'Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez: cuando tu cuenta queda aprobada o, donde hay plazo para los papeles, la primera vez que te conectas con la foto de tu cara ya tomada. Y solo mientras tu ciudad tenga ese regalo encendido.',
+    en: 'When you start, Divoox may give you a starter gift: balance for your first trips. It is given only once: when your account is approved or, where there is a document deadline, the first time you go online with the photo of your face already taken. And only while your city has that gift turned on.',
+  },
+  {
+    // C-PLAZO-PAPELES: el plazo, las fotos solo con cámara y que nada se envía solo.
+    id: 'plazo-de-papeles',
+    guia: 'drivers/document-deadline',
+    palabras: [
+      ...['plazo', 'papeles', 'mis papeles', 'tus papeles', 'documentos', '30 dias', 'un mes'],
+      ...['cuanto tiempo tengo', 'subir foto', 'subir desde archivos', 'galeria', 'camara'],
+      ...['cuenta en pausa', 'me pausaron', 'antecedentes', 'licencia', 'seguro'],
+      ...['deadline', 'documents', 'my documents', 'paperwork', '30 days', 'upload a photo'],
+      ...['from my files', 'gallery', 'camera', 'account paused', 'license', 'insurance'],
+    ],
+    es: 'Donde Divoox da un plazo, empiezas a trabajar con la foto de tu cara y entregas el resto de tus papeles después, por lo general dentro de un mes. En «Tus papeles» ves cada papel con su estado y los días que te quedan. Las fotos se toman en el momento con la cámara de la app: no se suben desde tus archivos. Nada se envía solo: revisas tus fotos y tocas «Enviar a revisión». Te recordamos el plazo varias veces; si se acaba y falta algo, tu cuenta queda en pausa hasta que lo subas, sin perder lo que ya enviaste. Qué papeles hacen falta depende de tu lugar, y la app te lo dice.',
+    en: 'Where Divoox gives you a deadline, you start working with a photo of your face and turn in the rest of your documents later, usually within a month. Under “Your documents” you see each one with its status and the days you have left. Photos are taken on the spot with the app’s camera: you can’t upload them from your files. Nothing is sent on its own: you review your photos and tap “Send for review.” We remind you of the deadline several times; if it runs out and something is missing, your account is paused until you send it, and nothing you already sent is lost. Which documents you need depends on where you are, and the app tells you.',
+  },
+  {
+    id: 'mi-linea',
+    guia: 'drivers/your-line',
+    palabras: [
+      ...['mi linea', 'linea', 'lider', 'codigo de la linea', 'codigo de linea', 'mi grupo'],
+      ...['entrar a una linea', 'cambiar de linea', 'esperando que el lider', 'qr de la linea'],
+      ...['my line', 'line code', 'leader', 'join a line', 'change line', 'my group'],
+    ],
+    es: 'Si trabajas en una línea de taxis o mototaxis, abre «Mi línea» en tu perfil de Divoox Driver. Entras con el código de tu línea o eligiéndola de la lista de tu ciudad, y tu líder acepta tu solicitud. Estás en una sola línea a la vez; para cambiar, pídele a tu líder que te saque de la suya. Si eres líder, ahí ves tu código, tu QR, las solicitudes y tu equipo.',
+    en: 'If you work in a taxi or moto-taxi line, open “My line” in your Divoox Driver profile. You join with your line’s code or by picking it from your city’s list, and your leader accepts your request. You are in one line at a time; to switch, ask your leader to remove you from theirs. If you are the leader, that is where you see your code, your QR, the requests and your team.',
   },
   {
     id: 'regalo-del-pasajero',

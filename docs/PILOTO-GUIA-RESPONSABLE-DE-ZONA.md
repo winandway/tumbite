@@ -2,51 +2,33 @@
 
 Para la persona que coordina a los mototaxistas en su zona. Corta, en orden, para tenerla en el celular.
 
-## 1. Instalar las apps (Android, sin Google Play)
+## 1. Instalar las apps (desde Google Play)
 
-Las apps del piloto se bajan directo, como un archivo. No se usa Google Play (allá todavía no salen para Venezuela). El archivo pesa unos 150 megas: mejor con wifi.
+Las apps se instalan desde Google Play, como cualquier otra. Ya no hace falta bajar ningún archivo ni tocar los ajustes de «aplicaciones desconocidas».
 
-1. En el celular, abre en Chrome la página de apps de Divoox: **https://divoox-progreso.sitios.dev/apps**
-2. Arriba está el bloque verde **«Versión real — para el piloto de El Vigía y Tucaní»**. Solo ese. Los de más abajo dicen «solo para el equipo»: no se usan.
-3. Toca **Descargar** en **Divoox Driver** (conductores), **Divoox** (pasajeros) o **Divoox Restaurants** (restaurantes).
-4. Chrome avisa que el archivo «podría ser dañino». Es el aviso normal de cualquier app que no viene de Google Play. Toca **Descargar de todos modos**.
+1. En el celular Android, abre **Google Play** y busca **Divoox Driver** (conductores) o **Divoox** (pasajeros). También sirven estos enlaces directos:
+   - Divoox Driver: **https://play.google.com/store/apps/details?id=com.windoce.tumbite.driver**
+   - Divoox (pasajeros): **https://play.google.com/store/apps/details?id=com.windoce.tumbite**
+2. Toca **Instalar** y, cuando termine, **Abrir**.
+3. Deja encendidas las actualizaciones automáticas de Google Play: así el conductor siempre tiene la versión nueva.
 
-   ![Chrome pide confirmar la descarga](capturas/piloto-instalar/1-chrome-descargar-de-todos-modos.png)
-
-5. Cuando termine, toca el archivo descargado (en la barra de avisos o en **Descargas** de Chrome).
-
-   ![El archivo ya descargado](capturas/piloto-instalar/2-descargado-tocar-el-archivo.png)
-
-6. La primera vez, Android dice que por seguridad no puede instalar aplicaciones desconocidas de esta fuente. Toca **Ajustes**.
-
-   ![Aviso de aplicaciones desconocidas](capturas/piloto-instalar/3-aviso-tocar-ajustes.png)
-
-7. Enciende **Autorizar de esta fuente** y vuelve atrás con la flecha.
-
-   ![Autorizar de esta fuente encendido](capturas/piloto-instalar/4-autorizar-de-esta-fuente.png)
-
-8. Toca **Instalar**.
-
-   ![Instalar la app](capturas/piloto-instalar/5-tocar-instalar.png)
-
-9. Cuando diga **Aplicación instalada**, toca **Abrir**.
-
-   ![Aplicación instalada](capturas/piloto-instalar/6-instalada-abrir.png)
-
-- Si en vez de «instalar» dice **«actualizar»**, ese celular tiene la app de PRUEBAS: cancela, bórrala (mantén el ícono apretado → Desinstalar) y vuelve al paso 5.
-- En algunos Samsung y Xiaomi el permiso se llama **«Instalar apps desconocidas»** o **«Fuentes desconocidas»**, y está en Ajustes → Aplicaciones → Chrome. Es el mismo interruptor.
+- Si el celular tenía una app de Divoox bajada como archivo (las del piloto del 16 de noviembre, o una que diga PRUEBAS): bórrala primero (mantén el ícono apretado → Desinstalar) y después instala la de Google Play.
+- Si Google Play dice que la app no está disponible para ese celular, manda una captura al equipo de Divoox con la marca y el modelo.
 
 ## 2. Registrarse como conductor de moto
 
-1. Abre **Divoox Driver** → **Crear cuenta**. Nombre real, correo, celular con +58 y fecha de nacimiento (mínimo 21 años).
-2. Confirma el correo con el enlace que llega a la bandeja (revisa también «Spam»).
+1. Abre **Divoox Driver** → **Crear cuenta**. Nombre real, correo, celular con +58 y fecha de nacimiento (mínimo 21 años). Si el conductor es de una línea, escribe ahí el **código de la línea**.
+2. Antes de crear la cuenta, la app muestra **«Revisa tus datos»** con el correo en grande: léelo letra por letra con el conductor. A ese correo llega el enlace para activar la cuenta (revisa también «Spam»).
 3. Elige la ciudad: **El Vigía** o **Tucaní**.
-4. Sube los papeles (fotos claras, sin reflejos, las cuatro esquinas a la vista):
-   - Cédula por delante y por detrás, y una selfie.
+4. **El conductor puede trabajar desde el primer día.** Para empezar solo necesita la **foto de su cara**, tomada en el momento con la cámara de la app.
+5. El resto de los papeles se entrega dentro de un **plazo de 30 días**. La app muestra la tarjeta **«Tus papeles»** con lo que falta y los días que quedan, y lo recuerda cuando faltan 15, 10, 5 y 1 día:
+   - Cédula por delante y por detrás.
    - Licencia para moto.
-   - Certificado de antecedentes penales.
-   - De la moto: carnet de circulación, seguro RCV, seguro de pasajeros, foto de frente con la placa.
-5. Toca **Enviar a revisión**. El equipo de Divoox lo revisa a mano y lo aprueba.
+   - Seguro de la moto.
+   - **No se pide certificado de antecedentes penales.**
+6. Todas las fotos se toman **con la cámara de la app, en el momento**. No se pueden subir desde la galería ni desde archivos. Fotos claras, sin reflejos, con las cuatro esquinas a la vista.
+7. Nada se envía solo: el conductor revisa sus fotos y toca **Enviar a revisión**. El equipo de Divoox las revisa y avisa en la app y por correo. Si hay que repetir una foto, la app dice cuál y por qué.
+8. Si el plazo se acaba y faltan papeles, la cuenta queda **en pausa** (no recibe carreras) hasta que los suba. No se borra nada de lo que ya envió.
 
 ## 3. Saldo prepago (para poder recibir carreras)
 
@@ -67,7 +49,7 @@ Los **envíos** (llevar un paquete de A a B) llegan igual que las carreras: reco
 ## 5. Si algo falla
 
 - **Botón de pánico:** dentro de la carrera, el botón rojo de emergencia. Le llega un **aviso al responsable de la zona** (al celular si tiene la app de Divoox con ese número, y por correo al equipo; el SMS se suma cuando esté el proveedor de Venezuela) con el nombre, el teléfono, el enlace del mapa con la ubicación y la carrera. Además da el número de emergencias del país.
-- **No me llegan carreras:** revisa que estés **Conectado**, que tengas **saldo**, GPS encendido y que tus papeles digan **Aprobado**.
+- **No me llegan carreras:** revisa que estés **Conectado**, que tengas **saldo**, GPS encendido, que ya te tomaste la **foto de tu cara** y que tu plazo de papeles no esté vencido.
 - **El mapa se ve gris o la app no abre:** cierra la app y ábrela otra vez; si sigue, avisa al responsable con una captura.
 - **Papel rechazado:** la app dice por qué. Se toma la foto otra vez y se reenvía.
 

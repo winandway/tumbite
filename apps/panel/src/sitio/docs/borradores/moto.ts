@@ -119,8 +119,8 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         resumen:
           'Elige tu ciudad, registra tu moto, sube tus papeles con la cámara y sigue tu aprobación desde la app.',
         explicacion: [
-          'Divoox Moto se abre ciudad por ciudad: puedes registrarte en las ciudades donde Divoox Moto esté abierto. Para llevar pasajeros en moto primero te conocemos: verificamos tu identidad, tu licencia, tus antecedentes y los papeles de tu moto. Así cuidamos al pasajero y a ti.',
-          'Lo que se pide depende de tu país. En Venezuela, por ejemplo, subes tu licencia para manejar moto y tu certificado de antecedentes penales, y nuestro equipo los revisa uno por uno.',
+          'Divoox Moto se abre ciudad por ciudad: puedes registrarte en las ciudades donde Divoox Moto esté abierto. Para llevar pasajeros en moto primero te conocemos: verificamos tu identidad, tu licencia y los papeles de tu moto. Así cuidamos al pasajero y a ti.',
+          'Lo que se pide depende de tu lugar, y la app te lo dice. Donde Divoox da un plazo, empiezas a trabajar con la foto de tu cara y entregas el resto de tus papeles después, por lo general dentro de un mes: lo explica la guía «Tu plazo para entregar los papeles». Las fotos de tu cara, tu documento, tu licencia y el seguro se toman en el momento con la cámara de la app, y nuestro equipo las revisa una por una.',
           'Cada papel muestra su estado: sin subir, en revisión, aprobado o «hay que corregir» con el motivo. Cuando todo está aprobado, activas «Recibir viajes de Moto».',
         ],
         preguntas: [
@@ -133,7 +133,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Revisa tu ciudad y cámbiala si hace falta (después de elegirla, puedes cambiarla una vez cada 24 horas dentro de tu país).',
           'Escribe la marca, el modelo, el año, el color y la placa de tu moto, y toca «Guardar mi moto».',
           'Sube cada papel de la moto: toca «Subir» y elige «Tomar foto» o «Subir desde archivos».',
-          'Sube tus papeles de conductor y verifica tu identidad en «Documentos».',
+          'Toma las fotos de tus papeles de conductor en «Tus papeles», con la cámara de la app, y envíalas a revisión.',
           'Toca «Enviar mi moto a revisión». Te avisamos cuando esté aprobada.',
           'Cuando todo esté aprobado, toca «Usar esta moto para trabajar» y «Recibir viajes de Moto».',
         ],
@@ -285,6 +285,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         explicacion: [
           'Divoox Moto opens city by city: you can sign up in the cities where Divoox Moto is open. Before you give rides, we get to know you: we verify your identity, your license, your background, and your motorcycle’s documents. That keeps riders and you safe.',
           'What we ask for depends on your country. In the United States, your background check and driving record are run by our screening partner, so you don’t upload them yourself: you enter your details on the partner’s secure page and see the result in the app.',
+          'Where Divoox gives you a deadline, you start working with a photo of your face and turn in the rest of your documents later, usually within a month: see the guide “Your deadline to submit your documents.” Those photos are always taken on the spot with the app’s camera.',
           'Each document shows its status: not uploaded, under review, approved, or “needs a fix” with the reason. Once everything is approved, you turn on “Get Moto rides.”',
         ],
         preguntas: [

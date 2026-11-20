@@ -80,7 +80,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
         resumen:
           'Tu perfil sirve para todos tus servicios. Para agregar uno nuevo, Divoox te pide solo lo que le falta a ese servicio: lo que ya aprobamos no se vuelve a pedir.',
         explicacion: [
-          'Tus datos se separan en dos grupos. Los del perfil (tu foto, tu nombre, tu documento de identidad y tus antecedentes) se piden una sola vez y sirven para todos los servicios. Los del vehículo (licencia, registro, seguro y fotos) van con cada moto o carro que registras.',
+          'Tus datos se separan en dos grupos. Los del perfil (tu foto, tu nombre, tu documento de identidad y, donde se pida, tus antecedentes) se piden una sola vez y sirven para todos los servicios. Los del vehículo (licencia, registro, seguro y fotos) van con cada moto o carro que registras.',
           'En el inicio, los servicios que funcionan en tu ciudad y todavía no tienes aparecen con «Agregar este servicio». Tócalo.',
           'Arriba ves, en verde, todo lo que ya está verificado: «Ya verificado, no se vuelve a pedir». Debajo, «Falta para este servicio», con solo los pasos nuevos, numerados.',
           'Toca «Empezar» o cualquier paso. Se abre la pantalla de ese papel: las fotos del vehículo se pueden tomar con la cámara o subir desde tus archivos, y lo que escribes se guarda solo aunque cierres la app.',
@@ -208,7 +208,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
         resumen:
           'Your profile works for all your services. To add a new one, Divoox only asks for what that service still needs: anything we’ve already approved isn’t asked again.',
         explicacion: [
-          'Your info is split into two groups. Profile info (your photo, your name, your ID and your background check) is asked for once and works for every service. Vehicle info (license, registration, insurance and photos) goes with each motorcycle or car you register.',
+          'Your info is split into two groups. Profile info (your photo, your name, your ID and, where required, your background check) is asked for once and works for every service. Vehicle info (license, registration, insurance and photos) goes with each motorcycle or car you register.',
           'On the home screen, services that work in your city but you don’t have yet show “Add this service.” Tap it.',
           'At the top you see, in green, everything that’s already verified: “Already verified · we won’t ask again.” Below it, “Still needed for this service,” with only the new steps, numbered.',
           'Tap “Start” or any step. That document’s screen opens: vehicle photos can be taken with your camera or uploaded from your files, and whatever you type is saved automatically, even if you close the app.',
