@@ -223,8 +223,12 @@ try {
   );
   casos.push(`saldo ${s0.disponible}: te alcanza para unos ${s0.pedidosAlcanzan} pedidos`);
 
-  const pedirComida = async (metodoPago) =>
-    ok(
+  const pedirComida = async (metodoPago) => {
+    // C-PAUSA-SIN-SENAL: el restaurante tiene su app abierta escuchando pedidos (la app pregunta
+    // sola cada pocos segundos). Sin esto, el local de pruebas, que escuchó por última vez en una
+    // vuelta de otro día, quedaba «sin señal» y el servidor rechazaba el pedido (19 nov 2026).
+    ok(await resto('GET', '/datos/restaurante/pedidos'), 'el restaurante escucha pedidos');
+    return ok(
       await cliente('POST', '/datos/pedidos', {
         restauranteId: r.id,
         lineas: [{ platoId: plato.id, cantidad: 2 }],
@@ -235,6 +239,7 @@ try {
       }),
       `pedido en ${metodoPago}`,
     );
+  };
   const aceptarRestaurante = async (id) =>
     ok(await resto('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }), 'acepta');
   const ofertasDe = async (quien) =>
