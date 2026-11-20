@@ -3,13 +3,20 @@
 > Esta es LA lista de trabajo de la IA. Una sola, en orden, solo con lo que la IA puede hacer sola.
 > El gancho de la fábrica (`scripts/fabrica/seguir.sh`) no deja que la sesión se quede parada
 > mientras quede un `- [ ] [para: desarrollador] Rehacer el reporte de fallo de Camila como conversación conducida por el modelo (esquema JSON plano por turno, el código elige la casilla que falta, guion fijo como respaldo, captura como borrador con miniatura, memoria de quien vuelve, ficha del caso en el superadmin). Decisión y pruebas de aceptación en `docs/investigaciones-rea/2026-11-19-reporte-de-fallo-conversado.md`. No adoptar Chatwoot. Todos los países.
+
 - [ ]` aquí: le devuelve el siguiente punto.
->
+
 > - `[ ]` por hacer · `[x]` hecho (con commit) · `[!]` trabado por Richard (la razón al lado).
 > - Lo que depende de Richard vive en `PENDIENTES.md` (los 👤), no aquí.
 > - Cada punto dice a qué país aplica.
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
+
+## Correo de confirmación honesto (19 nov 2026, emergencia) — todos los países
+
+- [ ] [para: desarrollador] Enterarse del rebote asíncrono (550 5.1.1 de Gmail llega después del envío): pedir a YaDominios que «leer_correos» o la respuesta del envío refleje el rebote, o leer `emailSendingAdaptive` de la zona divoox.com desde el reloj de Cloudflare con una llave de solo lectura, y marcar `correos_rebotados` sin esperar a que la persona toque «Mandar el enlace otra vez». Medir el costo antes. Todos los países.
+- [ ] [para: desarrollador] Captura nueva para la guía «Confirma tu correo» (es: El Vigía; en: Novi) con el aviso en rojo «No pudimos entregar el correo a esta dirección» (C-CORREO-HONESTO); hoy la guía lo describe en texto con las capturas de antes. Todos los países.
+- [ ] [para: desarrollador] El sitio de pruebas gasta la mayor parte del cupo diario de correos compartido con producción (avisos al equipo «Restaurante nuevo», «Nuevo ticket», «Pedido sin repartidor» que dispara el recorrido). Que los avisos al equipo disparados por cuentas del recorrido no salgan desde el sitio de pruebas, sin quitar las alarmas reales. Todos los países.
 
 ## Pantalla blanca al guardar una dirección y punto exacto (16 nov 2026, orden de Richard por Gerencia) — todos los países
 

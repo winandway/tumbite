@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { enIdioma, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { AvisoBorrador } from './AvisoBorrador';
+import { SugerenciaCorreo } from './SugerenciaCorreo';
 import { ConfirmarBorrado } from './OpcionesCuenta';
 import { useSesion } from './sesion';
 import { Boton, C, Campo, CampoClave } from './ui';
@@ -14,7 +15,10 @@ const T = {
     titulo: 'Confirma tu correo',
     enviamos: 'Te mandamos un enlace a',
     abrelo: 'Ábrelo en este teléfono para activar tu cuenta. Esta pantalla se actualiza sola.',
-    spam: '¿No te llegó? Mira en la carpeta de correo no deseado (spam).',
+    spam: '¿No te llegó? Mira en la carpeta de correo no deseado (spam) y revisa que el correo de arriba esté bien escrito.',
+    rebotado:
+      'No pudimos entregar el correo a esta dirección: no existe o no recibe mensajes. Revisa que esté bien escrita y cámbiala aquí abajo.',
+    enviadoNuevo: 'Listo. Te mandamos el enlace a tu correo nuevo.',
     reenviar: 'Mandar el enlace otra vez',
     reenviado: 'Te lo mandamos otra vez. Puede tardar un minuto.',
     yaLoHice: 'Ya lo confirmé',
@@ -36,7 +40,10 @@ const T = {
     titulo: 'Confirm your email',
     enviamos: 'We sent a link to',
     abrelo: 'Open it on this phone to activate your account. This screen updates on its own.',
-    spam: 'Don’t see it? Check your spam or junk folder.',
+    spam: 'Don’t see it? Check your spam or junk folder, and make sure the email above is spelled right.',
+    rebotado:
+      'We couldn’t deliver the email to this address: it doesn’t exist or can’t receive mail. Check the spelling and change it below.',
+    enviadoNuevo: 'Done. We sent the link to your new email.',
     reenviar: 'Send the link again',
     reenviado: 'We sent it again. It can take a minute.',
     yaLoHice: 'I already confirmed it',
@@ -58,7 +65,7 @@ const T = {
 /** Cada cuántos segundos se vuelve a mirar si la persona ya tocó el enlace. */
 export const CADA_MS_COMPROBAR_CORREO = 4000;
 
-type Perfil = { correo: string; debeConfirmarCorreo?: boolean };
+type Perfil = { correo: string; debeConfirmarCorreo?: boolean; correoRebotado?: boolean };
 
 /**
  * C-CORREO-OBLIGATORIO (4 nov 2026, Richard grabando el video para Apple): la app del cliente no
@@ -71,6 +78,8 @@ export function PuertaCorreo({ children }: { children: ReactNode }) {
   const { api, usuario } = useSesion();
   const [estado, setEstado] = useState<'mirando' | 'falta' | 'verificado' | 'dentro'>('mirando');
   const [correo, setCorreo] = useState(usuario?.correo ?? '');
+  // C-CORREO-HONESTO: el servidor sabe si esa dirección rebotó (no existe o no recibe).
+  const [rebotado, setRebotado] = useState(false);
   const [sinConexion, setSinConexion] = useState(false);
   const estadoRef = useRef(estado);
   useEffect(() => {
@@ -82,6 +91,7 @@ export function PuertaCorreo({ children }: { children: ReactNode }) {
       const r = await api.pedir<{ perfil: Perfil }>('GET', '/datos/cuentas/perfil');
       setSinConexion(false);
       setCorreo(r.perfil.correo);
+      setRebotado(r.perfil.correoRebotado === true);
       const debe = r.perfil.debeConfirmarCorreo === true;
       setEstado((e) => {
         if (!debe) return e === 'falta' ? 'verificado' : e === 'verificado' ? e : 'dentro';
@@ -124,6 +134,7 @@ export function PuertaCorreo({ children }: { children: ReactNode }) {
   return (
     <ConfirmaTuCorreo
       correo={correo}
+      rebotado={rebotado}
       sinConexion={sinConexion}
       comprobar={comprobar}
       alCambiar={setCorreo}
@@ -174,11 +185,13 @@ function Verificado({ alSeguir }: { alSeguir: () => void }) {
 
 function ConfirmaTuCorreo({
   correo,
+  rebotado,
   sinConexion,
   comprobar,
   alCambiar,
 }: {
   correo: string;
+  rebotado: boolean;
   sinConexion: boolean;
   comprobar: () => Promise<boolean>;
   alCambiar: (correo: string) => void;
@@ -190,6 +203,14 @@ function ConfirmaTuCorreo({
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState<'' | 'reenviar' | 'mirar' | 'cambiar'>('');
   const [cambiando, setCambiando] = useState(false);
+  // Si la dirección rebotó, el formulario para cambiarla se abre solo (una vez).
+  const abiertoPorRebote = useRef(false);
+  useEffect(() => {
+    if (rebotado && !abiertoPorRebote.current) {
+      abiertoPorRebote.current = true;
+      setCambiando(true);
+    }
+  }, [rebotado]);
   const [borrando, setBorrando] = useState(false);
   // NINGÚN FORMULARIO PIERDE LO ESCRITO: el correo nuevo se guarda solo; la contraseña nunca.
   const b = useBorrador({
@@ -240,7 +261,7 @@ function ConfirmaTuCorreo({
       await b.limpiar();
       alCambiar(r.usuario.correo);
       setCambiando(false);
-      setAviso(t.reenviado);
+      setAviso(t.enviadoNuevo);
     } catch (x) {
       // Si falla, lo escrito se queda en pantalla para reintentar.
       setError(x instanceof Error ? x.message : String(x));
@@ -271,6 +292,15 @@ function ConfirmaTuCorreo({
       </Text>
       <Text style={{ fontSize: 16, color: '#666B73' }}>{t.abrelo}</Text>
       <Text style={{ fontSize: 14, color: C.gris }}>{t.spam}</Text>
+      {rebotado ? (
+        <Text
+          style={{ fontSize: 15, color: C.acento, fontWeight: '700' }}
+          accessibilityRole="alert"
+          testID="correo-rebotado"
+        >
+          {t.rebotado}
+        </Text>
+      ) : null}
       {sinConexion ? <SinConexion /> : null}
       {aviso ? (
         <Text style={{ fontSize: 14, color: C.secundario }} accessibilityRole="alert">
@@ -301,6 +331,11 @@ function ConfirmaTuCorreo({
             keyboardType="email-address"
             value={b.valores.correo}
             onChangeText={(x) => b.cambiar('correo', x)}
+          />
+          <SugerenciaCorreo
+            correo={b.valores.correo}
+            idioma={idioma}
+            aceptar={(x) => b.cambiar('correo', x)}
           />
           <CampoClave
             etiqueta={t.clave}
@@ -340,6 +375,8 @@ const TA = {
     abrelo: 'Ábrelo en este teléfono. Mientras tanto puedes mirar.',
     reenviar: 'Mandar el enlace otra vez',
     reenviado: 'Te lo mandamos otra vez.',
+    rebotado:
+      'No pudimos entregar el correo a esta dirección: no existe o no recibe mensajes. Revísala y cámbiala en tu cuenta.',
     verificado: 'Tu correo quedó verificado. Ya puedes pedir.',
   },
   en: {
@@ -348,6 +385,8 @@ const TA = {
     abrelo: 'Open it on this phone. You can keep browsing meanwhile.',
     reenviar: 'Send the link again',
     reenviado: 'We sent it again.',
+    rebotado:
+      'We couldn’t deliver the email to this address: it doesn’t exist or can’t receive mail. Check it and change it in your account.',
     verificado: 'Your email is verified. You can order now.',
   },
 };
@@ -363,6 +402,8 @@ export function AvisoCorreo() {
   const [estado, setEstado] = useState<'nada' | 'falta' | 'verificado'>('nada');
   const [correo, setCorreo] = useState('');
   const [reenviado, setReenviado] = useState(false);
+  const [rebotado, setRebotado] = useState(false);
+  const [error, setError] = useState('');
   const estadoRef = useRef(estado);
   useEffect(() => {
     estadoRef.current = estado;
@@ -373,6 +414,7 @@ export function AvisoCorreo() {
     try {
       const r = await api.pedir<{ perfil: Perfil }>('GET', '/datos/cuentas/perfil');
       setCorreo(r.perfil.correo);
+      setRebotado(r.perfil.correoRebotado === true);
       const debe = r.perfil.debeConfirmarCorreo === true;
       setEstado((e) => (debe ? 'falta' : e === 'falta' ? 'verificado' : e));
     } catch {
@@ -437,14 +479,24 @@ export function AvisoCorreo() {
       <Text style={{ color: '#666B73' }}>
         {t.detalle} <Text style={{ fontWeight: '700' }}>{correo}</Text>. {t.abrelo}
       </Text>
+      {rebotado || error ? (
+        <Text style={{ color: C.acento, fontWeight: '700' }} accessibilityRole="alert">
+          {rebotado ? t.rebotado : error}
+        </Text>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         hitSlop={8}
         onPress={() => {
+          // C-CORREO-HONESTO: «Te lo mandamos otra vez» solo si salió de verdad; si no, el motivo.
+          setError('');
           void api
             .pedir('POST', '/datos/cuentas/confirmar/reenviar')
             .then(() => setReenviado(true))
-            .catch(() => undefined);
+            .catch((x: unknown) => {
+              setReenviado(false);
+              setError(x instanceof Error ? x.message : String(x));
+            });
         }}
       >
         <Text style={{ color: C.primario, fontWeight: '700', marginTop: 4 }}>

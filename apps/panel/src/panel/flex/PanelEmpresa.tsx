@@ -358,7 +358,13 @@ function AceptarInvitacion({ token, idioma }: { token: string; idioma: Idioma })
               <button
                 type="button"
                 className="enlace"
-                onClick={() => void pedir('POST', '/datos/cuentas/confirmar/reenviar', {})}
+                onClick={() => {
+                  // C-CORREO-HONESTO: si el enlace no salió, se dice el motivo (antes, silencio).
+                  setError('');
+                  pedir('POST', '/datos/cuentas/confirmar/reenviar', {}).catch((x: unknown) =>
+                    setError(mensajeDe(x)),
+                  );
+                }}
               >
                 {t.reenviarConfirmacion}
               </button>

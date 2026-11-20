@@ -16,6 +16,7 @@ import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
+import { SugerenciaCorreo } from './SugerenciaCorreo';
 import { FranjaPruebas } from './FranjaPruebas';
 import { CasillaSms } from './CasillaSms';
 import { Boton, C, Campo, CampoClave, Pantalla, e, useAcentoApp } from './ui';
@@ -238,6 +239,9 @@ export function Acceso({
         placeholder={correoEjemplo(idioma)}
         error={errorDe('correo')}
       />
+      {registro ? (
+        <SugerenciaCorreo correo={v.correo} idioma={idioma} aceptar={(x) => cambiar('correo', x)} />
+      ) : null}
       {registro && (
         <Campo
           etiqueta={t.telefono}

@@ -11,6 +11,7 @@ import {
 import { Icono } from '../sitio/Icono';
 import { AvisoBorrador } from './AvisoBorrador';
 import { CasillaSms } from './CasillaSms';
+import { SugerenciaCorreo } from './SugerenciaCorreo';
 import { Campo, CampoClave } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { api, pedir } from './api';
@@ -39,6 +40,8 @@ const T = {
     cambiarCorreo: 'Cambiar correo',
     correoCambiado: 'Correo cambiado. Te mandamos un enlace para confirmarlo.',
     sinConfirmar: 'Tu correo todavía no está confirmado.',
+    rebotado:
+      'No pudimos entregar el correo a esta dirección: no existe o no recibe mensajes. Revisa que esté bien escrita y cámbiala aquí abajo.',
     reenviar: 'Volver a mandar el enlace',
     reenviado: 'Enlace enviado. Revisa tu correo.',
     confirmado: 'Correo confirmado',
@@ -74,6 +77,8 @@ const T = {
     cambiarCorreo: 'Change email',
     correoCambiado: 'Email changed. We sent you a link to confirm it.',
     sinConfirmar: 'Your email isn’t confirmed yet.',
+    rebotado:
+      'We couldn’t deliver the email to this address: it doesn’t exist or can’t receive mail. Check the spelling and change it below.',
     reenviar: 'Send the link again',
     reenviado: 'Link sent. Check your email.',
     confirmado: 'Email confirmed',
@@ -95,6 +100,8 @@ type Perfil = {
   fechaNacimiento: string | null;
   idioma: Idioma;
   correoConfirmado: boolean;
+  /** C-CORREO-HONESTO: la dirección no existe o no recibe (rebotó). */
+  correoRebotado?: boolean;
   smsConsentimiento?: boolean;
 };
 
@@ -212,7 +219,9 @@ export function Configuracion({
       });
       setClaveCorreo('');
       b.cargar({ ...v, correoNuevo: '' });
-      setPerfil((p) => (p ? { ...p, correo: r.usuario.correo, correoConfirmado: false } : p));
+      setPerfil((p) =>
+        p ? { ...p, correo: r.usuario.correo, correoConfirmado: false, correoRebotado: false } : p,
+      );
       alCambiar(r.usuario);
       setAviso({ donde: 'correo', texto: t.correoCambiado });
     } catch (x) {
@@ -355,6 +364,11 @@ export function Configuracion({
             </>
           )}
         </p>
+        {!perfil.correoConfirmado && perfil.correoRebotado ? (
+          <p className="error-general" role="alert" data-testid="correo-rebotado">
+            {t.rebotado}
+          </p>
+        ) : null}
         <Campo
           etiqueta={t.correoNuevo}
           tipo="email"
@@ -363,6 +377,11 @@ export function Configuracion({
           autoComplete="email"
           placeholder={correoEjemplo(idioma)}
           error={errorDe('correo')}
+        />
+        <SugerenciaCorreo
+          correo={v.correoNuevo}
+          idioma={idioma}
+          aceptar={(x) => b.cambiar('correoNuevo', x)}
         />
         <CampoClave
           etiqueta={t.confirmaClave}

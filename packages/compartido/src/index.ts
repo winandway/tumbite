@@ -125,3 +125,4 @@ export * from './inicioNuevo';
 export * from './lugaresGuardados';
 export * from './camilaChat';
 export * from './categoriaRestaurante';
+export * from './sugerirCorreo';

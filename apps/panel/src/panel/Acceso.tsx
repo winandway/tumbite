@@ -15,6 +15,7 @@ import { Campo, CampoClave } from './CampoClave';
 import { Turnstile, reiniciarTurnstile } from './Turnstile';
 import { TEXTOS_PANEL } from './textos';
 import { CasillaSms } from './CasillaSms';
+import { SugerenciaCorreo } from './SugerenciaCorreo';
 
 const INICIAL = { nombre: '', correo: '', telefono: '', clave: '', sms: false };
 
@@ -136,6 +137,13 @@ export function Acceso({
           placeholder={correoEjemplo(idioma)}
           error={errorDe('correo')}
         />
+        {modo === 'registro' ? (
+          <SugerenciaCorreo
+            correo={v.correo}
+            idioma={idioma}
+            aceptar={(x) => b.cambiar('correo', x)}
+          />
+        ) : null}
         {modo === 'registro' && (
           <Campo
             etiqueta={t.telefono}

@@ -1431,6 +1431,19 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Usa el formato AAAA-MM-DD.', 'Use the format YYYY-MM-DD.'],
   ['Ya existe una cuenta con ese correo.', 'An account with that email already exists.'],
+  // C-CORREO-HONESTO (19 nov 2026): el enlace de confirmación que no salió se dice como es.
+  [
+    'No pudimos entregar el correo: esa dirección no existe o no recibe mensajes. Revisa que esté bien escrita o cambia tu correo.',
+    'We couldn’t deliver the email: that address doesn’t exist or can’t receive mail. Check the spelling or change your email.',
+  ],
+  [
+    'No pudimos mandar el correo en este momento. Intenta otra vez en unos minutos; si sigue sin llegar, escríbenos a soporte.',
+    'We couldn’t send the email right now. Try again in a few minutes; if it still doesn’t arrive, contact support.',
+  ],
+  [
+    'Cambiamos tu correo, pero no pudimos mandarte el enlace en este momento. Toca «Mandar el enlace otra vez» en unos minutos.',
+    'We changed your email, but couldn’t send you the link right now. Tap «Send the link again» in a few minutes.',
+  ],
   [
     'Ya existe una cuenta con ese correo. Entra con tu contraseña.',
     'An account with that email already exists. Sign in with your password.',

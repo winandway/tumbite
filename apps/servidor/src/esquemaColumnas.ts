@@ -3140,5 +3140,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resuelto_por",
     "resuelto_en",
     "creado_en"
+  ],
+  "correo_fallos": [
+    "id",
+    "tipo",
+    "motivo",
+    "creado_en"
+  ],
+  "correos_rebotados": [
+    "correo",
+    "motivo",
+    "creado_en"
   ]
 };

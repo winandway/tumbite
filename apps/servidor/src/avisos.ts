@@ -267,17 +267,28 @@ export async function bienvenidaListaEspera(
   });
 }
 
+/**
+ * C-CORREO-HONESTO: línea de disculpa que lleva SOLO el reenvío a cuentas que se quedaron sin su
+ * confirmación por un problema nuestro (orden de Richard, 19 nov 2026). La confirmación normal no la lleva.
+ */
+export const DISCULPA_CONFIRMACION = {
+  es: 'Tuvimos un inconveniente y tu correo de confirmación se demoró. Ya está resuelto: confirma tu cuenta con el botón de abajo.',
+  en: 'We had an issue and your confirmation email was delayed. It’s fixed now: confirm your account with the button below.',
+} as const;
+
 export async function correoDeConfirmacion(
   env: Env,
-  p: { correo: string; nombre: string; idioma: Idioma; token: string },
+  p: { correo: string; nombre: string; idioma: Idioma; token: string; disculpa?: boolean },
 ) {
   const d = p.idioma;
   const enlace = `${sitio(env)}${enIdiomaDireccion(PAGINAS.confirmEmail, d)}?token=${p.token}`;
   const asunto = d === 'en' ? 'Confirm your Divoox email' : 'Confirma tu correo de Divoox';
+  const disculpa = p.disculpa ? `${DISCULPA_CONFIRMACION[d === 'en' ? 'en' : 'es']}\n\n` : '';
   const texto =
-    d === 'en'
+    disculpa +
+    (d === 'en'
       ? `Hi ${p.nombre},\n\nWelcome to Divoox. Tap the link to confirm this email is yours (it expires in 2 days):\n\n${enlace}\n\nIf you didn't create an account, you can ignore this.`
-      : `Hola, ${p.nombre}.\n\nBienvenido a Divoox. Toca el enlace para confirmar que este correo es tuyo (vence en 2 días):\n\n${enlace}\n\nSi no creaste una cuenta, ignora este correo.`;
+      : `Hola, ${p.nombre}.\n\nBienvenido a Divoox. Toca el enlace para confirmar que este correo es tuyo (vence en 2 días):\n\n${enlace}\n\nSi no creaste una cuenta, ignora este correo.`);
   return enviarCorreo(env, { de: 'avisos', para: p.correo, asunto, texto });
 }
 

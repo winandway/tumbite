@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sugerirCorreo } from './contacto';
+import { sugerirCorreo } from './sugerirCorreo';
 
 describe('C-CONTACTO: sugerir el correo bien escrito', () => {
   it('corrige los dominios comunes mal escritos', () => {

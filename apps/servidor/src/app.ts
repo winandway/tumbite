@@ -134,7 +134,7 @@ import { lugares } from './rutas/lugares';
 import { tiendas } from './rutas/tiendas';
 import { tiendasPeso } from './rutas/tiendasPeso';
 import { saludExclusividad } from './operaciones';
-import { correoConfigurado, ultimoErrorCorreo } from './correo';
+import { correoConfigurado, saludCorreo, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 // C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
 import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
@@ -337,7 +337,17 @@ app.get('/datos/salud', async (c) => {
     : c.env.TURNSTILE_SITE_KEY
       ? 'ok'
       : 'error';
-  piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
+  // C-CORREO-HONESTO (19 nov 2026): los fallos del correo se leen de la base (todas las instancias),
+  // no solo de la memoria de la instancia que contesta. El cupo alto del día también pone rojo.
+  const correo = c.env.DB
+    ? await saludCorreo(c.env.DB).catch((e: unknown) => {
+        console.error('salud: correo', e);
+        return null;
+      })
+    : null;
+  const correoMal =
+    Boolean(ultimoErrorCorreo) || correo?.estado === 'error' || (Boolean(c.env.DB) && !correo);
+  piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : correoMal ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
   piezas.avisosWeb = saludAvisosWeb(c.env);
@@ -535,6 +545,14 @@ app.get('/datos/salud', async (c) => {
       piezas,
       rutas: { consultasHoy: rutas.consultasHoy, tope: rutas.tope },
       llegada: { calculosHoy: llegada.calculosHoy, tope: llegada.tope },
+      correo: correo
+        ? {
+            fallos24h: correo.fallos24h,
+            ultimoFallo: correo.ultimoFallo,
+            cupoAlto: correo.cupoAlto,
+            rebotes24h: correo.rebotes24h,
+          }
+        : null,
       ultimoRespaldo: fechaRespaldo,
       version: VERSION_SERVIDOR,
     },

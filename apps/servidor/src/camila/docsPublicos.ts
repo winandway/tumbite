@@ -2389,7 +2389,8 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Al crear tu cuenta, la portada te avisa «Confirma tu correo para poder pedir» y, al ir a pagar, verás «Confirma tu correo» con la dirección que escribiste. Busca en ese correo el mensaje «Confirma tu correo de Divoox» (mira también en spam).",
    "Toca el enlace del correo en tu teléfono. En la página que se abre, toca «Abrir la app de Divoox».",
    "La app se da cuenta sola, te dice «Tu correo quedó verificado» y, al tocar «Continuar», sigues con tu pedido. Hasta entonces no se puede pagar: así cada cuenta es de una persona real y sus recibos le llegan.",
-   "¿Escribiste mal el correo? En la misma pantalla toca «¿Correo equivocado? Cámbialo», escribe el bueno y tu contraseña, y te mandamos el enlace ahí. El enlace vence en dos días; «Mandar el enlace otra vez» te manda uno nuevo."
+   "¿Escribiste mal el correo? En la misma pantalla toca «¿Correo equivocado? Cámbialo», escribe el bueno y tu contraseña, y te mandamos el enlace ahí. El enlace vence en dos días; «Mandar el enlace otra vez» te manda uno nuevo.",
+   "Si la dirección no existe o no recibe correos, la app te lo dice en rojo («No pudimos entregar el correo a esta dirección») y abre sola la casilla para cambiarla. Si el correo no pudo salir por un problema nuestro, también te lo decimos y puedes intentarlo otra vez en unos minutos: nunca verás «Te lo mandamos» si no s…"
   ],
   "cuerpo": ""
  },
@@ -4877,7 +4878,8 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "After you create your account, the home screen shows “Confirm your email to order,” and at checkout you’ll see “Confirm your email” with the address you typed. Look in that inbox for “Confirm your Divoox email” (check spam too).",
    "Tap the link in the email on your phone. On the page that opens, tap “Open the Divoox app.”",
    "The app notices on its own, tells you “Your email is verified,” and when you tap “Continue,” you go on with your order. Until then you can’t pay: this way every account belongs to a real person and receipts reach them.",
-   "Typed the wrong email? On the same screen, tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there. The link expires in two days; “Send the link again” sends a new one."
+   "Typed the wrong email? On the same screen, tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there. The link expires in two days; “Send the link again” sends a new one.",
+   "If the address doesn’t exist or can’t receive mail, the app tells you in red (“We couldn’t deliver the email to this address”) and opens the box to change it. If the email couldn’t go out because of a problem on our side, we tell you that too and you can try again in a few minutes: you’ll never see “We sent it” when i…"
   ],
   "cuerpo": ""
  },

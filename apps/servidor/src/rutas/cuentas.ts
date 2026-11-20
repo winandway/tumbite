@@ -37,7 +37,7 @@ import {
 import { pasaTurnstile } from '../turnstile';
 import { leerAccesoInterno } from '../accesoInterno';
 import { limiteIntentos } from '../seguridad';
-import { enviarCorreo, esCorreoDePrueba } from '../correo';
+import { correoRebotado, enviarCorreo, esCorreoDePrueba, type ResultadoCorreo } from '../correo';
 import { correoDeConfirmacion } from '../avisos';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -279,7 +279,13 @@ cuentas.post('/registro', async (c) => {
     ).catch((e: unknown) => {
       console.error('registro: invitación', e instanceof ErrorDatos ? e.message : e);
     });
-  await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
+  // C-CORREO-HONESTO: la cuenta se crea igual; la respuesta dice si el enlace salió de verdad.
+  const envio = await mandarConfirmacion(c.env, db, {
+    id,
+    nombre: d.nombre,
+    correo: d.correo,
+    idioma: d.idioma,
+  });
   // C-CAMILA-BIENVENIDA: Camila le da la bienvenida al conductor y, si vino con el código de un
   // líder, le avisa al líder con el contador. Nunca frena el registro.
   if (rol === 'repartidor')
@@ -291,7 +297,7 @@ cuentas.post('/registro', async (c) => {
     );
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));
-  return c.json({ token, usuario }, 201);
+  return c.json({ token, usuario, correoEnviado: envio.ok }, 201);
 });
 
 cuentas.post('/entrar', async (c) => {
@@ -346,12 +352,30 @@ cuentas.post('/entrar', async (c) => {
   return c.json({ token, usuario });
 });
 
+/**
+ * C-CORREO-HONESTO (19 nov 2026): lo que la app le dice a la persona cuando el enlace NO salió.
+ * Antes la pantalla decía «Te lo mandamos otra vez» aunque el proveedor lo hubiera rechazado.
+ */
+export const CORREO_NO_EXISTE =
+  'No pudimos entregar el correo: esa dirección no existe o no recibe mensajes. Revisa que esté bien escrita o cambia tu correo.';
+export const CORREO_NO_SALIO =
+  'No pudimos mandar el correo en este momento. Intenta otra vez en unos minutos; si sigue sin llegar, escríbenos a soporte.';
+export const CORREO_CAMBIADO_SIN_ENLACE =
+  'Cambiamos tu correo, pero no pudimos mandarte el enlace en este momento. Toca «Mandar el enlace otra vez» en unos minutos.';
+
+/** Si el enlace no salió, la petición responde con la verdad (nunca un «enviado» falso). */
+function exigirEnvio(r: ResultadoCorreo, sinEnlace = CORREO_NO_SALIO): void {
+  if (r.ok) return;
+  if (r.rebotado) throw new ErrorDatos(CORREO_NO_EXISTE, 'correo', 422);
+  throw new ErrorDatos(sinEnlace, undefined, 503);
+}
+
 /** Enlace para confirmar el correo: vence en 2 días, un solo uso. No bloquea entrar. */
 async function mandarConfirmacion(
   env: Env,
   db: D1Database,
   u: { id: string; nombre: string; correo: string; idioma: 'es' | 'en' },
-) {
+): Promise<ResultadoCorreo> {
   const token = nuevoToken();
   await db
     .prepare(
@@ -359,7 +383,12 @@ async function mandarConfirmacion(
     )
     .bind(await sha256(token), u.id)
     .run();
-  await correoDeConfirmacion(env, { correo: u.correo, nombre: u.nombre, idioma: u.idioma, token });
+  return correoDeConfirmacion(env, {
+    correo: u.correo,
+    nombre: u.nombre,
+    idioma: u.idioma,
+    token,
+  });
 }
 
 /** El teléfono registra su token de avisos. Si ya estaba, se reactiva y se anota la visita. */
@@ -445,7 +474,7 @@ cuentas.post('/confirmar/reenviar', async (c) => {
     .bind(u.id)
     .first<{ correo_confirmado_en: string | null }>();
   if (f?.correo_confirmado_en) return c.json({ ok: true, yaConfirmado: true });
-  await mandarConfirmacion(c.env, db, u);
+  exigirEnvio(await mandarConfirmacion(c.env, db, u));
   return c.json({ ok: true, yaConfirmado: false });
 });
 
@@ -600,7 +629,9 @@ cuentas.get('/perfil', async (c) => {
   const u = exigir(c);
   const f = await base(c)
     .prepare(
-      'SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en, sms_consentido_en FROM usuarios WHERE id = ?',
+      `SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en, sms_consentido_en,
+         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo)) AS rebotado
+       FROM usuarios WHERE id = ?`,
     )
     .bind(u.id)
     .first<Record<string, unknown>>();
@@ -612,6 +643,8 @@ cuentas.get('/perfil', async (c) => {
       fechaNacimiento: (f?.fecha_nacimiento as string | null) ?? null,
       idioma: f?.idioma === 'en' ? 'en' : 'es',
       correoConfirmado: Boolean(f?.correo_confirmado_en),
+      // C-CORREO-HONESTO: la dirección no existe o no recibe: la app pide revisarla o cambiarla.
+      correoRebotado: !f?.correo_confirmado_en && Number(f?.rebotado ?? 0) === 1,
       smsConsentimiento: Boolean(f?.sms_consentido_en),
       debeConfirmarCorreo: debeConfirmarCorreo(
         c.req.url,
@@ -744,16 +777,21 @@ cuentas.post('/correo', async (c) => {
   if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: usuarioPublico(u) });
   const existe = await db.prepare('SELECT 1 FROM usuarios WHERE correo = ?').bind(d.correo).first();
   if (existe) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
+  // C-CORREO-HONESTO: una dirección que ya rebotó no se acepta (no recibiría el enlace).
+  if (await correoRebotado(c.env, d.correo)) throw new ErrorDatos(CORREO_NO_EXISTE, 'correo', 422);
   await db
     .prepare('UPDATE usuarios SET correo = ?, correo_confirmado_en = NULL WHERE id = ?')
     .bind(d.correo, u.id)
     .run();
-  await mandarConfirmacion(c.env, db, {
-    id: u.id,
-    nombre: u.nombre,
-    correo: d.correo,
-    idioma: u.idioma,
-  });
+  exigirEnvio(
+    await mandarConfirmacion(c.env, db, {
+      id: u.id,
+      nombre: u.nombre,
+      correo: d.correo,
+      idioma: u.idioma,
+    }),
+    CORREO_CAMBIADO_SIN_ENLACE,
+  );
   return c.json({ usuario: { ...usuarioPublico(u), correo: d.correo } });
 });
 

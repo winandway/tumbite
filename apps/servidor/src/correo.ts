@@ -71,6 +71,8 @@ const ENDPOINT = 'https://yapanel.yadominios.com/api/hosting/correo/enviar';
 
 /** Último fallo de envío (para el canario). null = todo bien o nada enviado aún. */
 export let ultimoErrorCorreo: { cuando: string; motivo: string } | null = null;
+/** Día (UTC) en que ya se anotó la alarma del cupo, para no escribirla en cada envío. */
+let cupoAvisadoEl = '';
 
 type Transporte = (entrada: string, init: RequestInit) => Promise<Response>;
 let transporte: Transporte = (e, i) => fetch(e, i);
@@ -85,6 +87,7 @@ export function usarTransporteCorreo(
   // Con un transporte simulado las pruebas miran los correos a direcciones de ejemplo.
   omitirDePrueba = t === null ? true : (opciones?.omitirDePrueba ?? false);
   ultimoErrorCorreo = null;
+  cupoAvisadoEl = '';
 }
 
 /** Tiempo máximo para hablar con el servicio de correo (C-LLAMADAS-CON-LIMITE). */
@@ -114,16 +117,101 @@ export function esCorreoDePrueba(correo: string): boolean {
   );
 }
 
+/** Las direcciones nunca quedan escritas en un motivo que se guarda o se muestra en el canario. */
+const sinDirecciones = (t: string) =>
+  t.replace(/[^\s@<>"',;:]+@[^\s@<>"',;:]+/g, '<correo>').slice(0, 300);
+
+/**
+ * C-CORREO-HONESTO (19 nov 2026): ¿el proveedor dice que la dirección no existe o está bloqueada?
+ * Pasó en producción: Gmail respondió «550 5.1.1 The email account that you tried to reach does not
+ * exist», Cloudflare puso la dirección en su lista de bloqueo y el segundo envío volvió con
+ * `recipient_suppressed`. Eso es un problema de la dirección, no del sistema.
+ */
+export function esFalloDeDestinatario(motivo: string, codigo?: string): boolean {
+  const t = `${codigo ?? ''} ${motivo}`.toLowerCase();
+  return /recipient_suppressed|suppress|rebote_permanente|rebote permanente|5\.1\.1|does not exist|no existe/.test(
+    t,
+  );
+}
+
+/** Cuota del día a partir de la que el canario avisa, antes de quedarse sin correos. */
+export const CUPO_ALARMA = 0.8;
+async function anotarFallo(env: Env, tipo: 'sistema' | 'cupo', motivo: string) {
+  if (!env.DB) return;
+  try {
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO correo_fallos (tipo, motivo) VALUES (?, ?)').bind(
+        tipo,
+        sinDirecciones(motivo),
+      ),
+      env.DB.prepare(
+        'DELETE FROM correo_fallos WHERE id <= (SELECT MAX(id) FROM correo_fallos) - 200',
+      ),
+    ]);
+  } catch (e) {
+    console.error('correo: no se pudo anotar el fallo en la base', e);
+  }
+}
+
+async function anotarRebote(env: Env, para: string, motivo: string) {
+  if (!env.DB) return;
+  try {
+    await env.DB.prepare(
+      `INSERT INTO correos_rebotados (correo, motivo) VALUES (?, ?)
+       ON CONFLICT(correo) DO UPDATE SET motivo = excluded.motivo, creado_en = datetime('now')`,
+    )
+      .bind(para.trim().toLowerCase(), sinDirecciones(motivo))
+      .run();
+  } catch (e) {
+    console.error('correo: no se pudo anotar el rebote en la base', e);
+  }
+}
+
+/** ¿Esta dirección ya rebotó? Entonces no se le vuelve a escribir. */
+export async function correoRebotado(env: Pick<Env, 'DB'>, para: string): Promise<boolean> {
+  if (!env.DB) return false;
+  try {
+    const f = await env.DB.prepare('SELECT 1 AS si FROM correos_rebotados WHERE correo = ?')
+      .bind(para.trim().toLowerCase())
+      .first<{ si: number }>();
+    return Boolean(f);
+  } catch (e) {
+    console.error('correo: no se pudo mirar la lista de rebotes', e);
+    return false;
+  }
+}
+
+async function falloDeSistema(env: Env, motivo: string, para: string): Promise<ResultadoCorreo> {
+  ultimoErrorCorreo = { cuando: new Date().toISOString(), motivo };
+  console.error('correo:', motivo, para);
+  await anotarFallo(env, 'sistema', motivo);
+  return { ok: false, motivo, rebotado: false };
+}
+
+async function falloDeDestinatario(
+  env: Env,
+  motivo: string,
+  para: string,
+): Promise<ResultadoCorreo> {
+  // No pinta de rojo el canario (es la dirección, no el sistema), pero queda contado y escrito.
+  console.error('correo: la dirección no recibe:', motivo);
+  await anotarRebote(env, para, motivo);
+  return { ok: false, motivo, rebotado: true };
+}
+
 export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoCorreo> {
   // No es un fallo: esa dirección no existe, así que no se gasta un envío en ella.
   if (omitirDePrueba && esCorreoDePrueba(correo.para))
     return { ok: true, id: 'omitido-de-prueba', rebotado: false };
-  if (!env.YAD_TOKEN) {
-    const motivo = 'Falta YAD_TOKEN: el sitio no puede mandar correos.';
-    ultimoErrorCorreo = { cuando: new Date().toISOString(), motivo };
-    console.error('correo:', motivo);
-    return { ok: false, motivo, rebotado: false };
-  }
+  if (!env.YAD_TOKEN)
+    return falloDeSistema(env, 'Falta YAD_TOKEN: el sitio no puede mandar correos.', correo.para);
+  // C-CORREO-HONESTO: a una dirección que ya rebotó no se le escribe otra vez.
+  if (await correoRebotado(env, correo.para))
+    return {
+      ok: false,
+      motivo: 'Esa dirección ya rebotó antes: no existe o no recibe correos.',
+      rebotado: true,
+    };
   const cuerpo = {
     sitio: SITIO,
     token: env.YAD_TOKEN,
@@ -147,31 +235,84 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
       signal: AbortSignal.timeout(TIEMPO_CORREO_MS),
     });
   } catch (e) {
-    const motivo = `No se pudo hablar con el servicio de correo: ${String(e)}`;
-    ultimoErrorCorreo = { cuando: new Date().toISOString(), motivo };
-    console.error('correo:', motivo);
-    return { ok: false, motivo, rebotado: false };
+    return falloDeSistema(
+      env,
+      `No se pudo hablar con el servicio de correo: ${String(e)}`,
+      correo.para,
+    );
   }
   const datos = (await res.json().catch(() => null)) as {
     success?: boolean;
     message_id?: string;
     error?: string;
+    codigo?: string;
+    code?: string;
     rebotados?: string[];
+    enviados_hoy?: number;
+    incluidos_por_dia?: number;
   } | null;
   if (!res.ok || !datos?.success) {
     const motivo = datos?.error ?? `El servicio de correo respondió ${res.status}.`;
-    ultimoErrorCorreo = { cuando: new Date().toISOString(), motivo };
-    console.error('correo:', motivo, correo.para);
-    return { ok: false, motivo, rebotado: false };
+    const codigo = datos?.codigo ?? datos?.code;
+    if (datos?.rebotados?.length || esFalloDeDestinatario(motivo, codigo))
+      return falloDeDestinatario(env, motivo, correo.para);
+    return falloDeSistema(env, motivo, correo.para);
   }
-  if (datos.rebotados?.length) {
+  if (datos.rebotados?.length)
     // Un «enviado» no es un «llegó»: la dirección no existe. Se avisa, no se reintenta.
-    const motivo = `Rebote permanente: ${datos.rebotados.join(', ')}`;
-    ultimoErrorCorreo = { cuando: new Date().toISOString(), motivo };
-    console.error('correo:', motivo);
-    return { ok: false, motivo, rebotado: true };
+    return falloDeDestinatario(
+      env,
+      `Rebote permanente: ${datos.rebotados.join(', ')}`,
+      correo.para,
+    );
+  // C-CORREO-HONESTO: el canario avisa ANTES de que se acabe el cupo diario (una vez por día).
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (
+    datos.enviados_hoy &&
+    datos.incluidos_por_dia &&
+    datos.enviados_hoy >= datos.incluidos_por_dia * CUPO_ALARMA &&
+    cupoAvisadoEl !== hoy
+  ) {
+    cupoAvisadoEl = hoy;
+    await anotarFallo(
+      env,
+      'cupo',
+      `Van ${datos.enviados_hoy} de ${datos.incluidos_por_dia} correos del día.`,
+    );
   }
   return { ok: true, id: datos.message_id ?? '', rebotado: false };
+}
+
+/**
+ * Pieza «correo» del canario, leída de la base (vale en todas las instancias): «error» si hubo un
+ * fallo del sistema en las últimas 24 horas o si el día pasó del 80 % del cupo. Los rebotes de
+ * direcciones mal escritas no la ponen en rojo: se cuentan aparte.
+ */
+export async function saludCorreo(db: D1Database): Promise<{
+  estado: 'ok' | 'error';
+  fallos24h: number;
+  ultimoFallo: string | null;
+  cupoAlto: boolean;
+  rebotes24h: number;
+}> {
+  const f = await db
+    .prepare(
+      `SELECT
+        (SELECT COUNT(*) FROM correo_fallos WHERE tipo = 'sistema' AND creado_en > datetime('now', '-1 day')) AS fallos,
+        (SELECT MAX(creado_en) FROM correo_fallos WHERE tipo = 'sistema') AS ultimo,
+        (SELECT COUNT(*) FROM correo_fallos WHERE tipo = 'cupo' AND creado_en >= date('now')) AS cupo,
+        (SELECT COUNT(*) FROM correos_rebotados WHERE creado_en > datetime('now', '-1 day')) AS rebotes`,
+    )
+    .first<{ fallos: number; ultimo: string | null; cupo: number; rebotes: number }>();
+  const fallos24h = Number(f?.fallos ?? 0);
+  const cupoAlto = Number(f?.cupo ?? 0) > 0;
+  return {
+    estado: fallos24h > 0 || cupoAlto ? 'error' : 'ok',
+    fallos24h,
+    ultimoFallo: f?.ultimo ?? null,
+    cupoAlto,
+    rebotes24h: Number(f?.rebotes ?? 0),
+  };
 }
 
 function escapar(s: string): string {
