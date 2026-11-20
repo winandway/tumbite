@@ -233,7 +233,13 @@ export function AsistentePapeles({
     setError('');
     const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permiso.granted) return setError(t.permisoArchivos);
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    // NXT-4z: el iPhone entrega JPEG y no HEIC, que el servidor no acepta.
+    const r = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      preferredAssetRepresentationMode:
+        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+    });
     const foto = r.canceled ? null : r.assets[0];
     if (!foto) return;
     try {
