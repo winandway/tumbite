@@ -85,13 +85,17 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     });
     render(<PanelApp ruta="/panel" />);
     await userEvent.click(await screen.findByText(/Crea tu cuenta/));
+    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Rosa Prueba');
     await userEvent.type(screen.getByLabelText('Correo'), 'rosa@correo.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'una-clave-larga');
-    await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta de restaurante' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Marca la casilla');
     expect(envios).toBe(0);
     await userEvent.click(screen.getAllByRole('checkbox')[0]!);
-    await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta de restaurante' }));
+    // C-REVISA-TUS-DATOS: primero «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(envios).toBe(0);
+    await userEvent.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
     await waitFor(() => expect(envios).toBe(1));
   });
 

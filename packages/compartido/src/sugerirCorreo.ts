@@ -80,8 +80,28 @@ export function sugerirCorreo(correo: string): string | null {
     }
   }
   // Hasta dos letras de diferencia (gmial.com, gmail.con, gmai.com, gmail.co, hotmial.com).
-  return mejor && menor <= 2 ? `${usuario}@${mejor}` : null;
+  if (mejor && menor <= 2) return `${usuario}@${mejor}`;
+  // C-REVISA-TUS-DATOS: el final mal escrito también en dominios propios (empresa.con → .com).
+  // «.co» no se toca: es el de Colombia y existe.
+  const punto = dominio.lastIndexOf('.');
+  const final = TERMINACIONES_MAL_ESCRITAS.find(([mal]) => mal === dominio.slice(punto + 1));
+  return punto > 0 && final ? `${usuario}@${dominio.slice(0, punto + 1)}${final[1]}` : null;
 }
+
+/** Terminaciones que casi siempre son un dedo de más o de menos. */
+const TERMINACIONES_MAL_ESCRITAS: readonly (readonly [string, string])[] = [
+  ['con', 'com'],
+  ['cmo', 'com'],
+  ['ocm', 'com'],
+  ['vom', 'com'],
+  ['xom', 'com'],
+  ['cpm', 'com'],
+  ['comm', 'com'],
+  ['coom', 'com'],
+  ['nte', 'net'],
+  ['ner', 'net'],
+  ['ogr', 'org'],
+];
 
 /** El texto del aviso en el idioma de la persona. */
 export function textoSugerenciaCorreo(idioma: 'es' | 'en', sugerido: string): string {

@@ -5,12 +5,19 @@ import { BackHandler, Keyboard, Platform, Pressable, ScrollView, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
+  correoLimpio,
+  filasParaRevisar,
   pareceCorreo,
   ErrorApi,
   enIdioma,
   enIdiomaDireccion,
+  soloNumerosTelefono,
+  textosRevisar,
   useBorrador,
   pistaDeEntrada,
+  validarRegistro,
+  type CasillaRegistro,
+  type FalloCasilla,
 } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
@@ -26,6 +33,7 @@ import { SelectorIdioma } from './SelectorIdioma';
 import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile';
 import { mensajeSinCasilla } from './accesoErrores';
 import { EncabezadoVolver, useVolverDelSistema } from './VolverAEntrar';
+import { RevisaTusDatos } from './RevisaTusDatos';
 
 const INICIAL = {
   nombre: '',
@@ -85,12 +93,24 @@ export function Acceso({
     alSalir: alSalirTelefono,
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
-  // Volver de «Crear cuenta» a «Entrar». Cada modo tiene su borrador: lo escrito no se pierde al ir
-  // y volver.
+  // C-REVISA-TUS-DATOS: al crear la cuenta hay dos pasos, el formulario y «Revisa tus datos». La
+  // cuenta solo se crea desde el segundo, con el toque en «Crear mi cuenta».
+  const [paso, setPaso] = useState<'formulario' | 'revisar'>('formulario');
+  // «Editar» en la revisión vuelve al formulario con esa casilla ya abierta.
+  const [enfocar, setEnfocar] = useState<CasillaRegistro | null>(null);
+  // Los fallos de cada casilla al tocar «Continuar», dichos al lado de su casilla.
+  const [fallos, setFallos] = useState<FalloCasilla[]>([]);
+  // Un paso atrás. Desde «Revisa tus datos» se vuelve al formulario; desde «Crear cuenta», a
+  // «Entrar». Cada modo tiene su borrador: lo escrito no se pierde al ir y volver.
   const aEntrar = useCallback(() => {
     setError(null);
+    if (paso === 'revisar') {
+      setPaso('formulario');
+      return;
+    }
+    setFallos([]);
     setModo('entrar');
-  }, []);
+  }, [paso]);
   const gestoVolver = useVolverDelSistema(modo === 'registro', aEntrar);
   // C-APP-DE-PRUEBAS-VISIBLE: si entrar falla y la causa probable es la app equivocada (la de
   // pruebas con una cuenta real, o la de la tienda con una cuenta de prueba), se orienta. Sale de
@@ -100,70 +120,131 @@ export function Acceso({
   // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
   const [acepto, setAcepto] = useState(false);
   const v = b.valores;
-  const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
+  const errorDe = (c: CasillaRegistro) =>
+    fallos.find((f) => f.campo === c)?.mensaje ?? (error?.campo === c ? error.mensaje : undefined);
   // El error de una casilla se va en cuanto la persona la corrige (antes quedaba en rojo aunque ya
   // estuviera bien escrita).
   const cambiar = (campo: Exclude<keyof typeof INICIAL, 'sms'>, valor: string) => {
     b.cambiar(campo, valor);
     setError((e) => (e?.campo === campo ? null : e));
+    setFallos((f) => f.filter((x) => x.campo !== campo));
   };
   const turnstileSitio = useTurnstileSitio(api);
+  const r = textosRevisar(idioma);
+  const registro = modo === 'registro' && rolRegistro;
+  // Las casillas del registro, en el orden de la pantalla (también el de «Revisa tus datos»).
+  const casillasRegistro: CasillaRegistro[] = [
+    'nombre',
+    'correo',
+    'telefono',
+    'invitacion',
+    ...(pideCumple ? (['fechaNacimiento'] as const) : []),
+    'clave',
+  ];
 
-  async function enviar() {
+  const casillasVisibles: string[] = [
+    'correo',
+    'clave',
+    ...(registro ? ['nombre', 'telefono', 'invitacion'] : []),
+    ...(registro && pideCumple ? ['fechaNacimiento'] : []),
+  ];
+
+  /** Algo salió mal en el servidor: lo escrito se queda; si es de una casilla, se ve a su lado. */
+  function alFallar(x: unknown) {
+    // Un 403 del escudo anti-robots: el pase ya no sirve, se pide otro.
+    if (x instanceof ErrorApi && x.estado === 403) olvidarPaseTurnstile();
+    if (modo === 'entrar' && x instanceof ErrorApi && x.estado === 401 && Platform.OS !== 'web')
+      setPista(pistaDeEntrada(URL_SERVIDOR, v.correo));
+    if (x instanceof ErrorApi && x.campo && casillasVisibles.includes(x.campo))
+      setPaso('formulario');
+    setError(
+      x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
+    );
+  }
+
+  async function entrarConCuenta() {
     setError(null);
     setPista(null);
     if (!pareceCorreo(v.correo)) {
       setError({ mensaje: t.correoInvalido, campo: 'correo' });
       return;
     }
-    if (modo === 'registro' && rolRegistro && !acepto) {
-      setError({ mensaje: t.faltaAceptar });
-      return;
-    }
     setEnviando(true);
     try {
-      const r =
-        modo === 'entrar' || !rolRegistro
-          ? await api.entrar({ correo: v.correo, clave: v.clave })
-          : await api.registro({
-              nombre: v.nombre,
-              correo: v.correo,
-              clave: v.clave,
-              telefono: v.telefono || undefined,
-              fechaNacimiento: v.fechaNacimiento || undefined,
-              rol: rolRegistro,
-              idioma,
-              // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
-              smsConsentimiento: v.sms,
-              canal: 'app',
-              ...(v.invitacion.trim() ? { invitacion: v.invitacion.trim().toUpperCase() } : {}),
-            });
-      if (!rolesPermitidos.includes(r.usuario.rol)) {
+      const sesion = await api.entrar({ correo: v.correo, clave: v.clave });
+      if (!rolesPermitidos.includes(sesion.usuario.rol)) {
         setError({ mensaje: t.rolEquivocado });
         return;
       }
       await b.limpiar();
-      await alEntrar(r.token, r.usuario);
+      await alEntrar(sesion.token, sesion.usuario);
     } catch (x) {
-      // Un 403 del escudo anti-robots: el pase ya no sirve, se pide otro.
-      if (x instanceof ErrorApi && x.estado === 403) olvidarPaseTurnstile();
-      if (modo === 'entrar' && x instanceof ErrorApi && x.estado === 401 && Platform.OS !== 'web')
-        setPista(pistaDeEntrada(URL_SERVIDOR, v.correo));
-      setError(
-        x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
-      );
+      alFallar(x);
     } finally {
       setEnviando(false);
     }
   }
 
-  const registro = modo === 'registro' && rolRegistro;
-  const casillasVisibles = [
-    'correo',
-    'clave',
-    ...(registro ? ['nombre', 'telefono', 'invitacion'] : []),
-    ...(registro && pideCumple ? ['fechaNacimiento'] : []),
-  ];
+  /**
+   * C-REVISA-TUS-DATOS: «Continuar» del formulario. Valida cada casilla y, si todo está bien, abre
+   * «Revisa tus datos». NUNCA crea la cuenta.
+   */
+  function continuar() {
+    setError(null);
+    Keyboard.dismiss();
+    const malos = validarRegistro(v, idioma, casillasRegistro);
+    setFallos(malos);
+    if (malos.length) return;
+    if (!acepto) {
+      setError({ mensaje: t.faltaAceptar });
+      return;
+    }
+    setEnfocar(null);
+    setPaso('revisar');
+  }
+
+  /** «Editar» en la revisión: de vuelta al formulario, con lo escrito y esa casilla abierta. */
+  function editar(campo: CasillaRegistro | null) {
+    setError(null);
+    setEnfocar(campo);
+    setPaso('formulario');
+  }
+
+  /**
+   * Crea la cuenta. La llama SOLO el botón «Crear mi cuenta» de «Revisa tus datos» (candado
+   * C-REVISA-TUS-DATOS): ni la última casilla, ni el teclado, ni un efecto.
+   */
+  async function crearCuenta() {
+    if (!rolRegistro) return;
+    setError(null);
+    setEnviando(true);
+    try {
+      const sesion = await api.registro({
+        nombre: v.nombre.trim(),
+        correo: correoLimpio(v.correo),
+        clave: v.clave,
+        telefono: v.telefono || undefined,
+        fechaNacimiento: v.fechaNacimiento || undefined,
+        rol: rolRegistro,
+        idioma,
+        // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
+        smsConsentimiento: v.sms,
+        canal: 'app',
+        ...(v.invitacion.trim() ? { invitacion: v.invitacion.trim().toUpperCase() } : {}),
+      });
+      if (!rolesPermitidos.includes(sesion.usuario.rol)) {
+        setError({ mensaje: t.rolEquivocado });
+        return;
+      }
+      await b.limpiar();
+      await alEntrar(sesion.token, sesion.usuario);
+    } catch (x) {
+      alFallar(x);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   const mensajeGeneral = mensajeSinCasilla(error, casillasVisibles);
   // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
   const abrir = (ruta: string) => abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
@@ -171,6 +252,9 @@ export function Acceso({
   // negro y el cliente rojo, para que las tres se distingan a primera vista.
   const fondoIdioma =
     acento === 'logistica' ? COLOR.logistica : rolRegistro ? C.primario : COLOR.negro;
+  // Arriba, la flecha dice adónde lleva: de la revisión al formulario, del formulario a «Entrar».
+  const textoVolver = paso === 'revisar' ? r.editarDatos : t.volverAEntrar;
+  const tituloPantalla = !registro ? t.entrar : paso === 'revisar' ? r.titulo : t.crearCuenta;
   const marco = (cuerpo: ReactNode) =>
     portada ? (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} {...gestoVolver}>
@@ -190,18 +274,32 @@ export function Acceso({
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {registro ? <EncabezadoVolver texto={t.volverAEntrar} alVolver={aEntrar} /> : null}
+          {registro ? <EncabezadoVolver texto={textoVolver} alVolver={aEntrar} /> : null}
           {portada}
           {cuerpo}
         </ScrollView>
       </SafeAreaView>
     ) : (
-      <Pantalla
-        titulo={registro ? t.crearCuenta : t.entrar}
-        volver={registro ? aEntrar : seguirMirando}
-      >
+      <Pantalla titulo={tituloPantalla} volver={registro ? aEntrar : seguirMirando}>
         {cuerpo}
       </Pantalla>
+    );
+  if (registro && paso === 'revisar')
+    return marco(
+      <RevisaTusDatos
+        idioma={idioma}
+        correo={v.correo}
+        filas={filasParaRevisar(v, idioma, casillasRegistro)}
+        enviando={enviando}
+        error={mensajeGeneral}
+        conTitulo={Boolean(portada)}
+        alEditar={editar}
+        alEditarDatos={() => editar(null)}
+        alCrear={() => void crearCuenta()}
+        aceptarCorreo={(x) => cambiar('correo', x)}
+      >
+        <Turnstile sitio={turnstileSitio} idioma={idioma} />
+      </RevisaTusDatos>,
     );
   return marco(
     <>
@@ -255,6 +353,9 @@ export function Acceso({
           value={v.nombre}
           onChangeText={(x) => cambiar('nombre', x)}
           autoComplete="name"
+          textContentType="name"
+          autoCapitalize="words"
+          autoFocus={enfocar === 'nombre'}
           placeholder={t.nombre}
           error={errorDe('nombre')}
         />
@@ -266,6 +367,7 @@ export function Acceso({
         autoCapitalize="none"
         keyboardType="email-address"
         autoComplete="email"
+        autoFocus={Boolean(registro) && enfocar === 'correo'}
         placeholder={correoEjemplo(idioma)}
         error={errorDe('correo')}
       />
@@ -276,9 +378,12 @@ export function Acceso({
         <Campo
           etiqueta={t.telefono}
           value={v.telefono}
-          onChangeText={(x) => cambiar('telefono', x)}
+          // Solo números (y el + del país): las letras no entran.
+          onChangeText={(x) => cambiar('telefono', soloNumerosTelefono(x))}
           keyboardType="phone-pad"
           autoComplete="tel"
+          textContentType="telephoneNumber"
+          autoFocus={enfocar === 'telefono'}
           placeholder={t.telefono}
           error={errorDe('telefono')}
         />
@@ -290,6 +395,7 @@ export function Acceso({
           onChangeText={(x) => cambiar('invitacion', x.toUpperCase())}
           autoCapitalize="characters"
           autoCorrect={false}
+          autoFocus={enfocar === 'invitacion'}
           placeholder={t.invitacionAyuda}
           testID="registro-invitacion"
           error={errorDe('invitacion')}
@@ -314,10 +420,13 @@ export function Acceso({
         valor={v.clave}
         cambiar={(x) => cambiar('clave', x)}
         nueva={Boolean(registro)}
-        alEnviar={() => void enviar()}
+        // C-REVISA-TUS-DATOS: al crear la cuenta, la tecla del teclado solo lo guarda; nada se
+        // manda solo. Al entrar sí entra, como en cualquier app.
+        alEnviar={registro ? () => Keyboard.dismiss() : () => void entrarConCuenta()}
         error={errorDe('clave')}
       />
-      <Turnstile sitio={turnstileSitio} idioma={idioma} />
+      {/* En el registro, el escudo va en «Revisa tus datos», donde se crea la cuenta. */}
+      {registro ? null : <Turnstile sitio={turnstileSitio} idioma={idioma} />}
       {/* C-REGISTRO-ERRORES: un error sin casilla en pantalla sale aquí; nunca queda escondido. */}
       {mensajeGeneral ? (
         <Text
@@ -393,11 +502,16 @@ export function Acceso({
           {pista === 'appDePruebas' ? t.pistaAppDePruebas : t.pistaAppReal}
         </Text>
       ) : null}
-      <Boton
-        texto={enviando ? t.enviando : registro ? t.crearCuenta : t.entrar}
-        alTocar={() => void enviar()}
-        cargando={enviando}
-      />
+      {registro ? (
+        // C-REVISA-TUS-DATOS: «Continuar» lleva a revisar; la cuenta todavía no se crea.
+        <Boton testID="registro-continuar" texto={r.continuar} alTocar={continuar} />
+      ) : (
+        <Boton
+          texto={enviando ? t.enviando : t.entrar}
+          alTocar={() => void entrarConCuenta()}
+          cargando={enviando}
+        />
+      )}
       {modo === 'entrar' ? (
         <Text
           style={e.enlace}
@@ -413,6 +527,8 @@ export function Acceso({
           style={e.enlace}
           onPress={() => {
             setError(null);
+            setFallos([]);
+            setPaso('formulario');
             setModo(modo === 'entrar' ? 'registro' : 'entrar');
           }}
           accessibilityRole="button"

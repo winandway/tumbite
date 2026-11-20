@@ -29,7 +29,11 @@ describe('C-SIN-CALLEJON: de «Crear cuenta» siempre se vuelve a «Entrar»', (
   const acceso = leer('packages/movil/src/Acceso.tsx');
   it('la pantalla de acceso (la única de las tres apps) trae la flecha, los dos enlaces y el gesto', () => {
     expect(acceso).toMatch(
-      /registro \? <EncabezadoVolver texto=\{t\.volverAEntrar\} alVolver=\{aEntrar\}/,
+      /registro \? <EncabezadoVolver texto=\{textoVolver\} alVolver=\{aEntrar\}/,
+    );
+    // C-REVISA-TUS-DATOS: desde «Revisa tus datos» la flecha vuelve al formulario y lo dice.
+    expect(acceso).toContain(
+      "const textoVolver = paso === 'revisar' ? r.editarDatos : t.volverAEntrar;",
     );
     expect(acceso).toContain('volver={registro ? aEntrar : seguirMirando}');
     expect(acceso).toContain('testID="ya-tengo-cuenta-arriba"');

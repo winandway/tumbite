@@ -7544,3 +7544,70 @@ body.modo-tableta .cabecera {
   display: grid;
   gap: 6px;
 }
+
+/* C-REVISA-TUS-DATOS (19 nov 2026): «Revisa tus datos» antes de crear la cuenta. El correo arriba y
+   en grande; lo demás debajo, más pequeño. Tarjetas con borde fino, sin franjas de color. Cabe a
+   360 px: el correo largo se parte donde haga falta en vez de salirse. */
+.revisa-datos h2 {
+  font-size: 1.3rem;
+  margin: 8px 0 4px;
+}
+.revisa-intro {
+  color: #666b73;
+  margin: 0 0 16px;
+}
+.revisa-tarjeta {
+  border: 1px solid #d6d8dc;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+  margin: 0 0 12px;
+}
+.revisa-fila-cabeza,
+.revisa-dato {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.revisa-fila-cabeza .enlace,
+.revisa-dato .enlace {
+  padding: 4px 0;
+  flex: none;
+}
+.revisa-etiqueta {
+  color: #666b73;
+  font-size: 0.85rem;
+}
+.revisa-correo {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--secundario);
+  margin: 4px 0 8px;
+  overflow-wrap: anywhere;
+}
+.revisa-pregunta {
+  margin: 0;
+}
+.revisa-tarjeta .pista {
+  margin: 12px 0 0;
+}
+.revisa-lista {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.revisa-dato {
+  padding: 10px 0;
+}
+.revisa-dato + .revisa-dato {
+  border-top: 1px solid #e6e7ea;
+}
+.revisa-dato dt {
+  margin: 0;
+}
+.revisa-dato dd {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}

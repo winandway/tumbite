@@ -424,8 +424,19 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   // C-PERFIL-PERU: Perú (soles) entra a la lista de países con su propia configuración.
   const PAISES = ['US', 'CO', 'VE', 'MX', 'PE'] as const;
   const [paisElegido, setPaisElegido] = useState<(typeof PAISES)[number]>('US');
-  const [pais, setPais] = useState<ConfigPais | null>(null);
-  const [comisionesPais, setComisionesPais] = useState<number | null>(null);
+  // C-AJUSTES-PAIS-PROPIO (20 nov 2026) — todos los países. Lo cargado se guarda CON el país al que
+  // pertenece. Al cambiar de pestaña, mientras llega el país nuevo, `pais` es null y no se pinta
+  // ninguna casilla: antes se veían (y se podían guardar) los datos del país anterior en el nuevo.
+  const [cargado, setCargado] = useState<{
+    codigo: string;
+    config: ConfigPais | null;
+    comisiones: number | null;
+  } | null>(null);
+  const pais = cargado?.codigo === paisElegido ? cargado.config : null;
+  const comisionesPais = cargado?.codigo === paisElegido ? cargado.comisiones : null;
+  /** Edita la configuración que está en pantalla; si la cargada es de otro país, no toca nada. */
+  const setPais = (config: ConfigPais) =>
+    setCargado((antes) => (antes?.codigo === paisElegido ? { ...antes, config } : antes));
   const [puntos, setPuntos] = useState<Punto[] | null>(null);
   const [nuevoPunto, setNuevoPunto] = useState({ nombre: '', correo: '' });
   const [fondoPunto, setFondoPunto] = useState<
@@ -445,8 +456,11 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
         pedir<{ puntos: Punto[] }>('GET', '/datos/admin/puntos-venta').catch(() => null),
       ]);
       if (!vivo) return;
-      setPais(c?.config ?? null);
-      setComisionesPais(k?.comisiones ?? null);
+      setCargado({
+        codigo: paisElegido,
+        config: c?.config ?? null,
+        comisiones: k?.comisiones ?? null,
+      });
       setPuntos(p?.puntos ?? []);
     })();
     return () => {

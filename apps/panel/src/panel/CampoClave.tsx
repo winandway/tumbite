@@ -48,8 +48,13 @@ export function Campo(props: {
   autoComplete?: string;
   placeholder?: string;
   error?: string;
+  /** C-REVISA-TUS-DATOS: «Editar» en la revisión vuelve con esta casilla ya abierta. */
+  enfocar?: boolean;
+  /** El teclado del celular que corresponde (`tel`, `email`…). */
+  modoTeclado?: 'text' | 'tel' | 'email' | 'numeric';
 }) {
   const id = useId();
+  const idError = `${id}-error`;
   return (
     <div className="campo">
       <label htmlFor={id}>{props.etiqueta}</label>
@@ -61,8 +66,16 @@ export function Campo(props: {
         autoComplete={props.autoComplete}
         placeholder={props.placeholder}
         aria-invalid={Boolean(props.error)}
+        aria-describedby={props.error ? idError : undefined}
+        inputMode={props.modoTeclado}
+        // Solo al volver de «Editar», a pedido de la persona.
+        autoFocus={props.enfocar}
       />
-      {props.error && <p className="error-campo">{props.error}</p>}
+      {props.error && (
+        <p className="error-campo" id={idError}>
+          {props.error}
+        </p>
+      )}
     </div>
   );
 }

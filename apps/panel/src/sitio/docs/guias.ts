@@ -5202,6 +5202,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver.',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
+          'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta».',
         ],
         capturas: [
           {
@@ -5226,7 +5227,7 @@ const es: SeccionDocs[] = [
           '¿Cómo creo una cuenta de repartidor?',
         ],
         pasos: [
-          'Para pedir: abre la app de Divoox, toca «¿Eres nuevo? Crea tu cuenta», completa tus datos y toca «Crear cuenta». Si pones tu cumpleaños, tus restaurantes favoritos te pueden mandar un regalo.',
+          'Para pedir: abre la app de Divoox, toca «¿Eres nuevo? Crea tu cuenta», completa tus datos, toca «Continuar», revisa que tu correo esté bien escrito y toca «Crear mi cuenta». Si pones tu cumpleaños, tus restaurantes favoritos te pueden mandar un regalo.',
           'Para tu restaurante: entra a divoox.com, toca «Panel», luego «¿Tu restaurante aún no está en Divoox? Crea tu cuenta», y completa tus datos.',
           'Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.',
           'Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox.',
@@ -10679,6 +10680,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
+          'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.”',
         ],
         capturas: [
           {
@@ -10703,7 +10705,7 @@ const en: SeccionDocs[] = [
           'How do I create a driver account?',
         ],
         pasos: [
-          'To order: open the Divoox app, tap “New here? Create your account,” fill in your details, and tap “Create account.” If you add your birthday, your favorite restaurants can send you a gift.',
+          'To order: open the Divoox app, tap “New here? Create your account,” fill in your details, tap “Continue,” check that your email is spelled right, and tap “Create my account.” If you add your birthday, your favorite restaurants can send you a gift.',
           'For your restaurant: go to divoox.com, tap “Dashboard,” then “Restaurant not on Divoox yet? Create your account,” and fill in your details.',
           'To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.',
           'We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox.',

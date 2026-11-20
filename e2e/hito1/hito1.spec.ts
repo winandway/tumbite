@@ -16,7 +16,6 @@ const TXT = {
     correo: 'Email',
     celular: 'Mobile phone',
     clave: 'Password',
-    boton: 'Create account',
     comida: 'Food',
   },
   es: {
@@ -25,7 +24,6 @@ const TXT = {
     correo: 'Correo',
     celular: 'Celular',
     clave: 'Contraseña',
-    boton: 'Crear cuenta',
     comida: 'Comida',
   },
 } as const;
@@ -55,7 +53,9 @@ async function registrar(p: Page, idioma: 'en' | 'es') {
   await p.getByLabel(L.celular).fill('3055550199');
   await p.getByLabel(L.clave, { exact: true }).fill(CLAVE);
   await p.getByRole('checkbox').first().click(); // acepta los términos
-  await p.getByRole('button', { name: L.boton }).click();
+  // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+  await p.getByTestId('registro-continuar').click();
+  await p.getByTestId('crear-mi-cuenta').click();
 }
 
 const foto = (p: Page, nombre: string) => p.screenshot({ path: `${CAPTURAS}/${nombre}.png` });

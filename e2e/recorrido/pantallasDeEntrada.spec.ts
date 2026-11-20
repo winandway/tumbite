@@ -161,9 +161,11 @@ for (const idioma of ['es', 'en'] as const) {
       await casillaCelular.fill(celular);
     }
     await p.getByRole('checkbox').first().click();
-    await p
-      .getByRole('button', { name: en ? 'Create account' : 'Crear cuenta', exact: true })
-      .click();
+    // C-REVISA-TUS-DATOS: nada se manda solo; primero «Revisa tus datos», con el correo en grande.
+    await p.getByTestId('registro-continuar').click();
+    await expect(p.getByTestId('revisar-correo')).toHaveText(correo);
+    await guardar(p, 'app-restaurante-app-revisa-tus-datos');
+    await p.getByTestId('crear-mi-cuenta').click();
     // Ya dentro: la app le ofrece completar su restaurante ahí mismo, sin pedirle una computadora.
     await expect(
       p.getByRole('button', { name: en ? 'Complete my restaurant' : 'Completar mi restaurante' }),
