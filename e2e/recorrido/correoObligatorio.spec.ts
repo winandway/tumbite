@@ -54,7 +54,9 @@ for (const idioma of ['en', 'es'] as const)
     await p.getByLabel(L.correo).fill(correo);
     await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
     await p.getByRole('checkbox').first().click();
-    await p.getByRole('button', { name: L.crearCuenta }).click();
+    // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+    await p.getByTestId('registro-continuar').click();
+    await p.getByTestId('crear-mi-cuenta').click();
 
     // 1. Vuelve a la portada con el aviso de confirmar el correo (no bloquea mirar).
     await expect(p.getByTestId('aviso-correo')).toBeVisible({ timeout: 20_000 });

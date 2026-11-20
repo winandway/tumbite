@@ -325,7 +325,9 @@ for (const P of PAISES) {
       await rep.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}7`);
       await rep.getByLabel(L.clave, { exact: true }).fill(clave);
       await rep.getByRole('checkbox').first().click(); // acepta los términos
-      await rep.getByRole('button', { name: L.crearCuenta }).click();
+      // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+      await rep.getByTestId('registro-continuar').click();
+      await rep.getByTestId('crear-mi-cuenta').click();
       await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
       // C-PLAZO-PAPELES (19 nov 2026): donde el país da plazo para los papeles (Venezuela), la cuenta
       // nueva se conecta desde el primer día, pero con la foto de su cara ya tomada. La foto se deja
@@ -416,7 +418,9 @@ for (const P of PAISES) {
       await cli.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}8`);
       await cli.getByLabel(L.clave, { exact: true }).fill(clave);
       await cli.getByRole('checkbox').first().click(); // acepta los términos
-      await cli.getByRole('button', { name: L.crearCuenta }).click();
+      // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+      await cli.getByTestId('registro-continuar').click();
+      await cli.getByTestId('crear-mi-cuenta').click();
       await expect(cli.getByText(nombreRest).first()).toBeVisible({ timeout: 30_000 });
       await cli.getByText(nombreRest).first().click();
       await expect(cli.getByText(P.visto).first()).toBeVisible({ timeout: 20_000 });

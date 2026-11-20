@@ -313,7 +313,10 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(panel, 'restaurante-registro');
     await panel.getByRole('checkbox').first().check(); // acepta los términos
-    await panel.getByRole('button', { name: L.panelRegistrar }).click();
+    // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+    await panel.getByTestId('registro-continuar').click();
+    await expect(panel.getByTestId('revisa-tus-datos')).toBeVisible();
+    await panel.getByTestId('crear-mi-cuenta').click();
 
     await panel.getByRole('link', { name: L.miRestaurante, exact: true }).click();
     await panel.getByLabel(L.nombreRest).fill(restaurante);
@@ -557,7 +560,9 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await fotoAqui(rep, 'repartidor-registro');
     await rep.getByRole('checkbox').first().click(); // acepta los términos
-    await rep.getByRole('button', { name: L.crearCuenta }).click();
+    // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+    await rep.getByTestId('registro-continuar').click();
+    await rep.getByTestId('crear-mi-cuenta').click();
     // C-PERMISOS-EXPLICADOS: tras registrarse, la app explica los permisos antes de pedirlos.
     await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
@@ -621,7 +626,9 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
     await cli.getByRole('checkbox').first().click(); // acepta los términos
-    await cli.getByRole('button', { name: L.crearCuenta }).click();
+    // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+    await cli.getByTestId('registro-continuar').click();
+    await cli.getByTestId('crear-mi-cuenta').click();
     await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
     await foto(cli, 'cliente-inicio');
