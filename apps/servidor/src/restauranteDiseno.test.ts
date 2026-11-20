@@ -63,7 +63,10 @@ describe('app del restaurante con el diseño aprobado', () => {
     expect(empaquetar).toMatch(/\$SALIDA\/restaurant/);
   });
   it('el acceso del restaurante tiene su portada sin cambiar el de cliente y repartidor', () => {
-    expect(leer(...APP, 'app', 'index.tsx')).toMatch(/<Acceso portada=\{<Portada \/>\} \/>/);
+    // Desde el 19 nov 2026 la app crea la cuenta del restaurante (C-RESTAURANTE-DESDE-EL-TELEFONO).
+    expect(leer(...APP, 'app', 'index.tsx')).toMatch(
+      /<Acceso rolRegistro="restaurante" portada=\{<Portada \/>\} \/>/,
+    );
     expect(leer('packages', 'movil', 'src', 'Acceso.tsx')).toMatch(/portada \?/);
     expect(leer('apps', 'cliente', 'src', 'app', '_layout.tsx')).not.toMatch(/portada/);
   });
