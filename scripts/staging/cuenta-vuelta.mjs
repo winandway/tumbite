@@ -15,6 +15,11 @@ const r = await fetch(`${base}/datos/interno/diagnostico/vuelta`, {
 });
 const d = await r.json().catch(() => ({}));
 console.log(`FILAS-VUELTA ${JSON.stringify(d)}`);
+// C-PRUEBAS-NO-SE-FRENAN-POR-EL-DIA: pasar el aviso del día no frena la corrida, solo se dice.
+if (d.avisoDia)
+  console.log(
+    `::warning::Las pruebas de hoy ya escribieron ${d.hoy?.escritas} filas en el sitio de pruebas (aviso desde ${d.topes?.avisoDia?.escritas}). La corrida no se frena.`,
+  );
 if (d.vuelta?.frenada) {
   console.error('::error::La vuelta de pruebas se frenó por pasar del presupuesto de filas');
   process.exit(1);

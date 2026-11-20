@@ -11,7 +11,7 @@ import type { Env } from './env';
  * y el recorrido de cada rama) mandan la cabecera `x-vuelta-pruebas` con el número de su corrida.
  * El servidor cuenta las filas leídas y escritas de cada petición de esa vuelta y las suma en
  * `vueltas_pruebas`. Si la vuelta pasa de su tope, o entre todas las vueltas del día pasan del
- * tope diario, la vuelta se frena: cada petición siguiente responde 429 sin tocar nada más, la
+ * tope diario (el de desbocado, ver TOPE_DIA_PRUEBAS), la vuelta se frena: cada petición siguiente responde 429 sin tocar nada más, la
  * corrida queda en rojo en GitHub y el canario (`pruebasContinuas`) sale en error.
  *
  * En producción la cabecera se ignora: ahí no hay vueltas de prueba. Solo se guarda la cuenta de
@@ -21,13 +21,18 @@ export const TOPE_VUELTA_PRUEBAS = { escritas: 6_000 };
 /** El recorrido completo de una rama (`rama-…`) prueba todos los servicios: tope aparte. */
 export const TOPE_VUELTA_RAMA = { escritas: 20_000 };
 /**
- * Tope diario del sitio de pruebas. Subió de 30.000 a 120.000 el 14 nov 2026: en una noche con
- * varias ramas probándose a la vez (cada recorrido de rama escribe unas 7.000 filas) el tope de
- * 30.000 frenó la prueba del circuito de cobro, que es obligatoria antes de publicar pagos. Con
- * 120.000 al día, el peor mes posible son 3,6 millones de escrituras (menos de 4 dólares en D1).
- * El freno de verdad contra un bucle sigue siendo el tope POR VUELTA, que no cambia.
+ * C-PRUEBAS-NO-SE-FRENAN-POR-EL-DIA (orden de Richard, 20 nov 2026). El 20 nov la suma del día llegó
+ * a 120.007 filas y frenó con 429 la corrida que faltaba para publicar: horas paradas por un
+ * contador nuestro. Desde hoy la suma del día tiene dos escalones:
+ *  - AVISO_DIA_PRUEBAS (120.000): pasado, la corrida SIGUE; se avisa en el registro del servidor y
+ *    en el último paso de la corrida (`cuenta-vuelta.mjs`). No frena ni pone el canario en rojo.
+ *  - TOPE_DIA_PRUEBAS (600.000): freno de desbocado. Son treinta recorridos completos de rama en un
+ *    día (60 centavos de dólar en D1); llegar ahí ya no es trabajo, es un bucle.
+ * El freno de verdad contra un bucle sigue siendo el tope POR VUELTA, que no cambia. El presupuesto
+ * de PRODUCCIÓN es otra pieza y no se tocó.
  */
-export const TOPE_DIA_PRUEBAS = { escritas: 120_000 };
+export const AVISO_DIA_PRUEBAS = { escritas: 120_000 };
+export const TOPE_DIA_PRUEBAS = { escritas: 600_000 };
 export const topeDeVuelta = (id: string) =>
   id.startsWith('rama-') ? TOPE_VUELTA_RAMA : TOPE_VUELTA_PRUEBAS;
 export const CABECERA_VUELTA = 'x-vuelta-pruebas';
@@ -60,6 +65,10 @@ export const presupuestoVueltaPruebas: MiddlewareHandler<{ Bindings: Env }> = as
       : (delDia?.n ?? 0) > TOPE_DIA_PRUEBAS.escritas
         ? `presupuesto: las vueltas de pruebas de hoy escribieron ${delDia?.n} filas (tope diario ${TOPE_DIA_PRUEBAS.escritas})`
         : null;
+  if (!motivo && (delDia?.n ?? 0) > AVISO_DIA_PRUEBAS.escritas && !vuelta)
+    console.error(
+      `aviso: las vueltas de pruebas de hoy llevan ${delDia?.n} filas (aviso desde ${AVISO_DIA_PRUEBAS.escritas}); la vuelta ${id} sigue`,
+    );
   if (motivo) {
     console.error(motivo);
     if (!vuelta?.frenada)
@@ -139,7 +148,8 @@ export async function cuentaVuelta(db: D1Database, id: string) {
     vuelta,
     hoy: dia,
     pesadas: pesadas.results,
-    topes: { vuelta: topeDeVuelta(id), dia: TOPE_DIA_PRUEBAS },
+    topes: { vuelta: topeDeVuelta(id), dia: TOPE_DIA_PRUEBAS, avisoDia: AVISO_DIA_PRUEBAS },
+    avisoDia: (dia?.escritas ?? 0) > AVISO_DIA_PRUEBAS.escritas,
   };
 }
 

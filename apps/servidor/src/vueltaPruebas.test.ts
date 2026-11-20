@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { app } from './app';
 import { mundo } from './pruebas/ayuda';
 import {
+  AVISO_DIA_PRUEBAS,
   TOPE_DIA_PRUEBAS,
   TOPE_VUELTA_PRUEBAS,
   cuentaVuelta,
@@ -94,7 +95,22 @@ describe('C-PRESUPUESTO-VUELTA-PRUEBAS', () => {
     expect((await registrar('continuas-1004-1', PRUEBAS, 2)).status).toBeLessThan(300);
   });
 
-  it('pasado el tope diario se frena también una vuelta nueva', async () => {
+  it('C-PRUEBAS-NO-SE-FRENAN-POR-EL-DIA: pasado el aviso del día la corrida sigue, avisa y el canario no sale en rojo', async () => {
+    const { m, registrar, poner } = preparar();
+    // Siete recorridos de rama, cada uno dentro de SU tope: juntos pasan el aviso del día.
+    for (let i = 1; i <= 7; i++) await poner(`rama-90${i}-1`, 18_000);
+    expect(7 * 18_000).toBeGreaterThan(AVISO_DIA_PRUEBAS.escritas);
+    expect((await registrar('rama-1010-1')).status).toBeLessThan(300);
+    expect((await registrar('continuas-1011-1', PRUEBAS, 2)).status).toBeLessThan(300);
+    expect(await saludVueltasPruebas(m.DB)).toBe('ok');
+    const cuenta = await cuentaVuelta(m.DB, 'rama-1010-1');
+    expect(cuenta.avisoDia).toBe(true);
+    expect((cuenta.vuelta as { frenada: number }).frenada).toBe(0);
+    // Hay holgura de verdad: el freno de desbocado está varias corridas completas más arriba.
+    expect(TOPE_DIA_PRUEBAS.escritas).toBeGreaterThanOrEqual(AVISO_DIA_PRUEBAS.escritas * 4);
+  });
+
+  it('pasado el tope diario de desbocado se frena también una vuelta nueva', async () => {
     const { registrar, poner } = preparar();
     await poner('rama-1', 16_000);
     await poner('rama-2', TOPE_DIA_PRUEBAS.escritas - 16_000 + 1);

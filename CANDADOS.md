@@ -3874,6 +3874,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## C-PRUEBAS-NO-SE-FRENAN-POR-EL-DIA (20 nov 2026, orden de Richard) — todos los países
+
+- **Qué pasó:** el 20 nov la suma del día del sitio de pruebas llegó a 120.007 filas escritas (tope diario 120.000) y el servidor frenó con 429 la corrida de la rama `fase-plazo-papeles-4`, la que faltaba para publicar el asistente de Driver. El código estaba bien; el trabajo quedó parado horas por un contador nuestro. Palabras de Richard: «no puede ser que nos hayamos parado por un contador».
+- **Causa real:** la suma del día era un freno duro pensado para un día normal; un día con muchas corridas completas (cada recorrido de rama escribe entre 7.000 y 20.000 filas) lo alcanza haciendo trabajo legítimo.
+- **Arreglo:** `apps/servidor/src/vueltaPruebas.ts`. La suma del día tiene dos escalones: `AVISO_DIA_PRUEBAS` (120.000) solo AVISA (registro del servidor y `::warning::` en el último paso de la corrida, `scripts/staging/cuenta-vuelta.mjs`, campo `avisoDia`), no frena y no pone el canario en rojo; `TOPE_DIA_PRUEBAS` (600.000) queda como freno de desbocado (treinta recorridos completos en un día, 60 centavos de dólar en D1). El tope POR VUELTA (6.000 y 20.000) no cambió: sigue siendo el freno contra un bucle. La ciudad de juego sigue usando el escalón de 120.000 para encenderse.
+- **Candado:** `vueltaPruebas.test.ts`, prueba «C-PRUEBAS-NO-SE-FRENAN-POR-EL-DIA». Vista en rojo poniendo el tope del día otra vez en 120.000 (la corrida nueva recibía 429).
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/vueltaPruebas.test.ts`. En una corrida, el paso final imprime `FILAS-VUELTA` con `avisoDia`.
+- **Qué NO tocar:** el presupuesto de PRODUCCIÓN es otra pieza y no se tocó: protege la factura de la nube. No volver a convertir el aviso del día en freno. Regla general de Richard desde hoy: ningún obstáculo nuestro (un contador, una fila, un límite propio) justifica esperar horas; se quita y se sigue. Solo se espera por terceros.
+
 ## C-APP-INSTALABLE (13 nov 2026, Richard) — todos los países
 
 - **Qué faltaba:** la versión web de las tres apps (`/app`, `/driver`, `/restaurant`) no se podía «Agregar a la pantalla de inicio» como aplicación: no tenía manifiesto ni ícono de Apple. Richard la quiere para quien tiene iPhone mientras Apple revisa y para arrancar en países donde casi nadie usa la tienda.

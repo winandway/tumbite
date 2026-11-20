@@ -9,7 +9,7 @@ import { paisDeZona } from './internacional/paises';
 import { contarFilas, type CuentaFilas } from './presupuestoFilas';
 import { zonaPara } from './rutas/zonas';
 import { ErrorDatos } from './validar';
-import { TOPE_DIA_PRUEBAS } from './vueltaPruebas';
+import { AVISO_DIA_PRUEBAS as TOPE_DIA_PRUEBAS } from './vueltaPruebas';
 
 /**
  * C-CIUDAD-JUEGO (SIM-7, 13 nov 2026, pedido de Richard): la ciudad de pruebas en MODO JUEGO. Una
