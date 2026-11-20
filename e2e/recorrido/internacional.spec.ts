@@ -327,6 +327,12 @@ for (const P of PAISES) {
       await rep.getByRole('checkbox').first().click(); // acepta los términos
       await rep.getByRole('button', { name: L.crearCuenta }).click();
       await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
+      // C-PLAZO-PAPELES (19 nov 2026): donde el país da plazo para los papeles (Venezuela), la cuenta
+      // nueva se conecta desde el primer día, pero con la foto de su cara ya tomada. La foto se deja
+      // en la base local, como en los demás recorridos; donde no hay plazo (Colombia) no cambia nada.
+      sqlLocalTexto(
+        `INSERT OR IGNORE INTO kyc (usuario_id, selfie) SELECT id, 'kyc/selfie' FROM usuarios WHERE correo = '${correo('repartidor')}'`,
+      );
       const conectar = () => deslizar(rep, 'conectarme');
       await conectar();
       await expect(rep.getByRole('button', { name: L.tomarSelfie })).toBeVisible({
