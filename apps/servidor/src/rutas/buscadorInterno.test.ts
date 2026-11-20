@@ -269,7 +269,8 @@ describe('C-BUSCADOR-SERIO · el buscador de arriba del superadmin', () => {
     expect(grupo(porCorreo, 'clientes').map((c) => c.id)).toEqual(['c-ana']);
     expect(grupo(porCorreo, 'tickets').map((t) => t.id)).toEqual([TICKET]);
     expect(grupo(await buscar('ana.r@'), 'clientes')).toEqual([]);
-    expect(grupo(await buscar('ana.ru'), 'clientes').map((c) => c.id)).toEqual([]);
+    // C-BUSCADOR-SECCIONES (19 nov 2026): el comienzo del correo sin «@» también encuentra.
+    expect(grupo(await buscar('ana.ru'), 'clientes').map((c) => c.id)).toEqual(['c-ana']);
     expect(grupo(await buscar('carla@'), 'repartidores').map((c) => c.id)).toEqual(['r-carla']);
     expect(grupo(await buscar('us-mia-0001'), 'repartidores').map((c) => c.id)).toEqual([
       'r-carla',
@@ -661,6 +662,12 @@ describe('C-BUSCADOR-SERIO · presupuesto (la nube no se come el dinero)', () =>
       'XYZ9',
       '$12.34',
       'c0ffee',
+      // C-BUSCADOR-SECCIONES: comienzo del correo sin «@», dueños de comercio y empresas de Flex.
+      'ana.ru',
+      'vol1',
+      'dueño',
+      'kprado07',
+      'envios rap',
     ];
     for (const q of entradas)
       expect(

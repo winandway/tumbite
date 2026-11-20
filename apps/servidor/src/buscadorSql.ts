@@ -39,6 +39,9 @@ export const INDICES_BUSCADOR = [
   "CREATE INDEX IF NOT EXISTS vehiculos_placa ON vehiculos(upper(placa)) WHERE placa != ''",
   // Placa declarada por el repartidor de comida (se guarda en mayúscula).
   "CREATE INDEX IF NOT EXISTS repartidor_datos_placa ON repartidor_datos(placa) WHERE placa != ''",
+  // C-BUSCADOR-SECCIONES: empresas de Divoox Flex por comienzo del nombre, sin acentos (se escribe
+  // una fila más solo al crear una empresa o cambiarle el nombre).
+  `CREATE INDEX IF NOT EXISTS empresas_nombre_plano ON empresas(${NOMBRE_PLANO})`,
   // Tickets por correo de quien escribió (la columna ya es NOCASE: el índice también lo es).
   'CREATE INDEX IF NOT EXISTS tickets_correo ON tickets(correo)',
 ];

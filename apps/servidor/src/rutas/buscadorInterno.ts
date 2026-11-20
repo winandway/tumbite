@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import {
+  alcanceEsTotal,
   type AccesoInterno,
   type BusquedaInterna,
   type PermisoInterno,
@@ -92,6 +93,11 @@ export type ResultadoBusqueda = {
   fecha?: string | null;
   monto?: number | null;
   moneda?: string | null;
+  /**
+   * C-BUSCADOR-SECCIONES: un acceso directo más, debajo del resultado («Ver sus papeles» abre la
+   * verificación de un conductor o del dueño de un comercio). Relativo a la dirección del superadmin.
+   */
+  atajo?: { clave: 'papeles'; enlace: string };
 };
 export const GRUPOS_BUSQUEDA = [
   'pedidos',
@@ -101,6 +107,8 @@ export const GRUPOS_BUSQUEDA = [
   'restaurantes',
   'vehiculos',
   'tickets',
+  // C-BUSCADOR-SECCIONES: las empresas de Divoox Flex.
+  'empresas',
 ] as const;
 export type GrupoBusqueda = (typeof GRUPOS_BUSQUEDA)[number];
 
@@ -114,17 +122,26 @@ const todasSinAlcance = todas;
 
 // ───────────────────────── Personas: clientes, repartidores, comercios ─────────────────────────
 
+/**
+ * C-BUSCADOR-SECCIONES (19 nov 2026): una cuenta se encuentra en CUALQUIER estado. Antes las
+ * búsquedas por nombre, teléfono y comienzo del correo pedían `activo = 1`, así que una cuenta
+ * suspendida no salía; y el comienzo del correo solo se buscaba con «@». Solo quedan fuera las
+ * cuentas borradas por su dueño (nombre «Cuenta borrada», sin datos): esas se abren por su id.
+ * Es un filtro de la fila ya encontrada por el índice: no cambia el índice ni lee de más.
+ */
+export const SIN_BORRADAS = "NOT (activo = 0 AND nombre = 'Cuenta borrada')";
+
 /** Ids de cuentas de un rol por comienzo del nombre (sin acentos), del teléfono o del correo. */
 async function idsDeCuentas(
   db: D1Database,
-  rol: 'cliente' | 'repartidor',
+  rol: 'cliente' | 'repartidor' | 'restaurante',
   b: BusquedaInterna,
   tope: number,
   acceso: AccesoInterno | null = null,
 ): Promise<string[]> {
   // C-PERMISOS-FINOS: con alcance, cada consulta lleva la condición de la persona (por su llave),
   // antes del LIMIT: el tope de 5 se llena con gente de su zona, no se recorta después.
-  const objeto = rol === 'cliente' ? 'cliente' : 'repartidor';
+  const objeto = rol === 'cliente' ? 'cliente' : rol === 'repartidor' ? 'repartidor' : 'persona';
   const al = (id: string) => alcanceObjetoSql(acceso, objeto, id);
   const todas = (db: D1Database, sql: string, ...valores: unknown[]) => {
     const tabla = /FROM (\w+)/.exec(sql)?.[1] ?? 'usuarios';
@@ -152,7 +169,7 @@ async function idsDeCuentas(
     consultas.push(
       todas(
         db,
-        `SELECT id FROM usuarios WHERE rol = ? AND ${NOMBRE_PLANO} >= ? AND ${NOMBRE_PLANO} < ? AND activo = 1 LIMIT ?`,
+        `SELECT id FROM usuarios WHERE rol = ? AND ${NOMBRE_PLANO} >= ? AND ${NOMBRE_PLANO} < ? AND ${SIN_BORRADAS} LIMIT ?`,
         rol,
         desde,
         hasta,
@@ -170,7 +187,7 @@ async function idsDeCuentas(
       consultas.push(
         todas(
           db,
-          'SELECT id FROM usuarios WHERE telefono_canonico >= ? AND telefono_canonico < ? AND +rol = ? AND activo = 1 LIMIT ?',
+          `SELECT id FROM usuarios WHERE telefono_canonico >= ? AND telefono_canonico < ? AND +rol = ? AND ${SIN_BORRADAS} LIMIT ?`,
           desde,
           hasta,
           rol,
@@ -185,7 +202,7 @@ async function idsDeCuentas(
     consultas.push(
       todas(
         db,
-        `SELECT id FROM usuarios INDEXED BY usuarios_telefono_viejo WHERE telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != '' AND ${TELEFONO_DIEZ} >= ? AND ${TELEFONO_DIEZ} < ? AND +rol = ? AND activo = 1 LIMIT ?`,
+        `SELECT id FROM usuarios INDEXED BY usuarios_telefono_viejo WHERE telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != '' AND ${TELEFONO_DIEZ} >= ? AND ${TELEFONO_DIEZ} < ? AND +rol = ? AND ${SIN_BORRADAS} LIMIT ?`,
         desde,
         hasta,
         rol,
@@ -196,7 +213,7 @@ async function idsDeCuentas(
     consultas.push(
       todas(
         db,
-        `SELECT id FROM usuarios WHERE ${CON_TELEFONO} AND ${TELEFONO_FINAL} = ? AND ${TELEFONO_DIGITOS} LIKE ? AND +rol = ? AND activo = 1 LIMIT ?`,
+        `SELECT id FROM usuarios WHERE ${CON_TELEFONO} AND ${TELEFONO_FINAL} = ? AND ${TELEFONO_DIGITOS} LIKE ? AND +rol = ? AND ${SIN_BORRADAS} LIMIT ?`,
         d.slice(-4),
         `%${d}`,
         rol,
@@ -227,7 +244,27 @@ async function idsDeCuentas(
       consultas.push(
         todas(
           db,
-          'SELECT id FROM usuarios WHERE correo >= ? AND correo < ? AND +rol = ? AND activo = 1 LIMIT ?',
+          `SELECT id FROM usuarios WHERE correo >= ? AND correo < ? AND +rol = ? AND ${SIN_BORRADAS} LIMIT ?`,
+          desde,
+          hasta,
+          rol,
+          tope,
+        ),
+      );
+    }
+  }
+  // C-BUSCADOR-SECCIONES: «kpr» ya encuentra «kprado07@gmail.com», desde la primera letra, por el
+  // índice del correo (y por el del correo único, que en Gmail no lleva puntos).
+  if (b.inicioCorreo && !b.correo) {
+    const variantes = new Map<string, string>([['correo', b.inicioCorreo]]);
+    if (b.inicioCorreo.includes('.'))
+      variantes.set('correo_canonico', b.inicioCorreo.replace(/\./g, ''));
+    for (const [columna, inicio] of variantes) {
+      const [desde, hasta] = rangoPrefijo(inicio);
+      consultas.push(
+        todas(
+          db,
+          `SELECT id FROM usuarios WHERE ${columna} >= ? AND ${columna} < ? AND +rol = ? AND ${SIN_BORRADAS} LIMIT ?`,
           desde,
           hasta,
           rol,
@@ -423,6 +460,34 @@ async function grupoViajes(
   return { resultados, total: Math.max(r.total, resultados.length), totalMas: r.totalMas };
 }
 
+/**
+ * C-BUSCADOR-SECCIONES: el estado de una cuenta, en una clave que el panel dice en palabras. El de
+ * un conductor sale de su verificación (KYC) y de sus papeles; el de un cliente, del correo.
+ * - `eliminada`: la borró su dueño. `suspendido`: el equipo la apagó (activo = 0).
+ * - Conductor: `rechazado` (verificación no aprobada), `papeles_pendientes` (envió su verificación
+ *   o un papel y espera revisión), `sin_verificar` (todavía no envió nada), o `aprobado`.
+ * - Cliente: `sin_confirmar` mientras no confirme su correo; si no, sin estado (todo bien).
+ */
+export function estadoDeCuenta(
+  rol: 'cliente' | 'repartidor',
+  f: {
+    activo?: unknown;
+    nombre?: unknown;
+    kyc?: unknown;
+    papeles_pendientes?: unknown;
+    correo_confirmado_en?: unknown;
+  },
+): string | null {
+  if (Number(f.activo ?? 1) !== 1)
+    return String(f.nombre) === 'Cuenta borrada' ? 'eliminada' : 'suspendido';
+  if (rol === 'cliente') return f.correo_confirmado_en ? null : 'sin_confirmar';
+  const kyc = texto(f.kyc) ?? 'sin_enviar';
+  if (kyc === 'rechazado') return 'rechazado';
+  if (kyc === 'pendiente' || Number(f.papeles_pendientes ?? 0) === 1) return 'papeles_pendientes';
+  if (kyc === 'aprobado') return 'aprobado';
+  return 'sin_verificar';
+}
+
 async function grupoCuentas(
   db: D1Database,
   quien: Usuario,
@@ -432,12 +497,20 @@ async function grupoCuentas(
 ): Promise<ResultadoBusqueda[]> {
   const ids = await idsDeCuentas(db, rol, b, POR_GRUPO, acceso);
   if (!ids.length) return [];
+  // La verificación (por su llave) y un papel pendiente (por el índice del conductor): una o dos
+  // filas por cuenta, nunca la tabla.
   const filas = await todas(
     db,
-    `SELECT u.id, u.nombre, u.correo, u.telefono, u.activo, z.nombre AS ciudad, d.codigo,
-        x.placa, x.vehiculo_tipo
+    `SELECT u.id, u.nombre, u.correo, u.telefono, u.activo, u.correo_confirmado_en,
+        z.nombre AS ciudad, d.codigo, x.placa, x.vehiculo_tipo, k.estado AS kyc,
+        ${
+          rol === 'repartidor'
+            ? "EXISTS (SELECT 1 FROM conductor_documentos cd WHERE cd.conductor_id = u.id AND cd.estado = 'pendiente')"
+            : '0'
+        } AS papeles_pendientes
        FROM usuarios u LEFT JOIN repartidores d ON d.usuario_id = u.id
        LEFT JOIN repartidor_datos x ON x.usuario_id = u.id
+       LEFT JOIN kyc k ON k.usuario_id = u.id
        LEFT JOIN zonas z ON z.id = ${rol === 'repartidor' ? 'COALESCE(d.zona_id, u.zona_id)' : 'u.zona_id'}
       WHERE u.id IN (${marcas(ids.length)})`,
     ...ids,
@@ -450,6 +523,7 @@ async function grupoCuentas(
     const correo = contactoVisible(quien, 'correo', f.correo);
     const coincide =
       b.nombre ?? b.codigoRepartidor ?? (b.telefono ? b.telefono.slice(-4) : (b.placa ?? ''));
+    const estado = estadoDeCuenta(rol, f);
     return [
       {
         id,
@@ -462,30 +536,80 @@ async function grupoCuentas(
         ]
           .filter(Boolean)
           .join(' · '),
-        estado: Number(f.activo ?? 1) === 1 ? null : 'eliminada',
+        estado,
         ciudad: texto(f.ciudad),
         enlace: `/${rol === 'cliente' ? 'customers' : 'drivers'}/${id}`,
         coincide,
+        // C-BUSCADOR-SECCIONES: el acceso directo a sus papeles (la verificación de ESA persona).
+        ...(rol === 'repartidor' && estado !== 'eliminada'
+          ? { atajo: { clave: 'papeles' as const, enlace: `/verifications/${id}` } }
+          : {}),
       },
     ];
   });
 }
 
+/** Ids en tandas de 80 (D1 acepta 100 valores por consulta; queda sitio para el alcance). */
+const TANDA = 80;
+async function enTandas(ids: string[], f: (tanda: string[]) => Promise<Fila[]>): Promise<Fila[]> {
+  const partes: Promise<Fila[]>[] = [];
+  for (let i = 0; i < ids.length; i += TANDA) partes.push(f(ids.slice(i, i + TANDA)));
+  return (await Promise.all(partes)).flat();
+}
+
+/**
+ * Restaurantes y tiendas: por su nombre o su id, y — C-BUSCADOR-SECCIONES — también por la cuenta de
+ * su dueño (nombre, teléfono o correo, en cualquier estado). Un dueño que se registró y todavía no
+ * terminó de cargar su comercio sale igual, con «Registro sin terminar», y lleva a su verificación.
+ */
 async function grupoComercios(
   db: D1Database,
+  quien: Usuario,
   b: BusquedaInterna,
   acceso: AccesoInterno | null,
 ): Promise<ResultadoBusqueda[]> {
-  const ids = await idsDeComercios(db, b, POR_GRUPO, acceso);
-  if (!ids.length) return [];
-  const filas = await todas(
-    db,
-    `SELECT r.id, r.nombre, r.tipo_comercio, r.estado, z.nombre AS ciudad
-       FROM restaurantes r LEFT JOIN zonas z ON z.id = r.zona_id WHERE r.id IN (${marcas(ids.length)})`,
-    ...ids,
+  const [porNombre, duenos] = await Promise.all([
+    idsDeComercios(db, b, POR_GRUPO, acceso),
+    // Desde la segunda letra: con una sola, el comercio ya sugiere por su nombre (y no se lee de más).
+    b.texto.length >= 2 ? idsDeCuentas(db, 'restaurante', b, POR_GRUPO, null) : [],
+  ]);
+  const al = alcanceObjetoSql(acceso, 'restaurante', 'restaurantes.id');
+  const deDuenos = duenos.length
+    ? await enTandas(duenos, (t) =>
+        todas(
+          db,
+          `SELECT id, dueno_id FROM restaurantes WHERE dueno_id IN (${marcas(t.length)})${al.sql}`,
+          ...t,
+          ...al.valores,
+        ),
+      )
+    : [];
+  const conComercio = new Set(deDuenos.map((f) => String(f.dueno_id)));
+  // Los dueños sin comercio: solo los que su alcance deja ver (por la cuenta).
+  const sinComercio = duenos.filter((d) => !conComercio.has(d));
+  const ap = alcanceObjetoSql(acceso, 'persona', 'usuarios.id');
+  const cuentas = sinComercio.length
+    ? await todas(
+        db,
+        `SELECT id, nombre, correo, activo FROM usuarios WHERE id IN (${marcas(sinComercio.length)})${ap.sql}`,
+        ...sinComercio,
+        ...ap.valores,
+      )
+    : [];
+  const ids = [...new Set([...porNombre, ...deDuenos.map((f) => String(f.id))])].slice(
+    0,
+    POR_GRUPO,
   );
+  const filas = ids.length
+    ? await todas(
+        db,
+        `SELECT r.id, r.nombre, r.tipo_comercio, r.estado, r.dueno_id, z.nombre AS ciudad
+           FROM restaurantes r LEFT JOIN zonas z ON z.id = r.zona_id WHERE r.id IN (${marcas(ids.length)})`,
+        ...ids,
+      )
+    : [];
   const porId = new Map(filas.map((f) => [String(f.id), f]));
-  return ids.flatMap((id) => {
+  const comercios: ResultadoBusqueda[] = ids.flatMap((id) => {
     const f = porId.get(id);
     return f
       ? [
@@ -497,6 +621,115 @@ async function grupoComercios(
             estado: texto(f.estado),
             ciudad: texto(f.ciudad),
             enlace: `/restaurants/${id}`,
+            coincide: b.nombre ?? '',
+            ...(f.dueno_id
+              ? {
+                  atajo: {
+                    clave: 'papeles' as const,
+                    enlace: `/verifications/${String(f.dueno_id)}`,
+                  },
+                }
+              : {}),
+          },
+        ]
+      : [];
+  });
+  const registros: ResultadoBusqueda[] = cuentas.map((f) => ({
+    id: String(f.id),
+    titulo: String(f.nombre),
+    detalle: contactoVisible(quien, 'correo', f.correo),
+    clase: 'registro',
+    estado: Number(f.activo ?? 1) === 1 ? 'registro_sin_terminar' : 'suspendido',
+    ciudad: null,
+    enlace: `/verifications/${String(f.id)}`,
+    coincide: b.nombre ?? '',
+  }));
+  return [...comercios, ...registros].slice(0, POR_GRUPO);
+}
+
+/**
+ * C-BUSCADOR-SECCIONES: las empresas de Divoox Flex, en cualquier estado (activa, pausada, cerrada),
+ * por su nombre (índice sin acentos), su id o el correo de su dueño o de un miembro. El dinero de
+ * las empresas es de toda la startup: solo lo ve quien tiene alcance total (como su ficha).
+ */
+async function grupoEmpresas(
+  db: D1Database,
+  quien: Usuario,
+  b: BusquedaInterna,
+  acceso: AccesoInterno | null,
+): Promise<ResultadoBusqueda[]> {
+  if (acceso && !alcanceEsTotal(acceso.alcance)) return [];
+  const consultas: Promise<Fila[]>[] = [];
+  // Desde la segunda letra, como el dueño de un comercio.
+  if (b.nombre && b.nombre.length >= 2) {
+    const [desde, hasta] = rangoPrefijo(b.nombre);
+    consultas.push(
+      todas(
+        db,
+        `SELECT id FROM empresas WHERE ${NOMBRE_PLANO} >= ? AND ${NOMBRE_PLANO} < ? LIMIT ?`,
+        desde,
+        hasta,
+        POR_GRUPO,
+      ),
+    );
+  }
+  if (b.id) consultas.push(todas(db, 'SELECT id FROM empresas WHERE id = ?', b.id));
+  const correoCompleto = b.correo && /@[^@\s]+\.[a-z]{2,}$/i.test(b.correo) ? b.correo : null;
+  const inicio = b.correo && !correoCompleto ? b.correo : (b.inicioCorreo ?? null);
+  if (correoCompleto || inicio) {
+    const [desde, hasta] = rangoPrefijo(inicio ?? '');
+    const personas = (
+      correoCompleto
+        ? await todas(db, 'SELECT id FROM usuarios WHERE correo = ? LIMIT ?', correoCompleto, 1)
+        : await todas(
+            db,
+            'SELECT id FROM usuarios WHERE correo >= ? AND correo < ? LIMIT ?',
+            desde,
+            hasta,
+            POR_GRUPO,
+          )
+    ).map((f) => String(f.id));
+    if (personas.length)
+      consultas.push(
+        todas(
+          db,
+          `SELECT id FROM empresas WHERE dueno_id IN (${marcas(personas.length)}) LIMIT ?`,
+          ...personas,
+          POR_GRUPO,
+        ),
+        todas(
+          db,
+          `SELECT empresa_id AS id FROM empresa_miembros WHERE usuario_id IN (${marcas(personas.length)}) LIMIT ?`,
+          ...personas,
+          POR_GRUPO,
+        ),
+      );
+  }
+  if (!consultas.length) return [];
+  const ids = [...new Set((await Promise.all(consultas)).flat().map((f) => String(f.id)))].slice(
+    0,
+    POR_GRUPO,
+  );
+  if (!ids.length) return [];
+  const filas = await todas(
+    db,
+    `SELECT e.id, e.nombre, e.pais, e.estado, u.correo
+       FROM empresas e LEFT JOIN usuarios u ON u.id = e.dueno_id WHERE e.id IN (${marcas(ids.length)})`,
+    ...ids,
+  );
+  const porId = new Map(filas.map((f) => [String(f.id), f]));
+  return ids.flatMap((id) => {
+    const f = porId.get(id);
+    return f
+      ? [
+          {
+            id,
+            titulo: String(f.nombre),
+            detalle: contactoVisible(quien, 'correo', f.correo),
+            clase: 'empresa',
+            estado: texto(f.estado),
+            ciudad: texto(f.pais),
+            enlace: `/flexfinance/${id}`,
             coincide: b.nombre ?? '',
           },
         ]
@@ -591,6 +824,7 @@ export const PERMISO_GRUPO: Record<GrupoBusqueda, readonly PermisoInterno[]> = {
   restaurantes: ['restaurantes.ver'],
   vehiculos: ['repartidores.ver'],
   tickets: ['tickets.ver'],
+  empresas: ['dinero.ver'],
 };
 
 /**
@@ -613,15 +847,16 @@ export async function buscarEnSuperadmin(
     toca(g)
       ? f().then((x) => (Array.isArray(x) ? { resultados: x } : x))
       : Promise.resolve<GrupoConTotal>({ resultados: [] });
-  const [pedidos, viajes, clientes, repartidores, restaurantes, vehiculos, tickets] =
+  const [pedidos, viajes, clientes, repartidores, restaurantes, vehiculos, tickets, empresas] =
     await Promise.all([
       si('pedidos', () => grupoPedidos(db, b, acceso)),
       si('viajes', () => grupoViajes(db, b, acceso)),
       si('clientes', () => grupoCuentas(db, quien, 'cliente', b, acceso)),
       si('repartidores', () => grupoCuentas(db, quien, 'repartidor', b, acceso)),
-      si('restaurantes', () => grupoComercios(db, b, acceso)),
+      si('restaurantes', () => grupoComercios(db, quien, b, acceso)),
       si('vehiculos', () => grupoVehiculos(db, b, acceso)),
       si('tickets', () => grupoTickets(db, quien, b, acceso)),
+      si('empresas', () => grupoEmpresas(db, quien, b, acceso)),
     ]);
   const grupos = Object.entries({
     pedidos,
@@ -631,6 +866,7 @@ export async function buscarEnSuperadmin(
     restaurantes,
     vehiculos,
     tickets,
+    empresas,
   })
     .filter(([, g]) => g.resultados.length > 0)
     .map(([tipo, g]) => ({

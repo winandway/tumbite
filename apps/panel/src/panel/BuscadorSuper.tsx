@@ -8,7 +8,6 @@ import {
   enIdioma,
   formatearMonto,
   quisoDecirCodigo,
-  textoPlano,
   tramoCoincidente,
 } from '@tumbite/compartido';
 import { ir } from '../ruta';
@@ -17,6 +16,7 @@ import { useHora } from './horario';
 import { type GrupoMenu, IconoDe } from './armazon/menus';
 import { PAUSA_TECLAS_MS, crearMemoria } from './memoriaBusqueda';
 import { AyudaAqui } from './AyudaAqui';
+import { buscarSecciones, seccionesParecidas } from './indiceSecciones';
 
 /**
  * C-BUSCADOR-SERIO (15 nov 2026, pedido de Richard). Todos los países. El buscador fijo arriba de
@@ -29,6 +29,12 @@ import { AyudaAqui } from './AyudaAqui';
  * «Ver todos»; la pausa baja a 120 ms; lo ya buscado sale al instante de la memoria de la pestaña;
  * mientras llega lo nuevo se deja ver lo anterior (sin parpadeo); y si no hay nada se dice qué se
  * buscó y se sugiere («¿Quisiste decir #B4290C?»).
+ *
+ * C-BUSCADOR-SECCIONES (19 nov 2026, Richard escribió «kyc» y no salió nada): «Ir a…» va arriba con
+ * las secciones y acciones del panel por su nombre y por sus sinónimos, en los dos idiomas, desde un
+ * índice local (indiceSecciones.ts) y solo las que el permiso de la cuenta deja ver. Cada cuenta
+ * trae su estado en palabras y, la de un conductor o un comercio, «Ver sus papeles». Sin resultados,
+ * sugiere secciones parecidas: nunca un callejón sin salida.
  */
 export const PAUSA_BUSCAR_MS = PAUSA_TECLAS_MS;
 
@@ -48,8 +54,10 @@ const T = {
     enLista: 'Buscar en Pedidos en curso, con los cerrados',
     avisoMonto: 'Los montos se buscan solo en los últimos 30 días.',
     irDirecto: 'Enter abre la ficha',
+    quizas: 'Quizás buscabas:',
+    verPapeles: 'Ver sus papeles',
     grupos: {
-      secciones: 'Ir a',
+      secciones: 'Ir a…',
       pedidos: 'Pedidos',
       viajes: 'Viajes',
       clientes: 'Clientes',
@@ -57,6 +65,7 @@ const T = {
       restaurantes: 'Restaurantes y tiendas',
       vehiculos: 'Vehículos',
       tickets: 'Tickets',
+      empresas: 'Empresas de Flex',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Esperando pago',
@@ -88,6 +97,12 @@ const T = {
       vencido: 'Vencido',
       retirado: 'Retirado',
       eliminada: 'Cuenta eliminada',
+      sin_verificar: 'Sin verificar',
+      papeles_pendientes: 'Papeles pendientes',
+      sin_confirmar: 'Correo sin confirmar',
+      registro_sin_terminar: 'Registro sin terminar',
+      activa: 'Activa',
+      pausada: 'Pausada',
     } as Record<string, string>,
     clases: {
       moto: 'Moto',
@@ -102,6 +117,8 @@ const T = {
       franquicia: 'Franquicia',
       queja: 'Queja',
       soporte: 'Soporte',
+      registro: 'Dueño de comercio',
+      empresa: 'Empresa',
     } as Record<string, string>,
   },
   en: {
@@ -117,8 +134,10 @@ const T = {
     enLista: 'Search Live orders, including closed ones',
     avisoMonto: 'Amounts are searched in the last 30 days only.',
     irDirecto: 'Press Enter to open it',
+    quizas: 'Maybe you were looking for:',
+    verPapeles: 'See their documents',
     grupos: {
-      secciones: 'Go to',
+      secciones: 'Go to…',
       pedidos: 'Orders',
       viajes: 'Rides',
       clientes: 'Customers',
@@ -126,6 +145,7 @@ const T = {
       restaurantes: 'Restaurants and stores',
       vehiculos: 'Vehicles',
       tickets: 'Tickets',
+      empresas: 'Flex businesses',
     } as Record<string, string>,
     estados: {
       pago_pendiente: 'Awaiting payment',
@@ -157,6 +177,12 @@ const T = {
       vencido: 'Expired',
       retirado: 'Retired',
       eliminada: 'Deleted account',
+      sin_verificar: 'Not verified',
+      papeles_pendientes: 'Documents pending',
+      sin_confirmar: 'Email not confirmed',
+      registro_sin_terminar: 'Sign-up not finished',
+      activa: 'Active',
+      pausada: 'Paused',
     } as Record<string, string>,
     clases: {
       moto: 'Moto',
@@ -171,6 +197,8 @@ const T = {
       franquicia: 'Franchise',
       queja: 'Complaint',
       soporte: 'Support',
+      registro: 'Store owner',
+      empresa: 'Business',
     } as Record<string, string>,
   },
 };
@@ -182,7 +210,7 @@ function nombreClase(clase: string, idioma: Idioma, clases: Record<string, strin
   return new Map(Object.entries(clases)).get(clase) ?? clase;
 }
 
-const EXITO = new Set(['entregado', 'terminado', 'terminada', 'aprobado', 'respondido']);
+const EXITO = new Set(['entregado', 'terminado', 'terminada', 'aprobado', 'respondido', 'activa']);
 const PROBLEMA = new Set([
   'cancelado',
   'cancelada',
@@ -201,6 +229,12 @@ const NEUTRO = new Set([
   'cerrado',
   'pausado',
   'retirado',
+  'sin_verificar',
+  'papeles_pendientes',
+  'sin_confirmar',
+  'registro_sin_terminar',
+  'pausada',
+  'cerrada',
 ]);
 /** Verde lo que salió bien, rojo los problemas, gris lo que espera o ya no cuenta. */
 export function tonoEstado(
@@ -244,6 +278,8 @@ type Resultado = {
   fecha?: string | null;
   monto?: number | null;
   moneda?: string | null;
+  /** C-BUSCADOR-SECCIONES: el acceso directo debajo del resultado («Ver sus papeles»). */
+  atajo?: { clave: 'papeles'; enlace: string };
 };
 type Respuesta = {
   q: string;
@@ -261,6 +297,12 @@ type Opcion = {
   texto?: string;
   /** «Ver todos» al pie de un grupo con más de los que se muestran. */
   verTodos?: string;
+  /** La palabra que encontró la sección cuando no es su nombre («kyc»). */
+  porque?: string | null;
+  /** Dónde vive la sección en el menú («Operación»). */
+  donde?: string;
+  /** «Ver sus papeles» debajo de una cuenta. */
+  papeles?: boolean;
 };
 
 /** Lo ya buscado, en la memoria de esta pestaña (C-BUSCADOR-INSTANTANEO). */
@@ -368,14 +410,11 @@ export function BuscadorSuper({
     };
   }, [q]);
 
-  const secciones = useMemo(() => {
-    const plano = textoPlano(q);
-    if (!plano) return [];
-    return grupos
-      .flatMap((g) => g.items.map((i) => ({ ...i, grupo: g.titulo })))
-      .filter((i) => textoPlano(`${i.texto} ${i.grupo}`).includes(plano))
-      .slice(0, 5);
-  }, [grupos, q]);
+  // C-BUSCADOR-SECCIONES: el índice local (sin pedir nada al servidor), con los permisos del menú.
+  const secciones = useMemo(
+    () => buscarSecciones(grupos, q, idioma, base),
+    [grupos, q, idioma, base],
+  );
 
   const enMemoria = q ? (MEMORIA.leer(q)?.valor ?? null) : null;
   const vigente = respuesta && respuesta.q === q ? respuesta : enMemoria;
@@ -393,16 +432,32 @@ export function BuscadorSuper({
         clave: `secciones-${s.clave}`,
         grupo: 'secciones',
         a: s.a,
-        icono: s.clave,
+        icono: s.icono,
         texto: s.texto,
+        porque: s.porque,
+        donde: s.grupo,
       })),
       ...(mostrada?.grupos ?? []).flatMap((g) => [
-        ...g.resultados.map((r) => ({
-          clave: `${g.tipo}-${r.id}`,
-          grupo: g.tipo,
-          a: `${base}${r.enlace}`,
-          resultado: r,
-        })),
+        ...g.resultados.flatMap((r): Opcion[] => [
+          {
+            clave: `${g.tipo}-${r.id}`,
+            grupo: g.tipo,
+            a: `${base}${r.enlace}`,
+            resultado: r,
+          },
+          // C-BUSCADOR-SECCIONES: «Ver sus papeles», una opción más del teclado, debajo de la cuenta.
+          ...(r.atajo
+            ? [
+                {
+                  clave: `${g.tipo}-${r.id}-papeles`,
+                  grupo: g.tipo,
+                  a: `${base}${r.atajo.enlace}`,
+                  verTodos: t.verPapeles,
+                  papeles: true,
+                },
+              ]
+            : []),
+        ]),
         // C-BUSCADOR-INSTANTANEO: «Ver todos» si hay más de los que caben aquí.
         ...(g.total !== undefined && (g.totalMas || g.total > g.resultados.length)
           ? [
@@ -420,6 +475,10 @@ export function BuscadorSuper({
   );
   const totalDe = new Map((mostrada?.grupos ?? []).map((g) => [g.tipo, g]));
   const sugerencia = quisoDecirCodigo(q);
+  const parecidas = useMemo(
+    () => (opciones.length === 0 ? seccionesParecidas(grupos, q, idioma, base) : []),
+    [opciones.length, grupos, q, idioma, base],
+  );
 
   const elegir = useCallback((a: string) => {
     corte.current?.abort();
@@ -519,6 +578,25 @@ export function BuscadorSuper({
                     ?
                   </p>
                 ) : null}
+                {parecidas.length ? (
+                  <>
+                    <p>{t.quizas}</p>
+                    <ul className="bs-parecidas">
+                      {parecidas.map((s) => (
+                        <li key={s.clave}>
+                          <button
+                            type="button"
+                            className="bs-sugerencia"
+                            onClick={() => elegir(s.a)}
+                          >
+                            <IconoDe clave={s.icono} tamano={16} />
+                            <span>{s.texto}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
                 <p>{t.pista}</p>
                 <p>
                   <button
@@ -552,7 +630,7 @@ export function BuscadorSuper({
                       id={idOpcion(yo)}
                       role="option"
                       aria-selected={yo === marcado}
-                      className={`bs-opcion${r ? '' : ' bs-seccion'}${o.verTodos ? ' bs-ver-todos' : ''}${yo === marcado ? ' pd-opcion-activa' : ''}`}
+                      className={`bs-opcion${r ? '' : ' bs-seccion'}${o.verTodos ? ' bs-ver-todos' : ''}${o.papeles ? ' bs-papeles' : ''}${yo === marcado ? ' pd-opcion-activa' : ''}`}
                       onMouseEnter={() => setMarcado(yo)}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => elegir(o.a)}
@@ -595,8 +673,17 @@ export function BuscadorSuper({
                       ) : (
                         <>
                           <IconoDe clave={o.icono ?? ''} tamano={18} />
-                          <span>
-                            <Resaltado texto={o.texto ?? ''} buscado={q} />
+                          <span className="bs-principal">
+                            <span>
+                              <Resaltado texto={o.texto ?? ''} buscado={q} />
+                            </span>
+                            {o.porque || o.donde ? (
+                              <small>
+                                {o.porque ? <Resaltado texto={o.porque} buscado={q} /> : null}
+                                {o.porque && o.donde ? ' · ' : null}
+                                {o.donde}
+                              </small>
+                            ) : null}
                           </span>
                         </>
                       )}

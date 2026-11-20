@@ -2107,6 +2107,23 @@ body.modo-tableta .pd .pd-contenido {
   font-weight: 600;
   font-size: 0.85rem;
 }
+.bs-caja li.bs-opcion.bs-papeles {
+  padding-left: 28px;
+  font-size: 0.82rem;
+}
+.bs-vacio ul.bs-parecidas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.bs-parecidas .bs-sugerencia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .bs-caja.bs-cargando ul {
   opacity: 0.55;
   transition: opacity 120ms;

@@ -156,7 +156,7 @@ describe('C-BUSCADOR-SERIO · buscador de arriba del superadmin', () => {
     expect(document.activeElement).toBe(otra);
   });
 
-  it('las secciones del menú también aparecen («Ir a»)', async () => {
+  it('las secciones del menú también aparecen («Ir a…»)', async () => {
     servidor(
       (q) => new Response(JSON.stringify({ q, grupos: [], salto: null, avisoMonto: false })),
     );
@@ -173,7 +173,7 @@ describe('C-BUSCADOR-SERIO · buscador de arriba del superadmin', () => {
       />,
     );
     await userEvent.type(screen.getByRole('combobox'), 'pedidos');
-    expect(await screen.findByText('Ir a')).toBeTruthy();
+    expect(await screen.findByText('Ir a…')).toBeTruthy();
     await userEvent.keyboard('{Enter}');
     expect(window.location.pathname).toBe(`${BASE}/orders`);
   });

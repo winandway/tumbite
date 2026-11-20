@@ -571,6 +571,83 @@
         text-decoration: underline;
         flex: none;
       }
+      .correo-grande {
+        border: 1.5px solid var(--negro);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+      .correo-grande .arriba {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .resumen .editar {
+        text-decoration: none;
+      }
+      .correo-grande span {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--gris);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .correo-grande b {
+        display: block;
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .correo-grande p {
+        margin: 10px 0 0;
+        font-size: 13.5px;
+        line-height: 1.4;
+        color: #33363b;
+      }
+      .editar {
+        border: 1.5px solid var(--negro);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        flex: none;
+        margin-left: auto;
+      }
+      .sugiere {
+        display: block;
+        width: 100%;
+        text-align: left;
+        margin-top: 10px;
+        background: var(--ambar-suave);
+        color: var(--ambar);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .sugiere u {
+        color: var(--negro);
+      }
+      .franja-ok {
+        background: var(--verde-suave);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        color: #0a4f27;
+        font-size: 13.5px;
+        line-height: 1.4;
+      }
+      .franja-ok b {
+        display: block;
+        font-family: Poppins, sans-serif;
+        font-size: 16px;
+        color: var(--verde);
+        margin-bottom: 2px;
+      }
       .chips {
         display: flex;
         flex-direction: column;
@@ -602,6 +679,546 @@
       .chips button[aria-pressed='true'] i {
         background: var(--negro);
         border-color: var(--negro);
+      }
+
+      /* ---------- Asistente de fotos: hormas, cámara y miniaturas ---------- */
+      .tira {
+        display: flex;
+        gap: 6px;
+        margin: -6px 0 16px;
+        overflow-x: auto;
+        padding: 4px 2px;
+      }
+      .tira button {
+        flex: none;
+        border-radius: 10px;
+        padding: 3px;
+        border: 2px solid transparent;
+        opacity: 0.75;
+      }
+      .tira button[aria-current='true'] {
+        border-color: var(--negro);
+        opacity: 1;
+      }
+      .mini {
+        position: relative;
+        display: block;
+        background: #f1f2f4;
+        border-radius: 7px;
+        overflow: visible;
+        flex: none;
+      }
+      .mini svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 7px;
+      }
+      .mini.circ,
+      .mini.circ svg {
+        border-radius: 999px;
+      }
+      .mini .ok,
+      .horma .ok {
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        width: 17px;
+        height: 17px;
+        border-radius: 999px;
+        background: var(--verde);
+        border: 2px solid #fff;
+        display: grid;
+        place-items: center;
+      }
+      .mini .ok svg {
+        width: 9px;
+        height: 9px;
+        border-radius: 0;
+      }
+      .lado-doc {
+        font-family: Poppins, sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        color: var(--gris);
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      .horma {
+        position: relative;
+        margin: 0 auto 14px;
+        width: 250px;
+        aspect-ratio: 1.586;
+      }
+      .horma svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 14px;
+      }
+      .horma.ovalo {
+        width: 170px;
+        aspect-ratio: 0.8;
+      }
+      .horma.ovalo svg {
+        border-radius: 50%;
+      }
+      .horma.circulo {
+        width: 170px;
+        aspect-ratio: 1;
+      }
+      .horma.circulo svg {
+        border-radius: 50%;
+      }
+      .horma.tomada.ovalo {
+        width: 180px;
+        aspect-ratio: 1;
+      }
+      .horma.tomada svg {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+        animation: aparece 0.35s ease;
+      }
+      .horma .ok {
+        width: 30px;
+        height: 30px;
+        right: 4px;
+        bottom: 4px;
+        border-width: 3px;
+        animation: salta 0.45s ease;
+      }
+      .horma .ok svg {
+        width: 15px;
+        height: 15px;
+        box-shadow: none;
+        border-radius: 0;
+      }
+      .centro {
+        text-align: center;
+      }
+      .aviso-foto {
+        background: var(--ambar-suave);
+        color: var(--ambar);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-weight: 600;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 0 0 14px;
+        text-align: center;
+      }
+      .cuerpo .boton + .boton {
+        margin-top: 10px;
+      }
+      .camara {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, #5c6168, #2c2f34 60%, #44484e);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+        z-index: 20;
+      }
+      .camara .cab {
+        width: 100%;
+        position: relative;
+        z-index: 2;
+      }
+      .cam-lado {
+        position: relative;
+        z-index: 2;
+        font-family: Poppins, sans-serif;
+        font-weight: 700;
+        font-size: 30px;
+        letter-spacing: 0.12em;
+        margin-top: 18px;
+      }
+      .cam-titulo {
+        position: relative;
+        z-index: 2;
+        font-weight: 600;
+        opacity: 0.9;
+        margin-top: 2px;
+      }
+      .cam-marco {
+        position: relative;
+        z-index: 1;
+        margin-top: 34px;
+        width: 310px;
+        aspect-ratio: 1.586;
+        border: 3px solid #fff;
+        border-radius: 16px;
+        box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.6);
+      }
+      .cam-marco.ovalo {
+        width: 220px;
+        aspect-ratio: 0.78;
+        border-radius: 50%;
+      }
+      .cam-marco.circulo {
+        width: 240px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+      }
+      .cam-marco svg {
+        width: 100%;
+        height: 100%;
+        opacity: 0.55;
+      }
+      .cam-frase {
+        position: relative;
+        z-index: 2;
+        margin: 26px 34px 0;
+        text-align: center;
+        font-size: 16px;
+        line-height: 1.4;
+        font-weight: 600;
+      }
+      .disparo {
+        position: absolute;
+        z-index: 2;
+        bottom: 34px;
+        width: 74px;
+        height: 74px;
+        border-radius: 999px;
+        background: #fff;
+        border: 5px solid rgba(255, 255, 255, 0.45);
+        background-clip: padding-box;
+      }
+      .rejilla-papeles {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .rejilla-papeles button {
+        border: 1px solid var(--borde);
+        border-radius: 14px;
+        padding: 14px 10px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .rejilla-papeles small {
+        font-weight: 600;
+        font-size: 11.5px;
+        color: var(--gris);
+      }
+      .rejilla-papeles small.si {
+        color: var(--verde);
+      }
+      /* ---------- Tarjeta de perfil que se va armando ---------- */
+      .perfil-t {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 4px 20px 18px;
+        background: var(--app);
+        color: #fff;
+      }
+      .clara .perfil-t {
+        background: #fff;
+        color: var(--negro);
+        border-bottom: 1px solid var(--borde);
+      }
+      .perfil-t h1 {
+        font-size: 22px;
+      }
+      .perfil-t p {
+        margin: 3px 0 0;
+        font-size: 13.5px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+      .anillo {
+        position: relative;
+        width: 78px;
+        height: 78px;
+        flex: none;
+      }
+      .anillo > svg {
+        position: absolute;
+        inset: 0;
+        transform: rotate(-90deg);
+      }
+      .anillo circle {
+        fill: none;
+        stroke-width: 5;
+      }
+      .anillo .pista-a {
+        stroke: rgba(255, 255, 255, 0.28);
+      }
+      .clara .anillo .pista-a {
+        stroke: #e9ebee;
+      }
+      .anillo .avance {
+        stroke: #35c46f;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.8s ease;
+      }
+      .clara .anillo .avance {
+        stroke: var(--verde);
+      }
+      .anillo .mini {
+        position: absolute;
+        inset: 9px;
+        width: auto;
+        height: auto;
+        background: rgba(255, 255, 255, 0.16);
+      }
+      .clara .anillo .mini {
+        background: #f1f2f4;
+      }
+      .tarea .minis {
+        display: flex;
+        gap: 7px;
+        margin-top: 7px;
+      }
+      .tarea.recien .punto {
+        animation: salta 0.6s ease;
+      }
+      .fila-enlace {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        padding: 13px 14px;
+        margin-top: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        text-align: left;
+      }
+      .fila-enlace svg {
+        margin-left: auto;
+        color: var(--gris);
+      }
+      @keyframes salta {
+        0% {
+          transform: scale(0.3);
+        }
+        60% {
+          transform: scale(1.25);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      @keyframes aparece {
+        from {
+          opacity: 0;
+          transform: scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes sube {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      /* ---------- Perfil del conductor: «Así te ven los pasajeros» ---------- */
+      .pf {
+        flex: 1;
+        overflow-y: auto;
+        background: #fff;
+      }
+      .pf-arriba {
+        background: #101010;
+        color: #fff;
+        text-align: center;
+        padding: 0 22px 24px;
+      }
+      .pf.clara-v .pf-arriba {
+        background: linear-gradient(#f3f4f6, #fff);
+        color: var(--negro);
+      }
+      .pf-arriba .cab {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .pf-arriba .cab small {
+        font-size: 12.5px;
+        font-weight: 600;
+        opacity: 0.75;
+      }
+      .pf-foto {
+        position: relative;
+        width: 136px;
+        height: 136px;
+        margin: 6px auto 14px;
+        border-radius: 999px;
+        padding: 4px;
+        background: #2a2a2a;
+        animation: aparece 0.5s ease both;
+      }
+      .pf.clara-v .pf-foto {
+        background: #e2e4e8;
+      }
+      .pf-foto.verificada {
+        background: #35c46f;
+      }
+      .pf-foto .mini {
+        width: 100%;
+        height: 100%;
+        border: 4px solid #101010;
+        background: #2a2d31;
+      }
+      .pf.clara-v .pf-foto .mini {
+        border-color: #fff;
+        background: #f1f2f4;
+      }
+      .pf-foto .sello {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        background: var(--verde);
+        border: 3px solid #101010;
+        display: grid;
+        place-items: center;
+      }
+      .pf.clara-v .pf-foto .sello {
+        border-color: #fff;
+      }
+      .pf-foto .sello svg {
+        width: 15px;
+        height: 15px;
+      }
+      .pf-arriba h1 {
+        font-size: 30px;
+        letter-spacing: -0.01em;
+        animation: sube 0.45s 0.08s ease both;
+      }
+      .pf-veh {
+        margin: 4px 0 0;
+        font-size: 14.5px;
+        opacity: 0.78;
+        animation: sube 0.45s 0.14s ease both;
+      }
+      .pf-veh b {
+        font-family: ui-monospace, Menlo, monospace;
+        letter-spacing: 0.06em;
+      }
+      .pf-cifras {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 20px;
+        animation: sube 0.45s 0.22s ease both;
+      }
+      .pf-cifras div + div {
+        border-left: 1px solid rgba(255, 255, 255, 0.16);
+      }
+      .pf.clara-v .pf-cifras div + div {
+        border-left-color: var(--borde);
+      }
+      .pf-cifras b {
+        display: block;
+        font-family: Poppins, sans-serif;
+        font-size: 25px;
+        font-weight: 600;
+      }
+      .pf-cifras span {
+        font-size: 12.5px;
+        opacity: 0.7;
+      }
+      .pf-nuevo {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 14px;
+        background: rgba(53, 196, 111, 0.16);
+        color: #4fdc88;
+        animation: sube 0.45s 0.22s ease both;
+      }
+      .pf.clara-v .pf-nuevo {
+        background: var(--verde-suave);
+        color: var(--verde);
+      }
+      .pf-abajo {
+        padding: 16px 22px 8px;
+        animation: sube 0.45s 0.3s ease both;
+      }
+      .pf-sellos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .pf-sellos span {
+        font-size: 12.5px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 6px 11px;
+        background: var(--fondo);
+        color: var(--gris);
+      }
+      .pf-sellos span.si {
+        background: var(--verde-suave);
+        color: var(--verde);
+      }
+      .pf-dato {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 13px 0;
+        border-top: 1px solid var(--borde);
+        font-size: 14.5px;
+        line-height: 1.4;
+      }
+      .pf-dato svg {
+        flex: none;
+        color: var(--gris);
+        margin-top: 1px;
+      }
+      .pf-dato small {
+        display: block;
+        font-size: 12px;
+        color: var(--gris);
+      }
+      .pf-dato i {
+        color: var(--gris-2);
+        font-style: normal;
+      }
+      .viaje-mapa {
+        height: 250px;
+        flex: none;
+        background: #e9edf0;
+        position: relative;
+        overflow: hidden;
+      }
+      .viaje-mapa svg {
+        width: 100%;
+        height: 100%;
+      }
+      .viaje-llega {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        background: #101010;
+        color: #fff;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 700;
+        font-size: 13.5px;
       }
       .foto {
         border: 1.5px dashed #b9bdc3;
@@ -956,12 +1573,29 @@
         ejemplo: L('ejemplo', 'example'),
         guardarSeguir: L('Guardar y seguir después', 'Save and finish later'),
         guardar: L('Guardar', 'Save'),
-        cambiar: L('Cambiar', 'Edit'),
-        revisa: L('Revisa y acepta', 'Review and accept'),
-        revisaA: L(
-          'Con esto ya entras. Lo demás lo completas adentro, cuando quieras.',
-          'That’s all you need to get in. You can finish the rest inside, anytime.',
+        cambiar: L('Editar', 'Edit'),
+        editarDatos: L('Editar datos', 'Edit details'),
+        tuCorreo: L('Tu correo', 'Your email'),
+        bienEscrito: L(
+          '¿Está bien escrito? Aquí te mandamos el enlace para activar tu cuenta.',
+          'Is it spelled right? We’ll send the link to activate your account here.',
         ),
+        quisiste: L('¿Quisiste decir', 'Did you mean'),
+        volverRevisar: L('Guardar y volver a revisar', 'Save and back to review'),
+        activa: L('Te mandamos a', 'We sent the link to activate your account to'),
+        activa2: L('el enlace para activar tu cuenta.', ''),
+        yaPuedes: L('Ya puedes trabajar', 'You can start working'),
+        yaPuedesP: L(
+          'Tienes 30 días para subir tus papeles. Mientras tanto ya puedes conectarte y recibir viajes.',
+          'You have 30 days to upload your documents. Meanwhile you can go online and take trips.',
+        ),
+        papeles: L('Tus papeles', 'Your documents'),
+        papelesSub: L(
+          'Te quedan 30 días. Cada papel se guarda solo y lo retomas donde quedaste.',
+          '30 days left. Each document saves itself and you can pick up where you left off.',
+        ),
+        revisa: L('Revisa tus datos', 'Check your details'),
+        revisaA: L('Si algo está mal, corrígelo ahora.', 'If anything is wrong, fix it now.'),
         crearMi: L('Crear mi cuenta', 'Create my account'),
         acepto: L('Acepto los', 'I agree to the'),
         terminos: L('Términos', 'Terms'),
@@ -1014,6 +1648,7 @@
         nombre: {
           tipo: 'texto',
           auto: 'name',
+          solo: 'letras',
           t: L('¿Cómo te llamas?', 'What’s your name?'),
           a: L('Así te vamos a saludar.', 'It’s how we’ll greet you.'),
           e: L('Nombre y apellido', 'First and last name'),
@@ -1045,7 +1680,7 @@
         },
         acepto: { tipo: 'acepto', t: T.revisa, a: T.revisaA },
       };
-      const foto = (t, a) => ({ tipo: 'foto', t, a });
+      const foto = (t, a, clase) => ({ tipo: 'foto', t, a, clase });
 
       const APPS = {
         cliente: {
@@ -1106,6 +1741,22 @@
                   e: L('Dirección', 'Address'),
                   ph: L('Calle y número', 'Street and number'),
                 },
+              ],
+            },
+            {
+              id: 'foto',
+              opcional: true,
+              t: L('Tu foto de perfil', 'Your profile photo'),
+              a: L('Para que tu conductor te reconozca.', 'So your driver can recognize you.'),
+              pasos: [
+                foto(
+                  L('Tómate una foto de frente', 'Take a photo of your face'),
+                  L(
+                    'Con buena luz. La verá quien te lleve o te entregue.',
+                    'In good light. Your driver or courier will see it.',
+                  ),
+                  'cara',
+                ),
               ],
             },
             {
@@ -1198,6 +1849,7 @@
             {
               id: 'cara',
               fin: 'revision',
+              papel: true,
               t: L('Foto de tu cara', 'Photo of your face'),
               a: L('Es tu foto de perfil.', 'It’s your profile photo.'),
               pasos: [
@@ -1207,12 +1859,14 @@
                     'Con buena luz, sin gorra ni lentes oscuros. La verá el cliente de cada viaje.',
                     'Good light, no cap or sunglasses. Riders and customers will see it.',
                   ),
+                  'cara',
                 ),
               ],
             },
             {
               id: 'identidad',
               fin: 'revision',
+              papel: true,
               t: L('Tu identidad', 'Your identity'),
               a: L('Fecha de nacimiento y documento.', 'Date of birth and ID.'),
               pasos: [
@@ -1229,37 +1883,60 @@
                 foto(
                   L('Tu documento, por el frente', 'Your ID, front side'),
                   L(
-                    'Que se lean bien todos los datos. Solo lo ve el equipo de Divoox.',
-                    'Make sure everything is readable. Only the Divoox team sees it.',
+                    'El lado donde sale tu foto. Solo lo ve el equipo de Divoox.',
+                    'The side with your photo. Only the Divoox team sees it.',
                   ),
+                  'docF',
                 ),
                 foto(
                   L('Tu documento, por detrás', 'Your ID, back side'),
                   L('La otra cara del mismo documento.', 'The other side of the same document.'),
+                  'docR',
                 ),
               ],
             },
             {
               id: 'licencia',
               fin: 'revision',
+              papel: true,
               t: L('Tu licencia de conducir', 'Your driver’s license'),
-              a: L('Una foto, vigente.', 'One photo, not expired.'),
+              a: L('Por delante y por detrás.', 'Front and back.'),
               pasos: [
                 foto(
-                  L('Tu licencia de conducir', 'Your driver’s license'),
+                  L('Tu licencia, por el frente', 'Your license, front side'),
                   L(
                     'Vigente y con todos los datos a la vista.',
                     'Valid, with every detail visible.',
                   ),
+                  'licF',
+                ),
+                foto(
+                  L('Tu licencia, por detrás', 'Your license, back side'),
+                  L('La otra cara de la misma licencia.', 'The other side of the same license.'),
+                  'licR',
                 ),
               ],
             },
             {
               id: 'vehiculo',
               fin: 'revision',
+              papel: true,
               t: L('Tu vehículo', 'Your vehicle'),
-              a: L('Placa, una foto y el seguro.', 'Plate, one photo and insurance.'),
+              a: L(
+                'Modelo, placa, una foto y el seguro.',
+                'Model, plate, one photo and insurance.',
+              ),
               pasos: [
+                {
+                  tipo: 'texto',
+                  t: L('¿Qué vehículo usas?', 'What vehicle do you use?'),
+                  a: L(
+                    'Marca, modelo y color. Así te reconoce el pasajero.',
+                    'Make, model and color. It’s how riders spot you.',
+                  ),
+                  e: L('Vehículo', 'Vehicle'),
+                  ph: L('Marca, modelo y color', 'Make, model and color'),
+                },
                 {
                   tipo: 'texto',
                   mayus: true,
@@ -1274,6 +1951,7 @@
                     'De lado, completo y con la placa a la vista.',
                     'Side view, the whole vehicle, plate visible.',
                   ),
+                  'vehiculo',
                 ),
                 foto(
                   L('El seguro de tu vehículo', 'Your vehicle insurance'),
@@ -1281,7 +1959,37 @@
                     'El documento vigente, con la fecha a la vista.',
                     'The current document, with the date visible.',
                   ),
+                  'seguro',
                 ),
+              ],
+            },
+            {
+              id: 'perfil',
+              opcional: true,
+              t: L('Tu perfil para los pasajeros', 'Your profile for riders'),
+              a: L('Idiomas y un dato tuyo.', 'Languages and something about you.'),
+              pasos: [
+                {
+                  tipo: 'opciones',
+                  t: L('¿Qué idiomas hablas?', 'What languages do you speak?'),
+                  a: L('Lo verá el pasajero en tu perfil.', 'Riders will see it on your profile.'),
+                  ops: [
+                    L('Español', 'Spanish'),
+                    L('Inglés', 'English'),
+                    L('Portugués', 'Portuguese'),
+                  ],
+                },
+                {
+                  tipo: 'texto',
+                  libre: true,
+                  t: L('Cuéntale algo de ti a tus pasajeros', 'Tell riders something about you'),
+                  a: L(
+                    'Es opcional. Algo corto que te guste contar.',
+                    'Optional. Something short you like to share.',
+                  ),
+                  e: L('Un dato tuyo', 'About you'),
+                  ph: L('Algo que te guste contar', 'Something you like to share'),
+                },
               ],
             },
             {
@@ -1401,6 +2109,7 @@
                   ...foto(
                     L('Una foto del plato', 'A photo of the item'),
                     L('Los platos con foto se piden más.', 'Items with photos get ordered more.'),
+                    'plato',
                   ),
                   libre: true,
                 },
@@ -1415,6 +2124,7 @@
                 foto(
                   L('El logo de tu negocio', 'Your business logo'),
                   L('Cuadrado y con fondo limpio.', 'Square, on a clean background.'),
+                  'logo',
                 ),
                 foto(
                   L('Una foto de portada', 'A cover photo'),
@@ -1422,6 +2132,7 @@
                     'Tu mejor plato o el frente de tu local.',
                     'Your best dish or your storefront.',
                   ),
+                  'local',
                 ),
               ],
             },
@@ -1438,6 +2149,404 @@
         },
       };
       const ORDEN_APPS = ['cliente', 'driver', 'restaurante'];
+
+      /* ---------- Asistente de fotos, tarjeta de perfil y perfil del conductor ---------- */
+      const TX = {
+        frente: L('FRENTE', 'FRONT'),
+        reverso: L('REVERSO', 'BACK'),
+        asiTeLaPido: L(
+          'Así te la vamos a pedir. Se toma en un momento.',
+          'This is what we’ll ask for. It takes a moment.',
+        ),
+        seVeBien: L('¿Se ve completa y se lee bien?', 'Is it complete and easy to read?'),
+        usar: L('Usar esta', 'Use this one'),
+        repetir: L('Repetir', 'Retake'),
+        usarIgual: L('Usar esta de todos modos', 'Use it anyway'),
+        borrosa: L(
+          'La foto salió borrosa. ¿La repetimos?',
+          'The photo came out blurry. Shall we retake it?',
+        ),
+        papeles: L('Revisa tus papeles', 'Review your documents'),
+        papelesA: L(
+          'Toca cualquiera para repetirla. Cuando todo esté bien, envíalos.',
+          'Tap any of them to retake it. When everything looks right, send them.',
+        ),
+        fotosR: L('Revisa tus fotos', 'Review your photos'),
+        enviar: L('Enviar a revisión', 'Send for review'),
+        enviado: L(
+          'Enviados. Te avisamos cuando estén aprobados.',
+          'Sent. We’ll let you know when they’re approved.',
+        ),
+        faltan: L(
+          'Todavía faltan fotos. Toca las que dicen «Falta».',
+          'Some photos are still missing. Tap the ones marked “To do”.',
+        ),
+        lista: L('Lista', 'Ready'),
+        asiTeVen: L('Así te ven los pasajeros', 'How riders see you'),
+        tuConductor: L('Así verás a tu conductor', 'How you’ll see your driver'),
+        enCamino: L('Tu conductor va en camino', 'Your driver is on the way'),
+        llega: L('Llega en 4 min', 'Arrives in 4 min'),
+        viajes: L('Viajes', 'Trips'),
+        calif: L('Calificación', 'Rating'),
+        tiempo: L('En Divoox', 'With Divoox'),
+        anios: L('2 años', '2 years'),
+        nuevo: L('Nuevo en Divoox', 'New to Divoox'),
+        nuevoP: L(
+          'Tus viajes y tu calificación aparecen aquí cuando empieces.',
+          'Your trips and rating show up here once you start.',
+        ),
+        idVerif: L('Identidad verificada', 'Identity verified'),
+        vehVerif: L('Vehículo verificado', 'Vehicle verified'),
+        linea: L('Línea', 'Fleet'),
+        idiomas: L('Habla', 'Speaks'),
+        dato: L('Un dato suyo', 'About them'),
+        agrega: L('Sin agregar todavía', 'Not added yet'),
+        completar: L('Completar mi perfil', 'Complete my profile'),
+        llamar: L('Llamar', 'Call'),
+        mensaje: L('Mensaje', 'Message'),
+        vehEj: L('Tu vehículo', 'Your vehicle'),
+      };
+      const pedir = (es, en) => ({
+        mal: L(
+          `Esto no parece ${es}. ¿La repetimos?`,
+          `This doesn’t look like ${en}. Shall we retake it?`,
+        ),
+      });
+      const CLASES = {
+        cara: {
+          forma: 'ovalo',
+          n: L('Tu cara', 'Your face'),
+          marco: L(
+            'Pon tu cara dentro del óvalo, sin gorra ni lentes oscuros.',
+            'Fit your face inside the oval, no cap or sunglasses.',
+          ),
+          ...pedir('una cara de frente', 'a face looking at the camera'),
+        },
+        docF: {
+          forma: 'carnet',
+          lado: 'frente',
+          n: L('Documento, frente', 'ID, front'),
+          marco: L(
+            'Pon el frente de tu documento dentro del marco.',
+            'Fit the front of your ID inside the frame.',
+          ),
+          ...pedir('el frente de tu documento', 'the front of your ID'),
+        },
+        docR: {
+          forma: 'carnet',
+          lado: 'reverso',
+          n: L('Documento, reverso', 'ID, back'),
+          marco: L(
+            'Pon el reverso de tu documento dentro del marco.',
+            'Fit the back of your ID inside the frame.',
+          ),
+          ...pedir('el reverso de tu documento', 'the back of your ID'),
+        },
+        licF: {
+          forma: 'carnet',
+          lado: 'frente',
+          n: L('Licencia, frente', 'License, front'),
+          marco: L(
+            'Pon el frente de tu licencia dentro del marco.',
+            'Fit the front of your license inside the frame.',
+          ),
+          ...pedir('el frente de tu licencia', 'the front of your license'),
+        },
+        licR: {
+          forma: 'carnet',
+          lado: 'reverso',
+          n: L('Licencia, reverso', 'License, back'),
+          marco: L(
+            'Pon el reverso de tu licencia dentro del marco.',
+            'Fit the back of your license inside the frame.',
+          ),
+          ...pedir('el reverso de tu licencia', 'the back of your license'),
+        },
+        vehiculo: {
+          forma: 'carnet',
+          n: L('Tu vehículo', 'Your vehicle'),
+          marco: L(
+            'Que se vea completo, de lado y con la placa.',
+            'Show the whole vehicle from the side, with the plate.',
+          ),
+          ...pedir('tu vehículo completo', 'your whole vehicle'),
+        },
+        seguro: {
+          forma: 'carnet',
+          n: L('Seguro', 'Insurance'),
+          marco: L(
+            'Pon el seguro dentro del marco, con la fecha a la vista.',
+            'Fit the insurance document inside the frame, date visible.',
+          ),
+          ...pedir('el seguro de tu vehículo', 'your vehicle insurance'),
+        },
+        plato: {
+          forma: 'carnet',
+          n: L('Tu plato', 'Your item'),
+          marco: L('El plato completo, con buena luz.', 'The whole dish, in good light.'),
+          ...pedir('un plato', 'a dish'),
+        },
+        logo: {
+          forma: 'circulo',
+          n: L('Logo', 'Logo'),
+          marco: L('Pon tu logo dentro del círculo.', 'Fit your logo inside the circle.'),
+          ...pedir('un logo', 'a logo'),
+        },
+        local: {
+          forma: 'carnet',
+          n: L('Portada', 'Cover'),
+          marco: L('Tu mejor plato o el frente de tu local.', 'Your best dish or your storefront.'),
+          ...pedir('una foto de portada', 'a cover photo'),
+        },
+      };
+      /** El dibujo de cada foto: la horma (gris, antes de tomarla) o la ilustración ya tomada. */
+      function dibujo(clase, tomada, blanco) {
+        const t = tomada;
+        const linea = blanco ? '#ffffff' : '#b4b9c0';
+        const f = (gris, color) => (t ? color : blanco ? 'none' : gris);
+        const borde = t ? '' : `stroke="${linea}" stroke-width="2" stroke-dasharray="6 5"`;
+        const carita = (cx, cy, k) =>
+          t
+            ? `<circle cx="${cx}" cy="${cy}" r="${13 * k}" fill="#e8b98e"/><path d="M${cx - 13 * k} ${cy - 2 * k}a${13 * k} ${13 * k} 0 0126 0c-6-${5 * k}-20-${5 * k}-26 0z" fill="#2b2b2b"/><path d="M${cx - 22 * k} ${cy + 40 * k}c0-${16 * k} ${10 * k}-${23 * k} ${22 * k}-${23 * k}s${22 * k} ${7 * k} ${22 * k} ${23 * k}z" fill="#1f4d69"/>`
+            : `<circle cx="${cx}" cy="${cy}" r="${13 * k}" fill="${linea}" opacity=".55"/><path d="M${cx - 22 * k} ${cy + 40 * k}c0-${16 * k} ${10 * k}-${23 * k} ${22 * k}-${23 * k}s${22 * k} ${7 * k} ${22 * k} ${23 * k}z" fill="${linea}" opacity=".55"/>`;
+        if (clase === 'cara')
+          return t
+            ? `<svg viewBox="0 0 120 120"><rect width="120" height="120" fill="#dbe9f3"/><path d="M20 130c0-30 18-44 40-44s40 14 40 44z" fill="#1f4d69"/><rect x="52" y="70" width="16" height="20" rx="6" fill="#dca97c"/><circle cx="60" cy="54" r="25" fill="#e8b98e"/><path d="M35 52a25 25 0 0150 0c-9-13-41-13-50 0z" fill="#2b2b2b"/><circle cx="51" cy="56" r="2.6" fill="#2b2b2b"/><circle cx="69" cy="56" r="2.6" fill="#2b2b2b"/><path d="M51 66q9 8 18 0" fill="none" stroke="#2b2b2b" stroke-width="2.4" stroke-linecap="round"/></svg>`
+            : `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="75" rx="57" ry="72" fill="${f('#f4f5f7', '')}" ${borde}/><circle cx="60" cy="62" r="24" fill="${linea}" opacity=".5"/><path d="M22 138c0-27 17-40 38-40s38 13 38 40z" fill="${linea}" opacity=".5"/></svg>`;
+        const lic = clase === 'licF' || clase === 'licR';
+        const tarjeta = `<rect x="1.500" y="1.500" width="157" height="97" rx="10" fill="${f('#f4f5f7', lic ? '#fdf3e3' : '#eef3f7')}" ${borde}/>`;
+        const raya = (x1, y, w, op = 1) =>
+          `<rect x="${x1}" y="${y}" width="${w}" height="5" rx="2.500" fill="${t ? '#8d9aa6' : linea}" opacity="${op}"/>`;
+        if (clase === 'docF' || clase === 'licF')
+          return `<svg viewBox="0 0 160 100">${tarjeta}${lic ? `<rect x="1.500" y="1.500" width="157" height="18" rx="10" fill="${t ? '#e0902a' : linea}" opacity="${t ? 1 : 0.45}"/><path d="M128 13h18l-3-6h-12z" fill="#fff" opacity=".9"/>` : `<rect x="12" y="10" width="46" height="6" rx="3" fill="${t ? '#1f4d69' : linea}"/>`}
+            <rect x="12" y="28" width="44" height="56" rx="5" fill="${t ? '#dbe9f3' : 'none'}" stroke="${t ? 'none' : linea}" stroke-width="2"/>${carita(34, 50, 0.72)}
+            ${raya(68, 32, 76)}${raya(68, 45, 58)}${raya(68, 58, 66)}${raya(68, 71, 40)}</svg>`.replace(
+            /\.500/g,
+            '.5',
+          );
+        if (clase === 'docR' || clase === 'licR') {
+          let barras = '';
+          for (let i = 0; i < 30; i++)
+            barras += `<rect x="${14 + i * 4.4}" y="62" width="${i % 3 ? 1.6 : 3}" height="24" fill="${t ? '#2b2b2b' : linea}"/>`;
+          return `<svg viewBox="0 0 160 100">${tarjeta}${raya(14, 14, 90)}${raya(14, 26, 120)}${raya(14, 38, 70)}${lic ? `<rect x="112" y="34" width="34" height="18" rx="3" fill="none" stroke="${t ? '#8d9aa6' : linea}" stroke-width="2"/>` : ''}${barras}</svg>`.replace(
+            /\.500/g,
+            '.5',
+          );
+        }
+        if (clase === 'vehiculo')
+          return `<svg viewBox="0 0 160 100"><rect x="1.5" y="1.5" width="157" height="97" rx="10" fill="${f('#f4f5f7', '#dbe9f3')}" ${borde}/>${t ? '<rect x="1.5" y="74" width="157" height="24.5" fill="#c4ccd3"/>' : ''}<path d="M28 68l8-22c2-5 5-7 10-7h44c5 0 9 2 13 6l12 12 14 3c4 1 6 4 6 8v5H28z" fill="${t ? '#f20d20' : linea}" opacity="${t ? 1 : 0.55}"/><path d="M44 56l5-11h22v11zM77 45h13c3 0 5 1 7 3l8 8H77z" fill="${t ? '#dbe9f3' : '#fff'}" opacity=".9"/><circle cx="52" cy="74" r="10" fill="#2b2b2b"/><circle cx="52" cy="74" r="4" fill="#c4ccd3"/><circle cx="112" cy="74" r="10" fill="#2b2b2b"/><circle cx="112" cy="74" r="4" fill="#c4ccd3"/></svg>`;
+        if (clase === 'seguro')
+          return `<svg viewBox="0 0 160 100"><rect x="1.5" y="1.5" width="157" height="97" rx="10" fill="${f('#f4f5f7', '#eef6f0')}" ${borde}/><path d="M34 22l18 6v16c0 12-8 20-18 24-10-4-18-12-18-24V28z" transform="translate(6 4)" fill="${t ? '#0d7a3a' : linea}" opacity="${t ? 1 : 0.55}"/><path d="M32 46l6 6 11-12" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>${raya(74, 28, 68)}${raya(74, 42, 52)}${raya(74, 56, 62)}${raya(74, 70, 36)}</svg>`;
+        if (clase === 'plato')
+          return `<svg viewBox="0 0 160 100"><rect x="1.5" y="1.5" width="157" height="97" rx="10" fill="${f('#f4f5f7', '#fdf3e3')}" ${borde}/><circle cx="80" cy="50" r="34" fill="${t ? '#fff' : 'none'}" stroke="${t ? '#e2e4e8' : linea}" stroke-width="2"/><circle cx="80" cy="50" r="23" fill="${t ? '#e9a13b' : linea}" opacity="${t ? 1 : 0.5}"/>${t ? '<circle cx="72" cy="44" r="5" fill="#c9302c"/><circle cx="88" cy="48" r="5" fill="#c9302c"/><circle cx="78" cy="59" r="5" fill="#c9302c"/><circle cx="90" cy="60" r="2.5" fill="#0d7a3a"/><circle cx="68" cy="55" r="2.5" fill="#0d7a3a"/>' : ''}</svg>`;
+        const tienda = (x0, y0, k) =>
+          `<path d="M${x0} ${y0 + 14 * k}l${4 * k}-${14 * k}h${40 * k}l${4 * k} ${14 * k}z" fill="${t ? '#f20d20' : linea}" opacity="${t ? 1 : 0.6}"/><rect x="${x0 + 4 * k}" y="${y0 + 14 * k}" width="${40 * k}" height="${26 * k}" fill="${t ? '#fff' : 'none'}" stroke="${t ? '#e2e4e8' : linea}" stroke-width="2"/><rect x="${x0 + 19 * k}" y="${y0 + 22 * k}" width="${10 * k}" height="${18 * k}" fill="${t ? '#101010' : linea}" opacity="${t ? 1 : 0.6}"/>`;
+        if (clase === 'logo')
+          return `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="58" fill="${f('#f4f5f7', '#101010')}" ${borde}/>${t ? '<circle cx="60" cy="60" r="40" fill="#fff"/>' : ''}${tienda(36, 38, 1)}</svg>`;
+        return `<svg viewBox="0 0 160 100"><rect x="1.5" y="1.5" width="157" height="97" rx="10" fill="${f('#f4f5f7', '#dbe9f3')}" ${borde}/>${tienda(44, 16, 1.5)}</svg>`;
+      }
+      const redonda = (clase) => clase === 'cara' || clase === 'logo';
+      /** Una miniatura: círculo para la cara y el logo, rectángulo redondeado para lo demás. */
+      function mini(clase, tomada, alto, conVisto = tomada) {
+        const ancho = redonda(clase) ? alto : Math.round(alto * 1.586);
+        return `<span class="mini ${redonda(clase) ? 'circ' : ''}" style="width:${ancho}px;height:${alto}px">${dibujo(clase, tomada)}${conVisto ? `<i class="ok">${ICONO.visto}</i>` : ''}</span>`;
+      }
+      /** Todas las fotos que pide la app, en orden, con la pantalla donde se toma cada una. */
+      function fotosDeApp() {
+        return A()
+          .tareas.filter((t) => t.pasos)
+          .flatMap((t) =>
+            t.pasos
+              .map((p, i) => ({
+                t,
+                p,
+                llave: `${t.id}-${i + 1}`,
+                pantalla: `tarea-${t.id}-${i + 1}`,
+              }))
+              .filter((f) => f.p.tipo === 'foto'),
+          );
+      }
+      function tiraDeFotos(d) {
+        const fotos = fotosDeApp();
+        if (fotos.length < 2) return '';
+        return `<div class="tira" role="list">${fotos
+          .map(
+            (f) =>
+              `<button type="button" data-a="ir" data-p="${f.pantalla}" aria-current="${f.llave === d.llave}" aria-label="${x(CLASES[f.p.clase].n)}">${mini(f.p.clase, S().v[f.llave] === true, 30)}</button>`,
+          )
+          .join('')}</div>`;
+      }
+      function asistenteFoto(paso, llave) {
+        const c = CLASES[paso.clase];
+        const v = S().v[llave];
+        const horma = `<div class="horma ${c.forma} ${v ? 'tomada' : ''}">${dibujo(paso.clase, Boolean(v))}${v === true ? `<i class="ok">${ICONO.visto}</i>` : ''}</div>`;
+        const lado = c.lado ? `<div class="lado-doc">${x(TX[c.lado])}</div>` : '';
+        if (!v)
+          return `${lado}${horma}<p class="pista centro" style="margin:0 0 16px">${x(TX.asiTeLaPido)}</p>
+            <div class="dos"><button type="button" class="boton" data-a="foto-camara">${ICONO.camara} ${x(T.tomar)}</button><button type="button" class="boton borde" data-a="foto-subir">${ICONO.archivo} ${x(T.subir)}</button></div>`;
+        if (v === 'prueba')
+          return ui.aviso
+            ? `${lado}${horma}<div class="aviso-foto" role="alert">${x(ui.aviso === 'mal' ? c.mal : TX.borrosa)}</div>
+              <button type="button" class="boton" data-a="foto-repetir">${x(TX.repetir)}</button><button type="button" class="enlace" data-a="foto-usar">${x(TX.usarIgual)}</button>`
+            : `${lado}${horma}<p class="pista centro" style="margin:0 0 16px">${x(TX.seVeBien)}</p>
+              <button type="button" class="boton" data-a="foto-usar">${x(TX.usar)}</button><button type="button" class="boton borde" data-a="foto-repetir">${x(TX.repetir)}</button>`;
+        return `${lado}${horma}<p class="pista centro" style="color:var(--verde);font-weight:700">✓ ${x(T.fotoLista)}</p><button type="button" class="enlace" data-a="foto-repetir">${x(TX.repetir)}</button>`;
+      }
+      function pantallaCamara(d) {
+        const c = CLASES[d.paso.clase];
+        return `<div class="camara"><div class="cab"><button type="button" class="atras" style="color:#fff" data-a="cam-cerrar" aria-label="${x(T.volver)}">${ICONO.atras}</button></div>
+          ${c.lado ? `<div class="cam-lado">${x(TX[c.lado])}</div>` : '<div class="cam-lado" style="font-size:20px;letter-spacing:0">' + x(c.n) + '</div>'}
+          ${c.lado ? `<div class="cam-titulo">${x(c.n)}</div>` : ''}
+          <div class="cam-marco ${c.forma}">${dibujo(d.paso.clase, false, true)}</div>
+          <p class="cam-frase">${x(c.marco)}</p>
+          <button type="button" class="disparo" data-a="foto-disparo" aria-label="${x(T.tomar)}"></button></div>`;
+      }
+      /** A dónde se va al terminar una tarea: los papeles del conductor siguen de corrido. */
+      function despuesDeTarea(tarea) {
+        if (!tarea.papel) return 'dentro';
+        const falta = A().tareas.find((t) => t.papel && !S().hechas[t.id]);
+        return falta ? `tarea-${falta.id}-1` : 'papeles';
+      }
+      function pantallaPapeles() {
+        const fotos = fotosDeApp();
+        const celdas = fotos
+          .map((f) => {
+            const lista = S().v[f.llave] === true;
+            return `<button type="button" data-a="ir" data-p="${f.pantalla}">${mini(f.p.clase, lista, redonda(f.p.clase) ? 64 : 58)}<span>${x(CLASES[f.p.clase].n)}</span><small class="${lista ? 'si' : ''}">${lista ? `✓ ${x(TX.lista)}` : x(T.pendiente)}</small></button>`;
+          })
+          .join('');
+        const todas = fotos.every((f) => S().v[f.llave] === true || f.t.opcional || f.p.libre);
+        return `${cabecera()}
+          <div class="cuerpo"><h1>${x(E.app === 'driver' ? TX.papeles : TX.fotosR)}</h1><p class="ayuda">${x(TX.papelesA)}</p><div class="rejilla-papeles">${celdas}</div></div>
+          <div class="pie"><button type="button" class="boton ${todas ? '' : 'apagado'}" data-a="${todas ? 'enviar' : 'faltan'}">${x(TX.enviar)}</button>${enlaceAyuda()}</div>`;
+      }
+      function tarjetaPerfil(hechas, total, nombre) {
+        const a = A();
+        const pct = total ? hechas / total : 0;
+        const largo = 2 * Math.PI * 34;
+        const antes = S().pctVisto ?? 0;
+        S().pctVisto = pct;
+        const claseFoto = E.app === 'restaurante' ? 'logo' : 'cara';
+        const fotoPerfil = fotosDeApp().find((f) => f.p.clase === claseFoto);
+        const tomada = Boolean(fotoPerfil && S().v[fotoPerfil.llave] === true);
+        return `<div class="perfil-t"><div class="anillo"><svg viewBox="0 0 78 78"><circle class="pista-a" cx="39" cy="39" r="34"/><circle class="avance" cx="39" cy="39" r="34" stroke-dasharray="${largo}" stroke-dashoffset="${largo * (1 - antes)}" data-off="${largo * (1 - pct)}"/></svg>${mini(claseFoto, tomada, 60, false)}</div>
+          <div><h1>${x(T.hola)}${nombre ? `, ${esc(nombre)}` : ''}</h1><p>${hechas} ${x(T.de)} ${total} ${x(T.completos)} · ${a.nombre}</p></div></div>`;
+      }
+      function minisDeTarea(t) {
+        const m = (t.pasos || [])
+          .map((p, i) =>
+            p.tipo === 'foto' && S().v[`${t.id}-${i + 1}`] === true ? mini(p.clase, true, 26) : '',
+          )
+          .join('');
+        return m ? `<div class="minis">${m}</div>` : '';
+      }
+      function extrasDentro() {
+        const fila = (p, t) =>
+          `<button type="button" class="fila-enlace" data-a="ir" data-p="${p}">${x(t)} ${ICONO.mas}</button>`;
+        if (E.app === 'driver') return fila('perfil', TX.asiTeVen) + fila('papeles', TX.papeles);
+        if (E.app === 'restaurante') return fila('papeles', TX.fotosR);
+        return fila('conductor', TX.tuConductor);
+      }
+      const pantallasExtra = () =>
+        E.app === 'driver'
+          ? [
+              ['papeles', TX.papeles],
+              ['perfil', TX.asiTeVen],
+            ]
+          : E.app === 'restaurante'
+            ? [['papeles', TX.fotosR]]
+            : [['conductor', TX.tuConductor]];
+      const IC2 = {
+        mundo:
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+        grupo:
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="9" r="3.2"/><path d="M3 19c0-3.300 2.700-5 6-5s6 1.700 6 5M16 6.500a3 3 0 010 5.500M17.500 14.500c2.200.5 3.500 2 3.500 4.500"/></svg>'.replace(
+            /\.(\d)00/g,
+            '.$1',
+          ),
+        cara: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.500 14.500c2 2 5 2 7 0M9 10h.01M15 10h.01"/></svg>'.replace(
+          /\.500/g,
+          '.5',
+        ),
+      };
+      /** El perfil del conductor. `datos` viene de su registro (Driver) o de un ejemplo (cliente). */
+      function perfilConductor(datos, cabeceraHtml) {
+        const clara = (E.perfil || 'oscura') === 'clara';
+        const con = E.trayectoria;
+        const cifras = con
+          ? `<div class="pf-cifras"><div><b>1.240</b><span>${x(TX.viajes)}</span></div><div><b>4,9 ★</b><span>${x(TX.calif)}</span></div><div><b>${x(TX.anios)}</b><span>${x(TX.tiempo)}</span></div></div>`
+              .replace('1.240', E.lang === 'es' ? '1.240' : '1,240')
+              .replace('4,9', E.lang === 'es' ? '4,9' : '4.9')
+          : `<div class="pf-nuevo">${x(TX.nuevo)}</div>${datos.propio ? `<p class="pf-veh" style="font-size:13px;margin-top:10px">${x(TX.nuevoP)}</p>` : ''}`;
+        const dato = (icono, etiqueta, valor) =>
+          valor || datos.propio
+            ? `<div class="pf-dato">${icono}<div><small>${x(etiqueta)}</small>${valor ? esc(valor) : `<i>${x(TX.agrega)}</i>`}</div></div>`
+            : '';
+        return `<div class="pf ${clara ? 'clara-v' : ''}"><div class="pf-arriba">${cabeceraHtml}
+            <div class="pf-foto ${datos.idOk ? 'verificada' : ''}">${mini('cara', datos.foto, 120, false)}${datos.idOk ? `<i class="sello">${ICONO.visto}</i>` : ''}</div>
+            <h1>${esc(datos.nombre)}</h1><p class="pf-veh">${esc(datos.modelo)}${datos.placa ? ` · <b>${esc(datos.placa)}</b>` : ''}</p>${cifras}</div>
+          <div class="pf-abajo"><div class="pf-sellos"><span class="${datos.idOk ? 'si' : ''}">${datos.idOk ? '✓ ' : ''}${x(TX.idVerif)}</span><span class="${datos.vehOk ? 'si' : ''}">${datos.vehOk ? '✓ ' : ''}${x(TX.vehVerif)}</span></div>
+            ${dato(IC2.grupo, TX.linea, datos.linea)}${dato(IC2.mundo, TX.idiomas, datos.idiomas)}${dato(IC2.cara, TX.dato, datos.dato)}</div></div>`;
+      }
+      function pantallaPerfil() {
+        const v = S().v;
+        const h = S().hechas;
+        const tarea = A().tareas.find((t) => t.id === 'perfil');
+        const idiomas = tarea.pasos[0].ops
+          .filter((_, i) => (v['perfil-1'] || [])[i])
+          .map((o) => x(o));
+        const datos = {
+          propio: true,
+          nombre: (v.nombre || '').trim().split(/\s+/)[0] || x(L('Tu nombre', 'Your name')),
+          modelo: v['vehiculo-1'] || x(TX.vehEj),
+          placa: v['vehiculo-2'],
+          foto: v['cara-1'] === true,
+          idOk: Boolean(h.cara && h.identidad),
+          vehOk: Boolean(h.vehiculo),
+          linea: v['linea-1'],
+          idiomas:
+            E.lang === 'es'
+              ? idiomas
+                  .map((t, i) => (i ? t.toLowerCase() : t))
+                  .join(', ')
+                  .replace(/, ([^,]+)$/, (_, u) => (/^i/i.test(u) ? ` e ${u}` : ` y ${u}`))
+              : idiomas.join(', ').replace(/, ([^,]+)$/, ' and $1'),
+          dato: v['perfil-2'],
+        };
+        const cab = `<div class="cab"><button type="button" class="atras" data-a="atras" aria-label="${x(T.volver)}">${ICONO.atras}</button><small>${x(TX.asiTeVen)}</small><span class="hueco"></span></div>`;
+        return `${perfilConductor(datos, cab)}<div class="pie"><button type="button" class="boton" data-a="ir" data-p="tarea-perfil-1">${x(TX.completar)}</button>${enlaceAyuda()}</div>`;
+      }
+      function pantallaConductor() {
+        const es = E.lang === 'es';
+        const datos = {
+          nombre: es ? 'Carlos' : 'Chris',
+          modelo: es ? 'Moto 150 negra' : 'Black 150 motorcycle',
+          placa: es ? 'AB123CD' : 'ABC1234',
+          foto: true,
+          idOk: true,
+          vehOk: true,
+          linea: es ? 'Línea de ejemplo' : 'Example fleet',
+          idiomas: es ? 'Español e inglés' : 'English and Spanish',
+          dato: es ? 'Me gusta la música.' : 'I love music.',
+        };
+        const mapa = `<div class="viaje-mapa"><svg viewBox="0 0 390 250" preserveAspectRatio="xMidYMid slice"><rect width="390" height="250" fill="#e9edf0"/><path d="M-10 70h410M-10 170h410M90-10v270M250-10v270" stroke="#fff" stroke-width="16"/><path d="M-10 120h410M170-10v270M330-10v270" stroke="#fff" stroke-width="8"/><path d="M90 205V170h160V70h60" fill="none" stroke="#101010" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="90" cy="205" r="9" fill="#f20d20" stroke="#fff" stroke-width="3"/><circle cx="310" cy="70" r="9" fill="#101010" stroke="#fff" stroke-width="3"/></svg>
+          <button type="button" class="atras" data-a="atras" aria-label="${x(T.volver)}" style="position:absolute;left:12px;top:12px;background:#fff">${ICONO.atras}</button><span class="viaje-llega">${x(TX.llega)}</span></div>`;
+        const cab = `<div class="cab" style="justify-content:center"><small>${x(TX.enCamino)}</small></div>`;
+        return `${mapa}${perfilConductor(datos, cab)}<div class="pie"><div class="dos"><button type="button" class="boton" data-a="brindis">${x(TX.llamar)}</button><button type="button" class="boton borde" data-a="brindis">${x(TX.mensaje)}</button></div>${enlaceAyuda()}</div>`;
+      }
+      function controlesBorrador() {
+        const b = (acc, val, activo, t) =>
+          `<button type="button" data-a="${acc}" data-v="${val}" aria-pressed="${activo}">${x(t)}</button>`;
+        const aviso = E.prueba || '';
+        return `<div class="caja"><h2>${x(L('Probar el asistente de fotos', 'Try the photo assistant'))}</h2><p style="margin:0">${x(L('El borrador no usa la cámara: dibuja la foto. Elige cómo «sale» la próxima.', 'The draft doesn’t use the camera: it draws the photo. Choose how the next one “turns out”.'))}</p>
+            <div class="orden">${b('prueba', '', aviso === '', L('Sale bien', 'Good photo'))}${b('prueba', 'mal', aviso === 'mal', L('No es lo que se pidió', 'Not what was asked'))}${b('prueba', 'borrosa', aviso === 'borrosa', L('Sale borrosa', 'Blurry'))}</div></div>
+          ${
+            E.app === 'restaurante'
+              ? ''
+              : `<div class="caja"><h2>${x(L('Perfil del conductor', 'Driver profile'))}</h2><p style="margin:0">${x(L('Dos variantes para elegir. Recomendamos la oscura: la foto resalta más.', 'Two variants to choose from. We recommend the dark one: the photo stands out more.'))}</p>
+            <div class="orden">${b('variante', 'oscura', (E.perfil || 'oscura') === 'oscura', L('Oscura', 'Dark'))}${b('variante', 'clara', E.perfil === 'clara', L('Clara', 'Light'))}${b('trayectoria', '', !E.trayectoria, L('Conductor nuevo', 'New driver'))}${b('trayectoria', '1', Boolean(E.trayectoria), L('Con trayectoria (ejemplo)', 'Experienced (example)'))}</div></div>`
+          }`;
+      }
 
       /* ---------- Estado, con borrador que no se pierde ---------- */
       const nuevoDeApp = () => ({ pantalla: 'inicio', v: {}, hechas: {}, acepto: false });
@@ -1551,6 +2660,56 @@
         );
       }
 
+      /* ---------- El correo: validación seria y aviso si el dominio parece mal escrito ---------- */
+      const DOMINIOS = [
+        'gmail.com',
+        'hotmail.com',
+        'outlook.com',
+        'yahoo.com',
+        'icloud.com',
+        'live.com',
+        'msn.com',
+        'aol.com',
+        'proton.me',
+        'hotmail.es',
+        'outlook.es',
+        'yahoo.es',
+      ];
+      const correoValido = (c) =>
+        /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(c) &&
+        !/\.\.|^\.|\.@|@-|-\./.test(c);
+      function distancia(a, b) {
+        const f = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+        for (let j = 1; j <= b.length; j++) f[0][j] = j;
+        for (let i = 1; i <= a.length; i++)
+          for (let j = 1; j <= b.length; j++)
+            f[i][j] = Math.min(
+              f[i - 1][j] + 1,
+              f[i][j - 1] + 1,
+              f[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+            );
+        return f[a.length][b.length];
+      }
+      /** El correo corregido si el dominio parece un error de dedo; si no, null. */
+      function correoCorregido(correo) {
+        const m = /^([^@\s]+)@([^@\s]+\.[^@\s]+)$/.exec((correo || '').trim().toLowerCase());
+        if (!m || DOMINIOS.includes(m[2])) return null;
+        let mejor = null;
+        for (const d of DOMINIOS) {
+          const n = distancia(m[2], d);
+          if (n <= 2 && (!mejor || n < mejor.n)) mejor = { d, n };
+        }
+        if (mejor) return `${m[1]}@${mejor.d}`;
+        const cola = /\.(con|cmo|ocm|vom|xom|comm|coom)$/.exec(m[2]);
+        return cola ? `${m[1]}@${m[2].slice(0, -cola[1].length)}com` : null;
+      }
+      function sugiereCorreo(correo) {
+        const c = correoCorregido(correo);
+        return c
+          ? `<button type="button" class="sugiere" data-a="corregir" data-v="${esc(c)}">${x(T.quisiste)} <u>${esc(c)}</u>?</button>`
+          : '';
+      }
+
       /* ---------- De qué pantalla se trata ---------- */
       function donde() {
         const s = S().pantalla;
@@ -1579,11 +2738,14 @@
             };
           }
         }
-        if (s === 'entrar' || s === 'dentro') return { clase: s };
+        if (['entrar', 'dentro', 'papeles'].includes(s)) return { clase: s };
+        if ((s === 'perfil' && E.app === 'driver') || (s === 'conductor' && E.app === 'cliente'))
+          return { clase: s };
         return { clase: 'inicio' };
       }
-      function ir(pantalla) {
+      function ir(pantalla, editando = false) {
         S().pantalla = pantalla;
+        S().editando = editando;
         ui = { idioma: false, ayuda: false, ojo: false, error: '', brindis: '' };
         recuperado[E.app] = false;
         guardar();
@@ -1591,6 +2753,9 @@
       }
       function atras() {
         const d = donde();
+        if (['papeles', 'perfil', 'conductor'].includes(d.clase)) return ir('dentro');
+        if (d.clase === 'paso' && S().editando && d.paso.tipo !== 'acepto')
+          return ir(`paso-${d.total}`);
         if (d.clase === 'paso') return ir(d.i === 0 ? 'inicio' : `paso-${d.i}`);
         if (d.clase === 'tarea') return ir(d.i === 0 ? 'dentro' : `tarea-${d.tarea.id}-${d.i}`);
         if (d.clase === 'dentro') return ir(`paso-${A().pasos.length}`);
@@ -1618,7 +2783,7 @@
         const v = S().v;
         const etq = `<label for="c">${x(paso.e)}</label>`;
         if (paso.tipo === 'correo')
-          return `<div class="campo">${etq}<input id="c" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="${x(paso.ph)}" value="${esc(v[llave])}" /></div>`;
+          return `<div class="campo">${etq}<input id="c" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="${x(paso.ph)}" value="${esc(v[llave])}" /></div><div id="sug">${sugiereCorreo(v[llave])}</div>`;
         if (paso.tipo === 'texto')
           return `<div class="campo">${etq}<input id="c" type="text" ${paso.auto ? `autocomplete="${paso.auto}"` : 'autocomplete="off"'} ${paso.modo ? `inputmode="${paso.modo}"` : ''} ${paso.mayus ? 'autocapitalize="characters" style="text-transform:uppercase"' : ''} placeholder="${x(paso.ph)}" value="${esc(v[llave])}" /></div>`;
         if (paso.tipo === 'tel')
@@ -1643,9 +2808,7 @@
         }
         if (paso.tipo === 'opciones')
           return `<div class="chips">${paso.ops.map((o, i) => `<button type="button" data-a="opcion" data-i="${i}" aria-pressed="${Boolean((v[llave] || [])[i])}"><i>${(v[llave] || [])[i] ? ICONO.visto : ''}</i>${x(o)}</button>`).join('')}</div>`;
-        if (paso.tipo === 'foto')
-          return `<div class="foto ${v[llave] ? 'lista' : ''}">${v[llave] ? `<div>✓ ${x(T.fotoLista)}<div class="pista">${x(T.repetir)}</div></div>` : x(T.sinFoto)}</div>
-            <div class="dos"><button type="button" class="boton borde" data-a="foto">${ICONO.camara} ${x(T.tomar)}</button><button type="button" class="boton borde" data-a="foto">${ICONO.archivo} ${x(T.subir)}</button></div>`;
+        if (paso.tipo === 'foto') return asistenteFoto(paso, llave);
         if (paso.tipo === 'horas')
           return `<div class="fila"><div class="campo" style="flex:1"><label for="h1">${x(T.abre)}</label><input id="h1" type="time" value="${esc(v[`${llave}-a`] || '09:00')}" /></div><div class="campo" style="flex:1"><label for="h2">${x(T.cierra)}</label><input id="h2" type="time" value="${esc(v[`${llave}-c`] || '21:00')}" /></div></div>`;
         return '';
@@ -1653,40 +2816,52 @@
 
       function pantallaPaso(d) {
         const { paso, llave } = d;
+        if (paso.tipo === 'foto' && ui.cam) return pantallaCamara(d);
+        const fotoSinUsar = paso.tipo === 'foto' && S().v[llave] !== true;
         const pct = Math.round(((d.i + 1) / d.total) * 100);
         const cuenta = `<span class="cuenta">${x(T.paso)} ${d.i + 1} ${x(T.de)} ${d.total}</span>`;
         let cuerpo;
         let boton = x(T.siguiente);
         if (paso.tipo === 'acepto') {
           const v = S().v;
-          const filas = A()
+          const datos = A()
             .pasos.map((id, i) => ({ id, i, p: P[id] }))
-            .filter((f) => ['correo', 'texto', 'tel'].includes(f.p.tipo))
+            .filter((f) => ['correo', 'texto', 'tel'].includes(f.p.tipo));
+          const editar = (f) =>
+            `<button type="button" class="editar" data-a="editar" data-p="paso-${f.i + 1}" aria-label="${x(T.cambiar)}: ${x(f.p.e)}">${x(T.cambiar)}</button>`;
+          const elCorreo = datos.find((f) => f.p.tipo === 'correo');
+          const grande = `<div class="correo-grande"><div class="arriba"><span>${x(T.tuCorreo)}</span>${editar(elCorreo)}</div><b data-correo>${esc(v[elCorreo.id]).replace('@', '<wbr />@') || '—'}</b><p>${x(T.bienEscrito)}</p>${sugiereCorreo(v[elCorreo.id])}</div>`;
+          const filas = datos
+            .filter((f) => f !== elCorreo)
             .map(
               (f) =>
-                `<div><div><span>${x(f.p.e)}</span><b>${esc(f.p.tipo === 'tel' ? `${v[`${f.id}-pref`] ?? ''} ${v[f.id] ?? ''}` : v[f.id]) || '—'}</b></div><button type="button" data-a="ir" data-p="paso-${f.i + 1}">${x(T.cambiar)}</button></div>`,
+                `<div><div><span>${x(f.p.e)}</span><b>${esc(f.p.tipo === 'tel' ? `${v[`${f.id}-pref`] ?? ''} ${v[f.id] ?? ''}` : v[f.id]) || '—'}</b></div>${editar(f)}</div>`,
             )
             .join('');
           const extra = A()
             .terminos.map((t) => `, <u>${x(t)}</u>`)
             .join('');
-          cuerpo = `<div class="resumen">${filas}</div>
+          cuerpo = `${grande}<div class="resumen">${filas}</div>
             ${casilla('acepto', S().acepto, `${x(T.acepto)} <u>${x(T.terminos)}</u>${extra} ${x(T.yLa)} <u>${x(T.privacidad)}</u>.`)}
             ${A().nota18 ? `<p class="pista">${E.lang === 'es' ? 'Para conducir o repartir debes tener la edad mínima que pide la ley donde trabajas, nunca menos de 18 años. Lo comprobamos con tu documento.' : 'To drive or deliver you must meet the legal minimum age where you work, never under 18. We confirm it with your ID.'}</p>` : ''}`;
           boton = x(T.crearMi);
         } else cuerpo = campo(paso, llave);
         const ultimoDeTarea = d.clase === 'tarea' && d.i === d.total - 1;
         if (ultimoDeTarea) boton = x(T.guardar);
+        const editando = d.clase === 'paso' && S().editando && paso.tipo !== 'acepto';
+        if (editando) boton = x(T.volverRevisar);
         return `${cabecera(cuenta)}
           <div class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
           <div class="cuerpo" data-llave="${llave}">
             ${recuperado[E.app] ? `<div class="recuperado">${x(T.recuperado)} <button type="button" data-a="empezar">${x(T.empezar)}</button></div>` : ''}
+            ${paso.tipo === 'foto' ? tiraDeFotos(d) : ''}
             <h1>${x(paso.t)}</h1><p class="ayuda">${x(paso.a)}</p>
             ${cuerpo}
             ${ui.error ? `<div class="error" role="alert">${esc(ui.error)}</div>` : ''}
           </div>
           <div class="pie">
-            <button type="button" class="boton" data-a="siguiente">${boton}</button>
+            ${fotoSinUsar ? '' : `<button type="button" class="boton" data-a="siguiente">${boton}</button>`}
+            ${paso.tipo === 'acepto' ? `<button type="button" class="boton borde" style="margin-top:10px" data-a="ir" data-p="paso-1">${x(T.editarDatos)}</button>` : ''}
             ${d.clase === 'tarea' && !ultimoDeTarea ? `<button type="button" class="enlace" data-a="ir" data-p="dentro">${x(T.guardarSeguir)}</button>` : ''}
             ${enlaceAyuda()}
           </div>`;
@@ -1713,12 +2888,17 @@
           <div class="pie"><button type="button" class="boton" data-a="brindis">${x(T.entrar)}</button>
             <button type="button" class="enlace" data-a="ir" data-p="paso-1">${x(T.noTengo)}</button>${enlaceAyuda()}</div>`;
       }
+      /** Driver: con plazo de 30 días (Venezuela) o con los papeles antes del primer viaje. */
+      const conPlazo = () =>
+        E.modoDriver && E.modoDriver !== 'auto' ? E.modoDriver === 'plazo' : E.lang === 'es';
       function estadoTarea(t) {
         if (t.despues) return 'despues';
         return S().hechas[t.id] || '';
       }
       function pantallaDentro() {
         const a = A();
+        const rec = S().recien;
+        S().recien = null;
         const contables = a.tareas.filter((t) => !t.despues);
         const hechas = contables.filter((t) => estadoTarea(t)).length;
         const pct = Math.round((hechas / contables.length) * 100);
@@ -1742,19 +2922,26 @@
                 : est === 'revision' || est === 'despues'
                   ? ICONO.reloj
                   : '';
-            return `<button type="button" class="tarea ${est}" ${t.despues ? 'data-a="despues"' : `data-a="ir" data-p="tarea-${t.id}-1"`}><span class="punto">${punto}</span><div><b>${x(t.t)}</b><span>${x(t.a)}</span></div><em>${x(etiqueta)}</em></button>`;
+            return `<button type="button" class="tarea ${est} ${rec === t.id ? 'recien' : ''}" ${t.despues ? 'data-a="despues"' : `data-a="ir" data-p="tarea-${t.id}-1"`}><span class="punto">${punto}</span><div><b>${x(t.t)}</b><span>${x(t.a)}</span>${minisDeTarea(t)}</div><em>${x(etiqueta)}</em></button>`;
           })
           .join('');
         const exige = a.dentro.exige;
-        const puede = exige ? exige.every((id) => S().hechas[id]) : !a.dentro.falta;
+        const plazo = E.app === 'driver' && conPlazo();
+        const puede = plazo || (exige ? exige.every((id) => S().hechas[id]) : !a.dentro.falta);
+        const llaveCorreo = a.pasos.find((id) => P[id].tipo === 'correo');
+        const correo = S().v[llaveCorreo];
+        const arriba =
+          (plazo ? `<div class="franja-ok"><b>${x(T.yaPuedes)}</b>${x(T.yaPuedesP)}</div>` : '') +
+          (correo
+            ? `<div class="recuperado">${x(T.activa)} <b style="overflow-wrap:anywhere">${esc(correo)}</b> ${x(T.activa2)}</div>`
+            : '');
         return `<div class="cab color"><img src="${a.oscura ? 'img/logo-oscuro.svg' : 'img/logo-claro.svg'}" alt="${a.nombre}" style="height:26px" /><span class="hueco"></span>${selectorIdioma()}</div>
-          <div class="saludo"><h1>${x(T.hola)}${nombre ? `, ${esc(nombre)}` : ''}</h1><p>${a.nombre}</p></div>
-          <div class="dentro">
-            <div class="tarjeta"><h2>${x(a.dentro.t)}</h2><p class="sub">${x(a.dentro.sub)}</p>
-              <div class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
-              <div class="cuanto">${hechas} ${x(T.de)} ${contables.length} ${x(T.completos)}</div>
+          ${tarjetaPerfil(hechas, contables.length, nombre)}
+          <div class="dentro">${arriba}
+            <div class="tarjeta"><h2>${x(plazo ? T.papeles : a.dentro.t)}</h2><p class="sub">${x(plazo ? T.papelesSub : a.dentro.sub)}</p>
               ${filas}
             </div>
+            ${extrasDentro()}
           </div>
           <div class="pie">${!puede && a.dentro.falta ? `<p class="aviso">${x(a.dentro.falta)}</p>` : ''}<button type="button" class="boton ${puede ? '' : 'apagado'}" data-a="${puede ? 'brindis' : 'porque'}">${x(a.dentro.accion)}</button>${enlaceAyuda()}</div>`;
       }
@@ -1791,8 +2978,8 @@
             'The text-message checkbox: separate, unchecked and optional.',
           ),
           L(
-            'Conductores: edad mínima legal (nunca menos de 18), con identidad, licencia, vehículo y seguro aprobados antes del primer viaje. La lista de documentos la decide el país de la cuenta.',
-            'Drivers: legal minimum age (never under 18), with ID, license, vehicle and insurance approved before the first trip. The account’s country decides the document list.',
+            'Conductores: edad mínima legal (nunca menos de 18). En Venezuela ya pueden trabajar al crear la cuenta y tienen 30 días para «Tus papeles»; en Estados Unidos, identidad, licencia, vehículo y seguro aprobados antes del primer viaje.',
+            'Drivers: legal minimum age (never under 18). In Venezuela they can work right after sign-up and have 30 days for “Your documents”; in the United States, ID, license, vehicle and insurance are approved before the first trip.',
           ),
           L(
             'Datos de pago y fiscales: antes del primer pago, no al crear la cuenta.',
@@ -1826,6 +3013,17 @@
             'Minimum age and driver documents in each country: a legal matter.',
           ),
         ],
+        modo: L('Driver: los papeles según el país', 'Driver: documents by country'),
+        modoP: L(
+          'El país sale de la cuenta, nunca de una lista. Aquí puedes ver los dos casos.',
+          'The country comes from the account, never from a list. See both cases here.',
+        ),
+        modoAuto: L('Según el idioma', 'By language'),
+        modoPlazo: L('Venezuela: 30 días', 'Venezuela: 30 days'),
+        modoAntes: L(
+          'Estados Unidos: antes del primer viaje',
+          'United States: before the first trip',
+        ),
         fecha: L('La fecha', 'The date'),
         fechaP: L(
           'El orden lo decide la región del teléfono. Aquí puedes probar los dos.',
@@ -1859,6 +3057,7 @@
           ...a.tareas
             .filter((t) => t.pasos)
             .flatMap((t) => t.pasos.map((p, i) => fila(`tarea-${t.id}-${i + 1}`, ++n, x(p.t)))),
+          ...pantallasExtra().map(([p, t]) => fila(p, ++n, x(t))),
         ].join('');
         document.getElementById('lado-mapa').innerHTML =
           `<h2>${a.nombre}</h2><p>${x(NOTAS.intro)}</p>
@@ -1869,7 +3068,31 @@
         document.getElementById('lado-notas').innerHTML =
           `<div class="caja"><h2>${x(NOTAS.cambia)}</h2>${lista(NOTAS.cambiaL)}</div>
           <div class="caja"><h2>${x(NOTAS.fijo)}</h2>${lista(NOTAS.fijoL)}</div>
+          ${controlesBorrador()}
           <div class="caja"><h2>${x(NOTAS.decide)}</h2>${lista(NOTAS.decideL)}</div>
+          ${
+            E.app === 'driver'
+              ? `<div class="caja"><h2>${x(NOTAS.modo)}</h2><p style="margin:0">${x(NOTAS.modoP)}</p><div class="orden">${orden(
+                  'auto',
+                  NOTAS.modoAuto,
+                )
+                  .replace('data-a="orden"', 'data-a="modo"')
+                  .replace(
+                    /aria-pressed="[a-z]+"/,
+                    `aria-pressed="${(E.modoDriver || 'auto') === 'auto'}"`,
+                  )}${orden('plazo', NOTAS.modoPlazo)
+                  .replace('data-a="orden"', 'data-a="modo"')
+                  .replace(
+                    /aria-pressed="[a-z]+"/,
+                    `aria-pressed="${E.modoDriver === 'plazo'}"`,
+                  )}${orden('antes', NOTAS.modoAntes)
+                  .replace('data-a="orden"', 'data-a="modo"')
+                  .replace(
+                    /aria-pressed="[a-z]+"/,
+                    `aria-pressed="${E.modoDriver === 'antes'}"`,
+                  )}</div></div>`
+              : ''
+          }
           <div class="caja"><h2>${x(NOTAS.fecha)}</h2><p style="margin:0">${x(NOTAS.fechaP)}</p><div class="orden">${orden('auto', NOTAS.auto)}${orden('mda', NOTAS.mda)}${orden('dma', NOTAS.dma)}</div></div>`;
         document.getElementById('b-titulo').textContent = `Divoox · ${x(T.titulo)}`;
         document.getElementById('b-reiniciar').textContent = x(T.reiniciar);
@@ -1894,13 +3117,25 @@
               ? pantallaEntrar()
               : d.clase === 'dentro'
                 ? pantallaDentro()
-                : pantallaInicio();
+                : d.clase === 'papeles'
+                  ? pantallaPapeles()
+                  : d.clase === 'perfil'
+                    ? pantallaPerfil()
+                    : d.clase === 'conductor'
+                      ? pantallaConductor()
+                      : pantallaInicio();
         if (ui.ayuda)
           html += `<div class="hoja" data-a="cerrar-ayuda"><div role="dialog" aria-label="${x(T.ayudaT)}"><h2>${x(T.ayudaT)}</h2><p>${x(T.ayudaP)}</p>
             <button type="button" class="boton" data-a="brindis">${x(T.ayudaChat)}</button><button type="button" class="boton borde" data-a="brindis">${x(T.ayudaDocs)}</button>
             <button type="button" class="enlace" data-a="cerrar-ayuda">${x(T.cerrar)}</button></div></div>`;
         if (ui.brindis) html += `<div class="brindis" role="status">${esc(ui.brindis)}</div>`;
         p.innerHTML = html;
+        // El anillo del perfil avanza a la vista, desde donde estaba.
+        requestAnimationFrame(() =>
+          p
+            .querySelectorAll('[data-off]')
+            .forEach((c) => (c.style.strokeDashoffset = c.dataset.off)),
+        );
         pintarLados();
         if (enfocar === 'siempre' || (enfocar && matchMedia('(min-width: 781px)').matches)) {
           const c = document.getElementById('c');
@@ -1932,7 +3167,7 @@
           if (!S().acepto) return falla(T.marca);
           return ir('dentro');
         }
-        if (paso.tipo === 'correo' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(escrito))
+        if (paso.tipo === 'correo' && !correoValido(escrito))
           return falla(escrito ? T.correoMal : T.falta);
         if (paso.tipo === 'clave' && (claves[E.app] || '').length < 8) return falla(T.claveCorta);
         if (['texto', 'tel', 'direccion'].includes(paso.tipo) && !escrito && !opcional)
@@ -1947,11 +3182,12 @@
           if (paso.mayor && f > hace18) return falla(T.menor);
         }
         if (paso.tipo === 'opciones' && !(v[llave] || []).some(Boolean)) return falla(T.elige);
-        if (paso.tipo === 'foto' && !v[llave] && !opcional) return falla(T.faltaFoto);
-        if (d.clase === 'paso') return ir(`paso-${d.i + 2}`);
+        if (paso.tipo === 'foto' && v[llave] !== true && !opcional) return falla(T.faltaFoto);
+        if (d.clase === 'paso') return ir(`paso-${S().editando ? d.total : d.i + 2}`);
         if (d.i < d.total - 1) return ir(`tarea-${d.tarea.id}-${d.i + 2}`);
         S().hechas[d.tarea.id] = d.tarea.fin || 'listo';
-        ir('dentro');
+        S().recien = d.tarea.id;
+        ir(despuesDeTarea(d.tarea));
       }
       function brindis(texto) {
         ui.brindis = texto;
@@ -1995,6 +3231,18 @@
         if (acc === 'atras') return atras();
         if (acc === 'siguiente') return siguiente();
         if (acc === 'ir') return ir(b.dataset.p);
+        if (acc === 'editar') return ir(b.dataset.p, true);
+        if (acc === 'corregir') {
+          const llaveCorreo = A().pasos.find((id) => P[id].tipo === 'correo');
+          v[llaveCorreo] = b.dataset.v;
+          guardar();
+          return pintar(true);
+        }
+        if (acc === 'modo') {
+          E.modoDriver = b.dataset.v;
+          guardar();
+          return pintar();
+        }
         if (acc === 'ojo') {
           ui.ojo = !ui.ojo;
           return pintar(true);
@@ -2022,9 +3270,42 @@
           guardar();
           return pintar();
         }
-        if (acc === 'foto') {
-          v[d.llave] = true;
+        if (acc === 'foto-camara') {
+          ui.cam = true;
           ui.error = '';
+          return pintar();
+        }
+        if (acc === 'cam-cerrar') {
+          ui.cam = false;
+          return pintar();
+        }
+        if (acc === 'foto-disparo' || acc === 'foto-subir') {
+          v[d.llave] = 'prueba';
+          ui.cam = false;
+          ui.error = '';
+          ui.aviso = E.prueba || '';
+          guardar();
+          return pintar();
+        }
+        if (acc === 'foto-repetir') {
+          delete v[d.llave];
+          ui.aviso = '';
+          guardar();
+          return pintar();
+        }
+        if (acc === 'foto-usar') {
+          v[d.llave] = true;
+          ui.aviso = '';
+          guardar();
+          return siguiente();
+        }
+        if (acc === 'enviar') {
+          ir('dentro');
+          return brindis(x(TX.enviado));
+        }
+        if (acc === 'faltan') return brindis(x(TX.faltan));
+        if (acc === 'prueba' || acc === 'variante' || acc === 'trayectoria') {
+          E[acc === 'variante' ? 'perfil' : acc] = b.dataset.v;
           guardar();
           return pintar();
         }
@@ -2080,9 +3361,23 @@
             v[`${d.llave}-ok`] = false;
             guardar();
             return pintar('siempre');
-          } else v[d.llave] = d.paso.mayus ? t.value.toUpperCase() : t.value;
-        } else if (t.id === 'pref') v[`${d.llave}-pref`] = t.value;
-        else if (t.id === 'h1') v[`${d.llave}-a`] = t.value;
+          } else {
+            // Cada casilla acepta solo lo suyo: lo que no corresponde ni siquiera se escribe.
+            let limpio = t.value;
+            if (d.paso.tipo === 'correo') limpio = limpio.replace(/\s/g, '').toLowerCase();
+            else if (d.paso.tipo === 'tel') limpio = limpio.replace(/\D/g, '');
+            else if (d.paso.solo === 'letras') limpio = limpio.replace(/[^\p{L}\s.'’-]/gu, '');
+            else if (d.paso.mayus) limpio = limpio.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            else if (d.paso.modo === 'decimal') limpio = limpio.replace(/[^\d.,]/g, '');
+            if (limpio !== t.value) t.value = limpio;
+            v[d.llave] = limpio;
+            if (d.paso.tipo === 'correo')
+              document.getElementById('sug').innerHTML = sugiereCorreo(limpio);
+          }
+        } else if (t.id === 'pref') {
+          t.value = `+${t.value.replace(/\D/g, '').slice(0, 4)}`;
+          v[`${d.llave}-pref`] = t.value;
+        } else if (t.id === 'h1') v[`${d.llave}-a`] = t.value;
         else if (t.id === 'h2') v[`${d.llave}-c`] = t.value;
         else return;
         if (ui.error) {
