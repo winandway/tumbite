@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-20T06:41:56Z",
+  "actualizado": "2026-11-20T09:35:07Z",
   "version": "fe71f3f",
   "ahora": "20 nov: Google aprobó la app de restaurantes (versión 19) y ya está en producción. Las tres apps tienen compilación nueva en prueba interna de Google Play y en TestFlight: las pantallas de entrada ya no dejan a nadie sin salida, el restaurante crea su cuenta desde el teléfono y la puede borrar ahí mismo, la fecha se escribe con el orden de cada país y ninguna pantalla enumera ciudades. El auditor de tiendas dio por apta la de restaurantes (21) para producción de Google Play; las de clientes (56) y conductores (63) siguen aptas con una condición: marcar una casilla de ubicación en la consola de Google Play. En iPhone, la de restaurantes (27) espera a que Apple resuelva el envío que ya tiene en revisión.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-20",
+      "titulo": "Camila ya atiende el correo como el chat",
+      "texto": "Quien le escribe a soporte de Divoox, o responde a cualquier correo nuestro, entra a su misma conversación con Camila y recibe la respuesta en el mismo hilo de su buzón, con formato de correo: saludo, todos los pasos y el enlace a la guía. Si pide una persona, el caso pasa al equipo, que contesta desde la bandeja «Camila · Soporte» y la respuesta sale por correo en ese mismo hilo, firmada con su nombre. Los correos se ven dentro de la conversación, marcados como correo. Las respuestas automáticas, los rebotes y las listas no gastan modelo, hay topes por día y por persona, y los datos de una cuenta solo se dan al correo confirmado de esa cuenta. Probado en vivo con correos reales: Camila contestó en cinco segundos, la segunda respuesta y la del equipo cayeron en la misma conversación. No se añadió ningún registro al dominio. Hay guía pública en español y en inglés."
+    },
     {
       "fecha": "2026-11-20",
       "titulo": "Pantallas de entrada sin callejón, restaurante desde el teléfono y fecha moderna, en las tres apps",
