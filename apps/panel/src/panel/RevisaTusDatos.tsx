@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import {
   correoLimpio,
+  trozosDeCorreo,
   textosRevisar,
   type CasillaRegistro,
   type FilaRevision,
@@ -61,7 +62,13 @@ export function RevisaTusDatos({
           </button>
         </div>
         <p className="revisa-correo" data-testid="revisar-correo">
-          {correoLimpio(correo)}
+          {/* Un correo largo se parte en los puntos y guiones, nunca a media palabra. */}
+          {trozosDeCorreo(correoLimpio(correo)).map((trozo, i) => (
+            <Fragment key={`${i}-${trozo}`}>
+              {trozo}
+              <wbr />
+            </Fragment>
+          ))}
         </p>
         <p className="revisa-pregunta">{r.correoPregunta}</p>
         <SugerenciaCorreo correo={correo} idioma={idioma} aceptar={aceptarCorreo} />

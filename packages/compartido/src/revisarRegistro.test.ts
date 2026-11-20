@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  trozosDeCorreo,
   errorCorreo,
   errorTelefono,
   fechaParaLeer,
@@ -48,6 +49,20 @@ describe('el correo: arroba, dominio y terminación, dicho en palabras', () => {
     expect(errorCorreo('ana@gmail.c', 'es')).toMatch(/final del correo/);
     expect(errorCorreo('ana@gmail..com', 'es')).toMatch(/final del correo/);
     expect(errorCorreo('anagmail.com', 'en')).toBe('Your email is missing the @.');
+  });
+});
+
+describe('trozosDeCorreo: un correo largo se parte en puntos, no a media palabra', () => {
+  it('unidos dan el mismo correo y el dominio va entero', () => {
+    const correo = 'nombre.apellido.muy-largo_de.prueba@ejemplo.com';
+    const trozos = trozosDeCorreo(correo);
+    expect(trozos.join('')).toBe(correo);
+    expect(trozos.at(-1)).toBe('@ejemplo.com');
+    expect(trozos.slice(0, 3)).toEqual(['nombre.', 'apellido.', 'muy-']);
+  });
+  it('sin arroba o sin puntos no se rompe', () => {
+    expect(trozosDeCorreo('ana').join('')).toBe('ana');
+    expect(trozosDeCorreo('a@b.co')).toEqual(['a', '@b.co']);
   });
 });
 

@@ -128,6 +128,20 @@ export const textosRevisar = (idioma: Idioma) => (idioma === 'en' ? EN : ES);
 /** El correo como se manda: sin espacios a los lados y en minúsculas. */
 export const correoLimpio = (correo: string) => correo.trim().toLowerCase();
 
+/**
+ * Los trozos en que un correo largo puede partirse al mostrarlo en grande sin cortar palabras:
+ * después de cada punto, guion o guion bajo de lo que va antes de la arroba, y el dominio entero
+ * (con su arroba) como último trozo. Unidos, dan exactamente el mismo correo.
+ */
+export function trozosDeCorreo(correo: string): string[] {
+  const i = correo.lastIndexOf('@');
+  const usuario = i < 0 ? correo : correo.slice(0, i);
+  const dominio = i < 0 ? '' : correo.slice(i);
+  const trozos = usuario.split(/(?<=[._-])/).filter(Boolean);
+  if (dominio) trozos.push(dominio);
+  return trozos;
+}
+
 /** Por qué el correo no sirve todavía, en palabras; null si está bien formado. */
 export function errorCorreo(correo: string, idioma: Idioma): string | null {
   const e = textosRevisar(idioma).errores;

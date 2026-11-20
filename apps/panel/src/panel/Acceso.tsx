@@ -292,7 +292,12 @@ export function Acceso({
           {/* En el registro, el escudo va en «Revisa tus datos», donde se crea la cuenta. */}
           {modo === 'entrar' && <Turnstile sitio={turnstileSitio} idioma={idioma} />}
           {/* C-REVISA-TUS-DATOS: al crear la cuenta, el botón lleva a revisar; todavía no la crea. */}
-          <button type="submit" className="boton ancho" disabled={enviando}>
+          <button
+            type="submit"
+            className="boton ancho"
+            disabled={enviando}
+            data-testid={modo === 'registro' ? 'registro-continuar' : undefined}
+          >
             {enviando ? t.enviando : modo === 'entrar' ? t.entrar : r.continuar}
           </button>
         </form>

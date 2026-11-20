@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import {
   correoLimpio,
   textosRevisar,
+  trozosDeCorreo,
   type CasillaRegistro,
   type FilaRevision,
   type Idioma,
@@ -83,20 +84,28 @@ export function RevisaTusDatos({
           <Text style={{ flex: 1, color: COLOR.textoSuave, fontSize: 14 }}>{r.etiquetaCorreo}</Text>
           {editar('correo', r.etiquetaCorreo)}
         </View>
-        <Text
+        {/* Un correo largo se parte solo en los puntos y guiones, nunca a media palabra. */}
+        <View
           testID="revisar-correo"
-          selectable
-          style={{
-            fontSize: 22,
-            lineHeight: 28,
-            fontWeight: '700',
-            color: COLOR.negro,
-            marginTop: 4,
-            marginBottom: 8,
-          }}
+          accessible
+          accessibilityLabel={correoLimpio(correo)}
+          style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4, marginBottom: 8 }}
         >
-          {correoLimpio(correo)}
-        </Text>
+          {trozosDeCorreo(correoLimpio(correo)).map((trozo, i) => (
+            <Text
+              key={`${i}-${trozo}`}
+              selectable
+              style={{
+                fontSize: correoLimpio(correo).length > 30 ? 20 : 22,
+                lineHeight: 28,
+                fontWeight: '700',
+                color: COLOR.negro,
+              }}
+            >
+              {trozo}
+            </Text>
+          ))}
+        </View>
         <Text style={{ color: COLOR.texto, fontSize: 15, lineHeight: 21 }}>{r.correoPregunta}</Text>
         <View style={{ marginTop: 12 }}>
           <SugerenciaCorreo correo={correo} idioma={idioma} aceptar={aceptarCorreo} />
