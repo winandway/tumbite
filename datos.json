@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-20T03:16:42Z",
+  "actualizado": "2026-11-20T06:41:56Z",
   "version": "fe71f3f",
-  "ahora": "19 nov: la app de restaurantes sin el aviso de pruebas ya está enviada a producción de Google Play (versión 19) y espera la aprobación de Google; en TestFlight es la 25. La política de privacidad ya explica en vivo la comprobación de los viajes con regalo y las líneas de taxi y mototaxi. Las apps de cliente (54) y conductor (58) tienen el visto bueno condicionado del auditor: solo falta marcar una casilla de ubicación en la consola de Google Play de cada una para subirlas a producción.",
+  "ahora": "20 nov: Google aprobó la app de restaurantes (versión 19) y ya está en producción. Las tres apps tienen compilación nueva en prueba interna de Google Play y en TestFlight: las pantallas de entrada ya no dejan a nadie sin salida, el restaurante crea su cuenta desde el teléfono y la puede borrar ahí mismo, la fecha se escribe con el orden de cada país y ninguna pantalla enumera ciudades. El auditor de tiendas dio por apta la de restaurantes (21) para producción de Google Play; las de clientes (56) y conductores (63) siguen aptas con una condición: marcar una casilla de ubicación en la consola de Google Play. En iPhone, la de restaurantes (27) espera a que Apple resuelva el envío que ya tiene en revisión.",
   "proximo": [
     {
       "quien": "ia",
@@ -39,8 +39,8 @@
       "id": "play-datos-ubicacion-fraude",
       "prioridad": "alta",
       "titulo": "Google Play: marcar «Prevención de fraudes, seguridad y cumplimiento» en la ubicación de las apps de clientes y de conductores",
-      "para": "En la consola de Google Play, Seguridad de los datos. App de clientes: en Ubicación precisa (y, recomendado, también en Ubicación aproximada) se suma la finalidad «Prevención de fraudes, seguridad y cumplimiento»; sigue opcional y no compartida. App de conductores: en Ubicación precisa se suma esa misma finalidad; lo demás ya está bien. Se guarda y se envía. De paso, mirar en Resumen de publicación que no haya «Cambios en revisión». La app de restaurantes ya está enviada y no necesita nada.",
-      "destraba": "La subida a producción de la versión 54 de clientes y la 58 de conductores, que ya tienen el visto bueno condicionado del auditor de tiendas.",
+      "para": "En la consola de Google Play, Seguridad de los datos. App de clientes: en Ubicación precisa (y, recomendado, también en Ubicación aproximada) se suma la finalidad «Prevención de fraudes, seguridad y cumplimiento»; sigue opcional y no compartida. App de conductores: en Ubicación precisa se suma esa misma finalidad; lo demás ya está bien. Se guarda y se envía. De paso, mirar en Resumen de publicación que no haya «Cambios en revisión». La app de restaurantes no necesita nada.",
+      "destraba": "La subida a producción de la versión 56 de clientes y la 63 de conductores, que ya tienen el visto bueno condicionado del auditor de tiendas.",
       "numero": 34
     },
     {
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-20",
+      "titulo": "Pantallas de entrada sin callejón, restaurante desde el teléfono y fecha moderna, en las tres apps",
+      "texto": "Cuatro órdenes de Richard quedaron en vivo en la web y dentro de las apps de prueba. Uno: de «Crear cuenta» siempre se vuelve a «Entrar», con flecha arriba, enlace arriba y abajo y el gesto del teléfono, sin perder lo escrito. Dos: la app de restaurantes ya crea la cuenta desde el teléfono, tiene «¿Necesitas ayuda?» a la vista y, por hallazgo del auditor de tiendas, deja cerrar sesión y borrar la cuenta aunque el restaurante todavía no esté completo. Tres: una sola casilla de fecha para apps y panel, con teclado de números, barras que salen solas y el orden del país de la persona. Cuatro: ninguna app ni la web enumera ciudades o países. Además, las ganancias del conductor suman lo cobrado en mano y la cuenta de cobro de Venezuela pide los datos del pago móvil. Compilaciones: en Google Play (prueba interna) clientes 56, conductores 63 y restaurantes 21; en TestFlight clientes 62, conductores 49 y restaurantes 27. Google aprobó la versión 19 de restaurantes. Nada fue a revisión nueva: el auditor dio apta la de restaurantes para Google Play y condicionadas las otras dos a la casilla de ubicación."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Borrador del registro: asistente de fotos con hormas y perfil del conductor",
