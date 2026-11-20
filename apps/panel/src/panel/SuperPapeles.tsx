@@ -831,7 +831,12 @@ export function PoliticaPapelesPais({
           ? t.casos(Math.round((aciertos * 100) / conOpinion), conOpinion)
           : t.sinCasos}
       </p>
-      <button type="button" className="boton secundario" onClick={() => void enviar()}>
+      <button
+        type="button"
+        className="boton secundario"
+        data-testid="politica-guardar"
+        onClick={() => void enviar()}
+      >
         {t.guardarPolitica}
       </button>
       {estado.ok ? <p className="exito-general">{estado.ok}</p> : null}

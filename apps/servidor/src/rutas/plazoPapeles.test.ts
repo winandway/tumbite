@@ -11,8 +11,12 @@ import { mundo } from '../pruebas/ayuda';
 import { recordarPlazos } from '../plazoPapeles';
 import {
   type LlamadaIa,
+  SALIDA_MAXIMA_GEMINI,
   colorDeCaras,
   colorDeFoto,
+  cuerpoGemini,
+  leerRespuestaGemini,
+  saludVerificacionIa,
   usarModeloVerificacion,
 } from '../verificacionIa';
 
@@ -415,6 +419,46 @@ describe('C-VERIFICACION-IA: la IA adelanta, nunca bloquea, y tiene tope', () =>
     expect(r.datos.ia).toEqual({ color: 'sin_ia', aviso: '' });
     const g = await c.m.DB.prepare('SELECT llamadas, fallos FROM verificacion_ia_gasto').first();
     expect(g).toEqual({ llamadas: 0, fallos: 1 });
+  });
+
+  it('C-VERIFICACION-IA-RESPONDE: la consulta va con el «pensar» apagado y salida de sobra', () => {
+    const cuerpo = cuerpoGemini({ sistema: 's', texto: 't', imagenes: [], json: {} });
+    expect(cuerpo.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 });
+    expect(cuerpo.generationConfig.maxOutputTokens).toBe(SALIDA_MAXIMA_GEMINI);
+    expect(SALIDA_MAXIMA_GEMINI).toBeGreaterThanOrEqual(1024);
+  });
+
+  it('C-VERIFICACION-IA-RESPONDE: una respuesta que no terminó se reconoce como cortada', () => {
+    const cortada = leerRespuestaGemini({
+      candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: '{"cl' }] } }],
+      usageMetadata: { promptTokenCount: 1149, candidatesTokenCount: 2, thoughtsTokenCount: 383 },
+    });
+    expect(cortada).toMatchObject({ cortada: true, entrada: 1149, salida: 385 });
+    const entera = leerRespuestaGemini({
+      candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{}' }] } }],
+    });
+    expect(entera.cortada).toBe(false);
+  });
+
+  it('C-VERIFICACION-IA-RESPONDE: la respuesta cortada se paga, queda contada como sin respuesta y el canario avisa', async () => {
+    const c = await conductorNuevo();
+    usarModeloVerificacion(async () => ({
+      texto: '{"cl',
+      entrada: 1149,
+      salida: 385,
+      cortada: true,
+    }));
+    const r = await c.foto('doc_frente');
+    expect(r.estado).toBe(201);
+    expect(r.datos.ia).toEqual({ color: 'sin_ia', aviso: '' });
+    const g = await c.m.DB.prepare('SELECT llamadas, fallos FROM verificacion_ia_gasto').first();
+    expect(g).toEqual({ llamadas: 1, fallos: 1 });
+    expect(await saludVerificacionIa({}, c.m.DB)).toBe('ok');
+    // Lo que pasó el 20 nov: 33 consultas pagadas y 29 sin respuesta. El canario tiene que decirlo.
+    await c.m.DB.prepare('UPDATE verificacion_ia_gasto SET llamadas = 33, fallos = 29').run();
+    expect(await saludVerificacionIa({}, c.m.DB)).toBe('atrasado');
+    await c.m.DB.prepare('UPDATE verificacion_ia_gasto SET llamadas = 33, fallos = 4').run();
+    expect(await saludVerificacionIa({}, c.m.DB)).toBe('ok');
   });
 
   it('con el tope del día alcanzado no se llama al modelo', async () => {

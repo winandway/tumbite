@@ -54,7 +54,7 @@ export function topeVerificacionMicro(env: Pick<Env, 'TOPE_VERIFICACION_IA_CENTA
 
 export type Imagen = { bytes: Uint8Array; mime: string };
 export type PedidoIa = { sistema: string; texto: string; imagenes: Imagen[]; json: unknown };
-export type RespuestaIa = { texto: string; entrada: number; salida: number };
+export type RespuestaIa = { texto: string; entrada: number; salida: number; cortada?: boolean };
 export type LlamadaIa = (env: Env, p: PedidoIa) => Promise<RespuestaIa>;
 
 function aBase64(bytes: Uint8Array): string {
@@ -62,6 +62,61 @@ function aBase64(bytes: Uint8Array): string {
   for (let i = 0; i < bytes.length; i += 0x8000)
     s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(s);
+}
+
+/** Fichas de salida de sobra para el JSON (ocupa unas 60); el tope solo corta un desvarío. */
+export const SALIDA_MAXIMA_GEMINI = 1024;
+
+/**
+ * C-VERIFICACION-IA-RESPONDE (20 nov 2026) — todos los países. El cuerpo de la consulta, aparte para
+ * que lleve su prueba: el «pensar» del modelo va APAGADO (`thinkingBudget: 0`). Con él encendido
+ * gastaba unas 380 fichas de las 400 de salida antes de escribir, la respuesta llegaba cortada y la
+ * foto quedaba «A mano» pagando igual la consulta (29 de 33 en un día). No tocar sin medir otra vez.
+ */
+export function cuerpoGemini(p: PedidoIa) {
+  return {
+    systemInstruction: { parts: [{ text: p.sistema }] },
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          ...p.imagenes.map((i) => ({
+            inlineData: { mimeType: i.mime, data: aBase64(i.bytes) },
+          })),
+          { text: p.texto },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0,
+      maxOutputTokens: SALIDA_MAXIMA_GEMINI,
+      thinkingConfig: { thinkingBudget: 0 },
+      responseMimeType: 'application/json',
+      responseSchema: p.json,
+    },
+  };
+}
+
+type CrudoGemini = {
+  candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    thoughtsTokenCount?: number;
+  };
+};
+
+/** Lo que contestó Gemini, con lo que costó. `cortada` = no terminó de escribir (se paga igual). */
+export function leerRespuestaGemini(crudo: unknown): RespuestaIa & { cortada: boolean } {
+  const d = (crudo ?? {}) as CrudoGemini;
+  const u = d.usageMetadata ?? {};
+  const c = d.candidates?.[0];
+  return {
+    texto: (c?.content?.parts ?? []).map((x) => x.text ?? '').join(''),
+    entrada: u.promptTokenCount ?? 0,
+    salida: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0),
+    cortada: c?.finishReason !== 'STOP',
+  };
 }
 
 async function llamarGemini(env: Env, p: PedidoIa): Promise<RespuestaIa> {
@@ -72,43 +127,11 @@ async function llamarGemini(env: Env, p: PedidoIa): Promise<RespuestaIa> {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY ?? '' },
       signal: AbortSignal.timeout(15_000),
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: p.sistema }] },
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              ...p.imagenes.map((i) => ({
-                inlineData: { mimeType: i.mime, data: aBase64(i.bytes) },
-              })),
-              { text: p.texto },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0,
-          maxOutputTokens: 400,
-          responseMimeType: 'application/json',
-          responseSchema: p.json,
-        },
-      }),
+      body: JSON.stringify(cuerpoGemini(p)),
     },
   );
   if (!res.ok) throw new Error(`Gemini respondió ${res.status}`);
-  const d = (await res.json()) as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
-    usageMetadata?: {
-      promptTokenCount?: number;
-      candidatesTokenCount?: number;
-      thoughtsTokenCount?: number;
-    };
-  };
-  const u = d.usageMetadata ?? {};
-  return {
-    texto: (d.candidates?.[0]?.content?.parts ?? []).map((x) => x.text ?? '').join(''),
-    entrada: u.promptTokenCount ?? 0,
-    salida: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0),
-  };
+  return leerRespuestaGemini(await res.json());
 }
 
 let llamada: LlamadaIa = llamarGemini;
@@ -145,6 +168,7 @@ async function preguntar(env: Env, db: D1Database, p: PedidoIa): Promise<unknown
       )
       .bind(hoy(), costoMicroVerificacion(r.entrada, r.salida))
       .run();
+    if (r.cortada) throw new Error('la respuesta llegó cortada (se pagó y no sirve)');
     return JSON.parse(r.texto) as unknown;
   } catch (e) {
     // Fallo del modelo: queda contado para el canario y la foto la mira una persona.
@@ -335,8 +359,11 @@ export async function compararCaras(
 
 /**
  * Pieza «verificacion_ia» del canario: «tope» si hoy llegó al tope (las fotos pasan a revisión de
- * una persona; no es un fallo), «atrasado» si el modelo falló en más de la mitad de las llamadas de
- * hoy (con al menos 5 fallos), «error» si lo gastado pasó el tope en más de un 10 %.
+ * una persona; no es un fallo), «atrasado» si hoy la mitad o más de las consultas quedaron sin
+ * respuesta (con al menos 5), «error» si lo gastado pasó el tope en más de un 10 %.
+ * Ojo: una respuesta cortada cuenta en `llamadas` (se pagó) Y en `fallos`; un fallo de red solo en
+ * `fallos`. Por eso se compara contra el mayor de los dos y no con «fallos > llamadas», que con
+ * respuestas cortadas nunca se cumplía (29 de 33 sin respuesta y el canario en verde).
  */
 export async function saludVerificacionIa(
   env: Pick<Env, 'TOPE_VERIFICACION_IA_CENTAVOS'>,
@@ -345,7 +372,7 @@ export async function saludVerificacionIa(
   const g = await gastoVerificacionHoy(db);
   const tope = topeVerificacionMicro(env);
   if (g.microdolares > tope * 1.1 + 10_000) return 'error';
-  if (g.fallos >= 5 && g.fallos > g.llamadas) return 'atrasado';
+  if (g.fallos >= 5 && g.fallos * 2 >= Math.max(g.llamadas, g.fallos)) return 'atrasado';
   if (tope > 0 && g.microdolares >= tope) return 'tope';
   return 'ok';
 }
