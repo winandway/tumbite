@@ -30,6 +30,8 @@
     "libro": "ok",
     "regalos": "ok",
     "camila": "ok",
+    "verificacion_ia": "ok",
+    "correoEntrante": "ok",
     "disputas": "ok",
     "errores": "ok",
     "bandeja": "ok",
@@ -41,5 +43,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-20T06:42:01.382895+00:00"
+  "medido": "2026-11-20T17:01:12.996027+00:00"
 }
