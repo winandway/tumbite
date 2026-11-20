@@ -14,6 +14,8 @@ import { sqlLocal } from './sqlLocal';
 const CAPTURAS = process.env.CAPTURAS === '1';
 const DOCS = join(__dirname, '..', '..', 'docs', 'capturas', 'recorrido');
 const REVISION = process.env.CARPETA_ENTRADA;
+// En el sitio de pruebas no hay base local que consultar: ahí manda lo que se ve en pantalla.
+const STAGING = Boolean(process.env.RECORRIDO_URL);
 if (REVISION) mkdirSync(REVISION, { recursive: true });
 
 for (const idioma of ['es', 'en'] as const) {
@@ -167,9 +169,10 @@ for (const idioma of ['es', 'en'] as const) {
       p.getByRole('button', { name: en ? 'Complete my restaurant' : 'Completar mi restaurante' }),
     ).toBeVisible({ timeout: 30_000 });
     await guardar(p, 'app-restaurante-app-completar', true);
-    expect(sqlLocal(`SELECT rol FROM usuarios WHERE correo = '${correo}'`)[0]).toMatchObject({
-      rol: 'restaurante',
-    });
+    if (!STAGING)
+      expect(sqlLocal(`SELECT rol FROM usuarios WHERE correo = '${correo}'`)[0]).toMatchObject({
+        rol: 'restaurante',
+      });
     // La cuenta recién creada se borra desde esa misma pantalla, sin completar el restaurante.
     await p.getByTestId('cuenta-tres-puntos').click();
     await p.getByTestId('borrar-cuenta').click();
@@ -181,7 +184,8 @@ for (const idioma of ['es', 'en'] as const) {
     await expect(
       p.getByText(en ? 'Your account was deleted' : 'Tu cuenta quedó borrada'),
     ).toBeVisible();
-    expect(sqlLocal(`SELECT id FROM usuarios WHERE correo = '${correo}'`)).toHaveLength(0);
+    if (!STAGING)
+      expect(sqlLocal(`SELECT id FROM usuarios WHERE correo = '${correo}'`)).toHaveLength(0);
     await ctx.close();
   });
 

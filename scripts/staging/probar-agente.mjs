@@ -76,7 +76,9 @@ const ciudad = (activo) =>
     activo,
     pagaEn: 'USD',
     minimo: 500,
-    topeConductorDia: 20_000,
+    // El conductor del guion es siempre el mismo y el tope es por día: con el de fábrica (200 USD)
+    // la sexta corrida del día chocaba con «Ese monto pasa lo que puedes cobrar en efectivo hoy».
+    topeConductorDia: 100_000,
   });
 const ficha = async () =>
   ok(await equipo('GET', `agentes/${ids.agente}`), 'ficha del agente').agente;
