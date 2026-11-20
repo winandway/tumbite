@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-19T23:22:22Z",
+  "actualizado": "2026-11-20T02:01:48Z",
   "version": "fe71f3f",
   "ahora": "19 nov: la app de restaurantes sin el aviso de pruebas ya está enviada a producción de Google Play (versión 19) y espera la aprobación de Google; en TestFlight es la 25. La política de privacidad ya explica en vivo la comprobación de los viajes con regalo y las líneas de taxi y mototaxi. Las apps de cliente (54) y conductor (58) tienen el visto bueno condicionado del auditor: solo falta marcar una casilla de ubicación en la consola de Google Play de cada una para subirlas a producción.",
   "proximo": [
@@ -342,6 +342,14 @@
       "titulo": "Perú: el contacto del líder de Ica y si entra la moto lineal o solo el mototaxi",
       "para": "El líder de Ica vende saldo como punto de venta (cobra en efectivo, Yape o Plin): necesitamos su correo o su celular para crearle la cuenta. Y decidir si en Ica se ofrece solo mototaxi o también moto lineal: hoy la app lo llama «Moto», con un pasajero y casco.",
       "destraba": "Crear el punto de venta de Ica y dejar el nombre y el dibujo del servicio como es en la calle."
+    },
+    {
+      "id": "borrador-registro-nuevo",
+      "prioridad": "media",
+      "titulo": "Aprobar el borrador del registro nuevo y corto de las tres apps",
+      "para": "Abrir la página «borrador-registro» de este sitio (enlace «Borrador del registro nuevo» en el menú), recorrer Divoox, Driver y Restaurants como si fueran la app, y decir qué se cambia. A la derecha están las cinco decisiones que solo tú puedes tomar: entrar con código o con contraseña, «Continuar con Google y Apple», cuándo se pide el celular del cliente, cómo entra el restaurante, y la edad y los documentos del conductor por país.",
+      "destraba": "Construir el registro nuevo en las tres apps. No se toca el código hasta tu visto bueno.",
+      "numero": 38
     }
   ],
   "terceros": [
@@ -521,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Borrador navegable del registro nuevo y corto de las tres apps",
+      "texto": "Queda un borrador para tocar, a tamaño de teléfono y en español e inglés, del registro nuevo de Divoox, Driver y Restaurants (página «borrador-registro»): una sola cosa por pantalla con «Siguiente» y barra verde, lo mínimo para entrar (tres datos el cliente, cuatro el conductor, cinco el restaurante) y lo demás adentro, en una lista que se guarda sola y se retoma. Cumple las reglas de hoy: sin lista de ciudades ni países, fecha con el orden del país y barras que se ponen solas, regreso y ayuda en todas las pantallas, contraseña con ojito y casillas de términos y de mensajes sin marcar. Es solo un borrador: el código de las apps no se tocó y se construye cuando Richard lo apruebe. El estudio de cómo registran las grandes quedó en la ficha «registro-corto» del 19 de noviembre."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Tiendas: restaurantes enviada a Google y candidatas de cliente y conductor con visto bueno condicionado",
@@ -1281,5 +1294,5 @@
       ]
     }
   ],
-  "siguienteProgreso": 38
+  "siguienteProgreso": 39
 }
