@@ -79,11 +79,16 @@ const deben = [
 if (modo === 'despues') deben.push('exclusividad');
 const pieza = new Map(Object.entries(p));
 for (const k of deben) exigir(pieza.get(k) === 'ok', `salud · ${k} = ok (está «${pieza.get(k)}»)`);
-for (const k of ['retiros', 'tiempoReal'])
-  exigir(
-    pieza.get(k) === 'pendiente',
-    `salud · ${k} = pendiente, apagado a propósito (está «${pieza.get(k)}»)`,
-  );
+exigir(
+  pieza.get('tiempoReal') === 'pendiente',
+  `salud · tiempoReal = pendiente, apagado a propósito (está «${pieza.get('tiempoReal')}»)`,
+);
+// Los retiros se encendieron con Connect el 17 nov 2026 (C-CONNECT-PAIS): «ok» encendidos,
+// «pendiente» apagados. Error nunca.
+exigir(
+  ['ok', 'pendiente'].includes(pieza.get('retiros')),
+  `salud · retiros = ok o pendiente (está «${pieza.get('retiros')}»)`,
+);
 // C-ERRORES-VISIBLES: después de publicar la pieza existe; «pendiente» = hubo errores no
 // controlados en la última hora (no tumba la publicación, pero se dice para revisarlos).
 if (modo === 'despues')
@@ -148,6 +153,8 @@ const [m] = await consultar(
           (SELECT COUNT(*) FROM cobros WHERE capturado_en IS NULL AND cancelado_en IS NULL) cobros_abiertos,
           (SELECT COUNT(*) FROM pedidos WHERE estado IN ('pagado','aceptado','listo','en_camino')) activos,
           (SELECT COUNT(*) FROM retiros) retiros,
+          (SELECT COUNT(*) FROM retiros WHERE estado IN ('fallido', 'revision')) retiros_mal,
+          (SELECT COUNT(*) FROM retiros WHERE estado = 'enviando' AND enviando_desde < datetime('now', '-1 hour')) retiros_atascados,
           (SELECT COUNT(*) FROM config WHERE clave = 'retiros_activos') bandera_retiros,
           (SELECT COUNT(*) FROM abonos_fallidos) abonos_fallidos,
           (SELECT COUNT(*) FROM repartidores WHERE conectado = 1) conectados,
@@ -163,15 +170,31 @@ exigir(
   modo === 'despues' || Number(m.activos) === 0,
   `sin pedidos activos antes de publicar (${m.activos})`,
 );
+// Con los retiros encendidos ya no se exige «cero retiros»: se exige que ninguno esté fallido, en
+// revisión ni atascado a medio enviar. Apagados (sin bandera), sigue sin poder haber ninguno.
 exigir(
-  Number(m.retiros) === 0 && Number(m.bandera_retiros) === 0,
-  'retiros reales apagados y sin retiros',
+  Number(m.retiros_mal) === 0 && Number(m.retiros_atascados) === 0,
+  `ningún retiro fallido, en revisión ni atascado (${m.retiros_mal} / ${m.retiros_atascados})`,
+);
+exigir(
+  Number(m.bandera_retiros) > 0 || Number(m.retiros) === 0,
+  `con los retiros apagados no hay retiros (${m.retiros})`,
+);
+avisos.push(
+  `info · retiros ${Number(m.bandera_retiros) > 0 ? 'encendidos' : 'apagados'}: ${m.retiros} en total`,
 );
 exigir(Number(m.abonos_fallidos) === 0, 'sin abonos fallidos');
+// Desde el piloto del 16 nov 2026 hay más servicios que Comida. Se exige que Comida siga puesta y
+// que no aparezca ningún servicio fuera de los que el código implementa.
+const SERVICIOS_CONOCIDOS = ['carro', 'comida', 'envios', 'moto'];
+const implementados = String(m.implementados ?? '')
+  .split(',')
+  .filter(Boolean);
 exigir(
-  m.implementados === 'comida' && Number(m.moto_carro) === 0,
-  `solo Comida; Moto y Carro apagados (${m.implementados}, ${m.moto_carro})`,
+  implementados.includes('comida') && implementados.every((s) => SERVICIOS_CONOCIDOS.includes(s)),
+  `Comida implementada y ningún servicio desconocido (${m.implementados})`,
 );
+avisos.push(`info · zonas con Moto o Carro disponibles: ${m.moto_carro}`);
 avisos.push(`info · repartidores conectados: ${m.conectados}`);
 
 // 5. Después de publicar: la Fase 3 puesta y sana.
@@ -187,10 +210,7 @@ if (modo === 'despues') {
       Number(f.inconsistencias) === 0,
       `inconsistencias de exclusividad en cero (${f.inconsistencias})`,
     );
-    exigir(
-      Number(f.operaciones) === 0,
-      `ninguna operación de Moto o Carro creada (${f.operaciones})`,
-    );
+    avisos.push(`info · operaciones de Moto o Carro en la base: ${f.operaciones}`);
   } catch (e) {
     fallas.push(`no se pudo leer la Fase 3 en la base: ${String(e?.message ?? e).slice(0, 160)}`);
   }
