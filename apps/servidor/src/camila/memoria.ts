@@ -215,6 +215,9 @@ export async function unirConCorreo(db: D1Database, anonima: Persona, correoCrud
     db
       .prepare('UPDATE camila_adjuntos SET persona_id = ? WHERE persona_id = ?')
       .bind(destino.id, anonima.id),
+    db
+      .prepare('UPDATE camila_correos SET persona_id = ? WHERE persona_id = ?')
+      .bind(destino.id, anonima.id),
     db.prepare('DELETE FROM camila_personas WHERE id = ?').bind(anonima.id),
     // El navegador queda unido a la persona del correo: la próxima vez entra directo a su hilo.
     db
@@ -366,6 +369,8 @@ export function sentenciasBorrarDeCamila(
     // C-CAMILA-FALLOS: sus reportes de fallo (las capturas se borran del almacén aparte).
     de('camila_reportes_fallo'),
     de('camila_adjuntos'),
+    // C-CAMILA-CORREO-HILO: las cabeceras de sus correos (con su dirección y sus asuntos).
+    de('camila_correos'),
     de('camila_codigos'),
     db
       .prepare('DELETE FROM camila_codigos WHERE correo = ?1 OR correo = ?2')

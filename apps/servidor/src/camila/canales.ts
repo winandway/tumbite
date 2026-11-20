@@ -2,7 +2,8 @@ import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { notificar } from '../notificaciones';
 import { CORREOS_SOPORTE } from '@tumbite/compartido';
-import { conFirma, type IdiomaCamila } from './identidad';
+import { anotarErrorDeCorreo, direccionDeHilo, hiloDeCorreo } from './correoHilo';
+import { FIRMA, segun, type IdiomaCamila } from './identidad';
 import type { Canal, Persona } from './memoria';
 
 /**
@@ -36,27 +37,60 @@ const ENCENDIDOS = new Map(Object.entries(CANALES_ENCENDIDOS));
 
 export type Salida = { enviado: boolean; motivo?: string };
 
+/**
+ * C-CAMILA-CORREO-HILO: todo correo de Camila (y del equipo desde su bandeja) lo dice al pie: la
+ * persona responde ese mismo correo y la conversación sigue ahí.
+ */
+export const PUEDES_RESPONDER = {
+  es: 'Puedes responder a este correo y te contestamos aquí mismo.',
+  en: 'You can reply to this email and we will answer you right here.',
+} as const;
+
+/** El cuerpo de un correo de soporte: el texto, quién firma y la invitación a responder. */
+export const cuerpoDeCorreo = (texto: string, idioma: IdiomaCamila, firma?: string) =>
+  `${texto.trim()}\n\n${firma ?? segun(FIRMA, idioma)}\n\n${segun(PUEDES_RESPONDER, idioma)}`;
+
 export async function enviarPorCanal(
   env: Env,
   db: D1Database,
   persona: Persona,
   canal: Canal,
   texto: string,
-  opciones: { asunto?: string; aviso?: boolean } = {},
+  opciones: {
+    asunto?: string;
+    aviso?: boolean;
+    /** Quién firma el correo (una persona del equipo). Sin ella firma Camila. */
+    firma?: string;
+  } = {},
 ): Promise<Salida> {
   const idioma: IdiomaCamila = persona.idioma === 'en' ? 'en' : 'es';
   if (!ENCENDIDOS.get(canal)) return { enviado: false, motivo: 'canal_apagado' };
   if (canal === 'correo') {
     if (!persona.correo) return { enviado: false, motivo: 'sin_correo' };
+    // C-CAMILA-CORREO-HILO: si la persona escribió por correo, la respuesta va a su dirección tal
+    // como la escribió, con el mismo asunto y las cabeceras que la acomodan en su hilo; y siempre
+    // lleva la dirección de respuesta de SU conversación (en producción la recibe el Worker).
+    const [hilo, responderA] = await Promise.all([
+      hiloDeCorreo(db, persona.id),
+      direccionDeHilo(env, persona.id),
+    ]);
     const r = await enviarCorreo(env, {
       de: 'soporte',
-      para: persona.correo,
+      para: hilo?.para ?? persona.correo,
       idioma,
-      responderA: CORREOS_SOPORTE.camila,
-      asunto: opciones.asunto ?? (idioma === 'en' ? 'Divoox Support' : 'Soporte de Divoox'),
-      texto: conFirma(texto, idioma),
+      responderA: responderA ?? CORREOS_SOPORTE.camila,
+      asunto:
+        opciones.asunto ??
+        hilo?.asunto ??
+        (idioma === 'en' ? 'Divoox Support' : 'Soporte de Divoox'),
+      texto: cuerpoDeCorreo(texto, idioma, opciones.firma),
+      ...(hilo?.cabeceras && !opciones.asunto ? { cabeceras: hilo.cabeceras } : {}),
     });
-    return r.ok ? { enviado: true } : { enviado: false, motivo: r.motivo };
+    if (r.ok) return { enviado: true };
+    // Nunca en silencio: una respuesta que no salió queda para el canario (un rebote no es un fallo).
+    if (!r.rebotado)
+      await anotarErrorDeCorreo(db, `La respuesta no salió: ${r.motivo}`).catch(() => undefined);
+    return { enviado: false, motivo: r.motivo };
   }
   if (canal === 'sms' || canal === 'whatsapp') {
     const p = PROVEEDORES.get(canal);

@@ -4558,6 +4558,29 @@ CREATE TABLE IF NOT EXISTS camila_adjuntos (
 ) WITHOUT ROWID;
 CREATE INDEX IF NOT EXISTS camila_adjuntos_persona ON camila_adjuntos(persona_id, mensaje_id);
 CREATE INDEX IF NOT EXISTS camila_adjuntos_mensaje ON camila_adjuntos(mensaje_id) WHERE mensaje_id IS NOT NULL;
+-- C-CAMILA-CORREO-HILO (20 nov 2026): los correos que entran a la conversación de Camila. Una fila por
+-- correo recibido (su identificador evita atenderlo dos veces y sirve para contestar en el mismo
+-- hilo). El texto vive en camila_mensajes; aquí solo van las cabeceras del hilo. Un solo índice.
+CREATE TABLE IF NOT EXISTS camila_correos (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  message_id TEXT NOT NULL UNIQUE,
+  -- La dirección tal como la escribió quien manda (la respuesta sale a esa, no a su forma canónica).
+  de TEXT NOT NULL DEFAULT '',
+  asunto TEXT NOT NULL DEFAULT '',
+  referencias TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS camila_correos_persona ON camila_correos(persona_id, creado_en);
+-- La cuenta del día de la entrada de correo (una fila por día): topes y canario. Una escritura por correo.
+CREATE TABLE IF NOT EXISTS camila_correo_dia (
+  dia TEXT PRIMARY KEY,
+  recibidos INTEGER NOT NULL DEFAULT 0,
+  atendidos INTEGER NOT NULL DEFAULT 0,
+  ignorados INTEGER NOT NULL DEFAULT 0,
+  error_en TEXT,
+  error TEXT
+) WITHOUT ROWID;
 -- Preguntas de diagnóstico que el equipo agrega por tipo de fallo. Camila usa solo las aprobadas.
 CREATE TABLE IF NOT EXISTS camila_preguntas (
   id TEXT PRIMARY KEY,

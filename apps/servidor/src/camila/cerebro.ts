@@ -1,7 +1,7 @@
 import type { Env } from '../env';
 import { correosEquipo } from '../avisosEquipo';
 import { enviarCorreo } from '../correo';
-import { enviarPorCanal } from './canales';
+import { type Salida, enviarPorCanal } from './canales';
 import { conEnlacesDeGuia, buscarGuias, respuestaDeGuia } from './buscadorDocs';
 import {
   type ContextoPeticion,
@@ -91,6 +91,8 @@ export type ResultadoCerebro = {
   modo: 'ia' | 'reglas' | 'fija' | 'silencio';
   /** Quedó de la versión anterior del chat (la captura ya no se pide aparte). Siempre falso. */
   pideCaptura?: boolean;
+  /** Si la respuesta salió por un canal que no es el chat (correo): cómo le fue al envío. */
+  salida?: Salida;
 };
 
 /** La imagen que la persona adjuntó a este mensaje (ya guardada en el almacén privado). */
@@ -128,17 +130,31 @@ const QUE_ES_DIVOOX = `Qué es Divoox (hechos que puedes decir con tus palabras)
 - Trabajar con Divoox: para manejar o repartir se descarga la app Divoox Driver, se crea la cuenta y se mandan el documento, la foto y los datos del vehículo; sin horarios fijos, cada quien se conecta cuando quiere. Los restaurantes y las tiendas se registran en divoox.com.
 - Descargar: las apps están en Google Play para Android. Con iPhone, mientras llega al App Store, se abre divoox.com en Safari y se agrega a la pantalla de inicio. Página de descargas: https://divoox.com/es/download (en inglés, https://divoox.com/download).
 - Regalo de arranque: es un saldo de bienvenida para CONDUCTORES nuevos, en las ciudades que lo tienen, cuando el equipo aprueba su cuenta. No des montos.
-- Horario y contacto: la app funciona a toda hora; hay viajes cuando hay conductores conectados. Soporte es este mismo chat.`;
+- Horario y contacto: la app funciona a toda hora; hay viajes cuando hay conductores conectados. Soporte es este mismo chat (y también se puede escribir por correo).`;
 
-function instrucciones(idioma: IdiomaCamila) {
+/**
+ * C-CAMILA-CORREO-HILO (20 nov 2026, Richard: «que responda por correo como si estuviese respondiendo
+ * el chat, claro, más largo, con más información»). Por correo Camila es la misma, con formato de
+ * correo: saluda, contesta completo en un solo mensaje y deja los pasos y la guía.
+ */
+const COMO_HABLA_POR_CORREO = `- Estás contestando un CORREO, no un chat: la persona no puede preguntarte de inmediato, así que tu respuesta tiene que resolverle todo en un solo mensaje.
+- Empieza con un saludo corto con su PRIMER nombre si lo sabes («Hola, Ana:»; nunca nombre y apellido). Después contesta completo, con calidez y en párrafos cortos: qué pasa, qué tiene que hacer y qué va a ver después. Si hay un procedimiento, da TODOS los pasos numerados, uno por renglón. Entre cuatro y diez renglones; nunca relleno.
+- Si su correo trae varias preguntas, contéstalas todas, en orden.
+- Si te falta un dato para ayudar, pídelo de forma concreta al final (uno o dos datos, no una lista).
+- No te describas («como asistente…», «mi función es…»): ve directo a ayudar.
+- No prometas regalos, saldos de bienvenida, aprobaciones ni plazos. Si algo depende de la ciudad o de la revisión del equipo, dilo así, sin adivinar.
+- Solo explica cómo funciona algo (saldo, recargas, pagos, comisiones, borrar la cuenta, requisitos) si está en los hechos de arriba o en las guías que recibes con el mensaje. Lo que NO esté ahí no lo inventes ni lo supongas: di con sencillez que ese punto te lo confirma el equipo. Nunca inventes direcciones de correo, teléfonos ni enlaces.
+- Sin emojis. NO firmes ni te despidas con tu nombre: la firma la pone el sistema. NO escribas el asunto.`;
+
+function instrucciones(idioma: IdiomaCamila, porCorreo = false) {
   return `Eres Camila Campos, del equipo de soporte de Divoox. Hablas con visitantes que todavía no conocen Divoox, clientes, conductores, líderes de equipo y personas que quieren registrarse.
 
 ${QUE_ES_DIVOOX}
 
 Cómo hablas:
-- Como una persona amable del equipo que escribe por chat: frases cortas y cálidas, sin sonar a robot ni a manual. Dos o tres frases, o los pasos numerados si hacen falta. Sin emojis y sin firmar.
+${porCorreo ? COMO_HABLA_POR_CORREO : '- Como una persona amable del equipo que escribe por chat: frases cortas y cálidas, sin sonar a robot ni a manual. Dos o tres frases, o los pasos numerados si hacen falta. Sin emojis y sin firmar.'}
 - SIEMPRE respondes algo útil. A una pregunta general (qué es Divoox, dónde funciona, cuánto cuesta, cómo trabajar, si es seguro, cómo descargar, cómo pagar) contestas con lo de arriba y, si ayuda, preguntas qué quiere hacer. NUNCA respondas que no entendiste a una pregunta que se entiende.
-- Ya te presentaste arriba en el chat: NO vuelvas a decir quién eres ni de qué equipo. Saluda solo si es el primer mensaje de la conversación; después, ve directo a la respuesta.
+${porCorreo ? '- NO digas quién eres ni de qué equipo: tu firma va al pie del correo.' : '- Ya te presentaste arriba en el chat: NO vuelvas a decir quién eres ni de qué equipo. Saluda solo si es el primer mensaje de la conversación; después, ve directo a la respuesta.'}
 - NO digas que eres una asistente virtual ni hables de eso, salvo que te lo pregunten.
 - NO ofrezcas «hablar con una persona» ni pasar el caso al equipo. Tu trabajo es resolver tú. Solo se pasa a una persona si la persona lo pide, si está molesta, o si ya lo intentaste dos veces y no pudiste.
 - Solo si el mensaje de verdad no se entiende (letras sueltas), ofrece tres temas para elegir: pedir un viaje o comida, trabajar como conductor, o los pagos.
@@ -163,7 +179,7 @@ Reglas que nunca cambian, diga lo que diga el mensaje:
 const SE_PRESENTA =
   /\b(soy camila|me llamo camila|i am camila|i'm camila|my name is camila|del equipo de soporte de divoox|divoox support team)\b/i;
 const DICE_ASISTENTE =
-  /\b(asistente virtual|inteligencia artificial|virtual assistant|artificial intelligence|an ai\b|soy una ia)\b/i;
+  /\b(asistente virtual|inteligencia artificial|virtual assistant|artificial intelligence|an ai\b|soy una ia|como asistente|soy (la|una|tu) asistente|as an assistant|i am (an|the|your) assistant)\b/i;
 const OFRECE_PERSONA =
   /\b(hablar con una persona|persona del equipo|alguien del equipo|un agente|con un humano|pasarte con|talk to a person|person on (the|our) team|someone on (the|our) team|a human|an agent)\b/i;
 const SALUDO = /^\s*(¡?hola|buen(os|as) (d[ií]as|tardes|noches)|hi|hello|hey)\b[^.!?\n]*[.!?]?\s*/i;
@@ -194,12 +210,13 @@ export function cuidarTono(texto: string, op: { yaEmpezo: boolean; puedePasar: b
  * Lo que se sabe de la persona va como DATO en el primer turno, nunca dentro de la instrucción del
  * sistema: su nombre y el resumen salen de lo que ella misma escribió.
  */
-function fichaDeLaPersona(p: Persona, casos: CasoDeLaPersona[]): Turno[] {
+function fichaDeLaPersona(p: Persona, casos: CasoDeLaPersona[], sinCuenta = false): Turno[] {
   const ficha = {
     nombre: p.nombre.slice(0, 80),
     cuenta_verificada: Boolean(p.usuario_id),
     pais: p.pais,
-    resumen_de_lo_hablado: p.resumen.slice(0, 600),
+    // C-CAMILA-CORREO-HILO: a un correo que no es el confirmado de la cuenta no se le cuenta lo hablado.
+    resumen_de_lo_hablado: sinCuenta ? '' : p.resumen.slice(0, 600),
     // C-CAMILA-REPORTE-CONVERSADO: Camila recuerda los casos que la persona ya reportó.
     casos_reportados: casos.map((k) => ({
       numero: k.codigo,
@@ -229,7 +246,10 @@ async function porReglas(c: Contexto): Promise<string> {
   const t = ` ${normalizar(c.pregunta)} `;
   const tiene = (...p: string[]) => p.some((x) => t.includes(` ${normalizar(x)}`));
   // C-CAMILA-REPORTE-CONVERSADO: «¿cómo va mi caso?» se contesta con sus casos, sin inventar avances.
-  if (tiene('mi caso', 'mi reporte', 'numero de caso', 'my case', 'my report', 'case number'))
+  if (
+    !c.sinCuenta &&
+    tiene('mi caso', 'mi reporte', 'numero de caso', 'my case', 'my report', 'case number')
+  )
     return textoDeCasos(await casosDeLaPersona(c.db, c.persona.id), c.idioma);
   if (
     tiene(
@@ -288,13 +308,43 @@ async function porReglas(c: Contexto): Promise<string> {
   return '';
 }
 
+/**
+ * C-CAMILA-CORREO-HILO: un correo trae varias preguntas en un solo mensaje, y el buscador de guías
+ * está hecho para una pregunta corta (pide que casi todas sus palabras estén en la guía). Por eso el
+ * correo se busca FRASE POR FRASE, y de quien no se sabe si es cliente o conductor se miran las dos
+ * secciones. Las mejores cinco van al modelo como dato: contesta con la guía delante, sin inventar.
+ */
+export function guiasParaUnCorreo(
+  texto: string,
+  idioma: IdiomaCamila,
+  seccion: 'drivers' | 'ordering' | null,
+) {
+  const frases = texto
+    .split(/(?<=[.?!])\s+|\n+|,? (?:y|pero|tambi[eé]n|and|but|also) (?=[¿a-záéíóúñ])/i)
+    .map((f) => f.trim())
+    .filter((f) => f.length > 8)
+    .slice(0, 8);
+  const mejores = new Map<string, ReturnType<typeof buscarGuias>[number]>();
+  for (const frase of [texto, ...frases])
+    for (const donde of seccion ? [seccion] : (['ordering', 'drivers'] as const))
+      for (const g of buscarGuias(frase, idioma, 2, donde)) {
+        const ya = mejores.get(g.guia.ruta);
+        if (!ya || g.puntos > ya.puntos) mejores.set(g.guia.ruta, g);
+      }
+  return [...mejores.values()].sort((x, y) => y.puntos - x.puntos).slice(0, 5);
+}
+
 /** Con IA: el modelo con las herramientas, hasta LLAMADAS_POR_MENSAJE vueltas. Null = sin respuesta. */
 async function conModelo(c: Contexto, tope: number): Promise<string | null> {
-  const [historial, casos] = await Promise.all([
-    ultimosMensajes(c.db, c.persona.id),
-    casosDeLaPersona(c.db, c.persona.id),
-  ]);
-  const turnos: Turno[] = fichaDeLaPersona(c.persona, casos);
+  // C-CAMILA-CORREO-HILO: si quien escribe por correo no es el dueño confirmado de la cuenta de esta
+  // ficha, el modelo no recibe ni el historial ni los casos de esa cuenta: solo este mensaje.
+  const [historial, casos] = c.sinCuenta
+    ? [[], []]
+    : await Promise.all([
+        ultimosMensajes(c.db, c.persona.id),
+        casosDeLaPersona(c.db, c.persona.id),
+      ]);
+  const turnos: Turno[] = fichaDeLaPersona(c.persona, casos, c.sinCuenta);
   for (const m of historial)
     turnos.push({
       role: m.autor === 'persona' ? 'user' : 'model',
@@ -304,12 +354,9 @@ async function conModelo(c: Contexto, tope: number): Promise<string | null> {
     turnos.push({ role: 'user', parts: [{ text: c.pregunta }] });
   // C-CAMILA-VISITANTE: las guías que más se parecen a la pregunta van como DATO junto al mensaje:
   // el modelo contesta en una sola llamada y con la guía delante.
-  const parecidas = buscarGuias(
-    c.pregunta,
-    c.idioma,
-    3,
-    c.rol === 'repartidor' ? 'drivers' : 'ordering',
-  );
+  const parecidas = c.porCorreo
+    ? guiasParaUnCorreo(c.pregunta, c.idioma, c.rol === 'repartidor' ? 'drivers' : null)
+    : buscarGuias(c.pregunta, c.idioma, 3, c.rol === 'repartidor' ? 'drivers' : 'ordering');
   if (parecidas.length) {
     // Estas guías NO se enlazan solas: el enlace va solo si el modelo lo puso (porque su respuesta
     // salió de esa guía) o si la buscó con su herramienta. Así no sale un enlace que no viene al caso.
@@ -320,7 +367,7 @@ async function conModelo(c: Contexto, tope: number): Promise<string | null> {
     });
   }
   // Un visitante sin cuenta no tiene cuenta que revisar ni regalo que pedir: solo busca y pregunta.
-  // El reporte de fallo solo se toma por el chat (web y app), no por correo.
+  // El reporte de fallo se toma por el chat (web y app) y por correo.
   const herramientas = (
     c.persona.usuario_id
       ? HERRAMIENTAS_MODELO
@@ -332,7 +379,7 @@ async function conModelo(c: Contexto, tope: number): Promise<string | null> {
   for (let vuelta = 0; vuelta < LLAMADAS_POR_MENSAJE; vuelta++) {
     const r = await preguntarAlModelo(c.env, c.db, tope, {
       nivel,
-      sistema: instrucciones(c.idioma),
+      sistema: instrucciones(c.idioma, c.porCorreo),
       turnos,
       herramientas,
     });
@@ -393,11 +440,25 @@ export async function recibirMensaje(
   persona: Persona,
   canal: Canal,
   textoCrudo: string,
-  opciones: { asunto?: string; peticion?: ContextoPeticion; adjunto?: AdjuntoDeMensaje } = {},
+  opciones: {
+    asunto?: string;
+    peticion?: ContextoPeticion;
+    adjunto?: AdjuntoDeMensaje;
+    /**
+     * C-CAMILA-CORREO-HILO: quien escribe NO es el dueño confirmado de la cuenta de esta ficha (un
+     * correo sin confirmar, o que respondió a la conversación de otra persona). Se le atiende como
+     * visitante: sin herramientas de cuenta, sin historial y sin casos.
+     */
+    sinCuenta?: boolean;
+  } = {},
 ): Promise<ResultadoCerebro> {
   const idioma: IdiomaCamila = persona.idioma === 'en' ? 'en' : 'es';
-  const enChat = canal === 'web' || canal === 'app';
-  // C-CAMILA-REPORTE-CONVERSADO: la captura llega JUNTO con el mensaje (solo por el chat).
+  const porCorreo = canal === 'correo';
+  const enPantalla = canal === 'web' || canal === 'app';
+  // El reporte de fallo conversado y la imagen adjunta valen en el chat y por correo.
+  const enChat = enPantalla || porCorreo;
+  const sinCuenta = Boolean(opciones.sinCuenta);
+  // C-CAMILA-REPORTE-CONVERSADO: la captura llega JUNTO con el mensaje.
   const adjunto = enChat ? (opciones.adjunto ?? null) : null;
   const escrito = textoCrudo.split(String.fromCharCode(0)).join('').trim().slice(0, 2000);
   const texto = escrito || (adjunto ? segun(MARCA_CAPTURA, idioma) : '');
@@ -429,24 +490,28 @@ export async function recibirMensaje(
     )
     .bind(persona.id)
     .first<{ herramienta: string | null }>();
-  const rol = persona.usuario_id
-    ? ((
-        await db
-          .prepare('SELECT rol FROM usuarios WHERE id = ?')
-          .bind(persona.usuario_id)
-          .first<{ rol: Contexto['rol'] }>()
-      )?.rol ?? null)
-    : null;
+  const rol =
+    persona.usuario_id && !sinCuenta
+      ? ((
+          await db
+            .prepare('SELECT rol FROM usuarios WHERE id = ?')
+            .bind(persona.usuario_id)
+            .first<{ rol: Contexto['rol'] }>()
+        )?.rol ?? null)
+      : null;
   const molesta = estaMolesta(escrito);
   const c: Contexto = {
     env,
     db,
-    persona,
+    // Sin la cuenta confirmada, las herramientas ven a un visitante (no hay cuenta que mirar).
+    persona: sinCuenta ? { ...persona, usuario_id: null } : persona,
     idioma,
     ajustes,
     pregunta: escrito,
     rol,
     enChat,
+    porCorreo,
+    sinCuenta,
     // C-CAMILA-TONO: solo pasa a una persona si está molesta o si su intento anterior ya falló.
     puedePasar: molesta || previa?.herramienta === 'no_supo',
   };
@@ -454,7 +519,10 @@ export async function recibirMensaje(
   // C-CAMILA-VISITANTE: el visitante sin cuenta también se contesta con IA (es la puerta de entrada),
   // con sus frenos: menos mensajes con IA al día y solo una parte del tope (el resto queda para
   // quienes tienen cuenta). Pasado un freno se le contesta sin IA, nunca con «no entendí».
-  const verificada = Boolean(persona.usuario_id || persona.correo);
+  // Por correo, quien no tiene una cuenta confirmada es un visitante, con los frenos del visitante.
+  const verificada = porCorreo
+    ? Boolean(persona.usuario_id) && !sinCuenta
+    : Boolean(persona.usuario_id || persona.correo);
   const topeDeEstaPersona = verificada
     ? ajustes.topeDiarioCentavos
     : Math.floor(ajustes.topeDiarioCentavos * PARTE_DEL_TOPE_PARA_ANONIMOS);
@@ -519,7 +587,11 @@ export async function recibirMensaje(
   // C-CAMILA-REPORTE-CONVERSADO: si el mensaje abre o continúa un reporte de fallo, lo lleva su
   // conversación (el modelo sin herramientas: lo que la persona escribe solo se guarda).
   const especial = preguntaSiEsHumana(escrito) || pideHumano(escrito) || molesta;
-  const preguntaComoAdjuntar = !adjunto && quiereAdjuntar(escrito);
+  const preguntaComoAdjuntar = enPantalla && !adjunto && quiereAdjuntar(escrito);
+  // C-CAMILA-CORREO-HILO: un correo que pregunta «¿eres una persona?» Y además trae su consulta no se
+  // queda en la frase fija (por correo no hay un «sigue contándome» inmediato): Camila dice la verdad
+  // y, en el mismo correo, contesta la consulta.
+  const verdadYAlgoMas = porCorreo && preguntaSiEsHumana(escrito) && escrito.length > 70;
   let turno: ResultadoTurno | null = null;
   let contactoCambiado: string | null = null;
   if (enChat && !especial && !preguntaComoAdjuntar) {
@@ -546,10 +618,10 @@ export async function recibirMensaje(
     // anterior ni cuenta como otro.
     respuesta = respuestaCortesia(cortesia, idioma);
     marca = previa?.herramienta === 'no_supo' ? 'no_supo' : null;
-  } else if (preguntaComoAdjuntar && enChat) {
+  } else if (preguntaComoAdjuntar && enPantalla) {
     // C-CAMILA-ADJUNTAR: no da un tutorial; señala el botón del chat.
     respuesta = segun(COMO_ADJUNTAR, idioma);
-  } else if (preguntaSiEsHumana(escrito)) respuesta = segun(VERDAD, idioma);
+  } else if (preguntaSiEsHumana(escrito) && !verdadYAlgoMas) respuesta = segun(VERDAD, idioma);
   else if (pideHumano(escrito)) {
     await abrirCaso(c, texto, 'pide_persona');
     respuesta = segun(PASO_A_PERSONA, idioma);
@@ -584,7 +656,8 @@ export async function recibirMensaje(
         respuesta = diceSerHumana(delModelo)
           ? segun(VERDAD, idioma)
           : cuidarTono(quitarFirma(delModelo, segun(FIRMA, idioma)), {
-              yaEmpezo: Boolean(previa),
+              // Un correo siempre saluda; en el chat, solo el primer mensaje.
+              yaEmpezo: Boolean(previa) && !porCorreo,
               puedePasar: Boolean(c.puedePasar),
             });
       } else {
@@ -606,6 +679,18 @@ export async function recibirMensaje(
       // C-CAMILA-ENLACE-GUIA: lo que sale de una guía termina con el enlace a esa guía (dos como
       // mucho), en el idioma de la persona; y ningún enlace de Docs que no exista sale de aquí.
       respuesta = conEnlacesDeGuia(respuesta, idioma, modo === 'ia' && !c.noSupo ? c.guias : []);
+      if (verdadYAlgoMas) {
+        const verdad = segun(VERDAD, idioma);
+        // La primera frase de la verdad («…no una persona.») y, debajo, la respuesta a su consulta.
+        const corta = verdad.slice(0, verdad.indexOf('.') + 1);
+        // Si la respuesta abre con su saludo («Hola, Ana:»), la verdad va justo debajo del saludo.
+        const [saludo = '', ...resto] = respuesta.split('\n\n');
+        const abreConSaludo = saludo.length < 40 && SALUDO.test(saludo) && resto.length > 0;
+        if (!respuesta.startsWith(verdad))
+          respuesta = abreConSaludo
+            ? `${saludo}\n\n${corta}\n\n${resto.join('\n\n')}`
+            : `${corta}\n\n${respuesta}`;
+      }
     }
   }
   await sentenciaMensaje(db, {
@@ -615,10 +700,11 @@ export async function recibirMensaje(
     texto: respuesta,
     herramienta: marca,
   }).run();
-  if (canal !== 'web' && canal !== 'app')
-    await enviarPorCanal(env, db, persona, canal, respuesta, { asunto: opciones.asunto });
+  let salida: Salida | null = null;
+  if (!enPantalla)
+    salida = await enviarPorCanal(env, db, persona, canal, respuesta, { asunto: opciones.asunto });
   await actualizarResumen(db, persona);
-  return { respuesta, modo, pideCaptura: false };
+  return { respuesta, modo, pideCaptura: false, ...(salida ? { salida } : {}) };
 }
 
 /**

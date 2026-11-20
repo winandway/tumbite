@@ -72,4 +72,64 @@ describe('divoox.com no recibe correo', () => {
     });
     expect(cuerpos[0]?.reply_to).toEqual({ address: CORREOS_SOPORTE.divoox });
   });
+
+  it('la única excepción: la dirección de una conversación de Camila, que sí recibe (C-CAMILA-CORREO-HILO)', async () => {
+    const cuerpos: { reply_to?: { address: string }; headers?: Record<string, string> }[] = [];
+    usarTransporteCorreo((_e, init) => {
+      cuerpos.push(JSON.parse(String(init.body)));
+      return Promise.resolve(new Response(JSON.stringify({ success: true, message_id: 'm' })));
+    });
+    const env = { YAD_TOKEN: 'x'.repeat(40) } as never;
+    const hilo = `support+c${'0123456789abcdef0123'}@${'divoox'}.com`;
+    await enviarCorreo(env, {
+      de: 'soporte',
+      para: 'cliente@ejemplo.com',
+      asunto: 'a',
+      texto: 'b',
+      responderA: hilo,
+      // Solo viajan las dos cabeceras de hilo, y solo si son identificadores de correo.
+      cabeceras: {
+        'In-Reply-To': '<abc@buzon.test>',
+        References: '<uno@buzon.test>\r\nBcc: otro@ejemplo.com',
+        Bcc: 'espia@ejemplo.com',
+      },
+    });
+    expect(cuerpos[0]?.reply_to).toEqual({ address: hilo });
+    expect(cuerpos[0]?.headers).toEqual({ 'In-Reply-To': '<abc@buzon.test>' });
+    // Un identificador mal formado, o sin el «+c…», no pasa.
+    for (const mala of [`support+c123@${'divoox'}.com`, `support+cualquiera@${'divoox'}.com`]) {
+      await enviarCorreo(env, {
+        de: 'soporte',
+        para: 'cliente@ejemplo.com',
+        asunto: 'a',
+        texto: 'b',
+        responderA: mala,
+      });
+      expect(cuerpos[cuerpos.length - 1]?.reply_to).toEqual({ address: CORREOS_SOPORTE.divoox });
+    }
+  });
+
+  it('si el servicio no acepta las cabeceras de hilo, el correo sale igual, una vez más y sin ellas', async () => {
+    const cuerpos: { headers?: Record<string, string> }[] = [];
+    usarTransporteCorreo((_e, init) => {
+      const c = JSON.parse(String(init.body)) as { headers?: Record<string, string> };
+      cuerpos.push(c);
+      return Promise.resolve(
+        c.headers
+          ? new Response(JSON.stringify({ success: false, error: 'invalid_request_schema' }), {
+              status: 400,
+            })
+          : new Response(JSON.stringify({ success: true, message_id: 'm' })),
+      );
+    });
+    const r = await enviarCorreo({ YAD_TOKEN: 'x'.repeat(40) } as never, {
+      de: 'soporte',
+      para: 'cliente@ejemplo.com',
+      asunto: 'a',
+      texto: 'b',
+      cabeceras: { 'In-Reply-To': '<abc@buzon.test>' },
+    });
+    expect(r.ok).toBe(true);
+    expect(cuerpos.map((c) => Boolean(c.headers))).toEqual([true, false]);
+  });
 });

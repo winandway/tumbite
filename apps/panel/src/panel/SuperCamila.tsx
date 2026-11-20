@@ -51,6 +51,8 @@ const T = {
       sms: 'SMS',
       whatsapp: 'WhatsApp',
     } as Record<string, string>,
+    hiloDeCorreo: (asunto: string) => `Hilo de correo: ${asunto}`,
+    porCorreo: 'Correo',
     hasta: (h: string) => `Tomada hasta ${h}`,
     buscar: 'Buscar por nombre o correo',
     conversaciones: 'Conversaciones',
@@ -67,7 +69,7 @@ const T = {
     tomadaPorEquipo: 'La tiene el equipo: Camila no contesta.',
     responder: 'Responder en el mismo hilo',
     responderAyuda:
-      'Al responder tomas la conversación por 12 horas y Camila se calla. Sale por el último canal que usó la persona.',
+      'Al responder tomas la conversación por 12 horas y Camila se calla. Sale por el último canal que usó la persona; si fue el correo, sale por correo en su mismo hilo, firmada con tu nombre.',
     enviar: 'Enviar respuesta',
     enviado: 'Respuesta enviada.',
     noEnviado:
@@ -149,6 +151,8 @@ const T = {
       sms: 'SMS',
       whatsapp: 'WhatsApp',
     } as Record<string, string>,
+    hiloDeCorreo: (asunto: string) => `Email thread: ${asunto}`,
+    porCorreo: 'Email',
     hasta: (h: string) => `Taken until ${h}`,
     buscar: 'Search by name or email',
     conversaciones: 'Conversations',
@@ -161,7 +165,7 @@ const T = {
     tomadaPorEquipo: 'The team has it: Camila stays quiet.',
     responder: 'Reply in the same thread',
     responderAyuda:
-      'Replying takes the conversation for 12 hours and Camila stays quiet. It goes out on the last channel the person used.',
+      'Replying takes the conversation for 12 hours and Camila stays quiet. It goes out on the last channel the person used; if that was email, it goes out by email in their same thread, signed with your name.',
     enviar: 'Send reply',
     enviado: 'Reply sent.',
     noEnviado:
@@ -278,6 +282,8 @@ type HiloCompleto = {
   };
   mensajes: MensajeEquipo[];
   casos: { id: string; resumen: string; motivo: string; estado: string; creado_en: string }[];
+  /** C-CAMILA-CORREO-HILO: el hilo de correo de la persona (el asunto con el que sale la respuesta). */
+  correo?: { asunto: string | null; de: string | null } | null;
 };
 type Propuesta = {
   id: string;
@@ -633,6 +639,11 @@ function HiloEquipo({ t, idioma, persona }: { t: Textos; idioma: Idioma; persona
           <p className="pista">
             {[p.correo, t.canal[p.canal_ultimo] ?? p.canal_ultimo].filter(Boolean).join(' · ')}
           </p>
+          {hilo.correo?.asunto ? (
+            <p className="pista camila-asunto" data-testid="camila-asunto">
+              {t.hiloDeCorreo(hilo.correo.asunto)}
+            </p>
+          ) : null}
         </div>
         {p.equipoAtendiendo ? (
           <div className="camila-tomada">
@@ -658,14 +669,23 @@ function HiloEquipo({ t, idioma, persona }: { t: Textos; idioma: Idioma; persona
       </div>
       <ol className="camila-mensajes" aria-label={t.conversaciones}>
         {hilo.mensajes.map((m) => (
-          <li key={m.id} className={`camila-mensaje camila-${m.autor}`}>
+          <li
+            key={m.id}
+            className={`camila-mensaje camila-${m.autor}${m.canal === 'correo' ? ' camila-por-correo' : ''}`}
+          >
             <span className="camila-autor">
               {m.autor === 'equipo' && m.autor_nombre
                 ? m.autor_nombre
                 : (t.autor[m.autor] ?? m.autor)}
+              {m.canal === 'correo' ? (
+                <span className="camila-marca-correo" data-testid="camila-marca-correo">
+                  {t.porCorreo}
+                </span>
+              ) : null}
               <small>
                 {' '}
-                · {t.canal[m.canal] ?? m.canal} · {fechaCamila(m.creado_en, idioma)}
+                · {m.canal === 'correo' ? '' : `${t.canal[m.canal] ?? m.canal} · `}
+                {fechaCamila(m.creado_en, idioma)}
               </small>
             </span>
             <span className="camila-texto">{m.texto}</span>

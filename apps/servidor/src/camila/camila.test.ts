@@ -159,7 +159,9 @@ describe('C-CAMILA-IDENTIDAD: nunca dice que es humana', () => {
     const r = await e.decir(a.token, 'necesito ayuda con la app');
     expect(r.datos.respuesta).toBe('Claro, te ayudo.');
     const bienvenida = e.enviados.find((x) => x.para === a.correo && /Bienvenido/.test(x.asunto));
-    expect(bienvenida?.texto).toMatch(/Camila Campos, del equipo de soporte de Divoox$/);
+    expect(bienvenida?.texto).toMatch(
+      /Camila Campos, del equipo de soporte de Divoox\n\nPuedes responder a este correo y te contestamos aquí mismo\.$/,
+    );
     expect(bienvenida?.texto).not.toMatch(/asistente virtual/i);
   });
 });
@@ -268,7 +270,9 @@ describe('C-CAMILA-SIN-AVISO: Camila nunca dice por su cuenta que es una asisten
       /^Hola, Carmen, te doy la bienvenida a Divoox\. Soy Camila, del equipo de soporte, y te acompaño/,
     );
     expect(venezuela.correo).toMatch(/desliza para conectarte\./);
-    expect(venezuela.correo).toMatch(/Camila Campos, del equipo de soporte de Divoox$/);
+    expect(venezuela.correo).toMatch(
+      /Camila Campos, del equipo de soporte de Divoox\n\nPuedes responder a este correo y te contestamos aquí mismo\.$/,
+    );
     expect(california.correo).toMatch(/I am Camila, from the support team/);
     expect(michigan.correo).toMatch(/slide to go online\./);
   });
@@ -573,6 +577,8 @@ describe('C-CAMILA-MEMORIA: una persona, una memoria', () => {
   it('lo que escribió por correo y lo que escribe en el chat de la app es el mismo hilo', async () => {
     const e = await escenario({ GERENTE_SECRETO: 's'.repeat(48), GEMINI_API_KEY: undefined });
     const a = await e.conductor();
+    // C-CAMILA-CORREO-HILO: por correo, Camila solo trata como conductor al correo CONFIRMADO de la cuenta.
+    await e.m.confirmarCorreo(a.id);
     const r = await e.m.crudo('/datos/gerente/camila/correo', {
       method: 'POST',
       headers: { authorization: `Bearer ${'s'.repeat(48)}`, 'content-type': 'application/json' },
@@ -587,7 +593,7 @@ describe('C-CAMILA-MEMORIA: una persona, una memoria', () => {
       (x) => x.para === a.correo && x.asunto === 'Re: Mi saldo',
     );
     expect(respuestaCorreo?.texto).toMatch(
-      /punto de venta autorizado[\s\S]*Camila Campos, del equipo de soporte de Divoox$/,
+      /punto de venta autorizado[\s\S]*Camila Campos, del equipo de soporte de Divoox\n\nPuedes responder a este correo y te contestamos aquí mismo\.$/,
     );
     const hilo = await e.m.llamar('GET', '/datos/camila/hilo', undefined, a.token);
     const textos = hilo.datos.mensajes.map((x: { texto: string }) => x.texto);
@@ -974,7 +980,7 @@ describe('C-CAMILA-LIDER: Camila acompaña al líder sobre la pieza única de eq
     );
     expect(plan?.texto).toContain(`/es/join/${codigo}`);
     expect(plan?.texto).toMatch(
-      /Tu plan para registrar a tu equipo[\s\S]*Camila Campos, del equipo de soporte de Divoox$/,
+      /Tu plan para registrar a tu equipo[\s\S]*Camila Campos, del equipo de soporte de Divoox\n\nPuedes responder a este correo y te contestamos aquí mismo\.$/,
     );
     const nuevo = await e.conductor('Ana Nueva', codigo);
     await e.conductor('Beto Nuevo', codigo);

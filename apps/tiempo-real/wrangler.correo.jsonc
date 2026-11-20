@@ -1,0 +1,16 @@
+// C-CAMILA-CORREO-HILO (20 nov 2026): la ENTRADA de correo de Camila en PRODUCCIÓN. Cloudflare Email
+// Routing le entrega a este Worker lo que llega a las direcciones «support» y «soporte» de divoox.com (con o sin «+c…»), y él
+// se lo pasa a POST /datos/gerente/camila/correo de divoox.com. Lo que Camila no toma va a BUZON_EQUIPO.
+// Cuenta de Cloudflare: windoce1@gmail.com, SIEMPRE con HOME=~/.tumbite-cloudflare npx wrangler …
+// Secreto (nunca aquí): GERENTE_SECRETO → `wrangler secret put GERENTE_SECRETO -c wrangler.correo.jsonc`.
+// Las reglas de Email Routing NO van aquí (no se usa "addresses"): se crean a mano, una vez, y quedan
+// escritas en docs/CAMILA-CORREO.md junto con cómo volver atrás en una emergencia.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "divoox-correo",
+  "main": "src/correoEntrante.ts",
+  "compatibility_date": "2026-09-01",
+  "vars": { "BACKEND_URL": "https://divoox.com", "BUZON_EQUIPO": "soporte@windoce.com" },
+  "workers_dev": false,
+  "observability": { "enabled": true },
+}

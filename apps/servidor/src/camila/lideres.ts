@@ -1,6 +1,8 @@
 import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { CORREOS_SOPORTE } from '@tumbite/compartido';
+import { cuerpoDeCorreo } from './canales';
+import { direccionDeHilo } from './correoHilo';
 
 /**
  * C-CAMILA-LIDER (17 nov 2026) — todos los países, primero El Vigía y Tucaní.
@@ -113,22 +115,20 @@ Si alguien se traba, puede escribirme por el chat de Divoox Driver (Ayuda, «Hab
 
 export async function correoBienvenidaLider(
   env: Env,
-  l: { nombre: string; correo: string; idioma: 'es' | 'en'; codigo: string },
+  l: { nombre: string; correo: string; idioma: 'es' | 'en'; codigo: string; personaId?: string },
 ) {
-  const firma =
-    l.idioma === 'en'
-      ? 'Camila Campos, Divoox Support Team'
-      : 'Camila Campos, del equipo de soporte de Divoox';
+  // C-CAMILA-CORREO-HILO: la respuesta a este correo entra a la conversación del líder con Camila.
+  const hilo = l.personaId ? await direccionDeHilo(env, l.personaId) : null;
   const r = await enviarCorreo(env, {
     de: 'soporte',
     para: l.correo,
     idioma: l.idioma,
-    responderA: CORREOS_SOPORTE.camila,
+    responderA: hilo ?? CORREOS_SOPORTE.camila,
     asunto:
       l.idioma === 'en'
         ? 'Your Divoox team code and your plan'
         : 'El código de tu equipo de Divoox y tu plan',
-    texto: `${textoBienvenidaLider(env, l.nombre, l.codigo, l.idioma)}\n\n${firma}`,
+    texto: cuerpoDeCorreo(textoBienvenidaLider(env, l.nombre, l.codigo, l.idioma), l.idioma),
   });
   if (!r.ok) console.error('camila: correo de bienvenida del líder', r.motivo);
   return r;
