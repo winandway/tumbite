@@ -5202,7 +5202,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver.',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
-          'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta».',
+          'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero.',
         ],
         capturas: [
           {
@@ -5219,6 +5219,11 @@ const es: SeccionDocs[] = [
             src: '/docs/recorrido-repartidor-registro-es.webp',
             alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
             pie: 'Quien reparte se registra en la app Divoox Driver.',
+          },
+          {
+            src: '/docs/recorrido-registro-revisa-tus-datos-es.webp',
+            alt: 'La pantalla «Revisa tus datos» con el correo arriba y en grande, debajo el nombre y el celular cada uno con «Editar», y los botones «Crear mi cuenta» y «Editar datos».',
+            pie: 'Antes de crear tu cuenta revisas tus datos; el correo va arriba y en grande.',
           },
         ],
         preguntas: [
@@ -10680,7 +10685,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
-          'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.”',
+          'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over.',
         ],
         capturas: [
           {
@@ -10697,6 +10702,11 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-repartidor-registro-en.webp',
             alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
             pie: 'Drivers sign up in the Divoox Driver app.',
+          },
+          {
+            src: '/docs/recorrido-registro-revisa-tus-datos-en.webp',
+            alt: 'The “Review your details” screen with the email at the top in large type, your name and mobile phone below, each with “Edit,” and the “Create my account” and “Edit details” buttons.',
+            pie: 'Before your account is created you review your details; your email is at the top in large type.',
           },
         ],
         preguntas: [

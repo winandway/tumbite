@@ -1066,6 +1066,22 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "ordering/meet-your-driver",
+  "titulo": "Conoce a tu conductor antes de que llegue",
+  "resumen": "En tu viaje en moto o en carro ves quién te recoge: su foto, su vehículo con la placa, su trayectoria y los idiomas que habla.",
+  "preguntas": [
+   "¿Qué puedo saber de mi conductor antes de que llegue?",
+   "¿Qué significa «Identidad verificada»?",
+   "¿Por qué mi conductor dice «Nuevo en Divoox»?"
+  ],
+  "pasos": [
+   "Pide tu viaje en moto o en carro y, cuando un conductor lo acepte, mira su perfil en la pantalla del viaje.",
+   "Cuando llegue, confirma que su foto, su vehículo y su placa coinciden y dile tu código."
+  ],
+  "cuerpo": "Apenas un conductor acepta tu viaje, en la pantalla del viaje aparece su perfil con la etiqueta «Tu conductor»: su foto, su nombre de pila, la hora a la que llega, su vehículo con el color y la placa. Si ya tiene trayectoria, ves cuántos viajes ha hecho, su calificación y cuánto tiempo lleva en Divoox. Si es nuevo, dice «Nuevo en Divoox»: nunca verás ceros ni una calificación vacía. El aro verde y el sello «Identidad verificada» significan que Divoox revisó su identidad. «Vehículo verificado» significa que revisó el vehículo. Solo salen si de verdad lo están. Si el conductor lo agregó, también ves la línea a la que pertenece, los idiomas que habla y un dato corto suyo. Del conductor solo ves lo necesario para reconocerlo: nunca su apellido, su teléfono ni su correo. Debajo del perfil está tu código para empezar el viaje: se lo dices cuando te recoja."
+ },
+ {
+  "idioma": "es",
   "ruta": "drivers/invite-drivers-and-teams",
   "titulo": "Invita conductores y arma tu equipo: gana saldo por cada uno",
   "resumen": "Con tu código o tu enlace invitas a otros conductores. Cuando tu invitado completa sus primeras carreras, ganas saldo. Si eres líder de una línea, tu equipo queda unido a ti y ves cuántos están registrados, aprobados y activos.",
@@ -1826,6 +1842,47 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "drivers/document-deadline",
+  "titulo": "Tu plazo para entregar los papeles",
+  "resumen": "Donde Divoox da un plazo, empiezas a trabajar con la foto de tu cara y subes el resto de tus papeles después, con tiempo y con recordatorios.",
+  "preguntas": [
+   "¿Cuánto tiempo tengo para subir mis papeles?",
+   "¿Puedo trabajar sin haber subido todos mis papeles?",
+   "¿Qué pasa si se me acaba el plazo?",
+   "¿Cómo tomo las fotos de mis papeles?",
+   "¿Me van a recordar cuánto me queda?"
+  ],
+  "pasos": [
+   "Abre Divoox Driver y toca la tarjeta «Tus papeles» en el inicio.",
+   "Tómate la foto de tu cara con la cámara, dentro del óvalo.",
+   "Toma las demás fotos, una por una, con el papel dentro del marco.",
+   "Revisa tus fotos y toca «Enviar a revisión».",
+   "Espera nuestro aviso. Si hay que repetir una foto, la repites y listo."
+  ],
+  "cuerpo": "Para que empieces a ganar cuanto antes, en muchos lugares no hace falta tener todos los papeles aprobados el primer día. Creas tu cuenta, te tomas la foto de tu cara y ya puedes conectarte. El resto de tus papeles los entregas dentro de un plazo, que por lo general es de un mes. Qué hace falta para empezar depende de tu lugar, y la app te lo dice. Arriba, en el inicio de Divoox Driver, ves la tarjeta «Tus papeles»: tu foto, cada papel (tu cara, tu documento de identidad, tu licencia y el seguro del vehículo) con su estado, cuántas fotos llevas listas y cuántos días te quedan. Lo aprobado va en verde. También la encuentras en tu perfil. Las fotos se toman en el momento con la cámara de la app, una por una, con un marco que te muestra dónde colocar el papel. No se suben desde tus archivos. Si una foto no es la que toca, por ejemplo una borrosa o del papel equivocado, la app te lo dice al instante y puedes repetirla. Nada se envía solo. Cuando tienes todas las fotos, revisas cada una (si alguna no te gusta, la tocas y la repites) y tocas «Enviar a revisión». Nuestro equipo las revisa y te avisa en la app y por correo. Si hay que repetir una foto, te decimos cuál y por qué, y repites solo esa. Te recordamos tu plazo cuando quedan 15, 10, 5 y 1 día, y el día en que vence. Si el plazo se acaba y todavía faltan papeles, tu cuenta queda en pausa: no recibes viajes ni pedidos, pero no se borra nada de lo que ya subiste. Subes lo que falta y vuelves a recibir viajes en cuanto se aprueben. Y si ya enviaste todo, una demora de nuestra revisión nunca te pausa la cuenta."
+ },
+ {
+  "idioma": "es",
+  "ruta": "drivers/your-rider-profile",
+  "titulo": "Tu perfil para los pasajeros",
+  "resumen": "Ve cómo te ven los pasajeros en su viaje y complétalo con los idiomas que hablas y un dato tuyo.",
+  "preguntas": [
+   "¿Qué ven los pasajeros de mí?",
+   "¿Ven mi apellido o mi teléfono?",
+   "¿Cómo agrego los idiomas que hablo?",
+   "¿Por qué me sale «Nuevo en Divoox»?"
+  ],
+  "pasos": [
+   "Abre Divoox Driver y toca Perfil.",
+   "Toca «Así te ven los pasajeros».",
+   "Toca «Completar mi perfil».",
+   "Marca los idiomas que hablas y escribe un dato corto si quieres.",
+   "Toca «Guardar mi perfil»."
+  ],
+  "cuerpo": "Cuando te asignan un viaje, el pasajero ve quién va a recogerlo: tu foto, tu nombre de pila, tu vehículo con la placa y un resumen de tu trayectoria. Eso le da tranquilidad, y a ti te ayuda a recibir mejores calificaciones. En Divoox Driver, entra a Perfil y toca «Así te ven los pasajeros»: ves tu perfil exactamente como lo verá el pasajero. Ahí aparece tu foto verificada con un aro verde, tu nombre de pila (nunca tu apellido), tu vehículo y tu placa. Si todavía eres nuevo, el pasajero ve «Nuevo en Divoox»: tus viajes, tu calificación y el tiempo que llevas aparecen cuando ya tienes trayectoria. Los sellos «Identidad verificada» y «Vehículo verificado» solo se le muestran al pasajero si de verdad lo están. A ti te salen los dos para que veas cuál te falta. Toca «Completar mi perfil» para marcar los idiomas que hablas (español, inglés o portugués, uno o varios) y escribir, si quieres, algo corto para tus pasajeros, hasta 120 letras. Es opcional. Si el dato tiene palabras que no se permiten, la app te lo dice y lo escribes de otra forma. Si se te cierra la app a mitad, al volver está todo lo que habías escrito. Al guardar, tu perfil se actualiza y así te verán los pasajeros desde tu próximo viaje. Tu privacidad no cambia: los pasajeros nunca ven tu apellido, tu teléfono ni tu correo."
+ },
+ {
+  "idioma": "es",
   "ruta": "trust/talk-to-support",
   "titulo": "Habla con nuestro equipo de soporte",
   "resumen": "Escríbenos por el chat de divoox.com, por el chat de Divoox Driver o por correo. Es la misma conversación por cualquier camino, te responde Camila Campos, del equipo de soporte, y una persona del equipo cuando lo pidas.",
@@ -2259,7 +2316,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.",
    "Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox."
   ],
-  "cuerpo": "En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver. En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito. Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta»."
+  "cuerpo": "En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver. En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito. Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero."
  },
  {
   "idioma": "es",
@@ -3500,6 +3557,22 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "en",
+  "ruta": "ordering/meet-your-driver",
+  "titulo": "Meet your driver before they arrive",
+  "resumen": "On your moto or car ride you see who is picking you up: their photo, their vehicle and plate, their track record, and the languages they speak.",
+  "preguntas": [
+   "What can I find out about my driver before they arrive?",
+   "What does “Identity verified” mean?",
+   "Why does my driver say “New to Divoox”?"
+  ],
+  "pasos": [
+   "Request your moto or car ride and, when a driver accepts it, look at their profile on the ride screen.",
+   "When they arrive, check that their photo, vehicle, and plate match and tell them your code."
+  ],
+  "cuerpo": "As soon as a driver accepts your ride, their profile appears on the ride screen with the label “Your driver”: their photo, first name, arrival time, and their vehicle with its color and license plate. If they have a track record, you see how many trips they’ve done, their rating, and how long they’ve been with Divoox. If they’re new, it says “New to Divoox”: you’ll never see zeros or an empty rating. The green ring and the “Identity verified” badge mean Divoox checked their identity. “Vehicle verified” means we checked the vehicle. They only show if they really are verified. If the driver added them, you also see their fleet, the languages they speak, and something short about them. You only see what you need to recognize them: never their last name, phone number, or email. Below the profile is your code to start the ride: you tell it to your driver when they pick you up."
+ },
+ {
+  "idioma": "en",
   "ruta": "drivers/invite-drivers-and-teams",
   "titulo": "Invite drivers and build your team: earn balance for each one",
   "resumen": "With your code or link you invite other drivers. When your invitee completes their first trips, you earn balance. If you lead a group, your team stays linked to you and you see how many are signed up, approved and active.",
@@ -4259,6 +4332,47 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "en",
+  "ruta": "drivers/document-deadline",
+  "titulo": "Your deadline to submit your documents",
+  "resumen": "Where Divoox gives a deadline, you start working with your face photo and upload the rest of your documents afterward, with time to spare and reminders.",
+  "preguntas": [
+   "How long do I have to upload my documents?",
+   "Can I work before I’ve uploaded all my documents?",
+   "What happens if my deadline ends?",
+   "How do I take the photos of my documents?",
+   "Will you remind me how much time I have left?"
+  ],
+  "pasos": [
+   "Open Divoox Driver and tap the “Your documents” card on the home screen.",
+   "Take your face photo with the camera, inside the oval.",
+   "Take the other photos one at a time, with the document inside the frame.",
+   "Review your photos and tap “Send for review.”",
+   "Wait for our notice. If a photo needs to be redone, retake it and you’re done."
+  ],
+  "cuerpo": "So you can start earning sooner, in many places you don’t need every document approved on day one. You create your account, take your face photo, and you can go online. You submit the rest of your documents within a deadline, which is usually one month. What you need to start depends on where you drive, and the app tells you. At the top of the Divoox Driver home screen you see the “Your documents” card: your photo, each document (your face, your ID, your license, and your vehicle insurance) with its status, how many photos are ready, and how many days you have left. Approved items turn green. You can also find it in your profile. You take the photos on the spot with the app’s camera, one at a time, with a frame that shows where to place the document. They are not uploaded from your files. If a photo isn’t the right one, such as a blurry one or the wrong document, the app tells you right away and you can retake it. Nothing is sent on its own. When all the photos are ready, you review each one (tap any you don’t like to retake it) and tap “Send for review.” Our team reviews them and lets you know in the app and by email. If a photo needs to be redone, we tell you which one and why, and you retake only that one. We remind you about your deadline when 15, 10, 5, and 1 day are left, and on the day it ends. If the deadline ends and documents are still missing, your account is paused: you won’t get trips or orders, but nothing you already uploaded is deleted. Upload what’s missing and you’ll get trips again as soon as it’s approved. And if you’ve already sent everything, a delay…"
+ },
+ {
+  "idioma": "en",
+  "ruta": "drivers/your-rider-profile",
+  "titulo": "Your profile for riders",
+  "resumen": "See how riders see you during their trip and complete it with the languages you speak and something about you.",
+  "preguntas": [
+   "What do riders see about me?",
+   "Can riders see my last name or my phone number?",
+   "How do I add the languages I speak?",
+   "Why does it say “New to Divoox”?"
+  ],
+  "pasos": [
+   "Open Divoox Driver and tap Profile.",
+   "Tap “How riders see you.”",
+   "Tap “Complete my profile.”",
+   "Pick the languages you speak and write something short if you like.",
+   "Tap “Save my profile.”"
+  ],
+  "cuerpo": "When you’re assigned a trip, the rider sees who is coming to pick them up: your photo, your first name, your vehicle with the license plate, and a summary of your track record. It gives them peace of mind, and it helps you earn better ratings. In Divoox Driver, go to Profile and tap “How riders see you”: you see your profile exactly as the rider will. It shows your verified photo with a green ring, your first name (never your last name), your vehicle, and your plate. If you’re still new, riders see “New to Divoox”: your trips, your rating, and your time with Divoox show up once you have a track record. The “Identity verified” and “Vehicle verified” badges only show to riders if you really are verified. You see both, so you know which one is missing. Tap “Complete my profile” to pick the languages you speak (Spanish, English, or Portuguese, one or several) and, if you like, write something short for your riders, up to 120 characters. It’s optional. If it includes words that aren’t allowed, the app tells you and you write it another way. If the app closes halfway, everything you typed is still there when you come back. When you save, your profile updates and riders see it starting with your next trip. Your privacy doesn’t change: riders never see your last name, your phone number, or your email."
+ },
+ {
+  "idioma": "en",
   "ruta": "trust/talk-to-support",
   "titulo": "Talk to our support team",
   "resumen": "Write to us through the chat on divoox.com, the chat in Divoox Driver or by email. It is the same conversation on every channel, Camila Campos from the support team replies, and a person on the team does whenever you ask.",
@@ -4691,7 +4805,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.",
    "We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox."
   ],
-  "cuerpo": "Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app. All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back. Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.”"
+  "cuerpo": "Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app. All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back. Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over."
  },
  {
   "idioma": "en",

@@ -5,6 +5,7 @@ import { GUIAS_FOTO_PUERTA } from './fotoPuerta';
 import { GUIAS_MODERACION } from './moderacion';
 import { GUIAS_FLEX_BLOQUE } from './flexBloque';
 import { GUIAS_SERVICIOS_CONECTADOS } from './serviciosConectados';
+import { GUIAS_PLAZO_PERFIL } from './plazoPerfil';
 
 /**
  * C-DOCS-SEMANA (14 nov 2026): las guías públicas de lo construido la semana del 9 al 14 de noviembre,
@@ -364,7 +365,12 @@ function juntar(idioma: Idioma): PorSeccion {
   );
   // C-MODERACION y C-AVISOS-IDIOMA (16 nov 2026).
   const e = new Map(Object.entries(idioma === 'es' ? GUIAS_MODERACION.es : GUIAS_MODERACION.en));
+  // C-PLAZO-PAPELES y C-PERFIL-CONDUCTOR (20 nov 2026).
+  const g = new Map(
+    Object.entries(idioma === 'es' ? GUIAS_PLAZO_PERFIL.es : GUIAS_PLAZO_PERFIL.en),
+  );
   const ids = new Set([
+    ...g.keys(),
     ...a.keys(),
     ...b.keys(),
     ...c.keys(),
@@ -382,6 +388,7 @@ function juntar(idioma: Idioma): PorSeccion {
         ...(c.get(id) ?? []),
         ...(d.get(id) ?? []),
         ...(e.get(id) ?? []),
+        ...(g.get(id) ?? []),
       ],
     ]),
   ) as PorSeccion;

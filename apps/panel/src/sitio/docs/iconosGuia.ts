@@ -47,6 +47,9 @@ const REGLAS: [RegExp, LucideIcon][] = [
   // C-SERVICIOS-CONECTADOS: conectarse a varios servicios y agregar uno con el perfil compartido.
   [/^online-for-several-services/, PlugZap],
   [/^add-a-service/, ShieldCheck],
+  // C-PLAZO-PAPELES y C-PERFIL-CONDUCTOR: el plazo con un reloj, los perfiles con una persona.
+  [/^document-deadline/, Clock],
+  [/^your-rider-profile|^meet-your-driver/, User],
   [/customers-presentation/, ShoppingBag],
   [/restaurants-presentation/, Store],
   [/salespeople-presentation/, Handshake],
