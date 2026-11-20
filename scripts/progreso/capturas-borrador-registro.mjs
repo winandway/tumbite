@@ -133,7 +133,29 @@ for (const idioma of ['es', 'en']) {
         await foto('ayuda');
         await p.keyboard.press('Escape');
       }
+      if (donde === 'paso-1') {
+        // Un dominio mal escrito: sale la sugerencia y, al tocarla, se corrige.
+        await p.locator('#c').fill(d.correo.replace(/@.*/, '@gmial.com'));
+        await p.locator('#c').dispatchEvent('input');
+        await foto('correo-sugerencia');
+        await p.locator('.sugiere').click();
+        if (!(await p.locator('#c').inputValue()).endsWith('@gmail.com'))
+          throw new Error(`${idioma}/${app}: la sugerencia del correo no corrigió`);
+      }
       if (await p.locator('[data-id=acepto]').count()) {
+        // «Editar» el correo vuelve a su casilla y regresa a revisar sin perder lo demás.
+        await p.locator('.correo-grande .editar').click();
+        await p.locator('#c').fill(d.correo);
+        await p.locator('[data-a=siguiente]').click();
+        if ((await p.locator('[data-correo]').innerText()) !== d.correo)
+          throw new Error(`${idioma}/${app}: editar el correo no volvió a revisar`);
+        // El nombre no acepta números.
+        await p.locator('.resumen .editar').first().click();
+        await p.locator('#c').pressSequentially('7');
+        if (/\d/.test(await p.locator('#c').inputValue()))
+          throw new Error(`${idioma}/${app}: el nombre aceptó un número`);
+        await p.locator('[data-a=siguiente]').click();
+
         // Sin marcar la casilla no se crea la cuenta, y se dice por qué.
         await p.locator('[data-a=siguiente]').click();
         await foto('acepta-sin-marcar');

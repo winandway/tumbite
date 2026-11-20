@@ -571,6 +571,83 @@
         text-decoration: underline;
         flex: none;
       }
+      .correo-grande {
+        border: 1.5px solid var(--negro);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+      }
+      .correo-grande .arriba {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .resumen .editar {
+        text-decoration: none;
+      }
+      .correo-grande span {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--gris);
+        display: block;
+        margin-bottom: 4px;
+      }
+      .correo-grande b {
+        display: block;
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .correo-grande p {
+        margin: 10px 0 0;
+        font-size: 13.5px;
+        line-height: 1.4;
+        color: #33363b;
+      }
+      .editar {
+        border: 1.5px solid var(--negro);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        flex: none;
+        margin-left: auto;
+      }
+      .sugiere {
+        display: block;
+        width: 100%;
+        text-align: left;
+        margin-top: 10px;
+        background: var(--ambar-suave);
+        color: var(--ambar);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .sugiere u {
+        color: var(--negro);
+      }
+      .franja-ok {
+        background: var(--verde-suave);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+        color: #0a4f27;
+        font-size: 13.5px;
+        line-height: 1.4;
+      }
+      .franja-ok b {
+        display: block;
+        font-family: Poppins, sans-serif;
+        font-size: 16px;
+        color: var(--verde);
+        margin-bottom: 2px;
+      }
       .chips {
         display: flex;
         flex-direction: column;
@@ -956,12 +1033,29 @@
         ejemplo: L('ejemplo', 'example'),
         guardarSeguir: L('Guardar y seguir después', 'Save and finish later'),
         guardar: L('Guardar', 'Save'),
-        cambiar: L('Cambiar', 'Edit'),
-        revisa: L('Revisa y acepta', 'Review and accept'),
-        revisaA: L(
-          'Con esto ya entras. Lo demás lo completas adentro, cuando quieras.',
-          'That’s all you need to get in. You can finish the rest inside, anytime.',
+        cambiar: L('Editar', 'Edit'),
+        editarDatos: L('Editar datos', 'Edit details'),
+        tuCorreo: L('Tu correo', 'Your email'),
+        bienEscrito: L(
+          '¿Está bien escrito? Aquí te mandamos el enlace para activar tu cuenta.',
+          'Is it spelled right? We’ll send the link to activate your account here.',
         ),
+        quisiste: L('¿Quisiste decir', 'Did you mean'),
+        volverRevisar: L('Guardar y volver a revisar', 'Save and back to review'),
+        activa: L('Te mandamos a', 'We sent the link to activate your account to'),
+        activa2: L('el enlace para activar tu cuenta.', ''),
+        yaPuedes: L('Ya puedes trabajar', 'You can start working'),
+        yaPuedesP: L(
+          'Tienes 30 días para subir tus papeles. Mientras tanto ya puedes conectarte y recibir viajes.',
+          'You have 30 days to upload your documents. Meanwhile you can go online and take trips.',
+        ),
+        papeles: L('Tus papeles', 'Your documents'),
+        papelesSub: L(
+          'Te quedan 30 días. Cada papel se guarda solo y lo retomas donde quedaste.',
+          '30 days left. Each document saves itself and you can pick up where you left off.',
+        ),
+        revisa: L('Revisa tus datos', 'Check your details'),
+        revisaA: L('Si algo está mal, corrígelo ahora.', 'If anything is wrong, fix it now.'),
         crearMi: L('Crear mi cuenta', 'Create my account'),
         acepto: L('Acepto los', 'I agree to the'),
         terminos: L('Términos', 'Terms'),
@@ -1014,6 +1108,7 @@
         nombre: {
           tipo: 'texto',
           auto: 'name',
+          solo: 'letras',
           t: L('¿Cómo te llamas?', 'What’s your name?'),
           a: L('Así te vamos a saludar.', 'It’s how we’ll greet you.'),
           e: L('Nombre y apellido', 'First and last name'),
@@ -1551,6 +1646,56 @@
         );
       }
 
+      /* ---------- El correo: validación seria y aviso si el dominio parece mal escrito ---------- */
+      const DOMINIOS = [
+        'gmail.com',
+        'hotmail.com',
+        'outlook.com',
+        'yahoo.com',
+        'icloud.com',
+        'live.com',
+        'msn.com',
+        'aol.com',
+        'proton.me',
+        'hotmail.es',
+        'outlook.es',
+        'yahoo.es',
+      ];
+      const correoValido = (c) =>
+        /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(c) &&
+        !/\.\.|^\.|\.@|@-|-\./.test(c);
+      function distancia(a, b) {
+        const f = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+        for (let j = 1; j <= b.length; j++) f[0][j] = j;
+        for (let i = 1; i <= a.length; i++)
+          for (let j = 1; j <= b.length; j++)
+            f[i][j] = Math.min(
+              f[i - 1][j] + 1,
+              f[i][j - 1] + 1,
+              f[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+            );
+        return f[a.length][b.length];
+      }
+      /** El correo corregido si el dominio parece un error de dedo; si no, null. */
+      function correoCorregido(correo) {
+        const m = /^([^@\s]+)@([^@\s]+\.[^@\s]+)$/.exec((correo || '').trim().toLowerCase());
+        if (!m || DOMINIOS.includes(m[2])) return null;
+        let mejor = null;
+        for (const d of DOMINIOS) {
+          const n = distancia(m[2], d);
+          if (n <= 2 && (!mejor || n < mejor.n)) mejor = { d, n };
+        }
+        if (mejor) return `${m[1]}@${mejor.d}`;
+        const cola = /\.(con|cmo|ocm|vom|xom|comm|coom)$/.exec(m[2]);
+        return cola ? `${m[1]}@${m[2].slice(0, -cola[1].length)}com` : null;
+      }
+      function sugiereCorreo(correo) {
+        const c = correoCorregido(correo);
+        return c
+          ? `<button type="button" class="sugiere" data-a="corregir" data-v="${esc(c)}">${x(T.quisiste)} <u>${esc(c)}</u>?</button>`
+          : '';
+      }
+
       /* ---------- De qué pantalla se trata ---------- */
       function donde() {
         const s = S().pantalla;
@@ -1582,8 +1727,9 @@
         if (s === 'entrar' || s === 'dentro') return { clase: s };
         return { clase: 'inicio' };
       }
-      function ir(pantalla) {
+      function ir(pantalla, editando = false) {
         S().pantalla = pantalla;
+        S().editando = editando;
         ui = { idioma: false, ayuda: false, ojo: false, error: '', brindis: '' };
         recuperado[E.app] = false;
         guardar();
@@ -1591,6 +1737,8 @@
       }
       function atras() {
         const d = donde();
+        if (d.clase === 'paso' && S().editando && d.paso.tipo !== 'acepto')
+          return ir(`paso-${d.total}`);
         if (d.clase === 'paso') return ir(d.i === 0 ? 'inicio' : `paso-${d.i}`);
         if (d.clase === 'tarea') return ir(d.i === 0 ? 'dentro' : `tarea-${d.tarea.id}-${d.i}`);
         if (d.clase === 'dentro') return ir(`paso-${A().pasos.length}`);
@@ -1618,7 +1766,7 @@
         const v = S().v;
         const etq = `<label for="c">${x(paso.e)}</label>`;
         if (paso.tipo === 'correo')
-          return `<div class="campo">${etq}<input id="c" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="${x(paso.ph)}" value="${esc(v[llave])}" /></div>`;
+          return `<div class="campo">${etq}<input id="c" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="${x(paso.ph)}" value="${esc(v[llave])}" /></div><div id="sug">${sugiereCorreo(v[llave])}</div>`;
         if (paso.tipo === 'texto')
           return `<div class="campo">${etq}<input id="c" type="text" ${paso.auto ? `autocomplete="${paso.auto}"` : 'autocomplete="off"'} ${paso.modo ? `inputmode="${paso.modo}"` : ''} ${paso.mayus ? 'autocapitalize="characters" style="text-transform:uppercase"' : ''} placeholder="${x(paso.ph)}" value="${esc(v[llave])}" /></div>`;
         if (paso.tipo === 'tel')
@@ -1659,24 +1807,32 @@
         let boton = x(T.siguiente);
         if (paso.tipo === 'acepto') {
           const v = S().v;
-          const filas = A()
+          const datos = A()
             .pasos.map((id, i) => ({ id, i, p: P[id] }))
-            .filter((f) => ['correo', 'texto', 'tel'].includes(f.p.tipo))
+            .filter((f) => ['correo', 'texto', 'tel'].includes(f.p.tipo));
+          const editar = (f) =>
+            `<button type="button" class="editar" data-a="editar" data-p="paso-${f.i + 1}" aria-label="${x(T.cambiar)}: ${x(f.p.e)}">${x(T.cambiar)}</button>`;
+          const elCorreo = datos.find((f) => f.p.tipo === 'correo');
+          const grande = `<div class="correo-grande"><div class="arriba"><span>${x(T.tuCorreo)}</span>${editar(elCorreo)}</div><b data-correo>${esc(v[elCorreo.id]).replace('@', '<wbr />@') || '—'}</b><p>${x(T.bienEscrito)}</p>${sugiereCorreo(v[elCorreo.id])}</div>`;
+          const filas = datos
+            .filter((f) => f !== elCorreo)
             .map(
               (f) =>
-                `<div><div><span>${x(f.p.e)}</span><b>${esc(f.p.tipo === 'tel' ? `${v[`${f.id}-pref`] ?? ''} ${v[f.id] ?? ''}` : v[f.id]) || '—'}</b></div><button type="button" data-a="ir" data-p="paso-${f.i + 1}">${x(T.cambiar)}</button></div>`,
+                `<div><div><span>${x(f.p.e)}</span><b>${esc(f.p.tipo === 'tel' ? `${v[`${f.id}-pref`] ?? ''} ${v[f.id] ?? ''}` : v[f.id]) || '—'}</b></div>${editar(f)}</div>`,
             )
             .join('');
           const extra = A()
             .terminos.map((t) => `, <u>${x(t)}</u>`)
             .join('');
-          cuerpo = `<div class="resumen">${filas}</div>
+          cuerpo = `${grande}<div class="resumen">${filas}</div>
             ${casilla('acepto', S().acepto, `${x(T.acepto)} <u>${x(T.terminos)}</u>${extra} ${x(T.yLa)} <u>${x(T.privacidad)}</u>.`)}
             ${A().nota18 ? `<p class="pista">${E.lang === 'es' ? 'Para conducir o repartir debes tener la edad mínima que pide la ley donde trabajas, nunca menos de 18 años. Lo comprobamos con tu documento.' : 'To drive or deliver you must meet the legal minimum age where you work, never under 18. We confirm it with your ID.'}</p>` : ''}`;
           boton = x(T.crearMi);
         } else cuerpo = campo(paso, llave);
         const ultimoDeTarea = d.clase === 'tarea' && d.i === d.total - 1;
         if (ultimoDeTarea) boton = x(T.guardar);
+        const editando = d.clase === 'paso' && S().editando && paso.tipo !== 'acepto';
+        if (editando) boton = x(T.volverRevisar);
         return `${cabecera(cuenta)}
           <div class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
           <div class="cuerpo" data-llave="${llave}">
@@ -1687,6 +1843,7 @@
           </div>
           <div class="pie">
             <button type="button" class="boton" data-a="siguiente">${boton}</button>
+            ${paso.tipo === 'acepto' ? `<button type="button" class="boton borde" style="margin-top:10px" data-a="ir" data-p="paso-1">${x(T.editarDatos)}</button>` : ''}
             ${d.clase === 'tarea' && !ultimoDeTarea ? `<button type="button" class="enlace" data-a="ir" data-p="dentro">${x(T.guardarSeguir)}</button>` : ''}
             ${enlaceAyuda()}
           </div>`;
@@ -1713,6 +1870,9 @@
           <div class="pie"><button type="button" class="boton" data-a="brindis">${x(T.entrar)}</button>
             <button type="button" class="enlace" data-a="ir" data-p="paso-1">${x(T.noTengo)}</button>${enlaceAyuda()}</div>`;
       }
+      /** Driver: con plazo de 30 días (Venezuela) o con los papeles antes del primer viaje. */
+      const conPlazo = () =>
+        E.modoDriver && E.modoDriver !== 'auto' ? E.modoDriver === 'plazo' : E.lang === 'es';
       function estadoTarea(t) {
         if (t.despues) return 'despues';
         return S().hechas[t.id] || '';
@@ -1746,11 +1906,19 @@
           })
           .join('');
         const exige = a.dentro.exige;
-        const puede = exige ? exige.every((id) => S().hechas[id]) : !a.dentro.falta;
+        const plazo = E.app === 'driver' && conPlazo();
+        const puede = plazo || (exige ? exige.every((id) => S().hechas[id]) : !a.dentro.falta);
+        const llaveCorreo = a.pasos.find((id) => P[id].tipo === 'correo');
+        const correo = S().v[llaveCorreo];
+        const arriba =
+          (plazo ? `<div class="franja-ok"><b>${x(T.yaPuedes)}</b>${x(T.yaPuedesP)}</div>` : '') +
+          (correo
+            ? `<div class="recuperado">${x(T.activa)} <b style="overflow-wrap:anywhere">${esc(correo)}</b> ${x(T.activa2)}</div>`
+            : '');
         return `<div class="cab color"><img src="${a.oscura ? 'img/logo-oscuro.svg' : 'img/logo-claro.svg'}" alt="${a.nombre}" style="height:26px" /><span class="hueco"></span>${selectorIdioma()}</div>
           <div class="saludo"><h1>${x(T.hola)}${nombre ? `, ${esc(nombre)}` : ''}</h1><p>${a.nombre}</p></div>
-          <div class="dentro">
-            <div class="tarjeta"><h2>${x(a.dentro.t)}</h2><p class="sub">${x(a.dentro.sub)}</p>
+          <div class="dentro">${arriba}
+            <div class="tarjeta"><h2>${x(plazo ? T.papeles : a.dentro.t)}</h2><p class="sub">${x(plazo ? T.papelesSub : a.dentro.sub)}</p>
               <div class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
               <div class="cuanto">${hechas} ${x(T.de)} ${contables.length} ${x(T.completos)}</div>
               ${filas}
@@ -1791,8 +1959,8 @@
             'The text-message checkbox: separate, unchecked and optional.',
           ),
           L(
-            'Conductores: edad mínima legal (nunca menos de 18), con identidad, licencia, vehículo y seguro aprobados antes del primer viaje. La lista de documentos la decide el país de la cuenta.',
-            'Drivers: legal minimum age (never under 18), with ID, license, vehicle and insurance approved before the first trip. The account’s country decides the document list.',
+            'Conductores: edad mínima legal (nunca menos de 18). En Venezuela ya pueden trabajar al crear la cuenta y tienen 30 días para «Tus papeles»; en Estados Unidos, identidad, licencia, vehículo y seguro aprobados antes del primer viaje.',
+            'Drivers: legal minimum age (never under 18). In Venezuela they can work right after sign-up and have 30 days for “Your documents”; in the United States, ID, license, vehicle and insurance are approved before the first trip.',
           ),
           L(
             'Datos de pago y fiscales: antes del primer pago, no al crear la cuenta.',
@@ -1826,6 +1994,17 @@
             'Minimum age and driver documents in each country: a legal matter.',
           ),
         ],
+        modo: L('Driver: los papeles según el país', 'Driver: documents by country'),
+        modoP: L(
+          'El país sale de la cuenta, nunca de una lista. Aquí puedes ver los dos casos.',
+          'The country comes from the account, never from a list. See both cases here.',
+        ),
+        modoAuto: L('Según el idioma', 'By language'),
+        modoPlazo: L('Venezuela: 30 días', 'Venezuela: 30 days'),
+        modoAntes: L(
+          'Estados Unidos: antes del primer viaje',
+          'United States: before the first trip',
+        ),
         fecha: L('La fecha', 'The date'),
         fechaP: L(
           'El orden lo decide la región del teléfono. Aquí puedes probar los dos.',
@@ -1870,6 +2049,29 @@
           `<div class="caja"><h2>${x(NOTAS.cambia)}</h2>${lista(NOTAS.cambiaL)}</div>
           <div class="caja"><h2>${x(NOTAS.fijo)}</h2>${lista(NOTAS.fijoL)}</div>
           <div class="caja"><h2>${x(NOTAS.decide)}</h2>${lista(NOTAS.decideL)}</div>
+          ${
+            E.app === 'driver'
+              ? `<div class="caja"><h2>${x(NOTAS.modo)}</h2><p style="margin:0">${x(NOTAS.modoP)}</p><div class="orden">${orden(
+                  'auto',
+                  NOTAS.modoAuto,
+                )
+                  .replace('data-a="orden"', 'data-a="modo"')
+                  .replace(
+                    /aria-pressed="[a-z]+"/,
+                    `aria-pressed="${(E.modoDriver || 'auto') === 'auto'}"`,
+                  )}${orden('plazo', NOTAS.modoPlazo)
+                  .replace('data-a="orden"', 'data-a="modo"')
+                  .replace(
+                    /aria-pressed="[a-z]+"/,
+                    `aria-pressed="${E.modoDriver === 'plazo'}"`,
+                  )}${orden('antes', NOTAS.modoAntes)
+                  .replace('data-a="orden"', 'data-a="modo"')
+                  .replace(
+                    /aria-pressed="[a-z]+"/,
+                    `aria-pressed="${E.modoDriver === 'antes'}"`,
+                  )}</div></div>`
+              : ''
+          }
           <div class="caja"><h2>${x(NOTAS.fecha)}</h2><p style="margin:0">${x(NOTAS.fechaP)}</p><div class="orden">${orden('auto', NOTAS.auto)}${orden('mda', NOTAS.mda)}${orden('dma', NOTAS.dma)}</div></div>`;
         document.getElementById('b-titulo').textContent = `Divoox · ${x(T.titulo)}`;
         document.getElementById('b-reiniciar').textContent = x(T.reiniciar);
@@ -1932,7 +2134,7 @@
           if (!S().acepto) return falla(T.marca);
           return ir('dentro');
         }
-        if (paso.tipo === 'correo' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(escrito))
+        if (paso.tipo === 'correo' && !correoValido(escrito))
           return falla(escrito ? T.correoMal : T.falta);
         if (paso.tipo === 'clave' && (claves[E.app] || '').length < 8) return falla(T.claveCorta);
         if (['texto', 'tel', 'direccion'].includes(paso.tipo) && !escrito && !opcional)
@@ -1948,7 +2150,7 @@
         }
         if (paso.tipo === 'opciones' && !(v[llave] || []).some(Boolean)) return falla(T.elige);
         if (paso.tipo === 'foto' && !v[llave] && !opcional) return falla(T.faltaFoto);
-        if (d.clase === 'paso') return ir(`paso-${d.i + 2}`);
+        if (d.clase === 'paso') return ir(`paso-${S().editando ? d.total : d.i + 2}`);
         if (d.i < d.total - 1) return ir(`tarea-${d.tarea.id}-${d.i + 2}`);
         S().hechas[d.tarea.id] = d.tarea.fin || 'listo';
         ir('dentro');
@@ -1995,6 +2197,18 @@
         if (acc === 'atras') return atras();
         if (acc === 'siguiente') return siguiente();
         if (acc === 'ir') return ir(b.dataset.p);
+        if (acc === 'editar') return ir(b.dataset.p, true);
+        if (acc === 'corregir') {
+          const llaveCorreo = A().pasos.find((id) => P[id].tipo === 'correo');
+          v[llaveCorreo] = b.dataset.v;
+          guardar();
+          return pintar(true);
+        }
+        if (acc === 'modo') {
+          E.modoDriver = b.dataset.v;
+          guardar();
+          return pintar();
+        }
         if (acc === 'ojo') {
           ui.ojo = !ui.ojo;
           return pintar(true);
@@ -2080,9 +2294,23 @@
             v[`${d.llave}-ok`] = false;
             guardar();
             return pintar('siempre');
-          } else v[d.llave] = d.paso.mayus ? t.value.toUpperCase() : t.value;
-        } else if (t.id === 'pref') v[`${d.llave}-pref`] = t.value;
-        else if (t.id === 'h1') v[`${d.llave}-a`] = t.value;
+          } else {
+            // Cada casilla acepta solo lo suyo: lo que no corresponde ni siquiera se escribe.
+            let limpio = t.value;
+            if (d.paso.tipo === 'correo') limpio = limpio.replace(/\s/g, '').toLowerCase();
+            else if (d.paso.tipo === 'tel') limpio = limpio.replace(/\D/g, '');
+            else if (d.paso.solo === 'letras') limpio = limpio.replace(/[^\p{L}\s.'’-]/gu, '');
+            else if (d.paso.mayus) limpio = limpio.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            else if (d.paso.modo === 'decimal') limpio = limpio.replace(/[^\d.,]/g, '');
+            if (limpio !== t.value) t.value = limpio;
+            v[d.llave] = limpio;
+            if (d.paso.tipo === 'correo')
+              document.getElementById('sug').innerHTML = sugiereCorreo(limpio);
+          }
+        } else if (t.id === 'pref') {
+          t.value = `+${t.value.replace(/\D/g, '').slice(0, 4)}`;
+          v[`${d.llave}-pref`] = t.value;
+        } else if (t.id === 'h1') v[`${d.llave}-a`] = t.value;
         else if (t.id === 'h2') v[`${d.llave}-c`] = t.value;
         else return;
         if (ui.error) {
