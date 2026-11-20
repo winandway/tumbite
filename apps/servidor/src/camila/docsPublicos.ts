@@ -1841,12 +1841,34 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "En la app Divoox Driver, abre el menú y toca «Ayuda», «Habla con soporte». En la web, toca «Habla con nuestro equipo de soporte» abajo a la derecha.",
    "Escribe tu pregunta como se la dirías a una persona.",
    "Si quieres hablar con alguien del equipo, escribe «hablar con una persona».",
-   "Por correo, responde cualquier correo de Camila: sigue la misma conversación.",
+   "Por correo, responde cualquier correo de Camila: sigue la misma conversación y te contesta ahí mismo.",
    "Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa.",
    "Si algo falla, cuéntaselo a Camila con tus palabras. Si tienes una captura, toca «Adjuntar captura», elige la imagen o toma la foto, y envíala junto con tu mensaje.",
    "Responde lo que Camila te pregunte: solo pide lo que falta. Al final te da tu número de caso y te dice cómo te avisa."
   ],
   "cuerpo": "Camila Campos, del equipo de soporte de Divoox, te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse. Si le preguntas si es una persona, siempre te dice la verdad. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación. Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números. Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña. Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó. Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas. Si algo de la app o de la página falla (no carga, se cierra, no te deja pagar o no ves algo que debería estar), cuéntaselo a Camila con tus palabras, como se lo contarías a una persona. No hay formulario: Camila lee lo que escribes y solo te pregunta lo que falte, una cosa a la vez. Puedes acompañarl…"
+ },
+ {
+  "idioma": "es",
+  "ruta": "trust/support-by-email",
+  "titulo": "Escríbenos por correo: te respondemos ahí mismo",
+  "resumen": "Responde a cualquier correo de soporte de Divoox, o escríbenos por correo, y Camila Campos te contesta en ese mismo hilo. Es la misma conversación que tu chat.",
+  "preguntas": [
+   "¿Puedo responder a un correo de Divoox?",
+   "¿Cómo escribo a soporte por correo?",
+   "¿El correo y el chat son la misma conversación?",
+   "¿Puedo mandar una captura por correo?",
+   "¿Por qué Camila no me dio los datos de mi cuenta por correo?"
+  ],
+  "pasos": [
+   "Abre cualquier correo de soporte de Divoox (por ejemplo, tu correo de bienvenida) y toca «Responder».",
+   "Escribe tu pregunta como se la dirías a una persona. Si quieres, adjunta una captura.",
+   "Envíalo. La respuesta te llega al mismo hilo de correo, casi siempre en pocos minutos.",
+   "Si necesitas seguir, responde otra vez a ese correo: la conversación continúa ahí.",
+   "Para que Camila pueda revisar tu cuenta, escribe desde el correo con el que te registraste y que ya confirmaste.",
+   "Si prefieres a una persona del equipo, escribe «quiero hablar con una persona» en el correo."
+  ],
+  "cuerpo": "El correo funciona igual que el chat. Si respondes a un correo de Camila Campos, del equipo de soporte, tu mensaje entra a tu conversación y la respuesta te llega por correo, en el mismo hilo, con el mismo asunto. Por correo la respuesta es más completa que en el chat: te explica qué pasa, te da todos los pasos numerados y, cuando hay una guía de Docs para tu pregunta, te deja el botón «Ver la guía con capturas». Es una sola conversación por persona. Lo que escribiste por correo aparece en tu chat de la app y de la web, y lo que hablaste en el chat Camila lo recuerda cuando le escribes por correo. Si prefieres que te atienda una persona del equipo, escríbelo en el correo («quiero hablar con una persona»). Su respuesta te llega también por correo, en el mismo hilo, firmada con su nombre. Puedes adjuntar una imagen, por ejemplo la captura de un error. Camila la lee igual que en el chat y, si es un fallo de la app, lo reporta al equipo técnico con tu número de caso. Para cuidar tu cuenta, Camila solo revisa los datos de una cuenta cuando el correo llega desde la dirección confirmada de esa cuenta. Si escribes desde otra dirección, te ayuda con todo lo demás, pero no mira ni cuenta nada de la cuenta. Nunca te pide tu contraseña por correo. Las respuestas automáticas (por ejemplo, las de «fuera de la oficina») no reciben respuesta."
  },
  {
   "idioma": "es",
@@ -4252,12 +4274,34 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "In the Divoox Driver app, open the menu and tap “Help,” “Talk to support.” On the web, tap “Talk to our support team” at the bottom right.",
    "Write your question the way you would ask a person.",
    "If you want to talk to someone on the team, write “talk to a person.”",
-   "By email, reply to any email from Camila: it continues the same conversation.",
+   "By email, reply to any email from Camila: it continues the same conversation and she answers right there.",
    "If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it.",
    "If something is broken, tell Camila in your own words. If you have a screenshot, tap “Attach screenshot,” choose the image or take the photo, and send it together with your message.",
    "Answer what Camila asks: she only asks for what is missing. At the end she gives you your case number and tells you how she will notify you."
   ],
   "cuerpo": "Camila Campos, from the Divoox support team, helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated. If you ask whether she is a person, she always tells you the truth. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation. There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code. To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password. Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved. If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have. If something in the app or on the site is broken (it won’t load, it closes, it won’t let you pay, or you can’t see something that should be there), tell Camila in your own words, the way you would tell a person. There is no form: Camila reads what you write and only asks for what is missing, one thing at a time. You…"
+ },
+ {
+  "idioma": "en",
+  "ruta": "trust/support-by-email",
+  "titulo": "Write to us by email: we answer right there",
+  "resumen": "Reply to any Divoox support email, or write to us by email, and Camila Campos answers in that same thread. It is the same conversation as your chat.",
+  "preguntas": [
+   "Can I reply to an email from Divoox?",
+   "How do I write to support by email?",
+   "Are email and chat the same conversation?",
+   "Can I send a screenshot by email?",
+   "Why didn’t Camila give me my account details by email?"
+  ],
+  "pasos": [
+   "Open any Divoox support email (for example, your welcome email) and tap “Reply.”",
+   "Write your question the way you would ask a person. Attach a screenshot if you like.",
+   "Send it. The answer arrives in the same email thread, usually within a few minutes.",
+   "If you need to continue, reply to that email again: the conversation carries on there.",
+   "So Camila can check your account, write from the email you signed up with and already confirmed.",
+   "If you would rather have a person on the team, write “I want to talk to a person” in the email."
+  ],
+  "cuerpo": "Email works just like the chat. If you reply to an email from Camila Campos, from the support team, your message lands in your conversation and the answer comes back by email, in the same thread, with the same subject. By email the answer is more complete than in the chat: it explains what is happening, gives you every numbered step and, when there is a Docs guide for your question, includes the “See the guide with screenshots” button. It is one conversation per person. What you wrote by email shows up in your chat in the app and on the web, and Camila remembers what you discussed in the chat when you write by email. If you would rather be helped by a person on the team, say so in the email (“I want to talk to a person”). Their reply also reaches you by email, in the same thread, signed with their name. You can attach an image, for example a screenshot of an error. Camila reads it just as in the chat and, if it is an app issue, reports it to the technical team with your case number. To protect your account, Camila only looks at an account’s data when the email comes from that account’s confirmed address. If you write from another address, she helps with everything else, but does not look at or share anything about the account. She never asks for your password by email. Automatic replies (for example, “out of office” messages) do not get an answer."
  },
  {
   "idioma": "en",

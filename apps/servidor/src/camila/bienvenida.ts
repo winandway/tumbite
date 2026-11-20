@@ -146,7 +146,13 @@ export async function alCrearEquipo(env: Env, db: D1Database, liderId: string, c
     await mensajeDeCamila(env, db, persona, textoBienvenidaLider(env, u.nombre, codigo, idioma), [
       'app',
     ]);
-    await correoBienvenidaLider(env, { nombre: u.nombre, correo: u.correo, idioma, codigo });
+    await correoBienvenidaLider(env, {
+      nombre: u.nombre,
+      correo: u.correo,
+      idioma,
+      codigo,
+      personaId: persona.id,
+    });
   } catch (e) {
     console.error('camila: bienvenida del líder', e);
   }

@@ -155,6 +155,9 @@ export async function limpiarCamila(
       .prepare('DELETE FROM camila_codigos_dia WHERE dia < ?')
       .bind(ahora.toISOString().slice(0, 10)),
     db.prepare("DELETE FROM camila_codigos WHERE vence_en < datetime('now', '-1 day')"),
+    // C-CAMILA-CORREO-HILO: las cabeceras de hilo de más de 180 días y las cuentas de más de 60.
+    db.prepare("DELETE FROM camila_correos WHERE creado_en < datetime('now', '-180 days')"),
+    db.prepare("DELETE FROM camila_correo_dia WHERE dia < date('now', '-60 days')"),
     // Un reporte de fallo que la persona dejó a medias hace más de un día se cierra solo.
     db.prepare(
       "UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE estado IN ('preguntando', 'captura') AND actualizado_en < datetime('now', '-1 hour')",

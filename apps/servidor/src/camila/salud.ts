@@ -1,5 +1,5 @@
 import { leerAjustes } from './memoria';
-import { gastoDeHoy, hoy, topeEnMicro } from './modelo';
+import { hoy, topeEnMicro } from './modelo';
 
 /**
  * Pieza «camila» del canario (C-CAMILA-TOPE): «tope» si hoy llegó al tope de IA (sigue contestando
@@ -10,17 +10,21 @@ import { gastoDeHoy, hoy, topeEnMicro } from './modelo';
  */
 export async function saludCamila(db: D1Database): Promise<'ok' | 'error' | 'tope' | 'atrasado'> {
   // Una detrás de otra (no en paralelo): si la base falla, falla UNA promesa y la atrapa quien llama.
-  const g = await gastoDeHoy(db);
-  const a = await leerAjustes(db);
-  const fallo = await db
+  // El gasto de hoy y el fallo de la última hora salen de la MISMA fila, en una sola lectura
+  // (C-LECTURAS-SALUD: el canario lee poco; la lectura que se ahorra aquí la usa «correoEntrante»).
+  const g = await db
     .prepare(
-      "SELECT 1 AS hay FROM camila_gasto WHERE dia = ? AND error_en > datetime('now', '-1 hour')",
+      `SELECT microdolares, regalos, (error_en > datetime('now', '-1 hour')) AS fallo
+         FROM camila_gasto WHERE dia = ?`,
     )
     .bind(hoy())
-    .first<{ hay: number }>();
+    .first<{ microdolares: number; regalos: number; fallo: number | null }>();
+  const a = await leerAjustes(db);
   const tope = topeEnMicro(a.topeDiarioCentavos);
-  if (g.microdolares > tope * 1.1 + 10_000 || g.regalos > a.regalosPorDia) return 'error';
-  if (fallo) return 'atrasado';
-  if (tope > 0 && g.microdolares >= tope) return 'tope';
+  const microdolares = Number(g?.microdolares ?? 0);
+  if (microdolares > tope * 1.1 + 10_000 || Number(g?.regalos ?? 0) > a.regalosPorDia)
+    return 'error';
+  if (Number(g?.fallo ?? 0) === 1) return 'atrasado';
+  if (tope > 0 && microdolares >= tope) return 'tope';
   return 'ok';
 }

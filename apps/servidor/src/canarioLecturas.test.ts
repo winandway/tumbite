@@ -29,7 +29,8 @@ afterEach(() => vi.unstubAllGlobals());
  * - todo lo demás (los datos de verdad) no pasa de 1.150 filas. Antes eran 1.126 de 2.000.
  */
 // +1 (19 nov 2026, C-VERIFICACION-IA): la pieza del canario lee la fila del gasto de IA de hoy.
-const TOPE_CANARIO = 1151;
+// +1 (20 nov 2026, C-CAMILA-CORREO-HILO): al juntarse con la pieza del correo entrante, que lee su fila.
+const TOPE_CANARIO = 1152;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

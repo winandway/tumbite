@@ -193,6 +193,8 @@ export const esquemaEnv = z.object({
   PASE_SECRETO_ANTERIOR: z.string().min(32).optional(),
   /** Dirección del Worker de tiempo real (https://…). Vacía = tiempo real apagado. */
   TIEMPO_REAL_URL: z.url().optional(),
+  /** C-CAMILA-CORREO-HILO: el Worker «divoox-correo», por donde salen las respuestas en hilo. */
+  CORREO_HILO_URL: z.url().optional(),
   /** «1» = la selfie de control se pide en cada conexión (pruebas y recorrido). */
   SELFIE_CONTROL_SIEMPRE: z.enum(['0', '1']).optional(),
   /** C-TIENDAS-VITRINA: «1» enciende las tiendas en el servidor LOCAL del recorrido (nunca en un sitio publicado). */

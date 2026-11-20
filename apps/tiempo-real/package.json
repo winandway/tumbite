@@ -8,10 +8,12 @@
     "typecheck": "tsc --noEmit",
     "build:tiempo-real": "wrangler deploy --dry-run --outdir=.dist-tiempo-real",
     "build:reloj": "wrangler deploy --dry-run -c wrangler.reloj.jsonc --outdir=.dist-reloj",
-    "build:reloj-produccion": "wrangler deploy --dry-run -c wrangler.reloj-produccion.jsonc --outdir=.dist-reloj/produccion"
+    "build:reloj-produccion": "wrangler deploy --dry-run -c wrangler.reloj-produccion.jsonc --outdir=.dist-reloj/produccion",
+    "build:correo": "wrangler deploy --dry-run -c wrangler.correo.jsonc --outdir=.dist-correo"
   },
   "dependencies": {
-    "@tumbite/compartido": "0.1.0"
+    "@tumbite/compartido": "0.1.0",
+    "postal-mime": "^4.2.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261010.1",

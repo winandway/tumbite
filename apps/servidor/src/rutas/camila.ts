@@ -9,6 +9,8 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { recibirMensaje } from '../camila/cerebro';
 import { usarPersonaDelChat } from './camilaFallos';
 import { enviarPorCanal } from '../camila/canales';
+import { recibirCorreo } from '../camila/correoEntrante';
+import { anotarErrorDeCorreo, hiloDeCorreo } from '../camila/correoHilo';
 import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
 import {
   type AjustesCamila,
@@ -18,7 +20,6 @@ import {
   guardarAjustes,
   humanoActivo,
   leerAjustes,
-  personaDeCorreo,
   personaDeUsuario,
   personaDeVisitante,
   personaPorId,
@@ -344,26 +345,45 @@ camila.post('/camila/verificar/confirmar', async (c) => {
   return c.json(await hiloPublico(db, unida));
 });
 
-/** El correo entrante (lo trae el gerente de correo, con su secreto). */
+/**
+ * C-CAMILA-CORREO-HILO: el correo entrante. Lo trae el Worker «divoox-correo» (Cloudflare Email
+ * Routing) o el gerente de correo, los dos con el secreto del gerente. La respuesta dice si Camila lo
+ * tomó; si no (correo automático, tope, remitente sin autenticar), quien lo trae lo desvía al equipo.
+ */
+const cabecera = z.string().max(2000);
 export async function correoEntrante(c: Ctx) {
   const d = await leerCuerpo(
     c,
     z.object({
       de: z.email().max(160),
       nombre: z.string().trim().max(80).default(''),
-      asunto: z.string().trim().max(200).default(''),
-      texto: z.string().trim().min(1).max(8000),
+      asunto: z.string().trim().max(300).default(''),
+      texto: z.string().max(20_000).default(''),
+      para: z.string().max(200).optional(),
+      messageId: cabecera.optional(),
+      referencias: z.string().max(6000).optional(),
+      autenticado: z.boolean().optional(),
+      cabeceras: z.record(z.string().max(60), cabecera).optional(),
+      adjuntos: z
+        .array(
+          z.object({
+            nombre: z.string().max(200).optional(),
+            tipo: z.string().max(100).optional(),
+            base64: z.string().max(14_000_000),
+          }),
+        )
+        .max(5)
+        .optional(),
     }),
   );
   const db = base(c);
-  const p = await personaDeCorreo(db, d.de, d.nombre);
-  // Solo lo nuevo: se corta la cita del correo anterior («El … escribió:» / «On … wrote:»).
-  const limpio =
-    d.texto.split(/\n(?:>|El .{5,80} escribió:|On .{5,80} wrote:|-{2,} ?Original)/)[0]?.trim() ||
-    d.texto;
-  const asunto = d.asunto ? (/^re:/i.test(d.asunto) ? d.asunto : `Re: ${d.asunto}`) : undefined;
-  const r = await recibirMensaje(c.env, db, p, 'correo', limpio, { asunto });
-  return c.json({ ok: true, persona: p.id, respondio: Boolean(r.respuesta), modo: r.modo });
+  try {
+    return c.json(await recibirCorreo(c.env, db, d));
+  } catch (e) {
+    // Nunca en silencio: queda para el canario, y quien lo trae lo desvía al buzón del equipo.
+    await anotarErrorDeCorreo(db, e).catch(() => undefined);
+    throw e;
+  }
 }
 
 // ------------------------------------------------------------------ superadmin
@@ -468,10 +488,13 @@ camila.get('/admin/camila/hilos/:persona', async (c) => {
       .bind(p.id)
       .all(),
   ]);
+  // C-CAMILA-CORREO-HILO: el asunto del último correo de la persona (el hilo donde sale la respuesta).
+  const correo = await hiloDeCorreo(db, p.id);
   return c.json({
     persona: { ...p, equipoAtendiendo: humanoActivo(p) },
     mensajes: mensajes.results,
     casos: casos.results,
+    correo: correo ? { asunto: correo.asunto, de: correo.para } : null,
   });
 });
 
@@ -502,16 +525,16 @@ camila.post('/admin/camila/hilos/:persona/responder', async (c) => {
       .bind(yo.id, p.id),
   ]);
   const en = p.idioma === 'en';
-  const firmado = `${d.texto}\n\n${yo.nombre}${en ? ', Divoox Support Team' : ', del equipo de soporte de Divoox'}`;
+  const firma = `${yo.nombre}${en ? ', Divoox Support Team' : ', del equipo de soporte de Divoox'}`;
+  // C-CAMILA-CORREO-HILO: por correo sale en el mismo hilo de la persona, firmado por quien responde.
+  const porCorreo = p.canal_ultimo === 'correo';
   const salida = await enviarPorCanal(
     c.env,
     db,
     p,
     p.canal_ultimo,
-    p.canal_ultimo === 'correo' ? d.texto : firmado,
-    {
-      aviso: true,
-    },
+    porCorreo ? d.texto : `${d.texto}\n\n${firma}`,
+    { aviso: true, ...(porCorreo ? { firma } : {}) },
   );
   return c.json({ ok: true, enviado: salida.enviado, motivo: salida.motivo ?? null });
 });

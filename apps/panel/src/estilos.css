@@ -7378,6 +7378,22 @@ body.modo-tableta .cabecera {
 .camila-texto {
   white-space: pre-wrap;
 }
+/* C-CAMILA-CORREO-HILO: los mensajes que entraron o salieron por correo llevan su marca. */
+.camila-marca-correo {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.camila-asunto {
+  margin-top: 2px;
+  font-weight: 600;
+  color: #101010;
+}
 .camila-casos h4 {
   margin: 14px 0 8px;
 }

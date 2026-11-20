@@ -3004,6 +3004,23 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "reporte_id",
     "creado_en"
   ],
+  "camila_correos": [
+    "id",
+    "persona_id",
+    "message_id",
+    "de",
+    "asunto",
+    "referencias",
+    "creado_en"
+  ],
+  "camila_correo_dia": [
+    "dia",
+    "recibidos",
+    "atendidos",
+    "ignorados",
+    "error_en",
+    "error"
+  ],
   "camila_preguntas": [
     "id",
     "tipo",

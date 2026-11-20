@@ -104,6 +104,7 @@ import { saludRegalos } from './regalosDivoox';
 import { camila } from './rutas/camila';
 import { camilaFallos } from './rutas/camilaFallos';
 import { saludCamila } from './camila/salud';
+import { saludCorreoEntrante } from './camila/correoEntrante';
 import { direcciones } from './rutas/direcciones';
 import { fotoPuerta } from './rutas/fotoPuerta';
 import { restauranteMas } from './rutas/restauranteMas';
@@ -475,6 +476,15 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: verificación con IA', e);
       return 'error' as const;
     });
+  // C-CAMILA-CORREO-HILO: la entrada de correo de Camila (y sus respuestas) no falló en 24 horas.
+  const correoEntrante = c.env.DB
+    ? await saludCorreoEntrante(c.env.DB).catch((e: unknown) => {
+        console.error('salud: correo entrante', e);
+        return null;
+      })
+    : null;
+  // Si ni siquiera se pudo leer, «atrasado»: la entrada de correo no tumba el sitio.
+  if (c.env.DB) piezas.correoEntrante = correoEntrante?.estado ?? 'atrasado';
   // Disputas (contracargos) sin responder que vencen pronto: rojo para que alguien las atienda.
   if (c.env.DB)
     piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
@@ -561,6 +571,7 @@ app.get('/datos/salud', async (c) => {
             rebotes24h: correo.rebotes24h,
           }
         : null,
+      correoEntrante,
       ultimoRespaldo: fechaRespaldo,
       version: VERSION_SERVIDOR,
     },

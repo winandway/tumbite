@@ -41,8 +41,12 @@ export type Contexto = {
   noSupo?: boolean;
   /** C-CAMILA-ENLACE-GUIA: las guías de Docs que las herramientas le dieron al modelo. */
   guias?: string[];
-  /** El mensaje llegó por el chat (web o app): ahí se toman los reportes de fallo. */
+  /** El mensaje llegó por el chat (web o app) o por correo: ahí se toman los reportes de fallo. */
   enChat?: boolean;
+  /** C-CAMILA-CORREO-HILO: el mensaje llegó por correo (la respuesta lleva formato de correo). */
+  porCorreo?: boolean;
+  /** C-CAMILA-CORREO-HILO: quien escribe no es el dueño confirmado de la cuenta: sin datos de cuenta. */
+  sinCuenta?: boolean;
   /** C-CAMILA-REPORTE-CONVERSADO: el modelo vio que la persona cuenta un fallo y pidió reportarlo. */
   quiereReporte?: boolean;
 };

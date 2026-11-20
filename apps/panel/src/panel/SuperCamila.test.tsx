@@ -61,7 +61,16 @@ const HILO = {
       creado_en: '2026-11-17 14:01:00',
       autor_nombre: null,
     },
+    {
+      id: 'm3',
+      canal: 'correo',
+      autor: 'persona',
+      texto: 'Les escribo por correo: sigo sin carreras.',
+      creado_en: '2026-11-17 15:00:00',
+      autor_nombre: null,
+    },
   ],
+  correo: { asunto: 'Re: Mis carreras', de: 'jose@ejemplo.com' },
   casos: [
     {
       id: 'caso-1',
@@ -148,6 +157,14 @@ describe('C-CAMILA-BUZON: el buzón de Camila', () => {
     const hilo = await screen.findByTestId('camila-hilo');
     expect(within(hilo).getByText('No me llegan carreras')).toBeTruthy();
     expect(within(hilo).getByText('Te paso con el equipo.')).toBeTruthy();
+    // C-CAMILA-CORREO-HILO: el correo va dentro de la misma conversación, marcado como correo, y
+    // arriba se ve el asunto del hilo donde sale la respuesta.
+    expect(within(hilo).getByTestId('camila-asunto').textContent).toBe(
+      'Hilo de correo: Re: Mis carreras',
+    );
+    const marcas = within(hilo).getAllByTestId('camila-marca-correo');
+    expect(marcas).toHaveLength(1);
+    expect(marcas[0]!.closest('li')?.textContent).toContain('Les escribo por correo');
     await userEvent.type(
       within(hilo).getByLabelText('Responder en el mismo hilo'),
       'Ya activamos tu cuenta.',

@@ -43,10 +43,19 @@ export function remitente(env: Pick<Env, 'SITIO_URL'>, de: Remitente) {
   return { ...r, address: r.address.replace(`@${DOMINIO_CORREO}`, `@${dominioCorreo(env)}`) };
 }
 
-/** Un «responder a» en divoox.com se perdería: se cambia por el buzón de soporte. */
+/**
+ * C-CAMILA-CORREO-HILO (20 nov 2026): la única dirección de divoox.com que se acepta como «responder
+ * a»: la de una conversación de Camila («support+c…» en divoox.com). Entra por Cloudflare Email Routing al
+ * Worker «divoox-correo», que se la pasa a Camila. Cualquier otra de divoox.com sigue cambiándose por
+ * el buzón de soporte (C-CORREO-SIN-RECIBIR-DIVOOX).
+ */
+const RECIBE_EN_DIVOOX = /^support\+c[0-9a-f]{20}@divoox\.com$/;
+
+/** Un «responder a» en una dirección de divoox.com que nadie recibe se perdería: va al buzón de soporte. */
 function responderA(pedido: string | undefined): string {
   const limpio = pedido?.trim() ?? '';
   const d = limpio.toLowerCase();
+  if (RECIBE_EN_DIVOOX.test(d)) return d;
   if (!d || d.endsWith('@divoox.com') || d.endsWith('.divoox.com')) return CORREOS_SOPORTE.divoox;
   return limpio;
 }
@@ -62,7 +71,29 @@ export type Correo = {
   idioma?: 'es' | 'en';
   /** Una foto debajo del primer párrafo (C-CORREO-ENTREGA: la foto de la entrega). */
   imagen?: { url: string; alt: string };
+  /**
+   * C-CAMILA-CORREO-HILO: cabeceras de hilo de una respuesta («In-Reply-To» y «References»). Solo
+   * esas dos; cualquier otra se descarta.
+   */
+  cabeceras?: Record<string, string>;
 };
+
+const CABECERAS_DE_HILO = ['In-Reply-To', 'References'] as const;
+function cabecerasDeHilo(c: Record<string, string> | undefined) {
+  const dadas = new Map(Object.entries(c ?? {}));
+  const limpias = CABECERAS_DE_HILO.flatMap((nombre) => {
+    // Sin saltos de renglón: una cabecera nunca abre otra.
+    const valor = (dadas.get(nombre) ?? '')
+      .replace(/[\r\n]+/g, ' ')
+      .trim()
+      .slice(0, 1800);
+    const ids = valor.split(/\s+/);
+    return ids.every((id) => /^<[^<>\s]{3,300}>$/.test(id))
+      ? [[nombre, ids.join(' ')] as const]
+      : [];
+  });
+  return limpias.length ? Object.fromEntries(limpias) : null;
+}
 
 export type ResultadoCorreo =
   { ok: true; id: string; rebotado: false } | { ok: false; motivo: string; rebotado: boolean };
@@ -232,6 +263,7 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
       motivo: 'Esa dirección ya rebotó antes: no existe o no recibe correos.',
       rebotado: true,
     };
+  const hilo = cabecerasDeHilo(correo.cabeceras);
   const cuerpo = {
     sitio: SITIO,
     token: env.YAD_TOKEN,
@@ -244,6 +276,32 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
     // las respuestas van al buzón de soporte que sí recibe, salvo que el correo pida otro que reciba.
     reply_to: { address: responderA(correo.responderA) },
   };
+  // C-CAMILA-CORREO-HILO: una respuesta en hilo sale por el Worker «divoox-correo», que sí pone
+  // «In-Reply-To» y «References» (el servicio de correo del sitio no las deja pasar). Si esa puerta
+  // no está o falla, la respuesta sale igual por el camino de siempre, sin ellas: que llegue importa
+  // más que dónde se acomoda.
+  if (hilo && env.CORREO_HILO_URL && env.GERENTE_SECRETO) {
+    const porHilo = await transporte(new URL('/enviar', env.CORREO_HILO_URL).toString(), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${env.GERENTE_SECRETO}`,
+      },
+      body: JSON.stringify({
+        de: cuerpo.from,
+        para: correo.para,
+        asunto: cuerpo.subject,
+        texto: cuerpo.text,
+        html: cuerpo.html,
+        responderA: cuerpo.reply_to.address,
+        cabeceras: hilo,
+      }),
+      signal: AbortSignal.timeout(TIEMPO_CORREO_MS),
+    })
+      .then(async (r) => (r.ok ? ((await r.json()) as { ok?: boolean; id?: string }) : null))
+      .catch(() => null);
+    if (porHilo?.ok) return { ok: true, id: porHilo.id ?? '', rebotado: false };
+  }
   let res: Response;
   try {
     res = await transporte(ENDPOINT, {
