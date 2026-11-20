@@ -12,6 +12,7 @@ import { DespachoCatalogo } from './DespachoCatalogo';
 import { InterruptoresRepartidor } from './InterruptoresRepartidor';
 import { api, pedir } from './api';
 import { miniaturaWebp } from './SubirFoto';
+import { PapelesConductor, TableroVerificacionIa } from './SuperPapeles';
 
 /** Reduce la selfie aprobada a una miniatura y la guarda; si no se puede, el pasajero no ve foto. */
 async function guardarMiniatura(id: string) {
@@ -173,6 +174,7 @@ export function SuperKyc({
       <h1>{t.titulo}</h1>
       <InterruptoresRepartidor idioma={idioma} />
       <DespachoCatalogo idioma={idioma} />
+      <TableroVerificacionIa idioma={idioma} />
       <div className="super-filtros" role="tablist">
         {(
           [
@@ -316,6 +318,9 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
         {d.persona.restaurante ? ` · ${d.persona.restaurante} · ${d.persona.direccion ?? ''}` : ''}
       </p>
       <p className="como-nota">{t.compara}</p>
+      {d.persona.rol === 'repartidor' ? (
+        <PapelesConductor id={id} idioma={idioma} completa />
+      ) : null}
       <div className="kyc-fotos">
         {Object.entries(t.piezas)
           .filter(([p]) => tiene.get(p))

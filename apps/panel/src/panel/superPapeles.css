@@ -1,0 +1,167 @@
+/* C-PLAZO-PAPELES y C-VERIFICACION-IA en el superadmin: papeles del conductor. */
+.insignia.papeles-por-vencer {
+  background: #fff4d6;
+  color: #6b4500 !important;
+}
+.papeles-tarjeta h3 {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+}
+.papeles-estados {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.papeles-fotos {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  margin: 12px 0;
+}
+.papeles-fotos-grandes {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.papeles-foto {
+  margin: 0;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+.papeles-foto img,
+.papeles-horma {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+  background: #f4f4f4;
+}
+.papeles-fotos-grandes .papeles-foto img,
+.papeles-fotos-grandes .papeles-horma {
+  height: 220px;
+}
+.papeles-foto img.redonda {
+  width: 104px;
+  height: 104px;
+  margin: 8px auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.papeles-fotos-grandes .papeles-foto img.redonda {
+  width: 196px;
+  height: 196px;
+  margin: 12px auto;
+}
+.papeles-horma {
+  position: relative;
+}
+.papeles-horma::after {
+  content: '';
+  position: absolute;
+  inset: 22% 18%;
+  border: 2px dashed #b9b9b9;
+  border-radius: 10px;
+}
+.papeles-horma.redonda::after {
+  inset: 14% 34%;
+  border-radius: 50%;
+}
+.papeles-foto figcaption {
+  display: grid;
+  gap: 4px;
+  padding: 8px 12px 12px;
+  font-size: 0.86rem;
+}
+.papeles-luz {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #f1f1f1;
+  color: #101010;
+}
+.papeles-luz > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #9a9a9a;
+}
+.papeles-luz-verde {
+  background: #e3f6ea;
+  color: #0d5a2c;
+}
+.papeles-luz-verde > span {
+  background: #0d7a3a;
+}
+.papeles-luz-amarillo {
+  background: #fff4d6;
+  color: #6b4500;
+}
+.papeles-luz-amarillo > span {
+  background: #d99a00;
+}
+.papeles-luz-rojo {
+  background: #fde4e4;
+  color: #8a0014;
+}
+.papeles-luz-rojo > span {
+  background: #c4001d;
+}
+.papeles-leido {
+  margin: 4px 0 0;
+  display: grid;
+  gap: 2px;
+}
+.papeles-leido div {
+  display: flex;
+  gap: 6px;
+}
+.papeles-leido dt {
+  color: #666b73;
+}
+.papeles-leido dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.papeles-dudas {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff4d6;
+  color: #6b4500;
+  font-weight: 600;
+}
+.papeles-pedir {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+.papeles-caras {
+  margin: 8px 0 0;
+}
+.papeles-tablero summary {
+  cursor: pointer;
+}
+.papeles-politica {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+}
+.papeles-politica legend {
+  padding: 0 8px;
+  font-weight: 700;
+}
+.papeles-grupo {
+  margin: 8px 0 0;
+  font-weight: 700;
+}

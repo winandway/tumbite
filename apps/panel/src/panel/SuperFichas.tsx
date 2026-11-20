@@ -22,6 +22,7 @@ import {
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { usePreferencias } from './usePreferencias';
+import { FiltroPapeles, InsigniaPapeles, PapelesConductor } from './SuperPapeles';
 
 /**
  * Superadmin a escala: ciudades → repartidores / clientes / restaurantes de cada ciudad, con
@@ -49,6 +50,7 @@ const T = {
     seguro: 'Seguro',
     licencia: 'Licencia',
     antecedentes: 'Antecedentes',
+    papeles: 'Papeles',
     estadoDoc: {
       vigente: 'Vigente',
       vencido: 'Vencido',
@@ -146,6 +148,7 @@ const T = {
     seguro: 'Insurance',
     licencia: 'License',
     antecedentes: 'Background',
+    papeles: 'Documents',
     estadoDoc: {
       vigente: 'Valid',
       vencido: 'Expired',
@@ -446,10 +449,13 @@ export function SuperCiudades({ base, idioma }: { base: string; idioma: Idioma }
  */
 function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   const [q0] = useState(consulta);
-  const pref = usePreferencias(clave, { zona: '' });
+  // «estado» guarda el filtro de papeles de la lista de conductores (C-PLAZO-PAPELES).
+  const pref = usePreferencias(clave, { zona: '', estado: '' });
   // Un enlace con ?zona= (desde Ciudades) manda en esta visita, sin cambiar lo guardado.
   const [zonaDeEnlace, setZonaDeEnlace] = useState<string | null>(q0.get('zona') || null);
   const zona = zonaDeEnlace ?? pref.valores.zona ?? '';
+  const [plazoDeEnlace, setPlazoDeEnlace] = useState<string | null>(q0.get('plazo') || null);
+  const plazo = clave === 'repartidores' ? (plazoDeEnlace ?? pref.valores.estado ?? '') : '';
   const [q, setQ] = useState(q0.get('q') ?? '');
   const textoActual = useRef(q);
   useEffect(() => {
@@ -459,9 +465,10 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [error, setError] = useState('');
   const pedirPagina = useCallback(
-    async (despues: string | null, texto: string, z: string) => {
+    async (despues: string | null, texto: string, z: string, pl: string) => {
       const p = new URLSearchParams();
       if (z) p.set('zona', z);
+      if (pl) p.set('plazo', pl);
       if (texto) p.set('q', texto);
       if (despues) p.set('despues', despues);
       try {
@@ -478,13 +485,18 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   );
   // Al abrir, al cambiar la ciudad y cuando llegan los filtros guardados: la primera página.
   useEffect(() => {
-    void pedirPagina(null, textoActual.current, zona);
-  }, [pedirPagina, zona]);
+    void pedirPagina(null, textoActual.current, zona, plazo);
+  }, [pedirPagina, zona, plazo]);
   return {
     zona,
     setZona: (z: string) => {
       setZonaDeEnlace(null);
       pref.cambiar('zona', z);
+    },
+    plazo,
+    setPlazo: (v: string) => {
+      setPlazoDeEnlace(null);
+      pref.cambiar('estado', v);
     },
     q,
     setQ,
@@ -494,10 +506,11 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
     guardados: pref.guardados,
     restablecer: () => {
       setZonaDeEnlace(null);
+      setPlazoDeEnlace(null);
       pref.restablecer();
     },
-    buscar: () => void pedirPagina(null, q, zona),
-    mas: () => void pedirPagina(siguiente, q, zona),
+    buscar: () => void pedirPagina(null, q, zona, plazo),
+    mas: () => void pedirPagina(siguiente, q, zona, plazo),
   };
 }
 
@@ -536,6 +549,9 @@ type FilaRep = {
   licencia: string;
   antecedentes: string;
   entregas: number;
+  /** C-PLAZO-PAPELES: estado de sus papeles y días que le quedan (null = sin plazo o ya cerrado). */
+  papeles?: string;
+  diasPlazo?: number | null;
 };
 
 export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idioma }) {
@@ -546,6 +562,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
       <h1>{t.repartidores}</h1>
       <div className="super-busqueda" role="search">
         <SelectorCiudad zona={b.zona} cambiar={b.setZona} idioma={idioma} />
+        <FiltroPapeles valor={b.plazo} cambiar={b.setPlazo} idioma={idioma} />
         <input
           value={b.q}
           onChange={(e) => b.setQ(e.target.value)}
@@ -577,6 +594,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                 <th>{t.licencia}</th>
                 <th>{t.seguro}</th>
                 <th>{t.antecedentes}</th>
+                <th>{t.papeles}</th>
                 <th>{t.entregas}</th>
               </tr>
             </thead>
@@ -596,6 +614,13 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                   <td className={`doc-${r.licencia}`}>{t.estadoDoc[r.licencia]}</td>
                   <td className={`doc-${r.seguro}`}>{t.estadoDoc[r.seguro]}</td>
                   <td>{t.estadoAnt[r.antecedentes]}</td>
+                  <td>
+                    <InsigniaPapeles
+                      papeles={r.papeles ?? 'sin_plazo'}
+                      dias={r.diasPlazo ?? null}
+                      idioma={idioma}
+                    />
+                  </td>
                   <td>{r.entregas}</td>
                 </tr>
               ))}
@@ -803,6 +828,7 @@ export function SuperRepartidor({
         {r.conectado ? t.enLinea : t.fueraLinea} · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
+      <PapelesConductor id={id} idioma={idioma} />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.entregas}</span>

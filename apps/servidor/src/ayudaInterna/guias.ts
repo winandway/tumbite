@@ -13,6 +13,8 @@
  * En inglés van las capturas de Novi, Michigan, y en español las de El Vigía (C-CAPTURAS-POR-IDIOMA);
  * la guía de la autorización vencida lleva en español las de Miami (El Vigía no cobra con tarjeta).
  */
+import { plazoPapeles } from './papeles';
+
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
 export type GuiaAyuda = {
@@ -2391,6 +2393,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(dobleFirma),
         de(cambiarCiudad),
         de(corregirCorreo),
+        de(plazoPapeles),
       ],
     },
     {

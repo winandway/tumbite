@@ -13,6 +13,8 @@ import { Resumen1099 } from './Resumen1099';
 import { ExcepcionesConciliacion } from './ExcepcionesConciliacion';
 import { pedir } from './api';
 import { type TarifasPais, type TopesPais, TarifasTopesPais } from './TarifasTopesPais';
+import { PoliticaPapelesPais } from './SuperPapeles';
+import type { PoliticaPlazoPapeles } from '@tumbite/compartido';
 
 const T = {
   es: {
@@ -322,6 +324,8 @@ type ConfigPais = {
   cargoFijo: number;
   topeEfectivoDiario: number | null;
   tarifas: TarifasPais | null;
+  /** C-PLAZO-PAPELES: la política del plazo de papeles del conductor en este país. */
+  plazoPapeles?: PoliticaPlazoPapeles;
   topes: TopesPais | null;
   /** C-COMIDA-VENEZUELA: propinas sugeridas en el carrito, en puntos base (null = las de siempre). */
   propinasPb?: number[] | null;
@@ -837,6 +841,18 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
           >
             {t.guardarPais}
           </button>
+          {pais.plazoPapeles ? (
+            <PoliticaPapelesPais
+              key={`papeles-${paisElegido}`}
+              pais={paisElegido}
+              politica={pais.plazoPapeles}
+              idioma={idioma}
+              guardar={async (plazoPapeles) => {
+                await pedir('PUT', `/datos/admin/paises/${paisElegido}`, { plazoPapeles });
+                setRecargaPuntos((n) => n + 1);
+              }}
+            />
+          ) : null}
           <TarifasTopesPais
             key={paisElegido}
             pais={paisElegido}
