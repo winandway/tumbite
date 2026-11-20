@@ -98,6 +98,110 @@ describe('C-LINEAS-TAXI · crear la línea con su líder', () => {
   });
 });
 
+describe('C-LIDER-INVITADO · la línea de un líder que todavía no tiene cuenta', () => {
+  const invitaciones = (m: Awaited<ReturnType<typeof escenario>>['m'], token: string) =>
+    m.llamar('GET', '/datos/admin/lineas-invitaciones', undefined, token);
+
+  it('sin cuenta, el panel puede invitarlo: no hay línea todavía y queda la invitación con su enlace', async () => {
+    const { m, admin, crear } = await escenario();
+    const sin = await crear('+13055559999');
+    expect(sin.estado).toBe(404);
+    expect(sin.datos.campo).toBe('lider');
+    expect(sin.datos.error).toMatch(/invitar al líder|invite the leader/);
+    const r = await crear('+13055559999', { invitar: true });
+    expect(r.estado, JSON.stringify(r.datos)).toBe(201);
+    expect(r.datos.linea).toBeNull();
+    expect(r.datos.invitacion.enlace).toBe('https://staging.tumbite.com/driver');
+    const n = await m.DB.prepare('SELECT COUNT(*) AS n FROM lineas').first<{ n: number }>();
+    expect(n?.n).toBe(0);
+    const lista = await invitaciones(m, admin.token);
+    expect(lista.datos.invitaciones).toHaveLength(1);
+    expect(lista.datos.invitaciones[0].nombre).toBe('Línea Ejemplo');
+    // La misma persona no queda invitada dos veces.
+    expect((await crear('+13055559999', { invitar: true })).estado).toBe(409);
+  });
+
+  it('el líder se registra con ese celular, abre «Mi línea» y ya es el líder; la invitación se usa una sola vez', async () => {
+    const { m, admin, crear, conductor } = await escenario();
+    await crear('+13055559999', { invitar: true });
+    const otro = await conductor('Otro Conductor', '+13055550333');
+    const ajena = await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, otro.token);
+    expect(ajena.datos.linea).toBeNull();
+    const lider = await conductor('Lidia Líder', '+13055559999');
+    const mia = await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
+    expect(mia.estado, JSON.stringify(mia.datos)).toBe(200);
+    expect(mia.datos.linea.rol).toBe('lider');
+    expect(mia.datos.linea.nombre).toBe('Línea Ejemplo');
+    expect(mia.datos.linea.codigo).toBeTruthy();
+    await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
+    const n = await m.DB.prepare('SELECT COUNT(*) AS n FROM lineas').first<{ n: number }>();
+    expect(n?.n).toBe(1);
+    expect((await invitaciones(m, admin.token)).datos.invitaciones).toHaveLength(0);
+  });
+
+  it('también vale invitarlo por correo', async () => {
+    const { m, crear } = await escenario();
+    const lider = await m.cuenta('repartidor', 'Lidia Líder');
+    const correo = (
+      await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?').bind(lider.id).first<{
+        correo: string;
+      }>()
+    )?.correo;
+    await m.DB.prepare("UPDATE usuarios SET rol = 'cliente' WHERE id = ?").bind(lider.id).run();
+    expect((await crear(String(correo), { invitar: true })).estado).toBe(201);
+    await m.DB.prepare("UPDATE usuarios SET rol = 'repartidor' WHERE id = ?").bind(lider.id).run();
+    const mia = await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
+    expect(mia.datos.linea?.rol).toBe('lider');
+  });
+
+  it('una invitación anulada ya no crea nada, y sin correo ni celular completo no se invita', async () => {
+    const { m, admin, crear, conductor } = await escenario();
+    expect((await crear('solo un nombre', { invitar: true })).estado).toBe(422);
+    const r = await crear('+13055559999', { invitar: true });
+    const fuera = await m.llamar(
+      'POST',
+      `/datos/admin/lineas-invitaciones/${r.datos.invitacion.id}/anular`,
+      {},
+      admin.token,
+    );
+    expect(fuera.estado).toBe(200);
+    const lider = await conductor('Lidia Líder', '+13055559999');
+    const mia = await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
+    expect(mia.datos.linea).toBeNull();
+    const ajeno = await m.llamar('GET', '/datos/admin/lineas-invitaciones', undefined, lider.token);
+    expect(ajeno.estado).toBe(403);
+  });
+
+  it('aprobar una solicitud de «Registra tu línea» sin cuenta del líder: se invita y la línea nace cuando se registra', async () => {
+    const { m, admin, conductor } = await escenario();
+    await m.llamar('POST', '/datos/publico/lineas/solicitud', {
+      nombre: 'Línea Del Norte',
+      zonaId: MIAMI,
+      tipo: 'taxi',
+      conductores: 12,
+      liderNombre: 'Lidia Líder',
+      liderTelefono: '+13055550101',
+      contacto2Nombre: 'Contacto Dos',
+      contacto2Telefono: '+13055550202',
+    });
+    const lista = await m.llamar('GET', '/datos/admin/lineas-solicitudes', undefined, admin.token);
+    const id = lista.datos.solicitudes[0].id;
+    const ruta = `/datos/admin/lineas-solicitudes/${id}/aprobar`;
+    expect((await m.llamar('POST', ruta, {}, admin.token)).estado).toBe(404);
+    const ok = await m.llamar('POST', ruta, { invitar: true }, admin.token);
+    expect(ok.estado, JSON.stringify(ok.datos)).toBe(201);
+    expect(ok.datos.invitacion.enlace).toContain('/driver');
+    const lider = await conductor('Lidia Líder', '+13055550101');
+    const mia = await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
+    expect(mia.datos.linea.nombre).toBe('Línea Del Norte');
+    const s = await m.DB.prepare('SELECT estado, equipo_id FROM solicitudes_linea WHERE id = ?')
+      .bind(id)
+      .first<{ estado: string; equipo_id: string | null }>();
+    expect(s?.estado).toBe('aprobada');
+    expect(s?.equipo_id).toBeTruthy();
+  });
+});
+
 describe('C-LINEAS-TAXI · el conductor pide entrar y el líder acepta', () => {
   async function conLinea() {
     const e = await escenario();

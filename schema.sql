@@ -4333,6 +4333,26 @@ CREATE TABLE IF NOT EXISTS solicitudes_linea (
   resuelta_en TEXT
 );
 CREATE INDEX IF NOT EXISTS solicitudes_linea_estado ON solicitudes_linea(estado, creado_en);
+-- C-LIDER-INVITADO: la línea que espera a un líder que todavía no tiene cuenta de Driver. Cuando se
+-- registra con ese celular o correo y abre «Mi línea», la línea se crea sola. Una sola vez.
+CREATE TABLE IF NOT EXISTS invitaciones_lider (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  conductores INTEGER,
+  lider TEXT NOT NULL,
+  lider_telefono_canonico TEXT,
+  lider_correo TEXT,
+  contacto2_nombre TEXT NOT NULL,
+  contacto2_telefono TEXT NOT NULL,
+  solicitud_id TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  equipo_id TEXT,
+  creado_por TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usada_en TEXT
+);
 -- El conductor que pide entrar a una línea (con su código o eligiéndola); el líder acepta o rechaza con un toque.
 CREATE TABLE IF NOT EXISTS pedidos_linea (
   usuario_id TEXT PRIMARY KEY,

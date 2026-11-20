@@ -323,14 +323,185 @@ export async function listarSolicitudes(db: D1Database, estado = 'pendiente') {
   }));
 }
 
-/** Aprueba una solicitud: el líder tiene que tener su cuenta de Driver (se busca por su celular). */
-export async function aprobarSolicitud(db: D1Database, id: string, autorId: string) {
+// ───────────────────────── C-LIDER-INVITADO: el líder que todavía no tiene cuenta ─────────────────────────
+
+export type InvitacionLider = {
+  id: string;
+  nombre: string;
+  zonaId: string;
+  tipo: TipoLinea;
+  lider: string;
+  creadoEn: string;
+};
+
+/** Código del error de `crearEquipo` cuando nadie en Driver tiene ese correo o celular. */
+export const esLiderSinCuenta = (e: unknown) =>
+  e instanceof ErrorDatos && e.campo === 'lider' && e.estado === 404;
+
+/**
+ * Deja la línea esperando a su líder: se guarda con su celular o correo y se crea sola cuando esa
+ * persona se registra en Divoox Driver y abre «Mi línea». Una invitación viva por líder y ciudad.
+ */
+export async function invitarLider(
+  db: D1Database,
+  d: DatosLinea,
+  solicitudId: string | null = null,
+) {
+  validarContacto2(d.contacto2Nombre, d.contacto2Telefono);
+  if (!TIPOS_LINEA.includes(d.tipo))
+    throw new ErrorDatos('Elige taxi, mototaxi o los dos.', 'tipo', 422);
+  const zona = await db.prepare('SELECT id FROM zonas WHERE id = ?').bind(d.zonaId).first();
+  if (!zona) throw new ErrorDatos('Una de las ciudades no existe.', 'zonaId', 422);
+  const texto = d.lider.trim();
+  const correo = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(texto) ? texto.toLowerCase() : null;
+  const tel = correo ? null : telefonoE164(texto) ? telefonoCanonico(texto) : null;
+  if (!correo && !tel)
+    throw new ErrorDatos(
+      'Para invitar al líder escribe su correo o su celular completo, con el código del país.',
+      'lider',
+      422,
+    );
+  const ya = await db
+    .prepare(
+      `SELECT id FROM invitaciones_lider WHERE estado = 'pendiente'
+         AND ((?1 IS NOT NULL AND lider_telefono_canonico = ?1) OR (?2 IS NOT NULL AND lider_correo = ?2)) LIMIT 1`,
+    )
+    .bind(tel, correo)
+    .first<{ id: string }>();
+  if (ya)
+    throw new ErrorDatos(
+      'Ese líder ya tiene una invitación pendiente. Anúlala antes de crear otra.',
+      'lider',
+      409,
+    );
+  const id = nuevoId();
+  await db
+    .prepare(
+      `INSERT INTO invitaciones_lider (id, nombre, zona_id, tipo, conductores, lider, lider_telefono_canonico, lider_correo,
+         contacto2_nombre, contacto2_telefono, solicitud_id, creado_por) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      id,
+      d.nombre.trim(),
+      d.zonaId,
+      d.tipo,
+      d.conductores ?? null,
+      texto,
+      tel,
+      correo,
+      d.contacto2Nombre.trim(),
+      d.contacto2Telefono.trim(),
+      solicitudId,
+      d.autorId,
+    )
+    .run();
+  return { id };
+}
+
+/** Las invitaciones que siguen esperando a su líder (para el superadmin). */
+export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLider[]> {
+  const { results } = await db
+    .prepare(
+      "SELECT id, nombre, zona_id, tipo, lider, creado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
+    )
+    .all<Record<string, unknown>>();
+  return results.map((r) => ({
+    id: String(r.id),
+    nombre: String(r.nombre),
+    zonaId: String(r.zona_id),
+    tipo: String(r.tipo) as TipoLinea,
+    lider: String(r.lider),
+    creadoEn: String(r.creado_en),
+  }));
+}
+
+export async function anularInvitacionLider(db: D1Database, id: string) {
+  const r = await db
+    .prepare(
+      "UPDATE invitaciones_lider SET estado = 'anulada' WHERE id = ? AND estado = 'pendiente'",
+    )
+    .bind(id)
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Esa invitación ya no está pendiente.', undefined, 404);
+  await db
+    .prepare(
+      "UPDATE solicitudes_linea SET estado = 'pendiente', resuelta_por = NULL, resuelta_en = NULL WHERE estado = 'aprobada' AND equipo_id IS NULL AND id = (SELECT solicitud_id FROM invitaciones_lider WHERE id = ?)",
+    )
+    .bind(id)
+    .run();
+}
+
+/**
+ * El conductor recién registrado que tiene una línea esperándolo (por su celular o su correo) pasa a
+ * ser su líder: la línea se crea en ese momento, una sola vez. Devuelve si creó algo.
+ */
+async function reclamarLineaDeLider(db: D1Database, usuarioId: string) {
+  const u = await db
+    .prepare("SELECT correo, telefono_canonico FROM usuarios WHERE id = ? AND rol = 'repartidor'")
+    .bind(usuarioId)
+    .first<{ correo: string; telefono_canonico: string | null }>();
+  if (!u) return false;
+  const inv = await db
+    .prepare(
+      `SELECT * FROM invitaciones_lider WHERE estado = 'pendiente'
+         AND ((?1 <> '' AND lider_telefono_canonico = ?1) OR lider_correo = ?2) ORDER BY creado_en LIMIT 1`,
+    )
+    .bind(u.telefono_canonico ?? '', String(u.correo).toLowerCase())
+    .first<Record<string, unknown>>();
+  if (!inv) return false;
+  // Se aparta primero: dos aperturas a la vez no crean dos líneas.
+  const mia = await db
+    .prepare(
+      "UPDATE invitaciones_lider SET estado = 'usada', usada_en = datetime('now') WHERE id = ? AND estado = 'pendiente'",
+    )
+    .bind(inv.id)
+    .run();
+  if (!mia.meta.changes) return false;
+  try {
+    const r = await crearLinea(db, {
+      nombre: String(inv.nombre),
+      zonaId: String(inv.zona_id),
+      tipo: String(inv.tipo) as TipoLinea,
+      lider: u.correo,
+      contacto2Nombre: String(inv.contacto2_nombre),
+      contacto2Telefono: String(inv.contacto2_telefono),
+      conductores: inv.conductores == null ? null : Number(inv.conductores),
+      autorId: String(inv.creado_por),
+    });
+    await db
+      .prepare('UPDATE invitaciones_lider SET equipo_id = ? WHERE id = ?')
+      .bind(r.id, inv.id)
+      .run();
+    if (inv.solicitud_id)
+      await db
+        .prepare('UPDATE solicitudes_linea SET equipo_id = ? WHERE id = ?')
+        .bind(r.id, inv.solicitud_id)
+        .run();
+    return true;
+  } catch (e) {
+    // Si no se pudo crear, la invitación vuelve a quedar viva y el fallo queda a la vista.
+    console.error('lineas: no se pudo crear la línea del líder invitado', inv.id, String(e));
+    await db
+      .prepare("UPDATE invitaciones_lider SET estado = 'pendiente', usada_en = NULL WHERE id = ?")
+      .bind(inv.id)
+      .run();
+    return false;
+  }
+}
+
+/** Aprueba una solicitud. Si el líder no tiene cuenta y se pide invitarlo, queda esperándolo. */
+export async function aprobarSolicitud(
+  db: D1Database,
+  id: string,
+  autorId: string,
+  invitar = false,
+) {
   const s = await db
     .prepare("SELECT * FROM solicitudes_linea WHERE id = ? AND estado = 'pendiente'")
     .bind(id)
     .first<Record<string, unknown>>();
   if (!s) throw new ErrorDatos('Esa solicitud ya no está pendiente.', undefined, 404);
-  const r = await crearLinea(db, {
+  const datos: DatosLinea = {
     nombre: String(s.nombre),
     zonaId: String(s.zona_id),
     tipo: String(s.tipo) as TipoLinea,
@@ -339,7 +510,20 @@ export async function aprobarSolicitud(db: D1Database, id: string, autorId: stri
     contacto2Telefono: String(s.contacto2_telefono),
     conductores: Number(s.conductores),
     autorId,
+  };
+  const r = await crearLinea(db, datos).catch(async (e: unknown) => {
+    if (!invitar || !esLiderSinCuenta(e)) throw e;
+    return { invitacion: await invitarLider(db, datos, id) };
   });
+  if ('invitacion' in r) {
+    await db
+      .prepare(
+        "UPDATE solicitudes_linea SET estado = 'aprobada', resuelta_por = ?, resuelta_en = datetime('now') WHERE id = ?",
+      )
+      .bind(autorId, id)
+      .run();
+    return r;
+  }
   await db
     .prepare(
       "UPDATE solicitudes_linea SET estado = 'aprobada', equipo_id = ?, resuelta_por = ?, resuelta_en = datetime('now') WHERE id = ?",
@@ -583,7 +767,9 @@ export async function moverConductor(db: D1Database, usuarioId: string, destinoI
 
 /** Todo lo que el conductor ve en «Mi línea» (líder o miembro). */
 export async function miLinea(db: D1Database, usuario: { id: string }, sitio: string) {
-  const m = await lineaDe(db, usuario.id);
+  let m = await lineaDe(db, usuario.id);
+  // C-LIDER-INVITADO: si el equipo dejó una línea esperándolo, se crea ahora y entra como líder.
+  if (!m && (await reclamarLineaDeLider(db, usuario.id))) m = await lineaDe(db, usuario.id);
   if (!m) return { linea: null };
   const l = await lineaPorId(db, m.equipoId);
   if (!l) return { linea: null };

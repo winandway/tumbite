@@ -56,6 +56,7 @@ const FINANZAS = [
   // C-LINEAS-TAXI: las líneas de taxi y mototaxi y sus solicitudes, como los equipos.
   'lineas',
   'lineas-solicitudes',
+  'lineas-invitaciones',
   'regalo-conductor-nuevo',
   // C-AGENTE-DIVOOX: los agentes (fondo, topes y conciliación) son de finanzas.
   'agentes',

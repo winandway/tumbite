@@ -105,6 +105,23 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
   ],
   ['Ese premio pasa el máximo permitido de Divoox.', 'That reward is over the Divoox maximum.'],
   [
+    'Para invitar al líder escribe su correo o su celular completo, con el código del país.',
+    'To invite the leader, enter their email or their full cell phone number, with the country code.',
+  ],
+  [
+    'Ese líder ya tiene una invitación pendiente. Anúlala antes de crear otra.',
+    'That leader already has a pending invitation. Cancel it before creating another one.',
+  ],
+  [
+    'Nadie en Divoox Driver tiene ese correo o celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
+    'Nobody in Divoox Driver has that email or cell phone. You can invite the leader: the line is created automatically when they sign up.',
+  ],
+  [
+    'Nadie en Divoox Driver tiene ese celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
+    'Nobody in Divoox Driver has that cell phone. You can invite the leader: the line is created automatically when they sign up.',
+  ],
+  ['Esa invitación ya no está pendiente.', 'That invitation is no longer pending.'],
+  [
     'No encontramos a ese líder. Tiene que estar registrado en Divoox Driver con ese correo o celular.',
     'We couldn’t find that leader. They must be registered in Divoox Driver with that email or cell phone.',
   ],

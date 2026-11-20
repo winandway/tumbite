@@ -9,6 +9,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { AyudaAqui } from './AyudaAqui';
+import { MenuTresPuntos } from './MenuTresPuntos';
 import { pedir } from './api';
 
 /**
@@ -31,7 +32,7 @@ const T = {
     rechazar: 'Rechazar',
     motivo: 'Motivo (opcional)',
     verifica:
-      'Antes de aprobar, llama al líder y verifica que el celular es suyo. Tiene que estar registrado en Divoox Driver con ese celular.',
+      'Antes de aprobar, llama al líder y verifica que el celular es suyo. Si todavía no tiene cuenta en Divoox Driver, podrás invitarlo.',
     conductores: 'conductores',
     crearTitulo: 'Crear una línea',
     nombre: 'Nombre de la línea',
@@ -41,6 +42,16 @@ const T = {
     contacto2Nombre: 'Segundo contacto de emergencia: nombre',
     contacto2Telefono: 'Segundo contacto de emergencia: celular con código de país',
     crear: 'Crear la línea',
+    sinCuenta:
+      'Ese líder todavía no tiene cuenta en Divoox Driver. Puedes invitarlo: la línea se crea sola cuando se registre con ese correo o celular y abra «Mi línea».',
+    invitar: 'Invitar al líder',
+    invitado:
+      'Listo. La línea queda esperando al líder. Mándale el enlace de «Líderes invitados» para que cree su cuenta.',
+    invitados: 'Líderes invitados',
+    invitadosAyuda:
+      'Estas líneas esperan a que su líder cree su cuenta de conductor con ese mismo correo o celular. Mándale este enlace:',
+    anular: 'Anular la invitación',
+    opciones: 'Más opciones',
     lineas: 'Líneas',
     sinLineas: 'No hay líneas con esa búsqueda.',
     miembros: 'miembros',
@@ -76,7 +87,7 @@ const T = {
     rechazar: 'Decline',
     motivo: 'Reason (optional)',
     verifica:
-      'Before approving, call the leader and check the cell phone is theirs. They must be registered in Divoox Driver with that phone.',
+      'Before approving, call the leader and check the cell phone is theirs. If they don’t have a Divoox Driver account yet, you’ll be able to invite them.',
     conductores: 'drivers',
     crearTitulo: 'Create a line',
     nombre: 'Line name',
@@ -86,6 +97,16 @@ const T = {
     contacto2Nombre: 'Second emergency contact: name',
     contacto2Telefono: 'Second emergency contact: cell phone with country code',
     crear: 'Create the line',
+    sinCuenta:
+      'That leader doesn’t have a Divoox Driver account yet. You can invite them: the line is created automatically when they sign up with that email or cell phone and open “My line”.',
+    invitar: 'Invite the leader',
+    invitado:
+      'Done. The line is waiting for its leader. Send them the link under “Invited leaders” so they can create their account.',
+    invitados: 'Invited leaders',
+    invitadosAyuda:
+      'These lines are waiting for their leader to create a driver account with that same email or cell phone. Send them this link:',
+    anular: 'Cancel the invitation',
+    opciones: 'More options',
     lineas: 'Lines',
     sinLineas: 'No lines match that search.',
     miembros: 'members',
@@ -110,6 +131,21 @@ const T = {
   },
 };
 type Textos = (typeof T)['es'];
+type Invitado = { id: string; nombre: string; tipo: string; lider: string };
+/** El servidor dice así que nadie en Driver tiene ese correo o celular (C-LIDER-INVITADO). */
+const esSinCuenta = (x: unknown) =>
+  x instanceof ErrorApi && x.estado === 404 && x.campo === 'lider';
+
+function InvitarLider({ t, alInvitar }: { t: Textos; alInvitar: () => void }) {
+  return (
+    <div className="flex-tarjeta" role="alert" data-testid="lineas-invitar-lider">
+      <p>{t.sinCuenta}</p>
+      <button type="button" className="boton" onClick={alInvitar}>
+        {t.invitar}
+      </button>
+    </div>
+  );
+}
 
 type Linea = {
   id: string;
@@ -148,6 +184,8 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [sinLinea, setSinLinea] = useState<Suelto[]>([]);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
+  const [invitados, setInvitados] = useState<Invitado[]>([]);
+  const [enlaceDriver, setEnlaceDriver] = useState('');
   const [q, setQ] = useState('');
   const [zona, setZona] = useState('');
   const [abierta, setAbierta] = useState<string | null>(null);
@@ -164,13 +202,19 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
           `/datos/admin/lineas?zona=${encodeURIComponent(zona)}&q=${encodeURIComponent(q)}`,
         ),
         pedir<{ solicitudes: Solicitud[] }>('GET', '/datos/admin/lineas-solicitudes'),
+        pedir<{ invitaciones: Invitado[]; enlace: string }>(
+          'GET',
+          '/datos/admin/lineas-invitaciones',
+        ),
       ])
-        .then(([l, s]) => {
+        .then(([l, s, i]) => {
           if (!vivo) return;
           setLineas(l.lineas);
           setZonas(l.zonas);
           setSinLinea(l.sinLinea);
           setSolicitudes(s.solicitudes);
+          setInvitados(i.invitaciones);
+          setEnlaceDriver(i.enlace);
           setCargado(true);
         })
         .catch((x: unknown) => {
@@ -190,6 +234,14 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
   const mover = async (conductorId: string, lineaId: string | null) => {
     try {
       await pedir('POST', '/datos/admin/lineas/mover', { conductorId, lineaId });
+      recargar(t.guardado);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  };
+  const anular = async (id: string) => {
+    try {
+      await pedir('POST', `/datos/admin/lineas-invitaciones/${id}/anular`, {});
       recargar(t.guardado);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -227,6 +279,32 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
       )}
 
       <CrearLinea t={t} idioma={idioma} zonas={zonas} alCrear={recargar} setError={setError} />
+
+      {invitados.length ? (
+        <>
+          <h3>
+            {t.invitados} ({invitados.length})
+          </h3>
+          <p className="pista">{t.invitadosAyuda}</p>
+          <p>
+            <code data-testid="lineas-enlace-lider">{enlaceDriver}</code>
+          </p>
+          <ul className="flex-lista-tarjetas" data-testid="lineas-invitados">
+            {invitados.map((i) => (
+              <li key={i.id} className="flex-tarjeta">
+                <h4>{i.nombre}</h4>
+                <p>
+                  {t.tipos[i.tipo as keyof typeof t.tipos] ?? i.tipo} · {i.lider}
+                </p>
+                <MenuTresPuntos
+                  etiqueta={t.opciones}
+                  opciones={[{ texto: t.anular, peligro: true, alTocar: () => void anular(i.id) }]}
+                />
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
 
       <h3>{t.lineas}</h3>
       <div className="flex-inline" style={{ gap: 12, flexWrap: 'wrap' }}>
@@ -336,17 +414,19 @@ function TarjetaSolicitud({
 }) {
   const [motivo, setMotivo] = useState('');
   const [trabajando, setTrabajando] = useState(false);
-  const resolver = async (accion: 'aprobar' | 'rechazar') => {
+  const [sinCuenta, setSinCuenta] = useState(false);
+  const resolver = async (accion: 'aprobar' | 'rechazar', invitar = false) => {
     setTrabajando(true);
     try {
       await pedir(
         'POST',
         `/datos/admin/lineas-solicitudes/${s.id}/${accion}`,
-        accion === 'rechazar' ? { motivo } : {},
+        accion === 'rechazar' ? { motivo } : invitar ? { invitar: true } : {},
       );
-      alResolver(t.guardado);
+      alResolver(invitar ? t.invitado : t.guardado);
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      if (accion === 'aprobar' && esSinCuenta(x)) setSinCuenta(true);
+      else setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
       setTrabajando(false);
     }
@@ -388,6 +468,7 @@ function TarjetaSolicitud({
           {t.rechazar}
         </button>
       </div>
+      {sinCuenta ? <InvitarLider t={t} alInvitar={() => void resolver('aprobar', true)} /> : null}
     </li>
   );
 }
@@ -418,18 +499,23 @@ function CrearLinea({
     },
     almacen: almacenNavegador,
   });
-  async function crear(e: React.FormEvent) {
-    e.preventDefault();
+  const [sinCuenta, setSinCuenta] = useState(false);
+  async function crear(e: React.FormEvent | null, invitar = false) {
+    e?.preventDefault();
     setError('');
     try {
-      const r = await pedir<{ adoptados: number }>('POST', '/datos/admin/lineas', {
+      const r = await pedir<{ adoptados?: number }>('POST', '/datos/admin/lineas', {
         ...b.valores,
         zonaId: b.valores.zonaId || zonas[0]?.id || '',
+        ...(invitar ? { invitar: true } : {}),
       });
       await b.limpiar();
-      alCrear(r.adoptados ? t.adoptados(r.adoptados) : t.guardado);
+      setSinCuenta(false);
+      alCrear(invitar ? t.invitado : r.adoptados ? t.adoptados(r.adoptados) : t.guardado);
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      // Lo escrito se queda en pantalla: solo falta decidir si se invita al líder.
+      if (!invitar && esSinCuenta(x)) setSinCuenta(true);
+      else setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
   return (
@@ -488,6 +574,7 @@ function CrearLinea({
           {t.crear}
         </button>
       </form>
+      {sinCuenta ? <InvitarLider t={t} alInvitar={() => void crear(null, true)} /> : null}
     </div>
   );
 }

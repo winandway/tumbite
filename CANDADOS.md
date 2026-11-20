@@ -3874,6 +3874,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## C-LIDER-INVITADO (20 nov 2026, orden de Gerencia para El Vigía) — todos los países
+
+- **Qué faltaba:** una línea solo se podía crear si su líder ya tenía cuenta de conductor; si no, el panel respondía «No encontramos a ese líder» y no había salida. En producción no había ninguna línea creada por eso.
+- **Qué se hizo:** en `/panel/lines`, al crear una línea o aprobar una solicitud con un líder sin cuenta, el panel ofrece «Invitar al líder» (lo escrito no se pierde). La línea queda en la tabla nueva `invitaciones_lider` (una viva por líder), se ve en «Líderes invitados» con el enlace de registro de Driver y se anula desde los tres puntos. Cuando esa persona crea su cuenta de conductor con ese mismo celular o correo y abre «Mi línea» (`miLinea` → `reclamarLineaDeLider`, `apps/servidor/src/lineas.ts`), la línea se crea en ese momento con él de líder, una sola vez (la invitación se aparta antes de crear; si falla, vuelve a quedar viva y el error queda en el registro). La solicitud aprobada con invitación recibe su `equipo_id` al nacer la línea.
+- **Rutas:** `POST /datos/admin/lineas` y `POST /datos/admin/lineas-solicitudes/:id/aprobar` aceptan `invitar: true`; `GET /datos/admin/lineas-invitaciones`; `POST /datos/admin/lineas-invitaciones/:id/anular` (permisos en `rutasAdmin.ts`).
+- **Presupuesto:** «Mi línea» de un conductor sin línea hace una lectura más (la invitación); no escribe nada si no hay invitación.
+- **Candado:** `apps/servidor/src/lineas.test.ts` («C-LIDER-INVITADO», cinco pruebas; vistas en rojo quitando el reclamo en `miLinea`) y `apps/panel/src/panel/SuperLineas.test.tsx` (vista en rojo sin la detección del líder sin cuenta). Ayuda interna: guía `driver-lines`, es y en.
+- **Qué NO tocar:** la coincidencia es por celular canónico o correo, igual que `crearEquipo`. No crear la línea al invitar: sin líder con cuenta no hay a quién avisar la emergencia.
+
 ## C-PRUEBAS-NO-SE-FRENAN-POR-EL-DIA (20 nov 2026, orden de Richard) — todos los países
 
 - **Qué pasó:** el 20 nov la suma del día del sitio de pruebas llegó a 120.007 filas escritas (tope diario 120.000) y el servidor frenó con 429 la corrida de la rama `fase-plazo-papeles-4`, la que faltaba para publicar el asistente de Driver. El código estaba bien; el trabajo quedó parado horas por un contador nuestro. Palabras de Richard: «no puede ser que nos hayamos parado por un contador».

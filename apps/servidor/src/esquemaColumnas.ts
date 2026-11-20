@@ -2822,6 +2822,24 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "resuelta_en"
   ],
+  "invitaciones_lider": [
+    "id",
+    "nombre",
+    "zona_id",
+    "tipo",
+    "conductores",
+    "lider",
+    "lider_telefono_canonico",
+    "lider_correo",
+    "contacto2_nombre",
+    "contacto2_telefono",
+    "solicitud_id",
+    "estado",
+    "equipo_id",
+    "creado_por",
+    "creado_en",
+    "usada_en"
+  ],
   "pedidos_linea": [
     "usuario_id",
     "equipo_id",

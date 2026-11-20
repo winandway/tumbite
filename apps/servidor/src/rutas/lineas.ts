@@ -8,8 +8,12 @@ import { pasaTurnstile } from '../turnstile';
 import { resolverCodigo } from '../programaReferidos';
 import {
   TIPOS_LINEA,
+  anularInvitacionLider,
   aprobarSolicitud,
   crearLinea,
+  esLiderSinCuenta,
+  invitacionesDeLider,
+  invitarLider,
   lineaPorId,
   lineasDeCiudad,
   listarLineas,
@@ -32,6 +36,9 @@ import { sitioPublico } from './programaReferidos';
  * línea» y «Mi línea» del conductor). La lógica vive en `lineas.ts`.
  */
 export const lineas = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+/** Donde el líder invitado crea su cuenta de conductor (la misma app, en la web o instalada). */
+const enlaceDriver = (c: Parameters<typeof sitioPublico>[0]) => `${sitioPublico(c)}/driver`;
 
 const tipo = z.enum(TIPOS_LINEA, { error: 'Elige taxi, mototaxi o los dos.' });
 const celular = z.string().trim().min(7, { error: 'Escribe el celular completo.' }).max(24);
@@ -83,11 +90,38 @@ lineas.post('/admin/lineas', async (c) => {
       contacto2Nombre: z.string().trim().min(2).max(80),
       contacto2Telefono: celular,
       conductores: z.number().int().min(0).max(5000).optional(),
+      // C-LIDER-INVITADO: si el líder todavía no tiene cuenta, la línea queda esperándolo.
+      invitar: z.boolean().optional(),
     }),
   );
   const db = base(c);
-  const r = await crearLinea(db, { ...d, autorId: u.id });
-  return c.json({ linea: await lineaPorId(db, r.id), adoptados: r.adoptados }, 201);
+  const { invitar, ...datos } = d;
+  try {
+    const r = await crearLinea(db, { ...datos, autorId: u.id });
+    return c.json({ linea: await lineaPorId(db, r.id), adoptados: r.adoptados }, 201);
+  } catch (e) {
+    if (!esLiderSinCuenta(e)) throw e;
+    if (!invitar)
+      throw new ErrorDatos(
+        'Nadie en Divoox Driver tiene ese correo o celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
+        'lider',
+        404,
+      );
+    const inv = await invitarLider(db, { ...datos, autorId: u.id });
+    return c.json({ linea: null, invitacion: { id: inv.id, enlace: enlaceDriver(c) } }, 201);
+  }
+});
+
+/** Las líneas que esperan a que su líder se registre, y anular una. */
+lineas.get('/admin/lineas-invitaciones', async (c) => {
+  exigir(c, 'admin');
+  return c.json({ invitaciones: await invitacionesDeLider(base(c)), enlace: enlaceDriver(c) });
+});
+
+lineas.post('/admin/lineas-invitaciones/:id/anular', async (c) => {
+  exigir(c, 'admin');
+  await anularInvitacionLider(base(c), c.req.param('id'));
+  return c.json({ ok: true });
 });
 
 lineas.get('/admin/lineas-solicitudes', async (c) => {
@@ -104,7 +138,22 @@ lineas.get('/admin/lineas-solicitudes', async (c) => {
 lineas.post('/admin/lineas-solicitudes/:id/aprobar', async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
-  const r = await aprobarSolicitud(db, c.req.param('id'), u.id);
+  const d = await leerCuerpo(c, z.object({ invitar: z.boolean().optional() }));
+  const r = await aprobarSolicitud(db, c.req.param('id'), u.id, d.invitar === true).catch(
+    (e: unknown) => {
+      if (!esLiderSinCuenta(e)) throw e;
+      throw new ErrorDatos(
+        'Nadie en Divoox Driver tiene ese celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
+        'lider',
+        404,
+      );
+    },
+  );
+  if ('invitacion' in r)
+    return c.json(
+      { linea: null, invitacion: { id: r.invitacion.id, enlace: enlaceDriver(c) } },
+      201,
+    );
   return c.json({ linea: await lineaPorId(db, r.id), adoptados: r.adoptados }, 201);
 });
 
