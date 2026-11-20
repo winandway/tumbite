@@ -53,6 +53,26 @@ comprobó el 20 nov 2026 con un correo real, que llegó sin ellas. El envío de 
 - Comprobado en vivo el 20 nov 2026: la respuesta enviada por el Worker cayó en la misma conversación
   de Gmail que el correo anterior.
 
+## Por dónde entra el Worker al servidor
+
+El Worker llama al servidor por su dirección de la plataforma (`BACKEND_URL` = la dirección
+`sitios.dev` del sitio de producción), **no** por divoox.com. Comprobado el 20 nov 2026 con correos
+reales: desde el manejador de correo, la llamada a divoox.com respondía 522 (los dos intentos) y el
+correo se desviaba al buzón del equipo; por la dirección de la plataforma entra a la primera. El
+servidor es el mismo y arma sus direcciones con `SITIO_URL`, así que nada más cambia.
+
+## Prueba real del 20 nov 2026 (producción)
+
+- Correo real desde el buzón del equipo a la dirección `support`: Camila contestó en 5 segundos, en la
+  misma conversación del buzón.
+- Respuesta dentro del hilo pidiendo una persona: caso abierto (`pide_persona`) y aviso en el hilo.
+- Correo a una dirección `support+c…`: entra igual (subdirecciones encendidas).
+- Respuesta del equipo desde la bandeja de Camila: llegó al mismo hilo, firmada con el nombre de la
+  cuenta de Soporte.
+- La conversación en el panel muestra los ocho mensajes con el canal «correo» y el asunto del hilo.
+- Reglas cambiadas: `support` (id 8fd6b711fef94c71ba1e950bfda633c7) y `soporte`
+  (id 95bd60243c9444feb9464136917ae1ce), las dos al Worker `divoox-correo`.
+
 ## Registros del dominio (DNS)
 
 **No se añadió ningún registro.** divoox.com ya recibía correo desde el 4 nov 2026 (tres registros MX

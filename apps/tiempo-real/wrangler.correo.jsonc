@@ -10,7 +10,9 @@
   "name": "divoox-correo",
   "main": "src/correoEntrante.ts",
   "compatibility_date": "2026-09-01",
-  "vars": { "BACKEND_URL": "https://divoox.com", "BUZON_EQUIPO": "soporte@windoce.com" },
+  // BACKEND_URL es la dirección de plataforma del sitio de producción, NO divoox.com: desde el
+  // manejador de correo, la llamada a divoox.com respondía 522 (comprobado el 20 nov 2026).
+  "vars": { "BACKEND_URL": "https://tumbite.sitios.dev", "BUZON_EQUIPO": "soporte@windoce.com" },
   // La salida en hilo (src/correoSalida.ts): el servidor le pide a este Worker las respuestas que
   // llevan «In-Reply-To» y «References». Entra solo con el secreto del gerente.
   "workers_dev": true,
