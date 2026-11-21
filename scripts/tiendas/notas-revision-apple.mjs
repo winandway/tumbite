@@ -43,10 +43,32 @@ const notas = {
 HOW TO USE IT: 1) Open the app and sign in with the customer demo account below (or create an account with email). 2) Allow location or type a delivery address (it suggests real addresses). 3) Open Food, pick a restaurant, add dishes to the cart. 4) In the cart you see delivery fee, taxes and total; checkout pays by card with Stripe (Apple Pay where available). 5) After ordering, the order screen shows each step and the driver on the map. Paying is optional for review: everything up to the payment sheet can be reviewed without a charge. Purchases are physical goods and services delivered in person, so they use Stripe and not In-App Purchase.
 ${comun}`,
   // Divoox Driver
-  6829108327: `PURPOSE AND AUDIENCE: Divoox Driver is for independent delivery drivers (adults with a vehicle) who deliver orders from the Divoox marketplace and, through Divoox Flex, package routes from local businesses. It lets them earn money on their own schedule, with clear pay per offer and safety tools.
+  // Divoox Driver. Texto del dictamen del auditor de tiendas del 20 nov 2026 (bloqueo B6): las notas
+  // del 31 oct afirmaban cosas que ya no son ciertas («no usa ningún servicio de IA», «solo EE. UU.»,
+  // la ruta de borrado). NO lleva el bloque común. Solo se envía con el APTO del auditor, vía Gerencia.
+  6829108327: `PURPOSE AND AUDIENCE: Divoox Driver is for independent drivers (adults with a vehicle) who take delivery orders and rides from the Divoox marketplace and earn money on their own schedule. It is the driver side of the Divoox customer app, with a different purpose and audience.
 
-HOW TO USE IT: 1) Sign in with the driver demo account below. 2) On first launch the app explains each permission (location to receive nearby offers, notifications for new offers) before iOS asks. 3) Slide "Slide to go online" from left to right all the way (a tap does not go online, to avoid going online from a pocket): the map shows busy zones and the driver waits for offers. 4) An offer shows pay, distance and pickup; accept it to see the pickup and delivery steps, with proof of delivery (photo). 5) "My route (packages)" shows assigned package routes: scan packages, follow the stops, slide to finish each delivery. 6) Earnings and wallet are in the bottom tabs; Safety (emergency help, share trip) is always one tap away. Location is used only while the driver is online or on a delivery.
-${comun}`,
+DEMO ACCOUNTS (both work in production from any location):
+1) Standard driver account, ${cuentas.repartidor}: slide "Slide to go online" all the way to the right (a tap does not connect), accept the practice delivery and complete it with the photo and the slide. Profile > "Your documents" shows the standard document upload.
+2) Driver account #2, ${cuentas.repartidor2 ?? '[ACCOUNT 2 PENDING]'}: it belongs to a region that gives new drivers a grace period to upload documents, so it shows the new onboarding below. Everything new in this build can be reviewed with these two accounts.
+
+NEW IN THIS BUILD
+a) Document assistant with grace period (account #2: home card "Your documents" or Profile > "Your documents"). One screen per photo (ID front and back, license front and back, insurance, face) with a frame guide. All verification photos are taken LIVE with the in-app camera; the app never offers the photo library or files for them and the server rejects any photo not marked as taken by the camera. This is by design: the document must be the real one and the face the real person. If camera access is denied the screen explains how to turn it on, and "Save and continue later" leaves the assistant at any step. After the minimum required photos the driver sees "You can start working" and has a number of days to upload the rest; reminders arrive by push notification and email.
+b) "Review your details" screen before an account is created (in all three apps): shows what was typed; nothing is sent until "Create my account".
+c) "How passengers see you" (Profile): the driver's public profile (first name, vehicle, verified badge, languages and an optional 120-character note filtered for offensive words). Passengers see it during their trip.
+d) "My line": a driver can join a taxi or moto line; the line leader sees the driver's name and phone only after the driver asks to join.
+e) "Talk to support" chat: answered by a virtual assistant and by our team; any reply can be reported in the app.
+f) THIRD-PARTY AI, WITH EXPLICIT PERMISSION: before the first verification photo the assistant shows "Before your photos: your permission". It names Google (Gemini) and explains that the ID, license, insurance and face photos are analyzed by that third-party AI service to check the document type and legibility, read its details and compare the live face with the ID photo. The driver chooses "Yes, I give my permission" or "No, have a person review them". Without a yes, no photo is sent to the AI service and a person reviews it. The AI never decides: a person on our team approves or rejects every document. We use Google's paid API terms.
+
+ACCOUNT DELETION (inside the app): Profile > the three-dot menu > "Delete my account" > type DELETE. It deletes the account and its personal data, including ID, license, insurance and face photos, verification results and the AI permission (web: /delete-account).
+
+PAYMENTS: no in-app purchases. Riders pay for physical services (delivery, rides) by card through Stripe, in cash or by local mobile payment, outside In-App Purchase (guideline 3.1.3(e)).
+
+PERMISSIONS: camera (order photos, code scanning, verification photos); location while online or on a job, even with the screen off, only during an active job; notifications.
+
+REGIONS: the app is the same everywhere. Currency, payment methods and some onboarding steps (such as the document deadline) depend on the account's region; the app does not list regions.
+
+SCREEN RECORDING: attached, physical iPhone, starting from the app icon. Support: go@windoce.com. Developer: Windoce LLC`,
   // Divoox Restaurants
   6829108322: `PURPOSE AND AUDIENCE: Divoox Restaurants is for restaurant owners and staff who sell on the Divoox marketplace. It lets them receive and manage delivery orders from a phone or tablet, like DoorDash Merchant or Uber Eats Manager.
 

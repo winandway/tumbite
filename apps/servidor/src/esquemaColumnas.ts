@@ -3228,6 +3228,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "color",
     "comparado_en"
   ],
+  "verificacion_permiso_ia": [
+    "conductor_id",
+    "acepto",
+    "texto_version",
+    "decidido_en"
+  ],
   "verificacion_ia_gasto": [
     "dia",
     "microdolares",

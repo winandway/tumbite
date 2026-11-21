@@ -26,6 +26,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   aciertoDeLaIa,
+  FOTO_SIN_IA,
   compararCaras,
   comprobarFoto,
   gastoVerificacionHoy,
@@ -198,6 +199,34 @@ export function fotoSoloEnVivo(paso: PasoVerificacion, en: boolean): string {
 
 // ───────────────────────── El conductor ─────────────────────────
 
+/**
+ * C-PERMISO-IA (20 nov 2026, auditor de tiendas; Apple 5.1.2(i)): las fotos de verificación solo se
+ * analizan con la inteligencia artificial de un tercero si el conductor dio su permiso explícito.
+ * `null` = todavía no contestó. Sin un «sí», la foto se guarda y la revisa una persona.
+ */
+export const VERSION_PERMISO_IA = '2026-11-20';
+async function permisoIa(db: D1Database, conductorId: string): Promise<boolean | null> {
+  const f = await db
+    .prepare('SELECT acepto FROM verificacion_permiso_ia WHERE conductor_id = ?')
+    .bind(conductorId)
+    .first<{ acepto: number }>();
+  return f ? Number(f.acepto) === 1 : null;
+}
+
+verificacionConductor.post('/conductor/verificacion/permiso-ia', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(c, z.object({ acepto: z.boolean() }));
+  await base(c)
+    .prepare(
+      `INSERT INTO verificacion_permiso_ia (conductor_id, acepto, texto_version) VALUES (?, ?, ?)
+       ON CONFLICT(conductor_id) DO UPDATE SET acepto = excluded.acepto,
+         texto_version = excluded.texto_version, decidido_en = datetime('now')`,
+    )
+    .bind(u.id, d.acepto ? 1 : 0, VERSION_PERMISO_IA)
+    .run();
+  return c.json({ ok: true, permisoIa: d.acepto });
+});
+
 verificacionConductor.get('/conductor/verificacion', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
@@ -216,6 +245,7 @@ verificacionConductor.get('/conductor/verificacion', async (c) => {
     },
     perfil: { nombre: u.nombre, tieneCara: e.tieneCara },
     consentimiento: e.consentimiento,
+    permisoIa: await permisoIa(db, u.id),
     pasos: e.pasos.map((paso) => {
       const f = e.fotos.get(paso);
       return {
@@ -292,13 +322,17 @@ verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
     cacheControl: 'private, no-store',
     conservarOriginal: 'evidencia',
   });
-  const ia = await comprobarFoto(c.env, db, {
-    paso,
-    pais: g.pais,
-    ingles: ingles(c, u.idioma),
-    imagen: { bytes, mime: tipo },
-    intentos: Number(usados?.n ?? 0),
-  });
+  // C-PERMISO-IA: sin el «sí» del conductor la foto no sale hacia la IA; la revisa una persona.
+  const ia =
+    (await permisoIa(db, u.id)) === true
+      ? await comprobarFoto(c.env, db, {
+          paso,
+          pais: g.pais,
+          ingles: ingles(c, u.idioma),
+          imagen: { bytes, mime: tipo },
+          intentos: Number(usados?.n ?? 0),
+        })
+      : FOTO_SIN_IA;
   const columnaKyc =
     paso === 'doc_frente' || paso === 'doc_reverso' ? paso : paso === 'cara' ? 'selfie' : null;
   await db.batch([
@@ -467,10 +501,11 @@ verificacionConductor.post('/conductor/verificacion/enviar', async (c) => {
   const cara = e.fotos.get('cara');
   const frente = e.fotos.get('doc_frente');
   if (identidad && cara && frente) {
-    const [a, b] = await Promise.all([
-      leerImagen(c.env, cara.clave),
-      leerImagen(c.env, frente.clave),
-    ]);
+    // C-PERMISO-IA: la comparación de la cara también es IA de un tercero; sin permiso no se hace.
+    const conPermiso = (await permisoIa(db, u.id)) === true;
+    const [a, b] = conPermiso
+      ? await Promise.all([leerImagen(c.env, cara.clave), leerImagen(c.env, frente.clave)])
+      : [null, null];
     const r =
       a && b
         ? await compararCaras(c.env, db, { cara: a, documento: b })

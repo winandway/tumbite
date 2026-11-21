@@ -64,6 +64,11 @@ async function conductorNuevo(pais: 'VE' | 'US' = 'VE', extra: Record<string, un
     m.llamar(metodo, ruta, cuerpo, admin.token);
   if (pais === 'VE')
     expect((await yo('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id })).estado).toBe(200);
+  // C-PERMISO-IA: estas pruebas son de un conductor que dio su permiso; las de sin permiso lo quitan.
+  if (pais === 'VE')
+    expect(
+      (await yo('POST', '/datos/conductor/verificacion/permiso-ia', { acepto: true })).estado,
+    ).toBe(200);
   const foto = (paso: string, origen = 'camara') =>
     subirA(e, `/datos/conductor/verificacion/foto/${paso}?origen=${origen}`, rep.token) as Promise<{
       estado: number;
@@ -408,6 +413,30 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
     expect(despues.pasos.find((p: { paso: string }) => p.paso === 'doc_reverso').foto.estado).toBe(
       'vigente',
     );
+  });
+});
+
+describe('C-PERMISO-IA: sin permiso explícito ninguna foto sale hacia la IA', () => {
+  it('sin contestar o diciendo que no, la foto se guarda, no se llama al modelo y la revisa una persona', async () => {
+    const c = await conductorNuevo();
+    const m = modelo(() => lectura('identidad_frente'));
+    await c.m.DB.prepare('DELETE FROM verificacion_permiso_ia').run();
+    expect((await c.yo('GET', '/datos/conductor/verificacion')).datos.permisoIa).toBeNull();
+    const sinContestar = await c.foto('doc_frente');
+    expect(sinContestar.estado).toBe(201);
+    expect(sinContestar.datos.ia).toEqual({ color: 'sin_ia', aviso: '' });
+    await c.yo('POST', '/datos/conductor/verificacion/permiso-ia', { acepto: false });
+    expect((await c.yo('GET', '/datos/conductor/verificacion')).datos.permisoIa).toBe(false);
+    expect((await c.foto('doc_reverso')).datos.ia.color).toBe('sin_ia');
+    expect(m.llamadas).toBe(0);
+    const f = await c.m.DB.prepare(
+      "SELECT ia_color, ia_json FROM verificacion_fotos WHERE paso = 'doc_frente'",
+    ).first<{ ia_color: string; ia_json: string }>();
+    expect(f).toEqual({ ia_color: 'sin_ia', ia_json: '' });
+    // Con el «sí», la siguiente foto ya pasa por la IA.
+    await c.yo('POST', '/datos/conductor/verificacion/permiso-ia', { acepto: true });
+    expect((await c.foto('doc_frente')).datos.ia.color).toBe('verde');
+    expect(m.llamadas).toBe(1);
   });
 });
 

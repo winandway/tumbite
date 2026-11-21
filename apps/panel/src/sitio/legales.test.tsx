@@ -181,8 +181,8 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    expect(PRIVACIDAD.es.actualizado).toContain('19 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 19, 2026');
+    expect(PRIVACIDAD.es.actualizado).toContain('20 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 20, 2026');
   });
 });
 
@@ -203,5 +203,27 @@ describe('C-PROMO-CONDICIONES: las condiciones de la promoción del primer viaje
   it('no nombra ciudades: la app dice dónde está vigente (C-SIN-LISTA-DE-CIUDADES)', async () => {
     const { CONDICIONES_PROMO } = await import('./legales');
     expect(JSON.stringify(CONDICIONES_PROMO)).not.toMatch(/Vigía|Tucaní|Mérida|Miami|Novi/);
+  });
+});
+
+describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fotos de verificación', () => {
+  it('dice que las fotos van a la IA de Google con permiso, y quién ve la foto de perfil del conductor', async () => {
+    const { PRIVACIDAD } = await import('./legales');
+    const es = JSON.stringify(PRIVACIDAD.es);
+    const en = JSON.stringify(PRIVACIDAD.en);
+    expect(es).toContain('analiza las fotos de tu verificación');
+    expect(es).toContain('Con tu permiso, que te pedimos en la app antes de la primera foto');
+    expect(es).toContain('los pasajeros de tus viajes, junto con tu nombre de pila');
+    expect(en).toContain('it analyzes your verification photos');
+    expect(en).toContain(
+      'With your permission, which we ask for in the app before the first photo',
+    );
+    expect(en).toContain('the riders on your trips see it, together with your first name');
+    // Las frases viejas contradecían a la app.
+    expect(es).not.toMatch(/no tus datos de pago ni tus documentos/);
+    expect(en).not.toMatch(/not your payment details or documents/);
+    expect(en).not.toMatch(
+      /stored privately, only the Divoox team can see them, and they’re deleted/,
+    );
   });
 });

@@ -338,6 +338,7 @@ export async function borrarCuenta(
     db.prepare('DELETE FROM verificacion_fotos WHERE conductor_id = ?').bind(u.id),
     db.prepare('DELETE FROM verificacion_caras WHERE conductor_id = ?').bind(u.id),
     db.prepare('DELETE FROM verificacion_avisos WHERE conductor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM verificacion_permiso_ia WHERE conductor_id = ?').bind(u.id),
     db.prepare('DELETE FROM plazo_papeles WHERE conductor_id = ?').bind(u.id),
     db
       .prepare("UPDATE repartidores SET idiomas_perfil = '', dato_perfil = '' WHERE usuario_id = ?")

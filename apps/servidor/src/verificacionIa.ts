@@ -234,6 +234,14 @@ export type ResultadoFoto = {
   aviso: string;
 };
 
+/** La foto que no pasó por la IA (sin permiso, sin llave, tope o fallo): la revisa una persona. */
+export const FOTO_SIN_IA: ResultadoFoto = {
+  color: 'sin_ia',
+  clase: '',
+  confianza: null,
+  lectura: null,
+  aviso: '',
+};
 const SIN_IA: ResultadoFoto = {
   color: 'sin_ia',
   clase: '',

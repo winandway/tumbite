@@ -200,3 +200,34 @@ describe('C-ASISTENTE-DRIVER: las entradas del perfil', () => {
     expect(inicio).toContain('setVista(vueltaPapeles)');
   });
 });
+
+describe('C-PERMISO-IA: permiso explícito antes de la primera foto', () => {
+  it('se pide solo cuando todavía no contestó y está por tomar la foto', async () => {
+    const { hayQuePedirPermisoIa } = await import('./logica');
+    expect(hayQuePedirPermisoIa({ permisoIa: null }, 'horma')).toBe(true);
+    expect(hayQuePedirPermisoIa({ permisoIa: null }, 'lista')).toBe(false);
+    expect(hayQuePedirPermisoIa({ permisoIa: true }, 'horma')).toBe(false);
+    expect(hayQuePedirPermisoIa({ permisoIa: false }, 'horma')).toBe(false);
+    // Un servidor viejo no manda el campo: no se inventa una pregunta.
+    expect(hayQuePedirPermisoIa({}, 'horma')).toBe(false);
+  });
+
+  it('la pantalla nombra a Google y a la inteligencia artificial, ofrece el «no» y ya no dice que no se comparte', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const pantalla = readFileSync(join(__dirname, 'AsistentePapeles.tsx'), 'utf8');
+    for (const frase of [
+      'inteligencia artificial de otra empresa, Google (Gemini)',
+      'artificial intelligence service from another company, Google (Gemini)',
+      'papeles-permiso-ia-si',
+      'papeles-permiso-ia-no',
+      '/datos/conductor/verificacion/permiso-ia',
+    ])
+      expect(pantalla).toContain(frase);
+    expect(pantalla).not.toMatch(/ni se comparte|isn’t sold or shared/);
+    // El permiso va ANTES que el de la cara: se decide primero.
+    expect(pantalla.indexOf('pidePermisoIa ? (')).toBeLessThan(
+      pantalla.indexOf('pideConsentimiento ? ('),
+    );
+  });
+});
