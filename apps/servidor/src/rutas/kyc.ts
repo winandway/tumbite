@@ -1,3 +1,4 @@
+import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { guardarFoto } from '../fotoLimpia';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { correosEquipo } from '../avisosEquipo';
@@ -656,7 +657,7 @@ kyc.post('/admin/kyc/:id/liberar-foto', async (c) => {
 async function datosEdad(db: D1Database, id: string) {
   return db
     .prepare(
-      `SELECT u.fecha_nacimiento, COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI') AS zona_id,
+      `SELECT u.fecha_nacimiento, ${ZONA_CONDUCTOR_SQL} AS zona_id,
               COALESCE(v.tipo, NULLIF(d.vehiculo_tipo, '')) AS vehiculo
          FROM usuarios u
          LEFT JOIN repartidores r ON r.usuario_id = u.id

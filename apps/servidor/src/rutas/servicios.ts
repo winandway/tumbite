@@ -1,3 +1,4 @@
+import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { cuantosHay } from '../canarioLecturas';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import {
@@ -402,7 +403,7 @@ export async function estadoDelConductor(
   // (y si no tiene, la misma de fábrica que usa la tabla de repartidores).
   const rep = await db
     .prepare(
-      `SELECT COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI') AS zona_id, r.vehiculo_activo_id
+      `SELECT ${ZONA_CONDUCTOR_SQL} AS zona_id, r.vehiculo_activo_id
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?`,
     )
     .bind(conductorId)

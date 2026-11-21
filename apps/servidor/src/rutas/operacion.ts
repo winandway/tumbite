@@ -1,3 +1,4 @@
+import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import {
   TAREA_CAMILA_LIMPIEZA,
   TAREA_CAMILA_RESUMEN_FALLOS,
@@ -1587,7 +1588,7 @@ export async function conectarRepartidor(
   if (d.conectado) {
     const z = await db
       .prepare(
-        "SELECT COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI') AS zona_id FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?",
+        `SELECT ${ZONA_CONDUCTOR_SQL} AS zona_id FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?`,
       )
       .bind(u.id)
       .first<{ zona_id: string }>();

@@ -1,3 +1,4 @@
+import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -490,7 +491,7 @@ conductorPapeles.get('/admin/papeles-conductor', async (c) => {
     .prepare(
       `SELECT d.id, d.conductor_id AS conductorId, u.nombre AS conductor, d.tipo, d.estado, d.motivo,
               d.vence_en AS venceEn, d.creado_en AS creadoEn,
-              (SELECT z.pais FROM zonas z WHERE z.id = COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI')) AS pais
+              (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL}) AS pais
          FROM conductor_documentos d JOIN usuarios u ON u.id = d.conductor_id
          LEFT JOIN repartidores r ON r.usuario_id = d.conductor_id
         WHERE d.estado = ?${alc.sql} ORDER BY d.creado_en LIMIT 100`,

@@ -24,6 +24,12 @@ import {
  */
 export const ZONA_REAL_SQL = `COALESCE(CASE WHEN r.ubicacion_en IS NOT NULL OR r.ciudad_elegida_en IS NOT NULL THEN r.zona_id END, u.zona_id)`;
 
+/**
+ * La zona con que se decide algo del conductor (su país, sus papeles, sus servicios): la real, y si
+ * todavía no hay, la de su fila (y la ciudad por defecto solo como último recurso de una consulta).
+ */
+export const ZONA_CONDUCTOR_SQL = `COALESCE(${ZONA_REAL_SQL}, r.zona_id, 'US-FL-MIAMI')`;
+
 export type ZonaReal = {
   zonaId: string;
   pais: string;

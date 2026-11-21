@@ -1,3 +1,4 @@
+import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import {
   type LlaveFirma,
   emitirPase,
@@ -191,7 +192,7 @@ interno.post('/tiempo-real/pase', async (c) => {
   if (u.rol === 'repartidor') {
     const f = await db
       .prepare(
-        `SELECT COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI') AS zona FROM usuarios u
+        `SELECT ${ZONA_CONDUCTOR_SQL} AS zona FROM usuarios u
            LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?`,
       )
       .bind(u.id)
