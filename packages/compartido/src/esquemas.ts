@@ -30,6 +30,8 @@ export const esquemaRegistro = z
     canal: z.enum(['web', 'app']).optional(),
     // C-REFERIDOS-EQUIPOS: el código con el que lo invitaron (de un equipo o de una persona).
     invitacion: z.string().trim().max(20).optional(),
+    // C-TELEFONO-E164: el país del celular que eligió en la pantalla (el número se lee con él).
+    paisTelefono: z.string().trim().toUpperCase().length(2).optional(),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

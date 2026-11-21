@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { PaisTelefono } from './PaisTelefono';
 import {
   correoEjemplo,
   correoLimpio,
   filasParaRevisar,
   pareceCorreo,
   ErrorApi,
+  datosPais,
   soloNumerosTelefono,
   textosRevisar,
   validarRegistro,
@@ -26,7 +28,8 @@ import { CasillaSms } from './CasillaSms';
 import { SugerenciaCorreo } from './SugerenciaCorreo';
 import { RevisaTusDatos } from './RevisaTusDatos';
 
-const INICIAL = { nombre: '', correo: '', telefono: '', clave: '', sms: false };
+// C-TELEFONO-E164: `paisTelefono`, el país del celular (arranca en el país desde donde se abre).
+const INICIAL = { nombre: '', correo: '', telefono: '', clave: '', sms: false, paisTelefono: '' };
 /** Las casillas del registro web, en el orden de la pantalla y de «Revisa tus datos». */
 const CASILLAS: CasillaRegistro[] = ['nombre', 'correo', 'telefono', 'clave'];
 
@@ -147,6 +150,7 @@ export function Acceso({
         correo: correoLimpio(v.correo),
         clave: v.clave,
         telefono: v.telefono || undefined,
+        ...(v.telefono && v.paisTelefono ? { paisTelefono: v.paisTelefono } : {}),
         // La empresa de logística es una cuenta de cliente que crea su empresa en el panel.
         rol: empresa ? 'cliente' : 'restaurante',
         idioma,
@@ -231,6 +235,13 @@ export function Acceso({
             />
           ) : null}
           {modo === 'registro' && (
+            <PaisTelefono
+              pais={v.paisTelefono}
+              alCambiar={(x) => b.cambiar('paisTelefono', x)}
+              idioma={idioma}
+            />
+          )}
+          {modo === 'registro' && (
             <Campo
               etiqueta={t.telefono}
               tipo="tel"
@@ -240,7 +251,7 @@ export function Acceso({
               autoComplete="tel"
               modoTeclado="tel"
               enfocar={enfocar === 'telefono'}
-              placeholder={t.telefono}
+              placeholder={datosPais(v.paisTelefono)?.ejemploCelular ?? t.telefono}
               error={errorDe('telefono')}
             />
           )}

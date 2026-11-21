@@ -303,3 +303,40 @@ describe('C-TERRITORIO-OFICIAL · cada zona con su municipio oficial', () => {
     expect(f).toEqual({ municipio_pcode: 'VE1402', responsable_telefono: '+584120000004' });
   });
 });
+
+describe('C-TELEFONO-E164 · el país del celular en el registro', () => {
+  it('el servidor sugiere el país desde donde se abre la app, sin tocar la base', async () => {
+    const { m } = await escenario();
+    const r = await m.llamar('GET', '/datos/cuentas/pais-sugerido', undefined, undefined, {
+      'cf-ipcountry': 'VE',
+    });
+    expect(r.datos).toEqual({ pais: 'VE' });
+    const raro = await m.llamar('GET', '/datos/cuentas/pais-sugerido', undefined, undefined, {
+      'cf-ipcountry': 'XX',
+    });
+    expect(raro.datos).toEqual({ pais: null });
+  });
+
+  it('el país elegido en la pantalla manda sobre el de la conexión', async () => {
+    const { m } = await escenario();
+    const r = await m.llamar(
+      'POST',
+      '/datos/cuentas/registro',
+      {
+        nombre: 'Persona Ejemplo',
+        correo: 'persona.peru@ejemplo.com',
+        clave: 'clave-segura-1',
+        rol: 'repartidor',
+        telefono: '987654321',
+        paisTelefono: 'PE',
+      },
+      undefined,
+      { 'cf-ipcountry': 'US' },
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(201);
+    const u = await m.DB.prepare('SELECT telefono FROM usuarios WHERE id = ?')
+      .bind(r.datos.usuario.id)
+      .first<{ telefono: string }>();
+    expect(u?.telefono).toBe('+51987654321');
+  });
+});

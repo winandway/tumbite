@@ -1,3 +1,4 @@
+import { leerTelefono, mensajeTelefono, telefonoParaMostrar } from './pais/telefono';
 import type { Idioma } from './idiomas';
 
 /**
@@ -21,6 +22,8 @@ export type DatosRegistroEscritos = {
   clave: string;
   fechaNacimiento?: string;
   invitacion?: string;
+  /** C-TELEFONO-E164: el país del celular elegido en la pantalla (ISO de dos letras). */
+  paisTelefono?: string | null;
 };
 
 export type FalloCasilla = { campo: CasillaRegistro; mensaje: string };
@@ -168,12 +171,25 @@ export function soloNumerosTelefono(texto: string): string {
   return mas + texto.replace(/\D/g, '');
 }
 
-/** El celular es opcional: vacío está bien; escrito, solo números y de 7 a 15 cifras. */
-export function errorTelefono(telefono: string, idioma: Idioma): string | null {
+/**
+ * El celular es opcional: vacío está bien; escrito, solo números. C-TELEFONO-E164: con el país del
+ * celular (o un «+»), se valida con libphonenumber como lo hará el servidor (que exista en ese país y
+ * sea celular); sin país, de 7 a 15 cifras como siempre.
+ */
+export function errorTelefono(
+  telefono: string,
+  idioma: Idioma,
+  pais?: string | null,
+): string | null {
   const e = textosRevisar(idioma).errores;
   const limpio = telefono.trim();
   if (!limpio) return null;
   if (!/^\+?\d+$/.test(limpio)) return e.telefonoLetras;
+  if (pais || limpio.startsWith('+')) {
+    const r = leerTelefono(limpio, pais, { soloCelular: true });
+    if (!r.ok && r.motivo !== 'sin_pais') return mensajeTelefono(r.motivo, idioma);
+    if (r.ok) return null;
+  }
   const cifras = limpio.replace(/\D/g, '').length;
   if (cifras < 7) return e.telefonoCorto;
   if (cifras > 15) return e.telefonoLargo;
@@ -194,7 +210,8 @@ export function validarRegistro(
   for (const campo of casillas) {
     if (campo === 'nombre') fallo(campo, datos.nombre.trim().length < 2 ? e.nombreVacio : null);
     else if (campo === 'correo') fallo(campo, errorCorreo(datos.correo, idioma));
-    else if (campo === 'telefono') fallo(campo, errorTelefono(datos.telefono, idioma));
+    else if (campo === 'telefono')
+      fallo(campo, errorTelefono(datos.telefono, idioma, datos.paisTelefono));
     else if (campo === 'clave') fallo(campo, datos.clave.length < 8 ? e.claveCorta : null);
     else if (campo === 'invitacion') {
       const codigo = (datos.invitacion ?? '').trim();
@@ -230,7 +247,12 @@ export function filasParaRevisar(
     if (campo === 'nombre' && datos.nombre.trim())
       filas.push({ campo, etiqueta: t.nombre, valor: datos.nombre.trim() });
     else if (campo === 'telefono' && datos.telefono.trim())
-      filas.push({ campo, etiqueta: t.telefono, valor: datos.telefono.trim() });
+      filas.push({
+        campo,
+        etiqueta: t.telefono,
+        // C-TELEFONO-E164: se repasa como quedará guardado, con el código del país.
+        valor: telefonoParaMostrar(datos.telefono.trim(), datos.paisTelefono),
+      });
     else if (campo === 'fechaNacimiento' && datos.fechaNacimiento)
       filas.push({
         campo,

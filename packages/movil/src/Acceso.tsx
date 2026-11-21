@@ -9,6 +9,7 @@ import {
   filasParaRevisar,
   pareceCorreo,
   ErrorApi,
+  datosPais,
   enIdioma,
   enIdiomaDireccion,
   soloNumerosTelefono,
@@ -34,6 +35,7 @@ import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile'
 import { mensajeSinCasilla } from './accesoErrores';
 import { EncabezadoVolver, useVolverDelSistema } from './VolverAEntrar';
 import { RevisaTusDatos } from './RevisaTusDatos';
+import { SelectorPaisTelefono, usePaisSugerido } from './SelectorPaisTelefono';
 
 const INICIAL = {
   nombre: '',
@@ -44,6 +46,8 @@ const INICIAL = {
   sms: false,
   // C-REFERIDOS-EQUIPOS: el código con el que lo invitaron (opcional).
   invitacion: '',
+  // C-TELEFONO-E164: el país del celular (arranca en el país desde donde se abre la app).
+  paisTelefono: '',
 };
 
 /**
@@ -130,6 +134,12 @@ export function Acceso({
     setFallos((f) => f.filter((x) => x.campo !== campo));
   };
   const turnstileSitio = useTurnstileSitio(api);
+  // C-TELEFONO-E164: el selector del país del celular arranca donde está la persona (si no lo eligió).
+  const paisSugerido = usePaisSugerido();
+  useEffect(() => {
+    if (paisSugerido && !v.paisTelefono) b.cambiar('paisTelefono', paisSugerido);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo cuando llega la sugerencia
+  }, [paisSugerido]);
   const r = textosRevisar(idioma);
   const registro = modo === 'registro' && rolRegistro;
   // Las casillas del registro, en el orden de la pantalla (también el de «Revisa tus datos»).
@@ -224,6 +234,7 @@ export function Acceso({
         correo: correoLimpio(v.correo),
         clave: v.clave,
         telefono: v.telefono || undefined,
+        ...(v.telefono && v.paisTelefono ? { paisTelefono: v.paisTelefono } : {}),
         fechaNacimiento: v.fechaNacimiento || undefined,
         rol: rolRegistro,
         idioma,
@@ -375,6 +386,13 @@ export function Acceso({
         <SugerenciaCorreo correo={v.correo} idioma={idioma} aceptar={(x) => cambiar('correo', x)} />
       ) : null}
       {registro && (
+        <SelectorPaisTelefono
+          pais={v.paisTelefono || null}
+          alCambiar={(x) => cambiar('paisTelefono', x)}
+          idioma={idioma}
+        />
+      )}
+      {registro && (
         <Campo
           etiqueta={t.telefono}
           value={v.telefono}
@@ -384,7 +402,8 @@ export function Acceso({
           autoComplete="tel"
           textContentType="telephoneNumber"
           autoFocus={enfocar === 'telefono'}
-          placeholder={t.telefono}
+          // Cómo se escribe un celular en ese país (ejemplo imposible a propósito).
+          placeholder={datosPais(v.paisTelefono)?.ejemploCelular ?? t.telefono}
           error={errorDe('telefono')}
         />
       )}

@@ -98,3 +98,26 @@ describe('territorio oficial de Venezuela', () => {
     expect(lugarDePunto(contornos, 13.5, -66)).toBeNull();
   });
 });
+
+describe('el registro valida y repasa el celular con su país', async () => {
+  const { errorTelefono, filasParaRevisar } = await import('../revisarRegistro');
+  it('con el país elegido, un número imposible se dice antes de enviar y uno bueno pasa', () => {
+    expect(errorTelefono('042400001', 'es', 'VE')).toMatch(/no existe/);
+    expect(errorTelefono('04240000001', 'es', 'VE')).toBeNull();
+    expect(errorTelefono('02742511111', 'es', 'VE')).toMatch(/fijo/);
+  });
+  it('«Revisa tus datos» lo muestra como quedará guardado: con +58', () => {
+    const filas = filasParaRevisar(
+      {
+        nombre: 'Ana',
+        correo: 'a@ejemplo.com',
+        telefono: '04240000001',
+        clave: 'x',
+        paisTelefono: 'VE',
+      },
+      'es',
+      ['telefono'],
+    );
+    expect(filas[0]?.valor).toMatch(/^\+58 424/);
+  });
+});

@@ -6,6 +6,7 @@ import {
   VERSION_TERMINOS,
   correoCanonico,
   entornoDeHost,
+  datosPais,
   mensajeTelefono,
   telefonoCanonico,
 } from '@tumbite/compartido';
@@ -192,6 +193,13 @@ async function escudo(c: Ctx) {
     );
 }
 
+// C-TELEFONO-E164: el país desde donde se abre la app, para que el selector del celular arranque ahí.
+// No lee ni escribe la base.
+cuentas.get('/pais-sugerido', (c) => {
+  const ip = String(c.req.header('cf-ipcountry') ?? '').toUpperCase();
+  return c.json({ pais: datosPais(ip) ? ip : null });
+});
+
 cuentas.post('/registro', async (c) => {
   await escudo(c);
   const d = await leerCuerpo(c, esquemaRegistro);
@@ -208,7 +216,7 @@ cuentas.post('/registro', async (c) => {
     d.rol === 'repartidor' ? await invitacionQueEspera(db, d.correo, telConMas) : null;
   const paisTel = paisParaTelefono(
     d.telefono,
-    invitacion?.pais ?? null,
+    invitacion?.pais ?? (d.paisTelefono && datosPais(d.paisTelefono) ? d.paisTelefono : null),
     c.req.header('cf-ipcountry'),
   );
   let tel: { telefono: string | null; canonico: string | null };
