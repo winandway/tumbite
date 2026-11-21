@@ -9,6 +9,7 @@ import {
   diasRestantes,
   resumenEtiquetas,
   telefonoCanonico,
+  telefonoParaMostrar,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
@@ -39,60 +40,10 @@ export const superadmin = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const POR_PAGINA = 50;
 
-/** MIA, NOV, ORL… Si la zona no tiene código, se arma con las 3 primeras letras del nombre. */
-export function codigoCiudad(z: { codigo_ciudad?: string | null; nombre: string }): string {
-  if (z.codigo_ciudad) return z.codigo_ciudad.toUpperCase();
-  const limpio = z.nombre
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^A-Za-z]/g, '')
-    .toUpperCase();
-  return (limpio + 'XXX').slice(0, 3);
-}
-
-/**
- * Le da su ID al repartidor si todavía no lo tiene: US-MIA-000123 (país, ciudad, número que sube
- * de uno en uno por ciudad, sin choques). Se llama al crear su ficha y al listar.
- */
-export async function asegurarCodigoRepartidor(
-  db: D1Database,
-  usuarioId: string,
-): Promise<string | null> {
-  const r = await db
-    .prepare(
-      'SELECT d.codigo, d.zona_id, z.pais, z.nombre, z.codigo_ciudad FROM repartidores d LEFT JOIN zonas z ON z.id = d.zona_id WHERE d.usuario_id = ?',
-    )
-    .bind(usuarioId)
-    .first<{
-      codigo: string | null;
-      zona_id: string;
-      pais: string | null;
-      nombre: string | null;
-      codigo_ciudad: string | null;
-    }>();
-  if (!r) return null;
-  if (r.codigo) return r.codigo;
-  const pais = (r.pais ?? 'US').toUpperCase().slice(0, 2);
-  const ciudad = codigoCiudad({ codigo_ciudad: r.codigo_ciudad, nombre: r.nombre ?? r.zona_id });
-  const prefijo = `${pais}-${ciudad}`;
-  for (let intento = 0; intento < 3; intento++) {
-    const c = await db
-      .prepare(
-        'INSERT INTO contadores (clave, n) VALUES (?, 1) ON CONFLICT(clave) DO UPDATE SET n = n + 1 RETURNING n',
-      )
-      .bind(`repartidor:${prefijo}`)
-      .first<{ n: number }>();
-    const codigo = `${prefijo}-${String(c?.n ?? 1).padStart(6, '0')}`;
-    const ok = await db
-      .prepare('UPDATE repartidores SET codigo = ? WHERE usuario_id = ? AND codigo IS NULL')
-      .bind(codigo, usuarioId)
-      .run()
-      .then(() => true)
-      .catch(() => false); // otro ya tomó ese número: se pide el siguiente
-    if (ok) return codigo;
-  }
-  return null;
-}
+// C-ID-DEL-PAIS (21 nov 2026): el ID sale de la zona REAL del conductor (nunca la ciudad por defecto de la tabla)
+// y se corrige solo si quedó con el país equivocado. La lógica vive en cuentaPais.ts.
+export { asegurarCodigoRepartidor, codigoCiudad } from '../cuentaPais';
+import { asegurarCodigoRepartidor, codigoCiudad, zonaRealDe } from '../cuentaPais';
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 /** «vigente», «vencido», «por vencer» (30 días) o «sin datos». */
@@ -417,8 +368,12 @@ superadmin.get('/admin/repartidores', async (c) => {
   if (q) {
     // ID (US-MIA-000123 o parte), correo, teléfono o nombre: siempre «empieza por», con índice.
     if (/^[A-Za-z]{2}-/.test(q) || /^\d+$/.test(q)) {
-      filtros.push(/^\d+$/.test(q) ? 'd.codigo LIKE ?' : 'd.codigo LIKE ?');
-      valores.push(/^\d+$/.test(q) ? `%-${q.padStart(6, '0')}` : `${q.toUpperCase()}%`);
+      // C-ID-DEL-PAIS: también por un ID viejo (reasignado).
+      const patron = /^\d+$/.test(q) ? `%-${q.padStart(6, '0')}` : `${q.toUpperCase()}%`;
+      filtros.push(
+        '(d.codigo LIKE ? OR d.usuario_id IN (SELECT usuario_id FROM codigos_repartidor_anteriores WHERE codigo LIKE ?))',
+      );
+      valores.push(patron, patron);
     } else if (q.includes('@')) {
       filtros.push('u.correo = ?');
       valores.push(q.toLowerCase());
@@ -570,7 +525,20 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       nombre: String(r.nombre),
       esPrueba: Number(r.es_prueba) === 1,
       correo: String(r.correo),
-      telefono: String(r.telefono ?? ''),
+      // C-TELEFONO-E164: con el código del país, como se marca desde cualquier lado («+58 424-…»).
+      telefono: telefonoParaMostrar(
+        r.telefono ? String(r.telefono) : '',
+        (await zonaRealDe(db, id))?.pais ?? null,
+      ),
+      // C-ID-DEL-PAIS: los ID que tuvo antes (siguen encontrándose en el buscador).
+      codigosAnteriores: (
+        await db
+          .prepare(
+            'SELECT codigo FROM codigos_repartidor_anteriores WHERE usuario_id = ? ORDER BY cambiado_en',
+          )
+          .bind(id)
+          .all<{ codigo: string }>()
+      ).results.map((x) => x.codigo),
       fechaNacimiento: r.fecha_nacimiento ? String(r.fecha_nacimiento) : null,
       idioma: String(r.idioma),
       alta: String(r.creado_en),
@@ -581,6 +549,15 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       ciudad: String(r.ciudad ?? r.zona_id),
       tipo: String(r.tipo),
       conectado: Boolean(r.conectado),
+      // C-EN-LINEA-DE-VERDAD (21 nov 2026): «En línea» solo si de verdad puede recibir viajes (un
+      // servicio aprobado, o su plazo de papeles abierto, con su vehículo). Conectado sin nada de eso
+      // la ficha lo dice: «Conectado, todavía no recibe viajes».
+      recibeViajes: Boolean(
+        await db
+          .prepare('SELECT 1 FROM conductores_elegibles WHERE conductor_id = ? LIMIT 1')
+          .bind(id)
+          .first(),
+      ),
       puntos: Number(r.puntos),
       ubicacion:
         r.lat != null && r.lng != null

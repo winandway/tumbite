@@ -2,11 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { codigoCiudad, estadoVencimiento } from './superadmin';
 
+const MIAMI_CENTRO = { lat: 25.7617, lng: -80.1918 };
+
 describe('superadmin a escala (C-SUPERADMIN-ESCALA)', () => {
   it('cada repartidor recibe su ID País-Ciudad-número, seguido y sin repetirse', async () => {
     const m = mundo();
     const a = await m.cuenta('repartidor', 'Ana Rep');
     const b = await m.cuenta('repartidor', 'Beto Rep');
+    // C-ID-DEL-PAIS: sin ciudad real no hay ID (nunca uno de la ciudad por defecto).
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/datos', undefined, a.token)).datos.codigo,
+    ).toBeFalsy();
+    // Su ciudad sale de su ubicación al abrir Driver: Miami.
+    for (const t of [a.token, b.token])
+      await m.llamar('POST', '/datos/conductor/zona-por-ubicacion', MIAMI_CENTRO, t);
     const ra = await m.llamar('GET', '/datos/repartidor/datos', undefined, a.token);
     const rb = await m.llamar('GET', '/datos/repartidor/datos', undefined, b.token);
     expect(ra.datos.codigo).toBe('US-MIA-000001');
@@ -60,6 +69,7 @@ describe('superadmin a escala (C-SUPERADMIN-ESCALA)', () => {
     const m = mundo();
     const admin = await m.cuenta('admin');
     const r = await m.cuenta('repartidor', 'Carla Veloz');
+    await m.llamar('POST', '/datos/conductor/zona-por-ubicacion', MIAMI_CENTRO, r.token);
     await m.llamar('GET', '/datos/repartidor/datos', undefined, r.token);
     const cliente = await m.cuenta('cliente', 'Diego Cliente');
     for (const ruta of [

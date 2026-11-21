@@ -126,6 +126,8 @@ export async function borrarCuenta(
       )
       .bind(`borrada-${u.id}@tumbite.invalid`, u.id),
     db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
+    // C-ID-DEL-PAIS: los ID viejos del conductor se van con su cuenta.
+    db.prepare('DELETE FROM codigos_repartidor_anteriores WHERE usuario_id = ?').bind(u.id),
     // C-KYC-AUTO: la huella de la cara se borra con la cuenta (la de mala conducta se queda).
     db.prepare('DELETE FROM huellas_caras WHERE usuario_id = ? AND mala_conducta = 0').bind(u.id),
     db

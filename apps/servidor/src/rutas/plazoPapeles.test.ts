@@ -215,6 +215,8 @@ describe('C-PLAZO-PAPELES: el conductor de Venezuela trabaja desde que crea la c
     await c.m.DB.prepare("UPDATE usuarios SET creado_en = '2026-10-01 00:00:00' WHERE id = ?")
       .bind(c.rep.id)
       .run();
+    // C-PAIS-DE-LA-CUENTA: el plazo nace al elegir la ciudad; una cuenta de antes nunca lo tuvo.
+    await c.m.DB.prepare('DELETE FROM plazo_papeles WHERE conductor_id = ?').bind(c.rep.id).run();
     const v = await c.moto();
     expect((await c.yo('GET', '/datos/conductor/verificacion')).datos.plazo.estado).toBe(
       'sin_plazo',
@@ -254,6 +256,9 @@ describe('C-PLAZO-PAPELES: el conductor de Venezuela trabaja desde que crea la c
       },
     });
     expect(r.estado).toBe(200);
+    // C-PAIS-DE-LA-CUENTA: este conductor ya nació con su plazo al elegir la ciudad (30 días, la
+    // política de entonces). Una cuenta que nace después del cambio lleva los 45.
+    await c.m.DB.prepare('DELETE FROM plazo_papeles WHERE conductor_id = ?').bind(c.rep.id).run();
     await c.moto();
     expect((await c.yo('GET', '/datos/conductor/verificacion')).datos.plazo.dias).toBe(45);
     // Con la licencia exigida para empezar, ya no basta con declarar la moto.

@@ -40,6 +40,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // recogida cae en una dirección guardada del pasajero). Queda con la cotización y pasa al viaje.
   ['cotizaciones_viaje', 'origen_direccion_id', 'TEXT'],
   ['viajes', 'origen_direccion_id', 'TEXT'],
+  // C-TERRITORIO-OFICIAL (21 nov 2026): el municipio oficial donde cae cada zona (P-code del INE en
+  // Venezuela, «VE1401»). Sale de los contornos oficiales; el panel lo muestra y lo puede corregir.
+  ['zonas', 'municipio_pcode', 'TEXT'],
   // C-BS-EN-MANO (18 nov 2026, Venezuela): la tasa del día FIJADA con la operación (al cotizar el
   // viaje o al crear el pedido) y, al cerrar el viaje, lo cobrado en mano en céntimos de bolívar.
   // Conductor y pasajero ven el mismo número aunque la tasa cambie después.

@@ -73,6 +73,8 @@ const T = {
     } as Record<string, string>,
     enLinea: 'En línea',
     fueraLinea: 'Desconectado',
+    conectadoSinViajes: 'Conectado, todavía no recibe viajes (nada aprobado ni plazo abierto)',
+    idAnterior: 'Antes',
     volver: '← Volver',
     datos: 'Datos personales',
     correo: 'Correo',
@@ -171,6 +173,8 @@ const T = {
     } as Record<string, string>,
     enLinea: 'Online',
     fueraLinea: 'Offline',
+    conectadoSinViajes: 'Connected, can’t get trips yet (nothing approved, no open deadline)',
+    idAnterior: 'Formerly',
     volver: '← Back',
     datos: 'Personal details',
     correo: 'Email',
@@ -715,6 +719,10 @@ type Repartidor = {
   ciudad: string;
   tipo: string;
   conectado: boolean;
+  /** C-EN-LINEA-DE-VERDAD: puede recibir viajes ahora (servicio aprobado o plazo abierto). */
+  recibeViajes?: boolean;
+  /** C-ID-DEL-PAIS: los ID que tuvo antes. */
+  codigosAnteriores?: string[];
   puntos: number;
   ubicacion: { lat: number; lng: number; cuando: string | null } | null;
   datos: {
@@ -828,6 +836,11 @@ export function SuperRepartidor({
       </button>
       <h1>
         {r.nombre} <small className="super-id">{r.codigo}</small>{' '}
+        {r.codigosAnteriores?.length ? (
+          <small className="super-id">
+            ({t.idAnterior}: {r.codigosAnteriores.join(', ')})
+          </small>
+        ) : null}{' '}
         <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
       </h1>
       <BotonSuspender
@@ -840,8 +853,12 @@ export function SuperRepartidor({
       />
       <HistorialCorreo lista={r.historialCorreo} idioma={idioma} />
       <p>
-        <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
-        {r.conectado ? t.enLinea : t.fueraLinea} · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
+        <span
+          className={`punto ${r.conectado && r.recibeViajes !== false ? 'en-linea' : ''}`}
+          aria-hidden="true"
+        />{' '}
+        {r.conectado ? (r.recibeViajes === false ? t.conectadoSinViajes : t.enLinea) : t.fueraLinea}{' '}
+        · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <PapelesConductor id={id} idioma={idioma} />

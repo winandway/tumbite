@@ -37,6 +37,7 @@ import {
   ultimoErrorEsquema,
 } from './esquema';
 import { cuentas } from './rutas/cuentas';
+import { repararCuentasDePaisUnaVez } from './reparacionPais';
 import { catalogo } from './rutas/catalogo';
 import { dinero } from './rutas/dinero';
 import { pedidos } from './rutas/pedidos';
@@ -296,6 +297,8 @@ app.use('/datos/*', async (c, next) => {
       c.env.DB,
       entornoDeServicios(entornoDe(c.req.url), c.env.SERVICIOS_PRUEBA_LOCAL),
     );
+  // C-REPARACION-PAIS: una sola vez por base (lee una fila de config por servidor después de eso).
+  if (c.env.DB) await repararCuentasDePaisUnaVez(c.env, c.env.DB);
   await next();
 });
 app.use('/datos/*', cargarSesion);

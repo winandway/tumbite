@@ -104,8 +104,12 @@ for (const iso of paises) {
     [2, 'municipios', 'c=adm2_pcode,n=adm2_name,p=adm1_pcode'],
     [3, 'parroquias', 'c=adm3_pcode,n=adm3_name,p=adm2_pcode'],
   ];
+  // Las parroquias van en un archivo por entidad (parroquias/VE14.json): el mapa las carga al mirar
+  // ese estado, y ningún archivo del sitio pasa de 400 KB (C-PAQUETE-DIETA).
   for (const [n, nombre, campos] of niveles) {
-    const salida = join(dir, `${nombre}.json`);
+    const partir = n === 3;
+    if (partir) mkdirSync(join(dir, nombre), { recursive: true });
+    const salida = partir ? join(dir, nombre) : join(dir, `${nombre}.json`);
     execFileSync(
       'npx',
       [
@@ -116,13 +120,15 @@ for (const iso of paises) {
         campos,
         '-filter-fields',
         n === 1 ? 'c,n' : 'c,n,p',
+        ...(partir ? ['-each', 'e = p.slice(0, 4)', '-split', 'e', '-filter-fields', 'c,n,p'] : []),
         '-simplify',
         '4%',
         'keep-shapes',
         '-o',
         'precision=0.0001',
         'format=geojson',
-        salida,
+        ...(partir ? ['extension=.json'] : []),
+        salida + (partir ? '/' : ''),
       ],
       { stdio: 'inherit' },
     );

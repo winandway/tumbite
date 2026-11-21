@@ -1,4 +1,5 @@
 import { leerConfigPais, paisIncompleto } from '../internacional/paises';
+import { asignarMunicipio, municipioParaMostrar } from '../municipioDeZona';
 import { Hono } from 'hono';
 import { usuarioPorCuentas } from '../cuentasPruebaSql';
 import { z } from 'zod';
@@ -9,10 +10,9 @@ import {
   poligonosSeSolapan,
   validarPoligono,
 } from '@tumbite/compartido';
-import { type Disponibilidad, nombrePais, zonaDeFabrica } from '@tumbite/compartido';
+import { type Disponibilidad, aE164, nombrePais, zonaDeFabrica } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import { cobertura, leerPoligono, recalcularAreasCiudad } from '../territorio';
-import { telefonoE164 } from '../sms';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -116,6 +116,9 @@ zonas.get('/admin/zonas', async (c) => {
       // C-PANICO-ZONA: solo el superadmin los ve; la lista pública de zonas no los lleva.
       responsableNombre: String(f.responsable_nombre ?? ''),
       responsableTelefono: String(f.responsable_telefono ?? ''),
+      // C-TERRITORIO-OFICIAL: su municipio oficial (P-code y nombre), o null si su país no tiene
+      // todavía su territorio cargado.
+      municipio: municipioParaMostrar(f.municipio_pcode),
     })),
   });
 });
@@ -159,6 +162,8 @@ zonas.put('/admin/zonas', async (c) => {
       d.zonaHoraria ? 1 : 0,
     )
     .run();
+  // C-TERRITORIO-OFICIAL: con el centro (nuevo o movido), su municipio oficial.
+  await asignarMunicipio(c.env, base(c), d.id);
   return c.json({ ok: true });
 });
 
@@ -175,35 +180,50 @@ zonas.patch('/admin/zonas/:id', async (c) => {
         // C-PANICO-ZONA: la persona responsable de la zona (recibe el SMS de pánico).
         responsableNombre: z.string().trim().max(60).optional(),
         responsableTelefono: z.string().trim().max(30).optional(),
+        // C-TERRITORIO-OFICIAL: el equipo corrige el municipio si el centro cae en el de al lado.
+        municipioPcode: z.string().trim().toUpperCase().max(12).optional(),
       })
       .refine(
         (x) =>
           x.activa !== undefined ||
           x.fotoPuertaObligatoria !== undefined ||
           x.responsableNombre !== undefined ||
-          x.responsableTelefono !== undefined,
+          x.responsableTelefono !== undefined ||
+          x.municipioPcode !== undefined,
         { error: 'No llegó ningún cambio.' },
       ),
   );
+  const zonaPais = await base(c)
+    .prepare('SELECT pais FROM zonas WHERE id = ?')
+    .bind(c.req.param('id'))
+    .first<{ pais: string }>();
   let telefono: string | null = null;
   if (d.responsableTelefono !== undefined && d.responsableTelefono !== '') {
-    telefono = telefonoE164(d.responsableTelefono);
-    if (!telefono || !d.responsableTelefono.startsWith('+'))
+    // C-TELEFONO-E164: se lee con el país de la zona («0412…» en Venezuela ya vale).
+    telefono = aE164(d.responsableTelefono, zonaPais?.pais ?? null);
+    if (!telefono)
       throw new ErrorDatos(
-        'Escribe el celular con el código del país, por ejemplo +58 412 0000000.',
+        'Ese celular no existe en el país de la zona. Revisa los dígitos o escribe el código del país, por ejemplo +58 412 0000000.',
         'responsableTelefono',
       );
   } else if (d.responsableTelefono === '') telefono = '';
+  if (d.municipioPcode !== undefined) {
+    const m = municipioParaMostrar(d.municipioPcode);
+    if (!m || d.municipioPcode.slice(0, 2) !== zonaPais?.pais.toUpperCase())
+      throw new ErrorDatos('Ese municipio no existe en el país de la zona.', 'municipioPcode', 422);
+  }
   const r = await base(c)
     .prepare(
       `UPDATE zonas SET activa = COALESCE(?, activa), foto_puerta_obligatoria = COALESCE(?, foto_puerta_obligatoria),
-        responsable_nombre = COALESCE(?, responsable_nombre), responsable_telefono = COALESCE(?, responsable_telefono) WHERE id = ?`,
+        responsable_nombre = COALESCE(?, responsable_nombre), responsable_telefono = COALESCE(?, responsable_telefono),
+        municipio_pcode = COALESCE(?, municipio_pcode) WHERE id = ?`,
     )
     .bind(
       d.activa === undefined ? null : d.activa ? 1 : 0,
       d.fotoPuertaObligatoria === undefined ? null : d.fotoPuertaObligatoria ? 1 : 0,
       d.responsableNombre ?? null,
       telefono,
+      d.municipioPcode ?? null,
       c.req.param('id'),
     )
     .run();

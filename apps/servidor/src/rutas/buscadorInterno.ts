@@ -57,6 +57,9 @@ import { viajesPorCodigo } from '../monitoreo';
  */
 export const buscadorInterno = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+/** Países donde el celular se dice con un «0» delante (prefijo nacional): Venezuela, Colombia, Perú. */
+const PREFIJOS_CON_CERO = ['58', '57', '51'] as const;
+
 const POR_GRUPO = 5;
 /** Cuántas personas o comercios se toman como mucho para buscar sus pedidos en la lista. */
 const PERSONAS_EN_LISTA = 20;
@@ -182,6 +185,10 @@ async function idsDeCuentas(
     // El teléfono único guarda solo dígitos y suma el «1» a los de diez cifras de EE. UU.
     const comienzos = new Set([d]);
     if (!d.startsWith('1') && d.length <= 10) comienzos.add(`1${d}`);
+    // C-TELEFONO-E164: «0424…» como lo dice la gente en Venezuela, Colombia o Perú también encuentra
+    // el número guardado con su código («58424…»).
+    if (d.startsWith('0') && d.length >= 4)
+      for (const p of PREFIJOS_CON_CERO) comienzos.add(`${p}${d.slice(1)}`);
     for (const c of comienzos) {
       const [desde, hasta] = rangoPrefijo(c);
       consultas.push(
@@ -279,6 +286,14 @@ async function idsDeCuentas(
       todas(
         db,
         'SELECT usuario_id AS id FROM repartidores WHERE codigo >= ? AND codigo < ? ORDER BY codigo LIMIT ?',
+        desde,
+        hasta,
+        tope,
+      ),
+      // C-ID-DEL-PAIS: el ID viejo de un conductor (reasignado) también lo encuentra.
+      todas(
+        db,
+        'SELECT usuario_id AS id FROM codigos_repartidor_anteriores WHERE codigo >= ? AND codigo < ? LIMIT ?',
         desde,
         hasta,
         tope,

@@ -12,7 +12,8 @@ async function preparar() {
   expect((await abrirComida(e)).estado).toBe(201);
   const c = await e.m.cuenta('repartidor', 'Conductor Piloto');
   await e.m.DB.prepare(
-    "INSERT INTO repartidores (usuario_id, zona_id) VALUES (?, 'US-FL-MIAMI') ON CONFLICT(usuario_id) DO UPDATE SET zona_id = 'US-FL-MIAMI'",
+    // C-ID-DEL-PAIS: un conductor de Miami de verdad (se conectó allí), con su ID de Miami.
+    "INSERT INTO repartidores (usuario_id, zona_id, ubicacion_en) VALUES (?, 'US-FL-MIAMI', datetime('now')) ON CONFLICT(usuario_id) DO UPDATE SET zona_id = 'US-FL-MIAMI', ubicacion_en = datetime('now')",
   )
     .bind(c.id)
     .run();

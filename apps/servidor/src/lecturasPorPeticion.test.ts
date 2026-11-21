@@ -408,7 +408,8 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // +3 (19 nov 2026, C-PLAZO-PAPELES en la base): al aprobar una habilitación, el disparador mira
       // si el país del conductor declara exento algún requisito (su ciudad y la tabla de la política,
       // que tiene un puñado de filas).
-      ['f1', 508 + 2 * objetosEsquema],
+      // +2 (21 nov 2026, C-ID-DEL-PAIS): borrar la cuenta borra también sus ID viejos.
+      ['f1', 510 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
       ['migraciones-prueba', 3_020],

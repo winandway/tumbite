@@ -888,6 +888,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa tarjeta no existe.', 'That card doesn’t exist.'],
   ['Esa verificación no está pendiente.', 'That verification isn’t pending.'],
   ['Esa zona no existe.', 'That zone doesn’t exist.'],
+  // C-TELEFONO-E164 y C-TERRITORIO-OFICIAL (21 nov 2026).
+  [
+    'Ese celular no existe en el país de la zona. Revisa los dígitos o escribe el código del país, por ejemplo +58 412 0000000.',
+    'That mobile number doesn’t exist in the zone’s country. Check the digits or include the country code, for example +58 412 0000000.',
+  ],
+  [
+    'Ese municipio no existe en el país de la zona.',
+    'That municipality doesn’t exist in the zone’s country.',
+  ],
   [
     'Escribe el motivo: le llega a la persona para que lo corrija.',
     'Write the reason: the person receives it so they can fix it.',

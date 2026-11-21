@@ -80,6 +80,10 @@ describe('C-CUPON-DIVOOX: comida en mano con el regalo de Divoox', () => {
 
     // El repartidor: recarga, acepta, recoge, entrega y cobra en mano solo la diferencia.
     const rep = await e.m.cuenta('repartidor', 'Repartidor El Vigía');
+    // C-PAIS-DE-LA-CUENTA: en El Vigía nace con su plazo, que pide la foto de la cara para empezar.
+    await e.m.DB.prepare("INSERT OR IGNORE INTO kyc (usuario_id, selfie) VALUES (?, 'kyc/selfie')")
+      .bind(rep.id)
+      .run();
     await e.m.llamar(
       'POST',
       '/datos/repartidor/conectar',

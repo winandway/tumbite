@@ -132,6 +132,13 @@ describe('KYC (C-KYC)', () => {
   it('el repartidor sube documento y selfie a la carpeta privada, envía, y el admin aprueba', async () => {
     const { m, r2, subir } = conAlmacen();
     const rep = await m.cuenta('repartidor', 'Rep KYC');
+    // C-ID-DEL-PAIS: su ciudad real (Miami, por su ubicación) le da su ID.
+    await m.llamar(
+      'POST',
+      '/datos/conductor/zona-por-ubicacion',
+      { lat: 25.7617, lng: -80.1918 },
+      rep.token,
+    );
     // Sin fotos no se puede enviar.
     expect(
       (await m.llamar('POST', '/datos/kyc/enviar', { docTipo: 'licencia' }, rep.token)).estado,

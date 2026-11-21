@@ -35,6 +35,11 @@ async function mundoVe() {
     );
   async function repartidor(nombre: string) {
     const d = await e.m.cuenta('repartidor', nombre);
+    // C-PAIS-DE-LA-CUENTA: desde El Vigía su plazo de papeles se abre, y en plazo Venezuela pide la
+    // foto de la cara para empezar (antes el plazo se decidía con Miami y no se abría).
+    await e.m.DB.prepare("INSERT OR IGNORE INTO kyc (usuario_id, selfie) VALUES (?, 'kyc/selfie')")
+      .bind(d.id)
+      .run();
     const c = await e.m.llamar(
       'POST',
       '/datos/repartidor/conectar',

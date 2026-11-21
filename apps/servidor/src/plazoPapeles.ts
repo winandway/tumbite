@@ -9,6 +9,7 @@ import { z } from 'zod';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
 import { type Idioma, notificar } from './notificaciones';
+import { ZONA_REAL_SQL } from './cuentaPais';
 
 /**
  * C-PLAZO-PAPELES (19 nov 2026, decisión de Richard) — por país, por configuración.
@@ -91,7 +92,7 @@ const SQL_GRACIA = `SELECT u.id, z.pais, p.estado, p.vence_en,
         (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg
    FROM usuarios u
    LEFT JOIN repartidores r ON r.usuario_id = u.id
-   LEFT JOIN zonas z ON z.id = COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI')
+   LEFT JOIN zonas z ON z.id = COALESCE(${ZONA_REAL_SQL}, r.zona_id, 'US-FL-MIAMI')
    LEFT JOIN plazo_papeles p ON p.conductor_id = u.id
   WHERE u.id`;
 
@@ -223,10 +224,17 @@ export async function empezarPlazo(
   dias?: number,
 ): Promise<boolean> {
   const f = await db
-    .prepare(`${SQL_GRACIA.replace('p.vence_en,', 'p.vence_en, u.creado_en, u.rol,')} = ?`)
+    .prepare(
+      `${SQL_GRACIA.replace('p.vence_en,', `p.vence_en, u.creado_en, u.rol, ${ZONA_REAL_SQL} AS zona_real,`)} = ?`,
+    )
     .bind(conductorId)
-    .first<FilaGracia & { creado_en: string; rol: string }>();
+    .first<FilaGracia & { creado_en: string; rol: string; zona_real: string | null }>();
   if (!f || f.rol !== 'repartidor') return false;
+  // C-PAIS-DE-LA-CUENTA (21 nov 2026): al registrarse, el plazo se decide con el país REAL. Sin ciudad
+  // real todavía (ni invitación, ni elección, ni ubicación) no se decide nada: antes caía en Miami,
+  // Estados Unidos no tiene plazo y el venezolano se quedaba sin el suyo. Se vuelve a llamar en cuanto
+  // se sabe su ciudad (al conectarse, al abrir Driver con su ubicación o al elegir ciudad).
+  if (origen === 'registro' && !f.zona_real) return false;
   const g = graciaDeFila(f, ahoraPlazo());
   const plazo = Math.floor(dias ?? g.politica.dias);
   if (plazo <= 0) return false;

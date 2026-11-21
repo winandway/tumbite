@@ -17,8 +17,8 @@ import { anotarDecisionHumana } from './verificacionConductor';
 import { codigoCiudad } from './superadmin';
 import { porCobrarRegalos } from '../regalosDivoox';
 import { entornoDeHost } from '@tumbite/compartido';
-import { cobertura } from '../territorio';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
+import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
 
 /**
@@ -131,27 +131,16 @@ conductorPapeles.post('/conductor/zona-por-ubicacion', async (c) => {
     c,
     z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
   );
-  const ficha = await db
-    .prepare(
-      'SELECT zona_id, ubicacion_en, ciudad_elegida_en FROM repartidores WHERE usuario_id = ?',
-    )
-    .bind(u.id)
-    .first<{ zona_id: string; ubicacion_en: string | null; ciudad_elegida_en: string | null }>();
-  if (ficha?.ubicacion_en || ficha?.ciudad_elegida_en)
-    return c.json({ zonaId: ficha.zona_id, cambio: false });
-  const aqui = await cobertura(db, lat, lng);
-  const zona = aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null;
-  if (!zona || zona === ficha?.zona_id)
-    return c.json({ zonaId: ficha?.zona_id ?? null, cambio: false });
-  await db.batch([
-    db.prepare(ALTA_REPARTIDOR).bind(u.id),
-    db
-      .prepare(
-        'UPDATE repartidores SET zona_id = ? WHERE usuario_id = ? AND ubicacion_en IS NULL AND ciudad_elegida_en IS NULL',
-      )
-      .bind(zona, u.id),
-    db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ? AND zona_id IS NULL').bind(zona, u.id),
-  ]);
+  const zona = await fijarZonaPorUbicacion(db, u.id, lat, lng);
+  // C-PAIS-DE-LA-CUENTA: con la ciudad ya real, su ID de su país y su plazo de papeles si le toca.
+  await alSaberseLaCiudad(c.env, db, u.id);
+  if (!zona) {
+    const f = await db
+      .prepare('SELECT zona_id FROM repartidores WHERE usuario_id = ?')
+      .bind(u.id)
+      .first<{ zona_id: string }>();
+    return c.json({ zonaId: f?.zona_id ?? null, cambio: false });
+  }
   return c.json({ zonaId: zona, cambio: true });
 });
 
@@ -222,6 +211,7 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
       )
       .bind(u.id, zona.id),
   ]);
+  await alSaberseLaCiudad(c.env, db, u.id);
   return c.json({ zonaId: zona.id });
 });
 
@@ -402,6 +392,14 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
           'UPDATE usuarios SET zona_id = ?1 WHERE id = ?2 AND EXISTS (SELECT 1 FROM repartidores WHERE usuario_id = ?2 AND codigo = ?3)',
         )
         .bind(zona.id, id, codigo),
+      // C-ID-DEL-PAIS: el ID viejo sigue encontrándose en el buscador.
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO codigos_repartidor_anteriores (codigo, usuario_id, motivo)
+           SELECT ?1, ?2, 'cambio_ciudad' WHERE ?1 IS NOT NULL AND ?1 <> ?3
+             AND EXISTS (SELECT 1 FROM repartidores WHERE usuario_id = ?2 AND codigo = ?3)`,
+        )
+        .bind(persona.codigo ?? null, id, codigo),
       db
         .prepare(
           `INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json)

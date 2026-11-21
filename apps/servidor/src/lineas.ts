@@ -464,6 +464,16 @@ export async function anularInvitacionLider(db: D1Database, id: string) {
  * ser su líder: la línea se crea en ese momento, una sola vez. Devuelve si creó algo.
  */
 async function reclamarLineaDeLider(db: D1Database, usuarioId: string) {
+  return unirLineaQueEspera(db, usuarioId);
+}
+
+/**
+ * C-LINEA-SE-UNE-SOLA (21 nov 2026, caso del primer líder de El Vigía: se registró con el mismo
+ * correo de la invitación y su línea no apareció porque solo se unía al abrir «Mi línea»). Se llama
+ * al crear la cuenta, al confirmar el correo, al cambiar el celular, al entrar y al abrir «Mi línea».
+ * Una sola vez: la invitación se aparta antes de crear la línea.
+ */
+export async function unirLineaQueEspera(db: D1Database, usuarioId: string): Promise<boolean> {
   const u = await db
     .prepare("SELECT correo, telefono_canonico FROM usuarios WHERE id = ? AND rol = 'repartidor'")
     .bind(usuarioId)

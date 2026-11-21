@@ -6,6 +6,7 @@ import {
   VERSION_TERMINOS,
   correoCanonico,
   entornoDeHost,
+  mensajeTelefono,
   telefonoCanonico,
 } from '@tumbite/compartido';
 import { anotarAparato, codigoPara, vincularCliente } from '../programaReferidos';
@@ -49,6 +50,14 @@ import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { guardarConsentimientoSms } from '../sms';
 import { TELEFONO_DIEZ } from '../esquema';
+import {
+  TelefonoInvalido,
+  invitacionQueEspera,
+  paisDeCuenta,
+  paisParaTelefono,
+  telefonoParaGuardar,
+} from '../cuentaPais';
+import { unirLineaQueEspera } from '../lineas';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
 const esquemaRecuperar = z.object({
@@ -190,7 +199,27 @@ cuentas.post('/registro', async (c) => {
   // C-IDENTIDAD-UNICA: el mismo correo o teléfono escrito de otra forma cuenta como el mismo, y los de
   // cuentas cerradas por mala conducta no vuelven a entrar.
   const correoUnico = correoCanonico(d.correo);
-  const telUnico = telefonoCanonico(d.telefono);
+  // C-PAIS-DE-LA-CUENTA y C-TELEFONO-E164 (21 nov 2026): si una línea espera a este conductor, su
+  // ciudad es la de la invitación desde el primer momento (su ID, su plazo y su celular salen de ahí).
+  // El celular se lee con el país de esa ciudad, con el código que escribió o con el país desde donde
+  // se registra; nunca queda «0424…» sin su código.
+  const telConMas = telefonoCanonico(d.telefono?.trim().startsWith('+') ? d.telefono : null);
+  const invitacion =
+    d.rol === 'repartidor' ? await invitacionQueEspera(db, d.correo, telConMas) : null;
+  const paisTel = paisParaTelefono(
+    d.telefono,
+    invitacion?.pais ?? null,
+    c.req.header('cf-ipcountry'),
+  );
+  let tel: { telefono: string | null; canonico: string | null };
+  try {
+    tel = telefonoParaGuardar(d.telefono, paisTel);
+  } catch (e) {
+    if (e instanceof TelefonoInvalido)
+      throw new ErrorDatos(mensajeTelefono(e.motivo, d.idioma), 'telefono', 422);
+    throw e;
+  }
+  const telUnico = tel.canonico;
   const bloqueado = await db
     .prepare(
       "SELECT 1 FROM bloqueos_identidad WHERE (tipo = 'correo' AND valor = ?) OR (tipo = 'telefono' AND valor = ?)",
@@ -247,19 +276,20 @@ cuentas.post('/registro', async (c) => {
   const id = nuevoId();
   await db
     .prepare(
-      'INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico, zona_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
       id,
       d.correo,
       d.nombre,
-      d.telefono ?? null,
+      tel.telefono,
       d.fechaNacimiento ?? null,
       rol,
       d.idioma,
       await hashClave(d.clave),
       correoUnico,
       telUnico,
+      invitacion?.zonaId ?? null,
     )
     .run();
   // C-TERMINOS-ACTUALIZADOS: al crear la cuenta acepta los términos vigentes (casilla del registro).
@@ -285,6 +315,13 @@ cuentas.post('/registro', async (c) => {
     ).catch((e: unknown) => {
       console.error('registro: invitación', e instanceof ErrorDatos ? e.message : e);
     });
+  // C-LINEA-SE-UNE-SOLA (21 nov 2026): la línea que esperaba a este correo o celular se crea en este
+  // mismo momento, sin que el líder tenga que abrir «Mi línea». Si algo falla, la invitación sigue
+  // viva y se vuelve a intentar al confirmar el correo, al entrar o al abrir «Mi línea».
+  if (rol === 'repartidor')
+    await unirLineaQueEspera(db, id).catch((e: unknown) =>
+      console.error('registro: línea del líder invitado', e),
+    );
   // C-CORREO-HONESTO: la cuenta se crea igual; la respuesta dice si el enlace salió de verdad.
   const envio = await mandarConfirmacion(c.env, db, {
     id,
@@ -341,8 +378,13 @@ cuentas.post('/entrar', async (c) => {
   // C-REPARTIDOR-UN-TELEFONO (8 nov 2026, Richard): un repartidor trabaja en UN solo teléfono, como
   // en Uber y DoorDash. Entrar en otro cierra la sesión del anterior: si no, los dos reciben las
   // mismas ofertas. Restaurantes y empresas sí pueden tener varias pantallas abiertas.
-  if (fila.rol === 'repartidor')
+  if (fila.rol === 'repartidor') {
     await db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(fila.id).run();
+    // C-LINEA-SE-UNE-SOLA: la línea que lo espera se une también al entrar.
+    await unirLineaQueEspera(db, fila.id).catch((e: unknown) =>
+      console.error('entrar: línea del líder invitado', e),
+    );
+  }
   const token = await abrirSesion(db, fila.id, acceso ? JSON.stringify(acceso) : null);
   await anotarAparato(db, fila.id, await huellaAparato(c.req.header('x-aparato'))).catch(
     (e: unknown) => console.error('entrar: aparato', e),
@@ -470,6 +512,10 @@ cuentas.post('/confirmar', async (c) => {
       .bind(r.usuario_id),
     db.prepare("UPDATE confirmaciones SET usada_en = datetime('now') WHERE id = ?").bind(id),
   ]);
+  if (r.rol === 'repartidor')
+    await unirLineaQueEspera(db, r.usuario_id).catch((e: unknown) =>
+      console.error('confirmar: línea del líder invitado', e),
+    );
   // C-CORREO-OBLIGATORIO: con el rol, la página del enlace ofrece volver a la app del cliente.
   return c.json({ ok: true, rol: r.rol });
 });
@@ -685,14 +731,44 @@ cuentas.patch('/yo', async (c) => {
     );
   // C-SMS-CONSENTIMIENTO: el permiso de SMS se dio para un número; si el número cambia, el permiso
   // no pasa al nuevo (la persona vuelve a marcar la casilla si quiere).
+  // C-TELEFONO-E164: el celular nuevo se guarda en E.164 con el país de la cuenta, y su llave única
+  // se pone al día con él (antes quedaba la del número viejo).
+  let tel: { telefono: string | null; canonico: string | null };
+  try {
+    tel = telefonoParaGuardar(
+      d.telefono,
+      (await paisDeCuenta(base(c), u.id)) ??
+        paisParaTelefono(d.telefono, null, c.req.header('cf-ipcountry')),
+    );
+  } catch (e) {
+    if (e instanceof TelefonoInvalido)
+      throw new ErrorDatos(mensajeTelefono(e.motivo, d.idioma), 'telefono', 422);
+    throw e;
+  }
+  if (tel.canonico) {
+    const otro = await base(c)
+      .prepare('SELECT 1 FROM usuarios WHERE telefono_canonico = ? AND rol = ? AND id != ? LIMIT 1')
+      .bind(tel.canonico, u.rol, u.id)
+      .first();
+    if (otro)
+      throw new ErrorDatos(
+        'Ese teléfono ya tiene una cuenta. Entra con ella o escríbenos a soporte.',
+        'telefono',
+        409,
+      );
+  }
   await base(c)
     .prepare(
       `UPDATE usuarios SET nombre = ?1, fecha_nacimiento = ?3, idioma = ?4,
         sms_consentido_en = CASE WHEN COALESCE(telefono, '') = COALESCE(?2, '') THEN sms_consentido_en ELSE NULL END,
-        telefono = ?2 WHERE id = ?5`,
+        telefono = ?2, telefono_canonico = ?6 WHERE id = ?5`,
     )
-    .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
+    .bind(d.nombre, tel.telefono, d.fechaNacimiento, d.idioma, u.id, tel.canonico)
     .run();
+  if (u.rol === 'repartidor')
+    await unirLineaQueEspera(base(c), u.id).catch((e: unknown) =>
+      console.error('perfil: línea del líder invitado', e),
+    );
   // C-AVISOS-IDIOMA: el idioma elegido en la cuenta también vale para sus avisos (si cambió).
   if (d.idioma !== u.idioma) {
     const db = base(c);

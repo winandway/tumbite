@@ -112,7 +112,8 @@ import {
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
-import { empezarPlazo, graciaDe } from '../plazoPapeles';
+import { graciaDe } from '../plazoPapeles';
+import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { correrPlazoPapeles } from './verificacionConductor';
 import {
@@ -1218,7 +1219,7 @@ export async function miFicha(c: Ctx) {
   const u = exigir(c, 'repartidor');
   const db = base(c);
   await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
-  // Cada repartidor nace con su ID (US-MIA-000123).
+  // Cada repartidor tiene su ID de su país y ciudad reales (VE-ELV-000003) en cuanto se sabe su ciudad.
   await asegurarCodigoRepartidor(db, u.id);
   const f = await db
     .prepare('SELECT * FROM repartidores WHERE usuario_id = ?')
@@ -1518,7 +1519,11 @@ export async function conectarRepartidor(
     throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
   // C-PLAZO-PAPELES (Richard, 19 nov 2026): la cuenta nueva de un país con plazo nace con él, y
   // dentro del plazo se conecta con lo mínimo que su país pide para empezar.
-  if (d.conectado) await empezarPlazo(c.env, db, u.id, 'registro');
+  // C-PAIS-DE-LA-CUENTA (21 nov 2026): primero su ciudad real (la de su ubicación, si todavía no
+  // tenía), y con ella su ID y su plazo. Antes el plazo se decidía con Miami y no se abría.
+  if (d.conectado && d.lat != null && d.lng != null)
+    await fijarZonaPorUbicacion(db, u.id, d.lat, d.lng);
+  if (d.conectado) await alSaberseLaCiudad(c.env, db, u.id);
   const gracia = d.conectado ? await graciaDe(db, u.id) : null;
   if (
     gracia?.activa &&

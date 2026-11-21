@@ -431,6 +431,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "clave",
     "n"
   ],
+  "codigos_repartidor_anteriores": [
+    "codigo",
+    "usuario_id",
+    "motivo",
+    "cambiado_en"
+  ],
   "llegadas_estimadas": [
     "clave",
     "fase",
