@@ -1568,11 +1568,11 @@ export const CUENTAS_REVISOR = [
  * de papeles y asistente, para que el revisor vea el asistente, la cámara con marco y el permiso de IA.
  * Va aparte de CUENTAS_REVISOR a propósito: esa lista tiene una cuenta por rol (así rota su clave) y
  * sus cuentas reciben la entrega de práctica; esta es un conductor nuevo corriente. Se creó a mano en
- * producción; su clave está en ~/.config/tumbite/revisores-tiendas, línea `repartidor2`.
+ * producción; su correo y su clave están en ~/.config/tumbite/revisores-tiendas, línea `repartidor2`
+ * (el correo no va aquí: C-CORREO-DIVOOX no deja direcciones de ese dominio en el código).
  */
 export const CUENTA_REVISOR_ASISTENTE = {
   rol: 'repartidor',
-  correo: 'revisor.driver2@divoox.com',
   nombre: 'Soporte Revisor Driver 2',
   zona: 'VE-ZZ-REVIEW',
 } as const;
