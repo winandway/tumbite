@@ -1980,6 +1980,18 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
         'Las solicitudes pendientes: aprueba o rechaza con un toque.',
       ),
       capLineas(
+        'super-invitar',
+        'es',
+        'Una solicitud con el aviso de que el líder todavía no tiene cuenta en Divoox Driver y el botón Invitar al líder.',
+        'Si el líder todavía no tiene cuenta, la pantalla lo dice y te deja invitarlo.',
+      ),
+      capLineas(
+        'super-invitados',
+        'es',
+        'La sección Líderes invitados con el enlace para mandarle al líder y las líneas que lo esperan, cada una con su menú de tres puntos.',
+        'Las líneas que esperan a su líder y el enlace que le mandas.',
+      ),
+      capLineas(
         'super-crear',
         'es',
         'Formulario Crear una línea con nombre, ciudad, tipo, líder y segundo contacto de emergencia.',
@@ -2000,6 +2012,7 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
     pasos: [
       'Abre «Líneas de taxi y mototaxi» en el menú de Personas.',
       'En las solicitudes: llama al líder, verifica su celular y toca «Aprobar y crear la línea».',
+      'Si la pantalla dice que el líder todavía no tiene cuenta: toca «Invitar al líder», copia el enlace de «Líderes invitados» y mándaselo. Para deshacerlo, abre los tres puntos y toca «Anular la invitación».',
       'Para crear una línea tú: llena «Crear una línea» y toca «Crear la línea».',
       'Para mover a un conductor: arrástralo a otra línea o usa «Mover a…».',
     ],
@@ -2025,6 +2038,18 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
         'Pending requests: approve or decline with one tap.',
       ),
       capLineas(
+        'super-invitar',
+        'en',
+        'A request with the notice that the leader doesn’t have a Divoox Driver account yet and the Invite the leader button.',
+        'If the leader has no account yet, the screen says so and lets you invite them.',
+      ),
+      capLineas(
+        'super-invitados',
+        'en',
+        'The Invited leaders section with the link to send the leader and the lines waiting for them, each with its three-dot menu.',
+        'The lines waiting for their leader and the link you send them.',
+      ),
+      capLineas(
         'super-crear',
         'en',
         'The Create a line form with name, city, type, leader and second emergency contact.',
@@ -2045,6 +2070,7 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
     pasos: [
       'Open “Taxi and mototaxi lines” in the People menu.',
       'In the requests: call the leader, verify their cell phone and tap “Approve and create the line.”',
+      'If the screen says the leader has no account yet: tap “Invite the leader”, copy the link under “Invited leaders” and send it to them. To undo it, open the three dots and tap “Cancel the invitation”.',
       'To create a line yourself: fill in “Create a line” and tap “Create the line.”',
       'To move a driver: drag them to another line or use “Move to…”.',
     ],
