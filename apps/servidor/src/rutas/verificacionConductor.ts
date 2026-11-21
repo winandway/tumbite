@@ -205,7 +205,7 @@ export function fotoSoloEnVivo(paso: PasoVerificacion, en: boolean): string {
  * `null` = todavía no contestó. Sin un «sí», la foto se guarda y la revisa una persona.
  */
 export const VERSION_PERMISO_IA = '2026-11-20';
-async function permisoIa(db: D1Database, conductorId: string): Promise<boolean | null> {
+export async function permisoIa(db: D1Database, conductorId: string): Promise<boolean | null> {
   const f = await db
     .prepare('SELECT acepto FROM verificacion_permiso_ia WHERE conductor_id = ?')
     .bind(conductorId)
@@ -759,3 +759,59 @@ verificacionConductor.get('/admin/verificacion-ia/tablero', async (c) => {
     hoy: { ...gasto, topeMicrodolares: topeVerificacionMicro(c.env) },
   });
 });
+
+/**
+ * C-IA-TODA-FOTO (21 nov 2026, caso del primer líder de El Vigía: sus fotos entraron por la
+ * verificación vieja y la IA no las miró). Con el «sí» del conductor, TODA foto de documento o de cara
+ * pasa por la comprobación automática, venga de la pantalla que venga, y queda en `verificacion_fotos`
+ * (lo que la ficha muestra de cada foto). Sin el «sí», no sale hacia la IA; la revisa una persona.
+ */
+export async function revisarFotoKycConIa(
+  env: Env,
+  db: D1Database,
+  u: { id: string; idioma?: string | null },
+  pieza: string,
+  imagen: { bytes: Uint8Array; mime: string },
+  clave: string,
+): Promise<void> {
+  const paso =
+    pieza === 'selfie' ? 'cara' : pieza === 'doc_frente' || pieza === 'doc_reverso' ? pieza : null;
+  if (!paso || (await permisoIa(db, u.id)) !== true) return;
+  const g = await graciaDe(db, u.id);
+  const usados = await db
+    .prepare(
+      "SELECT count(*) AS n FROM verificacion_fotos WHERE conductor_id = ? AND paso = ? AND ia_color != 'sin_ia'",
+    )
+    .bind(u.id, paso)
+    .first<{ n: number }>();
+  const ia = await comprobarFoto(env, db, {
+    paso,
+    pais: g.pais,
+    ingles: u.idioma === 'en',
+    imagen: { bytes: imagen.bytes, mime: imagen.mime },
+    intentos: Number(usados?.n ?? 0),
+  });
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE verificacion_fotos SET estado = 'reemplazada' WHERE conductor_id = ? AND paso = ? AND estado IN ('vigente', 'repetir')",
+      )
+      .bind(u.id, paso),
+    db
+      .prepare(
+        `INSERT INTO verificacion_fotos (id, conductor_id, paso, clave, pais, ia_color, ia_clase, ia_confianza, ia_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        nuevoId(),
+        u.id,
+        paso,
+        clave,
+        g.pais,
+        ia.color,
+        ia.clase,
+        ia.confianza,
+        ia.lectura ? JSON.stringify(ia.lectura) : '',
+      ),
+  ]);
+}

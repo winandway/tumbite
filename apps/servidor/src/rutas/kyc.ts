@@ -20,7 +20,7 @@ import { enviarCorreo } from '../correo';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
-import { anotarDecisionHumana } from './verificacionConductor';
+import { anotarDecisionHumana, revisarFotoKycConIa } from './verificacionConductor';
 import { asegurarCodigoRepartidor } from './superadmin';
 import {
   checkrConfigurado,
@@ -299,6 +299,11 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
       u.id,
     )
     .run();
+  // C-IA-TODA-FOTO: con el permiso del conductor, la IA también mira la foto que llega por aquí.
+  if (u.rol === 'repartidor')
+    await revisarFotoKycConIa(c.env, db, u, pieza, { bytes, mime: tipo }, clave).catch(
+      (e: unknown) => console.error('kyc: la comprobación automática de la foto falló', e),
+    );
   // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
   return c.json({ ok: true, url: clave }, 201);
 });
