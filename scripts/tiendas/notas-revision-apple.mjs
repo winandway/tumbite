@@ -60,8 +60,8 @@ a) Document assistant with grace period (account #2: home card "Your documents" 
 b) "Review your details" screen before an account is created: shows what was typed; nothing is sent until "Create my account".
 c) "How passengers see you" (Profile): the driver's public profile (first name, face photo, vehicle, plate, verified badge, languages and an optional 120-character note filtered for offensive words). Passengers see it during their trip.
 d) "My line": a driver can join a taxi or moto line; the line leader sees the driver's name and phone only after the driver asks to join.
-e) Support chat (menu > Help), AI WITH EXPLICIT PERMISSION: before the first message it asks permission, naming Google (Gemini). "No": nothing goes to the AI; a person replies. Changeable in Profile. Replies can be reported.
-g) Rides: the assigned driver sees the rider’s entrance photo on "Go pick up", until pickup.
+e) Support chat (menu > Help), AI WITH EXPLICIT PERMISSION: before the first message it asks permission, naming Google (Gemini). "No": nothing goes to the AI; a person replies. Changeable in Profile. Replies are reportable.
+g) Rides: the assigned driver sees the rider’s entrance photo until pickup.
 f) THIRD-PARTY AI, WITH EXPLICIT PERMISSION: before the first verification photo the assistant shows "Before your photos: your permission". It names Google (Gemini) and explains that the ID, license, insurance and face photos are analyzed by that third-party AI service to check document type and legibility, read its details and compare the live face with the ID photo. The driver chooses "Yes, I give my permission" or "No, have a person review them". Without a yes, no photo is sent to the AI service and a person reviews it. The AI never decides: a person on our team approves or rejects every document. We use Google's paid API terms.
 
 ACCOUNT DELETION (inside the app): Profile > the three-dot menu > "Delete my account" > type DELETE. It deletes the account and its personal data, including ID, license, insurance and face photos, verification results and the AI permission (web: https://divoox.com/delete-account).
