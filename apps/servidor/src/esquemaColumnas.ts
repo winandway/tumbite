@@ -30,6 +30,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "clave_hash",
     "activo",
+    "es_prueba",
     "creado_en"
   ],
   "dispositivos": [

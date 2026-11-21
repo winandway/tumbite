@@ -109,35 +109,49 @@ for (const [rol, c] of Object.entries(CUENTAS)) {
   console.log(`${rol}: ${ya ? 'ya existía, al día' : 'creada'} (marcada de prueba)`);
 }
 
+// Quien aprueba: la cuenta principal del equipo (Soporte), como si lo hiciera desde el panel.
+const aprobador = (
+  await sql(
+    "SELECT id FROM usuarios WHERE rol = 'admin' AND activo = 1 AND nombre LIKE 'Soporte%' ORDER BY creado_en LIMIT 1",
+  )
+)[0]?.id;
+if (!aprobador)
+  throw new Error('no hay una cuenta Soporte del equipo para firmar las aprobaciones');
+
 // El conductor, listo para Carro en Novi (la misma receta del guion de Carro del sitio de pruebas).
 const k = ids.conductor;
 const veh = `prueba-novi-carro-${k.slice(0, 8)}`;
 const z = (await sql('SELECT lat, lng FROM zonas WHERE id = ?', [ZONA]))[0];
 if (!z) throw new Error(`no existe la zona ${ZONA}`);
+// El conductor y su carro se apuntan entre sí: primero el conductor sin carro, después el carro, y al
+// final se le pone el carro como activo.
 await sql(
-  `INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id, vehiculo_activo_id)
-   VALUES (?, 0, ?, ?, datetime('now'), ?, ?)
-   ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, vehiculo_activo_id = excluded.vehiculo_activo_id`,
-  [k, z.lat, z.lng, ZONA, veh],
+  `INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id)
+   VALUES (?, 0, ?, ?, datetime('now'), ?)
+   ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id`,
+  [k, z.lat, z.lng, ZONA],
 );
 await sql(
   `INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado, categoria, aprobado_en, aprobado_por)
-   VALUES (?, ?, 'carro', 'Toyota', 'Corolla', 'Blanco', 'PRUEBA1', 'MI', 2021, 4, 'aprobado', 'estandar', datetime('now'), 'equipo')
+   VALUES (?, ?, 'carro', 'Toyota', 'Corolla', 'Blanco', 'PRUEBA1', 'MI', 2021, 4, 'aprobado', 'estandar', datetime('now'), ?)
    ON CONFLICT(id) DO UPDATE SET estado = 'aprobado'`,
-  [veh, k],
+  [veh, k, aprobador],
 );
+await sql('UPDATE repartidores SET vehiculo_activo_id = ? WHERE usuario_id = ?', [veh, k]);
 for (const t of ['registro', 'seguro', 'seguro_pasajeros', 'inspeccion'])
   await sql(
     `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en, revisado_por, revisado_en)
-     VALUES (?, ?, ?, 'prueba', 'aprobado', datetime('now', '+1 year'), 'equipo', datetime('now'))
+     VALUES (?, ?, ?, 'prueba', 'aprobado', datetime('now', '+1 year'), ?, datetime('now'))
      ON CONFLICT(id) DO UPDATE SET estado = 'aprobado', vence_en = excluded.vence_en`,
-    [`${veh}-${t}`, veh, t],
+    [`${veh}-${t}`, veh, t, aprobador],
   );
 await sql(
   `INSERT INTO kyc (usuario_id, estado, doc_tipo, doc_frente, selfie, enviado_en, revisado_en, revisado_por)
-   VALUES (?, 'aprobado', 'licencia', 'prueba', 'prueba', datetime('now'), datetime('now'), 'equipo')
-   ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', revisado_en = datetime('now')`,
-  [k],
+   VALUES (?, 'aprobado', 'licencia', 'prueba', 'prueba', datetime('now'), datetime('now'), ?)
+   ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', revisado_en = datetime('now'),
+     revisado_por = excluded.revisado_por, doc_frente = COALESCE(kyc.doc_frente, excluded.doc_frente),
+     selfie = COALESCE(kyc.selfie, excluded.selfie)`,
+  [k, aprobador],
 );
 await sql(
   `INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, marca, modelo, anio, color, placa, licencia_estado, licencia_vence, antecedentes, antecedentes_fecha)
@@ -151,20 +165,21 @@ const requisitos = await sql(
 for (const r of requisitos)
   await sql(
     `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, vence_en, aprobado_por)
-     VALUES (?, ?, ?, 'aprobado', ?, datetime('now', '+1 year'), 'equipo')
+     VALUES (?, ?, ?, 'aprobado', ?, datetime('now', '+1 year'), ?)
      ON CONFLICT(conductor_id, vehiculo_id, requisito) DO UPDATE SET estado = 'aprobado', vence_en = excluded.vence_en`,
     [
       k,
       r.nivel === 'vehiculo' ? veh : '',
       r.requisito,
       r.requisito === 'identidad' ? 'kyc' : 'revision_manual',
+      aprobador,
     ],
   );
 await sql(
   `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en)
-   VALUES (?, 'carro', 'aprobada', 'equipo', datetime('now'))
+   VALUES (?, 'carro', 'aprobada', ?, datetime('now'))
    ON CONFLICT(conductor_id, servicio_id) DO UPDATE SET estado = 'aprobada'`,
-  [k],
+  [k, aprobador],
 );
 await sql(
   `INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'carro', 1)
@@ -177,8 +192,8 @@ console.log(
 
 // Carro en Novi solo para cuentas de prueba, con su tarifa de prueba.
 await sql(
-  "INSERT OR IGNORE INTO servicios_prueba (servicio_id, zona_id, creado_por) VALUES ('carro', ?, 'equipo')",
-  [ZONA],
+  "INSERT OR IGNORE INTO servicios_prueba (servicio_id, zona_id, creado_por) VALUES ('carro', ?, ?)",
+  [ZONA, aprobador],
 );
 await sql(
   `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,

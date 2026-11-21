@@ -313,6 +313,8 @@ export function evaluarServicio(e: {
   ingles: boolean;
   /** C-PLAZO-PAPELES: la política de su país y, si corre, su plazo para subir papeles. */
   gracia?: Gracia;
+  /** C-CUENTA-PRUEBA: el conductor es cuenta de prueba (ve lo encendido solo para pruebas). */
+  prueba?: boolean;
 }): EstadoConductor {
   const { s, ahora, vehiculo } = e;
   const enPlazo = Boolean(e.gracia?.activa);
@@ -320,7 +322,7 @@ export function evaluarServicio(e: {
   const requisitosFaltantes = requisitosConGracia(e.requisitosFaltantes, e.gracia);
   // El conductor puede conectarse aunque la ciudad aún no tenga tarifa (no le llegará nada hasta
   // que la tenga): C-SERVICIO-SIN-TARIFA solo cambia lo que se le ofrece al cliente.
-  const estadoServicio = estadoSinTarifa(s, ahora, false);
+  const estadoServicio = estadoSinTarifa(s, ahora, false, e.prueba === true);
   const h = e.habilitacion;
   // Comida, compatibilidad: quien ya reparte hoy no tiene fila y sigue habilitado («legado»).
   let habilitacion = h?.estado ?? (s.id === 'comida' ? 'aprobada' : 'sin_solicitar');
@@ -473,6 +475,7 @@ export async function estadoDelConductor(
   const hab = new Map(habs.results.map((h) => [h.servicio_id, h]));
   const pref = new Map(prefs.results.map((p) => [p.servicio_id, p.activa === 1]));
   const ahora = ahoraSql();
+  const prueba = await esCuentaPrueba(db, conductorId);
   const serviciosConductor = lista.map((s) =>
     evaluarServicio({
       s,
@@ -489,6 +492,7 @@ export async function estadoDelConductor(
       versionDriver,
       ingles,
       gracia,
+      prueba,
     }),
   );
   // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): si un servicio no se puede activar con el vehículo

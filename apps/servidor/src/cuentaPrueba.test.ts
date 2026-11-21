@@ -186,3 +186,113 @@ describe('C-CUENTA-PRUEBA · antecedentes de una cuenta de prueba', () => {
     expect(ficha.datos.esPrueba).toBe(true);
   });
 });
+
+/** Un conductor de Carro listo en Novi, con la misma receta del guion de las cuentas de prueba. */
+async function conductorCarroNovi(
+  e: Awaited<ReturnType<typeof escenario>>,
+  nombre: string,
+): Promise<{ id: string; token: string }> {
+  const c = await e.m.cuenta('repartidor', nombre);
+  const db = e.m.DB;
+  const veh = `veh-${c.id.slice(0, 8)}`;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id)
+         VALUES (?, 1, ?, ?, datetime('now'), ?)
+         ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng,
+           ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`,
+      )
+      .bind(c.id, NOVI.lat, NOVI.lng, NOVI.id),
+    db
+      .prepare(
+        `INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
+         VALUES (?, ?, 'carro', 'Toyota', 'Corolla', 'Blanco', ?, 'MI', 2021, 4, 'aprobado')`,
+      )
+      .bind(veh, c.id, `P${c.id.slice(0, 6)}`),
+    db
+      .prepare('UPDATE repartidores SET vehiculo_activo_id = ? WHERE usuario_id = ?')
+      .bind(veh, c.id),
+    ...['registro', 'seguro', 'seguro_pasajeros', 'inspeccion'].map((t) =>
+      db
+        .prepare(
+          `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en)
+           VALUES (?, ?, ?, 'x', 'aprobado', datetime('now', '+1 year'))`,
+        )
+        .bind(`${veh}-${t}`, veh, t),
+    ),
+    db
+      .prepare(
+        `INSERT INTO kyc (usuario_id, estado, doc_tipo, doc_frente, selfie, enviado_en, revisado_en, revisado_por)
+         VALUES (?, 'aprobado', 'licencia', 'x', 'x', datetime('now'), datetime('now'), ?)`,
+      )
+      .bind(c.id, e.admin.id),
+  ]);
+  const { results: req } = await db
+    .prepare(
+      "SELECT r.requisito, d.nivel FROM servicio_requisitos r JOIN requisitos_def d ON d.requisito = r.requisito WHERE r.servicio_id = 'carro'",
+    )
+    .all<{ requisito: string; nivel: string }>();
+  for (const r of req)
+    await db
+      .prepare(
+        `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, vence_en, aprobado_por)
+         VALUES (?, ?, ?, 'aprobado', ?, datetime('now', '+1 year'), ?)`,
+      )
+      .bind(
+        c.id,
+        r.nivel === 'vehiculo' ? veh : '',
+        r.requisito,
+        r.requisito === 'identidad' ? 'kyc' : 'revision_manual',
+        e.admin.id,
+      )
+      .run();
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en)
+         VALUES (?, 'carro', 'aprobada', ?, datetime('now'))`,
+      )
+      .bind(c.id, e.admin.id),
+    db
+      .prepare(
+        "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'carro', 1)",
+      )
+      .bind(c.id),
+  ]);
+  return { id: c.id, token: c.token };
+}
+
+describe('C-CUENTA-PRUEBA · el despacho: solo un conductor de prueba recibe los viajes de prueba', () => {
+  it('con Carro solo para pruebas en Novi, el conductor de prueba es elegible y uno real no', async () => {
+    const e = await escenario();
+    await e.m.DB.prepare(
+      "INSERT INTO servicios_prueba (servicio_id, zona_id) VALUES ('carro', 'US-MI-NOVI')",
+    ).run();
+    const real = (await conductorCarroNovi(e, 'Conductor Real')).id;
+    const cuentaPrueba = await conductorCarroNovi(e, 'Soporte Prueba Conductor');
+    const prueba = cuentaPrueba.id;
+    await e.marcar(prueba, true);
+    // En la app Driver, Carro sale disponible y activable para la cuenta de prueba.
+    const carroEnApp = (
+      (await e.m.llamar('GET', '/datos/conductor/servicios', undefined, cuentaPrueba.token)).datos
+        .servicios as { servicioId: string; estadoServicio: string; puedeActivar: boolean }[]
+    ).find((x) => x.servicioId === 'carro');
+    expect(carroEnApp).toMatchObject({ estadoServicio: 'disponible', puedeActivar: true });
+    const elegibles = async () =>
+      (
+        await e.m.DB.prepare(
+          "SELECT conductor_id FROM conductores_elegibles WHERE servicio_id = 'carro' AND zona_id = 'US-MI-NOVI'",
+        ).all<{ conductor_id: string }>()
+      ).results.map((r) => r.conductor_id);
+    expect(await elegibles()).toEqual([prueba]);
+    // Sin el encendido de prueba, nadie (Novi sigue «muy pronto» para el público).
+    await e.m.DB.prepare('DELETE FROM servicios_prueba').run();
+    expect(await elegibles()).toEqual([]);
+    // Abierto al público, los dos (la marca no quita nada en una ciudad abierta).
+    await e.m.DB.prepare(
+      "UPDATE servicios_zona SET estado = 'disponible' WHERE servicio_id = 'carro' AND zona_id = 'US-MI-NOVI'",
+    ).run();
+    expect((await elegibles()).sort()).toEqual([prueba, real].sort());
+  });
+});

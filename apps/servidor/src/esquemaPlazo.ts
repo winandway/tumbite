@@ -55,7 +55,12 @@ export async function rehacerElegibilidad(db: D1Database): Promise<boolean> {
     )
     .bind(...PIEZAS)
     .all<{ name: string; sql: string | null }>();
-  const viejas = results.filter((r) => !String(r.sql).includes('politica_requisitos'));
+  // C-CUENTA-PRUEBA (21 nov 2026): la vista sin «servicios_prueba» también se rehace.
+  const viejas = results.filter(
+    (r) =>
+      !String(r.sql).includes('politica_requisitos') ||
+      (r.name === 'conductores_elegibles' && !String(r.sql).includes('servicios_prueba')),
+  );
   // Lo que todavía no existe lo crea el arranque de siempre (schema.sql y asegurarFase3).
   if (!viejas.length) return false;
   await db.batch([

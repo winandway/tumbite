@@ -153,7 +153,21 @@ try {
     await C('POST', '/datos/repartidor/terminos', { version: '2026-10-18' }),
     'términos del conductor',
   );
-  ok(await C('POST', '/datos/repartidor/conectar', { conectado: true, ...RECOGIDA }), 'conectarse');
+  let conexion = await C('POST', '/datos/repartidor/conectar', { conectado: true, ...RECOGIDA });
+  if (conexion.estado === 409 && conexion.d.campo === 'selfie') {
+    // La foto de control (de frente y girando), como en la app. En la cuenta de prueba va un dibujo.
+    const dibujo = new Uint8Array(
+      readFileSync(join(RAIZ, 'e2e', 'recorrido', 'fotos', 'bolsa-recogida.jpg')),
+    );
+    for (const pose of ['frente', 'giro'])
+      ok(
+        await C('POST', `/datos/kyc/selfie-control?pose=${pose}`, dibujo),
+        `foto de control (${pose})`,
+      );
+    anotar('pidió la foto de control al conectarse y se tomó (de frente y girando)');
+    conexion = await C('POST', '/datos/repartidor/conectar', { conectado: true, ...RECOGIDA });
+  }
+  ok(conexion, 'conectarse');
   ok(
     await C('POST', '/datos/repartidor/ubicacion', { lat: RECOGIDA.lat, lng: RECOGIDA.lng }),
     'ubicación',

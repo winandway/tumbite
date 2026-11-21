@@ -37,10 +37,17 @@ SELECT d.usuario_id AS conductor_id, s.id AS servicio_id, v.id AS vehiculo_id, d
   JOIN vehiculos v             ON v.id = d.vehiculo_activo_id AND v.conductor_id = d.usuario_id
                               AND (v.estado = 'aprobado' OR (pp.conductor_id IS NOT NULL
                                    AND v.estado NOT IN ('rechazado', 'suspendido', 'retirado')))
-  JOIN servicios_zona sz       ON sz.zona_id = d.zona_id AND sz.estado = 'disponible'
-                              AND (sz.activo_desde IS NULL OR sz.activo_desde <= datetime('now'))
-                              AND (sz.activo_hasta IS NULL OR sz.activo_hasta > datetime('now'))
-  JOIN servicios s             ON s.id = sz.servicio_id AND s.estado = 'disponible'
+  -- C-CUENTA-PRUEBA: el servicio abierto en la ciudad, o encendido ahí SOLO para pruebas
+  -- (servicios_prueba) si el conductor es cuenta de prueba (y no está suspendido en la ciudad).
+  JOIN servicios s             ON s.estado = 'disponible' AND (
+         EXISTS (SELECT 1 FROM servicios_zona sz
+                  WHERE sz.zona_id = d.zona_id AND sz.servicio_id = s.id AND sz.estado = 'disponible'
+                    AND (sz.activo_desde IS NULL OR sz.activo_desde <= datetime('now'))
+                    AND (sz.activo_hasta IS NULL OR sz.activo_hasta > datetime('now')))
+      OR (u.es_prueba = 1
+          AND EXISTS (SELECT 1 FROM servicios_prueba sp WHERE sp.servicio_id = s.id AND sp.zona_id = d.zona_id)
+          AND NOT EXISTS (SELECT 1 FROM servicios_zona sx
+                           WHERE sx.zona_id = d.zona_id AND sx.servicio_id = s.id AND sx.estado = 'suspendido')))
   JOIN servicios_implementados si ON si.servicio_id = s.id
   JOIN servicio_vehiculos sv   ON sv.servicio_id = s.id AND sv.vehiculo_tipo = v.tipo
                               AND (sv.anio_minimo IS NULL OR v.anio >= sv.anio_minimo)

@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   zona_id TEXT,
   clave_hash TEXT NOT NULL,
   activo INTEGER NOT NULL DEFAULT 1,
+  -- C-CUENTA-PRUEBA: cuenta de prueba del equipo (también en COLUMNAS para las bases que ya existen).
+  es_prueba INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
