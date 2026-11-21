@@ -123,3 +123,9 @@ export function paisDePrefijo(prefijo: string): string | null {
   const p = prefijo.replace(/\D/g, '');
   return Object.values(PAISES).find((d) => d.prefijo === p)?.iso ?? null;
 }
+
+/**
+ * C-TERRITORIO-OFICIAL: los países con su división oficial cargada (contornos en
+ * `/territorio/<ISO>/`). Liviano, para el panel; `territorio.ts` tiene los datos.
+ */
+export const PAISES_CON_TERRITORIO_OFICIAL: readonly string[] = ['VE'];

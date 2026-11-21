@@ -89,7 +89,7 @@ export function AreasCiudad({
   usuario,
   idioma,
 }: {
-  zona: { id: string; lat: number; lng: number };
+  zona: { id: string; lat: number; lng: number; pais?: string };
   usuario: Usuario;
   idioma: Idioma;
 }) {
@@ -202,6 +202,7 @@ export function AreasCiudad({
         <div className="tarjeta-form">
           <EditorArea
             centro={zona}
+            pais={zona.pais}
             poligono={editando.poligono}
             otras={otras(editando.id)}
             cambiar={(p) => setEditando({ ...editando, poligono: p })}
@@ -263,6 +264,7 @@ export function AreasCiudad({
         </label>
         <EditorArea
           centro={zona}
+          pais={zona.pais}
           poligono={nueva.poligono}
           otras={otras(null)}
           cambiar={(p) => b.cambiar('poligono', p)}

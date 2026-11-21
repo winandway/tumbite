@@ -153,6 +153,11 @@ export type MapaG = {
     evento: string,
     cb: (e: { latLng?: { lat(): number; lng(): number } }) => void,
   ): Escuchador;
+  /** C-TERRITORIO-OFICIAL: la capa de datos (los límites oficiales de los municipios). */
+  data?: {
+    addGeoJson(g: unknown): unknown[];
+    setStyle(s: Record<string, unknown>): void;
+  };
 };
 type MarcaG = {
   setMap(m: MapaG | null): void;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Idioma, Poligono } from '@tumbite/compartido';
-import { enIdioma } from '@tumbite/compartido';
+import { PAISES_CON_TERRITORIO_OFICIAL, enIdioma } from '@tumbite/compartido';
 import {
   type GoogleMapsApi,
   type MapaG,
@@ -43,11 +43,41 @@ export type OtraArea = { id: string; nombre: string; poligono: Poligono };
 
 type PropsEditor = {
   centro: { lat: number; lng: number };
+  /** C-TERRITORIO-OFICIAL: el país de la ciudad; si tiene su división oficial, se ven los municipios. */
+  pais?: string;
   poligono: Poligono;
   otras: OtraArea[];
   cambiar: (p: Poligono) => void;
   idioma: Idioma;
 };
+
+/**
+ * C-TERRITORIO-OFICIAL (21 nov 2026): los límites oficiales de los municipios del país de la ciudad
+ * (INE vía OCHA en Venezuela), como base del mapa para dibujar áreas. Un archivo estático del sitio,
+ * que se pide solo al abrir el editor. null si el país no tiene su división cargada o no se pudo leer.
+ */
+export function useMunicipios(pais: string | undefined): unknown {
+  const [datos, setDatos] = useState<unknown>(null);
+  useEffect(() => {
+    const iso = (pais ?? '').toUpperCase();
+    if (!PAISES_CON_TERRITORIO_OFICIAL.includes(iso)) return;
+    let vivo = true;
+    fetch(`/territorio/${iso}/municipios.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<unknown>) : null))
+      .then((d) => {
+        if (vivo && d) setDatos(d);
+      })
+      .catch(() => {
+        // Sin la capa de municipios el mapa sigue sirviendo igual.
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [pais]);
+  return datos;
+}
+
+const ESTILO_MUNICIPIOS = { color: '#666B73', weight: 1, dashArray: '4 4', fill: false };
 
 export function EditorArea(props: PropsEditor) {
   const llave = (import.meta.env.VITE_GOOGLE_MAPS_WEB_KEY as string | undefined) ?? '';
@@ -69,7 +99,9 @@ function EditorAreaGoogle({
   idioma,
   llave,
   mapId,
+  pais,
 }: PropsEditor & { llave: string; mapId: string }) {
+  const municipios = useMunicipios(pais);
   const t = enIdioma(T, idioma);
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaG | null>(null);
@@ -118,6 +150,20 @@ function EditorAreaGoogle({
     // El centro solo importa al abrir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tema]);
+
+  // Los límites oficiales de los municipios, finos y punteados, debajo de todo (no se tocan).
+  useEffect(() => {
+    const m = mapa.current;
+    if (!listo || !m?.data || !municipios) return;
+    m.data.addGeoJson(municipios);
+    m.data.setStyle({
+      strokeColor: ESTILO_MUNICIPIOS.color,
+      strokeWeight: ESTILO_MUNICIPIOS.weight,
+      strokeOpacity: 0.7,
+      fillOpacity: 0,
+      clickable: false,
+    });
+  }, [listo, municipios]);
 
   useEffect(() => {
     const g = api.current;
@@ -227,8 +273,10 @@ function Botones({
   );
 }
 
-function EditorAreaLeaflet({ centro, poligono, otras, cambiar, idioma }: PropsEditor) {
+function EditorAreaLeaflet({ centro, poligono, otras, cambiar, idioma, pais }: PropsEditor) {
   const t = enIdioma(T, idioma);
+  const municipios = useMunicipios(pais);
+  const [mapaListo, setMapaListo] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<import('leaflet').Map | null>(null);
   const capa = useRef<import('leaflet').LayerGroup | null>(null);
@@ -260,6 +308,7 @@ function EditorAreaLeaflet({ centro, poligono, otras, cambiar, idioma }: PropsEd
       mapa.current = m;
       capa.current = leaflet.layerGroup().addTo(m);
       pintar();
+      setMapaListo(true);
     })();
     return () => {
       vivo = false;
@@ -269,6 +318,23 @@ function EditorAreaLeaflet({ centro, poligono, otras, cambiar, idioma }: PropsEd
     // El centro solo importa al abrir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // C-TERRITORIO-OFICIAL: los límites oficiales de los municipios, finos y punteados, sin tocarse.
+  useEffect(() => {
+    const leaflet = L.current;
+    const m = mapa.current;
+    if (!mapaListo || !leaflet || !m || !municipios) return;
+    const capaMunicipios = leaflet
+      .geoJSON(municipios as Parameters<typeof leaflet.geoJSON>[0], {
+        style: ESTILO_MUNICIPIOS,
+        interactive: false,
+      })
+      .addTo(m);
+    capaMunicipios.bringToBack();
+    return () => {
+      capaMunicipios.remove();
+    };
+  }, [mapaListo, municipios]);
 
   function pintar() {
     const leaflet = L.current;

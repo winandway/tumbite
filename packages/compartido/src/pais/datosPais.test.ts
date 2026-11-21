@@ -121,3 +121,18 @@ describe('el registro valida y repasa el celular con su país', async () => {
     expect(filas[0]?.valor).toMatch(/^\+58 424/);
   });
 });
+
+describe('C-TERRITORIO-OFICIAL · la lista liviana del panel coincide con los datos', () => {
+  it('cada país con territorio tiene sus contornos de municipios en el sitio', async () => {
+    const { PAISES_CON_TERRITORIO_OFICIAL } = await import('./paises');
+    const { PAISES_CON_TERRITORIO } = await import('./territorio');
+    expect([...PAISES_CON_TERRITORIO_OFICIAL].sort()).toEqual([...PAISES_CON_TERRITORIO].sort());
+    const { existsSync } = await import('node:fs');
+    for (const iso of PAISES_CON_TERRITORIO)
+      expect(
+        existsSync(
+          join(__dirname, `../../../../apps/panel/public/territorio/${iso}/municipios.json`),
+        ),
+      ).toBe(true);
+  });
+});
