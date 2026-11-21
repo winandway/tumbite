@@ -3891,6 +3891,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## C-PAQUETE-DIETA (21 nov 2026, orden de Gerencia) — todos los países
+
+- **Qué pasó:** el paquete del sitio llegó a 120,2 MB con las capturas de «Editar dirección» y el control C-PAQUETE-TOPE (120 MB) frenó la publicación de `9390004` a media entrega. La plataforma falla con «Memory limit exceeded» a 133 MB.
+- **Cuánto pesa cada parte (medido el 21 nov, 119,4 MB):** páginas prerenderizadas 40,2 MB (560 páginas, unos 72 KB cada una: la barra lateral de Docs se repite en todas); imágenes WebP de Docs 39,2; PDF de presentaciones 13,6; código JavaScript 15,2 (servidor 4, tres apps web y panel); fuentes 6,3; PNG 3,9.
+- **Arreglo:** los ocho PDF de presentaciones salieron del paquete. El original vive en `docs/presentaciones-pdf/` (ahí los deja `scripts/presentaciones/generar.mjs`), `node scripts/docs/subir-presentaciones.mjs` los sube al almacén de los dos sitios (`docs-pdf/<nombre>.pdf`) y el servidor los sirve en la MISMA dirección de siempre, `/docs/presentaciones/<nombre>.pdf` (`apps/servidor/src/rutas/fotos.ts`): ningún enlace compartido se rompe. Además, 42 imágenes de Docs de más de 80 KB recomprimidas a calidad 70. Paquete: de 120,2 a unos 106 MB.
+- **Candados:** (1) `scripts/verificar-paquete.mjs` baja el tope a 112 MB (8 de margen frente a 120). (2) `apps/panel/src/paqueteDieta.test.ts`, que corre en cada commit: lo público pesa menos de 46 MB (hoy 42), ningún PDF, video ni comprimido viaja en el paquete y ningún archivo público pasa de 400 KB. Visto en rojo metiendo un PDF en lo público. (3) `rutas/fotos.test.ts`: la ruta del PDF.
+- **Qué NO tocar:** no subir los topes para que pase una publicación: se adelgaza o se manda al almacén. Al regenerar una presentación, correr `subir-presentaciones.mjs` (si no, el sitio sirve la vieja). La segunda parte de la dieta está en la fila.
+
 ## Sexto dictamen del auditor (21 nov 2026): capturas del chat y cuenta 2 de revisión — todos los países
 
 - **B1, política:** la captura que alguien adjunta al chat de soporte también la lee Google Gemini (`camila/cerebro.ts`, `camila/fallos.ts`), y la política decía que Gemini solo recibía texto y que la captura «solo la ve nuestro equipo». Corregidas las dos frases en español y en inglés (`legales.ts`, fecha 21 nov) con prueba en `legales.test.tsx`. Regla: cada dato nuevo que se le mande a un proveedor de IA entra primero a la política.

@@ -162,6 +162,38 @@ media.get('/media/docs-grande/:archivo', async (c) => {
 });
 
 /**
+ * C-PAQUETE-DIETA (21 nov 2026): las presentaciones en PDF de Docs. Viven en el almacén del sitio
+ * (`docs-pdf/<nombre>.pdf`), no en el paquete: eran 14 MB de los 120 que admite la plataforma y el
+ * paquete se quedó sin publicar. La dirección es la de siempre (/docs/presentaciones/<nombre>.pdf),
+ * así ningún enlace compartido se rompe. Las sube `scripts/docs/subir-presentaciones.mjs`. Solo lee.
+ */
+const PDF_DOCS = /^[a-z0-9-]{1,100}\.pdf$/;
+
+media.on(['GET', 'HEAD'], '/docs/presentaciones/:archivo', async (c) => {
+  const { archivo } = c.req.param();
+  if (!PDF_DOCS.test(archivo)) return c.text('No encontrado', 404);
+  const clave = `docs-pdf/${archivo}`;
+  const headers = new Headers({
+    'content-type': 'application/pdf',
+    'content-disposition': `inline; filename="${archivo}"`,
+    'x-content-type-options': 'nosniff',
+    // El nombre no lleva huella: una hora de caché y la etiqueta para revalidar.
+    'cache-control': 'public, max-age=3600',
+  });
+  if (c.req.method === 'HEAD') {
+    const dato = await almacen(c.env).head(clave);
+    if (!dato) return c.text('No encontrado', 404);
+    if (typeof dato.size === 'number') headers.set('content-length', String(dato.size));
+    headers.set('etag', dato.httpEtag);
+    return new Response(null, { headers });
+  }
+  const obj = await almacen(c.env).get(clave);
+  if (!obj) return c.text('No encontrado', 404);
+  headers.set('etag', obj.httpEtag);
+  return new Response(obj.body, { headers });
+});
+
+/**
  * C-DOCS-VIDEO (19 nov 2026): los videos de Docs. Viven en el almacén del sitio
  * (`docs-video/<nombre>-<huella>.mp4`), nunca en el paquete; los sube `scripts/docs/subir-video.mjs`.
  * Se sirven por PARTES (cabecera Range): el iPhone no reproduce un video si el servidor no las

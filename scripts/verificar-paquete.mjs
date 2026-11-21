@@ -119,7 +119,9 @@ if (
 
 // C-PAQUETE-TOPE (15 nov 2026): a 133 MB la plataforma falló con «Memory limit exceeded» y el sitio
 // siguió sirviendo la versión anterior sin avisar; a 109 MB publicaba bien. Tope con margen.
-const topeMb = Number(process.env.PAQUETE_TOPE_MB ?? 120);
+// C-PAQUETE-DIETA (21 nov 2026): con 120 de tope el paquete llegó a 120,2 y se quedó sin publicar a
+// media entrega. El tope baja a 112: avisa con 8 MB de margen frente a lo que la plataforma aguanta.
+const topeMb = Number(process.env.PAQUETE_TOPE_MB ?? 112);
 if (bytes > topeMb * 1024 * 1024)
   problemas.push(
     `el paquete pesa ${(bytes / 1048576).toFixed(1)} MB y el tope es ${topeMb} MB: la plataforma no lo publicaría (mira qué creció: fuentes, imágenes, PDF)`,

@@ -250,6 +250,23 @@ describe('NXT-7 · C-FOTOS-LIVIANAS: tres tamaños en WebP', () => {
     expect((await ver('/media/docs-grande/sin-huella.webp')).status).toBe(404);
   });
 
+  // C-PAQUETE-DIETA (21 nov 2026): las presentaciones en PDF salen del almacén, en su dirección de siempre.
+  it('sirve la presentación en PDF desde el almacén en /docs/presentaciones, y nada con nombres raros', async () => {
+    const r2 = crearAlmacenPruebas();
+    const m = mundo({ BUCKET: r2.bucket });
+    await r2.bucket.put('docs-pdf/divoox-clientes-es.pdf', new Uint8Array([37, 80, 68, 70, 45]));
+    const ver = (url: string, method = 'GET') =>
+      app.request(url, { method }, { DB: m.DB, BUCKET: r2.bucket });
+    const ok = await ver('/docs/presentaciones/divoox-clientes-es.pdf');
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('content-type')).toBe('application/pdf');
+    expect(new Uint8Array(await ok.arrayBuffer())).toHaveLength(5);
+    expect((await ver('/docs/presentaciones/divoox-clientes-es.pdf', 'HEAD')).status).toBe(200);
+    expect((await ver('/docs/presentaciones/no-existe.pdf')).status).toBe(404);
+    expect((await ver('/docs/presentaciones/..%2Fsecreto.pdf')).status).toBe(404);
+    expect((await ver('/docs/presentaciones/Con-Mayuscula.PDF')).status).toBe(404);
+  });
+
   // C-DOCS-VIDEO (19 nov 2026): el video de Docs se sirve por partes desde el almacén.
   describe('el video de Docs', () => {
     const VIDEO = Uint8Array.from({ length: 1000 }, (_, i) => i % 251);

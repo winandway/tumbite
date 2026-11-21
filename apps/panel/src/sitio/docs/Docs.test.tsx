@@ -163,8 +163,16 @@ describe('Docs', { timeout: 30_000 }, () => {
       expect(cursos.id).toBe('courses');
       const pdfs = cursos.guias.flatMap((g) => (g.descargas ?? []).map((d) => d.href));
       expect(new Set(pdfs).size).toBe(4);
-      for (const href of pdfs)
-        expect(existsSync(join(process.cwd(), 'apps', 'panel', 'public', href)), href).toBe(true);
+      // C-PAQUETE-DIETA: los PDF ya no van en el paquete; el servidor los sirve desde el almacén en
+      // esta misma dirección y el original vive en docs/presentaciones-pdf/.
+      for (const href of pdfs) {
+        expect(href).toMatch(/^\/docs\/presentaciones\/[a-z0-9-]+\.pdf$/);
+        const nombre = href.split('/').pop()!;
+        expect(existsSync(join(process.cwd(), 'docs', 'presentaciones-pdf', nombre)), href).toBe(
+          true,
+        );
+        expect(existsSync(join(process.cwd(), 'apps', 'panel', 'public', href)), href).toBe(false);
+      }
     }
   });
 

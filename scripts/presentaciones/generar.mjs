@@ -3,14 +3,16 @@
 //   - restaurantes: láminas para las charlas (qué gana el restaurante con cada herramienta);
 //   - vendedores: cómo vender Divoox y acompañar el alta de un restaurante (sin inventar precios);
 //   - repartidores: conectarse, ofertas, turnos, destacado, seguridad y ganancias.
-// Salen en español e inglés a apps/panel/public/docs/presentaciones/ (se publican con la web).
+// Salen en español e inglés a docs/presentaciones-pdf/. NO van en el paquete del sitio
+// (C-PAQUETE-DIETA): se suben al almacén con `node scripts/docs/subir-presentaciones.mjs` y el
+// servidor las sirve en la misma dirección de siempre, /docs/presentaciones/<nombre>.pdf.
 // Uso: node scripts/presentaciones/generar.mjs
 import { chromium } from '@playwright/test';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const RAIZ = process.cwd();
-const SALIDA = join(RAIZ, 'apps', 'panel', 'public', 'docs', 'presentaciones');
+const SALIDA = join(RAIZ, 'docs', 'presentaciones-pdf');
 mkdirSync(SALIDA, { recursive: true });
 
 // Rutas fijas de este mismo guion (capturas y logos del repositorio), nunca de afuera.
