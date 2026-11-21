@@ -1645,7 +1645,11 @@ servicios.put('/admin/cumplimientos/:conductor/:requisito', async (c) => {
     .first<{ nivel: string; verifica: string }>();
   if (!def) throw new ErrorDatos('Ese requisito no existe.', undefined, 404);
   // La identidad y los antecedentes los aprueban sus proveedores (KYC y Checkr), no una persona.
-  if (def.verifica === 'kyc' || def.verifica === 'antecedentes')
+  // C-CUENTA-PRUEBA: en una cuenta marcada de prueba el equipo puede aprobar los antecedentes (Checkr
+  // no corre sobre cuentas de prueba). La identidad sigue yendo por «Verificaciones».
+  const deUnaCuentaPrueba =
+    def.verifica === 'antecedentes' && (await esCuentaPrueba(db, conductor));
+  if (def.verifica === 'kyc' || (def.verifica === 'antecedentes' && !deUnaCuentaPrueba))
     throw new ErrorDatos(
       'Este requisito lo aprueba la verificación automática, no el panel.',
       undefined,

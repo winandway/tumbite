@@ -151,3 +151,38 @@ describe('C-CUENTA-PRUEBA · los listados del panel: «Reales» por defecto', ()
     ]);
   });
 });
+
+describe('C-CUENTA-PRUEBA · antecedentes de una cuenta de prueba', () => {
+  it('el equipo no aprueba a mano los antecedentes de un conductor real, pero sí los de una cuenta de prueba', async () => {
+    const { m, admin, marcar } = await escenario();
+    const real = await m.cuenta('repartidor', 'Conductor Real');
+    const prueba = await m.cuenta('repartidor', 'Soporte Prueba Conductor');
+    await marcar(prueba.id, true);
+    const aprobar = (id: string) =>
+      m.llamar(
+        'PUT',
+        `/datos/admin/cumplimientos/${id}/antecedentes_pasajeros`,
+        { estado: 'aprobado' },
+        admin.token,
+      );
+    expect((await aprobar(real.id)).estado).toBe(409);
+    const r = await aprobar(prueba.id);
+    expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+    // La identidad sigue yendo por «Verificaciones» (KYC), también en una cuenta de prueba.
+    const kyc = await m.llamar(
+      'PUT',
+      `/datos/admin/cumplimientos/${prueba.id}/identidad`,
+      { estado: 'aprobado' },
+      admin.token,
+    );
+    expect(kyc.estado).toBe(409);
+    // La ficha de pasajeros del conductor dice si es de prueba.
+    const ficha = await m.llamar(
+      'GET',
+      `/datos/admin/conductores/${prueba.id}/pasajeros`,
+      undefined,
+      admin.token,
+    );
+    expect(ficha.datos.esPrueba).toBe(true);
+  });
+});

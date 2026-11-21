@@ -17,6 +17,7 @@ function servidor(
     papeles?: unknown[];
     vehiculos?: unknown[];
     servicios?: unknown[];
+    esPrueba?: boolean;
   } = {},
 ) {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -77,6 +78,7 @@ function servidor(
     if (u.endsWith('/datos/admin/conductores/c1/pasajeros'))
       return responder({
         nombre: 'Conductor Uno',
+        esPrueba: op.esPrueba === true,
         fechaNacimiento: '1990-01-01',
         ciudad: { id: 'VE-CCS-PRUEBAS', nombre: 'Caracas (pruebas)', pais: 'VE' },
         perfil: {},
@@ -508,5 +510,34 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
         tasaFija: 950.5,
       }),
     );
+  });
+
+  // C-CUENTA-PRUEBA: el botón de aprobar antecedentes sale solo en una cuenta de prueba.
+  it('solo en una cuenta de prueba sale «Aprobar antecedentes (cuenta de prueba)» y aprueba los dos', async () => {
+    for (const esPrueba of [false, true]) {
+      const llamadas: Llamada[] = [];
+      servidor(llamadas, { esPrueba });
+      const { unmount } = render(<SuperMoto base="/panel/control-x" idioma="es" />);
+      const fila = await screen.findByTestId('papel-doc1');
+      await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
+      const detalle = await screen.findByTestId('detalle-conductor');
+      await within(detalle).findByText('Identidad verificada');
+      const boton = within(detalle).queryByTestId('aprobar-antecedentes-prueba');
+      if (!esPrueba) {
+        expect(boton).toBeNull();
+        unmount();
+        continue;
+      }
+      expect(within(detalle).getByTestId('etiqueta-prueba').textContent).toBe('Prueba');
+      await userEvent.click(boton!);
+      await waitFor(() =>
+        expect(
+          llamadas
+            .filter((l) => l.metodo === 'PUT')
+            .map((l) => l.url.replace(/.*cumplimientos\/c1\//, '')),
+        ).toEqual(['antecedentes_pasajeros', 'historial_manejo']),
+      );
+      unmount();
+    }
   });
 });

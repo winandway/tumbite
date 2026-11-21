@@ -19,6 +19,7 @@ import {
 import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { EtiquetaPrueba } from './CuentasPrueba';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { Pastilla } from './armazon/Piezas';
 import { pedir } from './api';
@@ -211,6 +212,7 @@ const T = {
       inspeccion_vehiculo: 'Revisión del vehículo',
     } as Record<string, string>,
     aprobarEdad: 'Aprobar la edad',
+    aprobarAntecedentesPrueba: 'Aprobar antecedentes (cuenta de prueba)',
     aprobarCasco: 'Aprobar el casco del pasajero',
     cascoSinMoto: 'El casco se aprueba sobre su moto activa: primero hay que aprobar la moto.',
     habilitar: 'Habilitar para Moto',
@@ -448,6 +450,7 @@ const T = {
       inspeccion_vehiculo: 'Vehicle inspection',
     } as Record<string, string>,
     aprobarEdad: 'Approve age',
+    aprobarAntecedentesPrueba: 'Approve background check (test account)',
     aprobarCasco: 'Approve passenger helmet',
     cascoSinMoto: 'The helmet is approved on the active motorbike: approve the motorbike first.',
     habilitar: 'Approve for Moto',
@@ -1248,6 +1251,8 @@ const servicioDelPapel = (tipo: string) => (tipo === 'licencia_conducir' ? 'carr
 
 type DetalleConductor = {
   nombre: string;
+  /** C-CUENTA-PRUEBA: en una cuenta de prueba el equipo aprueba los antecedentes. */
+  esPrueba?: boolean;
   fechaNacimiento: string | null;
   ciudad: { id: string; nombre: string; pais: string };
   identidad: string;
@@ -1677,7 +1682,7 @@ function Conductor({
     <div className="tarjeta-form" data-testid="detalle-conductor">
       <div className="fila-botones">
         <h2>
-          {t.conductor}: {d?.nombre ?? '…'}
+          {t.conductor}: {d?.nombre ?? '…'} <EtiquetaPrueba si={d?.esPrueba} idioma={idioma} />
         </h2>
         <button type="button" className="boton secundario" onClick={alCerrar}>
           {t.cerrarConductor}
@@ -1756,6 +1761,26 @@ function Conductor({
           {moto ? bloqueServicio(moto, t.habilitacion, t.nadaFalta) : null}
           {carro ? bloqueServicio(carro, t.habilitacionCarro, t.nadaFaltaCarro) : null}
           <div className="fila-botones">
+            {d.esPrueba ? (
+              <button
+                type="button"
+                className="boton exito"
+                data-testid="aprobar-antecedentes-prueba"
+                onClick={() =>
+                  void (async () => {
+                    for (const r of ['antecedentes_pasajeros', 'historial_manejo'])
+                      await hacer(
+                        'PUT',
+                        `/datos/admin/cumplimientos/${id}/${r}`,
+                        { estado: 'aprobado' },
+                        t.hecho,
+                      );
+                  })()
+                }
+              >
+                {t.aprobarAntecedentesPrueba}
+              </button>
+            ) : null}
             <button
               type="button"
               className="boton exito"

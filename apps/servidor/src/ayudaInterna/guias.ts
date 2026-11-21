@@ -2096,6 +2096,7 @@ const cuentasPrueba: Record<IdiomaAyuda, Guia> = {
       'Los reportes, los conteos del resumen y los registros nuevos dejan fuera las cuentas de prueba, para que los números sean los de clientes de verdad.',
       'Un servicio se puede encender en una ciudad solo para cuentas de prueba (por ejemplo, Carro en una ciudad donde todavía no está abierto). Esas cuentas lo ven y lo piden; el resto de la ciudad no lo ve ni lo puede pedir. Hace falta además su tarifa en esa ciudad.',
       'Marcar o quitar la marca queda en la auditoría con tu nombre, la hora, el antes y el después. Solo el equipo puede hacerlo.',
+      'En Estados Unidos, los antecedentes de un conductor los aprueba la verificación automática. En una cuenta de prueba no corre, así que en la ficha del conductor (Moto y Carro → Ver lo que le falta) sale el botón «Aprobar antecedentes (cuenta de prueba)». En una cuenta real ese botón no aparece. La identidad se sigue aprobando en «Verificaciones».',
     ],
     capturas: [
       {
@@ -2131,6 +2132,7 @@ const cuentasPrueba: Record<IdiomaAyuda, Guia> = {
       'Reports, summary counts and new sign-ups leave test accounts out, so the numbers are those of real customers.',
       'A service can be turned on in a city for test accounts only (for example, Car in a city where it isn’t open yet). Those accounts see it and order it; the rest of the city doesn’t see it and can’t order it. It also needs its rate in that city.',
       'Marking or unmarking goes into the audit log with your name, the time, the before and after. Only the team can do it.',
+      'In the United States, a driver’s background check is approved by the automatic verification. It doesn’t run on a test account, so the driver’s profile (Moto and Car → See what’s missing) shows the “Approve background check (test account)” button. On a real account that button doesn’t appear. Identity is still approved under “Verifications.”',
     ],
     capturas: [
       {

@@ -508,9 +508,11 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
   const db = base(c);
   const id = c.req.param('id');
   const persona = await db
-    .prepare("SELECT nombre, fecha_nacimiento FROM usuarios WHERE id = ? AND rol = 'repartidor'")
+    .prepare(
+      "SELECT nombre, fecha_nacimiento, es_prueba FROM usuarios WHERE id = ? AND rol = 'repartidor'",
+    )
     .bind(id)
-    .first<{ nombre: string; fecha_nacimiento: string | null }>();
+    .first<{ nombre: string; fecha_nacimiento: string | null; es_prueba: number | null }>();
   if (!persona) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
   const donde = await paisDelConductor(db, id);
   const [estado, { results: documentos }, kycFila] = await Promise.all([
@@ -525,6 +527,8 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
   ]);
   return c.json({
     nombre: persona.nombre,
+    // C-CUENTA-PRUEBA: en una cuenta de prueba el equipo puede aprobar los antecedentes.
+    esPrueba: Number(persona.es_prueba) === 1,
     fechaNacimiento: persona.fecha_nacimiento,
     ciudad: { id: donde.zona_id, nombre: donde.nombre, pais: donde.pais },
     perfil: perfilPasajeros(donde.pais),
