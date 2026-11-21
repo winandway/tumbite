@@ -908,6 +908,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esta invitación ya no está vigente.', 'This invitation is no longer active.'],
   [
+    'Tu proveedor de correo no aceptó el mensaje por ahora. Intenta otra vez mañana; si sigue sin llegar, revisa que tu correo esté bien escrito o escríbenos a soporte.',
+    'Your email provider didn’t accept the message for now. Try again tomorrow; if it still doesn’t arrive, check that your email is spelled right or contact support.',
+  ],
+  [
     'Escribe el motivo: le llega a la persona para que lo corrija.',
     'Write the reason: the person receives it so they can fix it.',
   ],

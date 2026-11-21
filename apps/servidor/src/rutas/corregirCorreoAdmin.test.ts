@@ -143,7 +143,8 @@ describe('C-CORREGIR-CORREO: corregir el correo de una cuenta desde el superadmi
     );
     expect(re.estado).toBe(422);
     const ficha = await m.llamar('GET', `/datos/admin/clientes/${cli.id}`, undefined, total.token);
-    expect(ficha.datos.cliente.correoEstado).toBe('rebotado');
+    // C-REBOTE-TEMPORAL: «recipient_suppressed» sin 5.1.1 es un freno temporal, no un buzón muerto.
+    expect(ficha.datos.cliente.correoEstado).toBe('frenado');
     // Corregido a uno bueno, vuelve a «sin confirmar» y el enlace sale.
     buzon();
     const r = await m.llamar(

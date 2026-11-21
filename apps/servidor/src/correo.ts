@@ -180,6 +180,20 @@ export function esFalloDeDestinatario(motivo: string, codigo?: string): boolean 
  */
 export const DIAS_REBOTE = 30;
 export const REBOTE_VIGENTE = `datetime('now', '-${DIAS_REBOTE} days')`;
+/**
+ * C-REBOTE-TEMPORAL (21 nov 2026, caso del primer líder de El Vigía): `recipient_suppressed` SOLO dice
+ * que Cloudflare frenó la dirección; puede ser por un rebote temporal de Gmail (soft bounce, que
+ * Cloudflare congela 24 horas) y no por un buzón que no existe. Ese freno vale un día, nunca 30, y la
+ * ficha lo dice como «frenado por unas horas», no como «el buzón no existe». Un 5.1.1 sigue valiendo 30.
+ */
+export const HORAS_FRENO_TEMPORAL = 24;
+export const esFrenoTemporal = (motivo: string) =>
+  /recipient_suppressed/i.test(motivo) && !/\b5\.1\.1\b|does not exist/i.test(motivo);
+/** El rebote sigue vigente (SQL; `a` = alias de `correos_rebotados`, vacío si no hay). */
+export const reboteVigenteSql = (a = '') => {
+  const c = a ? `${a}.` : '';
+  return `(${c}creado_en > CASE WHEN ${c}motivo LIKE '%recipient_suppressed%' AND ${c}motivo NOT LIKE '%5.1.1%' THEN datetime('now', '-${HORAS_FRENO_TEMPORAL} hours') ELSE ${REBOTE_VIGENTE} END)`;
+};
 
 /** Cuota del día a partir de la que el canario avisa, antes de quedarse sin correos. */
 export const CUPO_ALARMA = 0.8;
@@ -218,17 +232,22 @@ async function anotarRebote(env: Env, para: string, motivo: string) {
 
 /** ¿Esta dirección ya rebotó? Entonces no se le vuelve a escribir. */
 export async function correoRebotado(env: Pick<Env, 'DB'>, para: string): Promise<boolean> {
-  if (!env.DB) return false;
+  return (await reboteVigente(env, para)) !== null;
+}
+
+/** El motivo del rebote vigente de esa dirección, o null (C-REBOTE-TEMPORAL: para decirlo bien). */
+export async function reboteVigente(env: Pick<Env, 'DB'>, para: string): Promise<string | null> {
+  if (!env.DB) return null;
   try {
     const f = await env.DB.prepare(
-      `SELECT 1 AS si FROM correos_rebotados WHERE correo = ? AND creado_en > ${REBOTE_VIGENTE}`,
+      `SELECT motivo FROM correos_rebotados WHERE correo = ? AND ${reboteVigenteSql()}`,
     )
       .bind(para.trim().toLowerCase())
-      .first<{ si: number }>();
-    return Boolean(f);
+      .first<{ motivo: string }>();
+    return f ? String(f.motivo) : null;
   } catch (e) {
     console.error('correo: no se pudo mirar la lista de rebotes', e);
-    return false;
+    return null;
   }
 }
 
@@ -257,10 +276,14 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
   if (!env.YAD_TOKEN)
     return falloDeSistema(env, 'Falta YAD_TOKEN: el sitio no puede mandar correos.', correo.para);
   // C-CORREO-HONESTO: a una dirección que ya rebotó no se le escribe otra vez.
-  if (await correoRebotado(env, correo.para))
+  const previo = await reboteVigente(env, correo.para);
+  if (previo !== null)
     return {
       ok: false,
-      motivo: 'Esa dirección ya rebotó antes: no existe o no recibe correos.',
+      // C-REBOTE-TEMPORAL: un freno del proveedor por un rechazo temporal se dice como tal.
+      motivo: esFrenoTemporal(previo)
+        ? 'El proveedor frenó esta dirección por unas horas (recipient_suppressed, rechazo temporal).'
+        : 'Esa dirección ya rebotó antes: no existe o no recibe correos.',
       rebotado: true,
     };
   const hilo = cabecerasDeHilo(correo.cabeceras);

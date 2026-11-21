@@ -24,7 +24,7 @@ import { fechaSuper } from './horario';
  * puntos, «Corregir correo» y «Reenviar confirmación». Lo usa quien tiene `clientes.corregir_correo`
  * (Soporte nivel 2, Supervisor y Total).
  */
-export type EstadoCorreo = 'confirmado' | 'sin_confirmar' | 'rebotado';
+export type EstadoCorreo = 'confirmado' | 'sin_confirmar' | 'rebotado' | 'frenado';
 export type CambioCorreo = {
   accion: string;
   fecha: string;
@@ -39,6 +39,8 @@ const T = {
     confirmado: 'Confirmado',
     sin_confirmar: 'Sin confirmar',
     rebotado: 'Rebotó: el buzón no existe o está bloqueado',
+    // C-REBOTE-TEMPORAL: el proveedor frenó la dirección por un rechazo temporal (no es un buzón muerto).
+    frenado: 'Correo frenado unas horas por un rechazo temporal; se puede volver a mandar mañana',
     corregir: 'Corregir correo',
     reenviar: 'Reenviar confirmación',
     reenviarDisculpa: 'Reenviar con disculpa (si el fallo fue nuestro)',
@@ -67,6 +69,8 @@ const T = {
     confirmado: 'Confirmed',
     sin_confirmar: 'Not confirmed',
     rebotado: 'Bounced: the mailbox doesn’t exist or is blocked',
+    frenado:
+      'Email paused for a few hours after a temporary rejection; it can be sent again tomorrow',
     corregir: 'Fix email',
     reenviar: 'Resend confirmation',
     reenviarDisculpa: 'Resend with an apology (if the issue was ours)',
@@ -102,7 +106,9 @@ export function EstadoDelCorreo({ estado, idioma }: { estado?: EstadoCorreo; idi
       ? 'insignia insignia-aprobado'
       : estado === 'rebotado'
         ? 'insignia insignia-rechazado'
-        : 'insignia';
+        : estado === 'frenado'
+          ? 'insignia insignia-pendiente'
+          : 'insignia';
   return (
     <span className={clase} data-testid="estado-correo">
       {/* eslint-disable-next-line security/detect-object-injection -- llave fija del tipo */}

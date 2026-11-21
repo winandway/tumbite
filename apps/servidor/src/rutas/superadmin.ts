@@ -24,8 +24,14 @@ import { pruebasDisputa } from '../disputas';
 import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
-import { REBOTE_VIGENTE, correoRebotado, sinDirecciones } from '../correo';
-import { CORREO_NO_EXISTE, CORREO_NO_SALIO, exigirEnvio, mandarConfirmacion } from './cuentas';
+import { correoRebotado, esFrenoTemporal, reboteVigenteSql, sinDirecciones } from '../correo';
+import {
+  CORREO_FRENADO,
+  CORREO_NO_EXISTE,
+  CORREO_NO_SALIO,
+  exigirEnvio,
+  mandarConfirmacion,
+} from './cuentas';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { sqlFiltroCuentas } from './cuentaPrueba';
 import { accesoDe, alcanceObjetoSql, alcancePedidos, alcanceViajes } from '../accesoInterno';
@@ -1137,18 +1143,19 @@ export function correoEnmascarado(correo: string): string {
 export async function estadoCorreoDe(
   db: D1Database,
   usuarioId: string,
-): Promise<'confirmado' | 'sin_confirmar' | 'rebotado'> {
+): Promise<'confirmado' | 'sin_confirmar' | 'rebotado' | 'frenado'> {
   const f = await db
     .prepare(
       `SELECT correo_confirmado_en AS conf,
-         EXISTS (SELECT 1 FROM correos_rebotados r
-           WHERE r.correo = lower(usuarios.correo) AND r.creado_en > ${REBOTE_VIGENTE}) AS rebotado
+         (SELECT r.motivo FROM correos_rebotados r
+           WHERE r.correo = lower(usuarios.correo) AND ${reboteVigenteSql('r')}) AS rebote
        FROM usuarios WHERE id = ?`,
     )
     .bind(usuarioId)
-    .first<{ conf: string | null; rebotado: number }>();
+    .first<{ conf: string | null; rebote: string | null }>();
   // Un rebote vigente manda aunque la cuenta haya confirmado antes: hoy su correo no recibe.
-  if (Number(f?.rebotado ?? 0) === 1) return 'rebotado';
+  // C-REBOTE-TEMPORAL: un freno temporal del proveedor no es un buzón muerto.
+  if (f?.rebote) return esFrenoTemporal(f.rebote) ? 'frenado' : 'rebotado';
   return f?.conf ? 'confirmado' : 'sin_confirmar';
 }
 
@@ -1269,7 +1276,7 @@ superadmin.post('/admin/usuarios/:id/correo', async (c) => {
         `UPDATE usuarios SET correo = ?, correo_confirmado_en = NULL
          WHERE id = ? AND (correo_confirmado_en IS NULL OR EXISTS (
            SELECT 1 FROM correos_rebotados x
-           WHERE x.correo = lower(usuarios.correo) AND x.creado_en > ${REBOTE_VIGENTE}))`,
+           WHERE x.correo = lower(usuarios.correo) AND ${reboteVigenteSql('x')}))`,
       )
       .bind(d.correo, id)
       .run();
@@ -1306,7 +1313,13 @@ superadmin.post('/admin/usuarios/:id/correo', async (c) => {
   return c.json({
     ok: true,
     correoEnviado: envio.ok,
-    aviso: envio.ok ? null : envio.rebotado ? CORREO_NO_EXISTE : CORREO_NO_SALIO,
+    aviso: envio.ok
+      ? null
+      : envio.rebotado
+        ? esFrenoTemporal(envio.motivo)
+          ? CORREO_FRENADO
+          : CORREO_NO_EXISTE
+        : CORREO_NO_SALIO,
     estado: await estadoCorreoDe(db, id),
   });
 });

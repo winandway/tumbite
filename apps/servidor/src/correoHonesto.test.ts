@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { mundo } from './pruebas/ayuda';
 import { usarTransporteCorreo } from './correo';
 import { DISCULPA_CONFIRMACION, correoDeConfirmacion } from './avisos';
-import { CORREO_NO_EXISTE, CORREO_NO_SALIO } from './rutas/cuentas';
+import { CORREO_FRENADO, CORREO_NO_SALIO } from './rutas/cuentas';
 
 /**
  * C-CORREO-HONESTO (19 nov 2026, todos los países). Pasó en producción: una cuenta nueva con un
@@ -59,8 +59,10 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
     bloquear = true;
     const re = await m.llamar('POST', '/datos/cuentas/confirmar/reenviar', {}, u.token, ES);
     expect(re.estado).toBe(422);
-    expect(re.datos.error).toBe(CORREO_NO_EXISTE);
-    expect((await correoDe(m, u.token)).correoRebotado).toBe(true);
+    // C-REBOTE-TEMPORAL: «recipient_suppressed» es un freno del proveedor, no un buzón muerto: se dice
+    // «por ahora» y la app no le pide cambiar el correo (un 5.1.1 sí; ver reboteTemporal.test.ts).
+    expect(re.datos.error).toBe(CORREO_FRENADO);
+    expect((await correoDe(m, u.token)).correoRebotado).toBe(false);
 
     // No se insiste con una dirección muerta: ni se llama al proveedor ni se dice «enviado».
     const antes = llamadas.filter((p) => p === correo).length;
@@ -85,8 +87,8 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
       ES,
     );
     expect(cambio.estado).toBe(422);
-    expect(cambio.datos.error).toBe(CORREO_NO_EXISTE);
-    expect((await correoDe(m, otraCuenta.token)).correoRebotado).toBe(true);
+    expect(cambio.datos.error).toBe(CORREO_FRENADO);
+    expect((await correoDe(m, otraCuenta.token)).correoRebotado).toBe(false);
   });
 
   it('en inglés el mensaje sale en inglés', async () => {
@@ -97,7 +99,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
       'x-idioma': 'en',
     });
     expect(re.estado).toBe(422);
-    expect(String(re.datos.error)).toContain('that address doesn’t exist');
+    expect(String(re.datos.error)).toContain('didn’t accept the message for now');
   });
 
   it('caída del servicio: la app dice que no salió y el canario lo ve desde cualquier instancia', async () => {

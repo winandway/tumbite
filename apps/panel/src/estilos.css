@@ -623,6 +623,11 @@ h1 {
   background: #e3f6ea;
   color: #0d5a2c !important;
 }
+/* Ámbar: pendiente, esperando, en plazo o frenado por un rato (ni éxito ni problema). */
+.insignia-pendiente {
+  background: #fff4d6;
+  color: #7a4b00 !important;
+}
 .insignia-pausado,
 .insignia-rechazado {
   background: #fde4e4;

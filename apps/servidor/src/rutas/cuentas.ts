@@ -40,8 +40,9 @@ import { pasaTurnstile } from '../turnstile';
 import { leerAccesoInterno } from '../accesoInterno';
 import { limiteIntentos } from '../seguridad';
 import {
-  REBOTE_VIGENTE,
+  reboteVigenteSql,
   correoRebotado,
+  esFrenoTemporal,
   enviarCorreo,
   esCorreoDePrueba,
   type ResultadoCorreo,
@@ -423,6 +424,9 @@ cuentas.post('/entrar', async (c) => {
  */
 export const CORREO_NO_EXISTE =
   'No pudimos entregar el correo: esa dirección no existe o no recibe mensajes. Revisa que esté bien escrita o cambia tu correo.';
+/** C-REBOTE-TEMPORAL: el proveedor frenó la dirección por un rechazo temporal (no es que no exista). */
+export const CORREO_FRENADO =
+  'Tu proveedor de correo no aceptó el mensaje por ahora. Intenta otra vez mañana; si sigue sin llegar, revisa que tu correo esté bien escrito o escríbenos a soporte.';
 export const CORREO_NO_SALIO =
   'No pudimos mandar el correo en este momento. Intenta otra vez en unos minutos; si sigue sin llegar, escríbenos a soporte.';
 export const CORREO_CAMBIADO_SIN_ENLACE =
@@ -431,7 +435,12 @@ export const CORREO_CAMBIADO_SIN_ENLACE =
 /** Si el enlace no salió, la petición responde con la verdad (nunca un «enviado» falso). */
 export function exigirEnvio(r: ResultadoCorreo, sinEnlace = CORREO_NO_SALIO): void {
   if (r.ok) return;
-  if (r.rebotado) throw new ErrorDatos(CORREO_NO_EXISTE, 'correo', 422);
+  if (r.rebotado)
+    throw new ErrorDatos(
+      esFrenoTemporal(r.motivo) ? CORREO_FRENADO : CORREO_NO_EXISTE,
+      'correo',
+      422,
+    );
   throw new ErrorDatos(sinEnlace, undefined, 503);
 }
 
@@ -702,7 +711,9 @@ cuentas.get('/perfil', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en, sms_consentido_en,
-         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo) AND r.creado_en > ${REBOTE_VIGENTE}) AS rebotado
+         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo) AND ${reboteVigenteSql('r')}
+           -- C-REBOTE-TEMPORAL: un freno temporal del proveedor no le pide a la persona cambiar su correo.
+           AND NOT (r.motivo LIKE '%recipient_suppressed%' AND r.motivo NOT LIKE '%5.1.1%')) AS rebotado
        FROM usuarios WHERE id = ?`,
     )
     .bind(u.id)
