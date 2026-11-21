@@ -126,3 +126,24 @@ export function mensajeTelefono(motivo: MotivoTelefono, idioma: 'es' | 'en' = 'e
   const m = MENSAJES.get(motivo);
   return idioma === 'en' ? (m?.en ?? '') : (m?.es ?? '');
 }
+
+/**
+ * C-SIN-ZONA-VISIBLE (21 nov 2026, Gerencia): el país de un celular escrito sin «+» cuando no hay
+ * ninguna otra pista: el número tiene que ser un celular válido en UNO solo de los países donde
+ * trabajamos («0414…» solo existe en Venezuela). Si vale en varios o en ninguno, null: no se adivina.
+ */
+export function paisUnicoDelCelular(
+  texto: string | null | undefined,
+  candidatos: readonly string[] = ['VE', 'CO', 'PE', 'US', 'MX', 'CL'],
+): string | null {
+  const crudo = String(texto ?? '').trim();
+  if (!crudo || crudo.startsWith('+')) {
+    const r = leerTelefono(crudo, null);
+    return r.ok ? r.telefono.pais : null;
+  }
+  const validos = candidatos.filter((p) => {
+    const r = leerTelefono(crudo, p, { soloCelular: true });
+    return r.ok && r.telefono.pais === p;
+  });
+  return validos.length === 1 ? (validos[0] ?? null) : null;
+}

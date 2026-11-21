@@ -1,4 +1,4 @@
-import { leerTelefono } from '@tumbite/compartido';
+import { leerTelefono, paisUnicoDelCelular } from '@tumbite/compartido';
 import type { Env } from './env';
 import { ZONA_REAL_SQL, asegurarCodigoRepartidor } from './cuentaPais';
 import { unirLineaQueEspera } from './lineas';
@@ -20,7 +20,8 @@ import { PLAZO_DESDE, empezarPlazo } from './plazoPapeles';
  * Solo lee las cuentas con algo que arreglar y escribe solo donde cambia algo. Al terminar deja su
  * marca en `config`; si algo falla no deja la marca y se reintenta en el siguiente arranque.
  */
-export const CLAVE_REPARACION_PAIS = 'reparacion:pais:v1';
+// v2 (21 nov 2026, C-SIN-ZONA-VISIBLE): también los celulares de las cuentas sin zona, por el país del número.
+export const CLAVE_REPARACION_PAIS = 'reparacion:pais:v2';
 
 export type ResultadoReparacion = {
   lineas: number;
@@ -57,12 +58,13 @@ export async function repararCuentasDePais(env: Env, db: D1Database): Promise<Re
     .prepare(
       `SELECT u.id, u.rol, u.telefono, z.pais FROM usuarios u
          LEFT JOIN repartidores r ON r.usuario_id = u.id
-         JOIN zonas z ON z.id = ${ZONA_REAL_SQL}
+         LEFT JOIN zonas z ON z.id = ${ZONA_REAL_SQL}
         WHERE u.telefono IS NOT NULL AND u.telefono != '' AND substr(u.telefono, 1, 1) != '+'`,
     )
-    .all<{ id: string; rol: string; telefono: string; pais: string }>();
+    .all<{ id: string; rol: string; telefono: string; pais: string | null }>();
   for (const f of sinCodigo) {
-    const t = leerTelefono(f.telefono, f.pais);
+    // Sin ciudad, el país sale del número solo si es celular en UNO de nuestros países (C-SIN-ZONA-VISIBLE).
+    const t = leerTelefono(f.telefono, f.pais ?? paisUnicoDelCelular(f.telefono));
     if (!t.ok) continue;
     const choca = await db
       .prepare('SELECT 1 FROM usuarios WHERE telefono_canonico = ? AND rol = ? AND id != ? LIMIT 1')

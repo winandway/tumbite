@@ -2,8 +2,10 @@ import {
   type MotivoTelefono,
   datosPais,
   leerTelefono,
+  paisUnicoDelCelular,
   telefonoCanonico,
 } from '@tumbite/compartido';
+import { cobertura } from './territorio';
 
 /**
  * C-ID-DEL-PAIS y C-PAIS-DE-LA-CUENTA (21 nov 2026, caso del primer líder real de El Vigía).
@@ -18,11 +20,20 @@ import {
  */
 
 /**
+ * El valor por defecto de la columna `repartidores.zona_id` (no se puede quitar en SQLite sin rehacer la
+ * tabla). Para el sistema NO es una ciudad: una fila con este valor y sin ubicación ni elección es una
+ * cuenta «sin zona», que el equipo ve con su aviso en el panel (C-SIN-ZONA-VISIBLE).
+ */
+export const ZONA_POR_DEFECTO_TABLA = 'US-FL-MIAMI';
+
+/**
  * La zona real del conductor en SQL (alias `u` = usuarios, `r` = repartidores): la de su ficha solo
  * si salió de una ubicación o de su elección; si no, la de su cuenta (la elegida o la de su
  * invitación). NULL si todavía no se sabe.
  */
-export const ZONA_REAL_SQL = `COALESCE(CASE WHEN r.ubicacion_en IS NOT NULL OR r.ciudad_elegida_en IS NOT NULL THEN r.zona_id END, u.zona_id)`;
+export const zonaRealSql = (r = 'r', u = 'u') =>
+  `COALESCE(CASE WHEN ${r}.ubicacion_en IS NOT NULL OR ${r}.ciudad_elegida_en IS NOT NULL OR ${r}.zona_id <> '${ZONA_POR_DEFECTO_TABLA}' THEN ${r}.zona_id END, ${u}.zona_id)`;
+export const ZONA_REAL_SQL = zonaRealSql();
 
 /**
  * La zona con que se decide algo del conductor (su país, sus papeles, sus servicios): la real, y si
@@ -139,8 +150,9 @@ export function paisParaTelefono(
   ipPais: string | null | undefined,
 ): string | null {
   if (zonaPais) return zonaPais;
-  const conCodigo = leerTelefono(telefono, null);
-  if (conCodigo.ok && conCodigo.telefono.pais) return conCodigo.telefono.pais;
+  // El «+» escrito, o un celular que solo existe en uno de nuestros países («0414…» = Venezuela).
+  const delNumero = paisUnicoDelCelular(telefono);
+  if (delNumero) return delNumero;
   const ip = String(ipPais ?? '').toUpperCase();
   return datosPais(ip) ? ip : null;
 }
@@ -189,4 +201,21 @@ export function telefonoParaGuardar(
   if (r.ok) return { telefono: r.telefono.e164, canonico: r.telefono.digitos };
   if (r.motivo === 'sin_pais') return { telefono: crudo, canonico: telefonoCanonico(crudo) };
   throw new TelefonoInvalido(r.motivo);
+}
+
+/**
+ * C-SIN-ZONA-VISIBLE (21 nov 2026, Gerencia): la ciudad de una cuenta nueva por la ubicación desde
+ * donde se registra (la que da la red al servidor, aproximada). Solo si cae DENTRO de una zona de
+ * Divoox; si no, la cuenta queda «sin zona» hasta que la app mande su ubicación o el equipo la elija.
+ */
+export async function zonaPorUbicacionDelRegistro(
+  db: D1Database,
+  cf: { latitude?: unknown; longitude?: unknown } | undefined,
+): Promise<string | null> {
+  const lat = Number(cf?.latitude);
+  const lng = Number(cf?.longitude);
+  if (!cf?.latitude || !cf?.longitude || !Number.isFinite(lat) || !Number.isFinite(lng))
+    return null;
+  const aqui = await cobertura(db, lat, lng);
+  return aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null;
 }

@@ -136,3 +136,12 @@ describe('C-TERRITORIO-OFICIAL · la lista liviana del panel coincide con los da
       ).toBe(true);
   });
 });
+
+describe('C-SIN-ZONA-VISIBLE · el país de un celular sin otra pista', async () => {
+  const { paisUnicoDelCelular } = await import('./telefono');
+  it('«0414…» solo existe en Venezuela; un número que vale en varios países no se adivina', () => {
+    expect(paisUnicoDelCelular('04141234567')).toBe('VE');
+    expect(paisUnicoDelCelular('+573001234567')).toBe('CO');
+    expect(paisUnicoDelCelular('12')).toBeNull();
+  });
+});

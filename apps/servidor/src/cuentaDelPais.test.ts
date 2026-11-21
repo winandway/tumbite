@@ -340,3 +340,73 @@ describe('C-TELEFONO-E164 · el país del celular en el registro', () => {
     expect(u?.telefono).toBe('+51987654321');
   });
 });
+
+describe('C-SIN-ZONA-VISIBLE · ninguna cuenta cae en una ciudad inventada', () => {
+  it('sin invitación ni ubicación: «sin zona» en la ficha y en la lista, nunca Miami, y con su aviso', async () => {
+    const { m, admin } = await escenario();
+    const r = await m.llamar('POST', '/datos/cuentas/registro', {
+      nombre: 'Conductor Ejemplo',
+      correo: 'sin.zona@ejemplo.com',
+      clave: 'clave-segura-1',
+      rol: 'repartidor',
+      telefono: '04140000005',
+    });
+    expect(r.estado).toBe(201);
+    await m.llamar('GET', '/datos/repartidor/estado', undefined, r.datos.token);
+    // El celular «0414…» solo existe en Venezuela: queda con su código aunque no se sepa la ciudad.
+    const u = await m.DB.prepare('SELECT telefono FROM usuarios WHERE id = ?')
+      .bind(r.datos.usuario.id)
+      .first<{ telefono: string }>();
+    expect(u?.telefono).toBe('+584140000005');
+    const f = await m.llamar(
+      'GET',
+      `/datos/admin/repartidores/${r.datos.usuario.id}`,
+      undefined,
+      admin.token,
+    );
+    expect(f.datos.repartidor.sinZona).toBe(true);
+    expect(f.datos.repartidor.ciudad).toBe('');
+    expect(f.datos.repartidor.codigo).toBe('');
+    const lista = await m.llamar(
+      'GET',
+      '/datos/admin/repartidores?zona=sin_zona',
+      undefined,
+      admin.token,
+    );
+    expect(lista.datos.repartidores.map((x: { id: string }) => x.id)).toContain(r.datos.usuario.id);
+    expect(lista.datos.sinZona).toBeGreaterThanOrEqual(1);
+    expect(lista.datos.repartidores[0].sinZona).toBe(true);
+  });
+
+  it('la ubicación del registro dentro de una zona le da su ciudad; fuera, nada', async () => {
+    const { m } = await escenario();
+    const { zonaPorUbicacionDelRegistro } = await import('./cuentaPais');
+    expect(
+      await zonaPorUbicacionDelRegistro(m.DB, { latitude: '8.6159', longitude: '-71.6442' }),
+    ).toBe(VIGIA);
+    expect(
+      await zonaPorUbicacionDelRegistro(m.DB, { latitude: '13.5', longitude: '-66' }),
+    ).toBeNull();
+    expect(await zonaPorUbicacionDelRegistro(m.DB, undefined)).toBeNull();
+  });
+
+  it('la reparación arregla el celular de una cuenta sin zona y la deja «sin zona» (no le inventa ciudad)', async () => {
+    const { m } = await escenario();
+    const c = await m.cuenta('repartidor', 'Conductor Ejemplo');
+    await m.DB.prepare(
+      "UPDATE usuarios SET telefono = '04140000006', telefono_canonico = '04140000006', zona_id = NULL WHERE id = ?",
+    )
+      .bind(c.id)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO repartidores (usuario_id, codigo) VALUES (?, 'US-MIA-000099') ON CONFLICT(usuario_id) DO UPDATE SET codigo = excluded.codigo",
+    )
+      .bind(c.id)
+      .run();
+    await repararCuentasDePais({ DB: m.DB } as never, m.DB);
+    const f = await m.DB.prepare('SELECT u.telefono, u.zona_id FROM usuarios u WHERE u.id = ?')
+      .bind(c.id)
+      .first<{ telefono: string; zona_id: string | null }>();
+    expect(f).toEqual({ telefono: '+584140000006', zona_id: null });
+  });
+});

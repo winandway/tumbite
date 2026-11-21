@@ -73,6 +73,12 @@ const T = {
     } as Record<string, string>,
     enLinea: 'En línea',
     fueraLinea: 'Desconectado',
+    sinZona: 'Sin zona',
+    avisoSinZona: (n: number) =>
+      n === 1
+        ? 'Hay 1 conductor sin zona: no sabemos su ciudad. Ábrelo y, en sus tres puntos, toca «Cambiar ciudad».'
+        : `Hay ${n} conductores sin zona: no sabemos su ciudad. Ábrelos y, en sus tres puntos, toca «Cambiar ciudad».`,
+    verSinZona: 'Ver los que no tienen zona',
     conectadoSinViajes: 'Conectado, todavía no recibe viajes (nada aprobado ni plazo abierto)',
     idAnterior: 'Antes',
     volver: '← Volver',
@@ -173,6 +179,12 @@ const T = {
     } as Record<string, string>,
     enLinea: 'Online',
     fueraLinea: 'Offline',
+    sinZona: 'No zone',
+    avisoSinZona: (n: number) =>
+      n === 1
+        ? 'There is 1 driver with no zone: we don’t know their city. Open them and, in the three-dot menu, tap “Change city”.'
+        : `There are ${n} drivers with no zone: we don’t know their city. Open them and, in the three-dot menu, tap “Change city”.`,
+    verSinZona: 'See the ones with no zone',
     conectadoSinViajes: 'Connected, can’t get trips yet (nothing approved, no open deadline)',
     idAnterior: 'Formerly',
     volver: '← Back',
@@ -476,6 +488,8 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   const [filas, setFilas] = useState<T[] | null>(null);
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [error, setError] = useState('');
+  // C-SIN-ZONA-VISIBLE: cuántas cuentas reales siguen sin ciudad (solo conductores).
+  const [sinZona, setSinZona] = useState(0);
   const pedirPagina = useCallback(
     async (despues: string | null, texto: string, z: string, pl: string, cu: string) => {
       const p = new URLSearchParams();
@@ -489,6 +503,7 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
         const nuevas = (new Map(Object.entries(r)).get(clave) ?? []) as T[];
         setFilas((viejas) => (despues ? [...(viejas ?? []), ...nuevas] : nuevas));
         setSiguiente((r.siguiente as string | null) ?? null);
+        if (typeof r.sinZona === 'number') setSinZona(r.sinZona);
         setError('');
       } catch (e) {
         setError(e instanceof ErrorApi ? e.message : String(e));
@@ -518,6 +533,7 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
     filas,
     siguiente,
     error,
+    sinZona,
     guardados: pref.guardados,
     restablecer: () => {
       setZonaDeEnlace(null);
@@ -533,16 +549,20 @@ export function SelectorCiudad({
   zona,
   cambiar,
   idioma,
+  conSinZona = false,
 }: {
   zona: string;
   cambiar: (z: string) => void;
   idioma: Idioma;
+  /** C-SIN-ZONA-VISIBLE: los conductores sin ciudad real, como una opción más. */
+  conSinZona?: boolean;
 }) {
   const t = enIdioma(T, idioma);
   const { x } = useCargar<{ ciudades: Ciudad[] }>('/datos/admin/ciudades');
   return (
     <select value={zona} onChange={(e) => cambiar(e.target.value)} aria-label={t.ciudad}>
       <option value="">{t.todas}</option>
+      {conSinZona ? <option value="sin_zona">{t.sinZona}</option> : null}
       {x?.ciudades.map((z) => (
         <option key={z.id} value={z.id}>
           {z.nombre} ({z.repartidores + z.clientes})
@@ -555,6 +575,8 @@ export function SelectorCiudad({
 type FilaRep = {
   id: string;
   codigo: string;
+  /** C-SIN-ZONA-VISIBLE: sin ciudad real todavía. */
+  sinZona?: boolean;
   nombre: string;
   esPrueba?: boolean;
   correo: string;
@@ -577,7 +599,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
     <section className="super">
       <h1>{t.repartidores}</h1>
       <div className="super-busqueda" role="search">
-        <SelectorCiudad zona={b.zona} cambiar={b.setZona} idioma={idioma} />
+        <SelectorCiudad zona={b.zona} cambiar={b.setZona} idioma={idioma} conSinZona />
         <FiltroCuentas valor={b.cuentas} cambiar={b.setCuentas} idioma={idioma} />
         <FiltroPapeles valor={b.plazo} cambiar={b.setPlazo} idioma={idioma} />
         <input
@@ -594,6 +616,14 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
         </button>
       </div>
       <AvisoFiltrosGuardados visible={b.guardados} idioma={idioma} restablecer={b.restablecer} />
+      {b.sinZona > 0 && b.zona !== 'sin_zona' ? (
+        <p className="aviso-alarma" role="status" data-testid="aviso-sin-zona">
+          {t.avisoSinZona(b.sinZona)}{' '}
+          <button type="button" className="enlace" onClick={() => b.setZona('sin_zona')}>
+            {t.verSinZona}
+          </button>
+        </p>
+      ) : null}
       {b.error && (
         <p className="error-general" role="alert">
           {b.error}
@@ -624,6 +654,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                   <td>
                     <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
                     {r.nombre} <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
+                    {r.sinZona ? <span className="insignia">{t.sinZona}</span> : null}
                   </td>
                   <td>
                     {t.vehiculos[r.vehiculo] ?? r.vehiculo} {r.placa}
@@ -723,6 +754,8 @@ type Repartidor = {
   recibeViajes?: boolean;
   /** C-ID-DEL-PAIS: los ID que tuvo antes. */
   codigosAnteriores?: string[];
+  /** C-SIN-ZONA-VISIBLE: todavía no se sabe su ciudad. */
+  sinZona?: boolean;
   puntos: number;
   ubicacion: { lat: number; lng: number; cuando: string | null } | null;
   datos: {
@@ -858,7 +891,7 @@ export function SuperRepartidor({
           aria-hidden="true"
         />{' '}
         {r.conectado ? (r.recibeViajes === false ? t.conectadoSinViajes : t.enLinea) : t.fueraLinea}{' '}
-        · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
+        · {r.sinZona ? t.sinZona : r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <PapelesConductor id={id} idioma={idioma} />

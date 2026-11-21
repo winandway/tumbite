@@ -57,6 +57,7 @@ import {
   paisDeCuenta,
   paisParaTelefono,
   telefonoParaGuardar,
+  zonaPorUbicacionDelRegistro,
 } from '../cuentaPais';
 import { unirLineaQueEspera } from '../lineas';
 
@@ -297,7 +298,15 @@ cuentas.post('/registro', async (c) => {
       await hashClave(d.clave),
       correoUnico,
       telUnico,
-      invitacion?.zonaId ?? null,
+      // C-SIN-ZONA-VISIBLE: sin invitación, la ciudad de la ubicación del registro (solo si cae en
+      // una zona). Si no, «sin zona»: nunca una ciudad por defecto.
+      invitacion?.zonaId ??
+        (rol === 'repartidor'
+          ? await zonaPorUbicacionDelRegistro(
+              db,
+              (c.req.raw as { cf?: { latitude?: unknown; longitude?: unknown } }).cf,
+            )
+          : null),
     )
     .run();
   // C-TERMINOS-ACTUALIZADOS: al crear la cuenta acepta los términos vigentes (casilla del registro).

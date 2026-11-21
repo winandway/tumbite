@@ -43,7 +43,7 @@ const POR_PAGINA = 50;
 // C-ID-DEL-PAIS (21 nov 2026): el ID sale de la zona REAL del conductor (nunca la ciudad por defecto de la tabla)
 // y se corrige solo si quedó con el país equivocado. La lógica vive en cuentaPais.ts.
 export { asegurarCodigoRepartidor, codigoCiudad } from '../cuentaPais';
-import { asegurarCodigoRepartidor, codigoCiudad, zonaRealDe } from '../cuentaPais';
+import { asegurarCodigoRepartidor, codigoCiudad, zonaRealDe, zonaRealSql } from '../cuentaPais';
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 /** «vigente», «vencido», «por vencer» (30 días) o «sin datos». */
@@ -361,7 +361,9 @@ superadmin.get('/admin/repartidores', async (c) => {
   // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto; las de prueba aparte.
   const cuentas = sqlFiltroCuentas(c.req.query('cuentas'));
   if (cuentas) filtros.push(cuentas);
-  if (zona) {
+  // C-SIN-ZONA-VISIBLE: «sin zona» = sin ciudad real (ni invitación, ni elección, ni ubicación).
+  if (zona === 'sin_zona') filtros.push(`${zonaRealSql('d', 'u')} IS NULL`);
+  else if (zona) {
     filtros.push('d.zona_id = ?');
     valores.push(zona);
   }
@@ -407,7 +409,7 @@ superadmin.get('/admin/repartidores', async (c) => {
   }
   const { results } = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.es_prueba, d.codigo, d.zona_id AS zonaId, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.es_prueba, d.codigo, d.zona_id AS zonaId, ${zonaRealSql('d', 'u')} IS NULL AS sin_zona, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
         (SELECT COUNT(*) FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado') AS entregas,
         x.vehiculo_tipo AS vehiculo, x.placa, x.seguro_vence, x.seguro_tumbite, x.licencia_vence, x.antecedentes,
         pp.estado AS plazo_estado, pp.vence_en AS plazo_vence
@@ -427,6 +429,7 @@ superadmin.get('/admin/repartidores', async (c) => {
       correo: String(r.correo),
       telefono: String(r.telefono ?? ''),
       zonaId: String(r.zonaId),
+      sinZona: Number(r.sin_zona) === 1,
       esPrueba: Number(r.es_prueba) === 1,
       conectado: Boolean(r.conectado),
       puntos: Number(r.puntos),
@@ -442,6 +445,21 @@ superadmin.get('/admin/repartidores', async (c) => {
       ...plazoDeFila(r.plazo_estado as string | null, r.plazo_vence as string | null),
     })),
     siguiente: hayMas ? String(pagina.at(-1)?.codigo ?? '') : null,
+    // C-SIN-ZONA-VISIBLE: cuántas cuentas reales siguen sin ciudad (el aviso del panel). Solo en la
+    // primera página, para no repetir la cuenta al pasar de página.
+    sinZona: despues
+      ? null
+      : Number(
+          (
+            await db
+              .prepare(
+                `SELECT COUNT(*) AS n FROM repartidores d JOIN usuarios u ON u.id = d.usuario_id
+                  WHERE u.rol = 'repartidor' AND u.activo = 1 AND COALESCE(u.es_prueba, 0) = 0
+                    AND ${zonaRealSql('d', 'u')} IS NULL`,
+              )
+              .first<{ n: number }>()
+          )?.n ?? 0,
+        ),
   });
 });
 
@@ -546,7 +564,11 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       correoEstado: await estadoCorreoDe(db, id),
       historialCorreo: await historialCorreoDe(db, id),
       activo: Number(r.activo ?? 1) === 1,
-      ciudad: String(r.ciudad ?? r.zona_id),
+      // C-SIN-ZONA-VISIBLE: sin ciudad real se dice «sin zona» (nunca la ciudad por defecto de la tabla).
+      ...(await (async () => {
+        const real = await zonaRealDe(db, id);
+        return { ciudad: real ? real.nombre : '', sinZona: !real };
+      })()),
       tipo: String(r.tipo),
       conectado: Boolean(r.conectado),
       // C-EN-LINEA-DE-VERDAD (21 nov 2026): «En línea» solo si de verdad puede recibir viajes (un
