@@ -2,8 +2,8 @@
 // los países. Arma un servidor LOCAL propio (carpeta .recorrido, solo servidor + el panel ya
 // compilado), lo enciende, toma las capturas y lo apaga. NO toca el sitio de pruebas ni producción.
 // Datos neutros: «Línea Ejemplo», «Ciudad de ejemplo», teléfonos imposibles; ninguna ciudad ni persona real.
-//   lineas-super-invitar-<es|en>    → la solicitud con el aviso «Ese líder todavía no tiene cuenta» y «Invitar al líder»
-//   lineas-super-invitados-<es|en>  → la sección «Líderes invitados» con el enlace para mandarle
+//   lineas-super-invitar-<es|en>    → aprobar a un líder sin cuenta lo invita en el mismo paso (C-INVITAR-LIDER-UN-PASO)
+//   lineas-super-invitados-<es|en>  → «Líderes invitados» con su enlace personal y los tres puntos abiertos
 //   → ~/Divoox-privado/ayuda-interna/{originales,capturas} (privadas, fuera del repositorio)
 // Antes: npm run build -w @tumbite/panel
 // Uso: node scripts/recorrido/capturas-lideres-invitados.mjs
@@ -160,12 +160,7 @@ try {
     await solicitar(T.otra, 'taxi');
     const primera = (await pedir('GET', '/datos/admin/lineas-solicitudes', undefined, dueno))
       .solicitudes[0];
-    await pedir(
-      'POST',
-      `/datos/admin/lineas-solicitudes/${primera.id}/aprobar`,
-      { invitar: true },
-      dueno,
-    );
+    await pedir('POST', `/datos/admin/lineas-solicitudes/${primera.id}/aprobar`, {}, dueno);
     await solicitar(T.solicitud, 'mototaxi');
 
     const ctx = await navegador.newContext({
@@ -179,13 +174,19 @@ try {
       { name: 'tumbite_sesion', value: dueno, domain: 'localhost', path: '/', httpOnly: true },
     ]);
     const s = await ctx.newPage();
-    // El enlace para el líder sale de la dirección del servidor que atiende (aquí, la computadora).
-    // En la captura va el del sitio público, que es el que el equipo ve en producción.
+    // El enlace personal sale de la dirección del servidor que atiende (aquí, la computadora). En la
+    // captura va el del sitio público, que es el que el equipo ve en producción.
     await s.route('**/datos/admin/lineas-invitaciones', async (r) => {
       const res = await r.fetch();
+      const d = await res.json();
+      const publico = (e) => String(e).replace(/^https?:\/\/[^/]+/, 'https://divoox.com');
       await r.fulfill({
         response: res,
-        json: { ...(await res.json()), enlace: 'https://divoox.com/driver' },
+        json: {
+          ...d,
+          enlace: 'https://divoox.com/driver',
+          invitaciones: d.invitaciones.map((i) => ({ ...i, enlace: publico(i.enlace) })),
+        },
       });
     });
     await s.goto(`/panel/${ruta}/lines`);
@@ -223,27 +224,34 @@ try {
         [desde, hasta],
       );
 
-    // 1. Aprobar una solicitud cuyo líder no tiene cuenta: sale el aviso con «Invitar al líder».
+    // 1. Aprobar una solicitud cuyo líder no tiene cuenta: queda invitado en el mismo paso y el
+    //    aviso dice qué hacer (por celular: mandarle su enlace por WhatsApp).
     await s
       .getByTestId('lineas-solicitudes')
       .getByRole('button', { name: T.aprobar, exact: true })
       .click();
-    await s.getByTestId('lineas-invitar-lider').waitFor({ timeout: 30_000 });
+    await s.locator('.texto-exito[role="status"]').waitFor({ timeout: 30_000 });
+    await s.getByTestId('lineas-invitados').locator('li').nth(1).waitFor({ timeout: 30_000 });
     await espera(700);
     await privada(
-      await caja('[data-testid="lineas-solicitudes"]', '[data-testid="lineas-solicitudes"]'),
+      await caja('.texto-exito[role="status"]', '.texto-exito[role="status"]'),
       'invitar',
     );
-    // 2. Tocar «Invitar al líder»: la línea pasa a «Líderes invitados», con el enlace para mandarle.
-    await s.getByTestId('lineas-invitar-lider').getByRole('button').click();
-    await s.getByTestId('lineas-invitados').locator('li').nth(1).waitFor({ timeout: 30_000 });
+    // 2. «Líderes invitados»: cada uno con su enlace personal y sus tres puntos abiertos (copiar,
+    //    WhatsApp, volver a mandar el correo, contactos, anular).
     await s.evaluate(() => {
-      // El título de la sección es el h3 que va justo antes de la explicación y del enlace.
       const lista = document.querySelector('[data-testid="lineas-invitados"]');
       let e = lista.previousElementSibling;
       while (e && e.tagName !== 'H3') e = e.previousElementSibling;
       e?.setAttribute('data-captura', 'titulo-invitados');
     });
+    await s
+      .getByTestId('lineas-invitados')
+      .locator('li')
+      .first()
+      .getByRole('button')
+      .first()
+      .click();
     await espera(700);
     await privada(
       await caja('[data-captura="titulo-invitados"]', '[data-testid="lineas-invitados"]'),

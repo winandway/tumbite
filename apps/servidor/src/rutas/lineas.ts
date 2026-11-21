@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { enlaceInvitacionLider, mandarInvitacionLider } from '../correoInvitacionLider';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -13,6 +14,7 @@ import {
   crearLinea,
   esLiderSinCuenta,
   invitacionesDeLider,
+  invitacionPorToken,
   editarContacto2,
   invitarLider,
   lineaPorId,
@@ -106,21 +108,65 @@ lineas.post('/admin/lineas', async (c) => {
     return c.json({ linea: await lineaPorId(db, r.id), adoptados: r.adoptados }, 201);
   } catch (e) {
     if (!esLiderSinCuenta(e)) throw e;
-    if (!invitar)
-      throw new ErrorDatos(
-        'Nadie en Divoox Driver tiene ese correo o celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
-        'lider',
-        404,
-      );
+    // C-INVITAR-LIDER-UN-PASO (21 nov 2026): sin cuenta, el líder queda invitado en el mismo paso
+    // (ya no hace falta un segundo botón) y, si se escribió su correo, le llega con su enlace.
+    void invitar;
     const inv = await invitarLider(db, { ...datos, autorId: u.id });
-    return c.json({ linea: null, invitacion: { id: inv.id, enlace: enlaceDriver(c) } }, 201);
+    return c.json({ linea: null, invitacion: await respuestaInvitacion(c, inv) }, 201);
   }
 });
+
+/** La invitación recién creada: su enlace personal y si el correo salió. */
+async function respuestaInvitacion(
+  c: Parameters<typeof sitioPublico>[0] & { env: Env },
+  inv: { id: string; token: string; correo: string | null },
+) {
+  const sitio = sitioPublico(c);
+  const correo = inv.correo
+    ? await mandarInvitacionLider(c.env, base(c), inv.id, sitio)
+    : { ok: false, motivo: 'sin_correo' };
+  return {
+    id: inv.id,
+    enlace: enlaceInvitacionLider(sitio, inv.token),
+    correoEnviado: correo.ok,
+  };
+}
 
 /** Las líneas que esperan a que su líder se registre, y anular una. */
 lineas.get('/admin/lineas-invitaciones', async (c) => {
   exigir(c, 'admin');
-  return c.json({ invitaciones: await invitacionesDeLider(base(c)), enlace: enlaceDriver(c) });
+  const sitio = sitioPublico(c);
+  const lista = await invitacionesDeLider(base(c));
+  return c.json({
+    invitaciones: lista.map(({ token, ...i }) => ({
+      ...i,
+      enlace: token ? enlaceInvitacionLider(sitio, token) : enlaceDriver(c),
+    })),
+    enlace: enlaceDriver(c),
+  });
+});
+
+// C-INVITAR-LIDER-UN-PASO: volver a mandarle el correo con su enlace.
+lineas.post('/admin/lineas-invitaciones/:id/reenviar', async (c) => {
+  exigir(c, 'admin');
+  const r = await mandarInvitacionLider(c.env, base(c), c.req.param('id'), sitioPublico(c));
+  if (!r.ok)
+    throw new ErrorDatos(
+      r.motivo === 'sin_correo'
+        ? 'Esta invitación no tiene correo: mándale el enlace por WhatsApp.'
+        : 'El correo no salió. Revisa la dirección o mándale el enlace por WhatsApp.',
+      undefined,
+      r.motivo === 'sin_correo' ? 409 : 503,
+    );
+  return c.json({ ok: true });
+});
+
+// C-INVITAR-LIDER-UN-PASO: la página del enlace personal (sin sesión): la línea, la ciudad y el correo
+// con que tiene que crear su cuenta. Solo lee; un enlace usado, anulado o inventado da 404.
+lineas.get('/lineas/invitacion/:token', async (c) => {
+  const inv = await invitacionPorToken(base(c), c.req.param('token'));
+  if (!inv) throw new ErrorDatos('Esta invitación ya no está vigente.', undefined, 404);
+  return c.json({ invitacion: inv, enlaceDriver: enlaceDriver(c) });
 });
 
 lineas.post('/admin/lineas-invitaciones/:id/anular', async (c) => {
@@ -144,21 +190,18 @@ lineas.post('/admin/lineas-solicitudes/:id/aprobar', async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
   const d = await leerCuerpo(c, z.object({ invitar: z.boolean().optional() }));
-  const r = await aprobarSolicitud(db, c.req.param('id'), u.id, d.invitar === true).catch(
-    (e: unknown) => {
-      if (!esLiderSinCuenta(e)) throw e;
-      throw new ErrorDatos(
-        'Nadie en Divoox Driver tiene ese celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
-        'lider',
-        404,
-      );
-    },
-  );
-  if ('invitacion' in r)
-    return c.json(
-      { linea: null, invitacion: { id: r.invitacion.id, enlace: enlaceDriver(c) } },
-      201,
+  void d;
+  // C-INVITAR-LIDER-UN-PASO: aprobar a un líder sin cuenta lo invita en el mismo paso.
+  const r = await aprobarSolicitud(db, c.req.param('id'), u.id, true).catch((e: unknown) => {
+    if (!esLiderSinCuenta(e)) throw e;
+    throw new ErrorDatos(
+      'Nadie en Divoox Driver tiene ese celular. Puedes invitar al líder: la línea se crea sola cuando se registre.',
+      'lider',
+      404,
     );
+  });
+  if ('invitacion' in r)
+    return c.json({ linea: null, invitacion: await respuestaInvitacion(c, r.invitacion) }, 201);
   return c.json({ linea: await lineaPorId(db, r.id), adoptados: r.adoptados }, 201);
 });
 

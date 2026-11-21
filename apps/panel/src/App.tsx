@@ -1,6 +1,7 @@
 import { enIdioma } from '@tumbite/compartido';
 import { Olvide, Restablecer } from './panel/Restablecer';
 import { AceptarInvitacion } from './panel/AceptarInvitacion';
+import { InvitacionLider } from './sitio/InvitacionLider';
 import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
 import { ComoFunciona } from './sitio/ComoFunciona';
@@ -163,6 +164,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <InvitacionConductor token={invitacion[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // C-INVITAR-LIDER-UN-PASO: el enlace personal de un líder de línea invitado.
+  const invitacionLider = /^\/driver\/lead\/([A-Za-z0-9_-]{16,64})$/.exec(ruta);
+  if (invitacionLider?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <InvitacionLider token={invitacionLider[1]} idioma={idioma} />
       </Sitio>
     );
   // C-FLOTA-PROPIA: el enlace con el que un restaurante invita a su repartidor.

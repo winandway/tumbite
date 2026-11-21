@@ -36,6 +36,7 @@ import { mensajeSinCasilla } from './accesoErrores';
 import { EncabezadoVolver, useVolverDelSistema } from './VolverAEntrar';
 import { RevisaTusDatos } from './RevisaTusDatos';
 import { SelectorPaisTelefono, usePaisSugerido } from './SelectorPaisTelefono';
+import { useInvitacionLider } from './invitacionLider';
 
 const INICIAL = {
   nombre: '',
@@ -79,6 +80,10 @@ export function Acceso({
   const acento = useAcentoApp();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   const [modo, setModo] = useState<'entrar' | 'registro'>(modoInicial);
+  // C-INVITAR-LIDER-UN-PASO: abierto desde el enlace personal de un líder: directo a «Crear cuenta».
+  const invitacionLider = useInvitacionLider(rolRegistro === 'repartidor', () =>
+    setModo('registro'),
+  );
   // C-ENTRAR-CON-SALIDA (14 nov 2026, Richard): el botón de atrás del teléfono también saca de
   // la pantalla de entrar cuando se puede seguir mirando sin cuenta; nadie queda atrapado.
   useEffect(() => {
@@ -133,6 +138,12 @@ export function Acceso({
     setError((e) => (e?.campo === campo ? null : e));
     setFallos((f) => f.filter((x) => x.campo !== campo));
   };
+  // Con la invitación, el correo ya puesto (si la persona todavía no escribió otro).
+  useEffect(() => {
+    if (modo === 'registro' && invitacionLider?.correo && !v.correo)
+      b.cambiar('correo', invitacionLider.correo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo cuando llega la invitación o cambia el modo
+  }, [invitacionLider, modo]);
   const turnstileSitio = useTurnstileSitio(api);
   // C-TELEFONO-E164: el selector del país del celular arranca donde está la persona (si no lo eligió).
   const paisSugerido = usePaisSugerido();
@@ -358,6 +369,13 @@ export function Acceso({
         </Text>
       ) : null}
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+      {registro && invitacionLider ? (
+        <Text testID="invitacion-lider" style={{ fontSize: 15, marginBottom: 12 }}>
+          {idioma === 'en'
+            ? `You’re invited to lead the “${invitacionLider.linea}” line in ${invitacionLider.ciudad}. Create your account${invitacionLider.correo ? ' with this email' : ''} and the line is yours automatically.`
+            : `Te invitamos a ser el líder de la línea «${invitacionLider.linea}» en ${invitacionLider.ciudad}. Crea tu cuenta${invitacionLider.correo ? ' con este correo' : ''} y la línea queda a tu nombre sola.`}
+        </Text>
+      ) : null}
       {registro && (
         <Campo
           etiqueta={t.nombre}

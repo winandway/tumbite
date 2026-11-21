@@ -91,10 +91,13 @@ describe('C-LINEAS-TAXI · crear la línea con su líder', () => {
     expect(n?.n).toBe(0);
   });
 
-  it('el líder tiene que estar registrado en Driver', async () => {
-    const { crear } = await escenario();
+  it('sin cuenta del líder no se crea la línea: queda invitado (C-INVITAR-LIDER-UN-PASO)', async () => {
+    const { crear, m } = await escenario();
     const r = await crear('+13055559999');
-    expect(r.estado).toBe(404);
+    expect(r.estado).toBe(201);
+    expect(r.datos.linea).toBeNull();
+    const n = await m.DB.prepare('SELECT COUNT(*) AS n FROM lineas').first<{ n: number }>();
+    expect(n?.n).toBe(0);
   });
 });
 
@@ -104,21 +107,22 @@ describe('C-LIDER-INVITADO · la línea de un líder que todavía no tiene cuent
 
   it('sin cuenta, el panel puede invitarlo: no hay línea todavía y queda la invitación con su enlace', async () => {
     const { m, admin, crear } = await escenario();
-    const sin = await crear('+13055559999');
-    expect(sin.estado).toBe(404);
-    expect(sin.datos.campo).toBe('lider');
-    expect(sin.datos.error).toMatch(/invitar al líder|invite the leader/);
-    const r = await crear('+13055559999', { invitar: true });
+    // C-INVITAR-LIDER-UN-PASO: en UN paso, sin segundo botón; el enlace es personal.
+    const r = await crear('+13055559999');
     expect(r.estado, JSON.stringify(r.datos)).toBe(201);
     expect(r.datos.linea).toBeNull();
-    expect(r.datos.invitacion.enlace).toBe('https://staging.tumbite.com/driver');
+    expect(r.datos.invitacion.enlace).toMatch(
+      /^https:\/\/staging\.tumbite\.com\/driver\/lead\/[\w-]{32}$/,
+    );
+    // Por celular no hay correo que mandar: el panel ofrece WhatsApp.
+    expect(r.datos.invitacion.correoEnviado).toBe(false);
     const n = await m.DB.prepare('SELECT COUNT(*) AS n FROM lineas').first<{ n: number }>();
     expect(n?.n).toBe(0);
     const lista = await invitaciones(m, admin.token);
     expect(lista.datos.invitaciones).toHaveLength(1);
     expect(lista.datos.invitaciones[0].nombre).toBe('Línea Ejemplo');
     // La misma persona no queda invitada dos veces.
-    expect((await crear('+13055559999', { invitar: true })).estado).toBe(409);
+    expect((await crear('+13055559999')).estado).toBe(409);
   });
 
   it('el líder se registra con ese celular, abre «Mi línea» y ya es el líder; la invitación se usa una sola vez', async () => {
@@ -187,10 +191,9 @@ describe('C-LIDER-INVITADO · la línea de un líder que todavía no tiene cuent
     const lista = await m.llamar('GET', '/datos/admin/lineas-solicitudes', undefined, admin.token);
     const id = lista.datos.solicitudes[0].id;
     const ruta = `/datos/admin/lineas-solicitudes/${id}/aprobar`;
-    expect((await m.llamar('POST', ruta, {}, admin.token)).estado).toBe(404);
-    const ok = await m.llamar('POST', ruta, { invitar: true }, admin.token);
+    const ok = await m.llamar('POST', ruta, {}, admin.token);
     expect(ok.estado, JSON.stringify(ok.datos)).toBe(201);
-    expect(ok.datos.invitacion.enlace).toContain('/driver');
+    expect(ok.datos.invitacion.enlace).toContain('/driver/lead/');
     const lider = await conductor('Lidia Líder', '+13055550101');
     const mia = await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
     expect(mia.datos.linea.nombre).toBe('Línea Del Norte');

@@ -1,5 +1,5 @@
 import { pareceTelefono, telefonoCanonico } from '@tumbite/compartido';
-import { nuevoId } from './cripto';
+import { nuevoId, nuevoToken } from './cripto';
 import { sqlFiltroCuentas } from './rutas/cuentaPrueba';
 import type { Env } from './env';
 import { notificar } from './notificaciones';
@@ -357,6 +357,10 @@ export type InvitacionLider = {
   contacto2Nombre: string;
   contacto2Telefono: string;
   creadoEn: string;
+  /** C-INVITAR-LIDER-UN-PASO: su enlace personal y si ya le llegó el correo. */
+  token: string | null;
+  correo: string | null;
+  correoEnviadoEn: string | null;
 };
 
 /** Código del error de `crearEquipo` cuando nadie en Driver tiene ese correo o celular. */
@@ -401,10 +405,12 @@ export async function invitarLider(
       409,
     );
   const id = nuevoId();
+  // C-INVITAR-LIDER-UN-PASO: su enlace personal (secreto, de este líder solo).
+  const token = nuevoToken().slice(0, 32);
   await db
     .prepare(
       `INSERT INTO invitaciones_lider (id, nombre, zona_id, tipo, conductores, lider, lider_telefono_canonico, lider_correo,
-         contacto2_nombre, contacto2_telefono, solicitud_id, creado_por) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         contacto2_nombre, contacto2_telefono, solicitud_id, creado_por, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -419,16 +425,58 @@ export async function invitarLider(
       d.contacto2Telefono.trim(),
       solicitudId,
       d.autorId,
+      token,
     )
     .run();
-  return { id };
+  return { id, token, correo };
+}
+
+/** C-INVITAR-LIDER-UN-PASO: la invitación viva de un enlace personal (para su página), o null. */
+export async function invitacionPorToken(db: D1Database, token: string) {
+  if (!/^[\w-]{16,64}$/.test(token)) return null;
+  const f = await db
+    .prepare(
+      `SELECT i.id, i.nombre, i.tipo, i.lider_correo, z.nombre AS ciudad, z.pais, z.idioma FROM invitaciones_lider i
+         JOIN zonas z ON z.id = i.zona_id WHERE i.token = ? AND i.estado = 'pendiente'`,
+    )
+    .bind(token)
+    .first<{
+      id: string;
+      nombre: string;
+      tipo: string;
+      lider_correo: string | null;
+      ciudad: string;
+      pais: string;
+      idioma: string | null;
+    }>();
+  return f
+    ? {
+        linea: f.nombre,
+        tipo: f.tipo as TipoLinea,
+        ciudad: f.ciudad,
+        pais: f.pais,
+        correo: f.lider_correo,
+        idioma: f.idioma === 'en' ? ('en' as const) : ('es' as const),
+      }
+    : null;
 }
 
 /** Las invitaciones que siguen esperando a su líder (para el superadmin). */
 export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLider[]> {
+  // C-INVITAR-LIDER-UN-PASO: las invitaciones de antes del enlace personal reciben el suyo (una vez).
+  const { results: sinToken } = await db
+    .prepare(
+      "SELECT id FROM invitaciones_lider WHERE estado = 'pendiente' AND token IS NULL LIMIT 100",
+    )
+    .all<{ id: string }>();
+  for (const { id } of sinToken)
+    await db
+      .prepare('UPDATE invitaciones_lider SET token = ? WHERE id = ? AND token IS NULL')
+      .bind(nuevoToken().slice(0, 32), id)
+      .run();
   const { results } = await db
     .prepare(
-      "SELECT id, nombre, zona_id, tipo, lider, contacto2_nombre, contacto2_telefono, creado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
+      "SELECT id, nombre, zona_id, tipo, lider, contacto2_nombre, contacto2_telefono, creado_en, token, lider_correo, correo_enviado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
     )
     .all<Record<string, unknown>>();
   return results.map((r) => ({
@@ -440,6 +488,9 @@ export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLid
     contacto2Nombre: String(r.contacto2_nombre ?? ''),
     contacto2Telefono: String(r.contacto2_telefono ?? ''),
     creadoEn: String(r.creado_en),
+    token: r.token ? String(r.token) : null,
+    correo: r.lider_correo ? String(r.lider_correo) : null,
+    correoEnviadoEn: r.correo_enviado_en ? String(r.correo_enviado_en) : null,
   }));
 }
 

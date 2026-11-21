@@ -43,6 +43,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-TERRITORIO-OFICIAL (21 nov 2026): el municipio oficial donde cae cada zona (P-code del INE en
   // Venezuela, «VE1401»). Sale de los contornos oficiales; el panel lo muestra y lo puede corregir.
   ['zonas', 'municipio_pcode', 'TEXT'],
+  // C-INVITAR-LIDER-UN-PASO (21 nov 2026): el enlace personal de la invitación (secreto, de un solo
+  // líder) y cuándo se le mandó el correo.
+  ['invitaciones_lider', 'token', 'TEXT'],
+  ['invitaciones_lider', 'correo_enviado_en', 'TEXT'],
   // C-BS-EN-MANO (18 nov 2026, Venezuela): la tasa del día FIJADA con la operación (al cotizar el
   // viaje o al crear el pedido) y, al cerrar el viaje, lo cobrado en mano en céntimos de bolívar.
   // Conductor y pasajero ven el mismo número aunque la tasa cambie después.
@@ -428,6 +432,8 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
   // C-BUSCADOR-SERIO (15 nov 2026): los índices del buscador del superadmin (buscadorSql.ts).
   ...INDICES_BUSCADOR,
+  // C-INVITAR-LIDER-UN-PASO: la página del enlace personal busca la invitación por su token.
+  'CREATE UNIQUE INDEX IF NOT EXISTS invitaciones_lider_token ON invitaciones_lider(token) WHERE token IS NOT NULL',
   // C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026): los reclamos de un pedido y de un viaje
   // en su ficha (sin esto, cada ficha recorría todos los tickets). Parciales: un ticket sin pedido o
   // sin viaje no entra; un reclamo enlazado es UNA escritura más al crearlo, y mirar no escribe.

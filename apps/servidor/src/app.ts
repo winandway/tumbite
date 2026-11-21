@@ -671,7 +671,8 @@ const PAGINA_RETIRADA = `<!doctype html><html lang="en"><head><meta charset="utf
 export function raizDeApp(ruta: string): string {
   // C-ENLACE-INVITACION: los enlaces con que una empresa (Flex) o un restaurante (flota propia)
   // invitan a su repartidor son páginas del sitio; si caían en la app Driver salía «página no existe».
-  if (/^\/driver\/(join|fleet)\//.test(ruta)) return '/';
+  // C-INVITAR-LIDER-UN-PASO: también el enlace personal del líder de una línea (/driver/lead/…).
+  if (/^\/driver\/(join|fleet|lead)\//.test(ruta)) return '/';
   for (const base of ['/app', '/driver', '/restaurant'])
     if (ruta === base || ruta.startsWith(`${base}/`)) return `${base}/`;
   return '/';

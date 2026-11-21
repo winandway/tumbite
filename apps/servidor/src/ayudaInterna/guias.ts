@@ -1969,7 +1969,7 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'Una línea es un grupo de taxis o mototaxis con su líder. Tiene un código, un enlace y un QR. El código solo vale en la ciudad de la línea. Es aparte de los referidos: entrar a una línea no da premios.',
       'La línea nace de dos formas. La primera: alguien llena «Registra tu línea» en la web (nombre, ciudad, taxi o mototaxi, cuántos conductores, líder y segundo contacto) y la solicitud aparece arriba en esta pantalla. La segunda: tú la creas en «Crear una línea». Nadie crea una línea sin que el equipo la apruebe.',
-      'Antes de aprobar, llama al líder y verifica que el celular es suyo. Si el líder todavía no tiene cuenta en Divoox Driver, la pantalla te lo dice y te deja tocar «Invitar al líder»: la línea queda en «Líderes invitados», le mandas el enlace que aparece ahí, y en el momento en que crea su cuenta de conductor con ese mismo celular o correo, la línea se crea sola con él de líder (no tiene que abrir nada; su cuenta nace en la ciudad de la línea, con su código de esa ciudad). Si ya tenía cuenta cuando lo invitaste, la línea se une la próxima vez que entra, confirma su correo o abre «Mi línea». Una invitación se puede anular desde sus tres puntos. Los conductores que ya se habían registrado con el código personal del líder pasan a la línea como aceptados.',
+      'Antes de aprobar, llama al líder y verifica que el celular es suyo. Si el líder todavía no tiene cuenta en Divoox Driver, al tocar «Crear la línea» (o «Aprobar») queda invitado en ese mismo paso: la línea pasa a «Líderes invitados» con su enlace personal; si escribiste su correo, le llega en ese momento un correo con el enlace, y si lo invitaste por celular, se lo mandas por WhatsApp desde los tres puntos. Y en el momento en que crea su cuenta de conductor con ese mismo celular o correo, la línea se crea sola con él de líder (no tiene que abrir nada; su cuenta nace en la ciudad de la línea, con su código de esa ciudad). Si ya tenía cuenta cuando lo invitaste, la línea se une la próxima vez que entra, confirma su correo o abre «Mi línea». Una invitación se puede anular desde sus tres puntos. Los conductores que ya se habían registrado con el código personal del líder pasan a la línea como aceptados.',
       'El conductor pide entrar con el código de la línea o eligiéndola de la lista de su ciudad, en el registro o desde su perfil. El líder acepta o rechaza con un toque en su app. Un conductor está en una sola línea.',
       'Para mover a un conductor: arrástralo a otra línea, o abre la línea con «Ver» y usa «Mover a…». También puedes dejarlo sin línea. El líder puede sacar a un conductor desde su app.',
       'Emergencias: si un conductor de la línea toca el botón de emergencia, el líder y el segundo contacto reciben un mensaje con el nombre, el celular y la ubicación. Hay un tope diario por conductor. Un conductor sin línea avisa al equipo de su ciudad.',
@@ -1984,14 +1984,14 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
       capLineas(
         'super-invitar',
         'es',
-        'Una solicitud con el aviso de que el líder todavía no tiene cuenta en Divoox Driver y el botón Invitar al líder.',
-        'Si el líder todavía no tiene cuenta, la pantalla lo dice y te deja invitarlo.',
+        'El aviso verde después de aprobar a un líder que todavía no tenía cuenta: quedó invitado en el mismo paso.',
+        'Aprobar a un líder sin cuenta lo invita en el mismo paso: el aviso dice si le llegó el correo o si hay que mandarle su enlace por WhatsApp.',
       ),
       capLineas(
         'super-invitados',
         'es',
-        'La sección Líderes invitados con el enlace para mandarle al líder y las líneas que lo esperan, cada una con su menú de tres puntos.',
-        'Las líneas que esperan a su líder y el enlace que le mandas.',
+        'La sección Líderes invitados: cada línea con su enlace personal y el menú de tres puntos abierto con Copiar su enlace, Mandar por WhatsApp, Editar contactos de emergencia y Anular la invitación.',
+        'Cada líder invitado con su enlace personal; desde los tres puntos lo copias o se lo mandas por WhatsApp.',
       ),
       capLineas(
         'super-crear',
@@ -2014,7 +2014,7 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
     pasos: [
       'Abre «Líneas de taxi y mototaxi» en el menú de Personas.',
       'En las solicitudes: llama al líder, verifica su celular y toca «Aprobar y crear la línea».',
-      'Si la pantalla dice que el líder todavía no tiene cuenta: toca «Invitar al líder», copia el enlace de «Líderes invitados» y mándaselo. Para deshacerlo, abre los tres puntos y toca «Anular la invitación».',
+      'Si el líder todavía no tiene cuenta, la línea queda en «Líderes invitados» sola. En sus tres puntos: «Copiar su enlace», «Mandar por WhatsApp» (abre WhatsApp con el mensaje y su enlace), «Volver a mandar el correo» (si lo invitaste por correo) y «Anular la invitación». Debajo dice si el correo ya salió.',
       'Para crear una línea tú: llena «Crear una línea» y toca «Crear la línea».',
       'Para mover a un conductor: arrástralo a otra línea o usa «Mover a…».',
       'Para corregir el segundo contacto de emergencia (por ejemplo, si la línea se creó con uno provisional): en la línea o en «Líderes invitados», abre los tres puntos y toca «Editar contactos de emergencia». Escribe el nombre y el celular completo otra vez, con el código del país, y toca «Guardar el contacto». Queda en la auditoría con el antes y el después.',
@@ -2029,7 +2029,7 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'A line is a group of taxis or mototaxis with its leader. It has a code, a link and a QR. The code only works in the line’s city. It is separate from referrals: joining a line earns no rewards.',
       'A line starts in two ways. First: someone fills in “Register your line” on the website (name, city, taxi or mototaxi, how many drivers, leader and second contact) and the request shows up at the top of this screen. Second: you create it under “Create a line.” Nobody creates a line without the team’s approval.',
-      'Before approving, call the leader and check the cell phone is theirs. If the leader doesn’t have a Divoox Driver account yet, the screen tells you and lets you tap “Invite the leader”: the line waits under “Invited leaders”, you send them the link shown there, and the moment they create their driver account with that same cell phone or email, the line is created automatically with them as leader (they don’t have to open anything; their account starts in the line’s city, with that city’s code). If they already had an account when you invited them, the line joins the next time they sign in, confirm their email or open “My line”. You can cancel an invitation from its three-dot menu. Drivers who had already signed up with the leader’s personal code move into the line as accepted.',
+      'Before approving, call the leader and check the cell phone is theirs. If the leader doesn’t have a Divoox Driver account yet, tapping “Create the line” (or “Approve”) invites them in that same step: the line moves to “Invited leaders” with their personal link; if you entered their email, they get an email with the link right away, and if you invited them by cell phone, you send it on WhatsApp from the three-dot menu. And the moment they create their driver account with that same cell phone or email, the line is created automatically with them as leader (they don’t have to open anything; their account starts in the line’s city, with that city’s code). If they already had an account when you invited them, the line joins the next time they sign in, confirm their email or open “My line”. You can cancel an invitation from its three-dot menu. Drivers who had already signed up with the leader’s personal code move into the line as accepted.',
       'A driver asks to join with the line’s code or by choosing it from the list for their city, at sign-up or from their profile. The leader accepts or declines with one tap in their app. A driver belongs to one line only.',
       'To move a driver: drag them to another line, or open the line with “View” and use “Move to…”. You can also leave them without a line. The leader can remove a driver from their app.',
       'Emergencies: if a driver in the line taps the emergency button, the leader and the second contact get a message with the name, cell phone and location. There is a daily limit per driver. A driver without a line alerts the team in their city.',
@@ -2044,14 +2044,14 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
       capLineas(
         'super-invitar',
         'en',
-        'A request with the notice that the leader doesn’t have a Divoox Driver account yet and the Invite the leader button.',
-        'If the leader has no account yet, the screen says so and lets you invite them.',
+        'The green notice after approving a leader who didn’t have an account yet: they were invited in the same step.',
+        'Approving a leader without an account invites them in the same step: the notice says whether the email went out or you need to send their link on WhatsApp.',
       ),
       capLineas(
         'super-invitados',
         'en',
-        'The Invited leaders section with the link to send the leader and the lines waiting for them, each with its three-dot menu.',
-        'The lines waiting for their leader and the link you send them.',
+        'The Invited leaders section: each line with its personal link and the open three-dot menu with Copy their link, Send on WhatsApp, Edit emergency contacts and Cancel the invitation.',
+        'Each invited leader with their personal link; from the three dots you copy it or send it on WhatsApp.',
       ),
       capLineas(
         'super-crear',
@@ -2074,7 +2074,7 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
     pasos: [
       'Open “Taxi and mototaxi lines” in the People menu.',
       'In the requests: call the leader, verify their cell phone and tap “Approve and create the line.”',
-      'If the screen says the leader has no account yet: tap “Invite the leader”, copy the link under “Invited leaders” and send it to them. To undo it, open the three dots and tap “Cancel the invitation”.',
+      'If the leader has no account yet, the line goes to “Invited leaders” on its own. In its three-dot menu: “Copy their link”, “Send on WhatsApp” (opens WhatsApp with the message and their link), “Send the email again” (if you invited them by email) and “Cancel the invitation”. Below, it says whether the email already went out.',
       'To create a line yourself: fill in “Create a line” and tap “Create the line.”',
       'To move a driver: drag them to another line or use “Move to…”.',
       'To fix the second emergency contact (for example, if the line was created with a temporary one): on the line or under “Invited leaders”, open the three dots and tap “Edit emergency contacts.” Enter the name and the full cell phone again, with the country code, and tap “Save the contact.” It goes into the audit log with the before and after.',

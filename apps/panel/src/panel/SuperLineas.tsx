@@ -14,6 +14,7 @@ import { MenuTresPuntos } from './MenuTresPuntos';
 import { EtiquetaPrueba, FiltroCuentas } from './CuentasPrueba';
 import { usePreferencias } from './usePreferencias';
 import { pedir } from './api';
+import { useHora } from './horario';
 
 /**
  * C-LINEAS-TAXI (19 nov 2026): las líneas de taxi y mototaxi en el superadmin. El equipo ve las
@@ -46,14 +47,22 @@ const T = {
     contacto2Nombre: 'Segundo contacto de emergencia: nombre',
     contacto2Telefono: 'Segundo contacto de emergencia: celular con código de país',
     crear: 'Crear la línea',
-    sinCuenta:
-      'Ese líder todavía no tiene cuenta en Divoox Driver. Puedes invitarlo: la línea se crea sola cuando se registre con ese correo o celular y abra «Mi línea».',
-    invitar: 'Invitar al líder',
-    invitado:
-      'Listo. La línea queda esperando al líder. Mándale el enlace de «Líderes invitados» para que cree su cuenta.',
+    invitado: (correo: boolean): string =>
+      correo
+        ? 'Listo. El líder todavía no tenía cuenta: le mandamos un correo con su enlace personal. La línea se crea sola en cuanto cree su cuenta.'
+        : 'Listo. El líder todavía no tenía cuenta y quedó invitado. Mándale su enlace por WhatsApp desde «Líderes invitados».',
     invitados: 'Líderes invitados',
     invitadosAyuda:
-      'Estas líneas esperan a que su líder cree su cuenta de conductor con ese mismo correo o celular. Mándale este enlace:',
+      'Estas líneas esperan a su líder. A cada uno le llega su enlace personal por correo; si lo invitaste por celular, mándaselo por WhatsApp. La línea se crea sola en cuanto crea su cuenta con ese correo o celular.',
+    copiarEnlace: 'Copiar su enlace',
+    enlaceCopiado: 'Enlace copiado.',
+    porWhatsapp: 'Mandar por WhatsApp',
+    reenviar: 'Volver a mandar el correo',
+    reenviado: 'Le volvimos a mandar el correo.',
+    correoEnviado: (f: string) => `Correo enviado el ${f}.`,
+    sinCorreo: 'Sin correo: mándale el enlace por WhatsApp.',
+    mensajeWhatsapp: (linea: string, enlace: string) =>
+      `Hola. Te invitamos a ser el líder de la línea «${linea}» en Divoox. Crea tu cuenta de conductor aquí y la línea queda a tu nombre: ${enlace}`,
     anular: 'Anular la invitación',
     opciones: 'Más opciones',
     editarContactos: 'Editar contactos de emergencia',
@@ -110,14 +119,22 @@ const T = {
     contacto2Nombre: 'Second emergency contact: name',
     contacto2Telefono: 'Second emergency contact: cell phone with country code',
     crear: 'Create the line',
-    sinCuenta:
-      'That leader doesn’t have a Divoox Driver account yet. You can invite them: the line is created automatically when they sign up with that email or cell phone and open “My line”.',
-    invitar: 'Invite the leader',
-    invitado:
-      'Done. The line is waiting for its leader. Send them the link under “Invited leaders” so they can create their account.',
+    invitado: (correo: boolean): string =>
+      correo
+        ? 'Done. The leader didn’t have an account yet: we emailed them their personal link. The line is created automatically as soon as they sign up.'
+        : 'Done. The leader didn’t have an account yet and is now invited. Send them their link on WhatsApp from “Invited leaders”.',
     invitados: 'Invited leaders',
     invitadosAyuda:
-      'These lines are waiting for their leader to create a driver account with that same email or cell phone. Send them this link:',
+      'These lines are waiting for their leader. Each one gets their personal link by email; if you invited them by cell phone, send it on WhatsApp. The line is created automatically as soon as they sign up with that email or cell phone.',
+    copiarEnlace: 'Copy their link',
+    enlaceCopiado: 'Link copied.',
+    porWhatsapp: 'Send on WhatsApp',
+    reenviar: 'Send the email again',
+    reenviado: 'We sent the email again.',
+    correoEnviado: (f: string) => `Email sent on ${f}.`,
+    sinCorreo: 'No email: send them the link on WhatsApp.',
+    mensajeWhatsapp: (linea: string, enlace: string) =>
+      `Hi. You’re invited to be the leader of the “${linea}” line on Divoox. Create your driver account here and the line is yours: ${enlace}`,
     anular: 'Cancel the invitation',
     opciones: 'More options',
     editarContactos: 'Edit emergency contacts',
@@ -159,7 +176,17 @@ type Invitado = {
   lider: string;
   contacto2Nombre: string;
   contacto2Telefono: string;
+  /** C-INVITAR-LIDER-UN-PASO: su enlace personal y el correo. */
+  enlace: string;
+  correo: string | null;
+  correoEnviadoEn: string | null;
 };
+
+/** wa.me con el celular del líder (si lo invitaron por celular) y el mensaje con su enlace. */
+function enlaceWhatsapp(lider: string, texto: string): string {
+  const digitos = lider.includes('@') ? '' : lider.replace(/\D/g, '');
+  return `https://wa.me/${digitos}?text=${encodeURIComponent(texto)}`;
+}
 
 /**
  * C-CONTACTO2-EDITABLE (21 nov 2026): corrige el segundo contacto de emergencia de una línea o de un
@@ -259,21 +286,6 @@ function EditarContacto2({
     </form>
   );
 }
-/** El servidor dice así que nadie en Driver tiene ese correo o celular (C-LIDER-INVITADO). */
-const esSinCuenta = (x: unknown) =>
-  x instanceof ErrorApi && x.estado === 404 && x.campo === 'lider';
-
-function InvitarLider({ t, alInvitar }: { t: Textos; alInvitar: () => void }) {
-  return (
-    <div className="flex-tarjeta" role="alert" data-testid="lineas-invitar-lider">
-      <p>{t.sinCuenta}</p>
-      <button type="button" className="boton" onClick={alInvitar}>
-        {t.invitar}
-      </button>
-    </div>
-  );
-}
-
 type Linea = {
   id: string;
   nombre: string;
@@ -314,7 +326,6 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
   const [sinLinea, setSinLinea] = useState<Suelto[]>([]);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [invitados, setInvitados] = useState<Invitado[]>([]);
-  const [enlaceDriver, setEnlaceDriver] = useState('');
   const [q, setQ] = useState('');
   const [zona, setZona] = useState('');
   // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto, recordado.
@@ -347,7 +358,6 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
           setSinLinea(l.sinLinea);
           setSolicitudes(s.solicitudes);
           setInvitados(i.invitaciones);
-          setEnlaceDriver(i.enlace);
           setCargado(true);
         })
         .catch((x: unknown) => {
@@ -368,6 +378,24 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
     try {
       await pedir('POST', '/datos/admin/lineas/mover', { conductorId, lineaId });
       recargar(t.guardado);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  };
+  const hora = useHora(idioma);
+  // C-INVITAR-LIDER-UN-PASO: copiar el enlace personal y volver a mandar el correo.
+  const copiar = async (enlace: string) => {
+    try {
+      await navigator.clipboard.writeText(enlace);
+      setOk(t.enlaceCopiado);
+    } catch {
+      setError(enlace);
+    }
+  };
+  const reenviar = async (id: string) => {
+    try {
+      await pedir('POST', `/datos/admin/lineas-invitaciones/${id}/reenviar`, {});
+      recargar(t.reenviado);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
@@ -419,9 +447,6 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
             {t.invitados} ({invitados.length})
           </h3>
           <p className="pista">{t.invitadosAyuda}</p>
-          <p>
-            <code data-testid="lineas-enlace-lider">{enlaceDriver}</code>
-          </p>
           <ul className="flex-lista-tarjetas" data-testid="lineas-invitados">
             {invitados.map((i) => (
               <li key={i.id} className="flex-tarjeta">
@@ -432,9 +457,32 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
                 <p className="pista">
                   {t.contacto2Nombre}: {i.contacto2Nombre} · {i.contacto2Telefono}
                 </p>
+                <p className="pista">
+                  {i.correoEnviadoEn
+                    ? t.correoEnviado(hora.fecha(i.correoEnviadoEn))
+                    : i.correo
+                      ? ''
+                      : t.sinCorreo}
+                </p>
+                <p>
+                  <code data-testid="lineas-enlace-lider">{i.enlace}</code>
+                </p>
                 <MenuTresPuntos
                   etiqueta={t.opciones}
                   opciones={[
+                    { texto: t.copiarEnlace, alTocar: () => void copiar(i.enlace) },
+                    {
+                      texto: t.porWhatsapp,
+                      alTocar: () =>
+                        window.open(
+                          enlaceWhatsapp(i.lider, t.mensajeWhatsapp(i.nombre, i.enlace)),
+                          '_blank',
+                          'noopener,noreferrer',
+                        ),
+                    },
+                    ...(i.correo
+                      ? [{ texto: t.reenviar, alTocar: () => void reenviar(i.id) }]
+                      : []),
                     { texto: t.editarContactos, alTocar: () => setEditando(`inv-${i.id}`) },
                     { texto: t.anular, peligro: true, alTocar: () => void anular(i.id) },
                   ]}
@@ -579,19 +627,18 @@ function TarjetaSolicitud({
 }) {
   const [motivo, setMotivo] = useState('');
   const [trabajando, setTrabajando] = useState(false);
-  const [sinCuenta, setSinCuenta] = useState(false);
-  const resolver = async (accion: 'aprobar' | 'rechazar', invitar = false) => {
+  const resolver = async (accion: 'aprobar' | 'rechazar') => {
     setTrabajando(true);
     try {
-      await pedir(
+      // C-INVITAR-LIDER-UN-PASO: aprobar a un líder sin cuenta lo invita en el mismo paso.
+      const r = await pedir<{ invitacion?: { correoEnviado: boolean } | null }>(
         'POST',
         `/datos/admin/lineas-solicitudes/${s.id}/${accion}`,
-        accion === 'rechazar' ? { motivo } : invitar ? { invitar: true } : {},
+        accion === 'rechazar' ? { motivo } : {},
       );
-      alResolver(invitar ? t.invitado : t.guardado);
+      alResolver(r?.invitacion ? t.invitado(r.invitacion.correoEnviado) : t.guardado);
     } catch (x) {
-      if (accion === 'aprobar' && esSinCuenta(x)) setSinCuenta(true);
-      else setError(x instanceof ErrorApi ? x.message : String(x));
+      setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
       setTrabajando(false);
     }
@@ -633,7 +680,6 @@ function TarjetaSolicitud({
           {t.rechazar}
         </button>
       </div>
-      {sinCuenta ? <InvitarLider t={t} alInvitar={() => void resolver('aprobar', true)} /> : null}
     </li>
   );
 }
@@ -664,23 +710,27 @@ function CrearLinea({
     },
     almacen: almacenNavegador,
   });
-  const [sinCuenta, setSinCuenta] = useState(false);
-  async function crear(e: React.FormEvent | null, invitar = false) {
+  async function crear(e: React.FormEvent | null) {
     e?.preventDefault();
     setError('');
     try {
-      const r = await pedir<{ adoptados?: number }>('POST', '/datos/admin/lineas', {
-        ...b.valores,
-        zonaId: b.valores.zonaId || zonas[0]?.id || '',
-        ...(invitar ? { invitar: true } : {}),
-      });
+      // C-INVITAR-LIDER-UN-PASO: si el líder no tiene cuenta, queda invitado en este mismo paso.
+      const r = await pedir<{ adoptados?: number; invitacion?: { correoEnviado: boolean } | null }>(
+        'POST',
+        '/datos/admin/lineas',
+        { ...b.valores, zonaId: b.valores.zonaId || zonas[0]?.id || '' },
+      );
       await b.limpiar();
-      setSinCuenta(false);
-      alCrear(invitar ? t.invitado : r.adoptados ? t.adoptados(r.adoptados) : t.guardado);
+      alCrear(
+        r.invitacion
+          ? t.invitado(r.invitacion.correoEnviado)
+          : r.adoptados
+            ? t.adoptados(r.adoptados)
+            : t.guardado,
+      );
     } catch (x) {
-      // Lo escrito se queda en pantalla: solo falta decidir si se invita al líder.
-      if (!invitar && esSinCuenta(x)) setSinCuenta(true);
-      else setError(x instanceof ErrorApi ? x.message : String(x));
+      // Lo escrito se queda en pantalla.
+      setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
   return (
@@ -754,7 +804,6 @@ function CrearLinea({
           {t.crear}
         </button>
       </form>
-      {sinCuenta ? <InvitarLider t={t} alInvitar={() => void crear(null, true)} /> : null}
     </div>
   );
 }

@@ -897,6 +897,16 @@ export const MENSAJES_EN = new Map<string, string>([
     'Ese municipio no existe en el país de la zona.',
     'That municipality doesn’t exist in the zone’s country.',
   ],
+  // C-INVITAR-LIDER-UN-PASO (21 nov 2026).
+  [
+    'Esta invitación no tiene correo: mándale el enlace por WhatsApp.',
+    'This invitation has no email: send them the link on WhatsApp.',
+  ],
+  [
+    'El correo no salió. Revisa la dirección o mándale el enlace por WhatsApp.',
+    'The email didn’t go out. Check the address or send them the link on WhatsApp.',
+  ],
+  ['Esta invitación ya no está vigente.', 'This invitation is no longer active.'],
   [
     'Escribe el motivo: le llega a la persona para que lo corrija.',
     'Write the reason: the person receives it so they can fix it.',
