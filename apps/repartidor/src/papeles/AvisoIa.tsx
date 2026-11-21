@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Api, ErrorApi, type Idioma } from '@tumbite/compartido';
-import { Boton, COLOR, FUENTE, Icono, Text } from '@tumbite/movil';
+import { Boton, COLOR, FUENTE, Icono, Text, abrirPagina } from '@tumbite/movil';
 import {
   avisoConAlternativa,
   plataformaAviso,
@@ -79,7 +79,8 @@ export function AvisoIa({
         </Text>
         <Pressable
           accessibilityRole="link"
-          onPress={() => void Linking.openURL(politicaDePrivacidad(idioma))}
+          // C-PAGINA-EN-APP: la política se abre dentro de la app, no en el navegador.
+          onPress={() => abrirPagina(politicaDePrivacidad(idioma))}
           testID="aviso-ia-politica"
         >
           <Text style={{ fontSize: 15, fontWeight: '700', textDecorationLine: 'underline' }}>
