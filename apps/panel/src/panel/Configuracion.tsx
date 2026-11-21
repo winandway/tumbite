@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useEffect, useState } from 'react';
 import {
   correoEjemplo,
@@ -357,7 +358,7 @@ export function Configuracion({
             <span className="insignia insignia-aprobado">{t.confirmado}</span>
           ) : (
             <>
-              <span className="insignia">{t.sinConfirmar}</span>{' '}
+              <Insignia tono="pendiente">{t.sinConfirmar}</Insignia>{' '}
               <button type="button" className="enlace" onClick={() => void reenviar()}>
                 {t.reenviar}
               </button>

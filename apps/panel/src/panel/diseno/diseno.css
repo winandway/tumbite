@@ -1,0 +1,193 @@
+/*
+ * C-PANEL-DISENO (21 nov 2026, Gerencia) — todos los países. El sistema de diseño de TODO el panel
+ * web (superadmin, restaurante, franquicia y Flex). Se carga después de las demás hojas, así que
+ * manda. Tres reglas:
+ *  1. Dos tipografías con su escala: Poppins para títulos y botones, Montserrat para todo el texto.
+ *  2. Un solo código de colores por estado, en cada fila y cada ficha: verde hecho, ámbar pendiente,
+ *     rojo problema, gris apagado (la tabla vive en `estados.ts`).
+ *  3. Jerarquía de botones: un principal por pantalla (rojo), los demás de borde o de texto; lo que
+ *     borra va en los tres puntos.
+ */
+.pd {
+  /* Tipografías */
+  --pd-fuente-titulo: 'Poppins', 'Montserrat', system-ui, sans-serif;
+  --pd-fuente-texto: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Escala (títulos) */
+  --pd-t1: 1.75rem; /* el título de la pantalla */
+  --pd-t2: 1.25rem; /* una sección */
+  --pd-t3: 1.0625rem; /* una tarjeta o un grupo */
+  /* Escala (texto) */
+  --pd-texto: 0.9375rem;
+  --pd-texto-chico: 0.8125rem;
+  --pd-texto-mini: 0.75rem;
+  /* Estados: fondo y letra de cada tono. Ninguna pantalla define los suyos. */
+  --pd-hecho: #0d6b34;
+  --pd-hecho-fondo: #e4f5ea;
+  --pd-hecho-punto: #1f9d55;
+  --pd-pendiente: #7a4b00;
+  --pd-pendiente-fondo: #fff3d4;
+  --pd-pendiente-punto: #e0a100;
+  --pd-problema: #9a0d18;
+  --pd-problema-fondo: #fde6e7;
+  --pd-problema-punto: #e5151f;
+  --pd-apagado: #4a5058;
+  --pd-apagado-fondo: #eef0f3;
+  --pd-apagado-punto: #9aa0a8;
+  font-family: var(--pd-fuente-texto);
+}
+
+/* ───────── 1. Tipografía ───────── */
+.pd .pd-contenido {
+  font-family: var(--pd-fuente-texto);
+  font-size: var(--pd-texto);
+  line-height: 1.55;
+  color: var(--pd-negro);
+}
+.pd .pd-contenido h1,
+.pd .pd-contenido h2,
+.pd .pd-contenido h3,
+.pd .pd-contenido h4,
+.pd .pd-contenido legend,
+.pd .pd-contenido summary strong,
+.pd .pd-contenido .boton,
+.pd .pd-contenido th {
+  font-family: var(--pd-fuente-titulo);
+}
+.pd .pd-contenido h1 {
+  font-size: var(--pd-t1);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+.pd .pd-contenido h2 {
+  font-size: var(--pd-t2);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.pd .pd-contenido h3,
+.pd .pd-contenido h4,
+.pd .pd-contenido legend {
+  font-size: var(--pd-t3);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.pd .pd-contenido legend {
+  padding: 0 6px;
+  color: var(--pd-negro);
+}
+.pd .pd-contenido p,
+.pd .pd-contenido li,
+.pd .pd-contenido td,
+.pd .pd-contenido dd,
+.pd .pd-contenido label,
+.pd .pd-contenido input,
+.pd .pd-contenido select,
+.pd .pd-contenido textarea {
+  font-family: var(--pd-fuente-texto);
+}
+.pd .pd-contenido dt {
+  font-weight: 600;
+}
+.pd .pd-contenido .pista,
+.pd .pd-contenido .suave,
+.pd .pd-contenido small {
+  font-size: var(--pd-texto-chico);
+  color: var(--pd-gris);
+}
+.pd .pd-contenido th {
+  font-size: var(--pd-texto-mini);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pd-gris);
+}
+
+/* ───────── 2. Estados: insignias de cada fila y ficha ───────── */
+.pd .insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--pd-fuente-texto);
+  font-size: var(--pd-texto-mini);
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: middle;
+  /* Sin tono = gris apagado: nunca rojo por omisión. */
+  background: var(--pd-apagado-fondo);
+  color: var(--pd-apagado) !important;
+}
+.pd .insignia-punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pd-apagado-punto);
+  flex: none;
+}
+/* Verde: hecho. También las clases de antes que querían decir lo mismo. */
+.pd .insignia-hecho,
+.pd .insignia-aprobado,
+.pd .insignia.doc-vigente {
+  background: var(--pd-hecho-fondo);
+  color: var(--pd-hecho) !important;
+}
+.pd .insignia-hecho .insignia-punto {
+  background: var(--pd-hecho-punto);
+}
+/* Ámbar: pendiente. */
+.pd .insignia-pendiente,
+.pd .insignia.doc-por_vencer {
+  background: var(--pd-pendiente-fondo);
+  color: var(--pd-pendiente) !important;
+}
+.pd .insignia-pendiente .insignia-punto {
+  background: var(--pd-pendiente-punto);
+}
+/* Rojo: problema. */
+.pd .insignia-problema,
+.pd .insignia-rechazado,
+.pd .insignia.doc-vencido {
+  background: var(--pd-problema-fondo);
+  color: var(--pd-problema) !important;
+}
+.pd .insignia-problema .insignia-punto {
+  background: var(--pd-problema-punto);
+}
+/* Gris: apagado (pausado, desconectado, sin datos). Ya no va en rojo: no es un problema. */
+.pd .insignia-apagado,
+.pd .insignia-pausado,
+.pd .insignia.doc-sin_datos {
+  background: var(--pd-apagado-fondo);
+  color: var(--pd-apagado) !important;
+}
+
+/* ───────── 3. Botones: un principal por pantalla ───────── */
+.pd .pd-contenido .boton {
+  font-family: var(--pd-fuente-titulo);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+/* De texto: la acción menor de una fila («Ver», «Áreas»). */
+.pd .pd-contenido .boton.terciario {
+  background: transparent;
+  border-color: transparent;
+  color: var(--pd-negro);
+  min-height: 36px;
+  padding: 6px 10px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pd .pd-contenido .boton.terciario:hover:not(:disabled) {
+  background: var(--pd-apagado-fondo);
+  border-color: transparent;
+  color: var(--pd-negro);
+}
+/* Tamaño de fila: los botones dentro de tarjetas y tablas no compiten con el principal. */
+.pd .pd-contenido .boton.chico {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: var(--pd-texto-chico);
+}

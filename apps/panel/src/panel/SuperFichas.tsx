@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fechaSuper } from './horario';
 import { ImportarMenu } from './ImportarMenu';
@@ -676,14 +677,20 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                   <td>
                     <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
                     {r.nombre} <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
-                    {r.sinZona ? <span className="insignia">{t.sinZona}</span> : null}
+                    {r.sinZona ? <Insignia tono="pendiente">{t.sinZona}</Insignia> : null}
                   </td>
                   <td>
                     {t.vehiculos[r.vehiculo] ?? r.vehiculo} {r.placa}
                   </td>
-                  <td className={`doc-${r.licencia}`}>{t.estadoDoc[r.licencia]}</td>
-                  <td className={`doc-${r.seguro}`}>{t.estadoDoc[r.seguro]}</td>
-                  <td>{t.estadoAnt[r.antecedentes]}</td>
+                  <td>
+                    <Insignia estado={r.licencia}>{t.estadoDoc[r.licencia]}</Insignia>
+                  </td>
+                  <td>
+                    <Insignia estado={r.seguro}>{t.estadoDoc[r.seguro]}</Insignia>
+                  </td>
+                  <td>
+                    <Insignia estado={r.antecedentes}>{t.estadoAnt[r.antecedentes]}</Insignia>
+                  </td>
                   <td>
                     <InsigniaPapeles
                       papeles={r.papeles ?? 'sin_plazo'}
@@ -742,10 +749,7 @@ function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idiom
   const t = enIdioma(TK, idioma);
   return (
     <p className="super-kyc">
-      {t.titulo}:{' '}
-      <span className={`insignia ${kyc.estado === 'aprobado' ? 'insignia-aprobado' : ''}`}>
-        {t.estados[kyc.estado] ?? kyc.estado}
-      </span>
+      {t.titulo}: <Insignia estado={kyc.estado}>{t.estados[kyc.estado] ?? kyc.estado}</Insignia>
       {kyc.estado !== 'sin_enviar' && (
         <>
           {' · '}
@@ -1032,9 +1036,7 @@ export function SuperRepartidor({
         <div className="tarjeta-form">
           <h2>
             {t.licencia}{' '}
-            <span className={`insignia doc-${d.estadoLicencia}`}>
-              {t.estadoDoc[d.estadoLicencia]}
-            </span>
+            <Insignia estado={d.estadoLicencia}>{t.estadoDoc[d.estadoLicencia]}</Insignia>
           </h2>
           <dl className="super-dl">
             <dt>{t.licenciaNum}</dt>
@@ -1045,8 +1047,7 @@ export function SuperRepartidor({
             <dd>{d.licenciaVence ?? '—'}</dd>
           </dl>
           <h2>
-            {t.seguro}{' '}
-            <span className={`insignia doc-${d.estadoSeguro}`}>{t.estadoDoc[d.estadoSeguro]}</span>
+            {t.seguro} <Insignia estado={d.estadoSeguro}>{t.estadoDoc[d.estadoSeguro]}</Insignia>
           </h2>
           <dl className="super-dl">
             <dt>{t.aseguradora}</dt>

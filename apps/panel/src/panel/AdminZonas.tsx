@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -208,20 +209,20 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
                   {z.municipio.pcode})
                 </span>
               ) : null}
-              <span className={`insignia ${z.activa ? 'insignia-aprobado' : ''}`}>
+              <Insignia estado={z.activa ? 'activa' : 'apagada'}>
                 {z.activa ? t.activa : t.apagada}
-              </span>
+              </Insignia>
             </div>
             <button
               type="button"
-              className={z.activa ? 'boton secundario' : 'boton'}
+              className="boton secundario chico"
               onClick={() => void alternar(z)}
             >
               {z.activa ? t.apagar : t.activar}
             </button>
             <button
               type="button"
-              className="boton secundario"
+              className="boton secundario chico"
               aria-expanded={conAreas === z.id}
               onClick={() => setConAreas(conAreas === z.id ? null : z.id)}
             >

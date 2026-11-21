@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { Insignia } from '../diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -232,12 +233,7 @@ export function RutasOperativas({ ctx }: { ctx: Contexto }) {
               <Enlace a={`${raiz}/operativas/${r.id}`}>
                 <strong>{r.nombre || r.id.slice(0, 8)}</strong>
               </Enlace>{' '}
-              ·{' '}
-              <span
-                className={`insignia ${['completada'].includes(r.estado) ? 'insignia-aprobado' : r.estado === 'con_incidencias' ? 'insignia-pausado' : ''}`}
-              >
-                {t.estadosRuta[r.estado] ?? r.estado}
-              </span>
+              · <Insignia estado={r.estado}>{t.estadosRuta[r.estado] ?? r.estado}</Insignia>
               {r.conductor ? ` · ${r.conductor}` : ''}
               {r.centro ? ` · ${r.centro}` : ''} · {r.entregados} {t.entregadosDe} {r.paquetes} ·{' '}
               {r.paradasResueltas}/{r.paradas} {t.paradasResueltas}
@@ -341,7 +337,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
         {t.detalleRuta}: {r.nombre || r.id.slice(0, 8)}
       </h1>
       <p>
-        <span className="insignia">{t.estadosRuta[r.estado] ?? r.estado}</span>
+        <Insignia estado={r.estado}>{t.estadosRuta[r.estado] ?? r.estado}</Insignia>
         {r.conductor ? ` · ${t.conductor}: ${r.conductor.nombre}` : ''}
         {r.estado === 'ofrecida' && r.ofertaVenceEn
           ? ` · ${t.ofertaVence}: ${r.ofertaVenceEn}`
@@ -557,11 +553,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
               {p.orden}. {p.referenciaExterna ?? '—'}
             </strong>{' '}
             · {p.destinatarioNombre} · {p.direccion} ·{' '}
-            <span
-              className={`insignia ${p.estado === 'entregada' ? 'insignia-aprobado' : p.estado === 'fallida' ? 'insignia-rechazado' : ''}`}
-            >
-              {t.estadosParada[p.estado] ?? p.estado}
-            </span>
+            <Insignia estado={p.estado}>{t.estadosParada[p.estado] ?? p.estado}</Insignia>
             {p.sinCoordenadas ? (
               <span className="insignia insignia-rechazado">{t.sinCoordenadas}</span>
             ) : null}
@@ -952,9 +944,9 @@ export function Devoluciones({ ctx }: { ctx: Contexto }) {
               <code>{x.codigoSeguimiento}</code> · {x.referenciaExterna ?? '—'} · {x.ruta}
               {x.conductor ? ` · ${x.conductor}` : ''} ·{' '}
               {x.motivo ? (t.motivos[x.motivo] ?? x.motivo) : '—'} ·{' '}
-              <span className={`insignia ${x.entregadoAlCentro ? 'insignia-aprobado' : ''}`}>
+              <Insignia tono={x.entregadoAlCentro ? 'hecho' : 'pendiente'}>
                 {x.entregadoAlCentro ? t.entregadoAlCentro : t.enCamino}
-              </span>{' '}
+              </Insignia>{' '}
               {puede ? (
                 <button
                   type="button"

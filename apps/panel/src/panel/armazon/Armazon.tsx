@@ -16,6 +16,8 @@ import { VersionPublicada } from '../../VersionPublicada';
 import { ir } from '../../ruta';
 import { type GrupoMenu, IconoDe, type ItemMenu } from './menus';
 import './armazon.css';
+// C-PANEL-DISENO: el sistema de diseño va después y manda en todo el panel.
+import '../diseno/diseno.css';
 
 /**
  * C-PANEL-ARMAZON (14 nov 2026, Richard): UN solo armazón para todos los paneles web (superadmin,

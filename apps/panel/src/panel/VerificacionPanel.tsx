@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useId, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { api, pedir } from './api';
@@ -141,9 +142,7 @@ export function VerificacionPanel({ idioma }: { idioma: Idioma }) {
     <section className="tarjeta-form verificacion">
       <h2>{t.titulo}</h2>
       <p>
-        <span className={`insignia ${k.estado === 'aprobado' ? 'insignia-aprobado' : ''}`}>
-          {new Map(Object.entries(t.estados)).get(k.estado)}
-        </span>
+        <Insignia estado={k.estado}>{new Map(Object.entries(t.estados)).get(k.estado)}</Insignia>
         {k.proximaRevision ? ` · ${t.revalidar}: ${k.proximaRevision}` : ''}
       </p>
       {k.estado === 'rechazado' && k.motivo && <p className="error-general">{k.motivo}</p>}

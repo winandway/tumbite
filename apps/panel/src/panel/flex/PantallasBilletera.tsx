@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { Insignia } from '../diseno/Insignia';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
@@ -824,11 +825,7 @@ function RecargasRecientes({ ctx }: { ctx: Contexto }) {
                 {r.motivo ? ` · ${r.motivo}` : ''}
               </small>
             </span>
-            <span
-              className={`insignia ${r.estado === 'acreditada' ? 'insignia-aprobado' : r.estado === 'fallida' ? 'insignia-rechazado' : ''}`}
-            >
-              {t.estadosRecarga[r.estado] ?? r.estado}
-            </span>
+            <Insignia estado={r.estado}>{t.estadosRecarga[r.estado] ?? r.estado}</Insignia>
           </li>
         ))}
       </ul>

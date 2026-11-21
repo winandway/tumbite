@@ -1,3 +1,4 @@
+import { Insignia } from '../diseno/Insignia';
 import { useState } from 'react';
 import { type Idioma, enIdioma, perfilFlex } from '@tumbite/compartido';
 import { ElegirPunto } from '../../sitio/ElegirPunto';
@@ -133,9 +134,7 @@ export function UbicacionEnvio({
     <div className="flex-tarjeta" data-testid="ubicacion-envio">
       <h2>{t.titulo}</h2>
       <p>
-        <span className={`insignia ${estado === 'confirmada' ? 'insignia-aprobado' : ''}`}>
-          {estados.get(estado) ?? estado}
-        </span>
+        <Insignia estado={estado}>{estados.get(estado) ?? estado}</Insignia>
         {envio.ubicacionFuente ? ` · ${fuentes.get(envio.ubicacionFuente) ?? ''}` : ''}
       </p>
       {envio.referencias ? (

@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { Insignia } from '../diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import { almacenNavegador, useBorrador } from '@tumbite/compartido';
 import { Campo } from '../CampoClave';
@@ -507,11 +508,7 @@ function FilaIntegracion({
     <li className="flex-tarjeta">
       <p>
         <strong>{w.descripcion || w.url}</strong>{' '}
-        <span
-          className={`insignia ${w.estado === 'activo' ? 'insignia-aprobado' : w.estado === 'desactivado' ? 'insignia-rechazado' : ''}`}
-        >
-          {t.estados[w.estado] ?? w.estado}
-        </span>
+        <Insignia estado={w.estado}>{t.estados[w.estado] ?? w.estado}</Insignia>
       </p>
       <p className="pista">
         {w.url} · {t.prefijo}: {w.secretoPrefijo}…

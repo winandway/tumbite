@@ -112,7 +112,7 @@ export function ResponsableZona({
       </label>
       {error && <p className="error">{error}</p>}
       {aviso && <p className="exito">{aviso}</p>}
-      <button type="submit" className="boton">
+      <button type="submit" className="boton secundario chico">
         {t.guardar}
       </button>
     </form>

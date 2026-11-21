@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { IconoServicio } from './FichaPiezas';
 import { Hora } from './horario';
 import { NuevoReclamo, TEXTO_RECLAMO_ABIERTO } from './NuevoReclamo';
@@ -875,11 +876,9 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
                 <IconoServicio servicio={x.servicio ?? 'general'} idioma={idioma} />{' '}
                 <span className="insignia">{t.tipos[x.tipo]}</span>{' '}
                 {x.prioridad && x.prioridad !== 'normal' ? (
-                  <span
-                    className={`insignia ${x.prioridad === 'urgente' ? 'insignia-rechazado' : ''}`}
-                  >
+                  <Insignia tono={x.prioridad === 'urgente' ? 'problema' : 'apagado'}>
                     {nombrePrioridad(tk, x.prioridad)}
-                  </span>
+                  </Insignia>
                 ) : null}{' '}
                 <strong>{x.asunto}</strong> · {x.nombre}
                 {x.asignadoNombre ? ` · ${tk.asignado}: ${x.asignadoNombre}` : ''}

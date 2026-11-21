@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos y resúmenes fijos, nunca claves del usuario */
+import { Insignia } from '../diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import {
   PERMISOS_CLAVE_API,
@@ -321,11 +322,7 @@ export function Centros({ ctx }: { ctx: Contexto }) {
           {lista.map((c) => (
             <li key={c.id}>
               <strong>{c.nombre}</strong> · {c.direccion}, {c.ciudad} ·{' '}
-              <span
-                className={`insignia ${c.estado === 'activo' ? 'insignia-aprobado' : 'insignia-pausado'}`}
-              >
-                {c.estado === 'activo' ? t.activo : t.inactivo}
-              </span>{' '}
+              <Insignia estado={c.estado}>{c.estado === 'activo' ? t.activo : t.inactivo}</Insignia>{' '}
               {puede && (
                 <button type="button" className="enlace" onClick={() => void estado(c)}>
                   {c.estado === 'activo' ? t.desactivar : t.activar}
@@ -506,11 +503,7 @@ export function Equipo({ ctx }: { ctx: Contexto }) {
           {datos.invitaciones.map((i) => (
             <li key={i.id}>
               {i.correo} · {t.roles[i.rol] ?? i.rol} ·{' '}
-              <span
-                className={`insignia ${i.estado === 'aceptada' ? 'insignia-aprobado' : i.estado === 'pendiente' ? '' : 'insignia-pausado'}`}
-              >
-                {t.estadosInvitacion[i.estado] ?? i.estado}
-              </span>{' '}
+              <Insignia estado={i.estado}>{t.estadosInvitacion[i.estado] ?? i.estado}</Insignia>{' '}
               {i.estado === 'pendiente' && (
                 <button type="button" className="enlace" onClick={() => void revocar(i.id)}>
                   {t.revocar}
@@ -724,11 +717,7 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
           {lista.map((c) => (
             <li key={c.usuarioId}>
               <strong>{c.nombre}</strong> · {t.vinculos[c.vinculo] ?? c.vinculo} ·{' '}
-              <span
-                className={`insignia ${c.estado === 'activo' ? 'insignia-aprobado' : 'insignia-pausado'}`}
-              >
-                {c.estado === 'activo' ? t.activo : t.inactivo}
-              </span>{' '}
+              <Insignia estado={c.estado}>{c.estado === 'activo' ? t.activo : t.inactivo}</Insignia>{' '}
               <button type="button" className="enlace" onClick={() => void estado(c)}>
                 {c.estado === 'activo' ? t.retirar : t.activar}
               </button>

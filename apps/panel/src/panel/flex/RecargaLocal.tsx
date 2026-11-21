@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { Insignia } from '../diseno/Insignia';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   almacenNavegador,
@@ -333,12 +334,8 @@ export function RecargaLocal({ ctx }: { ctx: Contexto }) {
           {lista.map((r) => (
             <li key={r.id}>
               <strong>{m(r.monto)}</strong> · {t.metodos[r.metodo] ?? r.metodo} · {r.referencia} ·{' '}
-              <span
-                className={`insignia ${r.estado === 'acreditada' ? 'insignia-aprobado' : r.estado === 'rechazada' ? 'insignia-rechazado' : ''}`}
-              >
-                {t.estados[r.estado] ?? r.estado}
-              </span>{' '}
-              · {fechaHoraLocal(r.creadoEn, ctx.idioma)}
+              <Insignia estado={r.estado}>{t.estados[r.estado] ?? r.estado}</Insignia> ·{' '}
+              {fechaHoraLocal(r.creadoEn, ctx.idioma)}
               {r.motivo ? ` · ${t.motivo}: ${r.motivo}` : ''}
             </li>
           ))}

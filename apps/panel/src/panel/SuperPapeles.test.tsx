@@ -81,9 +81,9 @@ describe('papeles del conductor en el superadmin', () => {
     rerender(<InsigniaPapeles papeles="en_plazo" dias={25} idioma="es" />);
     expect(screen.getByText('En plazo · quedan 25 días')).not.toHaveClass('papeles-por-vencer');
     rerender(<InsigniaPapeles papeles="completo" dias={null} idioma="es" />);
-    expect(screen.getByText('Completos')).toHaveClass('insignia-aprobado');
+    expect(screen.getByText('Completos')).toHaveClass('insignia-hecho');
     rerender(<InsigniaPapeles papeles="vencido" dias={null} idioma="es" />);
-    expect(screen.getByText('Plazo vencido · en pausa')).toHaveClass('insignia-rechazado');
+    expect(screen.getByText('Plazo vencido · en pausa')).toHaveClass('insignia-problema');
     rerender(<InsigniaPapeles papeles="sin_plazo" dias={null} idioma="en" />);
     expect(screen.getByText('No grace period')).toBeInTheDocument();
   });

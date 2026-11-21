@@ -309,7 +309,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     servidor(llamadas, { abierto: true });
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
     const fila = await screen.findByTestId('pais-VE');
-    expect(within(fila).getByText('Abierto').className).toContain('insignia-aprobado');
+    expect(within(fila).getByText('Abierto').className).toContain('insignia-hecho');
     expect(within(fila).queryByRole('button', { name: 'Cerrar en producción' })).toBeNull();
     await userEvent.click(within(fila).getByRole('button', { name: 'Más opciones del país' }));
     await userEvent.click(within(fila).getByRole('menuitem', { name: 'Cerrar en producción' }));

@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useEffect, useState } from 'react';
 import {
   ESTADOS_AREA,
@@ -171,9 +172,7 @@ export function AreasCiudad({
                 {a.franquicia?.nombre ?? t.sinFranquicia}
                 {a.aperturaPrevista ? ` · ${t.apertura}: ${a.aperturaPrevista}` : ''}
               </span>
-              <span className={`insignia ${a.estado === 'activa' ? 'insignia-aprobado' : ''}`}>
-                {nombreEstado(a.estado)}
-              </span>
+              <Insignia estado={a.estado}>{nombreEstado(a.estado)}</Insignia>
             </div>
             <label className="campo">
               <span>{t.estado}</span>

@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import { Hora } from './horario';
 import {
@@ -883,9 +884,9 @@ function FilaPais({ p, t, alCambiar }: { p: PaisPasajeros; t: Textos; alCambiar:
       <div className="lista-texto">
         <strong>
           {p.pais} · {enPalabras(t.nombresServicio, p.servicio)}{' '}
-          <span className={`insignia ${p.abierto ? 'insignia-aprobado' : ''}`}>
+          <Insignia tono={p.abierto ? 'hecho' : 'apagado'}>
             {p.abierto ? t.abiertoEstado : t.cerradoEstado}
-          </span>
+          </Insignia>
         </strong>
         {p.abierto ? (
           <span>
@@ -1092,17 +1093,7 @@ function FilaPapel({
         <strong>
           {nombrePapelPais(d.pais, servicioDelPapel(d.tipo), d.tipo, idioma) ??
             enPalabras(t.tiposPapel, d.tipo)}{' '}
-          <span
-            className={`insignia ${
-              d.estado === 'aprobado'
-                ? 'insignia-aprobado'
-                : d.estado === 'rechazado'
-                  ? 'insignia-rechazado'
-                  : ''
-            }`}
-          >
-            {enPalabras(t.estadosPapel, d.estado)}
-          </span>
+          <Insignia estado={d.estado}>{enPalabras(t.estadosPapel, d.estado)}</Insignia>
         </strong>
         <span>
           {d.conductor}
@@ -1659,9 +1650,9 @@ function Conductor({
     <div key={x.servicioId}>
       <h3>
         {titulo}:{' '}
-        <span className={`insignia ${x.habilitacion === 'aprobada' ? 'insignia-aprobado' : ''}`}>
+        <Insignia estado={x.habilitacion ?? 'apagado'}>
           {enPalabras(t.estadosHabilitacion, x.habilitacion ?? 'ninguna')}
-        </span>
+        </Insignia>
       </h3>
       {x.requisitosFaltantes.length ? (
         <>
@@ -1960,17 +1951,7 @@ function FilaMoto({
               <strong>
                 {nombrePapelPais(m.pais, esCarro ? 'carro' : 'moto', d.tipo, idioma) ??
                   enPalabras(nombresDoc, d.tipo)}{' '}
-                <span
-                  className={`insignia ${
-                    d.estado === 'aprobado'
-                      ? 'insignia-aprobado'
-                      : d.estado === 'rechazado'
-                        ? 'insignia-rechazado'
-                        : ''
-                  }`}
-                >
-                  {enPalabras(t.estadosPapel, d.estado)}
-                </span>
+                <Insignia estado={d.estado}>{enPalabras(t.estadosPapel, d.estado)}</Insignia>
               </strong>
               <a
                 href={`/datos/admin/vehiculos/${m.id}/documentos/${d.id}/archivo`}

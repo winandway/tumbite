@@ -176,6 +176,10 @@
 .pd-item svg {
   flex: none;
 }
+/* En el ítem activo (fondo de color), la cuenta va en blanco para que se lea. */
+.pd .pd-menu a.pd-item.activo .pd-item-pendiente {
+  background: #fff;
+}
 /* C-AVISOS-MENU: lo que espera en la sección. Verde = trabajo; rojo = urgente. El punto palpita. */
 .pd-item-pendiente {
   margin-left: auto;

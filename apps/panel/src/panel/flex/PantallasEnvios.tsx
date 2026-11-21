@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { Insignia } from '../diseno/Insignia';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
@@ -99,9 +100,9 @@ function InsigniaPaquete({ estado, t }: { estado: string; t: Contexto['t'] }) {
   const ok = estado === 'entregado';
   const mal = ['entrega_fallida', 'cancelado', 'devuelto', 'en_devolucion'].includes(estado);
   return (
-    <span className={`insignia ${ok ? 'insignia-aprobado' : mal ? 'insignia-rechazado' : ''}`}>
+    <Insignia tono={ok ? 'hecho' : mal ? 'problema' : 'pendiente'}>
       {t.estadosPaquete[estado] ?? estado}
-    </span>
+    </Insignia>
   );
 }
 
@@ -185,7 +186,7 @@ export function Envios({ ctx }: { ctx: Contexto }) {
                 <strong>{e.referenciaExterna ?? e.destinatarioNombre}</strong>
               </Enlace>{' '}
               · {e.destinatarioNombre} · {e.direccion} ·{' '}
-              <span className="insignia">{t.estadosEnvio[e.estado] ?? e.estado}</span> ·{' '}
+              <Insignia estado={e.estado}>{t.estadosEnvio[e.estado] ?? e.estado}</Insignia> ·{' '}
               {String(e.paquetes)} {t.paquetesN} · {fechaHoraLocal(e.creadoEn, ctx.idioma)}
             </li>
           ))}
@@ -604,7 +605,7 @@ export function DetalleEnvio({ ctx, envioId }: { ctx: Contexto; envioId: string 
       <h1>{t.detalleEnvio}</h1>
       <p>
         <strong>{e.referenciaExterna ?? '—'}</strong> ·{' '}
-        <span className="insignia">{t.estadosEnvio[e.estado] ?? e.estado}</span>
+        <Insignia estado={e.estado}>{t.estadosEnvio[e.estado] ?? e.estado}</Insignia>
       </p>
       <p>
         {e.destinatarioNombre}
@@ -1258,7 +1259,9 @@ export function Importar({ ctx }: { ctx: Contexto }) {
         <div className="flex-importacion" role="status">
           <h2>
             {imp.nombreArchivo || 'CSV'} ·{' '}
-            <span className="insignia">{t.estadosImportacion[imp.estado] ?? imp.estado}</span>
+            <Insignia estado={imp.estado}>
+              {t.estadosImportacion[imp.estado] ?? imp.estado}
+            </Insignia>
           </h2>
           <p>
             {t.filas}: <strong>{imp.total}</strong> · {t.validas}: <strong>{imp.validas}</strong> ·{' '}
@@ -1825,7 +1828,7 @@ export function LotesRutas({ ctx }: { ctx: Contexto }) {
                   <Enlace a={`${ctx.raiz}/operativas/${r.id}`}>
                     <strong>{r.nombre || r.id.slice(0, 8)}</strong>
                   </Enlace>{' '}
-                  · <span className="insignia">{t.estadosRuta[r.estado] ?? r.estado}</span> ·{' '}
+                  · <Insignia estado={r.estado}>{t.estadosRuta[r.estado] ?? r.estado}</Insignia> ·{' '}
                   {typeof r.paradas === 'number' ? r.paradas : r.paradas.length} {t.paradas}
                 </li>
               ))}

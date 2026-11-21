@@ -1,3 +1,5 @@
+import { HORAS_URGENTE, horasDesde } from './diseno/estados';
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -36,6 +38,13 @@ const T = {
     repartidor: 'Repartidor',
     restaurante: 'Restaurante',
     lejos: 'El local está lejos de su dirección',
+    espera: (h: number) =>
+      h < 1
+        ? 'Llegó hace menos de 1 h'
+        : h < 48
+          ? `Espera hace ${h} h`
+          : `Espera hace ${Math.floor(h / 24)} días`,
+    estadoFila: { aprobado: 'Aprobada', rechazado: 'Rechazada' } as Record<string, string>,
     volver: '← Verificaciones',
     piezas: {
       doc_frente: 'Documento (frente)',
@@ -80,6 +89,13 @@ const T = {
     repartidor: 'Driver',
     restaurante: 'Restaurant',
     lejos: 'The storefront is far from its address',
+    espera: (h: number) =>
+      h < 1
+        ? 'Arrived less than 1 h ago'
+        : h < 48
+          ? `Waiting ${h} h`
+          : `Waiting ${Math.floor(h / 24)} days`,
+    estadoFila: { aprobado: 'Approved', rechazado: 'Rejected' } as Record<string, string>,
     volver: '← Verifications',
     piezas: {
       doc_frente: 'Document (front)',
@@ -207,7 +223,17 @@ export function SuperKyc({
                 {s.rol === 'repartidor' ? t.repartidor : t.restaurante}
               </span>{' '}
               <strong>{s.nombre}</strong>{' '}
-              {s.codigo ? <span className="super-id">{s.codigo}</span> : null}
+              {s.codigo ? <span className="super-id">{s.codigo}</span> : null}{' '}
+              {/* C-PANEL-DISENO: el estado de cada fila con su color (ámbar espera, rojo pasado de un día). */}
+              {estado === 'pendiente' ? (
+                <Insignia tono={horasDesde(s.enviado) >= HORAS_URGENTE ? 'problema' : 'pendiente'}>
+                  {t.espera(horasDesde(s.enviado))}
+                </Insignia>
+              ) : (
+                <Insignia estado={estado}>
+                  {new Map(Object.entries(t.estadoFila)).get(estado) ?? estado}
+                </Insignia>
+              )}
               {s.restaurante ? ` · ${s.restaurante}` : ''}
               <small>
                 {s.correo} · {s.enviado}

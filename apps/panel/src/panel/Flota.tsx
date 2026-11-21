@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -379,11 +380,9 @@ export function Flota({ idioma }: { idioma: Idioma }) {
             <li key={r.id}>
               <div className="lista-texto">
                 <strong>{r.nombre}</strong>
-                <span
-                  className={`insignia ${r.conectado ? 'insignia-aprobado' : 'insignia-pausado'}`}
-                >
+                <Insignia tono={r.ocupado ? 'pendiente' : r.conectado ? 'hecho' : 'apagado'}>
                   {r.ocupado ? t.ocupado : r.conectado ? t.conectado : t.desconectado}
-                </span>
+                </Insignia>
               </div>
               <MenuTresPuntos
                 etiqueta={`${t.retirar}: ${r.nombre}`}

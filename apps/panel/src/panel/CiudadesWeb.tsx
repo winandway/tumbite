@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { CIUDADES } from '../sitio/cobertura';
@@ -75,9 +76,9 @@ export function CiudadesWeb({ idioma }: { idioma: Idioma }) {
             <li key={c.slug}>
               <div className="lista-texto">
                 <strong>{nombre}</strong>
-                <span className={`insignia ${activa ? 'insignia-aprobado' : ''}`}>
+                <Insignia tono={activa ? 'hecho' : 'pendiente'}>
                   {activa ? t.activa : t.pronto}
-                </span>
+                </Insignia>
               </div>
               {preguntando === c.slug ? (
                 <div className="fila-botones" role="group" aria-label={nombre}>
@@ -100,7 +101,8 @@ export function CiudadesWeb({ idioma }: { idioma: Idioma }) {
               ) : (
                 <button
                   type="button"
-                  className={activa ? 'boton secundario' : 'boton'}
+                  // C-PANEL-DISENO: la acción de una fila nunca es el botón principal.
+                  className="boton secundario chico"
                   onClick={() => setPreguntando(c.slug)}
                 >
                   {activa ? t.volver : t.anunciar}

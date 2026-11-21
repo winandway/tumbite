@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -430,7 +431,7 @@ export function Productos({ idioma }: { idioma: Idioma }) {
             <strong>{nombreDe(p)}</strong> · {p.marca}
             {p.tamano ? ` · ${p.tamano} ${p.unidadTamano}` : ''} · {p.categoria1} ·{' '}
             {p.precio != null ? formatearMonto(p.precio, datos.moneda, idioma) : '—'} · {p.sku}
-            {p.disponible ? null : <span className="insignia"> {t.agotado}</span>}{' '}
+            {p.disponible ? null : <Insignia tono="apagado"> {t.agotado}</Insignia>}{' '}
             <button type="button" className="enlace" onClick={() => void cambiarDisponible(p)}>
               {p.disponible ? t.agotar : t.reactivar}
             </button>

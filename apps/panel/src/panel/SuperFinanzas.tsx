@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { Insignia } from './diseno/Insignia';
 import { RecargasLocalesAdmin } from './flex/RecargaLocal';
 import { Hora } from './horario';
 import { useCallback, useEffect, useState } from 'react';
@@ -412,9 +413,9 @@ function Politicas({ t, idioma }: { t: TT; idioma: 'es' | 'en' }) {
               <li key={p.id} className="flex-tarjeta">
                 <p>
                   <strong>{p.nombre}</strong>{' '}
-                  <span className={`insignia ${!cerrada ? 'insignia-aprobado' : ''}`}>
+                  <Insignia estado={!p.activa ? 'inactiva' : p.vigenteHasta ? 'cerrada' : 'activa'}>
                     {!p.activa ? t.inactiva : p.vigenteHasta ? t.cerrada : t.activa}
-                  </span>
+                  </Insignia>
                 </p>
                 <p className="pista">
                   {p.servicio} · {t.tiposCuenta[p.tipoCuenta]} · {p.pais}

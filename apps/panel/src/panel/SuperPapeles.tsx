@@ -1,3 +1,4 @@
+import { Insignia } from './diseno/Insignia';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -291,17 +292,19 @@ export function InsigniaPapeles({
   idioma: Idioma;
 }) {
   const t = enIdioma(T, idioma);
-  if (papeles === 'completo')
-    return <span className="insignia insignia-aprobado">{t.completo}</span>;
-  if (papeles === 'vencido')
-    return <span className="insignia insignia-rechazado">{t.vencido}</span>;
+  // C-PANEL-DISENO: el color sale del estado (verde completo, ámbar en plazo, rojo vencido, gris sin plazo).
+  if (papeles === 'completo') return <Insignia estado="completado">{t.completo}</Insignia>;
+  if (papeles === 'vencido') return <Insignia estado="vencido">{t.vencido}</Insignia>;
   if (papeles === 'en_plazo')
     return (
-      <span className={`insignia ${dias !== null && dias <= 10 ? 'papeles-por-vencer' : ''}`}>
+      <Insignia
+        estado={dias !== null && dias <= 10 ? 'por_vencer' : 'en_plazo'}
+        clase={dias !== null && dias <= 10 ? 'papeles-por-vencer' : undefined}
+      >
         {t.enPlazo(dias ?? 0)}
-      </span>
+      </Insignia>
     );
-  return <span className="suave">{t.sinPlazo}</span>;
+  return <Insignia estado="sin_plazo">{t.sinPlazo}</Insignia>;
 }
 
 /** El filtro «Papeles» de la lista de conductores. */
@@ -536,17 +539,7 @@ export function PapelesConductor({
         {v.papeles.map((p) => (
           <li key={p.papel}>
             <strong>{t.nombres[p.papel] ?? p.papel}</strong>{' '}
-            <span
-              className={`insignia ${
-                p.estado === 'aprobado'
-                  ? 'insignia-aprobado'
-                  : p.estado === 'repetir'
-                    ? 'insignia-rechazado'
-                    : ''
-              }`}
-            >
-              {t.estados[p.estado] ?? p.estado}
-            </span>
+            <Insignia estado={p.estado}>{t.estados[p.estado] ?? p.estado}</Insignia>
             {p.motivo ? <small> · {p.motivo}</small> : null}
           </li>
         ))}
