@@ -3779,6 +3779,16 @@ const es: SeccionDocs[] = [
             pie: 'En Divoox Driver, abre el menú y toca «Ayuda».',
           },
           {
+            src: '/docs/camila-permiso-web-es.webp',
+            alt: 'El chat de soporte de la web con el aviso «Antes de escribirnos: tu permiso» y los botones «Sí, doy mi permiso» y «No, que me atienda una persona».',
+            pie: 'La primera vez, antes de escribir, el chat te pide tu permiso.',
+          },
+          {
+            src: '/docs/camila-permiso-driver-es.webp',
+            alt: 'El chat «Habla con soporte» de Divoox Driver con el mismo aviso de permiso y sus dos botones.',
+            pie: 'En Divoox Driver el aviso es el mismo. Puedes cambiar tu respuesta después en Perfil.',
+          },
+          {
             src: '/docs/camila-driver-chat-es.webp',
             alt: 'Chat «Habla con soporte» en Divoox Driver con una pregunta sobre el saldo y la respuesta de Camila Campos, del equipo de soporte.',
             pie: 'Escribe tu pregunta y Camila te responde en la misma pantalla.',
@@ -9270,6 +9280,16 @@ const en: SeccionDocs[] = [
             src: '/docs/camila-driver-ayuda-en.webp',
             alt: 'The Help screen in Divoox Driver with “Talk to support,” “My cases and reports” and “Docs guides.”',
             pie: 'In Divoox Driver, open the menu and tap “Help.”',
+          },
+          {
+            src: '/docs/camila-permiso-web-en.webp',
+            alt: 'The web support chat with the “Before you write to us: your permission” notice and the “Yes, I give my permission” and “No, have a person help me” buttons.',
+            pie: 'The first time, before you write, the chat asks for your permission.',
+          },
+          {
+            src: '/docs/camila-permiso-driver-en.webp',
+            alt: 'The “Talk to support” chat in Divoox Driver with the same permission notice and its two buttons.',
+            pie: 'In Divoox Driver the notice is the same. You can change your answer later under Profile.',
           },
           {
             src: '/docs/camila-driver-chat-en.webp',

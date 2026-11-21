@@ -36,6 +36,11 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
           'La pantalla Carro con la lista «Elige tu carro», el precio fijo en dólares con su equivalente en bolívares y las formas de pago.',
           'Antes de pedir ves el precio fijo y eliges cómo pagas.',
         ),
+        {
+          src: '/docs/recorrido-foto-puerta-pasajero-invitacion-es.webp',
+          alt: 'La pantalla de pedir un viaje con el precio y, debajo, la invitación «Agrega una foto de tu entrada y te encuentran más rápido», con el texto «Solo la ve tu conductor, y solo mientras va hacia ti».',
+          pie: 'Si sales de una dirección guardada sin fotos, la app te invita a agregar una. Es opcional.',
+        },
         foto(
           'pasajero-xl',
           'es',
@@ -475,6 +480,11 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
           'The Car screen with the “Choose your car” list, the fixed price in US dollars, and the payment methods: cash or card.',
           'Before you request, you see the fixed price and choose how to pay.',
         ),
+        {
+          src: '/docs/recorrido-foto-puerta-pasajero-invitacion-en.webp',
+          alt: 'The ride request screen with the price and, below it, the invitation “Add a photo of your entrance and get found faster”, with the text “Only your driver sees it, and only while on the way to you”.',
+          pie: 'If you leave from a saved address with no photos, the app invites you to add one. It’s optional.',
+        },
         foto(
           'pasajero-xl',
           'en',

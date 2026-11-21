@@ -177,6 +177,12 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
             'La tarjeta del pedido antes de la recogida, con el dibujo de comida y el restaurante: todavía no hay fotos de la puerta.',
             'Antes de recoger no ves fotos: solo el restaurante.',
           ),
+          foto(
+            'driver-recogida',
+            'es',
+            'La pantalla «Ve a recoger» de un viaje en Divoox Driver: el monto a cobrar, el mapa, la dirección y la tarjeta «Foto de la entrada» con la miniatura de la casa, el nombre que el pasajero le puso a su dirección y su mensaje.',
+            'En un viaje, la foto de la entrada sale en «Ve a recoger»; tócala para verla grande.',
+          ),
         ],
         preguntas: [
           '¿Dónde veo la foto de la puerta del cliente?',
@@ -352,6 +358,12 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
             'en',
             'The order card before pickup, with the food picture and the restaurant: there are no door photos yet.',
             'Before pickup there are no photos: just the restaurant.',
+          ),
+          foto(
+            'driver-recogida',
+            'en',
+            'The “Go pick up” screen of a ride in Divoox Driver: the amount to collect, the map, the address and the “Entrance photo” card with the thumbnail of the house, the name the rider gave their address and their message.',
+            'On a ride, the entrance photo shows on “Go pick up”; tap it to see it large.',
           ),
         ],
         preguntas: [
