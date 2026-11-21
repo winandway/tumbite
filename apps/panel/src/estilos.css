@@ -2041,6 +2041,43 @@ button {
   text-transform: uppercase;
   color: #101010;
 }
+/* C-BARRA-LIGERA: en la página prearmada una sección cerrada es un enlace a su página, con el mismo
+   aspecto que el título de la sección (al cargar, la app dibuja la barra completa). */
+.docs-barra .docs-seccion-cerrada {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 10px 6px;
+  border-radius: 10px;
+  font-family: Poppins, system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #101010;
+  margin-top: 4px;
+  text-decoration: none;
+}
+.docs-barra .docs-seccion-cerrada::after {
+  content: '▾';
+  margin-left: auto;
+  color: #666b73;
+  transform: rotate(-90deg);
+}
+.docs-barra .docs-seccion-cerrada + details {
+  border-top: 1px solid #ececec;
+  padding-top: 6px;
+}
+.docs-barra .docs-seccion-cerrada + .docs-seccion-cerrada,
+.docs-barra details + .docs-seccion-cerrada {
+  margin-top: 11px;
+  border-radius: 0;
+  box-shadow:
+    0 -6px 0 #fff,
+    0 -7px 0 #ececec;
+}
 .docs-barra summary::after {
   content: '▾';
   margin-left: auto;

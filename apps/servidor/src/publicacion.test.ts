@@ -81,6 +81,36 @@ describe('revisor de paquetes antes de publicar', () => {
       delete process.env.PAQUETE_TOPE_MB;
     }
   });
+  // C-BARRA-LIGERA (21 nov 2026): la barra de Docs repetida entera en cada página prearmada valía
+  // unos 20 MB del paquete. El revisor frena si las páginas vuelven a engordar o si una página
+  // prearmada trae otra vez todas las secciones de la barra desplegadas.
+  it('frena un paquete cuyas páginas prearmadas pasan de su tope', () => {
+    const d = paquete('pruebas', 'https://staging.tumbite.com');
+    process.env.PAGINAS_TOPE_MB = '0.00001';
+    try {
+      expect(revisar(d, 'pruebas')).toBe(false);
+    } finally {
+      delete process.env.PAGINAS_TOPE_MB;
+    }
+  });
+  it('frena una página de Docs con la barra entera y deja pasar la barra ligera', () => {
+    const seccion =
+      '<details><summary>Sección</summary><ul><li><a href="/docs/a/b">Guía</a></li></ul></details>';
+    const barra = (dentro: string) =>
+      `<html><aside class="docs-barra"><nav>${dentro}</nav></aside></html>`;
+    const ligera = barra(
+      `<a class="docs-seccion-cerrada" href="/docs/a">Sección</a>${seccion.replace('<details>', '<details open="">')}`,
+    );
+    expect(
+      revisar(paquete('produccion', 'https://tumbite.com', { 'guia.html': ligera }), 'produccion'),
+    ).toBe(true);
+    expect(
+      revisar(
+        paquete('produccion', 'https://tumbite.com', { 'guia.html': barra(seccion + seccion) }),
+        'produccion',
+      ),
+    ).toBe(false);
+  });
   it('frena un secreto dentro del paquete', () => {
     const d = paquete('produccion', 'https://tumbite.com', {
       'x.js': 'const k="whsec_0123456789abcdef"',

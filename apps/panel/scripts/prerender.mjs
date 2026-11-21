@@ -8,6 +8,7 @@ import { JSDOM } from 'jsdom';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { createServer } from 'vite';
+import { barraLigera } from './barraLigera.mjs';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(raiz, 'dist');
@@ -206,7 +207,8 @@ try {
       dom.reconfigure({ url: `${DOMINIO}${url}` });
       dom.window.localStorage.clear();
       dom.window.localStorage.setItem('tumbite.idioma', lengua);
-      const html = renderToString(React.createElement(App));
+      // C-BARRA-LIGERA: la barra de Docs no repite todas las guías en cada página prearmada.
+      const html = barraLigera(renderToString(React.createElement(App)));
       // Título y descripción propios de cada página (si no, Google ve 50 páginas iguales).
       const limpiar = (t) =>
         t

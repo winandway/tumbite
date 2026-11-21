@@ -126,6 +126,28 @@ if (bytes > topeMb * 1024 * 1024)
   problemas.push(
     `el paquete pesa ${(bytes / 1048576).toFixed(1)} MB y el tope es ${topeMb} MB: la plataforma no lo publicaría (mira qué creció: fuentes, imágenes, PDF)`,
   );
+// C-BARRA-LIGERA (21 nov 2026): las páginas prearmadas pesaban 42 MB porque cada una repetía la barra
+// de Docs entera y la lámina completa de íconos. Con la barra ligera pesan unos 23 MB. Si vuelven a
+// engordar, o si una página trae otra vez las secciones cerradas desplegadas, no se publica.
+const paginas = archivos.filter((a) => a.endsWith('.html'));
+const bytesPaginas = paginas.reduce((s, a) => s + statSync(a).size, 0);
+const topePaginasMb = Number(process.env.PAGINAS_TOPE_MB ?? 30);
+if (bytesPaginas > topePaginasMb * 1024 * 1024)
+  problemas.push(
+    `las páginas prearmadas pesan ${(bytesPaginas / 1048576).toFixed(1)} MB y su tope es ${topePaginasMb} MB (mira apps/panel/scripts/barraLigera.mjs: ¿algo se repite en todas?)`,
+  );
+for (const a of paginas) {
+  const html = readFileSync(a, 'utf8');
+  const i = html.indexOf('<aside class="docs-barra');
+  if (i === -1) continue;
+  const barra = html.slice(i, html.indexOf('</aside>', i));
+  if (barra.includes('<details><summary>')) {
+    problemas.push(
+      `${relative(carpeta, a)}: la barra de Docs viaja entera (falta barraLigera en el prearmado)`,
+    );
+    break;
+  }
+}
 if (problemas.length) {
   for (const p of problemas) console.error(`::error::${p}`);
   console.error(`El paquete de ${entorno} NO se publica: ${problemas.length} problema(s).`);
