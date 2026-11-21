@@ -3469,8 +3469,8 @@ const es: SeccionDocs[] = [
           'Tu documento y una foto de tu cara, desde la app. Es lo que les da confianza a los clientes que te abren la puerta.',
         explicacion: [
           'Cuando un cliente recibe su comida, quiere saber que quien toca su puerta es la persona que dice ser. Por eso todo repartidor de Divoox pasa por una verificación de identidad antes de repartir.',
-          'Solo necesitas tu documento y una foto de tu cara. El documento lo ve únicamente el equipo de Divoox que revisa las verificaciones; no se publica y se borra si cierras tu cuenta.',
-          'La foto de tu cara, una vez aprobada, es tu foto de perfil: el equipo la compara con tu documento y la ve el cliente del pedido que llevas, para que sepa quién toca su puerta. Nadie más la ve. Como es la foto verificada, no la puedes cambiar desde la app; si necesitas una nueva, escríbenos y la revisamos otra vez.',
+          'Solo necesitas tu documento y una foto de tu cara. El documento lo ve el equipo de Divoox que revisa las verificaciones y, donde la app te pide tu permiso antes de las fotos y dices que sí, también lo analiza un servicio de inteligencia artificial (Google Gemini) que ayuda a revisarlo. No se publica y se borra si cierras tu cuenta.',
+          'La foto de tu cara, una vez aprobada, es tu foto de perfil: el equipo la compara con tu documento, y la ven el cliente del pedido que llevas y el pasajero de tu viaje, para que sepan quién llega. Si diste tu permiso de inteligencia artificial, ese servicio también la compara con tu documento. Fuera de eso, no se muestra a nadie. Como es la foto verificada, no la puedes cambiar desde la app; si necesitas una nueva, escríbenos y la revisamos otra vez.',
           'Si repartes en carro o en moto, en «Mis datos y vehículo» también escribes tu licencia y tu seguro, cada uno con su fecha de vencimiento. Tienen que estar vigentes para conectarte: si uno vence, la app te avisa al conectarte y te dice dónde actualizarlo. A pie o en bicicleta no se pide ninguno de los dos.',
           'La edad mínima para repartir depende de dónde y en qué repartes, como en las demás apps de reparto: 18 años en general, 19 en Florida y Texas, 21 en California, y 19 si repartes en moto o en carro.',
         ],
@@ -3760,7 +3760,7 @@ const es: SeccionDocs[] = [
           'Para reportarlo, Camila reúne cuatro cosas: qué pasó, en qué parte te pasó, tu nombre y un correo o teléfono para avisarte. Si le das varias en un mismo mensaje, las anota todas y no te las vuelve a preguntar. Si entraste con tu cuenta, tu nombre y tu contacto ya los tiene. Si prefieres no dar tu nombre o un contacto, díselo: el reporte se hace igual.',
           'Al terminar, Camila te dice lo que entendió, te da tu número de caso (empieza por F-) y te dice cómo te va a avisar. Cuando el equipo lo arregle, el aviso te llega a ese contacto y queda escrito en tu chat.',
           'Camila te recuerda: si vuelves desde el mismo aparato o con tu cuenta, no te pide otra vez tu nombre ni tu contacto, y si le preguntas «¿cómo va mi caso?» te dice en qué va.',
-          'Tus capturas son privadas: solo las ve el equipo de Divoox, se borran solas a los 90 días y también al borrar tu cuenta.',
+          'Tus capturas son privadas: las ve el equipo de Divoox y, si diste tu permiso en el chat, también las lee nuestra asistente (Google Gemini) para entender el problema. Se borran solas a los 90 días y también al borrar tu cuenta.',
         ],
         capturas: [
           {
@@ -5485,7 +5485,7 @@ const es: SeccionDocs[] = [
         resumen:
           'En «Mis casos de ayuda» puedes adjuntar hasta tres capturas de pantalla por mensaje, para que el equipo vea exactamente lo que ves tú.',
         explicacion: [
-          'Una captura vale más que muchas palabras: muestra el error, el pedido o la pantalla tal como la ves. Divoox la guarda en privado y solo la ve el equipo de soporte, con un enlace que vence.',
+          'Una captura vale más que muchas palabras: muestra el error, el pedido o la pantalla tal como la ves. Divoox la guarda en privado: la ve el equipo de soporte, con un enlace que vence, y, si diste tu permiso en el chat, también la lee nuestra asistente (Google Gemini).',
           'Primero toma la captura en tu celular: en iPhone, botón lateral y subir volumen a la vez; en Android, encendido y bajar volumen a la vez. Queda en tu galería.',
           'Abre tu caso en «Mis casos de ayuda» (clientes: en tu cuenta; repartidores: en Soporte; restaurantes: en Configuración) y toca «Adjuntar captura». Elige hasta tres imágenes de tu galería.',
           'Antes de enviar ves la miniatura de cada una; si te equivocaste, toca «Quitar». Puedes escribir un mensaje o mandar solo las capturas.',
@@ -5514,7 +5514,7 @@ const es: SeccionDocs[] = [
           'Toca «Adjuntar captura» y elige hasta tres imágenes.',
           'Revisa las miniaturas y toca «Enviar».',
         ],
-        nota: 'Tus capturas no se publican: solo las ve el equipo de soporte de Divoox.',
+        nota: 'Tus capturas no se publican: las ve el equipo de soporte de Divoox y, si diste tu permiso en el chat, nuestra asistente (Google Gemini).',
       },
       {
         id: 'support',
@@ -8971,8 +8971,8 @@ const en: SeccionDocs[] = [
           'Your ID and a photo of your face, right from the app. It’s what gives customers peace of mind when they open the door.',
         explicacion: [
           'When customers get their food, they want to know the person at their door is who they say they are. That’s why every Divoox driver goes through an identity check before delivering.',
-          'All you need is your ID and a photo of your face. Only the Divoox team that reviews verifications sees your ID; it’s never published and it’s deleted if you close your account.',
-          'Once approved, the photo of your face is your profile photo: our team compares it with your ID, and the customer of the order you’re carrying sees it, so they know who’s at their door. No one else sees it. Since it’s your verified photo, you can’t change it from the app; if you need a new one, contact us and we’ll review it again.',
+          'All you need is your ID and a photo of your face. The Divoox team that reviews verifications sees your ID and, where the app asks for your permission before the photos and you say yes, an artificial intelligence service (Google Gemini) analyzes it too, to help review it. It’s never published and it’s deleted if you close your account.',
+          'Once approved, the photo of your face is your profile photo: our team compares it with your ID, and the customer of the order you’re carrying and the rider on your trip see it, so they know who’s arriving. If you gave your artificial intelligence permission, that service compares it with your ID too. Beyond that, it isn’t shown to anyone. Since it’s your verified photo, you can’t change it from the app; if you need a new one, contact us and we’ll review it again.',
           'If you deliver by car or motorcycle, under “My details and vehicle” you also enter your license and your insurance, each with its expiration date. They must be valid to go online: if one expires, the app tells you when you go online and where to update it. On foot or by bike, neither is required.',
           'The minimum age to deliver depends on where and how you deliver, like other delivery apps: 18 in general, 19 in Florida and Texas, 21 in California, and 19 if you deliver by motorcycle or car.',
         ],
@@ -9263,7 +9263,7 @@ const en: SeccionDocs[] = [
           'To report it, Camila gathers four things: what happened, where it happened, your name, and an email or phone number to notify you. If you give her several in one message, she notes them all and does not ask again. If you signed in with your account, she already has your name and your contact. If you would rather not give your name or a contact, tell her: the report is filed anyway.',
           'When she is done, Camila tells you what she understood, gives you your case number (it starts with F-) and tells you how she will notify you. When the team fixes it, the notice goes to that contact and stays written in your chat.',
           'Camila remembers you: if you come back from the same device or with your account, she does not ask for your name or contact again, and if you ask “how is my case going?” she tells you where it stands.',
-          'Your screenshots are private: only the Divoox team sees them, and they’re deleted automatically after 90 days and when you delete your account.',
+          'Your screenshots are private: the Divoox team sees them and, if you gave your permission in the chat, our assistant (Google Gemini) reads them too, to understand the problem. They’re deleted automatically after 90 days and when you delete your account.',
         ],
         capturas: [
           {
@@ -10980,7 +10980,7 @@ const en: SeccionDocs[] = [
         resumen:
           'In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.',
         explicacion: [
-          'A screenshot is worth many words: it shows the error, the order or the screen just as you see it. Divoox keeps it private and only the support team can see it, through a link that expires.',
+          'A screenshot is worth many words: it shows the error, the order or the screen just as you see it. Divoox keeps it private: the support team sees it, through a link that expires, and, if you gave your permission in the chat, our assistant (Google Gemini) reads it too.',
           'First take the screenshot on your phone: on iPhone, press the side button and volume up together; on Android, power and volume down together. It goes to your gallery.',
           'Open your case in “My help cases” (customers: in your account; drivers: in Support; restaurants: in Settings) and tap “Attach screenshot.” Pick up to three images from your gallery.',
           'Before sending you see a thumbnail of each one; if you picked the wrong one, tap “Remove.” You can write a message or send just the screenshots.',
@@ -11009,7 +11009,7 @@ const en: SeccionDocs[] = [
           'Tap “Attach screenshot” and pick up to three images.',
           'Check the thumbnails and tap “Send.”',
         ],
-        nota: 'Your screenshots are never published: only the Divoox support team sees them.',
+        nota: 'Your screenshots are never published: the Divoox support team sees them and, if you gave your permission in the chat, our assistant (Google Gemini).',
       },
       {
         id: 'support',

@@ -115,7 +115,9 @@ const CHAT_ES = {
   // con su equis) y se envía junto con lo que la persona escriba.
   capturaTitulo: 'Adjunta tu captura de pantalla',
   capturaAviso: 'Antes de adjuntarla, tapa cualquier contraseña o número de tarjeta.',
-  capturaPrivada: 'Solo la ve el equipo de Divoox. Se borra a los 90 días.',
+  // C-QUIEN-LO-VE (décimo dictamen del auditor): con el permiso de IA dado, también la lee la asistente.
+  capturaPrivada:
+    'Solo la ve el equipo de Divoox y, si diste tu permiso de IA, también nuestra asistente (Google Gemini). Se borra a los 90 días.',
   subirArchivos: 'Subir desde archivos',
   tomarFoto: 'Tomar foto',
   adjuntar: 'Adjuntar captura',
@@ -164,7 +166,8 @@ const CHAT_EN: typeof CHAT_ES = {
   reportada: 'Reply reported. Our team will review it.',
   capturaTitulo: 'Attach your screenshot',
   capturaAviso: 'Before attaching it, cover any password or card number.',
-  capturaPrivada: 'Only the Divoox team sees it. It’s deleted after 90 days.',
+  capturaPrivada:
+    'Only the Divoox team sees it and, if you gave your AI permission, our assistant (Google Gemini) too. It’s deleted after 90 days.',
   subirArchivos: 'Upload from files',
   tomarFoto: 'Take photo',
   adjuntar: 'Attach screenshot',
