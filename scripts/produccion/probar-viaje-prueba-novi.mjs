@@ -17,12 +17,31 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const PRUEBAS = process.argv.includes('--pruebas');
-const SITIO = PRUEBAS ? 'https://staging.tumbite.com' : 'https://divoox.com';
-const LLAVE = execFileSync(
-  'security',
-  ['find-generic-password', '-s', `yadominios-llave-ia-tumbite${PRUEBAS ? '-pruebas' : ''}`, '-w'],
-  { encoding: 'utf8' },
-).trim();
+// --local: contra el servidor local del recorrido (carpeta .recorrido), por su ruta interna de SQL.
+const LOCAL = process.argv.includes('--local');
+const DATOS_LOCAL = LOCAL
+  ? JSON.parse(
+      readFileSync(join(import.meta.dirname, '..', '..', '.recorrido', 'datos.json'), 'utf8'),
+    )
+  : null;
+const SITIO = LOCAL
+  ? DATOS_LOCAL.url
+  : PRUEBAS
+    ? 'https://staging.tumbite.com'
+    : 'https://divoox.com';
+
+const LLAVE = LOCAL
+  ? ''
+  : execFileSync(
+      'security',
+      [
+        'find-generic-password',
+        '-s',
+        `yadominios-llave-ia-tumbite${PRUEBAS ? '-pruebas' : ''}`,
+        '-w',
+      ],
+      { encoding: 'utf8' },
+    ).trim();
 const RAIZ = join(import.meta.dirname, '..', '..');
 const ids = JSON.parse(
   readFileSync(
@@ -30,7 +49,11 @@ const ids = JSON.parse(
       homedir(),
       '.config',
       'tumbite',
-      PRUEBAS ? '.ids-prueba-novi-pruebas.json' : '.ids-prueba-novi.json',
+      LOCAL
+        ? '.ids-prueba-novi-local.json'
+        : PRUEBAS
+          ? '.ids-prueba-novi-pruebas.json'
+          : '.ids-prueba-novi.json',
     ),
     'utf8',
   ),
@@ -54,7 +77,25 @@ const anotar = (t) => {
 };
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** En local, los valores van escritos en la consulta (son valores fijos de este guion). */
+const literal = (v) =>
+  v === null || v === undefined
+    ? 'NULL'
+    : typeof v === 'number'
+      ? String(v)
+      : `'${String(v).replaceAll("'", "''")}'`;
 async function sql(q, params = []) {
+  if (LOCAL) {
+    let i = 0;
+    const r = await fetch(`${DATOS_LOCAL.url}/datos/interno/diagnostico/sql`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-reloj-secreto': DATOS_LOCAL.relojSecreto },
+      body: JSON.stringify({ sql: q.replace(/\?/g, () => literal(params[i++])) }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(`base local: ${d.error ?? r.status} — ${q.slice(0, 80)}`);
+    return d.results ?? [];
+  }
   const r = await fetch('https://yapanel.yadominios.com/api/sitio/v1/consultar_base', {
     method: 'POST',
     headers: { authorization: `Bearer ${LLAVE}`, 'content-type': 'application/json' },
@@ -251,11 +292,13 @@ try {
   );
   const op = (
     await sql(
-      'SELECT estado_general, total_final, comision, metodo_pago FROM operaciones WHERE id = ?',
+      'SELECT estado, metodo_pago, total_final_centavos FROM viajes WHERE operacion_id = ?',
       [viajeId],
-    ).catch(() => [])
+    )
   )[0];
-  anotar(`operación: ${JSON.stringify(op ?? {})}`);
+  anotar(
+    `viaje: ${op?.estado ?? '?'}, ${op?.metodo_pago ?? '?'}, ${((op?.total_final_centavos ?? 0) / 100).toFixed(2)} USD`,
+  );
   anotar(
     libro.length
       ? `libro: ${libro.map((l) => `${l.bolsillo} ${l.monto} ${l.moneda}`).join(' · ')}`

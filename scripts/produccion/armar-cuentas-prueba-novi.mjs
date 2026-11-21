@@ -18,16 +18,34 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const PRUEBAS = process.argv.includes('--pruebas');
-const LLAVE = execFileSync(
-  'security',
-  ['find-generic-password', '-s', `yadominios-llave-ia-tumbite${PRUEBAS ? '-pruebas' : ''}`, '-w'],
-  { encoding: 'utf8' },
-).trim();
+// --local: contra el servidor local del recorrido (carpeta .recorrido), por su ruta interna de SQL.
+const LOCAL = process.argv.includes('--local');
+const DATOS_LOCAL = LOCAL
+  ? JSON.parse(
+      readFileSync(join(import.meta.dirname, '..', '..', '.recorrido', 'datos.json'), 'utf8'),
+    )
+  : null;
+const LLAVE = LOCAL
+  ? ''
+  : execFileSync(
+      'security',
+      [
+        'find-generic-password',
+        '-s',
+        `yadominios-llave-ia-tumbite${PRUEBAS ? '-pruebas' : ''}`,
+        '-w',
+      ],
+      { encoding: 'utf8' },
+    ).trim();
 const ZONA = 'US-MI-NOVI';
 const CARPETA = join(homedir(), '.config', 'tumbite');
 const ARCHIVO = join(
   CARPETA,
-  PRUEBAS ? 'cuentas-prueba-richard-pruebas' : 'cuentas-prueba-richard',
+  LOCAL
+    ? 'cuentas-prueba-richard-local'
+    : PRUEBAS
+      ? 'cuentas-prueba-richard-pruebas'
+      : 'cuentas-prueba-richard',
 );
 const CUENTAS = {
   pasajero: {
@@ -42,7 +60,25 @@ const CUENTAS = {
   },
 };
 
+/** En local, los valores van escritos en la consulta (son valores fijos de este guion). */
+const literal = (v) =>
+  v === null || v === undefined
+    ? 'NULL'
+    : typeof v === 'number'
+      ? String(v)
+      : `'${String(v).replaceAll("'", "''")}'`;
 async function sql(q, params = []) {
+  if (LOCAL) {
+    let i = 0;
+    const r = await fetch(`${DATOS_LOCAL.url}/datos/interno/diagnostico/sql`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-reloj-secreto': DATOS_LOCAL.relojSecreto },
+      body: JSON.stringify({ sql: q.replace(/\?/g, () => literal(params[i++])) }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(`base local: ${d.error ?? r.status} — ${q.slice(0, 80)}`);
+    return d.results ?? [];
+  }
   const r = await fetch('https://yapanel.yadominios.com/api/sitio/v1/consultar_base', {
     method: 'POST',
     headers: { authorization: `Bearer ${LLAVE}`, 'content-type': 'application/json' },
@@ -92,6 +128,27 @@ writeFileSync(
   { mode: 0o600 },
 );
 chmodSync(ARCHIVO, 0o600);
+
+// En local: Novi con Carro «muy pronto» (como producción) y una cuenta Soporte del equipo.
+if (LOCAL) {
+  await sql(
+    `INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
+     VALUES (?, 'Novi (pruebas)', 'US', 'USD', 'America/Detroit', 42.4806, -83.4755, 40, 1)`,
+    [ZONA],
+  );
+  await sql("UPDATE servicios SET estado = 'disponible' WHERE id = 'carro'");
+  await sql(
+    "INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('carro', ?, 'proximamente') ON CONFLICT DO UPDATE SET estado = 'proximamente'",
+    [ZONA],
+  );
+  await sql(
+    "INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('carro', 1)",
+  );
+  await sql(
+    `INSERT OR IGNORE INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES ('soporte-local', 'soporte.local@ejemplo.com', 'Soporte Local', 'admin', ?)`,
+    [await hashClave(claveNueva())],
+  );
+}
 
 const ids = {};
 for (const [rol, c] of Object.entries(CUENTAS)) {
@@ -213,7 +270,14 @@ console.log(
 );
 console.log(`claves guardadas en ${ARCHIVO} (600)`);
 writeFileSync(
-  join(CARPETA, PRUEBAS ? '.ids-prueba-novi-pruebas.json' : '.ids-prueba-novi.json'),
+  join(
+    CARPETA,
+    LOCAL
+      ? '.ids-prueba-novi-local.json'
+      : PRUEBAS
+        ? '.ids-prueba-novi-pruebas.json'
+        : '.ids-prueba-novi.json',
+  ),
   JSON.stringify(ids),
   {
     mode: 0o600,
