@@ -61,9 +61,13 @@ export async function borrarCuenta(
   // C-BORRADO-SERVICIOS, tercera vuelta: el correo y el teléfono canónicos, para encontrar las
   // invitaciones de empresas y restaurantes que lo nombran aunque no las haya aceptado.
   const canon = await db
-    .prepare('SELECT correo_canonico, telefono_canonico FROM usuarios WHERE id = ?')
+    .prepare('SELECT correo_canonico, telefono_canonico, telefono FROM usuarios WHERE id = ?')
     .bind(u.id)
-    .first<{ correo_canonico: string | null; telefono_canonico: string | null }>();
+    .first<{
+      correo_canonico: string | null;
+      telefono_canonico: string | null;
+      telefono: string | null;
+    }>();
   // C-BORRADO-SERVICIOS, cuarta vuelta: sus casos de soporte (por usuario o por su correo) se listan
   // ANTES del lote, porque el lote les cambia el correo y les vacía datos_json, donde la queja guarda
   // su foto (datos_json.foto, archivo quejas/<ticket>/…). Con esta lista se borran adjuntos y archivos.
@@ -329,6 +333,8 @@ export async function borrarCuenta(
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
+    // C-BORRADO-ESQUEMA: su correo en la lista de correos que rebotaron.
+    db.prepare('DELETE FROM correos_rebotados WHERE correo = ?').bind(u.correo),
     // Verificación de identidad y datos del vehículo, licencia y seguro: se borran con la cuenta.
     db.prepare('DELETE FROM kyc WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM repartidor_datos WHERE usuario_id = ?').bind(u.id),
@@ -350,6 +356,71 @@ export async function borrarCuenta(
            AND (lider_correo = ?1 OR (?2 <> '' AND lider_telefono_canonico = ?2))`,
       )
       .bind(String(u.correo).toLowerCase(), canon?.telefono_canonico ?? ''),
+    // C-BORRADO-ESQUEMA (21 nov 2026, auditor de tiendas): lo que quedaba fuera al repasar TODO el
+    // esquema tabla por tabla. Lo que escribió a soporte (y lo que el equipo le contestó, que cita sus
+    // datos); la fila queda vacía, como en los chats.
+    db
+      .prepare(
+        "UPDATE ticket_mensajes SET texto = '' WHERE ticket_id IN (SELECT value FROM json_each(?))",
+      )
+      .bind(idsTickets),
+    db.prepare("UPDATE ayuda_viajes SET detalle = '' WHERE cliente_id = ?").bind(u.id),
+    // Enlaces y pases de un solo uso para entrar, lo que seguía, sus preferencias y sus intentos.
+    ...[
+      'puentes_sesion',
+      'pases_web',
+      'favoritos',
+      'paquetes_seguidos',
+      'intentos_canje',
+      'piloto_participantes',
+      // Antecedentes y la comparación automática de su cara: datos de identidad.
+      'antecedentes_checkr',
+      'verificaciones_auto',
+      // Su lugar en una línea o equipo y su pedido de entrar a una.
+      'miembros_equipo',
+      'pedidos_linea',
+    ].map((t) => db.prepare(`DELETE FROM ${t} WHERE usuario_id = ?`).bind(u.id)),
+    db.prepare('DELETE FROM ajustes_seguridad WHERE cliente_id = ?').bind(u.id),
+    db.prepare('DELETE FROM recorridos_compartidos WHERE repartidor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM pedidos_compartidos WHERE creado_por = ?').bind(u.id),
+    // Lo que contó en un incidente (y dónde estaba) y en una apelación. El registro del hecho queda.
+    db
+      .prepare(
+        "UPDATE incidentes_repartidor SET detalle = '', lat = NULL, lng = NULL WHERE repartidor_id = ?",
+      )
+      .bind(u.id),
+    db.prepare("UPDATE apelaciones_repartidor SET motivo = '' WHERE repartidor_id = ?").bind(u.id),
+    // La invitación de una empresa a su correo.
+    db
+      .prepare('UPDATE empresa_invitaciones SET correo = ?1 WHERE correo = ?2')
+      .bind(`borrada-${u.id}@tumbite.invalid`, u.correo),
+    // Si lideraba una línea: los nombres y teléfonos de contacto que dio (los suyos y los del segundo
+    // contacto), en la línea y en la solicitud. La solicitud sin línea se reconoce por su teléfono.
+    db
+      .prepare(
+        `UPDATE lineas SET contacto2_nombre = '', contacto2_telefono = ''
+         WHERE equipo_id IN (SELECT id FROM equipos WHERE lider_id = ?)`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE solicitudes_linea SET lider_nombre = '', lider_telefono = '', contacto2_nombre = '', contacto2_telefono = ''
+         WHERE equipo_id IN (SELECT id FROM equipos WHERE lider_id = ?1)
+            OR (?2 <> '' AND lider_telefono = ?2) OR (?3 <> '' AND lider_telefono = ?3)`,
+      )
+      .bind(u.id, canon?.telefono ?? '', canon?.telefono_canonico ?? ''),
+    // Su vehículo: se retira y se le quitan placa, marca, modelo y color. Primero el estado (un
+    // vehículo aprobado no puede quedar sin placa) y después los datos; así la placa queda libre.
+    db
+      .prepare(
+        "UPDATE vehiculos SET estado = 'retirado', motivo = 'cuenta_borrada' WHERE conductor_id = ? AND estado != 'retirado'",
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        "UPDATE vehiculos SET placa = '', marca = '', modelo = '', color = '' WHERE conductor_id = ?",
+      )
+      .bind(u.id),
     // C-BORRADO-VEHICULO (20 oct 2026): los documentos del vehículo (registro, seguro, fotos de la
     // placa) también son datos personales: se quita el archivo y queda la fila sin él.
     db
