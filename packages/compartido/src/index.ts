@@ -131,3 +131,5 @@ export * from './sugerirCorreo';
 export * from './revisarRegistro';
 export * from './fechaEscrita';
 export * from './videosAyuda';
+export * from './pais/paises';
+export * from './pais/telefono';

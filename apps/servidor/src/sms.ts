@@ -1,4 +1,8 @@
-import { VERSION_CONSENTIMIENTO_SMS, type CanalConsentimientoSms } from '@tumbite/compartido';
+import {
+  VERSION_CONSENTIMIENTO_SMS,
+  aE164,
+  type CanalConsentimientoSms,
+} from '@tumbite/compartido';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
 
@@ -36,12 +40,20 @@ function baseTwilio(env: Env) {
   }
 }
 
-/** Teléfono en formato internacional (+1…). Sin prefijo se asume Estados Unidos. */
-export function telefonoE164(t: string | null | undefined): string | null {
+/**
+ * Teléfono en formato internacional (+58…, +1…). C-TELEFONO-E164: con el país de la persona se lee con
+ * libphonenumber. Sin país, lo de siempre (10 dígitos: Estados Unidos), pero un número que empieza
+ * por «0» (el prefijo nacional de Venezuela, Colombia o Perú) NUNCA se convierte en «+0…»: sin su
+ * país no se puede saber y vuelve null.
+ */
+export function telefonoE164(t: string | null | undefined, pais?: string | null): string | null {
+  const leido = aE164(t, pais);
+  if (leido) return leido;
   const d = String(t ?? '').replace(/[^\d+]/g, '');
   if (!d) return null;
-  if (d.startsWith('+')) return d.length >= 8 ? d : null;
+  if (d.startsWith('+')) return d.length >= 8 && !d.startsWith('+0') ? d : null;
   const solo = d.replace(/\D/g, '');
+  if (solo.startsWith('0')) return null;
   if (solo.length === 10) return `+1${solo}`;
   if (solo.length === 11 && solo.startsWith('1')) return `+${solo}`;
   return solo.length >= 8 ? `+${solo}` : null;

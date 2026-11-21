@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   BONO_OFERTA_ABIERTA,
   PAPELES_PARA_EMPEZAR,
+  PAISES,
   PLAZO_DIAS_MAXIMO,
   politicaPlazoDeFabrica,
 } from '@tumbite/compartido';
@@ -15,16 +16,10 @@ import { sincronizarPoliticaRequisitos } from '../esquemaPlazo';
  * comisión del punto) son decisiones de Richard (docs/DECISIONES-RICHARD-FASE-2.md): aquí solo
  * hay valores de fábrica neutros, nunca una equivalencia de moneda implícita.
  */
-export const MONEDA_POR_PAIS: Record<string, string> = {
-  US: 'USD',
-  CO: 'COP',
-  VE: 'VES',
-  MX: 'MXN',
-  // C-PERFIL-CHILE: la moneda queda declarada; el país sigue apagado (sin tarifas ni topes).
-  CL: 'CLP',
-  // C-PERFIL-PERU (19 nov 2026): Perú cobra en soles.
-  PE: 'PEN',
-};
+// C-DATOS-PAIS (21 nov 2026): la moneda oficial de cada país sale de la pieza única de país.
+export const MONEDA_POR_PAIS: Record<string, string> = Object.fromEntries(
+  Object.values(PAISES).map((p) => [p.iso, p.moneda]),
+);
 
 export const esquemaConfigPais = z.object({
   moneda: z.string().length(3).toUpperCase(),

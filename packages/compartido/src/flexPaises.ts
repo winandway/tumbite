@@ -1,4 +1,5 @@
 import { rutValido } from './perfilChile';
+import { leerTelefono } from './pais/telefono';
 /**
  * Divoox Flex · CADA PAÍS ES SU PROPIO SISTEMA (regla de Richard, 28 oct 2026). Al crear la empresa
  * se elige el país y este perfil decide cómo funciona Flex allí: monedas, cómo pagan, qué se le pide
@@ -70,15 +71,11 @@ export function perfilFlex(pais: string | null | undefined): PerfilFlex {
  * destinatario en Divoox aunque la empresa lo escriba «0414-…», «+58 414…» o «(305) …».
  */
 export function telefonoInternacional(texto: string, pais: string): string {
+  // C-TELEFONO-E164: libphonenumber con el país de la empresa; si no se puede leer, los dígitos.
+  const r = leerTelefono(texto, pais);
+  if (r.ok) return r.telefono.digitos;
   const d = texto.replace(/\D/g, '');
-  if (!d) return '';
-  if (pais === 'VE') {
-    if (d.startsWith('58') && d.length === 12) return d;
-    if (d.startsWith('0') && d.length === 11) return `58${d.slice(1)}`;
-    if (d.length === 10 && d.startsWith('4')) return `58${d}`;
-    return d;
-  }
-  if (d.length === 10) return `1${d}`;
+  if (pais !== 'VE' && d.length === 10) return `1${d}`;
   return d;
 }
 

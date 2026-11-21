@@ -1,3 +1,5 @@
+import { leerTelefono } from './pais/telefono';
+
 /**
  * C-IDENTIDAD-UNICA (29 oct 2026, pedido de Richard): el mismo correo o el mismo teléfono escritos de
  * otra forma cuentan como el mismo. Así nadie abre una segunda cuenta con «Juan.Perez+2@gmail.com»
@@ -26,8 +28,18 @@ export function correoCanonico(correo: string): string {
   return `${local}@${dominio}`;
 }
 
-/** Solo los dígitos; un número de EE. UU. de 10 dígitos gana su «1» de país. Null si no es un teléfono. */
-export function telefonoCanonico(telefono: string | null | undefined): string | null {
+/**
+ * La llave única del teléfono: los dígitos de su E.164 («584247568871»). C-TELEFONO-E164: con el país
+ * de la persona, un número escrito sin «+» («0424…») se lee con libphonenumber y gana su código.
+ * Sin país y sin «+», lo de siempre: un número de EE. UU. de 10 dígitos gana su «1». Null si no es
+ * un teléfono.
+ */
+export function telefonoCanonico(
+  telefono: string | null | undefined,
+  pais?: string | null,
+): string | null {
+  const r = leerTelefono(telefono, pais);
+  if (r.ok) return r.telefono.digitos;
   const digitos = String(telefono ?? '').replace(/\D/g, '');
   if (digitos.length < 7) return null;
   return digitos.length === 10 ? `1${digitos}` : digitos;
