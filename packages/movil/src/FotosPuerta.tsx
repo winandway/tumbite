@@ -283,7 +283,16 @@ function ContenidoFotosPuerta<F>({
   const [tipo, setTipo] = useState<TipoLugar | null>(() =>
     tipoLugarDe(direccion.tipoLugar, direccion.apto),
   );
-  const [fotos, setFotos] = useState<number[]>(() => direccion.fotos ?? []);
+  const [fotos, setFotosEstado] = useState<number[]>(() => direccion.fotos ?? []);
+  // Lo último que se sabe de las fotos, sin esperar al siguiente pintado: dos subidas seguidas no se
+  // pisan, y el aviso a la pantalla de afuera va FUERA del cálculo del estado (C-EDITAR-ES-EDITAR:
+  // avisar dentro de `setFotos(f => …)` hacía que React marcara un cambio de otra pantalla en pleno
+  // pintado y, en modo estricto, avisaba dos veces).
+  const fotosRef = useRef<number[]>(fotos);
+  const setFotos = useCallback((n: number[]) => {
+    fotosRef.current = n;
+    setFotosEstado(n);
+  }, []);
   const [casillas, setCasillas] = useState<Map<number, EstadoCasilla>>(() => new Map());
   const [errorTipo, setErrorTipo] = useState('');
   const [guardandoTipo, setGuardandoTipo] = useState(false);
@@ -333,7 +342,7 @@ function ContenidoFotosPuerta<F>({
         if (vivo.current) setGuardandoTipo(false);
       }
     },
-    [api, avisar, id, t],
+    [api, avisar, id, setFotos, t],
   );
 
   // Al abrir: si el tipo se dedujo del apartamento y no estaba guardado, se guarda (PATCH).
@@ -394,11 +403,10 @@ function ContenidoFotosPuerta<F>({
       await subirFotoPuertaApp(api.subirFoto, foto, manipular, webp, rutaFotoPuerta(id, orden));
       if (!vivo.current) return;
       fijar(orden, { subiendo: false, pendiente: undefined, error: '' });
-      setFotos((f) => {
-        const n = f.includes(orden) ? f : [...f, orden].sort((a, b) => a - b);
-        avisar(tipo, n);
-        return n;
-      });
+      const antes = fotosRef.current;
+      const n = antes.includes(orden) ? antes : [...antes, orden].sort((a, b) => a - b);
+      setFotos(n);
+      avisar(tipo, n);
     } catch (x) {
       if (!vivo.current) return;
       fijar(orden, {
@@ -427,11 +435,9 @@ function ContenidoFotosPuerta<F>({
       await api.pedir('DELETE', rutaFotoPuerta(id, orden));
       if (!vivo.current) return;
       fijar(orden, null);
-      setFotos((f) => {
-        const n = f.filter((o) => o !== orden);
-        avisar(tipo, n);
-        return n;
-      });
+      const n = fotosRef.current.filter((o) => o !== orden);
+      setFotos(n);
+      avisar(tipo, n);
     } catch (x) {
       if (vivo.current)
         fijar(orden, { subiendo: false, error: x instanceof Error ? x.message : String(x) });
