@@ -23,6 +23,8 @@ import * as Location from 'expo-location';
 import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
 import { AsistentePapeles } from './papeles/AsistentePapeles';
+import { AvisoIa } from './papeles/AvisoIa';
+import { hayQueMostrarAvisoIa } from './papeles/textosAvisoIa';
 import { TusPapeles, usePapeles } from './papeles/TusPapeles';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -1937,6 +1939,17 @@ export function Inicio() {
     </SafeAreaView>
   );
 
+  // C-AVISO-IA-UNICO: la cuenta que no contestó el aviso de IA lo ve una vez al entrar, en su propia
+  // pantalla. Nunca en medio de un pedido o de un viaje, ni encima de la ayuda.
+  if (
+    hayQueMostrarAvisoIa(papeles.v) &&
+    !estado?.activo &&
+    !viajeActivo &&
+    vista !== 'ayuda' &&
+    vista !== 'papeles'
+  )
+    return <AvisoIa api={api} idioma={idioma} alListo={() => papeles.recargar()} />;
+
   // ───────── Ganancias: Hoy / Semana / Mes con los movimientos reales, y la billetera ─────────
   if (vista === 'billetera' && billetera) {
     const ahora = new Date();
@@ -2528,7 +2541,7 @@ export function Inicio() {
         />
         {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
         <AjusteMapa />
-        {/* C-PERMISO-IA-CHAT: dar o retirar el permiso de IA del chat de ayuda. */}
+        {/* C-AVISO-IA-UNICO: dar o retirar el permiso de IA (fotos y chat de ayuda). */}
         <AjusteIaChat />
         {/* C-MODERACION: a quién bloqueó y «Desbloquear». */}
         <PersonasBloqueadas />

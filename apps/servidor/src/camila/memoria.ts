@@ -42,7 +42,10 @@ export type Persona = {
 };
 
 const COLUMNAS =
-  'id, usuario_id, correo, telefono, nombre, idioma, pais, zona_id, resumen, canal_ultimo, mensajes, humano_hasta, humano_id, aviso_ia_dado, contacto_correo, contacto_telefono, permiso_ia';
+  'id, usuario_id, correo, telefono, nombre, idioma, pais, zona_id, resumen, canal_ultimo, mensajes, humano_hasta, humano_id, aviso_ia_dado, contacto_correo, contacto_telefono, ' +
+  // C-AVISO-IA-UNICO: el conductor contesta el aviso de IA una vez (fotos y chat). Si su persona del
+  // chat todavía no tiene respuesta propia, vale la del aviso.
+  'COALESCE(permiso_ia, (SELECT v.acepto FROM verificacion_permiso_ia v WHERE v.conductor_id = camila_personas.usuario_id)) AS permiso_ia';
 
 export async function personaPorId(db: D1Database, id: string) {
   return db

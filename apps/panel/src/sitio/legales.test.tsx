@@ -212,11 +212,13 @@ describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fot
     const es = JSON.stringify(PRIVACIDAD.es);
     const en = JSON.stringify(PRIVACIDAD.en);
     expect(es).toContain('analiza las fotos de tu verificación');
-    expect(es).toContain('Con tu permiso, que te pedimos en la app antes de la primera foto');
+    expect(es).toContain(
+      'Con tu permiso, que te pedimos una sola vez en Divoox Driver, en una pantalla propia antes de la primera foto',
+    );
     expect(es).toContain('los pasajeros de tus viajes, junto con tu nombre de pila');
     expect(en).toContain('it analyzes your verification photos');
     expect(en).toContain(
-      'With your permission, which we ask for in the app before the first photo',
+      'With your permission, which we ask for once in Divoox Driver, on its own screen before the first photo',
     );
     expect(en).toContain('the riders on your trips see it, together with your first name');
     // B1 del sexto dictamen: la captura adjunta al chat de soporte también la lee Gemini.

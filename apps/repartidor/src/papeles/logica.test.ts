@@ -201,33 +201,52 @@ describe('C-ASISTENTE-DRIVER: las entradas del perfil', () => {
   });
 });
 
-describe('C-PERMISO-IA: permiso explícito antes de la primera foto', () => {
-  it('se pide solo cuando todavía no contestó y está por tomar la foto', async () => {
-    const { hayQuePedirPermisoIa } = await import('./logica');
-    expect(hayQuePedirPermisoIa({ permisoIa: null }, 'horma')).toBe(true);
-    expect(hayQuePedirPermisoIa({ permisoIa: null }, 'lista')).toBe(false);
-    expect(hayQuePedirPermisoIa({ permisoIa: true }, 'horma')).toBe(false);
-    expect(hayQuePedirPermisoIa({ permisoIa: false }, 'horma')).toBe(false);
-    // Un servidor viejo no manda el campo: no se inventa una pregunta.
-    expect(hayQuePedirPermisoIa({}, 'horma')).toBe(false);
+describe('C-AVISO-IA-UNICO: un solo aviso de IA, en su pantalla, antes de la primera foto', () => {
+  it('solo iPhone ofrece «Prefiero revisión solo por una persona»; Android y la web, no', async () => {
+    const { avisoConAlternativa, plataformaAviso } = await import('./textosAvisoIa');
+    expect(avisoConAlternativa(plataformaAviso('ios'))).toBe(true);
+    expect(avisoConAlternativa(plataformaAviso('android'))).toBe(false);
+    expect(avisoConAlternativa(plataformaAviso('web'))).toBe(false);
+    expect(plataformaAviso('windows')).toBe('web');
   });
 
-  it('la pantalla nombra a Google y a la inteligencia artificial, ofrece el «no» y ya no dice que no se comparte', async () => {
+  it('se muestra mientras el servidor lo marque pendiente; un servidor viejo no la inventa', async () => {
+    const { hayQueMostrarAvisoIa } = await import('./textosAvisoIa');
+    expect(hayQueMostrarAvisoIa({ avisoIaPendiente: true })).toBe(true);
+    expect(hayQueMostrarAvisoIa({ avisoIaPendiente: false })).toBe(false);
+    expect(hayQueMostrarAvisoIa({})).toBe(false);
+    expect(hayQueMostrarAvisoIa(null)).toBe(false);
+  });
+
+  it('el texto es el del dictamen, en español y en inglés', async () => {
+    const { TEXTOS_AVISO_IA } = await import('./textosAvisoIa');
+    expect(TEXTOS_AVISO_IA.es.titulo).toBe('Cómo revisamos tus documentos');
+    expect(TEXTOS_AVISO_IA.es.boton).toBe('Aceptar y continuar');
+    expect(TEXTOS_AVISO_IA.es.alternativa).toBe('Prefiero revisión solo por una persona');
+    expect(TEXTOS_AVISO_IA.es.texto).toContain('inteligencia artificial de Google (Gemini)');
+    expect(TEXTOS_AVISO_IA.en.boton).toBe('Accept and continue');
+    expect(TEXTOS_AVISO_IA.en.alternativa).toBe('I prefer review by a person only');
+    // «No se vende / no se entrena» solo cuando la facturación de Gemini esté confirmada.
+    for (const t of [TEXTOS_AVISO_IA.es.texto, TEXTOS_AVISO_IA.en.texto])
+      expect(t).not.toMatch(/vend|entren|sold|train/i);
+  });
+
+  it('el «Sí / No» viejo ya no existe y la pantalla nueva va antes que cualquier foto', async () => {
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
-    const pantalla = readFileSync(join(__dirname, 'AsistentePapeles.tsx'), 'utf8');
-    for (const frase of [
-      'inteligencia artificial de otra empresa, Google (Gemini)',
-      'artificial intelligence service from another company, Google (Gemini)',
-      'papeles-permiso-ia-si',
-      'papeles-permiso-ia-no',
-      '/datos/conductor/verificacion/permiso-ia',
-    ])
-      expect(pantalla).toContain(frase);
-    expect(pantalla).not.toMatch(/ni se comparte|isn’t sold or shared/);
-    // El permiso va ANTES que el de la cara: se decide primero.
-    expect(pantalla.indexOf('pidePermisoIa ? (')).toBeLessThan(
-      pantalla.indexOf('pideConsentimiento ? ('),
+    const asistente = readFileSync(join(__dirname, 'AsistentePapeles.tsx'), 'utf8');
+    const aviso = readFileSync(join(__dirname, 'AvisoIa.tsx'), 'utf8');
+    const inicio = readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8');
+    expect(asistente).not.toMatch(/papeles-permiso-ia-(si|no)|verificacion\/permiso-ia/);
+    expect(asistente.indexOf('hayQueMostrarAvisoIa(v)')).toBeGreaterThan(0);
+    expect(asistente.indexOf('hayQueMostrarAvisoIa(v)')).toBeLessThan(
+      asistente.indexOf("pantalla.tipo === 'yaPuedes'"),
     );
+    // Casilla sin marcar de entrada, y el enlace de la alternativa solo con la plataforma que la lleva.
+    expect(aviso).toContain('useState(false)');
+    expect(aviso).toContain('{conAlternativa ? (');
+    expect(aviso).toContain("'/datos/conductor/aviso-ia'");
+    // Cuentas que ya existen: la pantalla una vez al entrar (sin viaje ni pedido en curso).
+    expect(inicio).toContain('<AvisoIa');
   });
 });

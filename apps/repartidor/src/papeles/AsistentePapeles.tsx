@@ -14,6 +14,8 @@ import {
   useReducirMovimiento,
   useSesion,
 } from '@tumbite/movil';
+import { AvisoIa } from './AvisoIa';
+import { hayQueMostrarAvisoIa } from './textosAvisoIa';
 import { CamaraConMarco } from './CamaraConMarco';
 import { AnilloPerfil, DibujoHorma, MarcaLista, Mini } from './Horma';
 import {
@@ -32,7 +34,6 @@ import {
   sePuedeCambiar,
   siguientePaso,
   textosDelPaso,
-  hayQuePedirPermisoIa,
 } from './logica';
 
 const T = {
@@ -59,13 +60,6 @@ const T = {
       'Usamos la foto de tu cara para comprobar que el documento es tuyo y como tu foto de perfil. La ve el equipo de Divoox y los pasajeros de tus viajes. No la vendemos.',
     acepto: 'Acepto y sigo',
     // C-PERMISO-IA: permiso explícito ANTES de la primera foto (Apple 5.1.2(i)).
-    permisoIaTitulo: 'Antes de tus fotos: tu permiso',
-    permisoIa:
-      'Para revisar tus fotos más rápido, las analizamos con un servicio de inteligencia artificial de otra empresa, Google (Gemini). Recibe las fotos de tu documento, tu licencia, tu seguro y tu cara: comprueba que se vean bien y sean el papel pedido, lee los datos del documento y compara tu cara con la foto de tu documento. Google las procesa por encargo nuestro, solo para eso. La decisión la toma siempre una persona de nuestro equipo.',
-    permisoIaSi: 'Sí, doy mi permiso',
-    permisoIaNo: 'No, que las revise una persona',
-    permisoIaNota:
-      'Si eliges que no, tus fotos no se envían a ese servicio. La revisión puede tardar un poco más.',
     papeles: 'Revisa tus papeles',
     papelesAyuda: 'Toca cualquiera para repetirla. Cuando todo esté bien, envíalos.',
     enviar: 'Enviar a revisión',
@@ -108,13 +102,6 @@ const T = {
     ayuda: 'Need help?',
     consentimiento:
       'We use your face photo to confirm the document is yours and as your profile photo. The Divoox team and the riders on your trips see it. We don’t sell it.',
-    permisoIaTitulo: 'Before your photos: your permission',
-    permisoIa:
-      'To review your photos faster, we analyze them with an artificial intelligence service from another company, Google (Gemini). It receives the photos of your ID, your license, your insurance and your face: it checks that they are clear and are the requested document, reads the details on the document, and compares your face with the photo on your ID. Google processes them on our behalf, only for that. The decision is always made by a person on our team.',
-    permisoIaSi: 'Yes, I give my permission',
-    permisoIaNo: 'No, have a person review them',
-    permisoIaNota:
-      'If you choose no, your photos are not sent to that service. The review may take a little longer.',
     acepto: 'I agree, continue',
     papeles: 'Review your documents',
     papelesAyuda: 'Tap any photo to retake it. When everything looks right, send them.',
@@ -222,20 +209,6 @@ export function AsistentePapeles({
     setPantalla(p);
   };
   const fallo = (x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x));
-
-  // C-PERMISO-IA: la respuesta (sí o no) queda guardada; se puede cambiar escribiendo a soporte.
-  async function responderPermisoIa(acepto: boolean) {
-    setOcupado(true);
-    setError('');
-    try {
-      await api.pedir('POST', '/datos/conductor/verificacion/permiso-ia', { acepto });
-      await recargar();
-    } catch (x) {
-      fallo(x);
-    } finally {
-      setOcupado(false);
-    }
-  }
 
   async function aceptarConsentimiento() {
     setOcupado(true);
@@ -373,6 +346,11 @@ export function AsistentePapeles({
       {error}
     </Text>
   ) : null;
+
+  // C-AVISO-IA-UNICO: la pantalla propia del aviso de IA va ANTES de la primera foto y del permiso
+  // de cámara (reemplaza el «Sí / No» que salía encima de la horma).
+  if (hayQueMostrarAvisoIa(v))
+    return <AvisoIa api={api} idioma={idioma} alListo={() => recargar()} />;
 
   // ───────────────────────── «Ya puedes trabajar» ─────────────────────────
   if (pantalla.tipo === 'yaPuedes') {
@@ -555,8 +533,6 @@ export function AsistentePapeles({
   const indice = orden.findIndex((p) => p.paso === paso) + 1;
   const momento = momentoDelPaso({ foto: dato.foto, fotoNueva: Boolean(nueva), aviso });
   const cambiable = sePuedeCambiar(v, dato);
-  // C-PERMISO-IA: antes de la PRIMERA foto, sea el paso que sea, se pide el permiso (null = no contestó).
-  const pidePermisoIa = hayQuePedirPermisoIa(v, momento);
   const pideConsentimiento = paso === 'cara' && !v.consentimiento && momento === 'horma';
   const sigue = siguientePaso(v, paso);
   const uri = nueva?.uri ?? uriDe(dato);
@@ -683,39 +659,7 @@ export function AsistentePapeles({
 
         <View style={{ marginTop: 16, gap: 10 }}>
           {momento === 'horma' ? (
-            pidePermisoIa ? (
-              <>
-                <View
-                  testID="papeles-permiso-ia"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: COLOR.bordeFuerte,
-                    borderRadius: 12,
-                    padding: 12,
-                    gap: 6,
-                  }}
-                >
-                  <Text style={{ fontSize: 15, fontWeight: '700' }}>{t.permisoIaTitulo}</Text>
-                  <Text style={{ fontSize: 14, lineHeight: 20 }}>{t.permisoIa}</Text>
-                  <Text style={{ fontSize: 13, lineHeight: 18, color: COLOR.textoSuave }}>
-                    {t.permisoIaNota}
-                  </Text>
-                </View>
-                <Boton
-                  texto={t.permisoIaSi}
-                  alTocar={() => void responderPermisoIa(true)}
-                  cargando={ocupado}
-                  testID="papeles-permiso-ia-si"
-                />
-                <Boton
-                  texto={t.permisoIaNo}
-                  secundario
-                  alTocar={() => void responderPermisoIa(false)}
-                  cargando={ocupado}
-                  testID="papeles-permiso-ia-no"
-                />
-              </>
-            ) : pideConsentimiento ? (
+            pideConsentimiento ? (
               <>
                 <View
                   style={{

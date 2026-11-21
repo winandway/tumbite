@@ -55,6 +55,8 @@ export type Verificacion = {
   consentimiento: boolean;
   /** C-PERMISO-IA: `null` = todavía no contestó; un servidor viejo no lo manda (no se pide). */
   permisoIa?: boolean | null;
+  /** C-AVISO-IA-UNICO: la pantalla del aviso de IA está pendiente (un servidor viejo no lo manda). */
+  avisoIaPendiente?: boolean;
   pasos: PasoDelServidor[];
   papeles: PapelDelServidor[];
   listos: number;
@@ -354,11 +356,3 @@ export function nombreDeFoto(paso: PasoVerificacion, pais: string | null, idioma
     .nombre.replace(' (', ', ')
     .replace(')', '');
 }
-
-/**
- * C-PERMISO-IA (20 nov 2026): antes de la PRIMERA foto, sea el paso que sea, se pide el permiso
- * explícito para analizar las fotos con la inteligencia artificial de un tercero. `null` = no
- * contestó todavía. Un servidor viejo no manda el campo: ahí no hay nada que pedir.
- */
-export const hayQuePedirPermisoIa = (v: { permisoIa?: boolean | null }, momento: string) =>
-  v.permisoIa === null && momento === 'horma';

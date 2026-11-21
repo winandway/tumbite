@@ -146,13 +146,15 @@ describe('C-PERMISO-IA-CHAT: sin un «sí», nada sale al proveedor de IA', () =
     expect(cerebro.indexOf('C-PERMISO-IA-CHAT')).toBeLessThan(
       cerebro.indexOf('await leerAjustes(db)'),
     );
-    for (const pantalla of [
-      'apps/panel/src/sitio/ChatSoporte.tsx',
-      'apps/repartidor/src/soporte/ChatSoporteApp.tsx',
-    ]) {
-      expect(leer(pantalla), pantalla).toContain('/datos/camila/permiso-ia');
-      expect(leer(pantalla), pantalla).toContain('textosPermisoIaChat');
-    }
+    // La web pide el permiso en el chat; Driver usa el aviso único del registro (C-AVISO-IA-UNICO),
+    // que guarda el mismo permiso para las fotos y para este chat.
+    const web = leer('apps/panel/src/sitio/ChatSoporte.tsx');
+    expect(web).toContain('/datos/camila/permiso-ia');
+    expect(web).toContain('textosPermisoIaChat');
+    expect(leer('apps/repartidor/src/soporte/AjusteIaChat.tsx')).toContain(
+      '/datos/conductor/aviso-ia',
+    );
+    expect(leer('apps/servidor/src/camila/memoria.ts')).toContain('FROM verificacion_permiso_ia');
     // Y se puede cambiar después: en Ajustes de Driver y al pie del chat de la web.
     expect(leer('apps/repartidor/src/Inicio.tsx')).toContain('<AjusteIaChat />');
     expect(leer('apps/panel/src/sitio/ChatSoporte.tsx')).toContain('<AjusteIaChat');

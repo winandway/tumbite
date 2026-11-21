@@ -227,6 +227,141 @@ verificacionConductor.post('/conductor/verificacion/permiso-ia', async (c) => {
   return c.json({ ok: true, permisoIa: d.acepto });
 });
 
+/**
+ * C-AVISO-IA-UNICO (21 nov 2026, dictamen duodécimo del auditor de tiendas). Un solo aviso de IA
+ * para el conductor, en su propia pantalla antes de la primera foto: vale para las fotos de
+ * verificación y para el chat de ayuda. Reemplaza los dos «Sí / No».
+ *  - Android y web: obligatorio para seguir como conductor (Google no exige alternativa).
+ *  - iPhone: con «Prefiero revisión solo por una persona» (Apple 5.1.1(iv): ofrecer alternativa).
+ * La versión guarda la plataforma donde se contestó (prueba ante las tiendas). Quien ya dijo «Sí»
+ * con el aviso viejo no lo vuelve a ver; quien dijo «No» o no contestó, lo ve una vez.
+ */
+export const VERSION_AVISO_IA = 'aviso-2026-11-21';
+export const PLATAFORMAS_AVISO_IA = ['ios', 'android', 'web'] as const;
+export type PlataformaAvisoIa = (typeof PLATAFORMAS_AVISO_IA)[number];
+
+/** Solo iPhone ofrece seguir sin la IA desde el aviso (la diferencia está en CANDADOS.md). */
+export const avisoIaConAlternativa = (p: PlataformaAvisoIa) => p === 'ios';
+
+export async function avisoIaPendiente(db: D1Database, conductorId: string): Promise<boolean> {
+  const f = await db
+    .prepare('SELECT acepto, texto_version FROM verificacion_permiso_ia WHERE conductor_id = ?')
+    .bind(conductorId)
+    .first<{ acepto: number; texto_version: string | null }>();
+  if (!f) return true;
+  if (Number(f.acepto) === 1) return false;
+  return !String(f.texto_version ?? '').startsWith('aviso-');
+}
+
+/**
+ * Al dar el permiso, lo que ya había subido y nadie analizó pasa por la IA una vez: las fotos del
+ * asistente guardadas «sin IA» y las de la verificación vieja que no tienen su fila. La ficha del
+ * equipo muestra lo que vio. Una persona sigue decidiendo.
+ */
+export async function revisarPendientesConIa(
+  env: Env,
+  db: D1Database,
+  u: { id: string; idioma?: string | null },
+): Promise<number> {
+  if ((await permisoIa(db, u.id)) !== true) return 0;
+  const g = await graciaDe(db, u.id);
+  const { results: sinIa } = await db
+    .prepare(
+      `SELECT id, paso, clave FROM verificacion_fotos
+       WHERE conductor_id = ? AND ia_color = 'sin_ia' AND estado IN ('vigente', 'repetir')
+       LIMIT 8`,
+    )
+    .bind(u.id)
+    .all<{ id: string; paso: PasoVerificacion; clave: string }>();
+  let revisadas = 0;
+  for (const f of sinIa) {
+    const img = await leerImagen(env, f.clave);
+    if (!img) continue;
+    const ia = await comprobarFoto(env, db, {
+      paso: f.paso,
+      pais: g.pais,
+      ingles: u.idioma === 'en',
+      imagen: img,
+      intentos: 0,
+    });
+    await db
+      .prepare(
+        'UPDATE verificacion_fotos SET ia_color = ?, ia_clase = ?, ia_confianza = ?, ia_json = ? WHERE id = ?',
+      )
+      .bind(ia.color, ia.clase, ia.confianza, ia.lectura ? JSON.stringify(ia.lectura) : '', f.id)
+      .run();
+    revisadas++;
+  }
+  // La verificación vieja (`kyc`): la foto que no tiene fila propia en la ficha.
+  const k = await db
+    .prepare(
+      "SELECT selfie, doc_frente, doc_reverso FROM kyc WHERE usuario_id = ? AND estado != 'aprobado'",
+    )
+    .bind(u.id)
+    .first<{ selfie: string | null; doc_frente: string | null; doc_reverso: string | null }>();
+  for (const [pieza, clave] of [
+    ['selfie', k?.selfie],
+    ['doc_frente', k?.doc_frente],
+    ['doc_reverso', k?.doc_reverso],
+  ] as const) {
+    if (!clave) continue;
+    const ya = await db
+      .prepare('SELECT 1 FROM verificacion_fotos WHERE conductor_id = ? AND clave = ? LIMIT 1')
+      .bind(u.id, clave)
+      .first();
+    if (ya) continue;
+    const img = await leerImagen(env, clave);
+    if (!img) continue;
+    await revisarFotoKycConIa(env, db, u, pieza, img, clave);
+    revisadas++;
+  }
+  return revisadas;
+}
+
+verificacionConductor.post('/conductor/aviso-ia', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      acepto: z.boolean(),
+      plataforma: z.enum(PLATAFORMAS_AVISO_IA),
+      // «aviso» = la pantalla del registro; «perfil» = el interruptor para retirarlo o volver a darlo.
+      desde: z.enum(['aviso', 'perfil']).default('aviso'),
+    }),
+  );
+  if (!d.acepto && d.desde === 'aviso' && !avisoIaConAlternativa(d.plataforma))
+    throw new ErrorDatos(
+      'Para seguir como conductor, marca la casilla y toca «Aceptar y continuar».',
+      'acepto',
+      422,
+    );
+  const db = base(c);
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO verificacion_permiso_ia (conductor_id, acepto, texto_version) VALUES (?, ?, ?)
+         ON CONFLICT(conductor_id) DO UPDATE SET acepto = excluded.acepto,
+           texto_version = excluded.texto_version, decidido_en = datetime('now')`,
+      )
+      .bind(u.id, d.acepto ? 1 : 0, `${VERSION_AVISO_IA}/${d.plataforma}/${d.desde}`),
+    // El mismo permiso vale para su chat de ayuda (una escritura, solo si cambia).
+    db
+      .prepare(
+        `UPDATE camila_personas SET permiso_ia = ?, permiso_ia_en = datetime('now')
+         WHERE usuario_id = ? AND (permiso_ia IS NULL OR permiso_ia != ?)`,
+      )
+      .bind(d.acepto ? 1 : 0, u.id, d.acepto ? 1 : 0),
+  ]);
+  if (d.acepto) {
+    const trabajo = revisarPendientesConIa(c.env, db, u).catch((e: unknown) =>
+      console.error('aviso-ia: la revisión de las fotos pendientes falló', e),
+    );
+    if (c.env.ESPERAR_DESPUES) c.env.ESPERAR_DESPUES(trabajo);
+    else await trabajo;
+  }
+  return c.json({ ok: true, permisoIa: d.acepto, avisoPendiente: false });
+});
+
 verificacionConductor.get('/conductor/verificacion', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
@@ -246,6 +381,8 @@ verificacionConductor.get('/conductor/verificacion', async (c) => {
     perfil: { nombre: u.nombre, tieneCara: e.tieneCara },
     consentimiento: e.consentimiento,
     permisoIa: await permisoIa(db, u.id),
+    // C-AVISO-IA-UNICO: la app muestra la pantalla del aviso (una vez) mientras esto sea verdadero.
+    avisoIaPendiente: await avisoIaPendiente(db, u.id),
     pasos: e.pasos.map((paso) => {
       const f = e.fotos.get(paso);
       return {

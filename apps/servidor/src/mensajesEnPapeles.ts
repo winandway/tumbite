@@ -4,6 +4,10 @@
  */
 export const MENSAJES_EN_PAPELES: [string, string][] = [
   [
+    'Para seguir como conductor, marca la casilla y toca «Aceptar y continuar».',
+    'To continue as a driver, check the box and tap “Accept and continue.”',
+  ],
+  [
     'Tómate la foto de tu cara antes de conectarte. Así te reconoce el pasajero.',
     'Take the photo of your face before going online. It is how riders recognize you.',
   ],
