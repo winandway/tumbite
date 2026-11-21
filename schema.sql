@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   zona_id TEXT,
   clave_hash TEXT NOT NULL,
   activo INTEGER NOT NULL DEFAULT 1,
+  -- C-CUENTA-PRUEBA: cuenta de prueba del equipo (también en COLUMNAS para las bases que ya existen).
+  es_prueba INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -580,6 +582,16 @@ CREATE TABLE IF NOT EXISTS contadores (
   clave TEXT PRIMARY KEY,
   n INTEGER NOT NULL DEFAULT 0
 );
+
+-- C-ID-DEL-PAIS (21 nov 2026): los ID de repartidor que se reasignaron (uno puesto con el país
+-- equivocado, o un cambio de ciudad). El ID viejo sigue encontrándose en el buscador.
+CREATE TABLE IF NOT EXISTS codigos_repartidor_anteriores (
+  codigo TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  motivo TEXT NOT NULL,
+  cambiado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS codigos_repartidor_anteriores_usuario ON codigos_repartidor_anteriores(usuario_id);
 
 -- C-HORA-LLEGADA y C-RASTREO-VIVO (16 nov 2026): la ÚLTIMA hora de llegada calculada de un pedido o
 -- viaje en marcha (clave «pedido:<id>» o «viaje:<id>»), UNA fila que se reescribe como mucho cada
