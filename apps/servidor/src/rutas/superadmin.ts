@@ -1563,6 +1563,20 @@ export const CUENTAS_REVISOR = [
   },
 ] as const;
 
+/**
+ * La SEGUNDA cuenta de revisión de Driver (21 nov 2026, auditor de tiendas): está en una zona con plazo
+ * de papeles y asistente, para que el revisor vea el asistente, la cámara con marco y el permiso de IA.
+ * Va aparte de CUENTAS_REVISOR a propósito: esa lista tiene una cuenta por rol (así rota su clave) y
+ * sus cuentas reciben la entrega de práctica; esta es un conductor nuevo corriente. Se creó a mano en
+ * producción; su clave está en ~/.config/tumbite/revisores-tiendas, línea `repartidor2`.
+ */
+export const CUENTA_REVISOR_ASISTENTE = {
+  rol: 'repartidor',
+  correo: 'revisor.driver2@divoox.com',
+  nombre: 'Soporte Revisor Driver 2',
+  zona: 'VE-ZZ-REVIEW',
+} as const;
+
 /** Crea solo cuentas nuevas, en un único lote atómico. Repetir nunca cambia claves. */
 superadmin.post('/admin/revisores', async (c) => {
   exigir(c, 'admin');

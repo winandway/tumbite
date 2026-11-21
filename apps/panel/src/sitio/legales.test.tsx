@@ -181,8 +181,8 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    expect(PRIVACIDAD.es.actualizado).toContain('20 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 20, 2026');
+    expect(PRIVACIDAD.es.actualizado).toContain('21 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 21, 2026');
   });
 });
 
@@ -219,6 +219,15 @@ describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fot
       'With your permission, which we ask for in the app before the first photo',
     );
     expect(en).toContain('the riders on your trips see it, together with your first name');
+    // B1 del sexto dictamen: la captura adjunta al chat de soporte también la lee Gemini.
+    expect(es).toContain('y la captura de pantalla que adjuntes a un reporte');
+    expect(es).toContain('la lee la asistente virtual (Google Gemini) para entender el problema');
+    expect(en).toContain('and any screenshot you attach to a report');
+    expect(en).toContain(
+      'the virtual assistant (Google Gemini) reads it to understand the problem',
+    );
+    expect(es).not.toMatch(/solo la ve nuestro equipo/);
+    expect(en).not.toMatch(/only our team sees it/);
     // Las frases viejas contradecían a la app.
     expect(es).not.toMatch(/no tus datos de pago ni tus documentos/);
     expect(en).not.toMatch(/not your payment details or documents/);

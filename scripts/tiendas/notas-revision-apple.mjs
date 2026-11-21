@@ -54,21 +54,21 @@ DEMO ACCOUNTS (both work in production from any location):
 
 NEW IN THIS BUILD
 a) Document assistant with grace period (account #2: home card "Your documents" or Profile > "Your documents"). One screen per photo (ID front and back, license front and back, insurance, face) with a frame guide. All verification photos are taken LIVE with the in-app camera; the app never offers the photo library or files for them and the server rejects any photo not marked as taken by the camera. This is by design: the document must be the real one and the face the real person. If camera access is denied the screen explains how to turn it on, and "Save and continue later" leaves the assistant at any step. After the minimum required photos the driver sees "You can start working" and has a number of days to upload the rest; reminders arrive by push notification and email.
-b) "Review your details" screen before an account is created (in all three apps): shows what was typed; nothing is sent until "Create my account".
-c) "How passengers see you" (Profile): the driver's public profile (first name, vehicle, verified badge, languages and an optional 120-character note filtered for offensive words). Passengers see it during their trip.
+b) "Review your details" screen before an account is created: shows what was typed; nothing is sent until "Create my account".
+c) "How passengers see you" (Profile): the driver's public profile (first name, face photo, vehicle, plate, verified badge, languages and an optional 120-character note filtered for offensive words). Passengers see it during their trip.
 d) "My line": a driver can join a taxi or moto line; the line leader sees the driver's name and phone only after the driver asks to join.
-e) "Talk to support" chat: answered by a virtual assistant and by our team; any reply can be reported in the app.
-f) THIRD-PARTY AI, WITH EXPLICIT PERMISSION: before the first verification photo the assistant shows "Before your photos: your permission". It names Google (Gemini) and explains that the ID, license, insurance and face photos are analyzed by that third-party AI service to check the document type and legibility, read its details and compare the live face with the ID photo. The driver chooses "Yes, I give my permission" or "No, have a person review them". Without a yes, no photo is sent to the AI service and a person reviews it. The AI never decides: a person on our team approves or rejects every document. We use Google's paid API terms.
+e) "Talk to support" chat: answered by a virtual assistant and by our team; any reply can be reported in the app. The assistant uses Google Gemini; it receives the text of the messages and any screenshot the user chooses to attach, never payment details.
+f) THIRD-PARTY AI, WITH EXPLICIT PERMISSION: before the first verification photo the assistant shows "Before your photos: your permission". It names Google (Gemini) and explains that the ID, license, insurance and face photos are analyzed by that third-party AI service to check document type and legibility, read its details and compare the live face with the ID photo. The driver chooses "Yes, I give my permission" or "No, have a person review them". Without a yes, no photo is sent to the AI service and a person reviews it. The AI never decides: a person on our team approves or rejects every document. We use Google's paid API terms.
 
-ACCOUNT DELETION (inside the app): Profile > the three-dot menu > "Delete my account" > type DELETE. It deletes the account and its personal data, including ID, license, insurance and face photos, verification results and the AI permission (web: /delete-account).
+ACCOUNT DELETION (inside the app): Profile > the three-dot menu > "Delete my account" > type DELETE. It deletes the account and its personal data, including ID, license, insurance and face photos, verification results and the AI permission (web: https://divoox.com/delete-account).
 
-PAYMENTS: no in-app purchases. Riders pay for physical services (delivery, rides) by card through Stripe, in cash or by local mobile payment, outside In-App Purchase (guideline 3.1.3(e)).
+PAYMENTS: no in-app purchases. Riders pay for physical services (delivery, rides) by card through Stripe, in cash or by local mobile payment, outside In-App Purchase.
 
 PERMISSIONS: camera (order photos, code scanning, verification photos); location while online or on a job, even with the screen off, only during an active job; notifications.
 
 REGIONS: the app is the same everywhere. Currency, payment methods and some onboarding steps (such as the document deadline) depend on the account's region; the app does not list regions.
 
-SCREEN RECORDING: attached, physical iPhone, starting from the app icon. Support: go@windoce.com. Developer: Windoce LLC`,
+Support: go@windoce.com. Developer: Windoce LLC`,
   // Divoox Restaurants
   6829108322: `PURPOSE AND AUDIENCE: Divoox Restaurants is for restaurant owners and staff who sell on the Divoox marketplace. It lets them receive and manage delivery orders from a phone or tablet, like DoorDash Merchant or Uber Eats Manager.
 

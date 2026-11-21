@@ -3874,6 +3874,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## Sexto dictamen del auditor (21 nov 2026): capturas del chat y cuenta 2 de revisión — todos los países
+
+- **B1, política:** la captura que alguien adjunta al chat de soporte también la lee Google Gemini (`camila/cerebro.ts`, `camila/fallos.ts`), y la política decía que Gemini solo recibía texto y que la captura «solo la ve nuestro equipo». Corregidas las dos frases en español y en inglés (`legales.ts`, fecha 21 nov) con prueba en `legales.test.tsx`. Regla: cada dato nuevo que se le mande a un proveedor de IA entra primero a la política.
+- **B2, cuenta 2 de revisión de Driver:** `revisor.driver2@divoox.com`, «Soporte Revisor Driver 2», zona de producción `VE-ZZ-REVIEW` «Review area (test)» (no se anuncia al público), en plazo, con la cara tomada con un retrato dibujado, moto neutra, cinco papeles pendientes y el permiso de IA sin contestar. Anotada en `CUENTA_REVISOR_ASISTENTE` (`rutas/superadmin.ts`); su clave está en el archivo de revisores, línea `repartidor2`. No está en `CUENTAS_REVISOR` a propósito (esa lista es una por rol y sus cuentas reciben la entrega de práctica).
+- **Notas del revisor de Driver:** texto final del auditor en `scripts/tiendas/notas-revision-apple.mjs` (dice que el chat usa Gemini y recibe texto y capturas). No enviadas.
+- **Confirmado:** Gemini con facturación de pago; el motor propio de huella de la cara no está configurado en producción (apagado). Los permisos USE_BIOMETRIC y USE_FINGERPRINT quedan bloqueados en `app.json` de Driver y de clientes para la PRÓXIMA compilación (no se recompiló por esto).
+
 ## C-PERMISO-IA y C-POLITICA-VERDAD-IA (20 nov 2026, bloqueos B2, B3 y B6 del auditor de tiendas) — todos los países
 
 - **Qué pasaba:** las fotos del asistente de papeles (documento, licencia, seguro y cara) viajan a Google Gemini para comprobarlas, pero la política decía que Gemini «no recibe tus documentos», la pantalla decía «no se vende ni se comparte» y solo se pedía permiso para la cara. La política también decía que solo el equipo ve la foto de la cara, cuando es la foto de perfil que ven los pasajeros. Apple 5.1.2(i) exige avisar y pedir permiso explícito antes de compartir datos con una IA de terceros.
