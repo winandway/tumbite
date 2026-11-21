@@ -43,13 +43,13 @@ export function usePaisSugerido(): string | null {
 
 const TEXTOS = {
   es: {
-    pais: 'País del celular',
+    pais: 'Código de país',
     elegir: 'Elige el país',
     cerrar: 'Cerrar',
     sinPais: 'Elige el país',
   },
   en: {
-    pais: 'Phone country',
+    pais: 'Country code',
     elegir: 'Choose the country',
     cerrar: 'Close',
     sinPais: 'Choose the country',

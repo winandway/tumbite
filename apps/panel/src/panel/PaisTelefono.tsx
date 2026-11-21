@@ -36,7 +36,8 @@ export function PaisTelefono({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al abrir el formulario
   }, []);
-  const etiqueta = idioma === 'en' ? 'Phone country' : 'País del celular';
+  // «Código de país»: la etiqueta no repite «Celular» (la casilla del número se busca por ese nombre).
+  const etiqueta = idioma === 'en' ? 'Country code' : 'Código de país';
   return (
     <label className="campo">
       <span>{etiqueta}</span>
