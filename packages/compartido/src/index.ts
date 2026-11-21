@@ -130,3 +130,4 @@ export * from './categoriaRestaurante';
 export * from './sugerirCorreo';
 export * from './revisarRegistro';
 export * from './fechaEscrita';
+export * from './videosAyuda';

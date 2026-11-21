@@ -330,6 +330,9 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/banners': 'config.ver',
   'POST /admin/banners': 'config.editar',
   'PUT /admin/banners/:id': 'config.editar',
+  // C-VER-VIDEO: los videos de ayuda de las apps («Ver video»).
+  'GET /admin/videos-ayuda': 'config.ver',
+  'PUT /admin/videos-ayuda': 'config.editar',
   'POST /admin/banners/:id/publicar': 'config.editar',
   'POST /admin/banners/:id/pausar': 'config.editar',
   'DELETE /admin/banners/:id': 'config.editar',
@@ -718,6 +721,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/banners': CONFIG,
   'POST /admin/banners': CONFIG,
   'PUT /admin/banners/:id': CONFIG,
+  'GET /admin/videos-ayuda': CONFIG,
+  'PUT /admin/videos-ayuda': CONFIG,
   'POST /admin/banners/:id/publicar': CONFIG,
   'POST /admin/banners/:id/pausar': CONFIG,
   'DELETE /admin/banners/:id': CONFIG,

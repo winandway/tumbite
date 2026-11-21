@@ -1,3 +1,4 @@
+import { VerVideo } from './VerVideo';
 import { Modal } from './Hoja';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -649,7 +650,14 @@ function ContenidoFotosPuerta<F>({
     </>
   );
 
-  if (seccion) return <View style={{ gap: 14 }}>{cuerpo}</View>;
+  if (seccion)
+    return (
+      <View style={{ gap: 14 }}>
+        {/* C-VER-VIDEO: el video corto que enseña las fotos de la entrada (si está encendido). */}
+        <VerVideo clave="fotos-entrada" />
+        {cuerpo}
+      </View>
+    );
 
   return (
     <>
@@ -662,6 +670,7 @@ function ContenidoFotosPuerta<F>({
         testID="fotos-puerta-cabecera"
       />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 32 }}>
+        <VerVideo clave="fotos-entrada" />
         {cuerpo}
         <Pressable
           onPress={cerrar}

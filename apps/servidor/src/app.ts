@@ -108,6 +108,7 @@ import { saludCamila } from './camila/salud';
 import { saludCorreoEntrante } from './camila/correoEntrante';
 import { direcciones } from './rutas/direcciones';
 import { fotoPuerta } from './rutas/fotoPuerta';
+import { videosAyuda } from './rutas/videosAyuda';
 import { restauranteMas } from './rutas/restauranteMas';
 import { anuncios } from './rutas/anuncios';
 import { banners } from './rutas/banners';
@@ -810,6 +811,7 @@ app.route('/datos', programaReferidos);
 app.route('/datos', agentes);
 app.route('/datos', direcciones);
 app.route('/datos', fotoPuerta);
+app.route('/datos', videosAyuda);
 app.route('/datos', restauranteMas);
 app.route('/datos', anuncios);
 // C-BANNERS: los banners del inicio de la app (lectura pública) y su administrador.

@@ -1410,6 +1410,12 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Primero sube la foto.', 'Upload the photo first.'],
   ['Ese pedido no es tuyo.', 'That order isn’t yours.'],
   ['Ese viaje no es tuyo.', 'That ride isn’t yours.'],
+  ['Ese no es el nombre de un video del almacén.', 'That isn’t the name of a video in storage.'],
+  ['Esa pantalla no tiene video de ayuda.', 'That screen has no help video.'],
+  [
+    'Ese video todavía no está en el almacén. Súbelo primero y vuelve a intentarlo.',
+    'That video isn’t in storage yet. Upload it first and try again.',
+  ],
   [
     'En esta zona hace falta una foto del frente de tu casa o edificio para que tu repartidor te encuentre. Agrégala y vuelve a intentar.',
     'This area requires a photo of the front of your house or building so your courier can find you. Add it and try again.',
