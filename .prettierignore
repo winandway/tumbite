@@ -15,3 +15,7 @@ out-pruebas
 out-produccion
 out-deploy
 apps/servidor/src/camila/docsPublicos.ts
+
+# C-TERRITORIO-OFICIAL: datos generados por scripts/pais/generar-datos-pais.mjs (minificados a propósito).
+apps/panel/public/territorio/
+packages/compartido/src/pais/datos/
