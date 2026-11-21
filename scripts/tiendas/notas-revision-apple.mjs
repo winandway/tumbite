@@ -3,7 +3,8 @@
 // público, cómo entrar y usar lo principal (con las cuentas de cada tipo), servicios externos,
 // diferencias por región, y si el rubro está regulado. Este guion escribe esas notas en las tres
 // versiones. Las claves de las cuentas del revisor se leen de ~/.config/tumbite/revisores-tiendas
-// (nunca van en el repositorio). Uso: node scripts/tiendas/notas-revision-apple.mjs
+// (nunca van en el repositorio). Uso: node scripts/tiendas/notas-revision-apple.mjs   (--medir: solo cuenta
+// los caracteres de cada nota, sin escribir nada en Apple)
 import fs from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
@@ -41,6 +42,8 @@ const notas = {
   6829108108: `PURPOSE AND AUDIENCE: Divoox is a local delivery marketplace for consumers in the United States. People order food from nearby restaurants and get it delivered by independent drivers, with live order tracking. It solves "what's near me that can deliver now" and gives local restaurants a delivery channel with lower fees.
 
 HOW TO USE IT: 1) Open the app and sign in with the customer demo account below (or create an account with email). 2) Allow location or type a delivery address (it suggests real addresses). 3) Open Food, pick a restaurant, add dishes to the cart. 4) In the cart you see delivery fee, taxes and total; checkout pays by card with Stripe (Apple Pay where available). 5) After ordering, the order screen shows each step and the driver on the map. Paying is optional for review: everything up to the payment sheet can be reviewed without a charge. Purchases are physical goods and services delivered in person, so they use Stripe and not In-App Purchase.
+
+ENTRANCE PHOTOS (optional): in a saved address the user can add photos of their entrance. Only the assigned driver sees them, and only while on the way (delivering an order or heading to a ride pickup). The user can delete them anytime.
 ${comun}`,
   // Divoox Driver
   // Divoox Driver. Texto del dictamen del auditor de tiendas del 20 nov 2026 (bloqueo B6): las notas
@@ -57,7 +60,8 @@ a) Document assistant with grace period (account #2: home card "Your documents" 
 b) "Review your details" screen before an account is created: shows what was typed; nothing is sent until "Create my account".
 c) "How passengers see you" (Profile): the driver's public profile (first name, face photo, vehicle, plate, verified badge, languages and an optional 120-character note filtered for offensive words). Passengers see it during their trip.
 d) "My line": a driver can join a taxi or moto line; the line leader sees the driver's name and phone only after the driver asks to join.
-e) "Talk to support" chat: answered by a virtual assistant and by our team; any reply can be reported in the app. The assistant uses Google Gemini; it receives the text of the messages and any screenshot the user chooses to attach, never payment details.
+e) Support chat (menu > Help), AI WITH EXPLICIT PERMISSION: before the first message it asks permission, naming Google (Gemini). "No": nothing goes to the AI; a person replies. Changeable in Profile. Replies can be reported.
+g) Rides: the assigned driver sees the rider’s entrance photo on "Go pick up", until pickup.
 f) THIRD-PARTY AI, WITH EXPLICIT PERMISSION: before the first verification photo the assistant shows "Before your photos: your permission". It names Google (Gemini) and explains that the ID, license, insurance and face photos are analyzed by that third-party AI service to check document type and legibility, read its details and compare the live face with the ID photo. The driver chooses "Yes, I give my permission" or "No, have a person review them". Without a yes, no photo is sent to the AI service and a person reviews it. The AI never decides: a person on our team approves or rejects every document. We use Google's paid API terms.
 
 ACCOUNT DELETION (inside the app): Profile > the three-dot menu > "Delete my account" > type DELETE. It deletes the account and its personal data, including ID, license, insurance and face photos, verification results and the AI permission (web: https://divoox.com/delete-account).
@@ -76,6 +80,12 @@ HOW TO USE IT: 1) Sign in with the restaurant demo account below. 2) The Orders 
 ${comun}`,
 };
 
+// --medir: solo dice cuántos caracteres tiene cada nota (tope de Apple: 4000). NO escribe nada en Apple.
+if (process.argv.includes('--medir')) {
+  for (const [app, texto] of Object.entries(notas))
+    console.log(`${app}: ${texto.length} caracteres`);
+  process.exit(0);
+}
 for (const [app, texto] of Object.entries(notas)) {
   if (texto.length > 4000)
     throw new Error(`Notas de ${app} con ${texto.length} caracteres (máximo 4000)`);
