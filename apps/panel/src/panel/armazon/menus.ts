@@ -153,7 +153,34 @@ export function IconoDe({
   return createElement(iconoDe(clave), { size: tamano, strokeWidth: grosor, 'aria-hidden': true });
 }
 
-export type ItemMenu = { clave: string; texto: string; a: string; activo?: boolean };
+/**
+ * C-AVISOS-MENU: lo que espera en esa sección (el número) y el tono del punto que palpita:
+ * `trabajo` verde, `urgente` rojo. Sin pendientes, no se dibuja nada.
+ */
+export type PendienteItem = { cantidad: number; tono: 'trabajo' | 'urgente' };
+export type ItemMenu = {
+  clave: string;
+  texto: string;
+  a: string;
+  activo?: boolean;
+  pendiente?: PendienteItem;
+};
+
+/** Pone a cada ítem lo que espera en su sección (por su clave). */
+export function conPendientes(
+  grupos: GrupoMenu[],
+  menu: { clave: string; cantidad: number; tono: 'trabajo' | 'urgente' }[],
+): GrupoMenu[] {
+  if (!menu.length) return grupos;
+  const por = new Map(menu.map((m) => [m.clave, m]));
+  return grupos.map((g) => ({
+    ...g,
+    items: g.items.map((i) => {
+      const m = por.get(i.clave);
+      return m && m.cantidad > 0 ? { ...i, pendiente: { cantidad: m.cantidad, tono: m.tono } } : i;
+    }),
+  }));
+}
 export type GrupoMenu = { titulo: string; items: ItemMenu[] };
 
 type Textos = (typeof TEXTOS_PANEL)['es'];

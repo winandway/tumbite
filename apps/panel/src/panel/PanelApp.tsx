@@ -6,12 +6,16 @@ import { BaseAyudaInterna } from './AyudaAqui';
 import { Armazon, type AvisoArmazon, SesionArmazon } from './armazon/Armazon';
 import { EncabezadoPagina, Metricas, TarjetaMetrica } from './armazon/Piezas';
 import {
+  conPendientes,
   gruposAdmin,
   gruposCuenta,
   gruposRestaurante,
   IconoDe,
+  type PendienteItem,
   titulosGrupo,
 } from './armazon/menus';
+
+type PendienteMenu = { clave: string } & PendienteItem;
 import {
   MARCA,
   PATRON_ID_FICHA,
@@ -334,22 +338,32 @@ export function PanelApp({ ruta }: { ruta: string }) {
 
   // La campana: lo que espera por la persona (lectura; como mucho una vez por minuto).
   const [avisosCrudos, setAvisosCrudos] = useState<{ clave: string; cantidad: number }[]>([]);
+  // C-AVISOS-MENU: lo que espera en cada sección del menú (número y tono del punto).
+  const [pendientesMenu, setPendientesMenu] = useState<PendienteMenu[]>([]);
   const ultimaLectura = useRef(0);
   useEffect(() => {
     if (!usuario || (!esAdmin && !esRestaurante)) return;
     const leer = () => {
       if (document.visibilityState === 'hidden') return;
-      if (Date.now() - ultimaLectura.current < 55_000) return;
+      // Al cambiar de sección se vuelve a mirar (así el punto se apaga al atender), como mucho cada 10 s.
+      if (Date.now() - ultimaLectura.current < 10_000) return;
       ultimaLectura.current = Date.now();
-      void pedir<{ avisos: { clave: string; cantidad: number }[] }>('GET', '/datos/panel/avisos')
-        .then((r) => setAvisosCrudos(r.avisos ?? []))
+      void pedir<{ avisos: { clave: string; cantidad: number }[]; menu?: PendienteMenu[] }>(
+        'GET',
+        '/datos/panel/avisos',
+      )
+        .then((r) => {
+          setAvisosCrudos(r.avisos ?? []);
+          setPendientesMenu(r.menu ?? []);
+        })
         .catch((e: unknown) => console.warn('avisos del panel: no se pudieron leer', e));
     };
     leer();
-    // Una lectura chica por minuto y solo con la pestaña a la vista (no escribe nada).
-    const reloj = window.setInterval(leer, 60_000);
+    // Una lectura chica cada 30 s y solo con la pestaña a la vista (no escribe nada).
+    const reloj = window.setInterval(leer, 30_000);
     return () => window.clearInterval(reloj);
   }, [usuario, esAdmin, esRestaurante, ruta]);
+  const gruposConAvisos = esAdmin ? conPendientes(grupos, pendientesMenu) : grupos;
   const avisos: AvisoArmazon[] = avisosCrudos.flatMap((a) => {
     if (a.clave === 'tickets')
       return [{ ...a, texto: t.avisos.tickets, a: `${raizAdmin}/tickets` }];
@@ -538,7 +552,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
               value={esAdmin && baseAdmin && baseAdmin !== '/panel' ? baseAdmin : null}
             >
               <Armazon
-                grupos={grupos}
+                grupos={gruposConAvisos}
                 avisos={avisos}
                 buscador={
                   esAdmin && baseAdmin && baseAdmin !== '/panel' ? (

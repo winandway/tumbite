@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../env';
+import { zonaRealSql } from '../cuentaPais';
 import { type Variables, base, exigir } from '../sesion';
 import {
   accesoDe,
@@ -153,22 +154,88 @@ tableroPanel.get('/admin/tablero', async (c) => {
   });
 });
 
+/**
+ * C-AVISOS-MENU (21 nov 2026, Gerencia) — todos los países. Lo que espera en cada sección del menú
+ * del superadmin: el número y el tono del punto (`trabajo` verde, `urgente` rojo). Solo cuentas
+ * reales (nunca las marcadas de prueba) y solo de la zona de trabajo de quien mira. Es UNA lectura
+ * de solo conteos: mirar no escribe nada en la base (regla de la nube). La clave es la del menú.
+ */
+export type PendienteMenu = { clave: string; cantidad: number; tono: 'trabajo' | 'urgente' };
+const REAL = (col: string) => `${col} NOT IN (SELECT id FROM usuarios WHERE es_prueba = 1)`;
+/** Horas que una verificación enviada puede esperar antes de volverse urgente. */
+export const HORAS_VERIFICACION_URGENTE = 24;
+export async function pendientesDelMenu(
+  db: D1Database,
+  acceso: Parameters<typeof alcanceObjetoSql>[0],
+): Promise<PendienteMenu[]> {
+  const conductor = alcanceObjetoSql(acceso, 'repartidor', 'k.usuario_id');
+  const conductorD = alcanceObjetoSql(acceso, 'repartidor', 'u.id');
+  const ticket = alcanceObjetoSql(acceso, 'ticket', 't.id');
+  const restaurante = alcanceObjetoSql(acceso, 'restaurante', 'r.id');
+  const viaje = alcanceObjetoSql(acceso, 'viaje', 'e.operacion_id');
+  const f = await db
+    .prepare(
+      `SELECT
+        (SELECT COUNT(*) FROM tickets t WHERE t.estado = 'abierto'
+           AND (t.usuario_id IS NULL OR ${REAL('t.usuario_id')})${ticket.sql}) AS tickets,
+        (SELECT COUNT(*) FROM camila_casos cc JOIN camila_personas cp ON cp.id = cc.persona_id
+           WHERE cc.estado = 'abierto' AND (cp.usuario_id IS NULL OR ${REAL('cp.usuario_id')})) AS camila,
+        (SELECT COUNT(*) FROM reportes_contenido rc WHERE rc.estado = 'abierto') AS moderacion,
+        (SELECT COUNT(*) FROM aprobaciones_dinero a WHERE a.estado = 'pendiente') AS aprobaciones,
+        (SELECT COUNT(*) FROM kyc k WHERE k.estado = 'pendiente' AND ${REAL('k.usuario_id')}${conductor.sql}) AS verificaciones,
+        (SELECT COUNT(*) FROM kyc k WHERE k.estado = 'pendiente' AND ${REAL('k.usuario_id')}${conductor.sql}
+           AND k.enviado_en <= datetime('now', '-${HORAS_VERIFICACION_URGENTE} hours')) AS verificaciones_viejas,
+        (SELECT COUNT(*) FROM restaurantes r WHERE r.estado = 'pendiente' AND ${REAL('r.dueno_id')}${restaurante.sql}) AS restaurantes,
+        (SELECT COUNT(*) FROM solicitudes_linea s WHERE s.estado = 'pendiente') AS lineas,
+        (SELECT COUNT(*) FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id
+           WHERE u.rol = 'repartidor' AND u.activo = 1 AND u.es_prueba = 0
+             AND ${zonaRealSql('d', 'u')} IS NULL${conductorD.sql}) AS sin_zona,
+        (SELECT COUNT(*) FROM emergencias_viaje e WHERE e.atendida_en IS NULL
+           AND ${REAL('e.actor_id')}${viaje.sql}) AS emergencias`,
+    )
+    .bind(
+      ...ticket.valores,
+      ...conductor.valores,
+      ...conductor.valores,
+      ...restaurante.valores,
+      ...conductorD.valores,
+      ...viaje.valores,
+    )
+    .first<Record<string, number>>();
+  const cuentas = new Map(Object.entries(f ?? {}));
+  const n = (k: string) => Number(cuentas.get(k) ?? 0);
+  const lista: PendienteMenu[] = [
+    { clave: 'tickets', cantidad: n('tickets'), tono: 'trabajo' },
+    { clave: 'camila', cantidad: n('camila'), tono: 'trabajo' },
+    { clave: 'moderation', cantidad: n('moderacion'), tono: 'trabajo' },
+    { clave: 'approvals', cantidad: n('aprobaciones'), tono: 'trabajo' },
+    {
+      clave: 'verifications',
+      cantidad: n('verificaciones'),
+      tono: n('verificaciones_viejas') > 0 ? 'urgente' : 'trabajo',
+    },
+    { clave: 'restaurants', cantidad: n('restaurantes'), tono: 'trabajo' },
+    { clave: 'lines', cantidad: n('lineas'), tono: 'trabajo' },
+    { clave: 'drivers', cantidad: n('sin_zona'), tono: 'trabajo' },
+    // Una emergencia de viaje sin atender es lo más urgente del panel.
+    { clave: 'rides', cantidad: n('emergencias'), tono: 'urgente' },
+  ];
+  return lista.filter((x) => x.cantidad > 0);
+}
+
 /** La campana de la cabecera: lo que espera por la persona, según su rol. Solo cantidades. */
 tableroPanel.get('/panel/avisos', async (c) => {
   const u = exigir(c);
   const db = base(c);
   if (u.rol === 'admin') {
-    const f = await db
-      .prepare(
-        `SELECT (SELECT COUNT(*) FROM tickets WHERE estado = 'abierto') AS tickets,
-                (SELECT COUNT(*) FROM restaurantes WHERE estado = 'pendiente') AS restaurantes`,
-      )
-      .first<{ tickets: number; restaurantes: number }>();
+    const menu = await pendientesDelMenu(db, accesoDe(c));
+    const de = (clave: string) => menu.find((m) => m.clave === clave)?.cantidad ?? 0;
     return c.json({
       avisos: [
-        { clave: 'tickets', cantidad: Number(f?.tickets ?? 0) },
-        { clave: 'restaurantes', cantidad: Number(f?.restaurantes ?? 0) },
+        { clave: 'tickets', cantidad: de('tickets') },
+        { clave: 'restaurantes', cantidad: de('restaurants') },
       ],
+      menu,
     });
   }
   if (u.rol === 'restaurante') {

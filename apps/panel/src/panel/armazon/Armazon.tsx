@@ -62,6 +62,8 @@ const T = {
     flexLema: 'Logística de paquetes para empresas',
     inicioSitio: 'Ir al inicio de Divoox',
     ayuda: 'Ayuda del equipo',
+    pendiente: (n: number) => (n === 1 ? '1 pendiente' : `${n} pendientes`),
+    pendienteUrgente: (n: number) => (n === 1 ? '1 pendiente urgente' : `${n} pendientes, urgente`),
   },
   en: {
     menu: 'Dashboard',
@@ -80,6 +82,8 @@ const T = {
     flexLema: 'Package logistics for businesses',
     inicioSitio: 'Go to the Divoox home page',
     ayuda: 'Team help',
+    pendiente: (n: number) => (n === 1 ? '1 pending' : `${n} pending`),
+    pendienteUrgente: (n: number) => (n === 1 ? '1 pending, urgent' : `${n} pending, urgent`),
   },
 };
 
@@ -413,6 +417,20 @@ export function Armazon({
                 >
                   <IconoDe clave={i.clave} tamano={19} />
                   <span>{i.texto}</span>
+                  {i.pendiente ? (
+                    <span
+                      className={`pd-item-pendiente pd-item-${i.pendiente.tono}`}
+                      data-testid={`pendiente-${i.clave}`}
+                      aria-label={(i.pendiente.tono === 'urgente'
+                        ? t.pendienteUrgente
+                        : t.pendiente)(i.pendiente.cantidad)}
+                    >
+                      <span className="pd-item-punto" aria-hidden="true" />
+                      <span aria-hidden="true">
+                        {i.pendiente.cantidad > 99 ? '99+' : i.pendiente.cantidad}
+                      </span>
+                    </span>
+                  ) : null}
                 </Enlace>
               ))}
             </div>
