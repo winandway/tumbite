@@ -237,6 +237,9 @@ export const PANTALLAS_PREFERENCIAS = [
   'horario',
   // C-VIAJES-FIJOS: el monitoreo de viajes fijos (ciudad, estado y solo menores).
   'viajes-fijos',
+  // C-CUENTA-PRUEBA: el filtro «Cuentas» de Restaurantes y Líneas.
+  'restaurantes',
+  'lineas',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [
@@ -251,6 +254,8 @@ export const CLAVES_PREFERENCIAS = [
   'zonaHoraria',
   // C-VIAJES-FIJOS: «1» = solo los viajes fijos con un menor.
   'menores',
+  // C-CUENTA-PRUEBA: «reales» (por defecto), «prueba» o «todas».
+  'cuentas',
 ] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;

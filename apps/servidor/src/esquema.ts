@@ -395,6 +395,8 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS usuarios_rol_nombre ON usuarios(rol, nombre COLLATE NOCASE)',
   'CREATE INDEX IF NOT EXISTS usuarios_rol_zona ON usuarios(rol, zona_id, creado_en)',
   'CREATE INDEX IF NOT EXISTS usuarios_telefono ON usuarios(telefono)',
+  // C-CUENTA-PRUEBA: solo las cuentas de prueba (pocas): los reportes arman su lista sin recorrer a todos.
+  'CREATE INDEX IF NOT EXISTS usuarios_es_prueba ON usuarios(es_prueba) WHERE es_prueba = 1',
   'CREATE INDEX IF NOT EXISTS pedidos_repartidor_fecha ON pedidos(repartidor_id, creado_en)',
   'CREATE INDEX IF NOT EXISTS restaurantes_area ON restaurantes(area_id)',
   'CREATE INDEX IF NOT EXISTS repartidores_area ON repartidores(area_id, conectado)',

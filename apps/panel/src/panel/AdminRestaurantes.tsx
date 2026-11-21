@@ -9,12 +9,21 @@ import {
 } from '@tumbite/compartido';
 import { pedir } from './api';
 import { Enlace } from '../Enlace';
+import { EtiquetaPrueba, FiltroCuentas, opcionMarcarPrueba } from './CuentasPrueba';
+import { MenuTresPuntos } from './MenuTresPuntos';
+import { usePreferencias } from './usePreferencias';
 
 function nombrePlan(n: Record<Plan, string>, p: Plan): string {
   return p === 'elite' ? n.elite : p === 'crece' ? n.crece : n.inicial;
 }
 
-type Fila = Restaurante & { duenoCorreo: string; duenoNombre: string };
+type Fila = Restaurante & {
+  duenoCorreo: string;
+  duenoNombre: string;
+  duenoId?: string;
+  /** C-CUENTA-PRUEBA: el dueño es cuenta de prueba. */
+  esPrueba?: boolean;
+};
 
 const T = {
   es: {
@@ -23,6 +32,7 @@ const T = {
     aprobar: 'Aprobar',
     pausar: 'Pausar',
     rechazar: 'No aprobar',
+    opciones: 'Más opciones',
     reactivar: 'Reactivar',
     plan: 'Plan',
     abierto: 'Abierto',
@@ -41,6 +51,7 @@ const T = {
     aprobar: 'Approve',
     pausar: 'Pause',
     rechazar: 'Decline',
+    opciones: 'More options',
     reactivar: 'Reactivate',
     plan: 'Plan',
     abierto: 'Open',
@@ -59,16 +70,20 @@ export function AdminRestaurantes({ idioma, base }: { idioma: Idioma; base?: str
   const t = enIdioma(T, idioma);
   const [lista, setLista] = useState<Fila[] | null>(null);
   const [error, setError] = useState('');
+  // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto, recordado.
+  const pref = usePreferencias('restaurantes', { cuentas: 'reales' });
+  const cuentas = pref.valores.cuentas || 'reales';
+  const [vuelta, setVuelta] = useState(0);
 
   useEffect(() => {
+    const p = new URLSearchParams();
     const zona = new URLSearchParams(window.location.search).get('zona');
-    pedir<{ restaurantes: Fila[] }>(
-      'GET',
-      `/datos/admin/restaurantes${zona ? `?zona=${encodeURIComponent(zona)}` : ''}`,
-    )
+    if (zona) p.set('zona', zona);
+    p.set('cuentas', cuentas);
+    pedir<{ restaurantes: Fila[] }>('GET', `/datos/admin/restaurantes?${p.toString()}`)
       .then((r) => setLista(r.restaurantes))
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
-  }, []);
+  }, [cuentas, vuelta]);
 
   async function cambiar(r: Fila, cambio: { estado?: Restaurante['estado']; plan?: Plan }) {
     setError('');
@@ -88,6 +103,13 @@ export function AdminRestaurantes({ idioma, base }: { idioma: Idioma; base?: str
   return (
     <section>
       <h1>{t.titulo}</h1>
+      <div className="super-busqueda" role="search">
+        <FiltroCuentas
+          valor={cuentas}
+          cambiar={(v) => pref.cambiar('cuentas', v)}
+          idioma={idioma}
+        />
+      </div>
       {error && (
         <p className="error-general" role="alert">
           {error}
@@ -100,7 +122,8 @@ export function AdminRestaurantes({ idioma, base }: { idioma: Idioma; base?: str
             <div className="lista-texto">
               <strong>
                 {base ? <Enlace a={`${base}/restaurants/${r.id}`}>{r.nombre}</Enlace> : r.nombre}
-              </strong>
+              </strong>{' '}
+              <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
               <span>
                 {r.duenoNombre} · {r.duenoCorreo}
               </span>
@@ -151,6 +174,20 @@ export function AdminRestaurantes({ idioma, base }: { idioma: Idioma; base?: str
                   {t.rechazar}
                 </button>
               )}
+              {r.duenoId ? (
+                <MenuTresPuntos
+                  etiqueta={t.opciones}
+                  opciones={[
+                    opcionMarcarPrueba(
+                      r.duenoId,
+                      r.esPrueba === true,
+                      idioma,
+                      () => setVuelta((n) => n + 1),
+                      setError,
+                    ),
+                  ]}
+                />
+              ) : null}
             </div>
           </li>
         ))}

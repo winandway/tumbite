@@ -7689,3 +7689,10 @@ body.modo-tableta .cabecera {
   font-size: 1rem;
   overflow-wrap: anywhere;
 }
+/* C-CUENTA-PRUEBA: la etiqueta «Prueba» de las cuentas de prueba (neutra, con borde, sin rojo). */
+.insignia-prueba {
+  background: #fff;
+  border: 1px solid #666b73;
+  color: #666b73 !important;
+  vertical-align: middle;
+}

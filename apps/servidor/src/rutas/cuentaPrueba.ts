@@ -19,6 +19,21 @@ export const cuentaPrueba = new Hono<{ Bindings: Env; Variables: Variables }>();
 /** Fragmento SQL: la cuenta (alias `u` por defecto) NO es de prueba. */
 export const sinPrueba = (alias = 'u') => `COALESCE(${alias}.es_prueba, 0) = 0`;
 
+/** El filtro «Cuentas» del panel: reales (por defecto), de prueba o todas. */
+export type FiltroCuentas = 'reales' | 'prueba' | 'todas';
+export const leerFiltroCuentas = (v: string | undefined | null): FiltroCuentas =>
+  v === 'prueba' || v === 'todas' ? v : 'reales';
+
+/**
+ * El fragmento SQL del filtro «Cuentas» sobre la cuenta con alias `alias` (sin « AND » delante), o null
+ * si es «todas». Por defecto, «reales»: las cuentas de prueba no se mezclan con las que llegan en vivo.
+ */
+export function sqlFiltroCuentas(v: string | undefined | null, alias = 'u'): string | null {
+  const f = leerFiltroCuentas(v);
+  if (f === 'todas') return null;
+  return f === 'prueba' ? `COALESCE(${alias}.es_prueba, 0) = 1` : sinPrueba(alias);
+}
+
 export async function esCuentaPrueba(db: D1Database, usuarioId: string): Promise<boolean> {
   const f = await db
     .prepare('SELECT es_prueba FROM usuarios WHERE id = ?')

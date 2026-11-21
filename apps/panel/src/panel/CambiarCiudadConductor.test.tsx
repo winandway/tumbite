@@ -93,7 +93,8 @@ describe('cambiar la ciudad de un repartidor desde su ficha', () => {
     const s = readFileSync(join(import.meta.dirname, 'SuperFichas.tsx'), 'utf8');
     expect(s).toMatch(/texto: t\.cambiarCiudad, alTocar: \(\) => setCambiandoCiudad\(true\)/);
     expect(s).toMatch(/<BotonSuspender\s+id=\{r\.id\}[\s\S]{0,160}ciudad=\{r\.ciudad\}/);
-    expect(s).toMatch(/<BotonSuspender id=\{c\.id\}/);
+    // La del cliente existe y no lleva ciudad (el cambio de ciudad es solo del repartidor).
+    expect(s).toMatch(/<BotonSuspender\s+id=\{c\.id\}(?![^>]*ciudad=)/);
     const moto = readFileSync(join(import.meta.dirname, 'SuperMoto.tsx'), 'utf8');
     expect(moto).toMatch(/<CambiarCiudadConductor/);
     expect(moto).not.toMatch(/window\.confirm\(x\.message\)/);

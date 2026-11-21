@@ -8,6 +8,7 @@ import {
   filtroAlcance,
   servicioOperacionSql,
 } from '../accesoInterno';
+import { operacionesPorCuentas, pedidosPorCuentas, usuarioPorCuentas } from '../cuentasPruebaSql';
 
 /**
  * C-PANEL-ARMAZON (14 nov 2026): lo que leen los tableros del panel web. SOLO LECTURA: ninguna de
@@ -31,14 +32,21 @@ tableroPanel.get('/admin/tablero', async (c) => {
   const db = base(c);
   // C-PERMISOS-FINOS: con alcance limitado, todo el tablero cuenta solo su zona y sus servicios.
   const acceso = accesoDe(c);
-  const alP = alcancePedidos(c);
-  const alV = filtroAlcance(acceso, {
+  // C-CUENTA-PRUEBA: por defecto solo cuentas reales; ?cuentas=prueba|todas lo cambia.
+  const cuentas = c.req.query('cuentas');
+  const alP0 = alcancePedidos(c);
+  const alP = { sql: alP0.sql + pedidosPorCuentas(cuentas), valores: alP0.valores };
+  const alV0 = filtroAlcance(acceso, {
     zona: '+o.zona_id',
     servicio: servicioOperacionSql('o.servicio_id'),
   });
-  const alC = alcanceObjetoSql(acceso, 'cliente', 'u.id');
-  const alR = alcanceObjetoSql(acceso, 'restaurante', 'r.id');
-  const alD = alcanceObjetoSql(acceso, 'repartidor', 'd.usuario_id');
+  const alV = { sql: alV0.sql + operacionesPorCuentas(cuentas), valores: alV0.valores };
+  const alC0 = alcanceObjetoSql(acceso, 'cliente', 'u.id');
+  const alC = { sql: alC0.sql + usuarioPorCuentas(cuentas, 'u.id'), valores: alC0.valores };
+  const alR0 = alcanceObjetoSql(acceso, 'restaurante', 'r.id');
+  const alR = { sql: alR0.sql + usuarioPorCuentas(cuentas, 'r.dueno_id'), valores: alR0.valores };
+  const alD0 = alcanceObjetoSql(acceso, 'repartidor', 'd.usuario_id');
+  const alD = { sql: alD0.sql + usuarioPorCuentas(cuentas, 'd.usuario_id'), valores: alD0.valores };
   const alT = alcanceObjetoSql(acceso, 'ticket', 't.id');
   // UNA lectura por tabla, por el índice de la fecha (pedidos_creado y operaciones_viaje_creado):
   // 30 días agrupados por día y estado; de ahí salen la serie, los estados y la comparación.

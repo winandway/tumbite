@@ -13,6 +13,8 @@ import { VerDato } from './DatoProtegido';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { AyudaAqui } from './AyudaAqui';
+import { EtiquetaPrueba, FiltroCuentas, opcionMarcarPrueba } from './CuentasPrueba';
 import {
   AccionesCorreo,
   type CambioCorreo,
@@ -278,11 +280,14 @@ function BotonSuspender({
   idioma,
   recargar,
   ciudad,
+  esPrueba,
 }: {
   id: string;
   activo: boolean;
   idioma: Idioma;
   recargar: () => void;
+  /** C-CUENTA-PRUEBA: la marca de cuenta de prueba de hoy. */
+  esPrueba?: boolean;
   /** C-CAMBIAR-CIUDAD-ADMIN: solo en la ficha del repartidor (su ciudad de hoy). */
   ciudad?: string;
 }) {
@@ -347,6 +352,7 @@ function BotonSuspender({
             ...(ciudad !== undefined
               ? [{ texto: t.cambiarCiudad, alTocar: () => setCambiandoCiudad(true) }]
               : []),
+            opcionMarcarPrueba(id, esPrueba === true, idioma, recargar, setError),
             { texto: t.borrarCuenta, peligro: true, alTocar: () => void borrar() },
           ]}
         />
@@ -450,7 +456,9 @@ export function SuperCiudades({ base, idioma }: { base: string; idioma: Idioma }
 function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   const [q0] = useState(consulta);
   // «estado» guarda el filtro de papeles de la lista de conductores (C-PLAZO-PAPELES).
-  const pref = usePreferencias(clave, { zona: '', estado: '' });
+  // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto, recordado como los demás filtros.
+  const pref = usePreferencias(clave, { zona: '', estado: '', cuentas: 'reales' });
+  const cuentas = pref.valores.cuentas || 'reales';
   // Un enlace con ?zona= (desde Ciudades) manda en esta visita, sin cambiar lo guardado.
   const [zonaDeEnlace, setZonaDeEnlace] = useState<string | null>(q0.get('zona') || null);
   const zona = zonaDeEnlace ?? pref.valores.zona ?? '';
@@ -465,8 +473,9 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [error, setError] = useState('');
   const pedirPagina = useCallback(
-    async (despues: string | null, texto: string, z: string, pl: string) => {
+    async (despues: string | null, texto: string, z: string, pl: string, cu: string) => {
       const p = new URLSearchParams();
+      p.set('cuentas', cu);
       if (z) p.set('zona', z);
       if (pl) p.set('plazo', pl);
       if (texto) p.set('q', texto);
@@ -485,14 +494,16 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   );
   // Al abrir, al cambiar la ciudad y cuando llegan los filtros guardados: la primera página.
   useEffect(() => {
-    void pedirPagina(null, textoActual.current, zona, plazo);
-  }, [pedirPagina, zona, plazo]);
+    void pedirPagina(null, textoActual.current, zona, plazo, cuentas);
+  }, [pedirPagina, zona, plazo, cuentas]);
   return {
     zona,
     setZona: (z: string) => {
       setZonaDeEnlace(null);
       pref.cambiar('zona', z);
     },
+    cuentas,
+    setCuentas: (v: string) => pref.cambiar('cuentas', v),
     plazo,
     setPlazo: (v: string) => {
       setPlazoDeEnlace(null);
@@ -509,8 +520,8 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
       setPlazoDeEnlace(null);
       pref.restablecer();
     },
-    buscar: () => void pedirPagina(null, q, zona, plazo),
-    mas: () => void pedirPagina(siguiente, q, zona, plazo),
+    buscar: () => void pedirPagina(null, q, zona, plazo, cuentas),
+    mas: () => void pedirPagina(siguiente, q, zona, plazo, cuentas),
   };
 }
 
@@ -541,6 +552,7 @@ type FilaRep = {
   id: string;
   codigo: string;
   nombre: string;
+  esPrueba?: boolean;
   correo: string;
   conectado: boolean;
   vehiculo: string;
@@ -562,6 +574,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
       <h1>{t.repartidores}</h1>
       <div className="super-busqueda" role="search">
         <SelectorCiudad zona={b.zona} cambiar={b.setZona} idioma={idioma} />
+        <FiltroCuentas valor={b.cuentas} cambiar={b.setCuentas} idioma={idioma} />
         <FiltroPapeles valor={b.plazo} cambiar={b.setPlazo} idioma={idioma} />
         <input
           value={b.q}
@@ -606,7 +619,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                   </td>
                   <td>
                     <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
-                    {r.nombre}
+                    {r.nombre} <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
                   </td>
                   <td>
                     {t.vehiculos[r.vehiculo] ?? r.vehiculo} {r.placa}
@@ -687,6 +700,7 @@ function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idiom
 }
 
 type Repartidor = {
+  esPrueba?: boolean;
   activo?: boolean;
   correoEstado?: EstadoCorreo;
   historialCorreo?: CambioCorreo[];
@@ -813,7 +827,8 @@ export function SuperRepartidor({
         {t.volver}
       </button>
       <h1>
-        {r.nombre} <small className="super-id">{r.codigo}</small>
+        {r.nombre} <small className="super-id">{r.codigo}</small>{' '}
+        <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
       </h1>
       <BotonSuspender
         id={r.id}
@@ -821,6 +836,7 @@ export function SuperRepartidor({
         idioma={idioma}
         recargar={recargar}
         ciudad={r.ciudad}
+        esPrueba={r.esPrueba}
       />
       <HistorialCorreo lista={r.historialCorreo} idioma={idioma} />
       <p>
@@ -1013,16 +1029,27 @@ export function SuperRepartidor({
   );
 }
 
-type FilaCliente = { id: string; nombre: string; correo: string; telefono: string; alta: string };
+type FilaCliente = {
+  id: string;
+  nombre: string;
+  correo: string;
+  telefono: string;
+  alta: string;
+  esPrueba?: boolean;
+};
 
 export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const b = useBuscador<FilaCliente>('/datos/admin/clientes', 'clientes');
   return (
     <section className="super">
-      <h1>{t.clientes}</h1>
+      <h1>
+        {t.clientes}
+        <AyudaAqui guia="test-accounts" idioma={idioma} />
+      </h1>
       <div className="super-busqueda" role="search">
         <SelectorCiudad zona={b.zona} cambiar={b.setZona} idioma={idioma} />
+        <FiltroCuentas valor={b.cuentas} cambiar={b.setCuentas} idioma={idioma} />
         <input
           value={b.q}
           onChange={(e) => b.setQ(e.target.value)}
@@ -1047,7 +1074,8 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
         {b.filas?.map((c) => (
           <li key={c.id}>
             <Enlace a={`${base}/customers/${c.id}`}>
-              <strong>{c.nombre}</strong> · {c.correo}
+              <strong>{c.nombre}</strong> <EtiquetaPrueba si={c.esPrueba} idioma={idioma} /> ·{' '}
+              {c.correo}
               <small>
                 {c.telefono || '—'} · {t.alta} {fechaCorta(c.alta, idioma)}
               </small>
@@ -1066,6 +1094,7 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
 
 type Cliente = {
   activo?: boolean;
+  esPrueba?: boolean;
   correoEstado?: EstadoCorreo;
   historialCorreo?: CambioCorreo[];
   id: string;
@@ -1104,8 +1133,16 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
       <button type="button" className="enlace docs-volver" onClick={() => window.history.back()}>
         {t.volver}
       </button>
-      <h1>{c.nombre}</h1>
-      <BotonSuspender id={c.id} activo={c.activo !== false} idioma={idioma} recargar={recargar} />
+      <h1>
+        {c.nombre} <EtiquetaPrueba si={c.esPrueba} idioma={idioma} />
+      </h1>
+      <BotonSuspender
+        id={c.id}
+        activo={c.activo !== false}
+        idioma={idioma}
+        recargar={recargar}
+        esPrueba={c.esPrueba}
+      />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.compras}</span>

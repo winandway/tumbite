@@ -117,3 +117,37 @@ describe('C-CUENTA-PRUEBA · Carro en Novi solo para cuentas de prueba', () => {
     expect(await carro(prueba.token)).not.toBe('disponible');
   });
 });
+
+describe('C-CUENTA-PRUEBA · los listados del panel: «Reales» por defecto', () => {
+  it('Clientes y Repartidores: por defecto solo reales; «prueba» solo las marcadas; «todas» ambas, con su etiqueta', async () => {
+    const { m, admin, normal, prueba, marcar } = await escenario();
+    await marcar(prueba.id, true);
+    const conductorReal = await m.cuenta('repartidor', 'Conductor Real');
+    const conductorPrueba = await m.cuenta('repartidor', 'Soporte Prueba Conductor');
+    await marcar(conductorPrueba.id, true);
+    const ids = async (ruta: string, clave: string, cuentas?: string) => {
+      const r = await m.llamar(
+        'GET',
+        `/datos/admin/${ruta}${cuentas ? `?cuentas=${cuentas}` : ''}`,
+        undefined,
+        admin.token,
+      );
+      expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+      return (r.datos[clave] as { id: string; esPrueba: boolean }[]).map(
+        (x) => `${x.id}:${x.esPrueba ? 'P' : 'R'}`,
+      );
+    };
+    const clientes = await ids('clientes', 'clientes');
+    expect(clientes).toContain(`${normal.id}:R`);
+    expect(clientes.some((x) => x.startsWith(prueba.id))).toBe(false);
+    expect(await ids('clientes', 'clientes', 'prueba')).toEqual([`${prueba.id}:P`]);
+    const todas = await ids('clientes', 'clientes', 'todas');
+    expect(todas).toEqual(expect.arrayContaining([`${normal.id}:R`, `${prueba.id}:P`]));
+    const reps = await ids('repartidores', 'repartidores');
+    expect(reps).toContain(`${conductorReal.id}:R`);
+    expect(reps.some((x) => x.startsWith(conductorPrueba.id))).toBe(false);
+    expect(await ids('repartidores', 'repartidores', 'prueba')).toEqual([
+      `${conductorPrueba.id}:P`,
+    ]);
+  });
+});

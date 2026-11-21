@@ -56,7 +56,7 @@ describe('administración de restaurantes', () => {
     render(<AdminRestaurantes idioma="es" />);
     await userEvent.click(await screen.findByRole('button', { name: 'Aprobar' }));
     expect(await screen.findByText(/Aprobado/)).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByRole('combobox'), 'elite');
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Plan' }), 'elite');
     await waitFor(() =>
       expect(llamadas.some((l) => (l.cuerpo as { plan?: string })?.plan === 'elite')).toBe(true),
     );

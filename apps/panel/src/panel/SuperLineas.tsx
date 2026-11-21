@@ -11,6 +11,8 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { AyudaAqui } from './AyudaAqui';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { EtiquetaPrueba, FiltroCuentas } from './CuentasPrueba';
+import { usePreferencias } from './usePreferencias';
 import { pedir } from './api';
 
 /**
@@ -26,6 +28,7 @@ const T = {
       'Cada línea tiene su líder, su código, su enlace y su QR. Los conductores piden entrar y el líder acepta. Si un conductor de la línea pide ayuda, el líder y el segundo contacto reciben un mensaje con su ubicación.',
     buscar: 'Buscar por nombre, código, líder, celular o ciudad',
     ciudad: 'Ciudad',
+    cuentas: 'Cuentas',
     todas: 'Todas las ciudades',
     solicitudes: 'Solicitudes del formulario «Registra tu línea»',
     sinSolicitudes: 'No hay solicitudes pendientes.',
@@ -89,6 +92,7 @@ const T = {
       'Each line has its leader, code, link and QR. Drivers ask to join and the leader accepts. If a driver in the line asks for help, the leader and the second contact get a message with their location.',
     buscar: 'Search by name, code, leader, cell phone or city',
     ciudad: 'City',
+    cuentas: 'Accounts',
     todas: 'All cities',
     solicitudes: '“Register your line” form requests',
     sinSolicitudes: 'There are no pending requests.',
@@ -273,6 +277,8 @@ function InvitarLider({ t, alInvitar }: { t: Textos; alInvitar: () => void }) {
 type Linea = {
   id: string;
   nombre: string;
+  /** C-CUENTA-PRUEBA: el líder es cuenta de prueba. */
+  esPrueba?: boolean;
   zonaId: string;
   ciudad: string;
   codigo: string;
@@ -311,6 +317,9 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
   const [enlaceDriver, setEnlaceDriver] = useState('');
   const [q, setQ] = useState('');
   const [zona, setZona] = useState('');
+  // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto, recordado.
+  const pref = usePreferencias('lineas', { cuentas: 'reales' });
+  const cuentas = pref.valores.cuentas || 'reales';
   const [abierta, setAbierta] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
   const [vuelta, setVuelta] = useState(0);
@@ -323,7 +332,7 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
       void Promise.all([
         pedir<{ lineas: Linea[]; zonas: Zona[]; sinLinea: Suelto[] }>(
           'GET',
-          `/datos/admin/lineas?zona=${encodeURIComponent(zona)}&q=${encodeURIComponent(q)}`,
+          `/datos/admin/lineas?zona=${encodeURIComponent(zona)}&q=${encodeURIComponent(q)}&cuentas=${cuentas}`,
         ),
         pedir<{ solicitudes: Solicitud[] }>('GET', '/datos/admin/lineas-solicitudes'),
         pedir<{ invitaciones: Invitado[]; enlace: string }>(
@@ -349,7 +358,7 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
       vivo = false;
       clearTimeout(espera);
     };
-  }, [q, zona, vuelta]);
+  }, [q, zona, vuelta, cuentas]);
   const recargar = (m: string) => {
     setOk(m);
     setError('');
@@ -460,6 +469,14 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             data-testid="lineas-buscar"
+          />
+        </label>
+        <label className="campo" style={{ flex: '1 1 180px' }}>
+          {t.cuentas}
+          <FiltroCuentas
+            valor={cuentas}
+            cambiar={(v) => pref.cambiar('cuentas', v)}
+            idioma={idioma}
           />
         </label>
         <label className="campo" style={{ flex: '1 1 180px' }}>
@@ -809,7 +826,7 @@ function TarjetaLinea({
       }}
     >
       <h4>
-        {l.nombre} · {l.ciudad}
+        {l.nombre} · {l.ciudad} <EtiquetaPrueba si={l.esPrueba} idioma={idioma} />
       </h4>
       <p>
         {t.tipos[l.tipo]} · {l.lider} · {l.liderTelefono}

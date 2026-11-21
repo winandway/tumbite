@@ -7,6 +7,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { paisDeZona } from '../internacional/paises';
 import { accesoDe, alcanceObjetoSql, filtroAlcance } from '../accesoInterno';
+import { pedidosPorCuentas, usuarioPorCuentas } from '../cuentasPruebaSql';
 
 /**
  * Franquicias y superadmin (C-FRANQUICIAS, C-TERRITORIO). Una ciudad puede tener VARIAS franquicias;
@@ -58,14 +59,19 @@ function filtro(a: Alcance, columna = 'area_id'): { sql: string; params: string[
   return { sql: `${columna} IN (${a.areas.map(() => '?').join(',')})`, params: a.areas };
 }
 
-async function metricasDe(db: D1Database, alcance: Alcance): Promise<Metricas> {
+/**
+ * C-CUENTA-PRUEBA: `cuentas` es el filtro «reales | prueba | todas» (por defecto, reales): los pedidos,
+ * los restaurantes y los repartidores de cuentas de prueba no se mezclan con los que llegan en vivo.
+ */
+async function metricasDe(db: D1Database, alcance: Alcance, cuentas?: string): Promise<Metricas> {
   const f = filtro(alcance);
+  const pp = pedidosPorCuentas(cuentas);
   const p = await db
     .prepare(
       `SELECT
         SUM(CASE WHEN estado <> 'pago_pendiente' AND creado_en >= datetime('now','start of day') THEN 1 ELSE 0 END) AS hoy,
         SUM(CASE WHEN estado = 'entregado' AND creado_en >= datetime('now','-30 days') THEN 1 ELSE 0 END) AS n30
-       FROM pedidos WHERE ${f.sql}`,
+       FROM pedidos p WHERE ${f.sql}${pp}`,
     )
     .bind(...f.params)
     .first<{ hoy: number | null; n30: number | null }>();
@@ -85,20 +91,20 @@ async function metricasDe(db: D1Database, alcance: Alcance): Promise<Metricas> {
   const moneda = zonaDeAlcance ? (await paisDeZona(db, zonaDeAlcance)).moneda : 'USD';
   const v = await db
     .prepare(
-      `SELECT COALESCE(SUM(total), 0) AS ventas, COALESCE(SUM(ganancia), 0) AS ganancia FROM pedidos
-       WHERE ${f.sql} AND estado = 'entregado' AND creado_en >= datetime('now','-30 days') AND moneda = ?`,
+      `SELECT COALESCE(SUM(total), 0) AS ventas, COALESCE(SUM(ganancia), 0) AS ganancia FROM pedidos p
+       WHERE ${f.sql}${pp} AND estado = 'entregado' AND creado_en >= datetime('now','-30 days') AND moneda = ?`,
     )
     .bind(...f.params, moneda)
     .first<{ ventas: number | null; ganancia: number | null }>();
   const r = await db
     .prepare(
-      `SELECT SUM(CASE WHEN estado = 'aprobado' THEN 1 ELSE 0 END) AS n, SUM(CASE WHEN estado = 'aprobado' AND abierto = 1 THEN 1 ELSE 0 END) AS abiertos FROM restaurantes WHERE ${f.sql}`,
+      `SELECT SUM(CASE WHEN estado = 'aprobado' THEN 1 ELSE 0 END) AS n, SUM(CASE WHEN estado = 'aprobado' AND abierto = 1 THEN 1 ELSE 0 END) AS abiertos FROM restaurantes WHERE ${f.sql}${usuarioPorCuentas(cuentas, 'dueno_id')}`,
     )
     .bind(...f.params)
     .first<{ n: number | null; abiertos: number | null }>();
   const d = await db
     .prepare(
-      `SELECT COUNT(*) AS n, SUM(CASE WHEN conectado = 1 THEN 1 ELSE 0 END) AS conectados FROM repartidores WHERE ${f.sql}`,
+      `SELECT COUNT(*) AS n, SUM(CASE WHEN conectado = 1 THEN 1 ELSE 0 END) AS conectados FROM repartidores WHERE ${f.sql}${usuarioPorCuentas(cuentas, 'usuario_id')}`,
     )
     .bind(...f.params)
     .first<{ n: number | null; conectados: number | null }>();
@@ -237,6 +243,8 @@ async function correoConfirmado(db: D1Database, usuarioId: string): Promise<bool
 franquicias.get('/admin/resumen', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
+  // C-CUENTA-PRUEBA: por defecto solo cuentas reales; ?cuentas=prueba|todas lo cambia.
+  const cuentas = c.req.query('cuentas');
   // C-PERMISOS-FINOS: con alcance limitado, solo sus ciudades (las franquicias y las métricas de
   // pedidos de esas ciudades) y los tickets de su alcance.
   // El resumen es el del reparto de comida y tiendas (franquicias, restaurantes, repartidores): quien
@@ -262,7 +270,11 @@ franquicias.get('/admin/resumen', async (c) => {
   const filas: (ReturnType<typeof publica> & { metricas: Metricas; areas: number })[] = [];
   for (const f of lista) {
     const areas = await areasDe(db, f.id);
-    filas.push({ ...publica(f), areas: areas.length, metricas: await metricasDe(db, { areas }) });
+    filas.push({
+      ...publica(f),
+      areas: areas.length,
+      metricas: await metricasDe(db, { areas }, cuentas),
+    });
   }
   // Ciudades: los resultados globales por ciudad, con cuántas franquicias y áreas tiene cada una.
   const { results: zonas } = await db
@@ -294,7 +306,7 @@ franquicias.get('/admin/resumen', async (c) => {
       franquicias: Number(z.franquicias),
       areas: Number(z.areas),
       areasLibres: Number(z.areas_libres),
-      metricas: await metricasDe(db, { zonaId: z.id }),
+      metricas: await metricasDe(db, { zonaId: z.id }, cuentas),
     });
   const cuenta = (e: string) => filas.filter((f) => f.estado === e).length;
   const leads = await db

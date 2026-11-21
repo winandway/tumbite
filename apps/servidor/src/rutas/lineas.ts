@@ -71,7 +71,11 @@ lineas.get('/admin/lineas', async (c) => {
     .prepare("SELECT COUNT(*) AS n FROM solicitudes_linea WHERE estado = 'pendiente'")
     .first<{ n: number }>();
   return c.json({
-    lineas: await listarLineas(db, { zonaId: zona, q: c.req.query('q') ?? '' }),
+    lineas: await listarLineas(db, {
+      zonaId: zona,
+      q: c.req.query('q') ?? '',
+      cuentas: c.req.query('cuentas') ?? 'reales',
+    }),
     zonas,
     sinLinea,
     solicitudesPendientes: Number(pend?.n ?? 0),

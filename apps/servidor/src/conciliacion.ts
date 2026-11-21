@@ -5,6 +5,7 @@ import { enviarCorreo } from './correo';
 import { CONFIG_PERMISOS } from '@tumbite/compartido';
 import { depurarAccesosSensibles } from './accesoInterno';
 import { conciliarViajes } from './conciliacionViajes';
+import { pedidoSinPrueba } from './cuentasPruebaSql';
 
 /**
  * Dinero vigilado (de los estudios de Richard): cada día se suma lo vendido, lo cobrado en Stripe,
@@ -39,7 +40,11 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
         -- cerró con nota) no espera captura en Stripe; su saldo anotado sí sigue en las reglas 1 y 2.
         COALESCE(SUM(CASE WHEN EXISTS (SELECT 1 FROM cobros c WHERE c.pedido_id = pedidos.id)
           AND NOT EXISTS (SELECT 1 FROM liquidaciones l WHERE l.pedido_id = pedidos.id AND l.estado = 'no_aplica')
-          THEN total ELSE 0 END),0) AS total_con_cobro
+          THEN total ELSE 0 END),0) AS total_con_cobro,
+        -- C-CUENTA-PRUEBA: lo de las cuentas de prueba se MIDE igual (entra en todas las sumas de arriba);
+        -- solo se cuenta aparte para mostrarlo. Nunca se resta de la conciliación.
+        COALESCE(SUM(CASE WHEN ${pedidoSinPrueba('pedidos')} THEN 0 ELSE 1 END),0) AS n_prueba,
+        COALESCE(SUM(CASE WHEN ${pedidoSinPrueba('pedidos')} THEN 0 ELSE total END),0) AS total_prueba
        FROM pedidos WHERE estado = 'entregado' AND date(entregado_en) = ? AND metodo_pago = 'tarjeta'`,
     )
     .bind(dia)
@@ -129,6 +134,11 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
       cuadraStripe: cuadraStripe ? 'sí' : 'NO',
       ...directos,
       ...viajes.detalle,
+      // C-CUENTA-PRUEBA: solo aparece si ese día hubo entregas de cuentas de prueba (así el detalle de
+      // los días sin pruebas no cambia y las excepciones ya firmadas siguen valiendo).
+      ...(n(p?.n_prueba) > 0
+        ? { pruebaPedidos: n(p?.n_prueba), pruebaVendido: n(p?.total_prueba) }
+        : {}),
     },
   };
   await db

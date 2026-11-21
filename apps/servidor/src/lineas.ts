@@ -1,5 +1,6 @@
 import { pareceTelefono, telefonoCanonico } from '@tumbite/compartido';
 import { nuevoId } from './cripto';
+import { sqlFiltroCuentas } from './rutas/cuentaPrueba';
 import type { Env } from './env';
 import { notificar } from './notificaciones';
 import { crearEquipo, resolverCodigo, vincularConductor } from './programaReferidos';
@@ -29,6 +30,8 @@ export const TOPE_SOLICITUDES_ABIERTAS = 200;
 export type Linea = {
   id: string;
   nombre: string;
+  /** C-CUENTA-PRUEBA: el líder es cuenta de prueba. */
+  esPrueba: boolean;
   zonaId: string;
   ciudad: string;
   codigo: string;
@@ -49,6 +52,7 @@ type FilaLinea = Record<string, unknown>;
 const mapear = (r: FilaLinea): Linea => ({
   id: String(r.id),
   nombre: String(r.nombre),
+  esPrueba: Number(r.lider_prueba) === 1,
   zonaId: String(r.zona_id),
   ciudad: String(r.ciudad ?? r.zona_id),
   codigo: String(r.codigo),
@@ -66,7 +70,7 @@ const mapear = (r: FilaLinea): Linea => ({
 });
 
 const SELECT_LINEA = `SELECT e.id, e.nombre, e.zona_id, e.codigo, e.activo, e.lider_id, e.creado_en, l.tipo,
-    l.contacto2_nombre, l.contacto2_telefono, l.telefono_verificado_en, u.nombre AS lider, u.telefono AS lider_telefono,
+    l.contacto2_nombre, l.contacto2_telefono, l.telefono_verificado_en, u.nombre AS lider, u.telefono AS lider_telefono, u.es_prueba AS lider_prueba,
     (SELECT nombre FROM zonas WHERE id = e.zona_id) AS ciudad,
     (SELECT COUNT(*) FROM miembros_equipo m WHERE m.equipo_id = e.id) AS miembros,
     (SELECT COUNT(*) FROM pedidos_linea p WHERE p.equipo_id = e.id AND p.estado = 'pendiente') AS pendientes
@@ -85,11 +89,18 @@ export const plano = (t: string) =>
 /** Las líneas para el superadmin, con buscador por nombre, código, líder, teléfono o ciudad. */
 export async function listarLineas(
   db: D1Database,
-  f: { zonaId?: string | null; q?: string | null; lineaId?: string | null } = {},
+  f: {
+    zonaId?: string | null;
+    q?: string | null;
+    lineaId?: string | null;
+    /** C-CUENTA-PRUEBA: el filtro «Cuentas» por el líder (sin él, todas). */
+    cuentas?: string | null;
+  } = {},
 ): Promise<Linea[]> {
+  const cuentas = f.cuentas === undefined ? null : sqlFiltroCuentas(f.cuentas);
   const { results } = await db
     .prepare(
-      `${SELECT_LINEA} WHERE (?1 = '' OR e.zona_id = ?1) AND (?2 = '' OR e.id = ?2) ORDER BY e.creado_en DESC LIMIT 300`,
+      `${SELECT_LINEA} WHERE (?1 = '' OR e.zona_id = ?1) AND (?2 = '' OR e.id = ?2)${cuentas ? ` AND ${cuentas}` : ''} ORDER BY e.creado_en DESC LIMIT 300`,
     )
     .bind(f.zonaId ?? '', f.lineaId ?? '')
     .all<FilaLinea>();

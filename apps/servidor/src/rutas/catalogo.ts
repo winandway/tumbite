@@ -52,6 +52,7 @@ import { propinasDePais, tarifasDeZona } from '../internacional/tarifas';
 import { tasaVigente } from './tasasReferencia';
 import { leerConfigDinero } from './dinero';
 import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
+import { sqlFiltroCuentas } from './cuentaPrueba';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -1220,6 +1221,9 @@ catalogo.get('/admin/restaurantes', async (c) => {
   const q = (c.req.query('q') ?? '').trim();
   const filtros: string[] = [];
   const valores: string[] = [];
+  // C-CUENTA-PRUEBA: el restaurante es de prueba si su dueño es cuenta de prueba («reales» por defecto).
+  const cuentas = sqlFiltroCuentas(c.req.query('cuentas'));
+  if (cuentas) filtros.push(cuentas);
   if (zona) {
     filtros.push('r.zona_id = ?');
     valores.push(zona);
@@ -1236,7 +1240,7 @@ catalogo.get('/admin/restaurantes', async (c) => {
   }
   const { results } = await base(c)
     .prepare(
-      `SELECT r.*, u.correo AS dueno_correo, u.nombre AS dueno_nombre, (SELECT moneda FROM zonas WHERE id = r.zona_id) AS zona_moneda FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id
+      `SELECT r.*, u.correo AS dueno_correo, u.nombre AS dueno_nombre, u.es_prueba AS dueno_prueba, u.id AS dueno_usuario, (SELECT moneda FROM zonas WHERE id = r.zona_id) AS zona_moneda FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id
        ${filtros.length ? `WHERE ${filtros.join(' AND ')}` : ''}
        ORDER BY CASE r.estado WHEN 'pendiente' THEN 0 ELSE 1 END, r.creado_en DESC LIMIT 300`,
     )
@@ -1247,6 +1251,8 @@ catalogo.get('/admin/restaurantes', async (c) => {
       ...aRestaurante(f),
       duenoCorreo: String(f.dueno_correo),
       duenoNombre: String(f.dueno_nombre),
+      duenoId: String((f as FilaRest & { dueno_usuario?: string }).dueno_usuario ?? ''),
+      esPrueba: Number((f as FilaRest & { dueno_prueba?: number }).dueno_prueba) === 1,
     })),
   });
 });

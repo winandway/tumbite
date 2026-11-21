@@ -2081,6 +2081,82 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────────── Cuentas de prueba (C-CUENTA-PRUEBA, 21 nov 2026) ─────────────────────────
+
+const cuentasPrueba: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'test-accounts',
+    titulo:
+      'Cuentas de prueba: marcarlas, separarlas de las reales y probar un servicio en una ciudad',
+    resumen:
+      'Cómo se marca una cuenta como de prueba, cómo se filtran las listas entre reales y de prueba, y cómo se prueba un servicio en una ciudad sin que lo vea el público.',
+    explicacion: [
+      'Una cuenta de prueba es la que usa el equipo para probar (las de Soporte de pruebas, las de revisión de las tiendas, las de ejemplo). Lleva la etiqueta «Prueba» en las listas y en su ficha.',
+      'Las listas de Repartidores, Clientes, Restaurantes y Líneas tienen el filtro «Cuentas» junto al de ciudad: «Reales» (lo que sale al abrir), «De prueba» o «Todas». Lo que elijas se recuerda la próxima vez que entres. Un restaurante cuenta como de prueba si su dueño lo es, y una línea, si su líder lo es.',
+      'Los reportes, los conteos del resumen y los registros nuevos dejan fuera las cuentas de prueba, para que los números sean los de clientes de verdad.',
+      'Un servicio se puede encender en una ciudad solo para cuentas de prueba (por ejemplo, Carro en una ciudad donde todavía no está abierto). Esas cuentas lo ven y lo piden; el resto de la ciudad no lo ve ni lo puede pedir. Hace falta además su tarifa en esa ciudad.',
+      'Marcar o quitar la marca queda en la auditoría con tu nombre, la hora, el antes y el después. Solo el equipo puede hacerlo.',
+    ],
+    capturas: [
+      {
+        archivo: 'cuentas-prueba-lista-es.webp',
+        alt: 'Lista de Clientes con el filtro Cuentas en De prueba y una cuenta con la etiqueta Prueba',
+        pie: 'Con «Cuentas: De prueba» solo salen las cuentas de prueba, con su etiqueta.',
+      },
+      {
+        archivo: 'cuentas-prueba-marcar-es.webp',
+        alt: 'Ficha de un cliente con el menú de tres puntos abierto y la opción Marcar como prueba',
+        pie: 'En la ficha, los tres puntos tienen «Marcar como prueba».',
+      },
+    ],
+    preguntas: [
+      '¿Cómo marco una cuenta como de prueba?',
+      '¿Por qué no veo una cuenta en la lista?',
+      '¿Las cuentas de prueba cuentan en los reportes?',
+    ],
+    pasos: [
+      'Abre la ficha de la cuenta (desde Repartidores o Clientes) o la lista de Restaurantes.',
+      'Abre los tres puntos y toca «Marcar como prueba». Para deshacerlo, toca «Quitar marca de prueba».',
+      'En las listas, cambia el filtro «Cuentas» a «De prueba» o «Todas» para verlas.',
+    ],
+  },
+  en: {
+    id: 'test-accounts',
+    titulo: 'Test accounts: mark them, keep them apart from real ones and try a service in a city',
+    resumen:
+      'How to mark an account as a test account, how to filter the lists between real and test accounts, and how to try a service in a city without the public seeing it.',
+    explicacion: [
+      'A test account is one the team uses to test (the test Support accounts, the app store review accounts, the sample accounts). It carries the “Test” tag in the lists and on its profile.',
+      'The Drivers, Customers, Restaurants and Lines lists have the “Accounts” filter next to the city one: “Real” (what you see when you open it), “Test” or “All.” Your choice is remembered next time. A restaurant counts as a test one if its owner is, and a line if its leader is.',
+      'Reports, summary counts and new sign-ups leave test accounts out, so the numbers are those of real customers.',
+      'A service can be turned on in a city for test accounts only (for example, Car in a city where it isn’t open yet). Those accounts see it and order it; the rest of the city doesn’t see it and can’t order it. It also needs its rate in that city.',
+      'Marking or unmarking goes into the audit log with your name, the time, the before and after. Only the team can do it.',
+    ],
+    capturas: [
+      {
+        archivo: 'cuentas-prueba-lista-en.webp',
+        alt: 'Customers list with the Accounts filter on Test and an account with the Test tag',
+        pie: 'With “Accounts: Test” only test accounts show up, with their tag.',
+      },
+      {
+        archivo: 'cuentas-prueba-marcar-en.webp',
+        alt: 'A customer profile with the three-dot menu open and the Mark as test option',
+        pie: 'On the profile, the three dots have “Mark as test.”',
+      },
+    ],
+    preguntas: [
+      'How do I mark an account as a test account?',
+      'Why don’t I see an account in the list?',
+      'Do test accounts count in the reports?',
+    ],
+    pasos: [
+      'Open the account’s profile (from Drivers or Customers) or the Restaurants list.',
+      'Open the three dots and tap “Mark as test.” To undo it, tap “Remove test mark.”',
+      'In the lists, switch the “Accounts” filter to “Test” or “All” to see them.',
+    ],
+  },
+};
+
 // ───────────────────────── Banners de la app (C-BANNERS, 17 nov 2026) ─────────────────────────
 
 const capBanners = (
@@ -2444,7 +2520,11 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     {
       id: 'settings',
       titulo: esp ? 'Configuración y equipo' : 'Settings and team',
-      guias: [...tomar(['time-zone-clock', 'add-team-members-permissions']), de(banners)],
+      guias: [
+        ...tomar(['time-zone-clock', 'add-team-members-permissions']),
+        de(banners),
+        de(cuentasPrueba),
+      ],
     },
   ];
 }

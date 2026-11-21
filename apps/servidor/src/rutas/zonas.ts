@@ -1,5 +1,6 @@
 import { leerConfigPais, paisIncompleto } from '../internacional/paises';
 import { Hono } from 'hono';
+import { usuarioPorCuentas } from '../cuentasPruebaSql';
 import { z } from 'zod';
 import {
   ESTADOS_AREA,
@@ -95,10 +96,12 @@ const esquemaZona = z.object({
 
 zonas.get('/admin/zonas', async (c) => {
   exigir(c, 'admin');
+  // C-CUENTA-PRUEBA: los conteos por ciudad dejan fuera las cuentas de prueba (?cuentas=prueba|todas).
+  const cuentas = c.req.query('cuentas');
   const { results } = await base(c)
     .prepare(
-      `SELECT z.*, (SELECT COUNT(*) FROM restaurantes r WHERE r.zona_id = z.id) AS restaurantes,
-      (SELECT COUNT(*) FROM repartidores d WHERE d.zona_id = z.id) AS repartidores,
+      `SELECT z.*, (SELECT COUNT(*) FROM restaurantes r WHERE r.zona_id = z.id${usuarioPorCuentas(cuentas, 'r.dueno_id')}) AS restaurantes,
+      (SELECT COUNT(*) FROM repartidores d WHERE d.zona_id = z.id${usuarioPorCuentas(cuentas, 'd.usuario_id')}) AS repartidores,
       (SELECT COUNT(*) FROM lista_espera l WHERE l.zona_id = z.id) AS en_espera FROM zonas z ORDER BY z.activa DESC, z.nombre`,
     )
     .all<Record<string, unknown>>();

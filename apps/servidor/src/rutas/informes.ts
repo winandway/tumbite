@@ -6,6 +6,7 @@ import { ErrorDatos } from '../validar';
 import { celdaCsv, montoATexto } from '@tumbite/compartido';
 import { mio } from './restauranteMas';
 import { alcancePedidos } from '../accesoInterno';
+import { pedidosPorCuentas } from '../cuentasPruebaSql';
 
 /**
  * C-INFORMES (29 oct 2026): informe del superadmin por rango de fechas, por ciudad y moneda
@@ -113,7 +114,12 @@ informes.get('/admin/informes', async (c) => {
     throw new ErrorDatos('La fecha final va después de la inicial.', 'hasta', 400);
   // C-PERMISOS-FINOS: el informe y el CSV cuentan solo los pedidos de la zona y los servicios de
   // quien lo pide (sin alcance limitado, todos).
-  const alc = alcancePedidos(c);
+  // C-CUENTA-PRUEBA: por defecto solo cuentas reales; ?cuentas=prueba|todas lo cambia.
+  const base0 = alcancePedidos(c);
+  const alc = {
+    sql: base0.sql + pedidosPorCuentas(c.req.query('cuentas')),
+    valores: base0.valores,
+  };
   const filas = await informe(base(c), d.data, h.data, alc);
   if (c.req.query('formato') === 'csv') {
     const cab = [

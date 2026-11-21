@@ -26,6 +26,7 @@ import { borrarCuenta } from '../borrarCuenta';
 import { REBOTE_VIGENTE, correoRebotado, sinDirecciones } from '../correo';
 import { CORREO_NO_EXISTE, CORREO_NO_SALIO, exigirEnvio, mandarConfirmacion } from './cuentas';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { sqlFiltroCuentas } from './cuentaPrueba';
 import { accesoDe, alcanceObjetoSql, alcancePedidos, alcanceViajes } from '../accesoInterno';
 
 /**
@@ -406,6 +407,9 @@ superadmin.get('/admin/repartidores', async (c) => {
   const despues = c.req.query('despues') ?? '';
   const filtros: string[] = ["u.rol = 'repartidor'", 'u.activo = 1'];
   const valores: unknown[] = [];
+  // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto; las de prueba aparte.
+  const cuentas = sqlFiltroCuentas(c.req.query('cuentas'));
+  if (cuentas) filtros.push(cuentas);
   if (zona) {
     filtros.push('d.zona_id = ?');
     valores.push(zona);
@@ -448,7 +452,7 @@ superadmin.get('/admin/repartidores', async (c) => {
   }
   const { results } = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, d.codigo, d.zona_id AS zonaId, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.es_prueba, d.codigo, d.zona_id AS zonaId, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
         (SELECT COUNT(*) FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado') AS entregas,
         x.vehiculo_tipo AS vehiculo, x.placa, x.seguro_vence, x.seguro_tumbite, x.licencia_vence, x.antecedentes,
         pp.estado AS plazo_estado, pp.vence_en AS plazo_vence
@@ -468,6 +472,7 @@ superadmin.get('/admin/repartidores', async (c) => {
       correo: String(r.correo),
       telefono: String(r.telefono ?? ''),
       zonaId: String(r.zonaId),
+      esPrueba: Number(r.es_prueba) === 1,
       conectado: Boolean(r.conectado),
       puntos: Number(r.puntos),
       tipo: String(r.tipo ?? 'independiente'),
@@ -492,7 +497,7 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
   await asegurarCodigoRepartidor(db, id);
   const r = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.activo,
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.activo, u.es_prueba,
         d.codigo, d.zona_id, d.conectado, d.puntos, d.lat, d.lng, d.ubicacion_en, d.tipo, z.nombre AS ciudad
        FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id LEFT JOIN zonas z ON z.id = d.zona_id WHERE u.id = ?`,
     )
@@ -563,6 +568,7 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       id: String(r.id),
       codigo: String(r.codigo ?? ''),
       nombre: String(r.nombre),
+      esPrueba: Number(r.es_prueba) === 1,
       correo: String(r.correo),
       telefono: String(r.telefono ?? ''),
       fechaNacimiento: r.fecha_nacimiento ? String(r.fecha_nacimiento) : null,
@@ -654,6 +660,8 @@ superadmin.get('/admin/clientes', async (c) => {
   const despues = c.req.query('despues') ?? '';
   const filtros: string[] = ["u.rol = 'cliente'", 'u.activo = 1'];
   const valores: unknown[] = [];
+  const cuentas = sqlFiltroCuentas(c.req.query('cuentas'));
+  if (cuentas) filtros.push(cuentas);
   if (zona) {
     filtros.push('u.zona_id = ?');
     valores.push(zona);
@@ -685,13 +693,18 @@ superadmin.get('/admin/clientes', async (c) => {
   }
   const { results } = await base(c)
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.zona_id AS zonaId, u.creado_en AS alta
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.zona_id AS zonaId, u.creado_en AS alta, u.es_prueba
        FROM usuarios u WHERE ${filtros.join(' AND ')} ORDER BY u.id LIMIT ?`,
     )
     .bind(...valores, POR_PAGINA + 1)
     .all<Record<string, unknown>>();
   const hayMas = results.length > POR_PAGINA;
-  const pagina = results.slice(0, POR_PAGINA);
+  const pagina = results
+    .slice(0, POR_PAGINA)
+    .map(({ es_prueba, ...r }): Record<string, unknown> => ({
+      ...r,
+      esPrueba: Number(es_prueba) === 1,
+    }));
   return c.json({
     clientes: pagina,
     siguiente: hayMas ? String(pagina.at(-1)?.id ?? '') : null,
@@ -704,7 +717,7 @@ superadmin.get('/admin/clientes/:id', async (c) => {
   const id = c.req.param('id');
   const u = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.zona_id, u.activo, z.nombre AS ciudad
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.zona_id, u.activo, u.es_prueba, z.nombre AS ciudad
        FROM usuarios u LEFT JOIN zonas z ON z.id = u.zona_id WHERE u.id = ? AND u.rol = 'cliente'`,
     )
     .bind(id)
@@ -749,6 +762,7 @@ superadmin.get('/admin/clientes/:id', async (c) => {
     cliente: {
       id: String(u.id),
       nombre: String(u.nombre),
+      esPrueba: Number(u.es_prueba) === 1,
       correo: String(u.correo),
       telefono: String(u.telefono ?? ''),
       fechaNacimiento: u.fecha_nacimiento ? String(u.fecha_nacimiento) : null,
