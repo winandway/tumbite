@@ -21,6 +21,8 @@ export type Territorio = {
   entidades: Lugar[];
   municipios: Lugar[];
   parroquias: Lugar[];
+  /** C-PUEBLOS-OFICIALES: los centros poblados van aparte, en `/territorio/<ISO>/pueblos/<entidad>.json`. */
+  pueblos?: { total: number; fuente: string; licencia: string; url: string };
 };
 
 const TERRITORIOS = new Map<string, Territorio>([['VE', territorioVE as Territorio]]);

@@ -145,3 +145,31 @@ describe('C-SIN-ZONA-VISIBLE · el país de un celular sin otra pista', async ()
     expect(paisUnicoDelCelular('12')).toBeNull();
   });
 });
+
+describe('C-PUEBLOS-OFICIALES · centros poblados del INE', () => {
+  it('12.557 centros poblados, cada uno con su parroquia; El Vigía y La Tendida donde están', async () => {
+    const { readdirSync } = await import('node:fs');
+    const dir = join(__dirname, '../../../../apps/panel/public/territorio/VE/pueblos');
+    let total = 0;
+    const todos: { n: string; p: string; lat: number; lng: number }[] = [];
+    for (const a of readdirSync(dir)) {
+      const d = JSON.parse(readFileSync(join(dir, a), 'utf8')) as {
+        pueblos: typeof todos;
+        licencia: string;
+      };
+      expect(d.licencia).toBe('CC BY');
+      total += d.pueblos.length;
+      todos.push(...d.pueblos);
+    }
+    expect(total).toBe(12557);
+    expect(territorio('VE')?.pueblos?.total).toBe(12557);
+    expect(todos.every((x) => /^VE\d{6}$/.test(x.p))).toBe(true);
+    const vigia = todos.find((x) => x.n === 'El Vigía' && x.p.startsWith('VE1401'));
+    expect(vigia && Math.abs(vigia.lat - 8.62) < 0.05 && Math.abs(vigia.lng + 71.65) < 0.05).toBe(
+      true,
+    );
+    expect(todos.some((x) => x.n === 'La Tendida' && x.p.startsWith('VE20'))).toBe(true);
+    // Los nombres van como los dice la gente: «El Achote», no «Achote, El».
+    expect(todos.some((x) => /, (El|La|Los|Las)$/.test(x.n))).toBe(false);
+  });
+});

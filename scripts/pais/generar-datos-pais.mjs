@@ -142,6 +142,89 @@ for (const iso of paises) {
   );
 }
 
+// Centros poblados (pueblos y ciudades) con su parroquia: OCHA «<iso3>-populated-places» (Venezuela:
+// INE, CC BY). Un archivo por entidad en el sitio (/territorio/<ISO>/pueblos/<entidad>.json) y la cuenta
+// total en el territorio. Las coordenadas vienen proyectadas: mapshaper las pasa a latitud y longitud.
+const FUENTES_PUEBLOS = {
+  VE: {
+    conjunto: 'venezuela-populated-places',
+    fuente:
+      'Instituto Nacional de Estadística (INE), vía OCHA (HDX, conjunto venezuela-populated-places)',
+    licencia: 'CC BY',
+    url: 'https://data.humdata.org/dataset/venezuela-populated-places',
+  },
+};
+/** «Tucani (F)(Capital)» → «Tucani»: quita las marcas del INE ((F), (Capital), …) y endereza el artículo. */
+const limpiarNombre = (n) =>
+  String(n)
+    .replace(/\s*\((?:F|Capital|U|R)\)/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    // «Achote, El» → «El Achote», como lo dice la gente.
+    .replace(/^(.+), (El|La|Los|Las)$/, '$2 $1');
+for (const iso of paises) {
+  const f = FUENTES_PUEBLOS[iso];
+  if (!f) continue;
+  const meta = await (
+    await fetch(`https://data.humdata.org/api/3/action/package_show?id=${f.conjunto}`)
+  ).json();
+  const recurso = meta.result.resources.find((r) => /shp|zip/i.test(r.format + r.name));
+  if (!recurso) throw new Error(`${f.conjunto} no trae el archivo de puntos`);
+  const tmp = mkdtempSync(join(tmpdir(), `pueblos-${iso}-`));
+  await bajar(recurso.url, join(tmp, 'pueblos.zip'));
+  execFileSync('unzip', ['-o', '-q', join(tmp, 'pueblos.zip'), '-d', join(tmp, 'p')]);
+  const shp = readdirSync(join(tmp, 'p')).find((x) => x.endsWith('.shp'));
+  if (!shp) throw new Error(`${f.conjunto}: falta el .shp`);
+  execFileSync(
+    'npx',
+    [
+      '-y',
+      MAPSHAPER,
+      join(tmp, 'p', shp),
+      '-proj',
+      'wgs84',
+      '-o',
+      'format=geojson',
+      join(tmp, 'p.json'),
+    ],
+    { stdio: 'inherit' },
+  );
+  const puntos = JSON.parse(readFileSync(join(tmp, 'p.json'), 'utf8')).features;
+  const porEntidad = new Map();
+  for (const x of puntos) {
+    const pr = x.properties;
+    const [lng, lat] = x.geometry?.coordinates ?? [];
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    const e = String(pr.ADM1_PCODE);
+    if (!porEntidad.has(e)) porEntidad.set(e, []);
+    porEntidad.get(e).push({
+      n: limpiarNombre(pr.NAME_PLACE ?? pr.NOM_CP),
+      p: pr.ADM3_PCODE,
+      lat: redondear(lat),
+      lng: redondear(lng),
+    });
+  }
+  const dir = join(PUBLICO, iso, 'pueblos');
+  mkdirSync(dir, { recursive: true });
+  let total = 0;
+  for (const [e, lista] of porEntidad) {
+    lista.sort((a, b) => a.n.localeCompare(b.n, 'es'));
+    total += lista.length;
+    writeFileSync(
+      join(dir, `${e}.json`),
+      `${JSON.stringify({ fuente: f.fuente, licencia: f.licencia, pueblos: lista })}\n`,
+    );
+  }
+  writeFileSync(
+    join(PUBLICO, iso, 'ATRIBUCION-PUEBLOS.txt'),
+    `Centros poblados de ${iso}: ${f.fuente}. Licencia ${f.licencia}. ${f.url}\n`,
+  );
+  const terr = JSON.parse(readFileSync(join(DATOS, `territorio-${iso}.json`), 'utf8'));
+  terr.pueblos = { total, fuente: f.fuente, licencia: f.licencia, url: f.url };
+  writeFileSync(join(DATOS, `territorio-${iso}.json`), `${JSON.stringify(terr)}\n`);
+  console.log(`${iso}: ${total} centros poblados en ${porEntidad.size} archivos`);
+}
+
 // Operadoras: prefijo (con el código del país) → nombre de la operadora.
 const operadoras = {};
 for (const cc of PREFIJOS_OPERADORAS) {
