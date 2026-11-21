@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { usarTransporteCorreo } from '../correo';
-import { mundo } from '../pruebas/ayuda';
+import { conPermisoIaDelChat, mundo } from '../pruebas/ayuda';
 import { CANALES_ENCENDIDOS } from './canales';
 import { CONOCIMIENTO_DOCS } from './conocimiento';
 import { DOCS_PUBLICOS } from './docsPublicos';
@@ -73,6 +73,7 @@ async function escenario(extra: Record<string, unknown> = {}) {
     GEMINI_API_KEY: 'llave-de-prueba-de-gemini-1234',
     ...extra,
   });
+  await conPermisoIaDelChat(m.DB);
   await m.DB.prepare(
     "INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES (?, 'El Vigía', 'VE', 'USD', 'America/Caracas', 8.62, -71.65, 15, 1)",
   )

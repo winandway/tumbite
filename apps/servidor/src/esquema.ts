@@ -28,6 +28,10 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)): el permiso explícito de la persona para que su
+  // chat de ayuda se procese con la IA de un proveedor. NULL = no ha contestado; 1 = sí; 0 = no.
+  ['camila_personas', 'permiso_ia', 'INTEGER'],
+  ['camila_personas', 'permiso_ia_en', 'TEXT'],
   // C-FOTO-RECOGIDA (21 nov 2026): la dirección guardada de donde sale el viaje (si el punto de
   // recogida cae en una dirección guardada del pasajero). Queda con la cotización y pasa al viaje.
   ['cotizaciones_viaje', 'origen_direccion_id', 'TEXT'],

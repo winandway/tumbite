@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { usarTransporteCorreo } from '../correo';
 import { guardarError } from '../errores';
-import { FOTO_PRUEBA, mundo } from '../pruebas/ayuda';
+import { FOTO_PRUEBA, conPermisoIaDelChat, mundo } from '../pruebas/ayuda';
 import { limpiarCamila } from './aprendizaje';
 import {
   CAMPOS_VACIOS,
@@ -56,6 +56,7 @@ async function escenario(extra: Record<string, unknown> = {}) {
     CAMILA_FALLOS_TOKEN: TOKEN,
     ...extra,
   });
+  await conPermisoIaDelChat(m.DB);
   await m.DB.prepare(
     "INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES (?, 'El Vigía', 'VE', 'USD', 'America/Caracas', 8.62, -71.65, 15, 1)",
   )

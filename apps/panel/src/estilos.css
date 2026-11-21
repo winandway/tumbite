@@ -6038,6 +6038,31 @@ body.modo-tableta .cabecera {
   margin: 0;
   padding: 6px 16px 0;
 }
+/* C-PERMISO-IA-CHAT: el permiso explícito antes del primer mensaje (borde fino, sin franjas). */
+.chat-soporte-permiso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+.chat-soporte-permiso-caja {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #101010;
+}
+.chat-soporte-permiso-caja p {
+  margin: 6px 0 0;
+}
+.chat-soporte-permiso-caja .chat-soporte-permiso-nota {
+  color: #666b73;
+  font-size: 0.82rem;
+}
+.chat-soporte-permiso .boton {
+  width: 100%;
+}
 .chat-soporte-casilla {
   display: flex;
   align-items: flex-end;

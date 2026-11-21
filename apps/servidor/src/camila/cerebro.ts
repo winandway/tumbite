@@ -84,6 +84,12 @@ import {
  * 5. Sin IA (o con el tope alcanzado): Docs y lo aprobado por palabras, las herramientas por intención
  *    y, si no sabe, lo anota y abre un caso. Nunca se queda sin responder.
  */
+/** C-PERMISO-IA-CHAT: lo que se le dice a quien no dio su permiso (su mensaje lo lee el equipo). */
+const LO_ATIENDE_UNA_PERSONA = {
+  es: 'Recibimos tu mensaje. Una persona de nuestro equipo te responderá aquí mismo.',
+  en: 'We got your message. A person on our team will reply right here.',
+};
+
 export type ResultadoCerebro = {
   respuesta: string | null;
   /** Por qué Camila no contestó (una persona del equipo tiene el hilo). */
@@ -481,6 +487,34 @@ export async function recibirMensaje(
       : []),
   ]);
   if (humanoActivo(persona)) return { respuesta: null, silencio: 'equipo', modo: 'silencio' };
+
+  // C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)): en el chat de la app y de la web, sin el permiso
+  // explícito de la persona NADA suyo sale al proveedor de IA: ni lo que escribe ni la captura. El
+  // mensaje ya quedó guardado; va a la bandeja del equipo y se le dice, una vez, que una persona le
+  // responderá. Este corte va antes de leer ajustes, herramientas o modelo: de aquí para abajo es
+  // donde vive toda llamada al modelo. El correo no pasa por aquí (se decide aparte).
+  if (enPantalla && Number(persona.permiso_ia ?? -1) !== 1) {
+    const abierto = await db
+      .prepare("SELECT 1 FROM camila_casos WHERE persona_id = ? AND estado = 'abierto' LIMIT 1")
+      .bind(persona.id)
+      .first();
+    // Ya tiene su caso abierto y su aviso: el equipo le contesta; no se le repite nada.
+    if (abierto) return { respuesta: null, silencio: 'equipo', modo: 'silencio' };
+    await abrirCaso(
+      { env, db, persona, idioma, pregunta: escrito } as Contexto,
+      texto,
+      'sin_permiso_ia',
+    );
+    const respuesta = segun(LO_ATIENDE_UNA_PERSONA, idioma);
+    await sentenciaMensaje(db, {
+      personaId: persona.id,
+      canal,
+      autor: 'camila',
+      texto: respuesta,
+      herramienta: 'sin_permiso_ia',
+    }).run();
+    return { respuesta, modo: 'fija', pideCaptura: false };
+  }
 
   const ajustes = await leerAjustes(db);
   // Lo último que dijo Camila en este hilo: si ya saludó y si su intento anterior fue «no entendí».

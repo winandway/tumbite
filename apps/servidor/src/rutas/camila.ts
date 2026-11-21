@@ -130,6 +130,8 @@ async function hiloPublico(db: D1Database, p: Persona) {
     adjuntoPendiente: pendiente?.id ?? null,
     verificada: Boolean(p.usuario_id || p.correo),
     equipoAtendiendo: humanoActivo(p),
+    // C-PERMISO-IA-CHAT: null = todavía no contestó (la pantalla le pregunta antes del primer mensaje).
+    permisoIa: p.permiso_ia == null ? null : Number(p.permiso_ia) === 1,
     mensajes: results.reverse().map((m) => ({ ...m, reportado: Number(m.reportado) === 1 })),
   };
 }
@@ -144,9 +146,30 @@ camila.get('/camila/hilo', async (c) => {
       adjuntoPendiente: null,
       verificada: false,
       equipoAtendiendo: false,
+      permisoIa: null,
       mensajes: [],
     });
   return c.json(await hiloPublico(base(c), p));
+});
+
+/**
+ * C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)): la persona da o retira su permiso para que su chat
+ * de ayuda se procese con la IA de un proveedor. Lo contesta antes de su primer mensaje y lo puede
+ * cambiar cuando quiera (Ajustes). Una escritura, solo si cambia.
+ */
+export const VERSION_PERMISO_IA_CHAT = '2026-11-21';
+camila.post('/camila/permiso-ia', async (c) => {
+  const d = await leerCuerpo(c, z.object({ acepto: z.boolean() }));
+  const p = await personaQueEscribe(c);
+  const valor = d.acepto ? 1 : 0;
+  if (p.permiso_ia == null || Number(p.permiso_ia) !== valor)
+    await base(c)
+      .prepare(
+        "UPDATE camila_personas SET permiso_ia = ?, permiso_ia_en = datetime('now') WHERE id = ?",
+      )
+      .bind(valor, p.id)
+      .run();
+  return c.json({ ok: true, permisoIa: d.acepto });
 });
 
 camila.post('/camila/mensaje', async (c) => {

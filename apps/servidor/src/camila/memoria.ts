@@ -34,13 +34,15 @@ export type Persona = {
   humano_hasta: string | null;
   humano_id: string | null;
   aviso_ia_dado: number;
+  /** C-PERMISO-IA-CHAT: null = no ha contestado; 1 = dio su permiso; 0 = dijo que no. */
+  permiso_ia?: number | null;
   /** El contacto que la persona DIJO en el chat para que le avisen (sin verificar). */
   contacto_correo: string | null;
   contacto_telefono: string | null;
 };
 
 const COLUMNAS =
-  'id, usuario_id, correo, telefono, nombre, idioma, pais, zona_id, resumen, canal_ultimo, mensajes, humano_hasta, humano_id, aviso_ia_dado, contacto_correo, contacto_telefono';
+  'id, usuario_id, correo, telefono, nombre, idioma, pais, zona_id, resumen, canal_ultimo, mensajes, humano_hasta, humano_id, aviso_ia_dado, contacto_correo, contacto_telefono, permiso_ia';
 
 export async function personaPorId(db: D1Database, id: string) {
   return db

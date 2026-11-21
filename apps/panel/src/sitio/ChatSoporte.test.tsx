@@ -37,6 +37,7 @@ const json = (d: unknown, status = 200) =>
 const HILO = {
   verificada: false,
   equipoAtendiendo: false,
+  permisoIa: true,
   mensajes: [
     {
       id: 'a',
@@ -52,6 +53,13 @@ const HILO = {
     },
   ],
 };
+
+/** C-PERMISO-IA-CHAT: un visitante nuevo contesta el permiso antes de escribir (aquí, que sí). */
+async function conPermiso() {
+  const si = await screen.findByTestId('chat-permiso-ia-si').catch(() => null);
+  if (si) await userEvent.click(si);
+  await waitFor(() => expect(screen.queryByTestId('chat-permiso-ia')).toBeNull());
+}
 
 describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
   beforeEach(() => {
@@ -73,6 +81,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     const chat = screen.getByRole('dialog', { name: 'Soporte de Divoox' });
     // El encabezado dice quién es; el saludo es corto, no se presenta ni ofrece una persona.
     expect(chat).toHaveTextContent('Camila Campos, del equipo de soporte de Divoox');
@@ -94,6 +103,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     await userEvent.type(screen.getByLabelText('Escribe tu mensaje…'), '¿Cómo recargo mi saldo?');
     await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
     expect(await screen.findByText('Por pago móvil, desde Ganancias.')).toBeTruthy();
@@ -117,6 +127,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     const hilo = {
       verificada: false,
       equipoAtendiendo: false,
+      permisoIa: true,
       mensajes: [
         { id: 'm1', autor: 'persona', texto: 'hola', creado_en: '2026-11-18 01:00:00' },
         {
@@ -138,6 +149,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     await userEvent.type(screen.getByLabelText('Escribe tu mensaje…'), 'hola');
     await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
     // Solo la respuesta de Camila del hilo lleva el botón (ni el saludo fijo ni lo que escribió la persona).
@@ -166,6 +178,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     await userEvent.type(screen.getByLabelText('Escribe tu mensaje…'), 'hola');
     await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
     const escribiendo = await screen.findByTestId('chat-escribiendo');
@@ -185,6 +198,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     const casilla = screen.getByLabelText('Escribe tu mensaje…') as HTMLTextAreaElement;
     await userEvent.type(casilla, 'hola');
     await userEvent.click(screen.getByRole('button', { name: /Enviar/ }));
@@ -199,12 +213,15 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     servidor((l) =>
       l.url.endsWith('/camila/mensaje')
         ? json({ error: 'No pudimos guardar tu mensaje.' }, 500)
-        : json({}, 401),
+        : l.url.endsWith('/camila/permiso-ia')
+          ? json({ ok: true, permisoIa: true })
+          : json({}, 401),
     );
     render(<ChatSoporte idioma="es" />);
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     await userEvent.type(screen.getByLabelText('Escribe tu mensaje…'), 'Hola');
     await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
     expect(await screen.findByRole('alert')).toBeTruthy();
@@ -219,6 +236,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
       json({
         verificada: true,
         equipoAtendiendo: true,
+        permisoIa: true,
         mensajes: [
           { id: 'x', autor: 'equipo', texto: 'Ya lo revisamos.', creado_en: '2026-11-17 11:00:00' },
         ],
@@ -245,6 +263,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
+    await conPermiso();
     await userEvent.click(screen.getByTestId('chat-unir'));
     await userEvent.type(screen.getByLabelText('Tu correo'), 'ana@ejemplo.com');
     await userEvent.click(screen.getByRole('button', { name: 'Mandar el código' }));
@@ -265,5 +284,67 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     expect(fuente.indexOf('setRespondiendo(true);')).toBeLessThan(
       fuente.indexOf('await esperar(r.respuesta);'),
     );
+  });
+});
+
+/**
+ * C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)) — todos los países. Antes del primer mensaje, el
+ * chat pide el permiso explícito; hasta contestar no hay casilla para escribir ni botón de adjuntar.
+ */
+describe('C-PERMISO-IA-CHAT: el chat de la web pide el permiso antes del primer mensaje', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    usarEsperaDeEscritura(() => 0);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    usarEsperaDeEscritura(null);
+  });
+  const SIN_CONTESTAR = {
+    verificada: false,
+    equipoAtendiendo: false,
+    permisoIa: null,
+    mensajes: [],
+  };
+
+  it.each([
+    ['es', 'Antes de escribirnos: tu permiso', 'No, que me atienda una persona', false],
+    ['en', 'Before you write to us: your permission', 'Yes, I give my permission', true],
+  ] as const)(
+    'en %s: muestra el aviso, guarda la respuesta y recién ahí deja escribir',
+    async (idioma, titulo, boton, acepto) => {
+      const llamadas = servidor((l) =>
+        l.url.endsWith('/datos/camila/permiso-ia')
+          ? json({ ok: true, permisoIa: (l.cuerpo as { acepto: boolean }).acepto })
+          : json(SIN_CONTESTAR),
+      );
+      render(<ChatSoporte idioma={idioma} />);
+      await userEvent.click(screen.getByRole('button', { name: /soporte|support/i }));
+      expect(await screen.findByText(titulo)).toBeInTheDocument();
+      // El aviso nombra la inteligencia artificial y al proveedor, y dice que se puede decir que no.
+      expect(screen.getByTestId('chat-permiso-ia').textContent).toMatch(/Google \(Gemini\)/);
+      expect(screen.queryByRole('textbox')).toBeNull();
+      expect(screen.queryByTestId('chat-adjuntar')).toBeNull();
+      await userEvent.click(screen.getByRole('button', { name: boton }));
+      await waitFor(() => expect(screen.queryByTestId('chat-permiso-ia')).toBeNull());
+      const guardado = llamadas.find((l) => l.url.endsWith('/datos/camila/permiso-ia'));
+      expect(guardado?.metodo).toBe('POST');
+      expect(guardado?.cuerpo).toEqual({ acepto });
+      expect(esVisitaCamila(guardado?.cabeceras.get('x-camila-visita'))).toBe(true);
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
+    },
+  );
+
+  it('si no se pudo guardar, lo dice y el aviso sigue ahí', async () => {
+    servidor((l) =>
+      l.url.endsWith('/datos/camila/permiso-ia')
+        ? json({ error: 'Sin conexión con el servidor.' }, 503)
+        : json(SIN_CONTESTAR),
+    );
+    render(<ChatSoporte idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: /soporte|support/i }));
+    await userEvent.click(await screen.findByTestId('chat-permiso-ia-si'));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByTestId('chat-permiso-ia')).toBeInTheDocument();
   });
 });

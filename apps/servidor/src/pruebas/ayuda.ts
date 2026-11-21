@@ -226,3 +226,22 @@ export async function llevarA(DB: D1Database, id: string, hacia: string, extra =
   }
   if (actual !== hacia) throw new Error(`llevarA: no se llegó a «${hacia}»`);
 }
+
+/**
+ * C-PERMISO-IA-CHAT: para las pruebas que describen a quien YA dio su permiso (casi todas las de
+ * Camila). En ESA base de prueba, toda ficha del chat nace con el «sí». Es armado de prueba: el código
+ * del servidor no tiene ninguna puerta para saltarse el permiso (eso lo prueba permisoIaChat.test.ts).
+ */
+export async function conPermisoIaDelChat(db: D1Database) {
+  // La columna llega con el arranque del servidor (COLUMNAS); si todavía no está, se agrega aquí.
+  await db
+    .prepare('ALTER TABLE camila_personas ADD COLUMN permiso_ia INTEGER')
+    .run()
+    .catch(() => undefined);
+  await db
+    .prepare(
+      `CREATE TRIGGER IF NOT EXISTS prueba_permiso_ia_chat AFTER INSERT ON camila_personas
+       BEGIN UPDATE camila_personas SET permiso_ia = 1 WHERE id = NEW.id; END`,
+    )
+    .run();
+}

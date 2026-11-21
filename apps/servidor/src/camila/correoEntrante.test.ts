@@ -212,6 +212,8 @@ describe('C-CAMILA-CORREO-HILO: el correo entra a la conversación y la respuest
     expect(JSON.stringify(pedido.turnos)).not.toMatch(/cita vieja/);
     // El chat sigue con las instrucciones del chat.
     const c = await e.m.cuenta('cliente', 'Carla Cliente');
+    // C-PERMISO-IA-CHAT: en el chat de pantalla, el modelo solo se usa con el permiso de la persona.
+    await e.m.llamar('POST', '/datos/camila/permiso-ia', { acepto: true }, c.token);
     await e.m.llamar('POST', '/datos/camila/mensaje', { texto: '¿cómo pido un viaje?' }, c.token);
     expect(e.llamadas[e.llamadas.length - 1]!.sistema).not.toMatch(/Estás contestando un CORREO/);
   });

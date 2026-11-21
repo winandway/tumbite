@@ -17,6 +17,7 @@ const HILO = (extra: Record<string, unknown> = {}) => ({
   adjuntoPendiente: null,
   verificada: false,
   equipoAtendiendo: false,
+  permisoIa: true,
   mensajes: [
     { id: 'a', autor: 'persona', texto: 'Hola', creado_en: '2026-11-19 10:00:00' },
     {

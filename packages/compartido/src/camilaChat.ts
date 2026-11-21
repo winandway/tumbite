@@ -26,6 +26,8 @@ export type HiloCamila = {
   adjuntoPendiente?: string | null;
   verificada: boolean;
   equipoAtendiendo: boolean;
+  /** C-PERMISO-IA-CHAT: null = todavía no contestó; true = dio su permiso; false = dijo que no. */
+  permisoIa?: boolean | null;
   mensajes: MensajeCamila[];
 };
 export type RespuestaCamila = HiloCamila & { respuesta: string | null };
@@ -269,3 +271,53 @@ export function problemaDeCaptura(
   if (archivo.type && !TIPOS_CAPTURA.includes(archivo.type.toLowerCase())) return t.capturaTipo;
   return null;
 }
+
+/**
+ * C-PERMISO-IA-CHAT (21 nov 2026, decisión delegada por Richard; Apple 5.1.2(i)) — todos los países.
+ * El permiso explícito que el chat de ayuda pide UNA vez, antes del primer mensaje: para responder más
+ * rápido, lo que la persona escribe y las capturas que adjunta se procesan con un servicio de
+ * inteligencia artificial de un proveedor. Puede decir que no (la atiende una persona) y cambiarlo
+ * después en Ajustes. El servidor lo hace cumplir. Este aviso y la política de privacidad son los
+ * únicos textos que nombran la IA: Camila conserva su nombre y su trato en la conversación.
+ */
+const PERMISO_IA_CHAT = {
+  es: {
+    titulo: 'Antes de escribirnos: tu permiso',
+    texto:
+      'Para responderte más rápido, lo que escribas aquí y las capturas que adjuntes se procesan con un servicio de inteligencia artificial de otra empresa, Google (Gemini), por encargo nuestro y solo para atenderte. Puedes decir que no.',
+    si: 'Sí, doy mi permiso',
+    no: 'No, que me atienda una persona',
+    nota: 'Si eliges que no, nada de lo que escribas se envía a ese servicio: tu mensaje llega a nuestro equipo y una persona te responde aquí mismo. Puedes cambiarlo cuando quieras en Ajustes.',
+    error: 'No se pudo guardar tu respuesta. Revisa tu conexión e inténtalo otra vez.',
+    ajuste: 'Ayuda con inteligencia artificial',
+    ajusteAyuda:
+      'Con tu permiso, lo que escribes en el chat de ayuda y las capturas que adjuntas se procesan con un servicio de inteligencia artificial de otra empresa, Google (Gemini), para responderte más rápido. Sin tu permiso, te atiende una persona de nuestro equipo.',
+    permitido: 'Permitido',
+    noPermitido: 'No permitido',
+    sinContestar: 'Todavía no has contestado',
+    permitir: 'Dar mi permiso',
+    retirar: 'Retirar mi permiso',
+  },
+  en: {
+    titulo: 'Before you write to us: your permission',
+    texto:
+      'To answer you faster, what you write here and the screenshots you attach are processed with an artificial intelligence service from another company, Google (Gemini), on our behalf and only to help you. You can say no.',
+    si: 'Yes, I give my permission',
+    no: 'No, have a person help me',
+    nota: 'If you choose no, nothing you write is sent to that service: your message goes to our team and a person replies right here. You can change this anytime in Settings.',
+    error: 'Couldn’t save your answer. Check your connection and try again.',
+    ajuste: 'Help with artificial intelligence',
+    ajusteAyuda:
+      'With your permission, what you write in the help chat and the screenshots you attach are processed with an artificial intelligence service from another company, Google (Gemini), to answer you faster. Without your permission, a person on our team helps you.',
+    permitido: 'Allowed',
+    noPermitido: 'Not allowed',
+    sinContestar: 'You haven’t answered yet',
+    permitir: 'Give my permission',
+    retirar: 'Withdraw my permission',
+  },
+} as const;
+export const textosPermisoIaChat = (idioma: Idioma) =>
+  idioma === 'en' ? PERMISO_IA_CHAT.en : PERMISO_IA_CHAT.es;
+/** El chat pide el permiso mientras la persona no haya contestado (ni sí ni no). */
+export const faltaPermisoIaChat = (hilo: { permisoIa?: boolean | null } | null | undefined) =>
+  hilo != null && hilo.permisoIa == null;

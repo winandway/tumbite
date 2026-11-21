@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  faltaPermisoIaChat,
+  textosPermisoIaChat,
   ErrorApi,
   type HiloCamila,
   type Idioma,
@@ -93,6 +95,11 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
     almacen: almacenNavegador,
   });
   const cabeceras = { 'x-camila-visita': visita };
+  // C-PERMISO-IA-CHAT: el permiso se pide antes del primer mensaje. Con el hilo leído, lo dice el
+  // servidor; un visitante nuevo (sin hilo que leer) todavía no ha contestado nada.
+  const pidePermiso = hilo
+    ? faltaPermisoIaChat(hilo)
+    : abierto && !cargando && !(conSesion || yaConverso());
 
   const cargar = useCallback(
     async (callado = false) => {
@@ -193,12 +200,14 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       setRespondiendo(true);
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
-      setHilo({
+      setHilo((h) => ({
         adjuntoPendiente: r.adjuntoPendiente,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
+        // C-PERMISO-IA-CHAT: lo que la persona contestó no se pierde al refrescar el hilo.
+        permisoIa: r.permisoIa ?? h?.permisoIa ?? null,
         mensajes: r.mensajes,
-      });
+      }));
     } catch (x) {
       // Lo escrito y la captura se quedan en el borrador para reintentar (regla de los formularios).
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
@@ -346,101 +355,120 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               </li>
             ) : null}
           </ol>
-          {adjuntar ? (
-            <BloqueCaptura
+          {pidePermiso ? (
+            // C-PERMISO-IA-CHAT: antes del primer mensaje, una sola vez, el permiso explícito.
+            <PermisoIaChat
               idioma={idioma}
               cabeceras={cabeceras}
-              ocupado={enviando}
-              alSubir={(id, local) => {
-                setAdjuntar(false);
+              alResponder={(permisoIa) => {
+                // La ficha del navegador ya existe en el servidor: la próxima vez se lee su hilo.
                 guardarConverso();
-                setLocales((m) => new Map(m).set(id, local));
-                setAdjunto({ id, local });
-                casilla.current?.focus();
+                setHilo((h) =>
+                  h
+                    ? { ...h, permisoIa }
+                    : { verificada: false, equipoAtendiendo: false, mensajes: [], permisoIa },
+                );
               }}
-              alCerrar={() => setAdjuntar(false)}
             />
-          ) : adjunto ? (
-            <div className="chat-soporte-borrador-captura" data-testid="chat-captura-lista">
-              <Miniatura
-                id={adjunto.id}
-                local={adjunto.local}
-                cabeceras={cabeceras}
-                alt={t.capturaAlt}
-              />
-              <span>{t.capturaLista}</span>
-              <button
-                type="button"
-                className="chat-soporte-quitar"
-                aria-label={t.quitarCaptura}
-                title={t.quitarCaptura}
-                disabled={enviando}
-                onClick={() => void quitarAdjunto()}
-                data-testid="chat-captura-quitar"
-              >
-                ×
-              </button>
-            </div>
-          ) : hilo?.equipoAtendiendo ? null : (
-            <button
-              type="button"
-              className="enlace chat-soporte-adjuntar"
-              data-testid="chat-adjuntar"
-              onClick={() => setAdjuntar(true)}
-            >
-              <Icono nombre="foto" tamano={16} /> {t.adjuntar}
-            </button>
-          )}
-          {hilo?.equipoAtendiendo ? (
-            <p className="chat-soporte-aviso" role="status" data-testid="chat-equipo-atiende">
-              {t.equipoAtiende}
-            </p>
-          ) : null}
-          {error ? (
-            <p className="chat-soporte-error" role="alert">
-              {error}
-            </p>
-          ) : null}
-          {b.recuperado ? (
-            <p className="aviso-borrador chat-soporte-borrador">
-              {idioma === 'en'
-                ? 'We restored what you were typing.'
-                : 'Recuperamos lo que estabas escribiendo.'}{' '}
-              <button type="button" className="enlace" onClick={() => void b.empezarDeNuevo()}>
-                {idioma === 'en' ? 'Start over' : 'Empezar de nuevo'}
-              </button>
-            </p>
-          ) : null}
-          <form
-            className="chat-soporte-casilla"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void enviar();
-            }}
-          >
-            <textarea
-              ref={casilla}
-              rows={2}
-              value={b.valores.texto}
-              placeholder={adjunto ? t.escribeConCaptura : t.escribe}
-              aria-label={t.escribe}
-              maxLength={2000}
-              onChange={(e) => b.cambiar('texto', e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+          ) : (
+            <>
+              {adjuntar ? (
+                <BloqueCaptura
+                  idioma={idioma}
+                  cabeceras={cabeceras}
+                  ocupado={enviando}
+                  alSubir={(id, local) => {
+                    setAdjuntar(false);
+                    guardarConverso();
+                    setLocales((m) => new Map(m).set(id, local));
+                    setAdjunto({ id, local });
+                    casilla.current?.focus();
+                  }}
+                  alCerrar={() => setAdjuntar(false)}
+                />
+              ) : adjunto ? (
+                <div className="chat-soporte-borrador-captura" data-testid="chat-captura-lista">
+                  <Miniatura
+                    id={adjunto.id}
+                    local={adjunto.local}
+                    cabeceras={cabeceras}
+                    alt={t.capturaAlt}
+                  />
+                  <span>{t.capturaLista}</span>
+                  <button
+                    type="button"
+                    className="chat-soporte-quitar"
+                    aria-label={t.quitarCaptura}
+                    title={t.quitarCaptura}
+                    disabled={enviando}
+                    onClick={() => void quitarAdjunto()}
+                    data-testid="chat-captura-quitar"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : hilo?.equipoAtendiendo ? null : (
+                <button
+                  type="button"
+                  className="enlace chat-soporte-adjuntar"
+                  data-testid="chat-adjuntar"
+                  onClick={() => setAdjuntar(true)}
+                >
+                  <Icono nombre="foto" tamano={16} /> {t.adjuntar}
+                </button>
+              )}
+              {hilo?.equipoAtendiendo ? (
+                <p className="chat-soporte-aviso" role="status" data-testid="chat-equipo-atiende">
+                  {t.equipoAtiende}
+                </p>
+              ) : null}
+              {error ? (
+                <p className="chat-soporte-error" role="alert">
+                  {error}
+                </p>
+              ) : null}
+              {b.recuperado ? (
+                <p className="aviso-borrador chat-soporte-borrador">
+                  {idioma === 'en'
+                    ? 'We restored what you were typing.'
+                    : 'Recuperamos lo que estabas escribiendo.'}{' '}
+                  <button type="button" className="enlace" onClick={() => void b.empezarDeNuevo()}>
+                    {idioma === 'en' ? 'Start over' : 'Empezar de nuevo'}
+                  </button>
+                </p>
+              ) : null}
+              <form
+                className="chat-soporte-casilla"
+                onSubmit={(e) => {
                   e.preventDefault();
                   void enviar();
-                }
-              }}
-            />
-            <button
-              type="submit"
-              className="boton"
-              disabled={enviando || (!b.valores.texto.trim() && !adjunto)}
-            >
-              {respondiendo ? t.unMomento : enviando ? t.enviando : t.enviar}
-            </button>
-          </form>
+                }}
+              >
+                <textarea
+                  ref={casilla}
+                  rows={2}
+                  value={b.valores.texto}
+                  placeholder={adjunto ? t.escribeConCaptura : t.escribe}
+                  aria-label={t.escribe}
+                  maxLength={2000}
+                  onChange={(e) => b.cambiar('texto', e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      void enviar();
+                    }
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="boton"
+                  disabled={enviando || (!b.valores.texto.trim() && !adjunto)}
+                >
+                  {respondiendo ? t.unMomento : enviando ? t.enviando : t.enviar}
+                </button>
+              </form>
+            </>
+          )}
           {hilo?.verificada || conCuenta ? (
             unido ? (
               <p className="chat-soporte-aviso exito chat-soporte-unir" role="status">
@@ -714,6 +742,73 @@ function BloqueCaptura({
         {t.cancelarCaptura}
       </button>
       <small className="pista">{t.capturaPrivada}</small>
+    </div>
+  );
+}
+
+/**
+ * C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)): el aviso con permiso explícito, en lugar de la
+ * casilla de escribir, hasta que la persona conteste. El servidor es quien lo hace cumplir.
+ */
+function PermisoIaChat({
+  idioma,
+  cabeceras,
+  alResponder,
+}: {
+  idioma: Idioma;
+  cabeceras: Record<string, string>;
+  alResponder: (permisoIa: boolean) => void;
+}) {
+  const t = textosPermisoIaChat(idioma);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState('');
+  const responder = async (acepto: boolean) => {
+    setOcupado(true);
+    setError('');
+    try {
+      const r = await pedir<{ permisoIa: boolean }>(
+        'POST',
+        '/datos/camila/permiso-ia',
+        { acepto },
+        { cabeceras },
+      );
+      alResponder(r.permisoIa);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.error);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <div className="chat-soporte-permiso" data-testid="chat-permiso-ia">
+      <div className="chat-soporte-permiso-caja">
+        <strong>{t.titulo}</strong>
+        <p>{t.texto}</p>
+        <p className="chat-soporte-permiso-nota">{t.nota}</p>
+      </div>
+      <button
+        type="button"
+        className="boton"
+        disabled={ocupado}
+        data-testid="chat-permiso-ia-si"
+        onClick={() => void responder(true)}
+      >
+        {t.si}
+      </button>
+      <button
+        type="button"
+        className="boton secundario"
+        disabled={ocupado}
+        data-testid="chat-permiso-ia-no"
+        onClick={() => void responder(false)}
+      >
+        {t.no}
+      </button>
+      {error ? (
+        <p className="chat-soporte-error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

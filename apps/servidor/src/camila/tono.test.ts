@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { aHtml, usarTransporteCorreo } from '../correo';
-import { mundo } from '../pruebas/ayuda';
+import { conPermisoIaDelChat, mundo } from '../pruebas/ayuda';
 import { trozosDeMensaje } from '@tumbite/compartido';
 import { buscarGuias, conEnlacesDeGuia, lineasDeGuia } from './buscadorDocs';
 import { buscarEnDocs } from './conocimiento';
@@ -152,6 +152,7 @@ async function escenario(extra: Record<string, unknown> = {}) {
     GEMINI_API_KEY: 'llave-de-prueba-de-gemini-1234',
     ...extra,
   });
+  await conPermisoIaDelChat(m.DB);
   const cliente = await m.cuenta('cliente', 'Carla Cliente');
   const decir = (t: string, token = cliente.token, idioma: 'es' | 'en' = 'es') =>
     m.llamar('POST', '/datos/camila/mensaje', { texto: t, canal: 'web' }, token, {

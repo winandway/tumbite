@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {
+  faltaPermisoIaChat,
+  textosPermisoIaChat,
   ErrorApi,
   type HiloCamila,
   type MensajeCamila,
@@ -139,12 +141,14 @@ export function ChatSoporteApp() {
       setRespondiendo(true);
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
-      setHilo({
+      setHilo((h) => ({
         adjuntoPendiente: r.adjuntoPendiente,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
+        // C-PERMISO-IA-CHAT: lo que la persona contestó no se pierde al refrescar el hilo.
+        permisoIa: r.permisoIa ?? h?.permisoIa ?? null,
         mensajes: r.mensajes,
-      });
+      }));
     } catch (x) {
       // Lo escrito y la captura se quedan en el borrador para reintentar.
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
@@ -294,90 +298,156 @@ export function ChatSoporteApp() {
           <Text style={{ color: '#666B73', marginTop: 4 }}>{t.cargando}</Text>
         ) : null}
       </ScrollView>
-      {adjuntar ? (
-        <BloqueCapturaApp
-          ocupado={enviando}
-          alSubir={(id, local) => {
-            setAdjuntar(false);
-            setLocales((m) => new Map(m).set(id, local));
-            setAdjunto({ id, local });
-          }}
-          alCerrar={() => setAdjuntar(false)}
+      {faltaPermisoIaChat(hilo) ? (
+        // C-PERMISO-IA-CHAT: antes del primer mensaje, una sola vez, el permiso explícito.
+        <PermisoIaChatApp
+          alResponder={(permisoIa) => setHilo((h) => (h ? { ...h, permisoIa } : h))}
         />
-      ) : adjunto ? (
-        <View
-          testID="chat-captura-lista"
-          style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
-        >
-          <MiniaturaApp id={adjunto.id} local={adjunto.local} lado={56} />
-          <Text style={{ flex: 1, color: C.secundario, fontSize: 13 }}>{t.capturaLista}</Text>
-          <Pressable
-            onPress={() => void quitarAdjunto()}
-            disabled={enviando}
-            accessibilityRole="button"
-            accessibilityLabel={t.quitarCaptura}
-            testID="chat-captura-quitar"
-            hitSlop={10}
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 17,
-              borderWidth: 1,
-              borderColor: C.secundario,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: C.secundario, fontSize: 18, fontWeight: '700' }}>×</Text>
-          </Pressable>
-        </View>
-      ) : hilo?.equipoAtendiendo ? null : (
-        <Pressable
-          onPress={() => setAdjuntar(true)}
-          accessibilityRole="button"
-          testID="chat-adjuntar"
-          hitSlop={8}
-          style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
-        >
-          <Text style={{ color: C.secundario, fontWeight: '700', textDecorationLine: 'underline' }}>
-            {t.adjuntar}
-          </Text>
-        </Pressable>
+      ) : (
+        <>
+          {adjuntar ? (
+            <BloqueCapturaApp
+              ocupado={enviando}
+              alSubir={(id, local) => {
+                setAdjuntar(false);
+                setLocales((m) => new Map(m).set(id, local));
+                setAdjunto({ id, local });
+              }}
+              alCerrar={() => setAdjuntar(false)}
+            />
+          ) : adjunto ? (
+            <View
+              testID="chat-captura-lista"
+              style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+            >
+              <MiniaturaApp id={adjunto.id} local={adjunto.local} lado={56} />
+              <Text style={{ flex: 1, color: C.secundario, fontSize: 13 }}>{t.capturaLista}</Text>
+              <Pressable
+                onPress={() => void quitarAdjunto()}
+                disabled={enviando}
+                accessibilityRole="button"
+                accessibilityLabel={t.quitarCaptura}
+                testID="chat-captura-quitar"
+                hitSlop={10}
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  borderWidth: 1,
+                  borderColor: C.secundario,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: C.secundario, fontSize: 18, fontWeight: '700' }}>×</Text>
+              </Pressable>
+            </View>
+          ) : hilo?.equipoAtendiendo ? null : (
+            <Pressable
+              onPress={() => setAdjuntar(true)}
+              accessibilityRole="button"
+              testID="chat-adjuntar"
+              hitSlop={8}
+              style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
+            >
+              <Text
+                style={{ color: C.secundario, fontWeight: '700', textDecorationLine: 'underline' }}
+              >
+                {t.adjuntar}
+              </Text>
+            </Pressable>
+          )}
+          {hilo?.equipoAtendiendo ? (
+            <Text
+              testID="chat-equipo-atiende"
+              accessibilityRole="alert"
+              style={{ color: C.secundario, fontWeight: '700' }}
+            >
+              {t.equipoAtiende}
+            </Text>
+          ) : null}
+          {error ? (
+            <Text style={e.error} accessibilityRole="alert">
+              {error}
+            </Text>
+          ) : null}
+          <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+          <FilaConBoton>
+            <TextInput
+              value={b.valores.texto}
+              onChangeText={(x) => b.cambiar('texto', x)}
+              placeholder={adjunto ? t.escribeConCaptura : t.escribe}
+              accessibilityLabel={t.escribe}
+              multiline
+              maxLength={2000}
+              style={[e.input, CASILLA_EN_FILA, { minHeight: 48, maxHeight: 120 }]}
+              testID="chat-soporte-casilla"
+            />
+            <Boton
+              texto={respondiendo ? t.unMomento : t.enviar}
+              alTocar={() => void enviar()}
+              cargando={enviando && !respondiendo}
+              testID="chat-soporte-enviar"
+              enFila
+            />
+          </FilaConBoton>
+        </>
       )}
-      {hilo?.equipoAtendiendo ? (
-        <Text
-          testID="chat-equipo-atiende"
-          accessibilityRole="alert"
-          style={{ color: C.secundario, fontWeight: '700' }}
-        >
-          {t.equipoAtiende}
-        </Text>
-      ) : null}
+    </View>
+  );
+}
+
+/**
+ * C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)): el aviso con permiso explícito, en lugar de la
+ * casilla de escribir, hasta que la persona conteste. Mismo estilo que «Antes de tus fotos: tu
+ * permiso» del asistente de papeles. El servidor es quien lo hace cumplir.
+ */
+export function PermisoIaChatApp({ alResponder }: { alResponder: (permisoIa: boolean) => void }) {
+  const { api, idioma } = useSesion();
+  const t = textosPermisoIaChat(idioma);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState('');
+  const responder = async (acepto: boolean) => {
+    setOcupado(true);
+    setError('');
+    try {
+      const r = await api.pedir<{ permisoIa: boolean }>('POST', '/datos/camila/permiso-ia', {
+        acepto,
+      });
+      alResponder(r.permisoIa);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.error);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <View style={{ gap: 10 }} testID="chat-permiso-ia">
+      <View
+        style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12, gap: 6 }}
+      >
+        <Text style={{ fontSize: 15, fontWeight: '700', color: C.secundario }}>{t.titulo}</Text>
+        <Text style={{ fontSize: 14, lineHeight: 20, color: C.secundario }}>{t.texto}</Text>
+        <Text style={{ fontSize: 13, lineHeight: 18, color: '#666B73' }}>{t.nota}</Text>
+      </View>
+      <Boton
+        texto={t.si}
+        alTocar={() => void responder(true)}
+        cargando={ocupado}
+        testID="chat-permiso-ia-si"
+      />
+      <Boton
+        texto={t.no}
+        secundario
+        alTocar={() => void responder(false)}
+        cargando={ocupado}
+        testID="chat-permiso-ia-no"
+      />
       {error ? (
         <Text style={e.error} accessibilityRole="alert">
           {error}
         </Text>
       ) : null}
-      <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
-      <FilaConBoton>
-        <TextInput
-          value={b.valores.texto}
-          onChangeText={(x) => b.cambiar('texto', x)}
-          placeholder={adjunto ? t.escribeConCaptura : t.escribe}
-          accessibilityLabel={t.escribe}
-          multiline
-          maxLength={2000}
-          style={[e.input, CASILLA_EN_FILA, { minHeight: 48, maxHeight: 120 }]}
-          testID="chat-soporte-casilla"
-        />
-        <Boton
-          texto={respondiendo ? t.unMomento : t.enviar}
-          alTocar={() => void enviar()}
-          cargando={enviando && !respondiendo}
-          testID="chat-soporte-enviar"
-          enFila
-        />
-      </FilaConBoton>
     </View>
   );
 }
