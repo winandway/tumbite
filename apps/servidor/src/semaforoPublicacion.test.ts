@@ -110,6 +110,8 @@ describe('C-SEMAFORO-INSISTE: el guion corriendo de verdad', () => {
   it('insiste con un empujón cada tanto, no uno solo, y pasa cuando la versión por fin llega', async () => {
     const r = await correr(7, 12);
     expect(r.empujones).toBe(3);
+    // C-SEMAFORO-REPUBLICA: en cada empujón también se le pide a la plataforma republicar.
+    expect(r.pedidas.filter((x) => x === 'POST /republicar')).toHaveLength(3);
     expect(r.codigo).toBe(0);
     expect(r.salida).toContain('El servidor confirma nueva12');
   }, 30_000);

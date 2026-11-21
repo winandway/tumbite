@@ -3874,6 +3874,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## C-SEMAFORO-REPUBLICA y C-RECORRIDO-SUELTO (20 nov 2026) — todos los países
+
+- **Qué pasó:** con el semáforo insistiendo (C-SEMAFORO-INSISTE), el sitio de pruebas volvió a quedarse quince minutos en «subiendo el paquete» durante la publicación de `6f04731`. Los empujones (commits vacíos) no lo sacaban. Lo que lo destrabó, las dos veces, fue pedirle a la plataforma «republicar» por su API (`POST …/api/sitio/v1/republicar` con la llave del sitio): publicó en segundos.
+- **Arreglo:** `scripts/semaforo.sh` pide «republicar» en cada empujón, con la misma llave que ya recibe (`YAD_LLAVE_SITIO`). Prueba en `apps/servidor/src/semaforoPublicacion.test.ts` (vista en rojo sin el pedido).
+- **A mano, si hiciera falta:** llaves en el llavero de la Mac, `yadominios-llave-ia-tumbite-pruebas` y `yadominios-llave-ia-tumbite` (producción); `estado_del_sitio` dice `al_dia` y `minutos_de_atraso`.
+- **C-RECORRIDO-SUELTO:** flujo `.github/workflows/recorrido-suelto.yml`. Repite UNA prueba del recorrido contra el sitio de pruebas en cinco minutos, sin entrar a la fila de publicar (subir una rama `suelto-*` o lanzarlo a mano con el nombre de la prueba). Sirvió el 20 nov para confirmar que el fallo de `caso-dinero` del recorrido de Comida en español fue un tropiezo: repetido solo, pasó.
+
 ## C-CUPON-USOS y C-PROMO-CONDICIONES (20 nov 2026, orden de Gerencia para El Vigía) — todos los países
 
 - **Qué faltaba:** el comercial promete el regalo «a las primeras 125 personas», pero el cupón solo tenía tope en dólares: con viajes baratos el presupuesto alcanzaba para más gente y la frase no quedaba exacta. Tampoco existía la página de condiciones que citan los comerciales.

@@ -61,6 +61,16 @@ for i in $(seq 1 $INTENTOS); do
          commit -q --allow-empty -m "empujón: republicar $VERSION" \
       && git -C "$TMP/rama" push -q origin "HEAD:$RAMA" ) || echo "::warning::No se pudo dar el empujón a $RAMA."
     git worktree remove --force "$TMP/rama" 2>/dev/null; true
+    # C-SEMAFORO-REPUBLICA (20 nov 2026): el empujón solo vuelve a avisar, y la plataforma se seguía
+    # quedando en «subiendo el paquete». Lo que la destrabó dos veces a mano fue pedirle «republicar»
+    # por su API: publica en el momento lo que hay en la rama. Se pide en cada empujón.
+    if [ -n "${YAD_LLAVE_SITIO:-}" ]; then
+      echo "Se le pide a la plataforma republicar el sitio:"
+      curl -s -m 120 -X POST "${YAD_API:-https://yapanel.yadominios.com/api/sitio/v1}/republicar" \
+        -H "Authorization: Bearer $YAD_LLAVE_SITIO" -H 'content-type: application/json' -d '{}' \
+        | head -c 400 || echo "::warning::La plataforma no contestó al pedido de republicar."
+      echo
+    fi
   fi
   sleep "$PAUSA"
 done
