@@ -47,6 +47,8 @@ const GUIONES_NEUTROS = [
   'scripts/recorrido/capturas-comida-venezuela.mjs',
   'scripts/flex/capturas-cobro.mjs',
   'scripts/docs/capturas-zonas.mjs',
+  // C-DOCS-SIN-DATOS-REALES (21 nov 2026, Gerencia): las capturas de líneas decían «El Vigía».
+  'scripts/recorrido/capturas-lineas.mjs',
 ];
 /** Lo que un guion escribe en pantalla: nombres, equipos, regalos y direcciones. */
 const SE_VE = /^\s*(equipo|lider|miembros|pasajero|conductor|nombreEs|nombreEn|recogida|destino):/;

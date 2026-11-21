@@ -16,6 +16,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
 import { CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS } from '../docs/ayudaPrivada.mjs';
+import { CIUDAD_NEUTRA, mapaSinRotulos } from './neutro.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -27,11 +28,12 @@ mkdirSync(SALIDA, { recursive: true });
 mkdirSync(ORIGINALES_PRIVADAS, { recursive: true });
 mkdirSync(CAPTURAS_PRIVADAS, { recursive: true });
 
-// Español en una ciudad hispana, inglés en una de Estados Unidos (C-CAPTURAS-POR-IDIOMA).
+// Español con un país hispano, inglés con Estados Unidos (C-CAPTURAS-POR-IDIOMA), y la ciudad
+// SIEMPRE neutra: ninguna captura pública nombra una ciudad real (C-DOCS-SIN-DATOS-REALES).
 const L = {
   es: {
-    zona: 'VE-MER-ELVIGIA',
-    ciudad: 'El Vigía',
+    zona: 'VE-ZZ-EJEMPLO',
+    ciudad: CIUDAD_NEUTRA.es,
     pais: 'VE',
     moneda: 'VES',
     tz: 'America/Caracas',
@@ -54,8 +56,8 @@ const L = {
     },
   },
   en: {
-    zona: 'US-MI-NOVI',
-    ciudad: 'Novi',
+    zona: 'US-ZZ-EXAMPLE',
+    ciudad: CIUDAD_NEUTRA.en,
     pais: 'US',
     moneda: 'USD',
     tz: 'America/Detroit',
@@ -125,7 +127,7 @@ async function conductor(nombre, idioma, zona, k) {
   return { id, token: r.token };
 }
 
-const navegador = await chromium.launch();
+const navegador = mapaSinRotulos(await chromium.launch());
 const webp = (origen, destino, ancho) =>
   execFileSync('cwebp', [
     '-quiet',
