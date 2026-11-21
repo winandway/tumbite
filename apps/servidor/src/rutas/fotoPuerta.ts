@@ -34,13 +34,12 @@ export const ROLES_PUERTA: Record<TipoLugar, RolFotoPuerta[]> = {
   edificio: ['entrada', 'paso', 'apto'],
 };
 
-/** Es edificio si lo dijo el cliente o si la casilla de apartamento tiene texto. */
-export const tipoLugarDe = (tipoLugar: unknown, apto: unknown): TipoLugar =>
-  tipoLugar === 'casa' || tipoLugar === 'edificio'
-    ? tipoLugar
-    : String(apto ?? '').trim()
-      ? 'edificio'
-      : 'casa';
+/**
+ * C-CASA-POR-DEFECTO (Richard, 21 nov 2026): lo que eligió el cliente y, si no eligió, casa (hay más
+ * casas que edificios). El apartamento escrito ya no decide: una casa también lleva número.
+ */
+export const tipoLugarDe = (tipoLugar: unknown): TipoLugar =>
+  tipoLugar === 'edificio' ? 'edificio' : 'casa';
 
 const MAX_MINI_BYTES = 80 * 1024;
 const PRIVADA = 'private, no-store';
@@ -140,8 +139,7 @@ fotoPuerta.patch('/mis-direcciones/:id', async (c) => {
   if (d.tipo_lugar !== tipoLugar) {
     // Al cambiar de casa a edificio (o al revés) la primera foto sigue valiendo (el frente o la
     // entrada); las de adentro cambian de sentido y se quitan para que no queden mal rotuladas.
-    if (tipoLugarDe(d.tipo_lugar, d.apto) !== tipoLugar)
-      await borrarFotosDeDireccion(c.env, db, d.id, 2);
+    if (tipoLugarDe(d.tipo_lugar) !== tipoLugar) await borrarFotosDeDireccion(c.env, db, d.id, 2);
     await db
       .prepare('UPDATE direcciones_cliente SET tipo_lugar = ? WHERE id = ?')
       .bind(tipoLugar, d.id)
@@ -160,7 +158,7 @@ fotoPuerta.post('/mis-direcciones/:id/fotos/:orden', async (c) => {
   const orden = ordenDe(c.req.param('orden'));
   const mini = c.req.query('tam') === 'mini';
   const d = await miDireccion(db, c.req.param('id'), u.id);
-  if (orden > ROLES_PUERTA[tipoLugarDe(d.tipo_lugar, d.apto)].length)
+  if (orden > ROLES_PUERTA[tipoLugarDe(d.tipo_lugar)].length)
     throw new ErrorDatos('Una casa lleva dos fotos: el frente y la puerta.', 'foto', 422);
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
@@ -257,7 +255,7 @@ fotoPuerta.get('/repartidor/pedidos/:id/puerta', async (c) => {
   if (!p) throw new ErrorDatos('Ese pedido no es tuyo.', undefined, 404);
   c.header('cache-control', PRIVADA);
   if (!p.visible) return c.json({ fotos: [] });
-  const roles = ROLES_PUERTA[tipoLugarDe(p.tipo_lugar, p.apto)];
+  const roles = ROLES_PUERTA[tipoLugarDe(p.tipo_lugar)];
   const { results } = await db
     .prepare('SELECT orden FROM direcciones_fotos WHERE direccion_id = ? ORDER BY orden')
     .bind(p.direccion_id)

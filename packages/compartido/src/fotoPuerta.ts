@@ -22,15 +22,13 @@ export const TAMANOS_FOTO_PUERTA = {
 } as const;
 
 /**
- * Casa o edificio: lo que eligió la persona; si no eligió, el apartamento escrito lo hace edificio
- * (ficha 5.1); si tampoco, todavía no se sabe (se pregunta con dos botones).
+ * C-CASA-POR-DEFECTO (Richard, 21 nov 2026): casa o edificio es lo que eligió la persona y, si no
+ * eligió, CASA («hay más casas que edificios»). Antes el apartamento escrito lo volvía edificio, y la
+ * casilla «Casa o apartamento» del punto exacto se llena también con el número de una casa: a Richard
+ * le salía edificio sin haberlo dicho. Mismo criterio en el servidor (`rutas/fotoPuerta.ts`).
  */
-export function tipoLugarDe(
-  tipoLugar: string | null | undefined,
-  apto: string | null | undefined,
-): TipoLugar | null {
-  if (tipoLugar === 'casa' || tipoLugar === 'edificio') return tipoLugar;
-  return (apto ?? '').trim() ? 'edificio' : null;
+export function tipoLugarDe(tipoLugar: string | null | undefined): TipoLugar {
+  return tipoLugar === 'edificio' ? 'edificio' : 'casa';
 }
 
 /** El rol de una foto según su orden (1..3) y el tipo de lugar; null si ese orden no existe. */

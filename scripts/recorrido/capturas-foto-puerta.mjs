@@ -410,15 +410,18 @@ async function pasada(idioma, ciudad) {
     `c ${idioma}`,
     `tras recargar, el carrito devuelve dirección «${tras.direccion}», apto «${tras.apto}» y notas`,
   );
-  // b) «Agregar fotos de mi puerta»: guarda la dirección y abre la hoja; con apartamento es edificio.
+  // b) «Agregar fotos de la entrada»: guarda la dirección y abre la hoja. C-CASA-POR-DEFECTO: aunque
+  // tenga apartamento escrito, arranca en casa; se elige «Edificio o conjunto» en el selector.
   await b.getByTestId('carrito-fotos-puerta-boton').click();
   await b.getByTestId('fotos-puerta-camara-1').waitFor({ timeout: 20_000 });
   comprobar(
-    (await b.getByTestId('fotos-puerta-tipo-casa').count()) === 0 &&
-      (await b.getByText(L.esEdificio, { exact: true }).isVisible()),
+    (await b.getByTestId('fotos-puerta-tipo-casa').getAttribute('aria-checked')) === 'true' &&
+      (await b.getByTestId('fotos-puerta-casilla-3').count()) === 0,
     `b ${idioma}`,
-    'con apartamento escrito, la hoja ya es de edificio (no pregunta casa o edificio)',
+    'sin elegir, la hoja arranca en casa aunque haya apartamento escrito',
   );
+  await b.getByTestId('fotos-puerta-tipo-edificio').click();
+  await b.getByTestId('fotos-puerta-casilla-3').waitFor({ timeout: 15_000 });
   for (const [i, titulo] of L.titulos.entries())
     comprobar(
       (await b.getByTestId(`fotos-puerta-casilla-${i + 1}`).innerText()).includes(titulo),

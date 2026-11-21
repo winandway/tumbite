@@ -43,7 +43,25 @@ describe('C-EDITAR-ES-EDITAR: la hoja de fotos no avisa afuera mientras calcula 
   });
 
   it('subir y borrar siguen avisando a la pantalla de afuera', () => {
-    const avisos = [...fuente.matchAll(/\bavisar\(tipo, /g)];
+    const avisos = [...fuente.matchAll(/\bavisar\(tipoRef\.current, /g)];
     expect(avisos.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('C-CASA-POR-DEFECTO: casa o edificio con un selector visible, casa primero', () => {
+  it('las dos opciones siempre a la vista, con su ícono, casa primero; sin el enlace «Cambiar»', () => {
+    expect(fuente).toContain('fotos-puerta-tipo-');
+    expect(fuente).not.toContain('fotos-puerta-cambiar-tipo');
+    // Nunca se queda sin tipo (antes, sin tipo salía una pregunta y, con apartamento, edificio).
+    expect(fuente).not.toMatch(/useState<TipoLugar \| null>/);
+    const casa = fuente.indexOf("'home-outline'");
+    const edificio = fuente.indexOf("'business-outline'");
+    expect(casa).toBeGreaterThan(-1);
+    expect(edificio).toBeGreaterThan(casa);
+    expect(fuente).toMatch(/\(\['casa', 'edificio'\] as const\)\.map/);
+  });
+
+  it('mirar no escribe: ya no se guarda el tipo al abrir la hoja', () => {
+    expect(fuente).not.toMatch(/Al abrir: si el tipo se dedujo/);
   });
 });

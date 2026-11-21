@@ -140,9 +140,23 @@ describe('foto de la puerta: el cliente', () => {
     expect(Number(filas?.n)).toBe(0);
   });
 
-  it('con apartamento es edificio sin preguntar; otra persona no ve ni toca la foto', async () => {
+  it('C-CASA-POR-DEFECTO: con apartamento escrito y sin elegir, sigue siendo casa (dos fotos)', async () => {
+    const { m, cliente, guardar } = await escenario();
+    const d = (await guardar({ apto: 'Casa 12' })).datos.direccion;
+    const ruta = `/datos/mis-direcciones/${d.id}/fotos`;
+    expect((await m.foto(`${ruta}/2`, cliente.token)).estado).toBe(201);
+    expect((await m.foto(`${ruta}/3`, cliente.token)).estado).toBe(422);
+  });
+
+  it('edificio elegido: tres fotos; otra persona no ve ni toca la foto', async () => {
     const { m, cliente, guardar } = await escenario();
     const d = (await guardar({ apto: 'Apto 4B' })).datos.direccion;
+    await m.llamar(
+      'PATCH',
+      `/datos/mis-direcciones/${d.id}`,
+      { tipoLugar: 'edificio' },
+      cliente.token,
+    );
     const ruta = `/datos/mis-direcciones/${d.id}/fotos`;
     expect((await m.foto(`${ruta}/3`, cliente.token)).estado).toBe(201);
     const otro = await m.cuenta('cliente');
@@ -160,6 +174,12 @@ describe('foto de la puerta: el repartidor', () => {
   it('solo el asignado y solo en camino; al entregar deja de verla', async () => {
     const { m, cliente, guardar, pedir, repartidor, ver } = await escenario();
     const d = (await guardar({ apto: 'Apto 4B' })).datos.direccion;
+    await m.llamar(
+      'PATCH',
+      `/datos/mis-direcciones/${d.id}`,
+      { tipoLugar: 'edificio' },
+      cliente.token,
+    );
     await m.foto(`/datos/mis-direcciones/${d.id}/fotos/1`, cliente.token);
     await m.foto(`/datos/mis-direcciones/${d.id}/fotos/3`, cliente.token);
     const p = await pedir({ apto: 'Apto 4B' });
@@ -257,6 +277,12 @@ describe('foto de la puerta: presupuesto de escrituras e interruptor por zona', 
   it('tres fotos escriben tres filas; mirar (cliente o repartidor) no escribe nada', async () => {
     const { m, cliente, guardar, pedir, repartidor, enCamino, ver } = await escenario();
     const d = (await guardar({ apto: 'Torre 2' })).datos.direccion;
+    await m.llamar(
+      'PATCH',
+      `/datos/mis-direcciones/${d.id}`,
+      { tipoLugar: 'edificio' },
+      cliente.token,
+    );
     const id = (await pedir({ apto: 'Torre 2' })).datos.pedidoId as string;
     const rep = await repartidor('Rita Reparto');
     await enCamino(id, rep);

@@ -27,13 +27,15 @@ describe('foto de la puerta: lógica común', () => {
     expect(rolDeOrden('edificio', 0)).toBeNull();
   });
 
-  it('el apartamento escrito lo hace edificio sin preguntar; lo elegido manda', () => {
-    expect(tipoLugarDe('', 'Apto 4B')).toBe('edificio');
-    expect(tipoLugarDe(null, '   ')).toBeNull();
-    expect(tipoLugarDe('', '')).toBeNull();
-    expect(tipoLugarDe('casa', 'Apto 4B')).toBe('casa');
-    expect(tipoLugarDe('edificio', '')).toBe('edificio');
-    expect(tipoLugarDe('otra cosa', undefined)).toBeNull();
+  it('C-CASA-POR-DEFECTO: sin elegir es casa (hay más casas que edificios); lo elegido manda', () => {
+    // Richard, 21 nov 2026: le salía «edificio» porque la casilla «Casa o apartamento» tenía texto.
+    // El apartamento escrito ya NO decide: una casa también lleva número («Casa 12»).
+    expect(tipoLugarDe('')).toBe('casa');
+    expect(tipoLugarDe(null)).toBe('casa');
+    expect(tipoLugarDe(undefined)).toBe('casa');
+    expect(tipoLugarDe('otra cosa')).toBe('casa');
+    expect(tipoLugarDe('casa')).toBe('casa');
+    expect(tipoLugarDe('edificio')).toBe('edificio');
   });
 
   it('cada casilla lleva su orden, su rol y su indicación exacta en los dos idiomas', () => {

@@ -279,10 +279,10 @@ function ContenidoFotosPuerta<F>({
   const { api } = useSesion();
   const t = textosFotoPuerta(idioma);
   const tc = textosCamara(idioma);
-  // Casa o edificio: lo guardado o, si escribió apartamento, edificio sin preguntar (ficha 5.1).
-  const [tipo, setTipo] = useState<TipoLugar | null>(() =>
-    tipoLugarDe(direccion.tipoLugar, direccion.apto),
-  );
+  // C-CASA-POR-DEFECTO: lo que eligió la persona o, si no eligió, casa (nunca se deduce del
+  // apartamento: una casa también lleva número). Mirar no escribe nada en la base.
+  const [tipo, setTipo] = useState<TipoLugar>(() => tipoLugarDe(direccion.tipoLugar));
+  const tipoRef = useRef<TipoLugar>(tipo);
   const [fotos, setFotosEstado] = useState<number[]>(() => direccion.fotos ?? []);
   // Lo último que se sabe de las fotos, sin esperar al siguiente pintado: dos subidas seguidas no se
   // pisan, y el aviso a la pantalla de afuera va FUERA del cálculo del estado (C-EDITAR-ES-EDITAR:
@@ -323,6 +323,10 @@ function ContenidoFotosPuerta<F>({
         return;
       setErrorTipo('');
       setGuardandoTipo(true);
+      // Las casillas cambian en el momento; si el servidor no lo guarda, se vuelve a lo de antes.
+      const antes = tipoRef.current;
+      tipoRef.current = nuevo;
+      setTipo(nuevo);
       try {
         const r = await api.pedir<{ ok: boolean; tipoLugar: TipoLugar; fotos: number[] }>(
           'PATCH',
@@ -332,41 +336,22 @@ function ContenidoFotosPuerta<F>({
         if (!vivo.current) return;
         const tl = r.tipoLugar === 'casa' || r.tipoLugar === 'edificio' ? r.tipoLugar : nuevo;
         const quedan = [...(r.fotos ?? [])].sort((a, b) => a - b);
+        tipoRef.current = tl;
         setTipo(tl);
         setFotos(quedan);
         avisar(tl, quedan);
         setCasillas((c) => new Map([...c].filter(([o]) => quedan.includes(o))));
       } catch (x) {
-        if (vivo.current) setErrorTipo(x instanceof Error ? x.message : String(x));
+        if (!vivo.current) return;
+        tipoRef.current = antes;
+        setTipo(antes);
+        setErrorTipo(x instanceof Error ? x.message : String(x));
       } finally {
         if (vivo.current) setGuardandoTipo(false);
       }
     },
     [api, avisar, id, setFotos, t],
   );
-
-  // Al abrir: si el tipo se dedujo del apartamento y no estaba guardado, se guarda (PATCH).
-  useEffect(() => {
-    const guardado = direccion.tipoLugar === 'casa' || direccion.tipoLugar === 'edificio';
-    const deducido = tipoLugarDe(direccion.tipoLugar, direccion.apto);
-    if (guardado || !deducido) return;
-    api
-      .pedir<{ ok: boolean; tipoLugar: TipoLugar; fotos: number[] }>(
-        'PATCH',
-        `/datos/mis-direcciones/${encodeURIComponent(id)}`,
-        { tipoLugar: deducido },
-      )
-      .then((r) => {
-        if (!vivo.current) return;
-        const quedan = [...(r.fotos ?? [])].sort((a, b) => a - b);
-        setFotos(quedan);
-        avisar(deducido, quedan);
-      })
-      // Si no se pudo guardar, la hoja sigue igual: se vuelve a guardar al cambiarlo o al reabrir.
-      .catch((x: unknown) => console.warn('foto de la puerta: no se guardó el tipo de lugar', x));
-    // Solo una vez, al abrir la hoja para esta dirección.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Las miniaturas de las fotos que ya están en el servidor.
   useEffect(() => {
@@ -406,7 +391,7 @@ function ContenidoFotosPuerta<F>({
       const antes = fotosRef.current;
       const n = antes.includes(orden) ? antes : [...antes, orden].sort((a, b) => a - b);
       setFotos(n);
-      avisar(tipo, n);
+      avisar(tipoRef.current, n);
     } catch (x) {
       if (!vivo.current) return;
       fijar(orden, {
@@ -437,7 +422,7 @@ function ContenidoFotosPuerta<F>({
       fijar(orden, null);
       const n = fotosRef.current.filter((o) => o !== orden);
       setFotos(n);
-      avisar(tipo, n);
+      avisar(tipoRef.current, n);
     } catch (x) {
       if (vivo.current)
         fijar(orden, { subiendo: false, error: x instanceof Error ? x.message : String(x) });
@@ -448,224 +433,219 @@ function ContenidoFotosPuerta<F>({
 
   const cuerpo = (
     <>
-      {!tipo ? (
-        <View style={{ gap: 12 }}>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: C.secundario }}>{t.pregunta}</Text>
-          {(['casa', 'edificio'] as const).map((op) => (
-            <Pressable
-              key={op}
-              onPress={() => void cambiarTipo(op)}
-              disabled={guardandoTipo}
-              accessibilityRole="button"
-              accessibilityLabel={op === 'casa' ? t.casa : t.edificio}
-              testID={`fotos-puerta-tipo-${op}`}
-              style={({ pressed }) => ({
-                minHeight: 64,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: '#2a2a2a',
-                paddingHorizontal: 14,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                backgroundColor: pressed ? '#F6F6F6' : '#fff',
-                opacity: guardandoTipo ? 0.6 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              })}
+      {/* C-CASA-POR-DEFECTO (Richard, 21 nov 2026): casa o edificio con dos opciones a la vista,
+          cada una con su ícono, casa primero y marcada si no se eligió otra cosa. Nada de enlace
+          pequeño «Cambiar». Al tocar, las casillas cambian en el momento. */}
+      <View style={{ gap: 10 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: C.secundario }}>{t.pregunta}</Text>
+        <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: 10 }}>
+          {(['casa', 'edificio'] as const).map((op) => {
+            const activo = tipo === op;
+            const nombre = op === 'casa' ? t.casa : t.edificio;
+            return (
+              <Pressable
+                key={op}
+                onPress={() => {
+                  if (!activo)
+                    void cambiarTipo(
+                      op,
+                      fotosRef.current.some((o) => o > 1),
+                    );
+                }}
+                disabled={guardandoTipo}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: activo, disabled: guardandoTipo }}
+                aria-checked={activo}
+                accessibilityLabel={nombre}
+                testID={`fotos-puerta-tipo-${op}`}
+                style={({ pressed }) => ({
+                  flex: 1,
+                  minHeight: 92,
+                  borderRadius: 14,
+                  borderWidth: activo ? 1.5 : 1,
+                  borderColor: activo ? C.primario : '#D6D8DC',
+                  backgroundColor: activo ? '#FDECEE' : pressed ? '#F6F6F6' : '#fff',
+                  paddingHorizontal: 10,
+                  paddingVertical: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                })}
+              >
+                <View
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                    backgroundColor: activo ? C.primario : '#F6F6F6',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icono
+                    nombre={op === 'casa' ? 'home-outline' : 'business-outline'}
+                    tamano={22}
+                    color={activo ? '#FFFFFF' : C.secundario}
+                  />
+                </View>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    color: activo ? C.primario : C.secundario,
+                  }}
+                >
+                  {nombre}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        {errorTipo ? <Text style={{ color: '#c4001d' }}>{errorTipo}</Text> : null}
+      </View>
+      {/* Indicaciones comunes y el aviso de privacidad, antes de los botones. */}
+      <View style={{ gap: 6, backgroundColor: '#F6F6F6', borderRadius: 12, padding: 12 }}>
+        {t.indicaciones.map((x) => (
+          <View key={x} style={{ flexDirection: 'row', gap: 8 }}>
+            <Text style={{ color: C.secundario }}>•</Text>
+            <Text style={{ flex: 1, color: C.secundario }}>{x}</Text>
+          </View>
+        ))}
+      </View>
+      <Text
+        testID="fotos-puerta-privacidad"
+        style={{ color: '#666B73', fontSize: 13, lineHeight: 18 }}
+      >
+        {t.privacidad}
+      </Text>
+      {casillasPuerta(tipo, idioma).map((c) => {
+        const est = casillas.get(c.orden) ?? {};
+        const tiene = fotos.includes(c.orden);
+        const conBotones = !tiene || est.cambiando || !!est.pendiente;
+        return (
+          <View
+            key={c.orden}
+            testID={`fotos-puerta-casilla-${c.orden}`}
+            style={{
+              borderWidth: 1,
+              borderColor: '#2a2a2a',
+              borderRadius: 14,
+              padding: 14,
+              gap: 10,
+              backgroundColor: '#fff',
+              zIndex: 10 - c.orden,
+            }}
+          >
+            {/* En la web cada vista abre su propia capa (z-index 0): sin subir esta fila,
+                      la miniatura de abajo tapaba el menú abierto y «Borrar foto» no se podía
+                      tocar (visto en el recorrido del 15 nov 2026). */}
+            <View
+              testID={`fotos-puerta-cabecera-${c.orden}`}
+              style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, zIndex: 2 }}
             >
               <View
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: '#FDECEE',
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
+                  backgroundColor: C.secundario,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icono
-                  nombre={op === 'casa' ? 'home-outline' : 'business-outline'}
-                  tamano={20}
-                  color={C.primario}
+                <Text style={{ color: '#fff', fontWeight: '700' }}>{c.orden}</Text>
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
+                  {c.titulo}
+                </Text>
+                <Text style={{ color: '#4A4F57', lineHeight: 20 }}>{c.indicacion}</Text>
+              </View>
+              {tiene && !est.subiendo ? (
+                <MenuTresPuntos
+                  etiqueta={`${t.masOpciones}: ${c.titulo}`}
+                  testID={`fotos-puerta-menu-${c.orden}`}
+                  opciones={[
+                    {
+                      texto: t.cambiarFoto,
+                      alTocar: () => fijar(c.orden, { cambiando: true }),
+                      testID: `fotos-puerta-cambiar-${c.orden}`,
+                    },
+                    {
+                      texto: t.borrarFoto,
+                      alTocar: () => void borrar(c.orden),
+                      peligro: true,
+                      testID: `fotos-puerta-borrar-${c.orden}`,
+                    },
+                  ]}
                 />
-              </View>
-              <Text style={{ flex: 1, fontSize: 17, fontWeight: '700', color: C.secundario }}>
-                {op === 'casa' ? t.casa : t.edificio}
-              </Text>
-              <Icono nombre="chevron-forward" tamano={18} color="#666B73" />
-            </Pressable>
-          ))}
-          {guardandoTipo ? <ActivityIndicator color={C.primario} /> : null}
-          {errorTipo ? <Text style={{ color: '#c4001d' }}>{errorTipo}</Text> : null}
-        </View>
-      ) : (
-        <>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ flex: 1, color: '#666B73', fontWeight: '600' }}>
-              {tipo === 'casa' ? t.esCasa : t.esEdificio}
-            </Text>
-            <Pressable
-              onPress={() =>
-                void cambiarTipo(
-                  tipo === 'casa' ? 'edificio' : 'casa',
-                  fotos.some((o) => o > 1),
-                )
-              }
-              disabled={guardandoTipo}
-              accessibilityRole="button"
-              accessibilityLabel={`${t.cambiar}: ${tipo === 'casa' ? t.edificio : t.casa}`}
-              hitSlop={8}
-              testID="fotos-puerta-cambiar-tipo"
-            >
-              <Text style={{ color: C.secundario, textDecorationLine: 'underline' }}>
-                {t.cambiar}
-              </Text>
-            </Pressable>
-          </View>
-          {errorTipo ? <Text style={{ color: '#c4001d' }}>{errorTipo}</Text> : null}
-          {/* Indicaciones comunes y el aviso de privacidad, antes de los botones. */}
-          <View style={{ gap: 6, backgroundColor: '#F6F6F6', borderRadius: 12, padding: 12 }}>
-            {t.indicaciones.map((x) => (
-              <View key={x} style={{ flexDirection: 'row', gap: 8 }}>
-                <Text style={{ color: C.secundario }}>•</Text>
-                <Text style={{ flex: 1, color: C.secundario }}>{x}</Text>
-              </View>
-            ))}
-          </View>
-          <Text
-            testID="fotos-puerta-privacidad"
-            style={{ color: '#666B73', fontSize: 13, lineHeight: 18 }}
-          >
-            {t.privacidad}
-          </Text>
-          {casillasPuerta(tipo, idioma).map((c) => {
-            const est = casillas.get(c.orden) ?? {};
-            const tiene = fotos.includes(c.orden);
-            const conBotones = !tiene || est.cambiando || !!est.pendiente;
-            return (
-              <View
-                key={c.orden}
-                testID={`fotos-puerta-casilla-${c.orden}`}
-                style={{
-                  borderWidth: 1,
-                  borderColor: '#2a2a2a',
-                  borderRadius: 14,
-                  padding: 14,
-                  gap: 10,
-                  backgroundColor: '#fff',
-                  zIndex: 10 - c.orden,
-                }}
-              >
-                {/* En la web cada vista abre su propia capa (z-index 0): sin subir esta fila,
-                      la miniatura de abajo tapaba el menú abierto y «Borrar foto» no se podía
-                      tocar (visto en el recorrido del 15 nov 2026). */}
-                <View
-                  testID={`fotos-puerta-cabecera-${c.orden}`}
-                  style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, zIndex: 2 }}
-                >
-                  <View
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 13,
-                      backgroundColor: C.secundario,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: '700' }}>{c.orden}</Text>
-                  </View>
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
-                      {c.titulo}
+              ) : null}
+            </View>
+            {est.uri ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Image
+                  source={{ uri: est.uri }}
+                  accessibilityLabel={c.titulo}
+                  style={{
+                    width: 120,
+                    height: 90,
+                    borderRadius: 10,
+                    backgroundColor: '#F6F6F6',
+                  }}
+                  resizeMode="cover"
+                />
+                <View style={{ flex: 1 }}>
+                  {est.subiendo ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <ActivityIndicator color={C.primario} />
+                      <Text style={{ color: '#666B73' }}>{t.subiendo}</Text>
+                    </View>
+                  ) : tiene && !est.pendiente ? (
+                    <Text
+                      testID={`fotos-puerta-guardada-${c.orden}`}
+                      style={{ color: C.exito, fontWeight: '700' }}
+                    >
+                      {t.guardada}
                     </Text>
-                    <Text style={{ color: '#4A4F57', lineHeight: 20 }}>{c.indicacion}</Text>
-                  </View>
-                  {tiene && !est.subiendo ? (
-                    <MenuTresPuntos
-                      etiqueta={`${t.masOpciones}: ${c.titulo}`}
-                      testID={`fotos-puerta-menu-${c.orden}`}
-                      opciones={[
-                        {
-                          texto: t.cambiarFoto,
-                          alTocar: () => fijar(c.orden, { cambiando: true }),
-                          testID: `fotos-puerta-cambiar-${c.orden}`,
-                        },
-                        {
-                          texto: t.borrarFoto,
-                          alTocar: () => void borrar(c.orden),
-                          peligro: true,
-                          testID: `fotos-puerta-borrar-${c.orden}`,
-                        },
-                      ]}
-                    />
                   ) : null}
                 </View>
-                {est.uri ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Image
-                      source={{ uri: est.uri }}
-                      accessibilityLabel={c.titulo}
-                      style={{
-                        width: 120,
-                        height: 90,
-                        borderRadius: 10,
-                        backgroundColor: '#F6F6F6',
-                      }}
-                      resizeMode="cover"
-                    />
-                    <View style={{ flex: 1 }}>
-                      {est.subiendo ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <ActivityIndicator color={C.primario} />
-                          <Text style={{ color: '#666B73' }}>{t.subiendo}</Text>
-                        </View>
-                      ) : tiene && !est.pendiente ? (
-                        <Text
-                          testID={`fotos-puerta-guardada-${c.orden}`}
-                          style={{ color: C.exito, fontWeight: '700' }}
-                        >
-                          {t.guardada}
-                        </Text>
-                      ) : null}
-                    </View>
-                  </View>
-                ) : null}
-                {est.error ? (
-                  <Text style={{ color: '#c4001d' }} accessibilityLiveRegion="polite">
-                    {est.error}
-                  </Text>
-                ) : null}
-                {est.pendiente && !est.subiendo ? (
-                  <BotonFoto
-                    texto={t.reintentar}
-                    principal
-                    alTocar={() => est.pendiente && void subir(c.orden, est.pendiente)}
-                    testID={`fotos-puerta-reintentar-${c.orden}`}
-                  />
-                ) : null}
-                {conBotones ? (
-                  <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <BotonFoto
-                      texto={tc.camara}
-                      principal={!est.pendiente}
-                      deshabilitado={est.subiendo}
-                      alTocar={() => void tomar(c.orden, 'camara')}
-                      testID={`fotos-puerta-camara-${c.orden}`}
-                    />
-                    <BotonFoto
-                      texto={tc.archivos}
-                      deshabilitado={est.subiendo}
-                      alTocar={() => void tomar(c.orden, 'archivos')}
-                      testID={`fotos-puerta-archivos-${c.orden}`}
-                    />
-                  </View>
-                ) : null}
               </View>
-            );
-          })}
-        </>
-      )}
+            ) : null}
+            {est.error ? (
+              <Text style={{ color: '#c4001d' }} accessibilityLiveRegion="polite">
+                {est.error}
+              </Text>
+            ) : null}
+            {est.pendiente && !est.subiendo ? (
+              <BotonFoto
+                texto={t.reintentar}
+                principal
+                alTocar={() => est.pendiente && void subir(c.orden, est.pendiente)}
+                testID={`fotos-puerta-reintentar-${c.orden}`}
+              />
+            ) : null}
+            {conBotones ? (
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <BotonFoto
+                  texto={tc.camara}
+                  principal={!est.pendiente}
+                  deshabilitado={est.subiendo}
+                  alTocar={() => void tomar(c.orden, 'camara')}
+                  testID={`fotos-puerta-camara-${c.orden}`}
+                />
+                <BotonFoto
+                  texto={tc.archivos}
+                  deshabilitado={est.subiendo}
+                  alTocar={() => void tomar(c.orden, 'archivos')}
+                  testID={`fotos-puerta-archivos-${c.orden}`}
+                />
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
     </>
   );
 

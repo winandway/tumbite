@@ -1077,7 +1077,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Guarda tu dirección en «Entregar en». Al guardarla se abre su hoja; baja hasta el paso 3, «Fotos de la entrada». Si ahora no puedes, toca «Ahora no». Desde el carrito, toca «Agregar fotos de la entrada».",
-   "Elige «Casa» o «Edificio o conjunto». Si escribiste apartamento, piso o torre, ya sabemos que es un edificio.",
+   "Arriba de las fotos ya está marcada «Casa». Si vives en un edificio o conjunto, toca «Edificio o conjunto»: las casillas cambian en el momento.",
    "En cada casilla toca «Tomar foto» o «Subir desde archivos». Sin personas, sin placas de carros y con la puerta en el centro; de día es mejor.",
    "Cada foto se guarda al instante: verás «Foto guardada». Si además cambiaste el nombre o los datos, toca «Guardar cambios».",
    "Para cambiarlas o borrarlas: en «Entregar en», toca los tres puntos de la dirección y luego «Fotos de la entrada»; o en el carrito, «Ver o cambiar las fotos». Cada foto tiene sus tres puntos con «Cambiar foto» y «Borrar foto»."
@@ -3588,7 +3588,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Save your address under “Deliver to.” When you save it, its sheet opens; scroll down to step 3, “Entrance photos.” If now isn’t a good time, tap “Not now.” From your cart, tap “Add entrance photos.”",
-   "Choose “House” or “Building or complex.” If you entered an apartment, floor or unit, we already know it’s a building.",
+   "Above the photos, “House” is already selected. If you live in a building or complex, tap “Building or complex”: the photo boxes change right away.",
    "In each box, tap “Take photo” or “Upload from files.” No people, no license plates, and the door in the center; daylight works best.",
    "Each photo saves right away: you’ll see “Photo saved.” If you also changed the name or details, tap “Save changes.”",
    "To change or delete them: under “Deliver to,” tap the address’s three dots and then “Entrance photos”; or in your cart, “View or change the photos.” Each photo has its own three dots with “Change photo” and “Delete photo.”"

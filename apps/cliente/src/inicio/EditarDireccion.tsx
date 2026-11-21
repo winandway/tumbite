@@ -149,6 +149,7 @@ export function EditarDireccion({
                   onPress={() => b.setValores(elegirTipo(v, x, idioma))}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: activo }}
+                  aria-checked={activo}
                   accessibilityLabel={nombre}
                   testID={`editar-direccion-tipo-${x}`}
                   style={({ pressed }) => ({
