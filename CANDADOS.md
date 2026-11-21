@@ -3874,6 +3874,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
 
+## C-BORRADO-PAPELES (20 nov 2026, bloqueo B1 del auditor de tiendas) — todos los países
+
+- **Qué pasaba:** borrar la cuenta no borraba nada del asistente de papeles. Quedaban para siempre las fotos del documento, la licencia, el seguro y la cara en el almacén (`verificacion/<id>/`), las filas de `verificacion_fotos` (con lo que la IA leyó: nombre, número, vencimiento), `verificacion_caras`, `verificacion_avisos`, `plazo_papeles` y el texto del perfil que ven los pasajeros. El borrado solo conocía lo viejo (`kyc/`). Con eso Google y Apple rechazan la app (borrado de cuenta incompleto).
+- **Arreglo:** `apps/servidor/src/borrarCuenta.ts` borra esas cuatro tablas, vacía `repartidores.idiomas_perfil` y `dato_perfil`, quita el prefijo `verificacion/<id>/` del almacén y borra la invitación de líder pendiente que llevara su celular o correo (C-LIDER-INVITADO). Vale para cualquier tipo de cuenta.
+- **Candado:** `apps/servidor/src/borradoPapeles.test.ts`: siembra fotos y filas de dos conductores, borra una cuenta y exige almacén y tablas vacíos para ella e intactos para la otra (visto en rojo antes del arreglo); y una segunda prueba que recorre `COLUMNAS_DEL_ESQUEMA` y falla si una tabla `verificacion_*` o `plazo_*` con `conductor_id` no está en el borrado.
+- **Punto abierto (dicho claro):** el auditor pidió el candado para TODO el esquema. Hay 85 tablas con `usuario_id`, `conductor_id`, `cliente_id` o `repartidor_id` que el borrado no nombra; muchas se conservan a propósito (libro de dinero, retiros, registros del equipo) y hay que clasificarlas una por una con su motivo. Ese candado completo queda en la fila del relevo, no está hecho.
+
 ## C-SEMAFORO-REPUBLICA y C-RECORRIDO-SUELTO (20 nov 2026) — todos los países
 
 - **Qué pasó:** con el semáforo insistiendo (C-SEMAFORO-INSISTE), el sitio de pruebas volvió a quedarse quince minutos en «subiendo el paquete» durante la publicación de `6f04731`. Los empujones (commits vacíos) no lo sacaban. Lo que lo destrabó, las dos veces, fue pedirle a la plataforma «republicar» por su API (`POST …/api/sitio/v1/republicar` con la llave del sitio): publicó en segundos.

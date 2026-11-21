@@ -332,6 +332,23 @@ export async function borrarCuenta(
     // Verificación de identidad y datos del vehículo, licencia y seguro: se borran con la cuenta.
     db.prepare('DELETE FROM kyc WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM repartidor_datos WHERE usuario_id = ?').bind(u.id),
+    // C-BORRADO-PAPELES (20 nov 2026): todo lo del asistente de papeles. Las fotos tienen lo que la
+    // IA leyó del documento (nombre, número, vencimiento); la cara, su comparación; y el perfil que
+    // ven los pasajeros, lo que el conductor escribió de sí mismo.
+    db.prepare('DELETE FROM verificacion_fotos WHERE conductor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM verificacion_caras WHERE conductor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM verificacion_avisos WHERE conductor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM plazo_papeles WHERE conductor_id = ?').bind(u.id),
+    db
+      .prepare("UPDATE repartidores SET idiomas_perfil = '', dato_perfil = '' WHERE usuario_id = ?")
+      .bind(u.id),
+    // C-LIDER-INVITADO: la línea que esperaba a esta persona como líder (lleva su celular o correo).
+    db
+      .prepare(
+        `DELETE FROM invitaciones_lider WHERE estado = 'pendiente'
+           AND (lider_correo = ?1 OR (?2 <> '' AND lider_telefono_canonico = ?2))`,
+      )
+      .bind(String(u.correo).toLowerCase(), canon?.telefono_canonico ?? ''),
     // C-BORRADO-VEHICULO (20 oct 2026): los documentos del vehículo (registro, seguro, fotos de la
     // placa) también son datos personales: se quita el archivo y queda la fila sin él.
     db
@@ -347,6 +364,8 @@ export async function borrarCuenta(
       `vehiculos/${u.id}/`,
       `casco/${u.id}/`,
       `conductores/${u.id}/`,
+      // C-BORRADO-PAPELES: las fotos del asistente (documento, licencia, seguro y cara).
+      `verificacion/${u.id}/`,
     ]) {
       let cursor: string | undefined;
       do {
