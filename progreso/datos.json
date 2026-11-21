@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-21T16:45:00Z",
+  "actualizado": "2026-11-21T23:30:00Z",
   "version": "fe71f3f",
   "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-21",
+      "titulo": "Cuentas de prueba separadas de las reales, y Carro en Novi solo para pruebas",
+      "texto": "El panel ya separa las cuentas de prueba de las reales: en Repartidores, Clientes, Restaurantes y Líneas hay un filtro «Cuentas» que arranca en «Reales» y se recuerda, y las de prueba llevan la etiqueta «Prueba». El equipo marca o quita la marca desde los tres puntos, y queda registrado. Los reportes y los conteos ya no cuentan las cuentas de prueba. Carro quedó encendido en Novi solo para las cuentas de prueba, para la prueba en vivo: el público de Novi sigue sin verlo. Un viaje completo en efectivo con esas cuentas salió bien de punta a punta. Además, el segundo contacto de emergencia de una línea ya se corrige desde el panel."
+    },
     {
       "fecha": "2026-11-21",
       "titulo": "Fotos de la entrada para mototaxi y viajes, permiso antes del chat de ayuda y «Ver video»",
