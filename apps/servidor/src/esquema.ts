@@ -28,6 +28,10 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-CUENTA-PRUEBA (21 nov 2026): la marca única de «cuenta de prueba». La pone solo el equipo desde el
+  // panel (con auditoría). Habilita los servicios encendidos solo para pruebas en una ciudad y deja la
+  // cuenta fuera de reportes, conteos y registros nuevos.
+  ['usuarios', 'es_prueba', 'INTEGER NOT NULL DEFAULT 0'],
   // C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)): el permiso explícito de la persona para que su
   // chat de ayuda se procese con la IA de un proveedor. NULL = no ha contestado; 1 = sí; 0 = no.
   ['camila_personas', 'permiso_ia', 'INTEGER'],

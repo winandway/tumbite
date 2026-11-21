@@ -2216,6 +2216,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "creado_en"
   ],
+  "servicios_prueba": [
+    "servicio_id",
+    "zona_id",
+    "creado_por",
+    "creado_en"
+  ],
   "reputacion_diaria": [
     "repartidor_id",
     "fecha",

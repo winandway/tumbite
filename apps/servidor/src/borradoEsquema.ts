@@ -86,6 +86,7 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   servicios: 'sin_persona',
   servicios_implementados: 'sin_persona',
   servicios_piloto: 'sin_persona',
+  servicios_prueba: 'sin_persona',
   servicios_zona: 'sin_persona',
   simulador_sesiones: 'sin_persona',
   tareas_programadas: 'sin_persona',

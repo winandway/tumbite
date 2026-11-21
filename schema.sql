@@ -3491,6 +3491,15 @@ CREATE TABLE IF NOT EXISTS servicios_piloto (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (servicio_id, zona_id)
 );
+-- C-CUENTA-PRUEBA (21 nov 2026): un servicio encendido en una ciudad SOLO para las cuentas marcadas de
+-- prueba (usuarios.es_prueba). El público de esa ciudad sigue sin verlo ni poder pedirlo.
+CREATE TABLE IF NOT EXISTS servicios_prueba (
+  servicio_id TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  creado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (servicio_id, zona_id)
+);
 
 -- ───────── Divoox Rewards · Fase 2 · MODO SOMBRA (30 oct 2026) ─────────
 -- Tablas nuevas e independientes: nada del despacho, la billetera, los puntos ni el destacado las lee.

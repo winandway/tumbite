@@ -179,4 +179,5 @@ export const MENSAJES_EN_EQUIPO: [string, string][] = [
     'Ya hay un cobro de reemplazo de este pago, hecho o en curso: no se puede cerrar sin cobro. Vuelve a abrir la ficha.',
     'There’s already a replacement charge for this payment, done or in progress: it can’t be closed without a charge. Reopen the order.',
   ],
+  ['Esa cuenta ya no existe.', 'That account no longer exists.'],
 ];

@@ -50,6 +50,7 @@ import { cancelaciones } from './rutas/cancelaciones';
 import { ciudadesWeb } from './rutas/ciudadesWeb';
 import { equipo, permisosInternos } from './rutas/equipo';
 import { piloto } from './rutas/piloto';
+import { cuentaPrueba } from './rutas/cuentaPrueba';
 import { informes } from './rutas/informes';
 import { tableroPanel } from './rutas/tableroPanel';
 import { turnos } from './rutas/turnos';
@@ -789,6 +790,7 @@ app.route('/datos', fichaViajeRutas);
 app.route('/datos', rastreoVivoRutas);
 app.route('/datos', preferenciasInternas);
 app.route('/datos', piloto);
+app.route('/datos', cuentaPrueba);
 app.route('/datos', informes);
 // C-PANEL-ARMAZON: lecturas de los tableros del panel web (nunca escriben).
 app.route('/datos', tableroPanel);

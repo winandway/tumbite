@@ -16,6 +16,7 @@ import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { SERVICIOS_EN_PRUEBA, SERVICIOS_PILOTO, serviciosImplementados } from '../esquema';
 import { esParticipante } from './piloto';
+import { esCuentaPrueba } from './cuentaPrueba';
 import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import type { Entorno } from '@tumbite/compartido';
@@ -133,6 +134,8 @@ export type Servicio = {
   activo_hasta: string | null;
   implementado: number;
   piloto: number;
+  /** C-CUENTA-PRUEBA: encendido en esta zona solo para las cuentas marcadas de prueba. */
+  solo_prueba: number;
   /** C-SERVICIO-SIN-TARIFA: hay tarifa activa de este servicio en la zona. */
   con_tarifa: number;
 };
@@ -151,13 +154,14 @@ export async function catalogo(db: Db, zonaId: string | null): Promise<Servicio[
       `SELECT s.*, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
               EXISTS (SELECT 1 FROM servicios_implementados si WHERE si.servicio_id = s.id) AS implementado,
               EXISTS (SELECT 1 FROM servicios_piloto sp WHERE sp.servicio_id = s.id AND sp.zona_id = ?) AS piloto,
+              EXISTS (SELECT 1 FROM servicios_prueba sx WHERE sx.servicio_id = s.id AND sx.zona_id = ?) AS solo_prueba,
               EXISTS (SELECT 1 FROM tarifas_viaje t WHERE t.servicio_id = s.id AND t.zona_id = ? AND t.activa = 1) AS con_tarifa
          FROM servicios s
          LEFT JOIN servicios_zona sz ON sz.servicio_id = s.id AND sz.zona_id = ?
         WHERE s.estado != 'oculto'
         ORDER BY s.orden, s.id`,
     )
-    .bind(zonaId ?? '', zonaId ?? '', zonaId ?? '')
+    .bind(zonaId ?? '', zonaId ?? '', zonaId ?? '', zonaId ?? '')
     .all<Servicio>();
   return results;
 }
@@ -167,8 +171,9 @@ function estadoEfectivo(
   s: Servicio,
   ahora: string,
   participante = false,
+  prueba = false,
 ): 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible_zona' {
-  const e = estadoSinTarifa(s, ahora, participante);
+  const e = estadoSinTarifa(s, ahora, participante, prueba);
   // C-SERVICIO-SIN-TARIFA: encendido pero sin precio en la ciudad = no se ofrece.
   if (e === 'disponible' && SERVICIOS_CON_TARIFA.has(s.id) && !s.con_tarifa)
     return 'no_disponible_zona';
@@ -178,8 +183,12 @@ function estadoSinTarifa(
   s: Servicio,
   ahora: string,
   participante: boolean,
+  prueba = false,
 ): 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible_zona' {
   if (s.estado === 'suspendido') return 'suspendido';
+  // C-CUENTA-PRUEBA: encendido en esta ciudad solo para cuentas de prueba (y ya construido).
+  if (prueba && s.solo_prueba && s.implementado && s.zona_estado !== 'suspendido')
+    return 'disponible';
   // C-PILOTO-SERVICIOS: encendido «solo piloto» en esta ciudad, para los participantes.
   if (participante && s.piloto && SERVICIOS_PILOTO.has(s.id) && s.zona_estado !== 'suspendido')
     return 'disponible';
@@ -203,8 +212,9 @@ export async function estadoServicioEnZona(
 ) {
   const s = (await catalogo(db, zonaId)).find((x) => x.id === servicioId);
   const participante = usuarioId ? await esParticipante(db, usuarioId) : false;
+  const prueba = usuarioId ? await esCuentaPrueba(db, usuarioId) : false;
   // La cotización mira la tarifa aparte, con su propio mensaje («todavía no tiene precio»).
-  return s ? estadoSinTarifa(s, ahoraSql(), participante) : 'no_disponible_zona';
+  return s ? estadoSinTarifa(s, ahoraSql(), participante, prueba) : 'no_disponible_zona';
 }
 const ACCION = new Map([
   ['disponible', 'abrir'],
@@ -245,8 +255,9 @@ servicios.get('/servicios', async (c) => {
   const ingles = (c.req.header('x-idioma') ?? '').startsWith('en');
   const ahora = ahoraSql();
   const participante = u ? await esParticipante(db, u.id) : false;
+  const prueba = u ? await esCuentaPrueba(db, u.id) : false;
   const lista = (await catalogo(db, zona?.id ?? null)).map((s) => {
-    let estado: string = estadoEfectivo(s, ahora, participante);
+    let estado: string = estadoEfectivo(s, ahora, participante, prueba);
     let accion = ACCION.get(estado) ?? 'muy_pronto';
     if (estado === 'disponible' && version < versionNum(s.version_min_cliente))
       accion = 'actualizar_app';
