@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-21T01:00:00Z",
+  "actualizado": "2026-11-21T15:00:00Z",
   "version": "fe71f3f",
-  "ahora": "21 nov (madrugada): el asistente de papeles de Divoox Driver ya está en producción, junto con el perfil del conductor («Así te ven los pasajeros» y la tarjeta del conductor en el viaje), la pantalla «Revisa tus datos» y las fotos de verificación solo con cámara. Para El Vigía quedó también: invitar al líder de una línea desde el panel aunque todavía no tenga cuenta, el tope por número de personas del cupón, la página pública de condiciones de la promoción, las guías sin «antecedentes» y Camila al día con el plazo y «Mi línea». Compilaciones nuevas en prueba interna de Google Play (Driver 65, clientes 57) y en TestFlight (Driver 51, clientes 63); nada fue a revisión. El auditor de tiendas pidió cerrar cinco puntos de privacidad en Driver antes de enviarlo: borrar la cuenta borra las fotos de los papeles, permiso explícito antes de analizar las fotos con inteligencia artificial y la política corregida ya están hechos y publicándose. Las pruebas automáticas ya no se frenan por el contador diario del sitio de pruebas: ahora solo avisa.",
+  "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
     {
       "quien": "ia",
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-21",
+      "titulo": "Deuda del envío a Google cerrada y próxima versión de las apps lista",
+      "texto": "Driver, clientes y Restaurants ya están aprobadas y publicadas en Google Play. Borrar la cuenta se comprueba contra las 313 tablas de la base y limpia lo que quedaba (mensajes a soporte, antecedentes, placa del vehículo, contactos de la línea). Medido en producción: ninguna foto de cuentas borradas quedó guardada. Las páginas del sitio bajaron de 42 a 22 megas. La próxima versión de Driver y de clientes ya no pide la huella, funciona en tabletas sin aviso de Google y no nombra ciudades; se compila una sola vez, con lo que salga de la prueba en vivo."
+    },
     {
       "fecha": "2026-11-21",
       "titulo": "Asistente de Driver en producción, paquete de El Vigía y privacidad que pidió el auditor",
