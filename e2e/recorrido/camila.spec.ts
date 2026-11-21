@@ -1,9 +1,22 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import type { Page } from '@playwright/test';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
 import { DOCS_PUBLICOS } from '../../apps/servidor/src/camila/docsPublicos';
+
+/**
+ * C-PERMISO-IA-CHAT: quien abre el chat por primera vez contesta el permiso antes de escribir (aquí,
+ * que sí: estas pruebas describen la conversación con la asistente). Si ya lo contestó, no hay aviso.
+ */
+async function darPermisoIa(p: Page) {
+  const si = p.getByTestId('chat-permiso-ia-si');
+  await si.waitFor({ timeout: 8_000 }).catch(() => null);
+  if ((await si.count()) === 0) return;
+  await si.click();
+  await p.getByTestId('chat-permiso-ia').waitFor({ state: 'hidden', timeout: 15_000 });
+}
 
 /**
  * C-CAMILA-CHAT y C-CAMILA-BUZON (17 nov 2026) en el navegador, de punta a punta y solo en esta
@@ -184,6 +197,7 @@ for (const idioma of ['es', 'en'] as const) {
     await expect(pr.getByTestId('ayuda-driver')).toBeVisible({ timeout: 30_000 });
     if (CAPTURAS) await pr.screenshot({ path: join(CARPETA, `camila-driver-ayuda-${idioma}.png`) });
     await pr.getByTestId('ayuda-hablar').click();
+    await darPermisoIa(pr);
     await expect(pr.getByTestId('chat-soporte-app')).toBeVisible({ timeout: 30_000 });
     // Camila ya le escribió (la bienvenida de líder y el aviso del registro): se cuenta desde aquí.
     await pr.waitForTimeout(1500);
@@ -270,6 +284,7 @@ for (const idioma of ['es', 'en'] as const) {
     const pw = await ctxWeb.newPage();
     await pw.goto(`${pre}/how-it-works`);
     await pw.getByRole('button', { name: C.textos.burbuja }).click();
+    await darPermisoIa(pw);
     const chat = pw.getByTestId('chat-soporte');
     await expect(chat).toBeVisible();
     const escribir = async (texto: string, camilas: number) => {
@@ -330,6 +345,7 @@ for (const idioma of ['es', 'en'] as const) {
     // La visita ve la respuesta del equipo en su chat, con el aviso.
     await pw.reload();
     await pw.getByRole('button', { name: C.textos.burbuja }).click();
+    await darPermisoIa(pw);
     await expect(pw.getByTestId('chat-equipo-atiende')).toBeVisible({ timeout: 30_000 });
     await expect(pw.getByTestId('chat-mensaje-equipo')).toContainText(C.respuestaEquipo);
     if (CAPTURAS) await pw.screenshot({ path: join(CARPETA, `camila-web-chat-${idioma}.png`) });
@@ -349,6 +365,7 @@ for (const idioma of ['es', 'en'] as const) {
     const pm = await ctxWebMovil.newPage();
     await pm.goto(`${pre}/`);
     await pm.getByRole('button', { name: C.textos.burbuja }).click();
+    await darPermisoIa(pm);
     await expect(pm.getByTestId('chat-mensaje-equipo')).toBeVisible({ timeout: 30_000 });
     const sobraMovil = await pm.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
@@ -492,6 +509,7 @@ for (const idioma of ['es', 'en'] as const) {
             boton: '“Request moto”',
           };
     await p.getByRole('button', { name: T.burbuja }).click();
+    await darPermisoIa(p);
     const chat = p.getByTestId('chat-soporte');
     await expect(chat).toBeVisible();
     await expect(chat).not.toContainText(/asistente virtual|virtual assistant/i);
