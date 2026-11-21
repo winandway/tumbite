@@ -469,6 +469,60 @@ superadmin.get('/admin/repartidores', async (c) => {
   });
 });
 
+/**
+ * C-FICHA-SIN-CONTRADICCION (21 nov 2026, ficha del primer líder de El Vigía: decía «nada aprobado ni
+ * plazo abierto» con el plazo abierto). El estado de arriba sale de la MISMA regla que reparte los
+ * viajes (`conductores_elegibles`) y, si no recibe, dice el primer paso que le falta, en el orden en
+ * que lo pide esa regla.
+ */
+export type FaltaParaViajes =
+  | 'desconectado'
+  | 'sin_vehiculo'
+  | 'vehiculo_sin_aprobar'
+  | 'sin_servicio_encendido'
+  | 'sin_habilitacion'
+  | 'servicio_no_disponible';
+export async function queLeFaltaParaViajes(
+  db: D1Database,
+  id: string,
+): Promise<{ recibeViajes: boolean; falta: FaltaParaViajes | null }> {
+  const si = await db
+    .prepare('SELECT 1 FROM conductores_elegibles WHERE conductor_id = ? LIMIT 1')
+    .bind(id)
+    .first();
+  if (si) return { recibeViajes: true, falta: null };
+  const f = await db
+    .prepare(
+      `SELECT d.conectado, v.estado AS vehiculo,
+         EXISTS (SELECT 1 FROM plazo_papeles pp WHERE pp.conductor_id = d.usuario_id AND pp.estado = 'en_plazo' AND pp.vence_en > datetime('now')) AS plazo,
+         EXISTS (SELECT 1 FROM preferencias_servicio p WHERE p.conductor_id = d.usuario_id AND p.activa = 1) AS encendido,
+         EXISTS (SELECT 1 FROM habilitaciones h WHERE h.conductor_id = d.usuario_id AND h.estado = 'aprobada') AS habilitado
+         FROM repartidores d LEFT JOIN vehiculos v ON v.id = d.vehiculo_activo_id AND v.conductor_id = d.usuario_id
+        WHERE d.usuario_id = ?`,
+    )
+    .bind(id)
+    .first<{
+      conectado: number;
+      vehiculo: string | null;
+      plazo: number;
+      encendido: number;
+      habilitado: number;
+    }>();
+  const falta: FaltaParaViajes = !f?.vehiculo
+    ? 'sin_vehiculo'
+    : f.vehiculo !== 'aprobado' &&
+        (!f.plazo || ['rechazado', 'suspendido', 'retirado'].includes(f.vehiculo))
+      ? 'vehiculo_sin_aprobar'
+      : !f.encendido
+        ? 'sin_servicio_encendido'
+        : !f.habilitado && !f.plazo
+          ? 'sin_habilitacion'
+          : !f.conectado
+            ? 'desconectado'
+            : 'servicio_no_disponible';
+  return { recibeViajes: false, falta };
+}
+
 superadmin.get('/admin/repartidores/:id', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
@@ -580,12 +634,17 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       // C-EN-LINEA-DE-VERDAD (21 nov 2026): «En línea» solo si de verdad puede recibir viajes (un
       // servicio aprobado, o su plazo de papeles abierto, con su vehículo). Conectado sin nada de eso
       // la ficha lo dice: «Conectado, todavía no recibe viajes».
-      recibeViajes: Boolean(
-        await db
-          .prepare('SELECT 1 FROM conductores_elegibles WHERE conductor_id = ? LIMIT 1')
-          .bind(id)
-          .first(),
-      ),
+      ...(await queLeFaltaParaViajes(db, id)),
+      // C-FICHA-SIN-CONTRADICCION: la línea que lidera (o a la que pertenece), aparte del contrato.
+      linea: await db
+        .prepare(
+          `SELECT e.nombre, CASE WHEN e.lider_id = ?1 THEN 'lider' ELSE 'miembro' END AS rol
+             FROM equipos e JOIN lineas l ON l.equipo_id = e.id
+            WHERE e.lider_id = ?1 OR e.id = (SELECT equipo_id FROM miembros_equipo WHERE usuario_id = ?1)
+            LIMIT 1`,
+        )
+        .bind(id)
+        .first<{ nombre: string; rol: 'lider' | 'miembro' }>(),
       puntos: Number(r.puntos),
       ubicacion:
         r.lat != null && r.lng != null

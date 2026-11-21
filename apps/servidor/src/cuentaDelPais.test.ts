@@ -170,6 +170,10 @@ describe('la ficha del equipo', () => {
     );
     expect(f.estado).toBe(200);
     expect(f.datos.repartidor.recibeViajes).toBe(false);
+    // C-FICHA-SIN-CONTRADICCION: dice el primer paso que le falta según la regla del reparto (con el
+    // plazo abierto, lo que le falta es su vehículo) y que es líder de su línea.
+    expect(f.datos.repartidor.falta).toBe('sin_vehiculo');
+    expect(f.datos.repartidor.linea).toEqual({ nombre: 'Línea Ejemplo', rol: 'lider' });
     expect(f.datos.repartidor.telefono).toMatch(/^\+58 /);
   });
 });

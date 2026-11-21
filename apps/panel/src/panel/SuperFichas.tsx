@@ -79,7 +79,18 @@ const T = {
         ? 'Hay 1 conductor sin zona: no sabemos su ciudad. Ábrelo y, en sus tres puntos, toca «Cambiar ciudad».'
         : `Hay ${n} conductores sin zona: no sabemos su ciudad. Ábrelos y, en sus tres puntos, toca «Cambiar ciudad».`,
     verSinZona: 'Ver los que no tienen zona',
-    conectadoSinViajes: 'Conectado, todavía no recibe viajes (nada aprobado ni plazo abierto)',
+    conectadoSinViajes: 'Conectado, todavía no recibe viajes',
+    faltas: {
+      desconectado: 'Le falta conectarse.',
+      sin_vehiculo: 'Le falta registrar su vehículo en Driver.',
+      vehiculo_sin_aprobar: 'Le falta que aprobemos su vehículo.',
+      sin_servicio_encendido: 'Le falta encender un servicio en Driver.',
+      sin_habilitacion: 'Le falta que aprobemos sus papeles del servicio.',
+      servicio_no_disponible: 'Su servicio no está abierto en su ciudad.',
+    } as Record<string, string>,
+    liderDe: (l: string) => `Líder de ${l}`,
+    miembroDe: (l: string) => `En la línea ${l}`,
+    contrato: 'Contrato',
     idAnterior: 'Antes',
     volver: '← Volver',
     datos: 'Datos personales',
@@ -185,7 +196,18 @@ const T = {
         ? 'There is 1 driver with no zone: we don’t know their city. Open them and, in the three-dot menu, tap “Change city”.'
         : `There are ${n} drivers with no zone: we don’t know their city. Open them and, in the three-dot menu, tap “Change city”.`,
     verSinZona: 'See the ones with no zone',
-    conectadoSinViajes: 'Connected, can’t get trips yet (nothing approved, no open deadline)',
+    conectadoSinViajes: 'Connected, can’t get trips yet',
+    faltas: {
+      desconectado: 'They need to go online.',
+      sin_vehiculo: 'They need to add their vehicle in Driver.',
+      vehiculo_sin_aprobar: 'We need to approve their vehicle.',
+      sin_servicio_encendido: 'They need to turn on a service in Driver.',
+      sin_habilitacion: 'We need to approve their documents for the service.',
+      servicio_no_disponible: 'Their service isn’t open in their city.',
+    } as Record<string, string>,
+    liderDe: (l: string) => `Leader of ${l}`,
+    miembroDe: (l: string) => `In the ${l} line`,
+    contrato: 'Contract',
     idAnterior: 'Formerly',
     volver: '← Back',
     datos: 'Personal details',
@@ -752,6 +774,9 @@ type Repartidor = {
   conectado: boolean;
   /** C-EN-LINEA-DE-VERDAD: puede recibir viajes ahora (servicio aprobado o plazo abierto). */
   recibeViajes?: boolean;
+  /** C-FICHA-SIN-CONTRADICCION: el primer paso que le falta para recibir viajes, según la regla. */
+  falta?: string | null;
+  linea?: { nombre: string; rol: 'lider' | 'miembro' } | null;
   /** C-ID-DEL-PAIS: los ID que tuvo antes. */
   codigosAnteriores?: string[];
   /** C-SIN-ZONA-VISIBLE: todavía no se sabe su ciudad. */
@@ -890,8 +915,18 @@ export function SuperRepartidor({
           className={`punto ${r.conectado && r.recibeViajes !== false ? 'en-linea' : ''}`}
           aria-hidden="true"
         />{' '}
-        {r.conectado ? (r.recibeViajes === false ? t.conectadoSinViajes : t.enLinea) : t.fueraLinea}{' '}
-        · {r.sinZona ? t.sinZona : r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
+        {r.conectado ? (r.recibeViajes === false ? t.conectadoSinViajes : t.enLinea) : t.fueraLinea}
+        {' · '}
+        {r.sinZona ? t.sinZona : r.ciudad}
+        {r.linea ? ` · ${(r.linea.rol === 'lider' ? t.liderDe : t.miembroDe)(r.linea.nombre)}` : ''}
+      </p>
+      {r.recibeViajes === false && r.falta ? (
+        <p className="pista" data-testid="ficha-falta">
+          {t.faltas[r.falta] ?? r.falta}
+        </p>
+      ) : null}
+      <p className="pista">
+        {t.contrato}: {t.tipos[r.tipo] ?? r.tipo}
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <PapelesConductor id={id} idioma={idioma} />
