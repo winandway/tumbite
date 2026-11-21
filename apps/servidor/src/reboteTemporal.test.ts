@@ -11,7 +11,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 async function conRebote(motivo: string) {
   vi.stubGlobal('fetch', async () => new Response('{}', { status: 200 }));
-  const m = mundo({}, { host: 'staging.tumbite.com' });
+  const m = mundo({ YAD_TOKEN: 'x'.repeat(40) }, { host: 'staging.tumbite.com' });
   const admin = await m.cuenta('admin', 'Soporte Divoox');
   const c = await m.cuenta('repartidor', 'Conductor Ejemplo');
   await m.llamar('GET', '/datos/repartidor/estado', undefined, c.token);
@@ -54,5 +54,35 @@ describe('C-REBOTE-TEMPORAL', () => {
     expect(f.datos.repartidor.correoEstado).toBe('rebotado');
     const p = await m.llamar('GET', '/datos/cuentas/perfil', undefined, c.token);
     expect(p.datos.perfil.correoRebotado).toBe(true);
+  });
+});
+
+describe('C-REBOTE-TEMPORAL · el reintento solo', () => {
+  it('vencido el freno, el enlace de confirmación se manda otra vez SOLO al abrir la app, una única vez', async () => {
+    const { usarTransporteCorreo } = await import('./correo');
+    const enviados: string[] = [];
+    usarTransporteCorreo(async (_e, init) => {
+      const c = JSON.parse(String(init.body)) as { to: { address: string }[] };
+      enviados.push(c.to[0]!.address);
+      return new Response('{"success":true,"message_id":"m1"}', { status: 200 });
+    });
+    try {
+      const { m, c } = await conRebote(
+        'El proveedor de correo rechazó el envío: email.sending.error.email.recipient_suppressed',
+      );
+      const antes = enviados.length;
+      // Mientras dura el freno, nada.
+      await m.llamar('GET', '/datos/cuentas/yo', undefined, c.token);
+      expect(enviados.length - antes).toBe(0);
+      await m.DB.prepare(
+        "UPDATE correos_rebotados SET creado_en = datetime('now', '-25 hours')",
+      ).run();
+      await m.llamar('GET', '/datos/cuentas/yo', undefined, c.token);
+      expect(enviados.length - antes).toBe(1);
+      await m.llamar('GET', '/datos/cuentas/yo', undefined, c.token);
+      expect(enviados.length - antes).toBe(1);
+    } finally {
+      usarTransporteCorreo(null);
+    }
   });
 });

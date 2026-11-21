@@ -43,6 +43,7 @@ import {
   reboteVigenteSql,
   correoRebotado,
   esFrenoTemporal,
+  HORAS_FRENO_TEMPORAL,
   enviarCorreo,
   esCorreoDePrueba,
   type ResultadoCorreo,
@@ -702,7 +703,55 @@ cuentas.delete('/yo', async (c) => {
   return c.json({ ok: true });
 });
 
-cuentas.get('/yo', (c) => c.json({ usuario: usuarioPublico(exigir(c)) }));
+/**
+ * C-REBOTE-TEMPORAL (reintento): si el enlace de confirmación no salió porque el proveedor frenó la
+ * dirección por un rechazo temporal, cuando ese freno vence (24 h) se manda otra vez SOLO, una única
+ * vez, la próxima vez que la persona abre la app. Nadie lo reenvía a mano. La fila del freno se toma
+ * con un UPDATE (dos aperturas a la vez no mandan dos) y queda marcada «[reintentado]».
+ */
+export const MARCA_REINTENTADO = '[reintentado]';
+export async function reintentarTrasFreno(env: Env, db: D1Database, u: Usuario): Promise<boolean> {
+  const f = await db
+    .prepare(
+      `SELECT r.correo FROM correos_rebotados r JOIN usuarios x ON x.id = ?1
+        WHERE r.correo = lower(x.correo) AND x.correo_confirmado_en IS NULL
+          AND r.motivo LIKE '%recipient_suppressed%' AND r.motivo NOT LIKE '%5.1.1%'
+          AND r.motivo NOT LIKE '%${MARCA_REINTENTADO}%'
+          AND r.creado_en <= datetime('now', '-${HORAS_FRENO_TEMPORAL} hours')`,
+    )
+    .bind(u.id)
+    .first<{ correo: string }>();
+  if (!f) return false;
+  // Se aparta primero: el freno vencido deja de contar y queda marcado para no repetir.
+  const mia = await db
+    .prepare(
+      `UPDATE correos_rebotados SET motivo = motivo || ' ${MARCA_REINTENTADO}', creado_en = datetime('now', '-${HORAS_FRENO_TEMPORAL + 1} hours')
+        WHERE correo = ? AND motivo NOT LIKE '%${MARCA_REINTENTADO}%'`,
+    )
+    .bind(f.correo)
+    .run();
+  if (!mia.meta.changes) return false;
+  const r = await mandarConfirmacion(env, db, u);
+  if (!r.ok) {
+    console.error('confirmación: el reintento tras el freno tampoco salió', u.id, r.motivo);
+    // Si volvió a frenar, el rebote nuevo no se reintenta otra vez: una sola vez.
+    await db
+      .prepare(
+        `UPDATE correos_rebotados SET motivo = motivo || ' ${MARCA_REINTENTADO}' WHERE correo = ? AND motivo NOT LIKE '%${MARCA_REINTENTADO}%'`,
+      )
+      .bind(f.correo)
+      .run();
+  }
+  return r.ok;
+}
+
+cuentas.get('/yo', async (c) => {
+  const u = exigir(c);
+  await reintentarTrasFreno(c.env, base(c), u).catch((e: unknown) =>
+    console.error('confirmación: reintento tras el freno', e),
+  );
+  return c.json({ usuario: usuarioPublico(u) });
+});
 
 // ---------- Configuración de la cuenta ----------
 
