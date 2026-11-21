@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-21T15:00:00Z",
+  "actualizado": "2026-11-21T16:45:00Z",
   "version": "fe71f3f",
   "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-21",
+      "titulo": "Fotos de la entrada para mototaxi y viajes, permiso antes del chat de ayuda y «Ver video»",
+      "texto": "El conductor que va a recoger a un pasajero ya ve la foto de la entrada de su casa, solo mientras va hacia él. El chat de ayuda pide permiso antes del primer mensaje; si la persona dice que no, la atiende alguien del equipo. Quedó lista la pieza «Ver video» en «Fotos de la entrada», apagada hasta que exista el video. Están las capturas para ese video, en español y en inglés. En la web ya está en vivo; en las apps de las tiendas se verá con la próxima versión."
+    },
     {
       "fecha": "2026-11-21",
       "titulo": "Deuda del envío a Google cerrada y próxima versión de las apps lista",
