@@ -4904,6 +4904,18 @@ CREATE TABLE IF NOT EXISTS verificacion_caras (
 
 -- C-VERIFICACION-IA-TOPE: lo gastado cada día en verificar fotos con IA, en millonésimas de dólar.
 -- Se mira ANTES de cada llamada; al llegar al tope del día las fotos pasan a revisión de una persona.
+-- C-PERMISO-IA (20 nov 2026): el permiso explícito del conductor para que sus fotos de verificación
+-- se analicen con un servicio de inteligencia artificial de un tercero. Sin fila o con acepto = 0,
+-- ninguna foto suya sale hacia la IA: la revisa una persona.
+-- Sin REFERENCES a propósito: cada referencia a usuarios suma lecturas al borrar una cuenta
+-- (C-LECTURAS-VUELTA-RUTAS); la fila se borra en borrarCuenta.ts.
+CREATE TABLE IF NOT EXISTS verificacion_permiso_ia (
+  conductor_id TEXT PRIMARY KEY,
+  acepto INTEGER NOT NULL,
+  texto_version TEXT NOT NULL DEFAULT '',
+  decidido_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS verificacion_ia_gasto (
   dia TEXT PRIMARY KEY,
   microdolares INTEGER NOT NULL DEFAULT 0,
