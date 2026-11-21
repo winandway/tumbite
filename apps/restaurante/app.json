@@ -73,6 +73,7 @@
         }
       ],
       "../../plugins/escenas-ios",
+      "../../plugins/pantalla-vertical-opcional",
       "../../plugins/firma-ios-local"
     ],
     "description": "Receive and manage your Divoox orders.",

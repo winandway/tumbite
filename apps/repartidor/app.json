@@ -111,6 +111,7 @@
         }
       ],
       "../../plugins/escenas-ios",
+      "../../plugins/pantalla-vertical-opcional",
       "../../plugins/firma-ios-local"
     ],
     "description": "Deliver with Divoox and earn. Keep 100% of your tips.",

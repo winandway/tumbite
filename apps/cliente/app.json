@@ -176,6 +176,7 @@
         }
       ],
       "../../plugins/escenas-ios",
+      "../../plugins/pantalla-vertical-opcional",
       "../../plugins/firma-ios-local",
       "../../plugins/stripe-espanol",
       [
@@ -187,7 +188,7 @@
         }
       ]
     ],
-    "description": "Food delivery in Miami. Order from local restaurants and track your driver live.",
+    "description": "Food delivery from local restaurants. Order in a few taps and track your driver live.",
     "owner": "windoce-llc",
     "experiments": {
       "baseUrl": "/app"
