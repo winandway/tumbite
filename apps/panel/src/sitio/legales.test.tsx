@@ -228,6 +228,11 @@ describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fot
     );
     expect(es).not.toMatch(/solo la ve nuestro equipo/);
     expect(en).not.toMatch(/only our team sees it/);
+    // «Papeles del conductor» remite a la IA (séptima vuelta del auditor).
+    expect(es).toContain(
+      'estas fotos también se analizan con un servicio de inteligencia artificial',
+    );
+    expect(en).toContain('these photos are also analyzed with an artificial intelligence service');
     // Las frases viejas contradecían a la app.
     expect(es).not.toMatch(/no tus datos de pago ni tus documentos/);
     expect(en).not.toMatch(/not your payment details or documents/);
