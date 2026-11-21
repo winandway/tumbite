@@ -142,7 +142,7 @@ export function VerVideo({
                   minHeight: 48,
                 }}
               >
-                <Text style={{ fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>{t.titulo}</Text>
                 <Pressable
                   onPress={cerrar}
                   accessibilityRole="button"
