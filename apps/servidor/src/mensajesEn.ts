@@ -1409,6 +1409,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Primero sube la foto.', 'Upload the photo first.'],
   ['Ese pedido no es tuyo.', 'That order isn’t yours.'],
+  ['Ese viaje no es tuyo.', 'That ride isn’t yours.'],
   [
     'En esta zona hace falta una foto del frente de tu casa o edificio para que tu repartidor te encuentre. Agrégala y vuelve a intentar.',
     'This area requires a photo of the front of your house or building so your courier can find you. Add it and try again.',

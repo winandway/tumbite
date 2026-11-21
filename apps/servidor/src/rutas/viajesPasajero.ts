@@ -1,6 +1,7 @@
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
 import { UMBRALES_VIAJE_REAL } from '../viajeReal';
+import { direccionDeRecogida } from './fotoPuerta';
 import { esPagoACelular, metrosEntre as metrosEntrePuntos } from '@tumbite/compartido';
 import { z } from 'zod';
 import {
@@ -582,6 +583,12 @@ export async function cotizarParaCliente(
     d.destino,
     d.paradas,
   );
+  // C-FOTO-RECOGIDA: si la recogida cae en una dirección guardada del pasajero (solo viajes de
+  // personas), queda anotada con la cotización: el conductor asignado verá la foto de esa entrada.
+  const recogida =
+    d.servicio === 'envios'
+      ? { direccionId: null, conFotos: false }
+      : await direccionDeRecogida(db, clienteId, d.origen);
   const id = nuevoId();
   const venceEn = sqlFecha(new Date(Date.now() + VIGENCIA_COTIZACION_S * 1000));
   // C-BS-EN-MANO: la tasa del día queda FIJADA con la cotización (y pasa al viaje al pedirlo).
@@ -591,8 +598,8 @@ export async function cotizarParaCliente(
       `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id,
          origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
          distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en, categoria,
-         fuente_distancia, paradas_json, ref_tasa, ref_fecha)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         fuente_distancia, paradas_json, ref_tasa, ref_fecha, origen_direccion_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -620,10 +627,13 @@ export async function cotizarParaCliente(
       JSON.stringify(d.paradas),
       tasaLocal?.tasa ?? null,
       tasaLocal?.fecha ?? null,
+      recogida.direccionId,
     )
     .run();
   const cotizacion: CotizacionViaje = {
     id,
+    // C-FOTO-RECOGIDA: la app invita a agregar la foto si sale de una dirección guardada sin fotos.
+    recogida: { guardada: recogida.direccionId != null, conFotos: recogida.conFotos },
     servicio: d.servicio,
     categoria: d.categoria,
     paradas: d.paradas,
@@ -946,6 +956,7 @@ export async function avisarDestinatario(
 }
 
 type FilaViajeCliente = FilaRegaloPasajero & {
+  recogida_guardada?: number | null;
   ref_tasa: number | null;
   ref_fecha: string | null;
   ref_monto: number | null;
@@ -1007,6 +1018,7 @@ async function viajeDelCliente(
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador, k.tipo AS pm_tipo,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               v.ref_tasa, v.ref_fecha, v.ref_monto, v.total_final_centavos,
+              v.origen_direccion_id IS NOT NULL AS recogida_guardada,
               ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          ${JOIN_REGALO_PASAJERO}
@@ -1074,6 +1086,8 @@ function viajePublico(f: FilaViajeCliente) {
     id: f.id,
     servicio: f.servicio_id,
     categoria: f.categoria ?? 'estandar',
+    // C-FOTO-RECOGIDA: false = salió de un punto suelto (al terminar, la app ofrece guardarlo).
+    recogidaGuardada: Number(f.recogida_guardada ?? 0) === 1,
     // C-CARRO-DINAMICA: el multiplicador con que se cotizó este viaje (10 000 = precio normal).
     multiplicadorPb: Number(f.multiplicador_pb ?? 10_000),
     estado: f.estado,

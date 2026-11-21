@@ -28,6 +28,10 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-FOTO-RECOGIDA (21 nov 2026): la dirección guardada de donde sale el viaje (si el punto de
+  // recogida cae en una dirección guardada del pasajero). Queda con la cotización y pasa al viaje.
+  ['cotizaciones_viaje', 'origen_direccion_id', 'TEXT'],
+  ['viajes', 'origen_direccion_id', 'TEXT'],
   // C-BS-EN-MANO (18 nov 2026, Venezuela): la tasa del día FIJADA con la operación (al cotizar el
   // viaje o al crear el pedido) y, al cerrar el viaje, lo cobrado en mano en céntimos de bolívar.
   // Conductor y pasajero ven el mismo número aunque la tasa cambie después.

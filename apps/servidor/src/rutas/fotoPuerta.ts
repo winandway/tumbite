@@ -1,3 +1,4 @@
+import { metrosEntre } from '@tumbite/compartido';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -275,6 +276,113 @@ fotoPuerta.get('/repartidor/pedidos/:id/puerta/:orden', async (c) => {
   const f = await db
     .prepare('SELECT clave FROM direcciones_fotos WHERE direccion_id = ? AND orden = ?')
     .bind(p.direccion_id, ordenDe(c.req.param('orden')))
+    .first<{ clave: string }>();
+  if (!f) return c.text('No encontrado', 404);
+  const mini = c.req.query('tam') === 'mini';
+  const obj =
+    (mini ? await c.env.BUCKET.get(`${f.clave}-s`) : null) ?? (await c.env.BUCKET.get(f.clave));
+  return obj ? entregar(obj) : c.text('No encontrado', 404);
+});
+
+// ───────────────────────── El conductor de un viaje: solo el asignado, solo yendo a recoger ─────
+
+/**
+ * C-FOTO-RECOGIDA (21 nov 2026, orden de Richard) — todos los países. Dentro de un barrio las casas
+ * no salen en el mapa: el conductor llega y no sabe dónde lo pidieron. Si el punto de recogida de un
+ * viaje cae en una dirección guardada del pasajero, el conductor ASIGNADO ve las fotos de esa entrada
+ * mientras va a recoger («asignado» y «conductor_llego»). Al recoger al pasajero, al cancelarse o al
+ * terminar, deja de verlas. Nunca la foto del destino. Mirar no escribe.
+ *
+ * «Cae en una dirección guardada»: a no más de RADIO_RECOGIDA_M metros de su punto (el GPS del
+ * pasajero parado en su puerta nunca da el punto exacto). Más lejos es un punto suelto: sin foto.
+ */
+export const RADIO_RECOGIDA_M = 40;
+/** Estados del viaje en que el conductor todavía busca la entrada. */
+const BUSCANDO_LA_ENTRADA = ['asignado', 'conductor_llego'];
+
+/** Al cotizar: si la recogida cae en una dirección guardada del pasajero, cuál y si tiene fotos. Una lectura. */
+export async function direccionDeRecogida(
+  db: D1Database,
+  clienteId: string,
+  origen: { lat: number; lng: number },
+): Promise<{ direccionId: string | null; conFotos: boolean }> {
+  const { results } = await db
+    .prepare(
+      `SELECT d.id, d.lat, d.lng,
+              EXISTS (SELECT 1 FROM direcciones_fotos f WHERE f.direccion_id = d.id) AS fotos
+         FROM direcciones_cliente d
+        WHERE d.usuario_id = ? AND d.lat IS NOT NULL AND d.lng IS NOT NULL`,
+    )
+    .bind(clienteId)
+    .all<{ id: string; lat: number; lng: number; fotos: number }>();
+  let cerca: { id: string; fotos: number; metros: number } | null = null;
+  for (const d of results) {
+    const metros = metrosEntre(origen, { lat: Number(d.lat), lng: Number(d.lng) });
+    if (metros <= RADIO_RECOGIDA_M && (!cerca || metros < cerca.metros))
+      cerca = { id: d.id, fotos: Number(d.fotos), metros };
+  }
+  return { direccionId: cerca?.id ?? null, conFotos: cerca?.fotos === 1 };
+}
+
+type RecogidaViaje = {
+  estado: string;
+  direccion_id: string | null;
+  tipo_lugar: string | null;
+  etiqueta: string | null;
+  instrucciones: string | null;
+};
+
+/**
+ * El viaje, si este conductor es el ASIGNADO. La dirección solo viene si sigue guardada y sigue
+ * siendo del pasajero de ese viaje (si la borró, ya no hay nada que mostrar).
+ */
+async function recogidaDelConductor(db: D1Database, operacionId: string, conductorId: string) {
+  const v = await db
+    .prepare(
+      `SELECT v.estado, d.id AS direccion_id, d.tipo_lugar, d.etiqueta, d.instrucciones
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN direcciones_cliente d ON d.id = v.origen_direccion_id AND d.usuario_id = o.cliente_id
+        WHERE o.id = ? AND o.conductor_id = ? AND o.tipo_operacion = 'viaje_pasajero'`,
+    )
+    .bind(operacionId, conductorId)
+    .first<RecogidaViaje>();
+  if (!v) return null;
+  return { ...v, visible: BUSCANDO_LA_ENTRADA.includes(v.estado) && !!v.direccion_id };
+}
+
+fotoPuerta.get('/conductor/operaciones/:id/recogida', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const v = await recogidaDelConductor(db, c.req.param('id'), u.id);
+  if (!v) throw new ErrorDatos('Ese viaje no es tuyo.', undefined, 404);
+  c.header('cache-control', PRIVADA);
+  const nada = { fotos: [], nombre: '', indicaciones: '' };
+  if (!v.visible) return c.json(nada);
+  const roles = ROLES_PUERTA[tipoLugarDe(v.tipo_lugar)];
+  const { results } = await db
+    .prepare('SELECT orden FROM direcciones_fotos WHERE direccion_id = ? ORDER BY orden')
+    .bind(v.direccion_id)
+    .all<{ orden: number }>();
+  const fotos = results
+    .map((r) => ({ orden: Number(r.orden), rol: roles[Number(r.orden) - 1] }))
+    .filter((f) => f.rol);
+  // Sin fotos no se manda nada de la dirección guardada: el nombre y las indicaciones acompañan a la foto.
+  if (!fotos.length) return c.json(nada);
+  return c.json({
+    fotos,
+    nombre: String(v.etiqueta ?? ''),
+    indicaciones: String(v.instrucciones ?? ''),
+  });
+});
+
+fotoPuerta.get('/conductor/operaciones/:id/recogida/:orden', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const v = await recogidaDelConductor(db, c.req.param('id'), u.id);
+  if (!v?.visible || !c.env.BUCKET) return c.text('No encontrado', 404);
+  const f = await db
+    .prepare('SELECT clave FROM direcciones_fotos WHERE direccion_id = ? AND orden = ?')
+    .bind(v.direccion_id, ordenDe(c.req.param('orden')))
     .first<{ clave: string }>();
   if (!f) return c.text('No encontrado', 404);
   const mini = c.req.query('tam') === 'mini';
