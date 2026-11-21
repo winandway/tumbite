@@ -13,6 +13,7 @@ import {
   crearLinea,
   esLiderSinCuenta,
   invitacionesDeLider,
+  editarContacto2,
   invitarLider,
   lineaPorId,
   lineasDeCiudad,
@@ -191,7 +192,7 @@ lineas.get('/admin/lineas/:id', async (c) => {
 });
 
 lineas.patch('/admin/lineas/:id', async (c) => {
-  exigir(c, 'admin');
+  const u = exigir(c, 'admin');
   const d = await leerCuerpo(
     c,
     z.object({
@@ -210,12 +211,37 @@ lineas.patch('/admin/lineas/:id', async (c) => {
       .bind(d.activa ? 1 : 0, id)
       .run();
   if (d.contacto2Nombre != null && d.contacto2Telefono != null)
-    await db
-      .prepare('UPDATE lineas SET contacto2_nombre = ?, contacto2_telefono = ? WHERE equipo_id = ?')
-      .bind(d.contacto2Nombre, d.contacto2Telefono, id)
-      .run();
+    await editarContacto2(db, {
+      donde: 'linea',
+      id,
+      nombre: d.contacto2Nombre,
+      telefono: d.contacto2Telefono,
+      actorId: u.id,
+    });
   return c.json({ linea: await lineaPorId(db, id) });
 });
+
+// C-CONTACTO2-EDITABLE: «Editar contactos de emergencia» (tres puntos) de una línea o de un líder invitado.
+const contacto2Cuerpo = z.object({
+  contacto2Nombre: z.string().trim().min(2).max(80),
+  contacto2Telefono: celular,
+});
+for (const [ruta, donde] of [
+  ['/admin/lineas/:id/contacto2', 'linea'],
+  ['/admin/lineas-invitaciones/:id/contacto2', 'invitacion'],
+] as const)
+  lineas.patch(ruta, async (c) => {
+    const u = exigir(c, 'admin');
+    const d = await leerCuerpo(c, contacto2Cuerpo);
+    const r = await editarContacto2(base(c), {
+      donde,
+      id: c.req.param('id'),
+      nombre: d.contacto2Nombre,
+      telefono: d.contacto2Telefono,
+      actorId: u.id,
+    });
+    return c.json({ ok: true, contacto2: r });
+  });
 
 // ───────────── Formulario público «Registra tu línea» ─────────────
 

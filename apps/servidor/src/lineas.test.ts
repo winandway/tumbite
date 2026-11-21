@@ -568,3 +568,78 @@ describe('C-LINEAS-TAXI · la emergencia llega al líder y al segundo contacto',
     ).toContain('sin ubicación');
   });
 });
+
+describe('C-CONTACTO2-EDITABLE · el segundo contacto de emergencia se corrige después', () => {
+  it('en una línea creada: el equipo lo cambia y queda en la auditoría con el antes y el después', async () => {
+    const { m, admin, crear, conductor } = await escenario();
+    await conductor('Lidia Líder', '+13055550101');
+    const r = await crear('+13055550101');
+    const id = r.datos.linea.id as string;
+    const e = await m.llamar(
+      'PATCH',
+      `/datos/admin/lineas/${id}/contacto2`,
+      { contacto2Nombre: 'Marta Definitiva', contacto2Telefono: '+13055550404' },
+      admin.token,
+    );
+    expect(e.estado, JSON.stringify(e.datos)).toBe(200);
+    const l = await m.DB.prepare(
+      'SELECT contacto2_nombre AS n, contacto2_telefono AS t FROM lineas WHERE equipo_id = ?',
+    )
+      .bind(id)
+      .first<{ n: string; t: string }>();
+    expect(l).toEqual({ n: 'Marta Definitiva', t: '+13055550404' });
+    const a = await m.DB.prepare(
+      "SELECT actor_id, antes_json, despues_json FROM auditoria_admin WHERE accion = 'linea_contacto2' AND objeto = ?",
+    )
+      .bind(id)
+      .first<{ actor_id: string; antes_json: string; despues_json: string }>();
+    expect(a?.actor_id).toBe(admin.id);
+    expect(a?.antes_json).toContain('Contacto Dos');
+    expect(a?.despues_json).toContain('Marta Definitiva');
+  });
+
+  it('en un líder invitado (pendiente): también se cambia, y la línea nace con el contacto nuevo', async () => {
+    const { m, admin, crear, conductor } = await escenario();
+    const r = await crear('+13055559999', { invitar: true });
+    const inv = r.datos.invitacion.id as string;
+    const e = await m.llamar(
+      'PATCH',
+      `/datos/admin/lineas-invitaciones/${inv}/contacto2`,
+      { contacto2Nombre: 'Marta Definitiva', contacto2Telefono: '+13055550404' },
+      admin.token,
+    );
+    expect(e.estado, JSON.stringify(e.datos)).toBe(200);
+    const lider = await conductor('Lidia Líder', '+13055559999');
+    await m.llamar('GET', '/datos/repartidor/mi-linea', undefined, lider.token);
+    const l = await m.DB.prepare('SELECT contacto2_nombre AS n FROM lineas').first<{ n: string }>();
+    expect(l?.n).toBe('Marta Definitiva');
+  });
+
+  it('el nombre no puede ser un teléfono, ni al crear ni al corregir; y solo el equipo lo cambia', async () => {
+    const { m, admin, crear, conductor } = await escenario();
+    const lider = await conductor('Lidia Líder', '+13055550101');
+    const mal = await crear('+13055550101', { contacto2Nombre: '+1 305 555 0202' });
+    expect(mal.estado).toBe(422);
+    expect(mal.datos.campo).toBe('contacto2Nombre');
+    expect(mal.datos.error).toMatch(/nombre de la persona|person’s name/);
+    const malLinea = await crear('+13055550101', { nombre: '3055550202' });
+    expect(malLinea.estado).toBe(422);
+    expect(malLinea.datos.campo).toBe('nombre');
+    const r = await crear('+13055550101');
+    const id = r.datos.linea.id as string;
+    const e = await m.llamar(
+      'PATCH',
+      `/datos/admin/lineas/${id}/contacto2`,
+      { contacto2Nombre: '305 555 0404', contacto2Telefono: '+13055550404' },
+      admin.token,
+    );
+    expect(e.estado).toBe(422);
+    const ajeno = await m.llamar(
+      'PATCH',
+      `/datos/admin/lineas/${id}/contacto2`,
+      { contacto2Nombre: 'Marta', contacto2Telefono: '+13055550404' },
+      lider.token,
+    );
+    expect(ajeno.estado).toBe(403);
+  });
+});

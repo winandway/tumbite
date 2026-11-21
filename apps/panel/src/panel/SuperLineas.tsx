@@ -5,6 +5,7 @@ import {
   type Idioma,
   almacenNavegador,
   enIdioma,
+  pareceTelefono,
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -52,6 +53,14 @@ const T = {
       'Estas líneas esperan a que su líder cree su cuenta de conductor con ese mismo correo o celular. Mándale este enlace:',
     anular: 'Anular la invitación',
     opciones: 'Más opciones',
+    editarContactos: 'Editar contactos de emergencia',
+    editarContactosAyuda:
+      'El segundo contacto recibe el aviso con la ubicación si un conductor de la línea pide ayuda. Escribe el celular completo otra vez, con el código del país.',
+    actual: 'Ahora',
+    guardarContactos: 'Guardar el contacto',
+    cancelar: 'Cancelar',
+    avisoNombre: 'Aquí va el nombre de la persona, no su celular.',
+    avisoNombreLinea: 'Aquí va el nombre de la línea, no un celular.',
     lineas: 'Líneas',
     sinLineas: 'No hay líneas con esa búsqueda.',
     miembros: 'miembros',
@@ -107,6 +116,14 @@ const T = {
       'These lines are waiting for their leader to create a driver account with that same email or cell phone. Send them this link:',
     anular: 'Cancel the invitation',
     opciones: 'More options',
+    editarContactos: 'Edit emergency contacts',
+    editarContactosAyuda:
+      'The second contact gets the alert with the location if a driver on the line asks for help. Enter the full cell phone again, with the country code.',
+    actual: 'Now',
+    guardarContactos: 'Save the contact',
+    cancelar: 'Cancel',
+    avisoNombre: 'This is for the person’s name, not their cell phone.',
+    avisoNombreLinea: 'This is for the line’s name, not a cell phone.',
     lineas: 'Lines',
     sinLineas: 'No lines match that search.',
     miembros: 'members',
@@ -131,7 +148,113 @@ const T = {
   },
 };
 type Textos = (typeof T)['es'];
-type Invitado = { id: string; nombre: string; tipo: string; lider: string };
+type Invitado = {
+  id: string;
+  nombre: string;
+  tipo: string;
+  lider: string;
+  contacto2Nombre: string;
+  contacto2Telefono: string;
+};
+
+/**
+ * C-CONTACTO2-EDITABLE (21 nov 2026): corrige el segundo contacto de emergencia de una línea o de un
+ * líder invitado. El celular se vuelve a escribir completo (el panel lo ve enmascarado). Lo escrito
+ * se guarda solo y vuelve si se cierra la ventana (useBorrador); se borra al guardar o cancelar.
+ */
+function EditarContacto2({
+  ruta,
+  clave,
+  actual,
+  t,
+  idioma,
+  alGuardar,
+  alCerrar,
+  setError,
+}: {
+  ruta: string;
+  clave: string;
+  actual: { nombre: string; telefono: string };
+  t: Textos;
+  idioma: Idioma;
+  alGuardar: (m: string) => void;
+  alCerrar: () => void;
+  setError: (m: string) => void;
+}) {
+  const b = useBorrador({
+    formulario: `contacto2-${clave}`,
+    cuenta: 'superadmin',
+    inicial: { contacto2Nombre: actual.nombre, contacto2Telefono: '' },
+    almacen: almacenNavegador,
+  });
+  const nombreMal = pareceTelefono(b.valores.contacto2Nombre);
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    try {
+      await pedir('PATCH', ruta, b.valores);
+      await b.limpiar();
+      alGuardar(t.guardado);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+  return (
+    <form
+      className="formulario flex-tarjeta"
+      noValidate
+      onSubmit={(e) => void guardar(e)}
+      data-testid="lineas-editar-contacto2"
+    >
+      <h4>{t.editarContactos}</h4>
+      <p className="pista">{t.editarContactosAyuda}</p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      <p className="pista">
+        {t.actual}: {actual.nombre} · {actual.telefono}
+      </p>
+      <label className="campo">
+        {t.contacto2Nombre}
+        <input
+          value={b.valores.contacto2Nombre}
+          aria-invalid={nombreMal || undefined}
+          onChange={(e) => b.cambiar('contacto2Nombre', e.target.value)}
+        />
+        {nombreMal ? (
+          <span className="error-campo" role="alert">
+            {t.avisoNombre}
+          </span>
+        ) : null}
+      </label>
+      <label className="campo">
+        {t.contacto2Telefono}
+        <input
+          type="tel"
+          value={b.valores.contacto2Telefono}
+          onChange={(e) => b.cambiar('contacto2Telefono', e.target.value)}
+        />
+      </label>
+      <div className="flex-inline" style={{ gap: 8 }}>
+        <button type="submit" className="boton" disabled={nombreMal}>
+          {t.guardarContactos}
+        </button>
+        <button
+          type="button"
+          className="boton secundario"
+          onClick={() => {
+            void b.limpiar();
+            alCerrar();
+          }}
+        >
+          {t.cancelar}
+        </button>
+      </div>
+    </form>
+  );
+}
 /** El servidor dice así que nadie en Driver tiene ese correo o celular (C-LIDER-INVITADO). */
 const esSinCuenta = (x: unknown) =>
   x instanceof ErrorApi && x.estado === 404 && x.campo === 'lider';
@@ -189,6 +312,7 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
   const [q, setQ] = useState('');
   const [zona, setZona] = useState('');
   const [abierta, setAbierta] = useState<string | null>(null);
+  const [editando, setEditando] = useState<string | null>(null);
   const [vuelta, setVuelta] = useState(0);
   const [cargado, setCargado] = useState(false);
   const [error, setError] = useState('');
@@ -296,10 +420,31 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
                 <p>
                   {t.tipos[i.tipo as keyof typeof t.tipos] ?? i.tipo} · {i.lider}
                 </p>
+                <p className="pista">
+                  {t.contacto2Nombre}: {i.contacto2Nombre} · {i.contacto2Telefono}
+                </p>
                 <MenuTresPuntos
                   etiqueta={t.opciones}
-                  opciones={[{ texto: t.anular, peligro: true, alTocar: () => void anular(i.id) }]}
+                  opciones={[
+                    { texto: t.editarContactos, alTocar: () => setEditando(`inv-${i.id}`) },
+                    { texto: t.anular, peligro: true, alTocar: () => void anular(i.id) },
+                  ]}
                 />
+                {editando === `inv-${i.id}` ? (
+                  <EditarContacto2
+                    ruta={`/datos/admin/lineas-invitaciones/${i.id}/contacto2`}
+                    clave={`inv-${i.id}`}
+                    actual={{ nombre: i.contacto2Nombre, telefono: i.contacto2Telefono }}
+                    t={t}
+                    idioma={idioma}
+                    alGuardar={(m) => {
+                      setEditando(null);
+                      recargar(m);
+                    }}
+                    alCerrar={() => setEditando(null)}
+                    setError={setError}
+                  />
+                ) : null}
               </li>
             ))}
           </ul>
@@ -350,6 +495,9 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
               recargar={recargar}
               vuelta={vuelta}
               setError={setError}
+              idioma={idioma}
+              editando={editando === `lin-${l.id}`}
+              alEditar={(si) => setEditando(si ? `lin-${l.id}` : null)}
             />
           ))}
         </ul>
@@ -529,7 +677,16 @@ function CrearLinea({
       <form className="formulario" noValidate onSubmit={(e) => void crear(e)}>
         <label className="campo">
           {t.nombre}
-          <input value={b.valores.nombre} onChange={(e) => b.cambiar('nombre', e.target.value)} />
+          <input
+            value={b.valores.nombre}
+            aria-invalid={pareceTelefono(b.valores.nombre) || undefined}
+            onChange={(e) => b.cambiar('nombre', e.target.value)}
+          />
+          {pareceTelefono(b.valores.nombre) ? (
+            <span className="error-campo" role="alert" data-testid="lineas-aviso-nombre">
+              {t.avisoNombreLinea}
+            </span>
+          ) : null}
         </label>
         <label className="campo">
           {t.ciudad}
@@ -559,8 +716,14 @@ function CrearLinea({
           {t.contacto2Nombre}
           <input
             value={b.valores.contacto2Nombre}
+            aria-invalid={pareceTelefono(b.valores.contacto2Nombre) || undefined}
             onChange={(e) => b.cambiar('contacto2Nombre', e.target.value)}
           />
+          {pareceTelefono(b.valores.contacto2Nombre) ? (
+            <span className="error-campo" role="alert" data-testid="lineas-aviso-contacto2">
+              {t.avisoNombre}
+            </span>
+          ) : null}
         </label>
         <label className="campo">
           {t.contacto2Telefono}
@@ -589,6 +752,9 @@ function TarjetaLinea({
   recargar,
   vuelta,
   setError,
+  idioma,
+  editando,
+  alEditar,
 }: {
   l: Linea;
   t: Textos;
@@ -599,6 +765,9 @@ function TarjetaLinea({
   recargar: (m: string) => void;
   vuelta: number;
   setError: (m: string) => void;
+  idioma: Idioma;
+  editando: boolean;
+  alEditar: (si: boolean) => void;
 }) {
   const [miembros, setMiembros] = useState<Miembro[]>([]);
   const [enlace, setEnlace] = useState('');
@@ -658,7 +827,29 @@ function TarjetaLinea({
         <button type="button" className="boton secundario" onClick={() => void alternar()}>
           {l.activa ? t.desactivar : t.activar}
         </button>
+        <MenuTresPuntos
+          etiqueta={t.opciones}
+          opciones={[{ texto: t.editarContactos, alTocar: () => alEditar(true) }]}
+        />
       </div>
+      <p className="pista">
+        {t.contacto2Nombre}: {l.contacto2Nombre} · {l.contacto2Telefono}
+      </p>
+      {editando ? (
+        <EditarContacto2
+          ruta={`/datos/admin/lineas/${l.id}/contacto2`}
+          clave={`lin-${l.id}`}
+          actual={{ nombre: l.contacto2Nombre, telefono: l.contacto2Telefono }}
+          t={t}
+          idioma={idioma}
+          alGuardar={(m) => {
+            alEditar(false);
+            recargar(m);
+          }}
+          alCerrar={() => alEditar(false)}
+          setError={setError}
+        />
+      ) : null}
       {abierta ? (
         <div>
           <div className="flex-inline" style={{ gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>

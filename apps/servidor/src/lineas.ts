@@ -1,4 +1,4 @@
-import { telefonoCanonico } from '@tumbite/compartido';
+import { pareceTelefono, telefonoCanonico } from '@tumbite/compartido';
 import { nuevoId } from './cripto';
 import type { Env } from './env';
 import { notificar } from './notificaciones';
@@ -168,7 +168,18 @@ type DatosLinea = {
   autorId: string;
 };
 
+/** Aviso único de C-CONTACTO2-EDITABLE: en la casilla del nombre va un nombre, no un celular. */
+export const AVISO_NOMBRE_NO_TELEFONO = 'Aquí va el nombre de la persona, no su celular.';
+
+function validarNombres(d: { nombre?: string; contacto2Nombre: string }) {
+  if (d.nombre != null && pareceTelefono(d.nombre))
+    throw new ErrorDatos('Aquí va el nombre de la línea, no un celular.', 'nombre', 422);
+  if (pareceTelefono(d.contacto2Nombre))
+    throw new ErrorDatos(AVISO_NOMBRE_NO_TELEFONO, 'contacto2Nombre', 422);
+}
+
 function validarContacto2(nombre: string, telefono: string) {
+  validarNombres({ contacto2Nombre: nombre });
   if (!nombre.trim() || !telefonoE164(telefono) || !telefonoCanonico(telefono))
     throw new ErrorDatos(
       'Escribe el nombre y el celular completo (con el código del país) del segundo contacto de emergencia.',
@@ -182,6 +193,7 @@ function validarContacto2(nombre: string, telefono: string) {
  * que ya entraron con el código de invitación personal del líder, en la ciudad de la línea, pasan como aceptados.
  */
 export async function crearLinea(db: D1Database, d: DatosLinea) {
+  validarNombres(d);
   validarContacto2(d.contacto2Nombre, d.contacto2Telefono);
   if (!TIPOS_LINEA.includes(d.tipo))
     throw new ErrorDatos('Elige taxi, mototaxi o los dos.', 'tipo', 422);
@@ -331,6 +343,8 @@ export type InvitacionLider = {
   zonaId: string;
   tipo: TipoLinea;
   lider: string;
+  contacto2Nombre: string;
+  contacto2Telefono: string;
   creadoEn: string;
 };
 
@@ -347,6 +361,7 @@ export async function invitarLider(
   d: DatosLinea,
   solicitudId: string | null = null,
 ) {
+  validarNombres(d);
   validarContacto2(d.contacto2Nombre, d.contacto2Telefono);
   if (!TIPOS_LINEA.includes(d.tipo))
     throw new ErrorDatos('Elige taxi, mototaxi o los dos.', 'tipo', 422);
@@ -402,7 +417,7 @@ export async function invitarLider(
 export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLider[]> {
   const { results } = await db
     .prepare(
-      "SELECT id, nombre, zona_id, tipo, lider, creado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
+      "SELECT id, nombre, zona_id, tipo, lider, contacto2_nombre, contacto2_telefono, creado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
     )
     .all<Record<string, unknown>>();
   return results.map((r) => ({
@@ -411,6 +426,8 @@ export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLid
     zonaId: String(r.zona_id),
     tipo: String(r.tipo) as TipoLinea,
     lider: String(r.lider),
+    contacto2Nombre: String(r.contacto2_nombre ?? ''),
+    contacto2Telefono: String(r.contacto2_telefono ?? ''),
     creadoEn: String(r.creado_en),
   }));
 }
@@ -925,4 +942,53 @@ export async function usarCodigoDeConductor(
     return { ...c, linea: r.linea.nombre as string | null };
   }
   return { ...(await vincularConductor(db, usuarioId, escrito)), linea: null as string | null };
+}
+
+/**
+ * C-CONTACTO2-EDITABLE (21 nov 2026): el equipo corrige el segundo contacto de emergencia de una línea
+ * o de un líder invitado todavía pendiente (se crea con uno provisional y se completa después). Es dato
+ * de seguridad: queda en la auditoría con el antes y el después.
+ */
+export async function editarContacto2(
+  db: D1Database,
+  d: {
+    donde: 'linea' | 'invitacion';
+    id: string;
+    nombre: string;
+    telefono: string;
+    actorId: string;
+  },
+) {
+  const nombre = d.nombre.trim();
+  const telefono = d.telefono.trim();
+  validarContacto2(nombre, telefono);
+  const tabla = d.donde === 'linea' ? 'lineas' : 'invitaciones_lider';
+  const llave = d.donde === 'linea' ? 'equipo_id' : 'id';
+  const extra = d.donde === 'invitacion' ? " AND estado = 'pendiente'" : '';
+  const antes = await db
+    .prepare(
+      `SELECT contacto2_nombre AS nombre, contacto2_telefono AS telefono FROM ${tabla} WHERE ${llave} = ?${extra}`,
+    )
+    .bind(d.id)
+    .first<{ nombre: string; telefono: string }>();
+  if (!antes) throw new ErrorDatos('Eso ya no está disponible.', undefined, 404);
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE ${tabla} SET contacto2_nombre = ?, contacto2_telefono = ? WHERE ${llave} = ?${extra}`,
+      )
+      .bind(nombre, telefono, d.id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        d.actorId,
+        d.donde === 'linea' ? 'linea_contacto2' : 'invitacion_lider_contacto2',
+        d.id,
+        JSON.stringify(antes),
+        JSON.stringify({ nombre, telefono }),
+      ),
+  ]);
+  return { nombre, telefono };
 }

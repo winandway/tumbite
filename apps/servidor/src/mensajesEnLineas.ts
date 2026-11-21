@@ -41,4 +41,12 @@ export const MENSAJES_EN_LINEAS: [string, string][] = [
   ['Cuéntanos cuántos conductores tienes.', 'Tell us how many drivers you have.'],
   ['Escribe el nombre del líder.', 'Enter the leader’s name.'],
   ['Escribe el nombre del segundo contacto.', 'Enter the second contact’s name.'],
+  [
+    'Aquí va el nombre de la persona, no su celular.',
+    'This is for the person’s name, not their cell phone.',
+  ],
+  [
+    'Aquí va el nombre de la línea, no un celular.',
+    'This is for the line’s name, not a cell phone.',
+  ],
 ];

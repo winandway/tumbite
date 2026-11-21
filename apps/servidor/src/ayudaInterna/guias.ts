@@ -2015,6 +2015,8 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
       'Si la pantalla dice que el líder todavía no tiene cuenta: toca «Invitar al líder», copia el enlace de «Líderes invitados» y mándaselo. Para deshacerlo, abre los tres puntos y toca «Anular la invitación».',
       'Para crear una línea tú: llena «Crear una línea» y toca «Crear la línea».',
       'Para mover a un conductor: arrástralo a otra línea o usa «Mover a…».',
+      'Para corregir el segundo contacto de emergencia (por ejemplo, si la línea se creó con uno provisional): en la línea o en «Líderes invitados», abre los tres puntos y toca «Editar contactos de emergencia». Escribe el nombre y el celular completo otra vez, con el código del país, y toca «Guardar el contacto». Queda en la auditoría con el antes y el después.',
+      'En las casillas de nombre va un nombre: si escribes un celular ahí, la pantalla te lo avisa y no deja guardar.',
     ],
   },
   en: {
@@ -2073,6 +2075,8 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
       'If the screen says the leader has no account yet: tap “Invite the leader”, copy the link under “Invited leaders” and send it to them. To undo it, open the three dots and tap “Cancel the invitation”.',
       'To create a line yourself: fill in “Create a line” and tap “Create the line.”',
       'To move a driver: drag them to another line or use “Move to…”.',
+      'To fix the second emergency contact (for example, if the line was created with a temporary one): on the line or under “Invited leaders”, open the three dots and tap “Edit emergency contacts.” Enter the name and the full cell phone again, with the country code, and tap “Save the contact.” It goes into the audit log with the before and after.',
+      'Name boxes are for names: if you type a cell phone there, the screen warns you and won’t save.',
     ],
   },
 };

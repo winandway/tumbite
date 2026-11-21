@@ -32,3 +32,11 @@ export function telefonoCanonico(telefono: string | null | undefined): string | 
   if (digitos.length < 7) return null;
   return digitos.length === 10 ? `1${digitos}` : digitos;
 }
+
+/**
+ * C-CONTACTO2-EDITABLE (21 nov 2026): ¿lo escrito en una casilla de NOMBRE parece un teléfono? Siete
+ * dígitos o más es un número, no el nombre de una persona ni de una línea («Línea 24» sí vale).
+ */
+export function pareceTelefono(texto: string | null | undefined): boolean {
+  return (String(texto ?? '').match(/\d/g) ?? []).length >= 7;
+}
