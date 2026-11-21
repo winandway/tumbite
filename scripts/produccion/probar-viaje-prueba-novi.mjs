@@ -130,8 +130,10 @@ function ok(r, que) {
 
 // Sesiones de dos horas para las dos cuentas (se borran al final).
 const tokens = {};
+const huellas = [];
 for (const quien of ['pasajero', 'conductor']) {
   const t = `prueba-${crypto.randomUUID()}-${crypto.randomUUID()}`;
+  huellas.push(await sha256(t));
   await sql(
     "INSERT INTO sesiones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+2 hours'))",
     [await sha256(t), ids[quien]],
@@ -315,10 +317,12 @@ try {
     ).catch(() => null);
 } finally {
   await C('POST', '/datos/repartidor/conectar', { conectado: false }).catch(() => null);
+  // Se borran exactamente las sesiones de este guion (cada uso renueva su vencimiento: no sirve
+  // borrarlas por fecha). Si el borrado falla se dice, no se calla.
   await sql(
-    "DELETE FROM sesiones WHERE usuario_id IN (?, ?) AND expira_en <= datetime('now', '+2 hours')",
-    [ids.pasajero, ids.conductor],
-  ).catch(() => null);
+    `DELETE FROM sesiones WHERE id IN (${huellas.map(() => '?').join(', ')})`,
+    huellas,
+  ).catch((e) => fallos.push(`no se pudieron borrar las sesiones del guion: ${e.message}`));
 }
 console.log(
   `\n${fallos.length ? `FALLÓ (${fallos.length}):\n- ${fallos.join('\n- ')}` : 'TODO EN VERDE'}`,
