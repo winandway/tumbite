@@ -29,6 +29,8 @@ type Zona = {
   fotoPuertaObligatoria: boolean;
   responsableNombre?: string;
   responsableTelefono?: string;
+  /** C-TERRITORIO-OFICIAL: el municipio oficial donde cae su centro. */
+  municipio?: { pcode: string; nombre: string; entidad: { pcode: string; nombre: string } } | null;
 };
 type Persona = {
   id: string;
@@ -59,6 +61,7 @@ const T = {
     restaurantes: 'restaurantes',
     repartidores: 'repartidores',
     enEspera: 'en espera',
+    municipio: 'Municipio oficial',
     nueva: 'Nueva zona',
     codigo: 'Código (ej. US-FL-OCALA)',
     nombre: 'Nombre',
@@ -92,6 +95,7 @@ const T = {
     restaurantes: 'restaurants',
     repartidores: 'drivers',
     enEspera: 'waiting',
+    municipio: 'Official municipality',
     nueva: 'New zone',
     codigo: 'Code (e.g. US-FL-OCALA)',
     nombre: 'Name',
@@ -198,6 +202,12 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
                 {z.restaurantes} {t.restaurantes} · {z.repartidores} {t.repartidores} · {z.enEspera}{' '}
                 {t.enEspera}
               </span>
+              {z.municipio ? (
+                <span>
+                  {t.municipio}: {z.municipio.nombre}, {z.municipio.entidad.nombre} (
+                  {z.municipio.pcode})
+                </span>
+              ) : null}
               <span className={`insignia ${z.activa ? 'insignia-aprobado' : ''}`}>
                 {z.activa ? t.activa : t.apagada}
               </span>
