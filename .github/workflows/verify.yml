@@ -9,7 +9,10 @@ on:
 # tres a la vez tardaban más de 40 minutos y producción no avanzaba.
 concurrency:
   group: verify-${{ github.ref }}
-  cancel-in-progress: true
+  # C-VERIFY-NO-SE-CANCELA (21 nov 2026): en la principal un commit nuevo NO cancela la verificación
+  # que ya corría (espera su turno). Dos veces un empujón canceló la corrida anterior y producción se
+  # quedó atrás una hora. En las ramas de trabajo sí se cancela la vieja: solo importa la última.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   verify:

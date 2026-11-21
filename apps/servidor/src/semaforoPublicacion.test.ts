@@ -29,6 +29,15 @@ describe('semáforo de la publicación', () => {
     expect(script).toMatch(/git worktree add/);
     expect(script).not.toMatch(/git checkout/);
   });
+  it('C-VERIFY-NO-SE-CANCELA: en la principal un commit nuevo no cancela la verificación en curso', () => {
+    const verify = readFileSync(
+      join(__dirname, '..', '..', '..', '.github', 'workflows', 'verify.yml'),
+      'utf8',
+    );
+    expect(verify).toContain("cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}");
+    expect(verify).not.toMatch(/cancel-in-progress: true/);
+  });
+
   it('dos publicaciones nunca corren a la vez', () => {
     expect(flujo).toMatch(/concurrency:\n\s+group: publicar\n\s+cancel-in-progress: false/);
   });
