@@ -1684,10 +1684,11 @@ superadmin.post('/admin/revisores', async (c) => {
               'Restaurante de prueba para los revisores de las tiendas.',
               'Test restaurant for the app store reviewers.',
               'Pizza',
-              '+1 305 000 0000',
-              '1 SE 3rd Ave, Miami, FL 33131',
-              25.7736,
-              -80.1897,
+              // C-REVISION-EN-NOVI: Novi, Michigan, como el restaurante de revisión vivo (21 nov 2026).
+              '+1 866 569 5258',
+              '27500 Novi Rd, Novi, MI 48377',
+              42.4906,
+              -83.4705,
             ),
         );
     }
