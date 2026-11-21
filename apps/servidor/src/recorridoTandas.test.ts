@@ -8,6 +8,8 @@ import { describe, expect, it } from 'vitest';
  * pruebas más la compilación). Ahora corre en tres tandas en paralelo, armadas por tiempo medido.
  * Candado: ninguna prueba se queda sin correr ni corre dos veces, cada tanda tiene su límite y su
  * aviso al 70 % con el mismo número, y el aviso sale justo al pasar ese umbral.
+ * 21 nov 2026: la tanda 3 («todo lo demás») ya rozaba los 20 minutos (19 min 39 s en una corrida verde)
+ * y se cortó tres veces seguidas, frenando toda publicación: «todo lo demás» se parte en dos (3 y 4).
  */
 const raiz = (f: string) => fileURLToPath(new URL(`../../../${f}`, import.meta.url).href);
 
@@ -21,20 +23,22 @@ type ConTiempo = {
 };
 
 describe('C-RECORRIDO-TANDAS', () => {
-  it('las tres tandas cubren todas las pruebas del recorrido, cada una una sola vez', async () => {
+  it('las cuatro tandas cubren todas las pruebas del recorrido, cada una una sola vez', async () => {
     const t = (await import(raiz('scripts/recorrido/tandas.mjs'))) as Tandas;
     const todas = t.archivosDeRecorrido();
     expect(todas.length).toBeGreaterThan(30);
-    const repartidas = [1, 2, 3].flatMap((n) => t.tanda(n));
+    const repartidas = [1, 2, 3, 4].flatMap((n) => t.tanda(n));
     expect([...repartidas].sort()).toEqual(todas);
     expect(new Set(repartidas).size).toBe(repartidas.length);
-    for (const n of [1, 2, 3]) expect(t.tanda(n).length, `tanda ${n}`).toBeGreaterThan(0);
+    for (const n of [1, 2, 3, 4]) expect(t.tanda(n).length, `tanda ${n}`).toBeGreaterThan(0);
+    // «Todo lo demás» se reparte parejo entre la 3 y la 4.
+    expect(Math.abs(t.tanda(3).length - t.tanda(4).length)).toBeLessThanOrEqual(1);
   });
 
-  it('la corrida tiene las tres tandas en paralelo, cada una con su aviso al 70 % de su límite', () => {
+  it('la corrida tiene las cuatro tandas en paralelo, cada una con su aviso al 70 % de su límite', () => {
     const y = readFileSync(raiz('.github/workflows/verify.yml'), 'utf8');
     expect(y).toMatch(/recorrido:\n\s+runs-on: ubuntu-latest\n\s+strategy:/);
-    expect(y).toMatch(/tanda: \[1, 2, 3\]/);
+    expect(y).toMatch(/tanda: \[1, 2, 3, 4\]/);
     expect(y).not.toMatch(/needs: verify/);
     const limite = /con-tiempo\.mjs (\d+) /.exec(y)?.[1];
     const corte =

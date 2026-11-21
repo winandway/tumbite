@@ -35,16 +35,16 @@ jobs:
       - run: npx playwright test
 
   # C-RECORRIDO-TANDAS (16 nov 2026): el recorrido completo en el navegador (restaurante, cliente,
-  # repartidor, pago simulado, entrega y calificación, en inglés y en español), en TRES tandas a la vez,
+  # repartidor, pago simulado, entrega y calificación, en inglés y en español), en CUATRO tandas a la vez,
   # cada una en su máquina y con su propia base. En un solo carril pasaba de 20 minutos y frenaba la
-  # publicación. Las tandas salen de scripts/recorrido/tandas.mjs (por tiempo medido; la 3 es «todo lo
+  # publicación. Las tandas salen de scripts/recorrido/tandas.mjs (por tiempo medido; la 3 y la 4 se reparten «todo lo
   # demás»). Cada tanda avisa en la corrida si pasa del 70 % de su límite. Si una se rompe, no se publica.
   recorrido:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        tanda: [1, 2, 3]
+        tanda: [1, 2, 3, 4]
     name: recorrido (tanda ${{ matrix.tanda }})
     steps:
       - uses: actions/checkout@v4

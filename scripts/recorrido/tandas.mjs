@@ -3,7 +3,9 @@
 // minutos de pruebas más la compilación). Las tandas se arman por el TIEMPO medido en la nube, no por
 // la cantidad de pruebas: la división automática de Playwright dejaba una tanda de 9 minutos.
 // La tanda 3 es «todo lo demás»: una prueba nueva entra sola ahí y nunca se queda sin correr.
-// Uso: node scripts/recorrido/tandas.mjs <1|2|3>   → imprime los archivos de esa tanda.
+// 21 nov 2026: «todo lo demás» rozaba los 20 minutos y se cortaba; se parte en dos tandas (3 y 4),
+// alternando los archivos en orden alfabético: una prueba nueva entra sola en una de las dos.
+// Uso: node scripts/recorrido/tandas.mjs <1|2|3|4>   → imprime los archivos de esa tanda.
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -28,9 +30,11 @@ export function archivosDeRecorrido() {
 
 export function tanda(n) {
   if (n === 1 || n === 2) return TANDAS_FIJAS[n - 1];
-  if (n === 3) {
+  if (n === 3 || n === 4) {
     const fijas = new Set(TANDAS_FIJAS.flat());
-    return archivosDeRecorrido().filter((f) => !fijas.has(f));
+    return archivosDeRecorrido()
+      .filter((f) => !fijas.has(f))
+      .filter((_, i) => i % 2 === n - 3);
   }
   throw new Error(`recorrido: tanda no válida: ${n}`);
 }
