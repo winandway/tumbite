@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-20T17:01:00Z",
+  "actualizado": "2026-11-21T01:00:00Z",
   "version": "fe71f3f",
-  "ahora": "20 nov: Google aprobó la app de restaurantes (versión 19) y ya está en producción. Las tres apps tienen compilación nueva en prueba interna de Google Play y en TestFlight: las pantallas de entrada ya no dejan a nadie sin salida, el restaurante crea su cuenta desde el teléfono y la puede borrar ahí mismo, la fecha se escribe con el orden de cada país y ninguna pantalla enumera ciudades. El auditor de tiendas dio por apta la de restaurantes (21) para producción de Google Play; las de clientes (56) y conductores (63) siguen aptas con una condición: marcar una casilla de ubicación en la consola de Google Play. En iPhone, la de restaurantes (27) espera a que Apple resuelva el envío que ya tiene en revisión.",
+  "ahora": "21 nov (madrugada): el asistente de papeles de Divoox Driver ya está en producción, junto con el perfil del conductor («Así te ven los pasajeros» y la tarjeta del conductor en el viaje), la pantalla «Revisa tus datos» y las fotos de verificación solo con cámara. Para El Vigía quedó también: invitar al líder de una línea desde el panel aunque todavía no tenga cuenta, el tope por número de personas del cupón, la página pública de condiciones de la promoción, las guías sin «antecedentes» y Camila al día con el plazo y «Mi línea». Compilaciones nuevas en prueba interna de Google Play (Driver 65, clientes 57) y en TestFlight (Driver 51, clientes 63); nada fue a revisión. El auditor de tiendas pidió cerrar cinco puntos de privacidad en Driver antes de enviarlo: borrar la cuenta borra las fotos de los papeles, permiso explícito antes de analizar las fotos con inteligencia artificial y la política corregida ya están hechos y publicándose. Las pruebas automáticas ya no se frenan por el contador diario del sitio de pruebas: ahora solo avisa.",
   "proximo": [
     {
       "quien": "ia",
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-21",
+      "titulo": "Asistente de Driver en producción, paquete de El Vigía y privacidad que pidió el auditor",
+      "texto": "En vivo: asistente de papeles, perfil del conductor, «Revisa tus datos», invitar al líder desde el panel, tope por personas del cupón y página de condiciones de la promoción. El contador diario de pruebas dejó de frenar las corridas (solo avisa) y el semáforo de publicación ahora le pide a la plataforma republicar cuando se queda atascada. Driver 65 y clientes 57 en prueba interna de Google Play; Driver 51 y clientes 63 en TestFlight. Del dictamen del auditor: borrar la cuenta ya borra las fotos y datos del asistente; antes de la primera foto Driver pide permiso para analizarlas con la inteligencia artificial de Google y, sin permiso, las revisa una persona; la política de privacidad dice lo que la app hace. Falta la segunda cuenta de revisión de Driver y cambiar las claves de las cuentas de revisión, que se hacen coordinadas con las consolas de las tiendas."
+    },
     {
       "fecha": "2026-11-20",
       "titulo": "El plazo de papeles para conductores ya está en producción",
