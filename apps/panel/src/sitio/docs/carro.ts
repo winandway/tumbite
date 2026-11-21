@@ -27,6 +27,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Carro Comfort o Carro Premium.',
         'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
         'Cuando un conductor acepta, ves su nombre, su foto (si la tiene), el carro con su color y sus plazas, la placa y en cuántos minutos llega. Para empezar el viaje le dices tu código de cuatro números: así sabes que te subes con la persona correcta.',
+        'Si pides desde una dirección guardada que tiene fotos de la entrada, tu conductor las ve mientras va a recogerte y reconoce tu casa a la primera. Solo la ve tu conductor, y solo mientras va hacia ti: deja de verla en cuanto te recoge. Si esa dirección todavía no tiene fotos, la app te invita a agregar una; es opcional. Si pides desde una esquina o un punto suelto del mapa, no hay foto.',
       ],
       capturas: [
         foto(
@@ -465,6 +466,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'There are two sizes. Car fits up to four riders with carry-on bags. Car XL fits up to six, for groups or more luggage.',
         'The price is fixed: you see it before you request and traffic doesn’t change it. In the United States it’s in US dollars. In countries where people also think in a local currency, the app shows the equivalent next to it, for reference only.',
         'When a driver accepts, you see their name, their photo (if they have one), the car with its color and seats, the license plate, and how many minutes away they are. To start the ride you tell them your four-digit code, so you know you’re getting in with the right person.',
+        'If you request from a saved address that has entrance photos, your driver sees them while heading to pick you up and recognizes your place on the first try. Only your driver sees it, and only while on the way to you: they stop seeing it as soon as they pick you up. If that address has no photos yet, the app invites you to add one; it’s optional. If you request from a corner or a loose spot on the map, there’s no photo.',
       ],
       capturas: [
         foto(

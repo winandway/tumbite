@@ -67,10 +67,25 @@ describe('foto de la puerta: lógica común', () => {
       'Horizontal, con la puerta en el centro.',
     ]);
     expect(textosFotoPuerta('es').privacidad).toBe(
-      'Solo tu repartidor la ve, solo mientras te lleva un pedido. Puedes borrarla cuando quieras.',
+      'Solo la ve tu conductor, y solo mientras va hacia ti. Puedes borrarla cuando quieras.',
     );
     expect(textosFotoPuerta('en').indicaciones).toHaveLength(3);
-    expect(textosFotoPuerta('en').privacidad).toMatch(/Only your courier/);
+    expect(textosFotoPuerta('en').privacidad).toBe(
+      'Only your driver sees it, and only while on the way to you. You can delete it anytime.',
+    );
+  });
+
+  // C-FOTO-RECOGIDA (Richard, 21 nov 2026): quien llega es la misma persona con la misma app, lleve
+  // comida, moto o carro. Una sola palabra: «tu conductor» / «your driver». Nada de «repartidor».
+  it('los textos de la foto hablan de «tu conductor», nunca del repartidor', () => {
+    const todo = (idioma: 'es' | 'en') =>
+      JSON.stringify([
+        textosFotoPuerta(idioma),
+        casillasPuerta('casa', idioma),
+        casillasPuerta('edificio', idioma),
+      ]);
+    expect(todo('es')).not.toMatch(/repartidor/i);
+    expect(todo('en')).not.toMatch(/courier/i);
   });
 
   it('tamaños de la conversión: grande 1024 a 0,75 y miniatura 200 a 0,7', () => {

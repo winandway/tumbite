@@ -72,11 +72,11 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
         id: 'door-photos',
         titulo: 'Agrega fotos de la entrada para que te encuentren a la primera',
         resumen:
-          'Con una o varias fotos del frente y de tu puerta, el repartidor reconoce tu casa o tu edificio a la primera, aunque no tenga número a la vista.',
+          'Con una o varias fotos del frente y de tu puerta, tu conductor reconoce tu casa o tu edificio a la primera, aunque no tenga número a la vista. Sirve igual cuando te traen un pedido y cuando pides un mototaxi o un viaje desde esa dirección.',
         explicacion: [
           'Una dirección escrita no siempre basta: casas iguales en la misma calle, edificios con varias entradas, números que no se ven de noche. Por eso, como en las grandes apps de reparto, puedes guardar fotos de tu entrada junto a tu dirección.',
-          'Si es una casa, son dos fotos: el frente desde la calle y la puerta de cerca. Si es un edificio o conjunto, son tres, en el orden en que el repartidor llega: la entrada del edificio, el paso intermedio (portería, portón, ascensor o pasillo) y la puerta de tu apartamento. Cada casilla te dice qué tiene que verse.',
-          'Quién las ve y cuándo: solo el repartidor que lleva tu pedido, y solo mientras va en camino a tu casa, después de recoger la comida. No las ve el restaurante, ni otros repartidores, ni nadie antes de la recogida o después de la entrega. No se publican ni se usan para publicidad.',
+          'Si es una casa, son dos fotos: el frente desde la calle y la puerta de cerca. Si es un edificio o conjunto, son tres, en el orden en que llega tu conductor: la entrada del edificio, el paso intermedio (portería, portón, ascensor o pasillo) y la puerta de tu apartamento. Cada casilla te dice qué tiene que verse.',
+          'Quién las ve y cuándo: solo tu conductor, y solo mientras va hacia ti. Si es un pedido, el conductor que lo lleva, mientras va en camino a tu casa después de recoger la comida. Si es un viaje pedido desde esa dirección, el conductor asignado, mientras va a recogerte; deja de verlas en cuanto te recoge. No las ve el restaurante, ni otros conductores, ni nadie antes o después. Las fotos del destino de un viaje nunca se muestran. No se publican ni se usan para publicidad.',
           'Son tuyas: las cambias o las borras cuando quieras, y si borras tu cuenta se borran con ella. Al guardarlas les quitamos los datos ocultos del teléfono, como la ubicación.',
           'Puedes tomarlas con la cámara o subirlas desde tus archivos. En la computadora, «Tomar foto» abre la cámara web en una ventanita. Si la conexión falla al subir, la foto se queda en pantalla con «Reintentar»: no se pierde nada.',
         ],
@@ -96,7 +96,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
             'cliente-edificio-fotos',
             'es',
             'Las tres casillas de un edificio: Entrada del edificio, Paso intermedio y Puerta del apartamento, con sus fotos.',
-            'Un edificio lleva tres, en el orden en que llega el repartidor.',
+            'Un edificio lleva tres, en el orden en que llega tu conductor.',
           ),
           foto(
             'cliente-menu',
@@ -135,7 +135,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Cada foto se guarda al instante: verás «Foto guardada». Si además cambiaste el nombre o los datos, toca «Guardar cambios».',
           'Para cambiarlas o borrarlas: en «Entregar en», toca los tres puntos de la dirección y luego «Fotos de la entrada»; o en el carrito, «Ver o cambiar las fotos». Cada foto tiene sus tres puntos con «Cambiar foto» y «Borrar foto».',
         ],
-        nota: 'Las fotos son opcionales. Tu repartidor solo las ve mientras te lleva un pedido. Para cambiar el nombre, el apartamento o el punto, mira la guía «Edita una dirección guardada».',
+        nota: 'Las fotos son opcionales. Solo las ve tu conductor, y solo mientras va hacia ti. Para cambiar el nombre, el apartamento o el punto, mira la guía «Edita una dirección guardada».',
       },
     ],
     drivers: [
@@ -149,6 +149,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Aparecen solo después de recoger la comida, mientras el pedido va en camino. En la tarjeta del pedido, en lugar del dibujo de comida, ves la miniatura de la primera foto con «1 de 3» (o las que haya).',
           'Al tocarla se abre una hoja a media altura: el mapa y la dirección siguen arriba, a la vista. Desliza de lado para pasar de una foto a otra; cada una dice qué es (Entrada, Portería o pasillo, Puerta del apartamento). Debajo van las indicaciones completas del cliente.',
           'Ciérrala con «Cerrar», tocando fuera de la hoja o deslizándola hacia abajo. Las fotos son privadas: no se pueden guardar ni compartir y desaparecen de tu app en cuanto entregas el pedido.',
+          'En un viaje de pasajeros también: si el pasajero pidió desde una dirección guardada con fotos, en la pantalla «Ir a recoger» ves la foto de su entrada, el nombre que le puso a esa dirección y su mensaje para quien llega. Tócala para verla grande. La ves mientras vas a recoger y mientras esperas en la puerta; desaparece en cuanto empiezas el viaje.',
           'Si el cliente no tiene fotos, la tarjeta se ve como siempre. Si no tienes señal, la foto se carga sola cuando vuelva.',
         ],
         capturas: [
@@ -188,7 +189,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Desliza de lado para pasar de la entrada a la portería y a la puerta.',
           'Cierra con «Cerrar», tocando fuera o deslizando hacia abajo, y sigue tu ruta.',
         ],
-        nota: 'Las fotos solo se ven mientras llevas ese pedido; al entregarlo desaparecen.',
+        nota: 'Las fotos solo se ven mientras llevas ese pedido o mientras vas a recoger a ese pasajero; al entregar o al empezar el viaje desaparecen.',
       },
     ],
   },
@@ -247,11 +248,11 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
         id: 'door-photos',
         titulo: 'Add entrance photos so they find you on the first try',
         resumen:
-          'With a few photos of your entrance and your door, your courier recognizes your house or building on the first try, even when the number is hard to see.',
+          'With a few photos of your entrance and your door, your driver recognizes your house or building on the first try, even when the number is hard to see. It works the same when an order is coming to you and when you request a moto taxi or a ride from that address.',
         explicacion: [
           'A written address isn’t always enough: houses that look alike on the same street, buildings with several entrances, numbers you can’t see at night. That’s why, like the big delivery apps, you can save photos of your entrance with your address.',
-          'For a house, it’s two photos: the front from the street and the door up close. For a building or complex, it’s three, in the order your courier gets there: the building entrance, the spot along the way (front desk, gate, elevator or hallway) and your apartment door. Each box tells you what should show.',
-          'Who sees them and when: only the courier bringing your order, and only while they’re on the way to you, after picking up the food. The restaurant doesn’t see them, other couriers don’t, and nobody sees them before pickup or after delivery. They’re never published or used for advertising.',
+          'For a house, it’s two photos: the front from the street and the door up close. For a building or complex, it’s three, in the order your driver gets there: the building entrance, the spot along the way (front desk, gate, elevator or hallway) and your apartment door. Each box tells you what should show.',
+          'Who sees them and when: only your driver, and only while on the way to you. For an order, the driver bringing it, while on the way to your place after picking up the food. For a ride requested from that address, the assigned driver, while heading to pick you up; they stop seeing them as soon as they pick you up. The restaurant doesn’t see them, other drivers don’t, and nobody sees them before or after. Photos of a ride’s destination are never shown. They’re never published or used for advertising.',
           'They’re yours: change or delete them anytime, and if you delete your account they’re deleted with it. When we save them, we remove the hidden data from your phone, like your location.',
           'Take them with your camera or upload them from your files. On a computer, “Take photo” opens your webcam in a small window. If the connection drops while uploading, the photo stays on screen with “Try again”: nothing is lost.',
         ],
@@ -271,7 +272,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
             'cliente-edificio-fotos',
             'en',
             'The three boxes for a building: Building entrance, Along the way and Apartment door, with their photos.',
-            'A building takes three, in the order your courier gets there.',
+            'A building takes three, in the order your driver gets there.',
           ),
           foto(
             'cliente-menu',
@@ -310,7 +311,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Each photo saves right away: you’ll see “Photo saved.” If you also changed the name or details, tap “Save changes.”',
           'To change or delete them: under “Deliver to,” tap the address’s three dots and then “Entrance photos”; or in your cart, “View or change the photos.” Each photo has its own three dots with “Change photo” and “Delete photo.”',
         ],
-        nota: 'Photos are optional. Your courier only sees them while bringing you an order. To change the name, the apartment or the spot, see the “Edit a saved address” guide.',
+        nota: 'Photos are optional. Only your driver sees them, and only while on the way to you. To change the name, the apartment or the spot, see the “Edit a saved address” guide.',
       },
     ],
     drivers: [
@@ -324,6 +325,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'They show up only after you pick up the food, while the order is on the way. On the order card, instead of the food picture, you see the first photo’s thumbnail with “1 of 3” (or however many there are).',
           'Tap it and a half-height sheet opens: the map and the address stay visible at the top. Swipe sideways to go from one photo to the next; each one says what it is (Entrance, Front desk or hallway, Apartment door). The customer’s full instructions are below.',
           'Close it with “Close,” by tapping outside the sheet or by swiping it down. The photos are private: they can’t be saved or shared, and they disappear from your app as soon as you deliver the order.',
+          'On passenger rides too: if the rider requested from a saved address with photos, the “Go pick up” screen shows the photo of their entrance, the name they gave that address and their message for whoever arrives. Tap it to see it large. You see it while heading to the pickup and while waiting at the door; it disappears as soon as you start the ride.',
           'If the customer has no photos, the card looks the same as always. If you lose signal, the photo loads by itself when you’re back online.',
         ],
         capturas: [
@@ -363,7 +365,7 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Swipe sideways to go from the entrance to the front desk and the door.',
           'Close it with “Close,” by tapping outside or swiping down, and keep going.',
         ],
-        nota: 'You only see the photos while you’re carrying that order; they disappear once you deliver it.',
+        nota: 'You only see the photos while you’re carrying that order or heading to pick up that rider; they disappear once you deliver or start the ride.',
       },
     ],
   },

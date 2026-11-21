@@ -14,6 +14,7 @@ import {
   type Idioma,
   type RolPuerta,
   rutaPuertaRepartidor,
+  rutaRecogidaConductor,
   textoRolPuerta,
   textosFotoPuerta,
 } from '@tumbite/compartido';
@@ -38,6 +39,10 @@ const T = {
     notas: 'Indicaciones del cliente',
     sinNotas: 'El cliente no dejó indicaciones.',
     foto: 'Foto {n}',
+    entrada: 'Foto de la entrada',
+    verEntrada: 'Ver la foto de la entrada',
+    mensaje: 'Mensaje para quien llega',
+    sinMensaje: 'El pasajero no dejó un mensaje.',
   },
   en: {
     verFotos: 'View the door photos',
@@ -47,40 +52,79 @@ const T = {
     notas: 'Customer instructions',
     sinNotas: 'The customer didn’t leave instructions.',
     foto: 'Photo {n}',
+    entrada: 'Entrance photo',
+    verEntrada: 'View the entrance photo',
+    mensaje: 'Message for whoever arrives',
+    sinMensaje: 'The rider didn’t leave a message.',
   },
 };
 
-/** La lista de fotos y la miniatura de la foto 1, solo mientras el pedido va en camino. */
-function usePuerta(pedidoId: string, estado: string) {
+/**
+ * De dónde salen las fotos: del pedido de comida que va «en camino» (C-FOTO-PUERTA) o del viaje que
+ * el conductor va a recoger (C-FOTO-RECOGIDA). La pieza es la misma; cambian las rutas.
+ */
+type Fuente = {
+  /** El pedido o el viaje. */
+  id: string;
+  /** Si en este momento le toca verlas (el servidor igual lo hace cumplir). */
+  activa: boolean;
+  lista: string;
+  foto: (orden: number, mini?: boolean) => string;
+};
+type Cargado = {
+  id: string;
+  fotos: FotoPuerta[];
+  mini: string | null;
+  nombre: string;
+  indicaciones: string;
+};
+const NADA: Cargado = { id: '', fotos: [], mini: null, nombre: '', indicaciones: '' };
+
+const fuentePedido = (pedidoId: string, estado: string): Fuente => ({
+  id: pedidoId,
+  activa: estado === 'en_camino',
+  lista: `/datos/repartidor/pedidos/${encodeURIComponent(pedidoId)}/puerta`,
+  foto: (orden, mini) => rutaPuertaRepartidor(pedidoId, orden, mini),
+});
+const fuenteViaje = (operacionId: string, estado: string): Fuente => ({
+  id: operacionId,
+  // Solo mientras va a recoger o espera en la puerta; al recoger al pasajero se acaba.
+  activa: estado === 'asignado' || estado === 'conductor_llego',
+  lista: `/datos/conductor/operaciones/${encodeURIComponent(operacionId)}/recogida`,
+  foto: (orden, mini) => rutaRecogidaConductor(operacionId, orden, mini),
+});
+
+/** La lista de fotos y la miniatura de la foto 1, solo mientras le toca verlas. */
+function usePuerta({ id, activa, lista: rutaLista, foto }: Fuente) {
   const { api } = useSesion();
-  const enCamino = estado === 'en_camino';
-  // Lo cargado, guardado con el pedido para el que se pidió: otro pedido no ve fotos ajenas.
-  const [datos, setDatos] = useState<{ pedido: string; fotos: FotoPuerta[]; mini: string | null }>({
-    pedido: '',
-    fotos: [],
-    mini: null,
-  });
+  // Lo cargado, guardado con el pedido o viaje para el que se pidió: otro no ve fotos ajenas.
+  const [datos, setDatos] = useState<Cargado>(NADA);
   useEffect(() => {
-    // Fuera de «en camino» (entregado, cancelado) no se pide nada.
-    if (!enCamino || !pedidoId) return;
+    // Fuera de su momento (entregado, recogido, cancelado) no se pide nada.
+    if (!activa || !id) return;
     let vivo = true;
     let reintento: ReturnType<typeof setTimeout> | undefined;
     const cargar = async () => {
       try {
-        const r = await api.pedir<{ fotos: FotoPuerta[] }>(
+        const r = await api.pedir<{ fotos: FotoPuerta[]; nombre?: string; indicaciones?: string }>(
           'GET',
-          `/datos/repartidor/pedidos/${encodeURIComponent(pedidoId)}/puerta`,
+          rutaLista,
         );
         if (!vivo) return;
         const lista = [...r.fotos].sort((a, b) => a.orden - b.orden);
         const primera = lista[0];
-        const uri = primera
-          ? await api.verFoto(rutaPuertaRepartidor(pedidoId, primera.orden, true))
-          : null;
-        if (vivo) setDatos({ pedido: pedidoId, fotos: lista, mini: uri });
+        const uri = primera ? await api.verFoto(foto(primera.orden, true)) : null;
+        if (vivo)
+          setDatos({
+            id,
+            fotos: lista,
+            mini: uri,
+            nombre: r.nombre ?? '',
+            indicaciones: r.indicaciones ?? '',
+          });
       } catch (x) {
-        // Sin señal: se vuelve a intentar en un rato, sin molestar al repartidor.
-        console.warn('foto de la puerta: no cargó', x);
+        // Sin señal: se vuelve a intentar en un rato, sin molestar a quien maneja.
+        console.warn('foto de la entrada: no cargó', x);
         if (vivo) reintento = setTimeout(() => void cargar(), 20_000);
       }
     };
@@ -89,29 +133,37 @@ function usePuerta(pedidoId: string, estado: string) {
       vivo = false;
       if (reintento) clearTimeout(reintento);
     };
-  }, [api, pedidoId, enCamino]);
-  // Al dejar de estar en camino, nada se muestra; y se suelta la imagen al cambiar de pedido.
-  const vale = enCamino && datos.pedido === pedidoId;
+    // Las rutas salen del id: con el id y el momento basta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, id, activa]);
+  // Al dejar de tocarle, nada se muestra; y se suelta la imagen al cambiar de pedido o de viaje.
+  const vale = activa && datos.id === id;
   useEffect(() => {
-    if (!enCamino && datos.pedido)
+    if (!activa && datos.id)
       // Suelta la miniatura de la memoria (cambio en una respuesta asíncrona, no en el render).
-      void Promise.resolve().then(() => setDatos({ pedido: '', fotos: [], mini: null }));
-  }, [enCamino, datos.pedido]);
-  return { fotos: vale ? datos.fotos : [], mini: vale ? datos.mini : null };
+      void Promise.resolve().then(() => setDatos(NADA));
+  }, [activa, datos.id]);
+  return vale ? datos : NADA;
 }
 
 function HojaFotos({
   cerrar,
-  pedidoId,
+  fuente,
   fotos,
   notas,
+  rotulos,
+  titulo,
   idioma,
   desde,
 }: {
   cerrar: () => void;
-  pedidoId: string;
+  fuente: Fuente;
   fotos: FotoPuerta[];
   notas: string;
+  /** Cómo se llaman las indicaciones aquí y qué se dice cuando no hay. */
+  rotulos: { notas: string; sinNotas: string };
+  /** El nombre que la persona le puso a la dirección (solo en viajes). */
+  titulo?: string;
   idioma: Idioma;
   /** Dónde termina la tarjeta del pedido (en pantalla): la hoja empieza debajo y no la tapa. */
   desde: number | null;
@@ -158,7 +210,7 @@ function HojaFotos({
     for (const f of fotos) {
       if (grandes[f.orden]) continue;
       api
-        .verFoto(rutaPuertaRepartidor(pedidoId, f.orden))
+        .verFoto(fuente.foto(f.orden))
         .then((uri) => {
           if (!vivo) return;
           setGrandes((g) => ({ ...g, [f.orden]: uri }));
@@ -171,7 +223,7 @@ function HojaFotos({
     };
     // `intento` vuelve a pedir las que fallaron.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [intento, pedidoId, fotos.map((f) => f.orden).join(',')]);
+  }, [intento, fuente.id, fotos.map((f) => f.orden).join(',')]);
 
   // «Se cargará al volver»: mientras la hoja está abierta y algo falló, se reintenta solo.
   const hayFallo = Object.values(fallo).some(Boolean);
@@ -303,9 +355,14 @@ function HojaFotos({
             </View>
           ) : null}
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 4 }}>
-            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.notas}</Text>
+            {titulo?.trim() ? (
+              <Text style={{ fontWeight: '800', color: C.secundario }} testID="puerta-nombre">
+                {titulo.trim()}
+              </Text>
+            ) : null}
+            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{rotulos.notas}</Text>
             <Text style={{ color: C.secundario }} testID="puerta-notas">
-              {notas.trim() || t.sinNotas}
+              {notas.trim() || rotulos.sinNotas}
             </Text>
           </ScrollView>
           <Pressable
@@ -354,7 +411,8 @@ export function MiniaturaPuerta({
   tarjeta?: RefObject<View | null>;
 }) {
   const t = idioma === 'en' ? T.en : T.es;
-  const { fotos, mini } = usePuerta(pedidoId, estado);
+  const fuente = fuentePedido(pedidoId, estado);
+  const { fotos, mini } = usePuerta(fuente);
   const [abierta, setAbierta] = useState(false);
   const [desde, setDesde] = useState<number | null>(null);
   const cerrar = useCallback(() => setAbierta(false), []);
@@ -407,11 +465,114 @@ export function MiniaturaPuerta({
       {abierta ? (
         <HojaFotos
           cerrar={cerrar}
-          pedidoId={pedidoId}
+          fuente={fuente}
           fotos={fotos}
           notas={notas}
+          rotulos={{ notas: t.notas, sinNotas: t.sinNotas }}
           idioma={idioma}
           desde={desde}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * C-FOTO-RECOGIDA (21 nov 2026) — todos los países. En «ir a recoger»: la foto de la entrada del
+ * pasajero, con el nombre que le puso a su dirección y su mensaje para quien llega. Tocarla la abre
+ * grande. Solo existe mientras el conductor va a recoger o espera en la puerta; si el pasajero salió
+ * de un punto suelto o no tiene fotos, no se dibuja nada.
+ */
+export function TarjetaRecogida({
+  operacionId,
+  estado,
+  idioma,
+}: {
+  operacionId: string;
+  estado: string;
+  idioma: Idioma;
+}) {
+  const t = idioma === 'en' ? T.en : T.es;
+  const fuente = fuenteViaje(operacionId, estado);
+  const { fotos, mini, nombre, indicaciones } = usePuerta(fuente);
+  const [abierta, setAbierta] = useState(false);
+  const cerrar = useCallback(() => setAbierta(false), []);
+  if (!fotos.length || !mini) return null;
+  return (
+    <>
+      <Pressable
+        onPress={() => setAbierta(true)}
+        accessibilityRole="button"
+        accessibilityLabel={t.verEntrada}
+        testID="recogida-foto"
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          gap: 12,
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: '#2a2a2a',
+          borderRadius: 12,
+          padding: 10,
+          opacity: pressed ? 0.85 : 1,
+        })}
+      >
+        <View style={{ width: 84, height: 84 }}>
+          <Image
+            source={{ uri: mini }}
+            style={{ width: 84, height: 84, borderRadius: 10, backgroundColor: '#F4F5F7' }}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+          />
+          {fotos.length > 1 ? (
+            <View
+              style={{
+                position: 'absolute',
+                right: -4,
+                bottom: -4,
+                backgroundColor: C.secundario,
+                borderRadius: 999,
+                paddingHorizontal: 6,
+                paddingVertical: 1,
+                borderWidth: 1.5,
+                borderColor: '#fff',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>
+                {textosFotoPuerta(idioma)
+                  .deCuantas.replace('{n}', '1')
+                  .replace('{total}', String(fotos.length))}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.entrada}</Text>
+          {nombre.trim() ? (
+            <Text
+              style={{ fontWeight: '800', color: C.secundario }}
+              numberOfLines={1}
+              testID="recogida-nombre"
+            >
+              {nombre.trim()}
+            </Text>
+          ) : null}
+          {indicaciones.trim() ? (
+            <Text style={{ color: C.secundario }} numberOfLines={3} testID="recogida-mensaje">
+              {indicaciones.trim()}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+      {abierta ? (
+        <HojaFotos
+          cerrar={cerrar}
+          fuente={fuente}
+          fotos={fotos}
+          notas={indicaciones}
+          rotulos={{ notas: t.mensaje, sinNotas: t.sinMensaje }}
+          titulo={nombre}
+          idioma={idioma}
+          desde={null}
         />
       ) : null}
     </>

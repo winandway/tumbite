@@ -39,6 +39,7 @@ import { type ParadaDelViaje, ParadasDelViaje } from './Paradas';
 import { BuscandoConductor, useReducirMovimiento } from './BuscandoConductor';
 import { TIEMPOS, vehiculoDeEspera } from './escenaBuscando';
 import { TEXTOS_ESPERA } from './textosEspera';
+import { GuardarPuntoDeRecogida } from './FotoEntradaViaje';
 import { PrecioCompacto, PrecioDelViaje, type RegaloDelViaje } from './PrecioDelViaje';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
@@ -51,6 +52,8 @@ export type ViajePasajero = {
   pin: string | null;
   metodoPago: string;
   origen: { direccion: string; lat: number; lng: number };
+  /** C-FOTO-RECOGIDA: false = salió de un punto suelto (no de una dirección guardada). */
+  recogidaGuardada?: boolean;
   destino: { direccion: string; lat: number; lng: number };
   total: number | null;
   moneda: string | null;
@@ -886,6 +889,8 @@ export function ViajeEnCurso({
           {t.propinaEnMano}
         </Text>
       ) : null}
+      {/* C-FOTO-RECOGIDA: salió de un punto suelto; se le ofrece guardarlo como dirección. */}
+      <GuardarPuntoDeRecogida viaje={viaje} />
       {FINALES.has(viaje.estado) ? (
         <Boton texto={t.otraVez} alTocar={alTerminar} exito={viaje.estado === 'terminado'} />
       ) : null}

@@ -420,7 +420,7 @@ export const esquemaCambiarParadas = z.object({
 export type CotizacionViaje = {
   id: string;
   /** C-FOTO-RECOGIDA: si la recogida cae en una dirección guardada del pasajero y si esa tiene fotos. */
-  recogida?: { guardada: boolean; conFotos: boolean };
+  recogida?: { guardada: boolean; conFotos: boolean; direccionId?: string | null };
   servicio: ServicioViaje;
   categoria?: CategoriaViaje;
   /** C-VIAJE-PARADAS: las paradas intermedias de la cotización, en orden. */

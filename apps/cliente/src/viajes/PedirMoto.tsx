@@ -53,6 +53,7 @@ import { BotonGrande } from './BotonGrande';
 import { BuscarDestino } from './BuscarDestino';
 import { LugaresFila } from './LugaresFila';
 import { useLugares } from './useLugares';
+import { InvitacionFotoEntrada } from './FotoEntradaViaje';
 import {
   EditorParadas,
   PARADAS_SIN_SABER,
@@ -939,6 +940,15 @@ export function PedirMoto({
             {/* C-CUPON-DIVOOX: el código se agrega a la cuenta y el precio se vuelve a calcular. */}
             {cotizacion.regalo ? null : <AgregarCodigoRegalo alAgregar={() => void cotizar()} />}
           </View>
+        ) : null}
+
+        {/* C-FOTO-RECOGIDA: invitación discreta si sale de una dirección guardada sin fotos. */}
+        {servicio !== 'envios' ? (
+          <InvitacionFotoEntrada
+            cotizacion={cotizacion}
+            lugares={lugares.lista}
+            alCambiar={() => void lugares.recargar()}
+          />
         ) : null}
 
         {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}

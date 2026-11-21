@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
@@ -90,7 +92,7 @@ describe('C-FOTO-RECOGIDA: el conductor ve la entrada mientras va a recoger', ()
     const v = await preparar();
     await v.guardar(true);
     const cot = await v.cotizar(EN_LA_PUERTA);
-    expect(cot.recogida).toEqual({ guardada: true, conFotos: true });
+    expect(cot.recogida).toMatchObject({ guardada: true, conFotos: true });
     const id = await v.pedir(cot.id);
     const lista = `/datos/conductor/operaciones/${id}/recogida`;
     // Antes de aceptar, nadie: ni quien recibe la oferta.
@@ -151,7 +153,7 @@ describe('C-FOTO-RECOGIDA: el conductor ve la entrada mientras va a recoger', ()
     const v = await preparar();
     await v.guardar(true);
     const cot = await v.cotizar(ESQUINA);
-    expect(cot.recogida).toEqual({ guardada: false, conFotos: false });
+    expect(cot.recogida).toEqual({ guardada: false, conFotos: false, direccionId: null });
     const id = await v.pedir(cot.id);
     expect(await v.cond.paso(id, 'aceptar')).toBe(200);
     const lista = `/datos/conductor/operaciones/${id}/recogida`;
@@ -164,7 +166,7 @@ describe('C-FOTO-RECOGIDA: el conductor ve la entrada mientras va a recoger', ()
     // La casa con fotos es a donde va, no de donde sale.
     await v.guardar(true, { lat: DESTINO.lat, lng: DESTINO.lng });
     const cot = await v.cotizar(ESQUINA, DESTINO);
-    expect(cot.recogida).toEqual({ guardada: false, conFotos: false });
+    expect(cot.recogida).toEqual({ guardada: false, conFotos: false, direccionId: null });
     const id = await v.pedir(cot.id);
     expect(await v.cond.paso(id, 'aceptar')).toBe(200);
     const lista = `/datos/conductor/operaciones/${id}/recogida`;
@@ -174,9 +176,9 @@ describe('C-FOTO-RECOGIDA: el conductor ve la entrada mientras va a recoger', ()
 
   it('desde una dirección guardada SIN fotos: se invita al pasajero y el conductor no ve nada', async () => {
     const v = await preparar();
-    await v.guardar(false);
+    const casa = await v.guardar(false);
     const cot = await v.cotizar(EN_LA_PUERTA);
-    expect(cot.recogida).toEqual({ guardada: true, conFotos: false });
+    expect(cot.recogida).toEqual({ guardada: true, conFotos: false, direccionId: casa.id });
     const id = await v.pedir(cot.id);
     expect(await v.cond.paso(id, 'aceptar')).toBe(200);
     expect(
@@ -230,5 +232,28 @@ describe('C-FOTO-RECOGIDA: el conductor ve la entrada mientras va a recoger', ()
     await v.ver(`${lista}/1?tam=mini`, v.cond.token);
     v.m.DB.prepare = preparado;
     expect(escritas).toEqual([]);
+  });
+});
+
+describe('C-FOTO-RECOGIDA: candados del código', () => {
+  const leer = (ruta: string) =>
+    readFileSync(join(__dirname, '..', '..', '..', '..', ruta), 'utf8');
+  it('Driver solo la pide mientras va a recoger o espera en la puerta, y la pantalla del viaje la muestra', () => {
+    const pieza = leer('apps/repartidor/src/piezas/FotosPuerta.tsx');
+    expect(pieza).toMatch(/activa: estado === 'asignado' \|\| estado === 'conductor_llego'/);
+    expect(leer('apps/repartidor/src/viajes/ViajeActivo.tsx')).toContain('<TarjetaRecogida');
+  });
+  it('el servidor nunca lee la dirección del destino para el conductor', () => {
+    const rutas = leer('apps/servidor/src/rutas/fotoPuerta.ts');
+    expect(rutas).toContain('d.id = v.origen_direccion_id AND d.usuario_id = o.cliente_id');
+    expect(rutas).not.toMatch(/destino_direccion_id/);
+    expect(rutas).toContain("BUSCANDO_LA_ENTRADA = ['asignado', 'conductor_llego']");
+  });
+  it('el pasajero ve la invitación al pedir y la oferta de guardar el punto al terminar', () => {
+    expect(leer('apps/cliente/src/viajes/PedirMoto.tsx')).toContain('<InvitacionFotoEntrada');
+    expect(leer('apps/cliente/src/viajes/ViajeEnCurso.tsx')).toContain('<GuardarPuntoDeRecogida');
+    const pieza = leer('apps/cliente/src/viajes/FotoEntradaViaje.tsx');
+    expect(pieza).toContain('Solo la ve tu conductor, y solo mientras va hacia ti.');
+    expect(pieza).toContain('Only your driver sees it, and only while on the way to you.');
   });
 });

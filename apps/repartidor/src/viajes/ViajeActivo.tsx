@@ -42,6 +42,7 @@ const deArchivosEntrega = async () => {
 };
 import { TEXTOS_VIAJE } from './textos';
 import { Mapa } from '../piezas/Mapa';
+import { TarjetaRecogida } from '../piezas/FotosPuerta';
 import { textoOfertaConfianza } from './agendaFijos';
 
 type Api = {
@@ -555,6 +556,10 @@ export function ViajeActivo({
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
       </View>
+      {/* C-FOTO-RECOGIDA: la foto de la entrada del pasajero, solo mientras va a recoger. */}
+      {!esEnvio ? (
+        <TarjetaRecogida operacionId={viaje.id} estado={viaje.estado} idioma={idioma} />
+      ) : null}
       {parada ? (
         // C-VIAJE-PARADAS: qué sigue después de esta parada (las demás paradas y el destino).
         <View testID="viaje-paradas" style={{ gap: 2 }}>

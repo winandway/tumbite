@@ -97,7 +97,7 @@ const ROLES: Record<Idioma, Record<RolPuerta, TextoRol>> = {
     paso: {
       titulo: 'Along the way (front desk, gate, elevator or hallway)',
       indicacion:
-        'If the courier has to go through a gate, a front desk or a hallway, take a photo of that spot.',
+        'If your driver has to go through a gate, a front desk or a hallway, take a photo of that spot.',
       rotulo: 'Front desk or hallway',
     },
     apto: {
@@ -140,7 +140,7 @@ const COMUNES = {
       'Horizontal, con la puerta en el centro.',
     ],
     privacidad:
-      'Solo tu repartidor la ve, solo mientras te lleva un pedido. Puedes borrarla cuando quieras.',
+      'Solo la ve tu conductor, y solo mientras va hacia ti. Puedes borrarla cuando quieras.',
     opcional: 'Opcional',
     listo: 'Listo',
     ahoraNo: 'Ahora no',
@@ -148,7 +148,7 @@ const COMUNES = {
     borrarFoto: 'Borrar foto',
     masOpciones: 'Más opciones',
     borrarTitulo: '¿Borrar esta foto?',
-    borrarMensaje: 'Tu repartidor ya no la verá. Puedes tomar otra cuando quieras.',
+    borrarMensaje: 'Tu conductor ya no la verá. Puedes tomar otra cuando quieras.',
     borrar: 'Borrar',
     cancelar: 'Cancelar',
     subiendo: 'Subiendo la foto…',
@@ -177,7 +177,7 @@ const COMUNES = {
       'Landscape, with the door in the center.',
     ],
     privacidad:
-      'Only your courier sees it, and only while bringing you an order. You can delete it anytime.',
+      'Only your driver sees it, and only while on the way to you. You can delete it anytime.',
     opcional: 'Optional',
     listo: 'Done',
     ahoraNo: 'Not now',
@@ -185,7 +185,7 @@ const COMUNES = {
     borrarFoto: 'Delete photo',
     masOpciones: 'More options',
     borrarTitulo: 'Delete this photo?',
-    borrarMensaje: 'Your courier won’t see it anymore. You can take another one anytime.',
+    borrarMensaje: 'Your driver won’t see it anymore. You can take another one anytime.',
     borrar: 'Delete',
     cancelar: 'Cancel',
     subiendo: 'Uploading the photo…',
@@ -214,4 +214,9 @@ export function rutaFotoPuerta(
 /** La ruta con la que el repartidor ve una foto de la puerta del pedido que lleva. */
 export function rutaPuertaRepartidor(pedidoId: string, orden: number, mini = false): string {
   return `/datos/repartidor/pedidos/${encodeURIComponent(pedidoId)}/puerta/${orden}${mini ? '?tam=mini' : ''}`;
+}
+
+/** C-FOTO-RECOGIDA: la ruta con la que el conductor ve la foto de la entrada del viaje que va a recoger. */
+export function rutaRecogidaConductor(operacionId: string, orden: number, mini = false): string {
+  return `/datos/conductor/operaciones/${encodeURIComponent(operacionId)}/recogida/${orden}${mini ? '?tam=mini' : ''}`;
 }

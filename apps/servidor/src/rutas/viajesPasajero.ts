@@ -633,7 +633,11 @@ export async function cotizarParaCliente(
   const cotizacion: CotizacionViaje = {
     id,
     // C-FOTO-RECOGIDA: la app invita a agregar la foto si sale de una dirección guardada sin fotos.
-    recogida: { guardada: recogida.direccionId != null, conFotos: recogida.conFotos },
+    recogida: {
+      guardada: recogida.direccionId != null,
+      conFotos: recogida.conFotos,
+      direccionId: recogida.direccionId,
+    },
     servicio: d.servicio,
     categoria: d.categoria,
     paradas: d.paradas,
