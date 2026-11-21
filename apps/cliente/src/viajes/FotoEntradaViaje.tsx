@@ -48,7 +48,7 @@ type ConFotos = LugarGuardado & { tipoLugar?: '' | 'casa' | 'edificio' | null; f
 function HojaEntrada({ direccion, cerrar }: { direccion: ConFotos | null; cerrar: () => void }) {
   if (!direccion) return null;
   return (
-    <Modal visible animationType="slide" onRequestClose={cerrar}>
+    <Modal visible animationType="slide" presentationStyle="pageSheet" onRequestClose={cerrar}>
       <HojaFotosPuerta direccion={direccion} cerrar={cerrar} alCambiar={() => undefined} />
     </Modal>
   );

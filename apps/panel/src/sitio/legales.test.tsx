@@ -220,12 +220,26 @@ describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fot
     );
     expect(en).toContain('the riders on your trips see it, together with your first name');
     // B1 del sexto dictamen: la captura adjunta al chat de soporte también la lee Gemini.
-    expect(es).toContain('y la captura de pantalla que adjuntes a un reporte');
+    expect(es).toContain('y la captura de pantalla que adjuntes');
     expect(es).toContain('la lee la asistente virtual (Google Gemini) para entender el problema');
-    expect(en).toContain('and any screenshot you attach to a report');
+    expect(en).toContain('and any screenshot you attach');
     expect(en).toContain(
       'the virtual assistant (Google Gemini) reads it to understand the problem',
     );
+    // C-PERMISO-IA-CHAT (Apple 5.1.2(i)): el chat pide permiso explícito antes del primer mensaje;
+    // sin permiso nada va a la IA, y se puede retirar.
+    expect(es).toContain(
+      'antes de tu primer mensaje en el chat de la app o de la web te pedimos tu permiso explícito',
+    );
+    expect(es).toContain('nada de lo que escribas en ese chat se envía a ese servicio');
+    expect(es).toContain('Puedes dar o retirar ese permiso cuando quieras');
+    expect(es).toContain('solo si diste tu permiso en el chat');
+    expect(en).toContain(
+      'before your first message in the app or web chat, we ask for your explicit permission',
+    );
+    expect(en).toContain('nothing you write in that chat is sent to that service');
+    expect(en).toContain('You can give or withdraw that permission at any time');
+    expect(en).toContain('only if you gave your permission in the chat');
     expect(es).not.toMatch(/solo la ve nuestro equipo/);
     expect(en).not.toMatch(/only our team sees it/);
     // «Papeles del conductor» remite a la IA (séptima vuelta del auditor).

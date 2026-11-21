@@ -6063,6 +6063,22 @@ body.modo-tableta .cabecera {
 .chat-soporte-permiso .boton {
   width: 100%;
 }
+.chat-soporte-ajuste-ia {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px 10px;
+  font-size: 0.78rem;
+}
+.chat-soporte-ajuste-ia > .enlace {
+  align-self: flex-start;
+  color: #666b73;
+  font-size: 0.78rem;
+}
+.chat-soporte-ajuste-ia .boton {
+  margin-top: 8px;
+  width: 100%;
+}
 .chat-soporte-casilla {
   display: flex;
   align-items: flex-end;

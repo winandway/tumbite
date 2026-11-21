@@ -500,6 +500,15 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
           <p className="chat-soporte-pie">
             {t.prefieresCorreo} <a href={enIdiomaDireccion('/contact', idioma)}>{t.formulario}</a>
           </p>
+          {hilo?.permisoIa != null ? (
+            // C-PERMISO-IA-CHAT: el permiso se puede dar o retirar cuando se quiera, aquí mismo.
+            <AjusteIaChat
+              idioma={idioma}
+              cabeceras={cabeceras}
+              permiso={hilo.permisoIa}
+              alCambiar={(permisoIa) => setHilo((h) => (h ? { ...h, permisoIa } : h))}
+            />
+          ) : null}
         </section>
       ) : null}
     </>
@@ -808,6 +817,74 @@ function PermisoIaChat({
         <p className="chat-soporte-error" role="alert">
           {error}
         </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** C-PERMISO-IA-CHAT: el ajuste del permiso, al pie del chat (la web no tiene otra pantalla de ajustes). */
+function AjusteIaChat({
+  idioma,
+  cabeceras,
+  permiso,
+  alCambiar,
+}: {
+  idioma: Idioma;
+  cabeceras: Record<string, string>;
+  permiso: boolean;
+  alCambiar: (permisoIa: boolean) => void;
+}) {
+  const t = textosPermisoIaChat(idioma);
+  const [abierto, setAbierto] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState('');
+  const cambiar = async () => {
+    setOcupado(true);
+    setError('');
+    try {
+      const r = await pedir<{ permisoIa: boolean }>(
+        'POST',
+        '/datos/camila/permiso-ia',
+        { acepto: !permiso },
+        { cabeceras },
+      );
+      alCambiar(r.permisoIa);
+      setAbierto(false);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.error);
+    } finally {
+      setOcupado(false);
+    }
+  };
+  return (
+    <div className="chat-soporte-ajuste-ia" data-testid="chat-ajuste-ia">
+      <button
+        type="button"
+        className="enlace"
+        aria-expanded={abierto}
+        data-testid="chat-ajuste-ia-abrir"
+        onClick={() => setAbierto((x) => !x)}
+      >
+        {t.ajuste}: {permiso ? t.permitido : t.noPermitido}
+      </button>
+      {abierto ? (
+        <div className="chat-soporte-permiso-caja">
+          <p className="chat-soporte-permiso-nota">{t.ajusteAyuda}</p>
+          <button
+            type="button"
+            className="boton secundario"
+            disabled={ocupado}
+            data-testid="chat-ajuste-ia-cambiar"
+            onClick={() => void cambiar()}
+          >
+            {permiso ? t.retirar : t.permitir}
+          </button>
+          {error ? (
+            <p className="chat-soporte-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -1,3 +1,4 @@
+import { AjusteIaChat } from './soporte/AjusteIaChat';
 import { CuentaCobro } from './cobros/CuentaCobro';
 import { RecargaTarjeta } from './cobros/RecargaTarjeta';
 import { ubicacionParaConectar } from './ubicacionParaConectar';
@@ -2527,6 +2528,8 @@ export function Inicio() {
         />
         {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
         <AjusteMapa />
+        {/* C-PERMISO-IA-CHAT: dar o retirar el permiso de IA del chat de ayuda. */}
+        <AjusteIaChat />
         {/* C-MODERACION: a quién bloqueó y «Desbloquear». */}
         <PersonasBloqueadas />
         {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista (si

@@ -347,4 +347,30 @@ describe('C-PERMISO-IA-CHAT: el chat de la web pide el permiso antes del primer 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByTestId('chat-permiso-ia')).toBeInTheDocument();
   });
+
+  it('el permiso se puede cambiar después, al pie del chat: de «No permitido» a «Permitido»', async () => {
+    localStorage.setItem(LLAVE_VISITA_CAMILA, 'visita-de-prueba-0123456789abcdefghij');
+    const llamadas = servidor((l) =>
+      l.url.endsWith('/datos/camila/permiso-ia')
+        ? json({ ok: true, permisoIa: (l.cuerpo as { acepto: boolean }).acepto })
+        : json({ ...SIN_CONTESTAR, permisoIa: false }),
+    );
+    render(<ChatSoporte idioma="es" conSesion />);
+    await userEvent.click(screen.getByRole('button', { name: /soporte/i }));
+    const abrir = await screen.findByTestId('chat-ajuste-ia-abrir');
+    expect(abrir.textContent).toBe('Ayuda con inteligencia artificial: No permitido');
+    // Ya contestó: no se le vuelve a preguntar y puede escribir.
+    expect(screen.queryByTestId('chat-permiso-ia')).toBeNull();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    await userEvent.click(abrir);
+    await userEvent.click(screen.getByRole('button', { name: 'Dar mi permiso' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('chat-ajuste-ia-abrir').textContent).toBe(
+        'Ayuda con inteligencia artificial: Permitido',
+      ),
+    );
+    expect(llamadas.find((l) => l.url.endsWith('/datos/camila/permiso-ia'))?.cuerpo).toEqual({
+      acepto: true,
+    });
+  });
 });

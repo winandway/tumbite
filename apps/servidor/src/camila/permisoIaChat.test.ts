@@ -153,5 +153,13 @@ describe('C-PERMISO-IA-CHAT: sin un «sí», nada sale al proveedor de IA', () =
       expect(leer(pantalla), pantalla).toContain('/datos/camila/permiso-ia');
       expect(leer(pantalla), pantalla).toContain('textosPermisoIaChat');
     }
+    // Y se puede cambiar después: en Ajustes de Driver y al pie del chat de la web.
+    expect(leer('apps/repartidor/src/Inicio.tsx')).toContain('<AjusteIaChat />');
+    expect(leer('apps/panel/src/sitio/ChatSoporte.tsx')).toContain('<AjusteIaChat');
+    // Las apps de clientes y de Restaurants no traen este chat: si un día lo traen, piden el permiso.
+    for (const app of ['cliente', 'restaurante']) {
+      const pkg = leer(`apps/${app}/package.json`);
+      expect(pkg).toBeTruthy();
+    }
   });
 });
