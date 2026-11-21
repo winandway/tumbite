@@ -1,15 +1,30 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { Idioma, PuntoConfirmado } from '@tumbite/compartido';
-import { C, CampoDireccion, Icono, MenuTresPuntos, Modal, useSesion, Text } from '@tumbite/movil';
+import { type Idioma, type PuntoConfirmado, iconoDeLugar } from '@tumbite/compartido';
+import {
+  C,
+  CampoDireccion,
+  Icono,
+  MenuTresPuntos,
+  Modal,
+  type NombreIcono,
+  useSesion,
+  Text,
+} from '@tumbite/movil';
 import type { DireccionEntrega } from '../comida/useRestaurantes';
-import { type DireccionGuardada, HojaFotosPuerta } from '../FotosPuertaCliente';
+import type { DireccionGuardada } from '../FotosPuertaCliente';
 import { PuntoExacto } from '../PuntoExacto';
 import { miUbicacion, type Punto } from '../ubicacion';
+import { ICONO_LUGAR } from '../viajes/textosLugares';
+import { EditarDireccion } from './EditarDireccion';
+import { cuerpoDePunto, despuesDeConfirmarPunto } from './editarDireccionLogica';
 import { textosInicio } from './textos';
 
 type Guardada = DireccionGuardada;
+
+const ICONOS = new Map(Object.entries(ICONO_LUGAR));
+const ICONO_DE_LUGAR = (x: string) => (ICONOS.get(x) ?? 'star-outline') as NombreIcono;
 
 /** ¿Borrar? En la web no hay ventanita nativa con botones: va la del navegador. */
 function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
@@ -33,17 +48,26 @@ type Paso =
   | {
       tipo: 'punto';
       inicial: { punto: Punto | null; direccion: string; referencia?: string; apto?: string };
-      /** Si viene de una dirección guardada («Ajustar el punto»). */
-      etiqueta?: string;
+      /** La dirección guardada que se ajusta («Ajustar el punto»): se corrige ESA, por su id. */
+      guardada?: Guardada;
+      /** A dónde se vuelve: la lista o la hoja de esa dirección. */
+      volverA?: 'buscar' | 'editar';
     }
-  | { tipo: 'fotos'; direccion: Guardada; alTerminar: 'cerrar' | 'volver' };
+  /**
+   * C-EDITAR-ES-EDITAR: la hoja de la dirección (nombre, datos y, abajo y opcional, las fotos de la
+   * entrada). `nueva`: recién guardada, se ofrece una vez con «Ahora no».
+   */
+  | { tipo: 'editar'; direccion: Guardada; nueva?: boolean; enfocarFotos?: boolean };
 
 /**
  * POR-1 (2 nov 2026): «Entregar en ▾» del inicio, como DoorDash y Uber Eats.
  * C-PUNTO-EXACTO (16 nov 2026): al elegir una calle o una avenida (o «Estoy aquí») se abre el mapa
  * con el pin fijo en el centro; la persona lo lleva hasta su puerta, agrega el punto de referencia
  * y la casa o apartamento (opcionales) y toca «Confirmar este punto». Se guarda con el punto exacto
- * y la referencia; después, una vez, se ofrecen las fotos de la puerta (con «Ahora no»).
+ * y la referencia; después, una vez, se ofrece la hoja de la dirección (con «Ahora no»).
+ * C-EDITAR-ES-EDITAR (21 nov 2026): en los tres puntos de cada dirección, «Editar» va primero y abre
+ * esa hoja; «Fotos de la entrada» la abre en las fotos; ajustar el punto de una dirección guardada
+ * la corrige por su id y vuelve atrás, nunca termina en las fotos.
  */
 export function ElegirDireccion({
   visible,
@@ -89,8 +113,15 @@ export function ElegirDireccion({
     cerrar();
   };
 
-  /** La persona confirmó el punto exacto: se elige, se guarda y se ofrecen las fotos una vez. */
-  async function alConfirmar(p: PuntoConfirmado, etiqueta = '') {
+  /**
+   * La persona confirmó el punto exacto: se elige y se guarda. Si era una dirección guardada, se
+   * corrige esa misma (PUT por id) y se vuelve atrás; si es nueva, se ofrece su hoja una vez.
+   */
+  async function alConfirmar(
+    p: PuntoConfirmado,
+    guardada?: Guardada,
+    volverA: 'buscar' | 'editar' = 'buscar',
+  ) {
     const entrega: DireccionEntrega = {
       texto: p.direccion,
       punto: p.punto,
@@ -102,21 +133,35 @@ export function ElegirDireccion({
     setAviso('');
     setGuardando(true);
     try {
-      const r = await api.pedir<{ direccion: Guardada }>('POST', '/datos/mis-direcciones', {
-        etiqueta,
-        direccion: p.direccion,
-        apto: p.apto,
-        referencia: p.referencia,
-        lat: p.punto.lat,
-        lng: p.punto.lng,
-        instrucciones: '',
-        entrega: 'puerta',
-      });
+      const r = guardada
+        ? await api.pedir<{ direccion: Guardada }>(
+            'PUT',
+            `/datos/mis-direcciones/${encodeURIComponent(guardada.id)}`,
+            cuerpoDePunto(guardada, p),
+          )
+        : await api.pedir<{ direccion: Guardada }>('POST', '/datos/mis-direcciones', {
+            etiqueta: '',
+            direccion: p.direccion,
+            apto: p.apto,
+            referencia: p.referencia,
+            lat: p.punto.lat,
+            lng: p.punto.lng,
+            instrucciones: '',
+            entrega: 'puerta',
+          });
       setGuardadas((g) => [r.direccion, ...g.filter((x) => x.id !== r.direccion.id)]);
       setTexto('');
-      // Ficha 5.3 de la foto de la puerta: justo después de guardar, una vez, con «Ahora no».
-      if (r.direccion.fotos?.length) salir();
-      else setPaso({ tipo: 'fotos', direccion: r.direccion, alTerminar: 'cerrar' });
+      const destino = despuesDeConfirmarPunto({
+        eraGuardada: !!guardada,
+        tieneFotos: !!r.direccion.fotos?.length,
+      });
+      if (destino === 'lista')
+        setPaso(
+          volverA === 'editar' ? { tipo: 'editar', direccion: r.direccion } : { tipo: 'buscar' },
+        );
+      // Ficha 5.3 de la foto de la puerta: justo después de guardar una NUEVA, una vez, con «Ahora no».
+      else if (destino === 'hoja') setPaso({ tipo: 'editar', direccion: r.direccion, nueva: true });
+      else salir();
     } catch (x) {
       // Ya quedó elegida para este pedido: no se frena a nadie, pero se dice qué pasó.
       console.warn('dirección: no se pudo guardar', x);
@@ -126,6 +171,20 @@ export function ElegirDireccion({
       setGuardando(false);
     }
   }
+
+  /** «Ajustar el punto en el mapa» de una dirección guardada (desde la lista o desde su hoja). */
+  const ajustar = (d: Guardada, volverA: 'buscar' | 'editar') =>
+    setPaso({
+      tipo: 'punto',
+      guardada: d,
+      volverA,
+      inicial: {
+        punto: d.lat != null && d.lng != null ? { lat: d.lat, lng: d.lng } : null,
+        direccion: d.direccion,
+        referencia: d.referencia ?? '',
+        apto: d.apto ?? '',
+      },
+    });
 
   async function estoyAqui() {
     setBuscandome(true);
@@ -161,23 +220,43 @@ export function ElegirDireccion({
           tipo="entrega"
           inicial={paso.inicial}
           cerca={cerca}
-          volver={() => setPaso({ tipo: 'buscar' })}
-          confirmar={(p) => void alConfirmar(p, paso.etiqueta)}
-        />
-      );
-    if (paso.tipo === 'fotos')
-      return (
-        <HojaFotosPuerta
-          enLinea
-          direccion={paso.direccion}
-          cerrar={() => (paso.alTerminar === 'cerrar' ? salir() : setPaso({ tipo: 'buscar' }))}
-          alCambiar={(c) =>
-            setGuardadas((g) =>
-              g.map((x) => (x.id === c.id ? { ...x, tipoLugar: c.tipoLugar, fotos: c.fotos } : x)),
+          volver={() =>
+            setPaso(
+              paso.guardada && paso.volverA === 'editar'
+                ? { tipo: 'editar', direccion: paso.guardada }
+                : { tipo: 'buscar' },
             )
           }
+          confirmar={(p) => void alConfirmar(p, paso.guardada, paso.volverA)}
         />
       );
+    if (paso.tipo === 'editar') {
+      const d = paso.direccion;
+      return (
+        <EditarDireccion
+          key={d.id}
+          idioma={idioma}
+          direccion={d}
+          nueva={paso.nueva}
+          enfocarFotos={paso.enfocarFotos}
+          volver={() => setPaso({ tipo: 'buscar' })}
+          cerrar={salir}
+          alGuardar={(r) => {
+            setGuardadas((g) => g.map((x) => (x.id === r.id ? r : x)));
+            if (paso.nueva) salir();
+            else setPaso({ tipo: 'buscar' });
+          }}
+          alPunto={() => ajustar(d, 'editar')}
+          alCambiarFotos={(c) => {
+            const cambio = (x: Guardada) =>
+              x.id === c.id ? { ...x, tipoLugar: c.tipoLugar, fotos: c.fotos } : x;
+            setGuardadas((g) => g.map(cambio));
+            // La hoja abierta también conoce sus fotos (al volver del mapa no se pierden).
+            setPaso((p) => (p.tipo === 'editar' ? { ...p, direccion: cambio(p.direccion) } : p));
+          }}
+        />
+      );
+    }
     return (
       <>
         <Encabezado titulo={t.direccionTitulo} cerrar={salir} etiquetaCerrar={t.cerrar} />
@@ -275,7 +354,14 @@ export function ElegirDireccion({
                     style={{ flex: 1, paddingVertical: 12 }}
                   >
                     {d.etiqueta ? (
-                      <Text style={{ fontWeight: '700', color: C.secundario }}>{d.etiqueta}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Icono
+                          nombre={ICONO_DE_LUGAR(iconoDeLugar(d))}
+                          tamano={16}
+                          color={C.primario}
+                        />
+                        <Text style={{ fontWeight: '700', color: C.secundario }}>{d.etiqueta}</Text>
+                      </View>
                     ) : null}
                     <Text style={{ color: '#666B73' }} numberOfLines={2}>
                       {d.direccion}
@@ -306,29 +392,27 @@ export function ElegirDireccion({
                     testID={`direccion-menu-${d.id}`}
                     opciones={[
                       {
+                        texto: t.editarDireccion,
+                        icono: 'create-outline',
+                        alTocar: () => setPaso({ tipo: 'editar', direccion: d }),
+                        testID: `direccion-editar-${d.id}`,
+                      },
+                      {
                         texto: t.ajustarPunto,
-                        alTocar: () =>
-                          setPaso({
-                            tipo: 'punto',
-                            etiqueta: d.etiqueta,
-                            inicial: {
-                              punto:
-                                d.lat != null && d.lng != null ? { lat: d.lat, lng: d.lng } : null,
-                              direccion: d.direccion,
-                              referencia: d.referencia ?? '',
-                              apto: d.apto ?? '',
-                            },
-                          }),
+                        icono: 'map-outline',
+                        alTocar: () => ajustar(d, 'buscar'),
                         testID: `direccion-ajustar-${d.id}`,
                       },
                       {
                         texto: t.fotosPuerta,
+                        icono: 'camera-outline',
                         alTocar: () =>
-                          setPaso({ tipo: 'fotos', direccion: d, alTerminar: 'volver' }),
+                          setPaso({ tipo: 'editar', direccion: d, enfocarFotos: true }),
                         testID: `direccion-fotos-${d.id}`,
                       },
                       {
                         texto: t.borrarDireccion,
+                        icono: 'trash-outline',
                         alTocar: () => void borrarDireccion(d),
                         peligro: true,
                         testID: `direccion-borrar-${d.id}`,

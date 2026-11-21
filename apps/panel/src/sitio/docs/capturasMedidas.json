@@ -961,5 +961,15 @@
   "recorrido-viaje-conductor-perfil-nuevo-en": [540, 571],
   "recorrido-viaje-conductor-perfil-nuevo-es": [540, 571],
   "recorrido-viaje-conductor-perfil-trayectoria-en": [540, 874],
-  "recorrido-viaje-conductor-perfil-trayectoria-es": [540, 957]
+  "recorrido-viaje-conductor-perfil-trayectoria-es": [540, 957],
+  "recorrido-editar-direccion-menu-es": [540, 1169],
+  "recorrido-editar-direccion-menu-en": [540, 1169],
+  "recorrido-editar-direccion-hoja-es": [540, 1169],
+  "recorrido-editar-direccion-hoja-en": [540, 1169],
+  "recorrido-editar-direccion-datos-es": [540, 1169],
+  "recorrido-editar-direccion-datos-en": [540, 1169],
+  "recorrido-editar-direccion-fotos-es": [540, 1169],
+  "recorrido-editar-direccion-fotos-en": [540, 1169],
+  "recorrido-editar-direccion-nueva-es": [540, 1169],
+  "recorrido-editar-direccion-nueva-en": [540, 1169]
 }

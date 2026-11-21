@@ -52,9 +52,18 @@ describe('C-NUNCA-EN-BLANCO', () => {
   });
 
   it('la hoja de dirección no abre la de las fotos como otra ventana encima', () => {
+    // C-EDITAR-ES-EDITAR (21 nov 2026): las fotos viven como sección de «Editar dirección», que es
+    // un paso de la misma hoja. Toda hoja de fotos de esas dos pantallas va en línea o en sección.
     const d = leer('apps/cliente/src/inicio/ElegirDireccion.tsx');
-    const usos = [...d.matchAll(/<HojaFotosPuerta\b[^>]*>/g)].map((m) => m[0]);
+    const h = leer('apps/cliente/src/inicio/EditarDireccion.tsx');
+    expect(d).toContain('<EditarDireccion');
+    expect(d).not.toMatch(/import\s*\{[^}]*\bModal\b[^}]*\}\s*from\s*'\.\/EditarDireccion'/);
+    const usos = [d, h].flatMap((x) =>
+      [...x.matchAll(/<HojaFotosPuerta\b[^>]*>/g)].map((m) => m[0]),
+    );
     expect(usos.length).toBeGreaterThan(0);
-    for (const u of usos) expect(u).toMatch(/\benLinea\b/);
+    for (const u of usos) expect(u).toMatch(/\b(enLinea|seccion)\b/);
+    // La hoja de editar no abre ninguna ventana propia.
+    expect(h).not.toMatch(/<Modal\b/);
   });
 });

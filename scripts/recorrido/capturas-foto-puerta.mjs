@@ -193,11 +193,16 @@ async function pasada(idioma, ciudad) {
   await a.getByTestId('inicio-direccion-casilla').fill(CASA.direccion.slice(0, 12));
   await a.getByText(CASA.direccion, { exact: true }).first().click({ timeout: 20_000 });
   await a.getByTestId('fotos-puerta-tipo-casa').waitFor({ timeout: 20_000 });
+  // C-EDITAR-ES-EDITAR: al guardar una dirección nueva sale su hoja (nombre, datos y, abajo, las
+  // fotos de la entrada con «Casa / Edificio»), con «Ahora no».
   comprobar(
-    await a.getByTestId('fotos-puerta-ahora-no').isVisible(),
+    await a.getByTestId('editar-direccion-ahora-no').isVisible(),
     `a ${idioma}`,
-    'al guardar la dirección nueva sale la hoja con «Casa / Edificio» y «Ahora no»',
+    'al guardar la dirección nueva sale su hoja con «Casa / Edificio» y «Ahora no»',
   );
+  await a
+    .getByTestId('fotos-puerta-tipo-casa')
+    .evaluate((x) => x.scrollIntoView({ block: 'center' }));
   await espera(700);
   await captura(a, 'cliente-tipo');
   await a.getByTestId('fotos-puerta-tipo-casa').click();
@@ -281,9 +286,9 @@ async function pasada(idioma, ciudad) {
   );
   await subirCon(a, 'fotos-puerta-camara-2', dibujo('casa-cerca', idioma));
   await a.getByTestId('fotos-puerta-guardada-2').waitFor({ timeout: 20_000 });
-  await a.getByTestId('fotos-puerta-listo').click();
-  await a.getByTestId('fotos-puerta-listo').waitFor({ state: 'hidden', timeout: 10_000 });
-  comprobar(true, `a ${idioma}`, '«Listo» cierra la hoja');
+  await a.getByTestId('editar-direccion-guardar').click();
+  await a.getByTestId('editar-direccion').waitFor({ state: 'hidden', timeout: 10_000 });
+  comprobar(true, `a ${idioma}`, '«Guardar cambios» cierra la hoja de la dirección nueva');
   // «Entregar en»: la dirección guardada con su sello «Con foto» y las fotos en sus tres puntos.
   await a.getByTestId('inicio-direccion').click();
   await a.getByTestId(`direccion-con-foto-${casa.id}`).waitFor({ timeout: 15_000 });
@@ -296,7 +301,7 @@ async function pasada(idioma, ciudad) {
   comprobar(
     true,
     `a ${idioma}`,
-    '«Entregar en» → tres puntos → «Fotos de la puerta» abre la hoja con sus 2 fotos',
+    '«Entregar en» → tres puntos → «Fotos de la entrada» abre la hoja en sus 2 fotos',
   );
   await ctxA.close();
 

@@ -631,9 +631,9 @@ const es: SeccionDocs[] = [
             pie: 'Cada casilla tiene su propio «Fijar en el mapa».',
           },
           {
-            src: '/docs/punto-exacto-fotos-es.webp',
-            alt: 'Paso «Ayuda a tu repartidor a encontrarte» con las opciones Casa, Edificio o conjunto y «Ahora no».',
-            pie: 'Puedes agregar fotos de tu puerta o tocar «Ahora no».',
+            src: '/docs/recorrido-editar-direccion-nueva-es.webp',
+            alt: 'Hoja «Tu dirección quedó guardada» con la cabecera roja y el pin, el paso «¿Dónde te entregamos?» con Casa, Trabajo y los demás tipos, el nombre de la dirección y los botones «Guardar cambios» y «Ahora no».',
+            pie: 'Al guardarla puedes ponerle nombre, datos y fotos de la entrada, o tocar «Ahora no».',
           },
           {
             src: '/docs/punto-exacto-web-es.webp',
@@ -6141,9 +6141,9 @@ const en: SeccionDocs[] = [
             pie: 'Each field has its own “Set on map.”',
           },
           {
-            src: '/docs/punto-exacto-fotos-en.webp',
-            alt: '“Help your courier find you” step with the options House, Building or complex and “Not now.”',
-            pie: 'Add photos of your door, or tap “Not now.”',
+            src: '/docs/recorrido-editar-direccion-nueva-en.webp',
+            alt: '“Your address is saved” sheet with the red header and the pin, the “Where do we deliver?” step with Home, Work and the other types, the address name, and the “Save changes” and “Not now” buttons.',
+            pie: 'Once it’s saved you can add a name, details and entrance photos, or tap “Not now.”',
           },
           {
             src: '/docs/punto-exacto-web-en.webp',

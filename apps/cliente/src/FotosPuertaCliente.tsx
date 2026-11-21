@@ -62,17 +62,21 @@ export function HojaFotosPuerta({
   cerrar,
   alCambiar,
   enLinea,
+  seccion,
 }: {
   direccion: DireccionConFotos | null;
   cerrar: () => void;
   alCambiar?: (d: { id: string; tipoLugar: TipoLugar | ''; fotos: number[] }) => void;
   /** C-NUNCA-EN-BLANCO: como un paso dentro de otra hoja, nunca como otra ventana encima. */
   enLinea?: boolean;
+  /** C-EDITAR-ES-EDITAR: como la sección de fotos al final de «Editar dirección». */
+  seccion?: boolean;
 }) {
   const { idioma } = useSesion();
   return (
     <FotosPuerta
       enLinea={enLinea}
+      seccion={seccion}
       visible={!!direccion}
       idioma={idioma}
       direccion={direccion}
@@ -87,17 +91,17 @@ export function HojaFotosPuerta({
 
 const TT = {
   es: {
-    titulo: 'Fotos de tu puerta',
-    ayuda: 'Agrega fotos para que tu repartidor te encuentre.',
-    agregar: 'Agregar fotos de mi puerta',
+    titulo: 'Fotos de la entrada',
+    ayuda: 'Agrega fotos de la entrada para que te encuentren a la primera.',
+    agregar: 'Agregar fotos de la entrada',
     ver: 'Ver o cambiar las fotos',
     escribeDireccion: 'Primero escribe tu dirección de entrega y luego agrega las fotos.',
     guardando: 'Guardando tu dirección…',
   },
   en: {
-    titulo: 'Photos of your door',
-    ayuda: 'Add photos so your courier can find you.',
-    agregar: 'Add photos of my door',
+    titulo: 'Entrance photos',
+    ayuda: 'Add entrance photos so they can find you on the first try.',
+    agregar: 'Add entrance photos',
     ver: 'View or change the photos',
     escribeDireccion: 'Enter your delivery address first, then add the photos.',
     guardando: 'Saving your address…',

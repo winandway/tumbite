@@ -32,6 +32,7 @@ export * from './camara';
 export * from './mapaDivoox';
 export * from './SobreLosBotones';
 export * from './FotosPuerta';
+export * from './CabeceraLugar';
 export * from './FranjaPruebas';
 export * from './tokens';
 export * from './diseno';

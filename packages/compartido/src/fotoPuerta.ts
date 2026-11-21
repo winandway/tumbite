@@ -125,8 +125,10 @@ export function casillasPuerta(tipo: TipoLugar, idioma: Idioma) {
 
 const COMUNES = {
   es: {
-    titulo: 'Ayuda a tu repartidor a encontrarte',
-    pregunta: '¿Dónde te entregamos?',
+    // C-EDITAR-ES-EDITAR: la hoja sirve también para viajes; no habla solo del repartidor.
+    titulo: 'Que te encuentren a la primera',
+    subtitulo: 'Fotos de la entrada para quien llega a entregarte o a buscarte.',
+    pregunta: '¿Es una casa o un edificio?',
     casa: 'Casa',
     edificio: 'Edificio o conjunto',
     cambiar: 'Cambiar',
@@ -160,8 +162,9 @@ const COMUNES = {
     deCuantas: '{n} de {total}',
   },
   en: {
-    titulo: 'Help your courier find you',
-    pregunta: 'Where do we deliver?',
+    titulo: 'Help them find you fast',
+    subtitulo: 'Entrance photos for whoever comes to deliver to you or pick you up.',
+    pregunta: 'Is it a house or a building?',
     casa: 'House',
     edificio: 'Building or complex',
     cambiar: 'Change',

@@ -1046,21 +1046,41 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "ordering/edit-address",
+  "titulo": "Edita una dirección guardada: nombre, datos y fotos de la entrada",
+  "resumen": "Ponle a cada dirección el nombre que quieras, corrige el apartamento, el punto de referencia o el punto en el mapa, y agrega fotos de la entrada si quieres.",
+  "preguntas": [
+   "¿Cómo le cambio el nombre a una dirección guardada?",
+   "¿Cómo corrijo el apartamento o el punto de referencia de mi dirección?",
+   "¿Cómo muevo el punto de mi dirección en el mapa?"
+  ],
+  "pasos": [
+   "Toca «Entregar en» arriba del inicio.",
+   "En «Tus direcciones», toca los tres puntos de la dirección y luego «Editar».",
+   "Elige el tipo de lugar y escribe el nombre.",
+   "Corrige el apartamento o el punto de referencia; si hace falta, toca «Ajustar el punto en el mapa».",
+   "Si quieres, agrega fotos de la entrada y un mensaje para quien llega.",
+   "Toca «Guardar cambios»."
+  ],
+  "cuerpo": "En «Entregar en», cada dirección guardada tiene sus tres puntos. La primera opción es «Editar»: abre la hoja de esa dirección. Paso 1, «¿Dónde te entregamos?»: elige el tipo de lugar (Casa, Trabajo, Escuela, Gimnasio, Favorito, Tienda, Hospital u Otro) y escribe el nombre que quieras, hasta 30 letras. Casa y Trabajo ponen su nombre solos; si escribiste uno propio, se respeta. Paso 2, «Datos de la dirección»: el apartamento, piso o casa, y el punto de referencia. Toca «Ajustar el punto en el mapa» para mover el pin hasta tu puerta; al confirmarlo vuelves a la misma hoja y se corrige esa dirección, sin crear otra. Paso 3, opcional: las fotos de la entrada (frente de la casa o entrada del edificio) y un mensaje para quien llega, por ejemplo cómo entrar o qué timbre tocar. Lo que escribes no se pierde: si cierras la app o se va el internet antes de guardar, al volver está todo en su sitio. Toca «Guardar cambios» para terminar."
+ },
+ {
+  "idioma": "es",
   "ruta": "ordering/door-photos",
-  "titulo": "Agrega fotos de tu puerta para que tu repartidor te encuentre",
+  "titulo": "Agrega fotos de la entrada para que te encuentren a la primera",
   "resumen": "Con una o varias fotos del frente y de tu puerta, el repartidor reconoce tu casa o tu edificio a la primera, aunque no tenga número a la vista.",
   "preguntas": [
-   "¿Cómo agrego una foto de mi puerta?",
+   "¿Cómo agrego una foto de la entrada de mi casa o edificio?",
    "¿Quién puede ver las fotos de mi puerta?",
    "¿Cómo cambio o borro las fotos de mi puerta?",
    "¿Qué pasa con mis fotos si borro mi cuenta?"
   ],
   "pasos": [
-   "Guarda tu dirección en «Entregar en» o en el carrito. Al guardarla aparece «Ayuda a tu repartidor a encontrarte»; si ahora no puedes, toca «Ahora no».",
+   "Guarda tu dirección en «Entregar en». Al guardarla se abre su hoja; baja hasta el paso 3, «Fotos de la entrada». Si ahora no puedes, toca «Ahora no». Desde el carrito, toca «Agregar fotos de la entrada».",
    "Elige «Casa» o «Edificio o conjunto». Si escribiste apartamento, piso o torre, ya sabemos que es un edificio.",
    "En cada casilla toca «Tomar foto» o «Subir desde archivos». Sin personas, sin placas de carros y con la puerta en el centro; de día es mejor.",
-   "Cuando veas «Foto guardada», toca «Listo».",
-   "Para cambiarlas o borrarlas: en «Entregar en», toca los tres puntos de la dirección y luego «Fotos de la puerta»; o en el carrito, «Ver o cambiar las fotos». Cada foto tiene sus tres puntos con «Cambiar foto» y «Borrar foto»."
+   "Cada foto se guarda al instante: verás «Foto guardada». Si además cambiaste el nombre o los datos, toca «Guardar cambios».",
+   "Para cambiarlas o borrarlas: en «Entregar en», toca los tres puntos de la dirección y luego «Fotos de la entrada»; o en el carrito, «Ver o cambiar las fotos». Cada foto tiene sus tres puntos con «Cambiar foto» y «Borrar foto»."
   ],
   "cuerpo": "Una dirección escrita no siempre basta: casas iguales en la misma calle, edificios con varias entradas, números que no se ven de noche. Por eso, como en las grandes apps de reparto, puedes guardar fotos de tu entrada junto a tu dirección. Si es una casa, son dos fotos: el frente desde la calle y la puerta de cerca. Si es un edificio o conjunto, son tres, en el orden en que el repartidor llega: la entrada del edificio, el paso intermedio (portería, portón, ascensor o pasillo) y la puerta de tu apartamento. Cada casilla te dice qué tiene que verse. Quién las ve y cuándo: solo el repartidor que lleva tu pedido, y solo mientras va en camino a tu casa, después de recoger la comida. No las ve el restaurante, ni otros repartidores, ni nadie antes de la recogida o después de la entrega. No se publican ni se usan para publicidad. Son tuyas: las cambias o las borras cuando quieras, y si borras tu cuenta se borran con ella. Al guardarlas les quitamos los datos ocultos del teléfono, como la ubicación. Puedes tomarlas con la cámara o subirlas desde tus archivos. En la computadora, «Tomar foto» abre la cámara web en una ventanita. Si la conexión falla al subir, la foto se queda en pantalla con «Reintentar»: no se pierde nada."
  },
@@ -3537,21 +3557,41 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "en",
+  "ruta": "ordering/edit-address",
+  "titulo": "Edit a saved address: name, details and entrance photos",
+  "resumen": "Give each address any name you like, fix the apartment, the landmark or the spot on the map, and add entrance photos if you want.",
+  "preguntas": [
+   "How do I rename a saved address?",
+   "How do I fix the apartment or landmark of my address?",
+   "How do I move my address’s spot on the map?"
+  ],
+  "pasos": [
+   "Tap “Deliver to” at the top of the home screen.",
+   "Under “Your addresses,” tap the address’s three dots and then “Edit.”",
+   "Pick the type of place and type the name.",
+   "Fix the apartment or the landmark; if needed, tap “Adjust the spot on the map.”",
+   "If you want, add entrance photos and a note for whoever arrives.",
+   "Tap “Save changes.”"
+  ],
+  "cuerpo": "Under “Deliver to,” each saved address has its three dots. The first option is “Edit”: it opens that address’s sheet. Step 1, “Where do we deliver?”: pick the type of place (Home, Work, School, Gym, Favorite, Store, Hospital or Other) and type any name you like, up to 30 characters. Home and Work fill in their name for you; if you typed your own, it stays. Step 2, “Address details”: the apartment, suite or floor, and a landmark. Tap “Adjust the spot on the map” to move the pin to your door; when you confirm it you’re back on the same sheet, and that address is updated without creating a new one. Step 3, optional: entrance photos (the front of your house or your building entrance) and a note for whoever arrives, like how to get in or which bell to ring. What you type isn’t lost: if you close the app or lose your connection before saving, everything is still there when you come back. Tap “Save changes” to finish."
+ },
+ {
+  "idioma": "en",
   "ruta": "ordering/door-photos",
-  "titulo": "Add photos of your door so your courier can find you",
+  "titulo": "Add entrance photos so they find you on the first try",
   "resumen": "With a few photos of your entrance and your door, your courier recognizes your house or building on the first try, even when the number is hard to see.",
   "preguntas": [
-   "How do I add a photo of my door?",
+   "How do I add a photo of my house or building entrance?",
    "Who can see the photos of my door?",
    "How do I change or delete my door photos?",
    "What happens to my photos if I delete my account?"
   ],
   "pasos": [
-   "Save your address under “Deliver to” or in your cart. When you save it, “Help your courier find you” opens; if now isn’t a good time, tap “Not now.”",
+   "Save your address under “Deliver to.” When you save it, its sheet opens; scroll down to step 3, “Entrance photos.” If now isn’t a good time, tap “Not now.” From your cart, tap “Add entrance photos.”",
    "Choose “House” or “Building or complex.” If you entered an apartment, floor or unit, we already know it’s a building.",
    "In each box, tap “Take photo” or “Upload from files.” No people, no license plates, and the door in the center; daylight works best.",
-   "When you see “Photo saved,” tap “Done.”",
-   "To change or delete them: under “Deliver to,” tap the address’s three dots and then “Door photos”; or in your cart, “View or change the photos.” Each photo has its own three dots with “Change photo” and “Delete photo.”"
+   "Each photo saves right away: you’ll see “Photo saved.” If you also changed the name or details, tap “Save changes.”",
+   "To change or delete them: under “Deliver to,” tap the address’s three dots and then “Entrance photos”; or in your cart, “View or change the photos.” Each photo has its own three dots with “Change photo” and “Delete photo.”"
   ],
   "cuerpo": "A written address isn’t always enough: houses that look alike on the same street, buildings with several entrances, numbers you can’t see at night. That’s why, like the big delivery apps, you can save photos of your entrance with your address. For a house, it’s two photos: the front from the street and the door up close. For a building or complex, it’s three, in the order your courier gets there: the building entrance, the spot along the way (front desk, gate, elevator or hallway) and your apartment door. Each box tells you what should show. Who sees them and when: only the courier bringing your order, and only while they’re on the way to you, after picking up the food. The restaurant doesn’t see them, other couriers don’t, and nobody sees them before pickup or after delivery. They’re never published or used for advertising. They’re yours: change or delete them anytime, and if you delete your account they’re deleted with it. When we save them, we remove the hidden data from your phone, like your location. Take them with your camera or upload them from your files. On a computer, “Take photo” opens your webcam in a small window. If the connection drops while uploading, the photo stays on screen with “Try again”: nothing is lost."
  },

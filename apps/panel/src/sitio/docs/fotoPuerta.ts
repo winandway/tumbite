@@ -2,7 +2,8 @@ import type { Idioma } from '@tumbite/compartido';
 import type { Captura, Guia, SeccionDocs } from './guias';
 
 /**
- * C-FOTO-PUERTA (15 nov 2026) — todos los países. Las guías públicas de la foto de la puerta: una
+ * C-FOTO-PUERTA (15 nov 2026) y C-EDITAR-ES-EDITAR (21 nov 2026) — todos los países. Las guías
+ * públicas de editar una dirección guardada y de la foto de la puerta: una
  * para el cliente («Para pedir») y una para el repartidor («Repartidores»), con capturas REALES
  * tomadas por `scripts/recorrido/capturas-foto-puerta.mjs` (inglés en Novi, Michigan; español en
  * El Vigía). Las fotos de las capturas son dibujos de ejemplo, nunca casas reales.
@@ -19,8 +20,57 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
   es: {
     ordering: [
       {
+        id: 'edit-address',
+        titulo: 'Edita una dirección guardada: nombre, datos y fotos de la entrada',
+        resumen:
+          'Ponle a cada dirección el nombre que quieras, corrige el apartamento, el punto de referencia o el punto en el mapa, y agrega fotos de la entrada si quieres.',
+        explicacion: [
+          'En «Entregar en», cada dirección guardada tiene sus tres puntos. La primera opción es «Editar»: abre la hoja de esa dirección.',
+          'Paso 1, «¿Dónde te entregamos?»: elige el tipo de lugar (Casa, Trabajo, Escuela, Gimnasio, Favorito, Tienda, Hospital u Otro) y escribe el nombre que quieras, hasta 30 letras. Casa y Trabajo ponen su nombre solos; si escribiste uno propio, se respeta.',
+          'Paso 2, «Datos de la dirección»: el apartamento, piso o casa, y el punto de referencia. Toca «Ajustar el punto en el mapa» para mover el pin hasta tu puerta; al confirmarlo vuelves a la misma hoja y se corrige esa dirección, sin crear otra.',
+          'Paso 3, opcional: las fotos de la entrada (frente de la casa o entrada del edificio) y un mensaje para quien llega, por ejemplo cómo entrar o qué timbre tocar.',
+          'Lo que escribes no se pierde: si cierras la app o se va el internet antes de guardar, al volver está todo en su sitio. Toca «Guardar cambios» para terminar.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-editar-direccion-menu-es.webp',
+            alt: 'El menú de tres puntos de una dirección guardada con Editar primero, luego Ajustar el punto en el mapa, Fotos de la entrada y Borrar dirección.',
+            pie: '«Editar» es la primera opción de los tres puntos.',
+          },
+          {
+            src: '/docs/recorrido-editar-direccion-hoja-es.webp',
+            alt: 'La hoja «Editar dirección» con la cabecera roja y el pin, el paso 1 «¿Dónde te entregamos?» con los ocho tipos de lugar y la casilla del nombre.',
+            pie: 'Elige el tipo de lugar y ponle el nombre que quieras.',
+          },
+          {
+            src: '/docs/recorrido-editar-direccion-datos-es.webp',
+            alt: 'El paso 2 «Datos de la dirección» con la dirección y «Ajustar el punto en el mapa», el apartamento y el punto de referencia.',
+            pie: 'Corrige el apartamento, el punto de referencia o el punto en el mapa.',
+          },
+          {
+            src: '/docs/recorrido-editar-direccion-fotos-es.webp',
+            alt: 'El paso 3 «Fotos de la entrada», opcional, con la pregunta de si es una casa o un edificio y el mensaje para quien llega.',
+            pie: 'Al final, si quieres, las fotos de la entrada y un mensaje.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo le cambio el nombre a una dirección guardada?',
+          '¿Cómo corrijo el apartamento o el punto de referencia de mi dirección?',
+          '¿Cómo muevo el punto de mi dirección en el mapa?',
+        ],
+        pasos: [
+          'Toca «Entregar en» arriba del inicio.',
+          'En «Tus direcciones», toca los tres puntos de la dirección y luego «Editar».',
+          'Elige el tipo de lugar y escribe el nombre.',
+          'Corrige el apartamento o el punto de referencia; si hace falta, toca «Ajustar el punto en el mapa».',
+          'Si quieres, agrega fotos de la entrada y un mensaje para quien llega.',
+          'Toca «Guardar cambios».',
+        ],
+        nota: 'Las fotos de la entrada son opcionales y se guardan al instante, cada una por su lado.',
+      },
+      {
         id: 'door-photos',
-        titulo: 'Agrega fotos de tu puerta para que tu repartidor te encuentre',
+        titulo: 'Agrega fotos de la entrada para que te encuentren a la primera',
         resumen:
           'Con una o varias fotos del frente y de tu puerta, el repartidor reconoce tu casa o tu edificio a la primera, aunque no tenga número a la vista.',
         explicacion: [
@@ -31,12 +81,11 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Puedes tomarlas con la cámara o subirlas desde tus archivos. En la computadora, «Tomar foto» abre la cámara web en una ventanita. Si la conexión falla al subir, la foto se queda en pantalla con «Reintentar»: no se pierde nada.',
         ],
         capturas: [
-          foto(
-            'cliente-tipo',
-            'es',
-            'La hoja «Ayuda a tu repartidor a encontrarte» con los botones Casa, Edificio o conjunto y Ahora no.',
-            'Al guardar una dirección nueva te preguntamos si es una casa o un edificio.',
-          ),
+          {
+            src: '/docs/recorrido-editar-direccion-fotos-es.webp',
+            alt: 'El paso 3, «Fotos de la entrada», marcado como opcional, dentro de la hoja de la dirección, con la pregunta de si es una casa o un edificio y el mensaje para quien llega.',
+            pie: 'Las fotos de la entrada van al final de la hoja de tu dirección, y son opcionales.',
+          },
           foto(
             'cliente-casa-fotos',
             'es',
@@ -58,15 +107,14 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           foto(
             'cliente-carrito',
             'es',
-            'El carrito con la casilla de apartamento y la tarjeta Fotos de tu puerta con tres miniaturas.',
+            'El carrito con la casilla de apartamento y la tarjeta de las fotos de la entrada con tres miniaturas.',
             'En el carrito ves las fotos de la dirección elegida y puedes cambiarlas.',
           ),
-          foto(
-            'cliente-direcciones',
-            'es',
-            'Tus direcciones en «Entregar en», con el sello Con foto y el menú con Fotos de la puerta.',
-            'En «Entregar en», las direcciones con foto llevan su sello.',
-          ),
+          {
+            src: '/docs/recorrido-editar-direccion-menu-es.webp',
+            alt: 'Tus direcciones en «Entregar en» con el menú de tres puntos abierto: Editar, Ajustar el punto en el mapa, Fotos de la entrada y Borrar dirección.',
+            pie: 'En los tres puntos de cada dirección, «Fotos de la entrada» te lleva directo a las fotos.',
+          },
           foto(
             'cliente-camara-computadora',
             'es',
@@ -75,19 +123,19 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           ),
         ],
         preguntas: [
-          '¿Cómo agrego una foto de mi puerta?',
+          '¿Cómo agrego una foto de la entrada de mi casa o edificio?',
           '¿Quién puede ver las fotos de mi puerta?',
           '¿Cómo cambio o borro las fotos de mi puerta?',
           '¿Qué pasa con mis fotos si borro mi cuenta?',
         ],
         pasos: [
-          'Guarda tu dirección en «Entregar en» o en el carrito. Al guardarla aparece «Ayuda a tu repartidor a encontrarte»; si ahora no puedes, toca «Ahora no».',
+          'Guarda tu dirección en «Entregar en». Al guardarla se abre su hoja; baja hasta el paso 3, «Fotos de la entrada». Si ahora no puedes, toca «Ahora no». Desde el carrito, toca «Agregar fotos de la entrada».',
           'Elige «Casa» o «Edificio o conjunto». Si escribiste apartamento, piso o torre, ya sabemos que es un edificio.',
           'En cada casilla toca «Tomar foto» o «Subir desde archivos». Sin personas, sin placas de carros y con la puerta en el centro; de día es mejor.',
-          'Cuando veas «Foto guardada», toca «Listo».',
-          'Para cambiarlas o borrarlas: en «Entregar en», toca los tres puntos de la dirección y luego «Fotos de la puerta»; o en el carrito, «Ver o cambiar las fotos». Cada foto tiene sus tres puntos con «Cambiar foto» y «Borrar foto».',
+          'Cada foto se guarda al instante: verás «Foto guardada». Si además cambiaste el nombre o los datos, toca «Guardar cambios».',
+          'Para cambiarlas o borrarlas: en «Entregar en», toca los tres puntos de la dirección y luego «Fotos de la entrada»; o en el carrito, «Ver o cambiar las fotos». Cada foto tiene sus tres puntos con «Cambiar foto» y «Borrar foto».',
         ],
-        nota: 'Las fotos son opcionales. Tu repartidor solo las ve mientras te lleva un pedido.',
+        nota: 'Las fotos son opcionales. Tu repartidor solo las ve mientras te lleva un pedido. Para cambiar el nombre, el apartamento o el punto, mira la guía «Edita una dirección guardada».',
       },
     ],
     drivers: [
@@ -147,8 +195,57 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
   en: {
     ordering: [
       {
+        id: 'edit-address',
+        titulo: 'Edit a saved address: name, details and entrance photos',
+        resumen:
+          'Give each address any name you like, fix the apartment, the landmark or the spot on the map, and add entrance photos if you want.',
+        explicacion: [
+          'Under “Deliver to,” each saved address has its three dots. The first option is “Edit”: it opens that address’s sheet.',
+          'Step 1, “Where do we deliver?”: pick the type of place (Home, Work, School, Gym, Favorite, Store, Hospital or Other) and type any name you like, up to 30 characters. Home and Work fill in their name for you; if you typed your own, it stays.',
+          'Step 2, “Address details”: the apartment, suite or floor, and a landmark. Tap “Adjust the spot on the map” to move the pin to your door; when you confirm it you’re back on the same sheet, and that address is updated without creating a new one.',
+          'Step 3, optional: entrance photos (the front of your house or your building entrance) and a note for whoever arrives, like how to get in or which bell to ring.',
+          'What you type isn’t lost: if you close the app or lose your connection before saving, everything is still there when you come back. Tap “Save changes” to finish.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-editar-direccion-menu-en.webp',
+            alt: 'A saved address’s three-dot menu with Edit first, then Adjust the spot on the map, Entrance photos and Delete address.',
+            pie: '“Edit” is the first option in the three dots.',
+          },
+          {
+            src: '/docs/recorrido-editar-direccion-hoja-en.webp',
+            alt: 'The “Edit address” sheet with the red header and the pin, step 1 “Where do we deliver?” with the eight types of place, and the name box.',
+            pie: 'Pick the type of place and give it any name you like.',
+          },
+          {
+            src: '/docs/recorrido-editar-direccion-datos-en.webp',
+            alt: 'Step 2 “Address details” with the address and “Adjust the spot on the map,” the apartment and the landmark.',
+            pie: 'Fix the apartment, the landmark or the spot on the map.',
+          },
+          {
+            src: '/docs/recorrido-editar-direccion-fotos-en.webp',
+            alt: 'Step 3 “Entrance photos,” optional, asking whether it’s a house or a building, with the note for whoever arrives.',
+            pie: 'At the end, if you want, entrance photos and a note.',
+          },
+        ],
+        preguntas: [
+          'How do I rename a saved address?',
+          'How do I fix the apartment or landmark of my address?',
+          'How do I move my address’s spot on the map?',
+        ],
+        pasos: [
+          'Tap “Deliver to” at the top of the home screen.',
+          'Under “Your addresses,” tap the address’s three dots and then “Edit.”',
+          'Pick the type of place and type the name.',
+          'Fix the apartment or the landmark; if needed, tap “Adjust the spot on the map.”',
+          'If you want, add entrance photos and a note for whoever arrives.',
+          'Tap “Save changes.”',
+        ],
+        nota: 'Entrance photos are optional and each one saves right away on its own.',
+      },
+      {
         id: 'door-photos',
-        titulo: 'Add photos of your door so your courier can find you',
+        titulo: 'Add entrance photos so they find you on the first try',
         resumen:
           'With a few photos of your entrance and your door, your courier recognizes your house or building on the first try, even when the number is hard to see.',
         explicacion: [
@@ -159,12 +256,11 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           'Take them with your camera or upload them from your files. On a computer, “Take photo” opens your webcam in a small window. If the connection drops while uploading, the photo stays on screen with “Try again”: nothing is lost.',
         ],
         capturas: [
-          foto(
-            'cliente-tipo',
-            'en',
-            'The “Help your courier find you” sheet with the House, Building or complex and Not now buttons.',
-            'When you save a new address, we ask whether it’s a house or a building.',
-          ),
+          {
+            src: '/docs/recorrido-editar-direccion-fotos-en.webp',
+            alt: 'Step 3, “Entrance photos,” marked optional, inside the address sheet, asking whether it’s a house or a building, with the note for whoever arrives.',
+            pie: 'Entrance photos are at the end of your address sheet, and they’re optional.',
+          },
           foto(
             'cliente-casa-fotos',
             'en',
@@ -186,15 +282,14 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           foto(
             'cliente-carrito',
             'en',
-            'The cart with the apartment box and the Photos of your door card with three thumbnails.',
+            'The cart with the apartment box and the entrance photos card with three thumbnails.',
             'In your cart you see the photos for the address you picked, and you can change them.',
           ),
-          foto(
-            'cliente-direcciones',
-            'en',
-            'Your addresses under “Deliver to,” with the With photo badge and the menu with Door photos.',
-            'Under “Deliver to,” addresses with photos show a badge.',
-          ),
+          {
+            src: '/docs/recorrido-editar-direccion-menu-en.webp',
+            alt: 'Your addresses under “Deliver to” with the three-dot menu open: Edit, Adjust the spot on the map, Entrance photos and Delete address.',
+            pie: 'From each address’s three dots, “Entrance photos” takes you straight to the photos.',
+          },
           foto(
             'cliente-camara-computadora',
             'en',
@@ -203,19 +298,19 @@ export const GUIAS_FOTO_PUERTA: Record<Idioma, PorSeccion> = {
           ),
         ],
         preguntas: [
-          'How do I add a photo of my door?',
+          'How do I add a photo of my house or building entrance?',
           'Who can see the photos of my door?',
           'How do I change or delete my door photos?',
           'What happens to my photos if I delete my account?',
         ],
         pasos: [
-          'Save your address under “Deliver to” or in your cart. When you save it, “Help your courier find you” opens; if now isn’t a good time, tap “Not now.”',
+          'Save your address under “Deliver to.” When you save it, its sheet opens; scroll down to step 3, “Entrance photos.” If now isn’t a good time, tap “Not now.” From your cart, tap “Add entrance photos.”',
           'Choose “House” or “Building or complex.” If you entered an apartment, floor or unit, we already know it’s a building.',
           'In each box, tap “Take photo” or “Upload from files.” No people, no license plates, and the door in the center; daylight works best.',
-          'When you see “Photo saved,” tap “Done.”',
-          'To change or delete them: under “Deliver to,” tap the address’s three dots and then “Door photos”; or in your cart, “View or change the photos.” Each photo has its own three dots with “Change photo” and “Delete photo.”',
+          'Each photo saves right away: you’ll see “Photo saved.” If you also changed the name or details, tap “Save changes.”',
+          'To change or delete them: under “Deliver to,” tap the address’s three dots and then “Entrance photos”; or in your cart, “View or change the photos.” Each photo has its own three dots with “Change photo” and “Delete photo.”',
         ],
-        nota: 'Photos are optional. Your courier only sees them while bringing you an order.',
+        nota: 'Photos are optional. Your courier only sees them while bringing you an order. To change the name, the apartment or the spot, see the “Edit a saved address” guide.',
       },
     ],
     drivers: [
