@@ -479,6 +479,25 @@ describe('C-REZAGADOS: la vuelta del reloj', () => {
       }
   });
 
+  it('la frase del plazo de papeles solo le sale a quien lo tiene corriendo', async () => {
+    const m = mundo();
+    const enviados = correos();
+    const con = await rezagado(m, 'repartidor', 6, [], 'Conplazo Ejemplo');
+    await rezagado(m, 'repartidor', 5, [], 'Sinplazo Ejemplo');
+    await m.DB.prepare(
+      "INSERT OR REPLACE INTO plazo_papeles (conductor_id, pais, vence_en, origen) VALUES (?, 'VE', '2099-12-21 10:00:00', 'registro')",
+    )
+      .bind(con.id)
+      .run();
+    await ajustar(m);
+    await correrRezagados(env(m), m.DB);
+    const de = (n: string) => enviados.find((e) => e.texto.includes(`Hola, ${n}.`))!.texto;
+    expect(de('Conplazo')).toContain(
+      'ya puedes conectarte y recibir viajes, y tienes hasta el 21 de diciembre',
+    );
+    expect(de('Sinplazo')).not.toMatch(/tienes hasta|\{plazo\}/);
+  });
+
   it('la tarea está en el reloj, una vez por hora, con sus escrituras declaradas', () => {
     const t = TAREAS_RELOJ.find((x) => x.nombre === 'rezagados');
     expect(t).toMatchObject({ cada: 'hora', critica: false });

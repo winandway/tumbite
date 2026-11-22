@@ -139,7 +139,8 @@ rezagadosRutas.post('/admin/camila/recordatorios/:id/mensaje', async (c) => {
   const db = base(c);
   const u = await db
     .prepare(
-      `SELECT u.id, u.rol, u.nombre, u.telefono, u.idioma, u.activo, COALESCE(r.zona_id, u.zona_id) AS zona
+      `SELECT u.id, u.rol, u.nombre, u.telefono, u.idioma, u.activo, COALESCE(r.zona_id, u.zona_id) AS zona,
+              (SELECT pp.vence_en FROM plazo_papeles pp WHERE pp.conductor_id = u.id AND pp.estado = 'en_plazo' AND pp.vence_en > datetime('now')) AS plazo_vence
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?`,
     )
     .bind(c.req.param('id'))
@@ -151,6 +152,7 @@ rezagadosRutas.post('/admin/camila/recordatorios/:id/mensaje', async (c) => {
       idioma: string;
       activo: number;
       zona: string | null;
+      plazo_vence: string | null;
     }>();
   if (!u || !u.activo) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
   const idioma = u.idioma === 'en' ? 'en' : 'es';
@@ -162,6 +164,7 @@ rezagadosRutas.post('/admin/camila/recordatorios/:id/mensaje', async (c) => {
     telefono: u.telefono,
     idioma,
     zona: u.zona ?? '',
+    plazoVence: u.plazo_vence,
   } as const;
   const deFabrica = d.plantilla ? envioDePlantilla(c.env, ajustes, persona, d.plantilla) : null;
   const texto = d.texto || deFabrica?.texto || '';

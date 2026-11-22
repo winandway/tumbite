@@ -37,19 +37,23 @@ type Idioma = 'es' | 'en';
 export type Plantilla = { asunto: string; texto: string; sms: string };
 type PlantillasPaso = Record<Idioma, Plantilla>;
 
-/** `{nombre}` = el primer nombre de la persona; `{enlace}` = la dirección que la lleva a seguir. */
+/**
+ * `{nombre}` = el primer nombre de la persona; `{enlace}` = la dirección que la lleva a seguir;
+ * `{enlace_corto}` = la dirección corta del SMS; `{plazo}` = una frase SOLO para quien tiene su plazo de
+ * papeles corriendo (ya puede trabajar y hasta qué día tiene); para los demás queda vacía.
+ */
 export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
   fotos: {
     es: {
       asunto: 'Te falta un paso para empezar a ganar con Divoox',
       texto:
-        'Hola, {nombre}. Soy Camila, de Divoox. Vi que creaste tu cuenta de conductor y todavía faltan tus fotos: tu cara, tu documento y tu licencia. Son tres fotos y se toman desde la app en un par de minutos.\n\nAbre Divoox Driver y toca «Tus papeles» para terminarlas:\n{enlace}\n\nSi algo no te deja avanzar, respóndeme y te ayudo.',
+        'Hola, {nombre}. Soy Camila, de Divoox. ¡Ya casi estás listo para ganar con Divoox! Solo faltan tus fotos: tu cara, tu documento y tu licencia. Se toman desde la app en pocos minutos.{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi algo no te deja avanzar, respóndeme este correo y te ayudo.',
       sms: 'Divoox: {nombre}, te faltan tus fotos para empezar a recibir viajes. Son pocos minutos. Continua aqui: {enlace_corto} Camila',
     },
     en: {
       asunto: 'One step left to start earning with Divoox',
       texto:
-        'Hi {nombre}, this is Camila from Divoox. You created your driver account and your photos are still missing: your face, your ID and your license. It is three photos and they take a couple of minutes in the app.\n\nOpen Divoox Driver and tap “Your documents” to finish them:\n{enlace}\n\nIf something is stopping you, reply to me and I will help.',
+        'Hi {nombre}, this is Camila from Divoox. You are almost ready to earn with Divoox! Only your photos are missing: your face, your ID and your license. They take a few minutes in the app.{plazo}\n\nContinue here:\n{enlace}\n\nIf something is stopping you, reply to this email and I will help.',
       sms: 'Divoox: {nombre}, your photos are missing to start getting trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
     },
   },
@@ -57,13 +61,13 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
     es: {
       asunto: 'Falta registrar tu vehículo en Divoox',
       texto:
-        'Hola, {nombre}. Soy Camila, de Divoox. Tu cuenta va bien, pero todavía no has registrado tu vehículo, y sin él no podemos enviarte viajes.\n\nAbre Divoox Driver, entra en «Tu vehículo» y escribe la marca, el modelo y la placa:\n{enlace}\n\nSi tienes una duda con algún dato, respóndeme y lo vemos.',
+        'Hola, {nombre}. Soy Camila, de Divoox. ¡Vas muy bien! Solo falta registrar tu vehículo para que podamos enviarte viajes: marca, modelo y placa. Toma pocos minutos.{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi tienes una duda con algún dato, respóndeme este correo y lo vemos.',
       sms: 'Divoox: {nombre}, solo falta registrar tu vehiculo para recibir viajes. Son pocos minutos. Continua aqui: {enlace_corto} Camila',
     },
     en: {
       asunto: 'Your vehicle is not registered yet',
       texto:
-        'Hi {nombre}, this is Camila from Divoox. Your account is doing well, but your vehicle is not registered yet, and without it we cannot send you trips.\n\nOpen Divoox Driver, go to “Your vehicle” and enter the make, model and plate:\n{enlace}\n\nIf you are unsure about any detail, reply to me and we will sort it out.',
+        'Hi {nombre}, this is Camila from Divoox. You are doing great! Just register your vehicle so we can send you trips: make, model and plate. It takes a few minutes.{plazo}\n\nContinue here:\n{enlace}\n\nIf you are unsure about any detail, reply to this email and we will sort it out.',
       sms: 'Divoox: {nombre}, just register your vehicle to get trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
     },
   },
@@ -256,11 +260,56 @@ export function plantillaDe(
 }
 
 const primerNombre = (nombre: string) => nombre.trim().split(/\s+/)[0] || nombre.trim();
-export const llenar = (t: string, d: { nombre: string; enlace: string; enlaceCorto?: string }) =>
+export const llenar = (
+  t: string,
+  d: { nombre: string; enlace: string; enlaceCorto?: string; plazo?: string },
+) =>
   t
+    .replaceAll('{plazo}', d.plazo ?? '')
     .replaceAll('{nombre}', primerNombre(d.nombre))
     .replaceAll('{enlace_corto}', d.enlaceCorto ?? d.enlace)
     .replaceAll('{enlace}', d.enlace);
+
+const MESES = {
+  es: [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ],
+  en: [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+} as const;
+/** La frase del plazo de papeles (C-PLAZO-PAPELES), solo si lo tiene corriendo. Nunca promete a quien no lo tiene. */
+export function frasePlazo(venceEn: string | null, idioma: Idioma): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(venceEn ?? '');
+  if (!m) return '';
+  const dia = Number(m[3]);
+  const mes = MESES[idioma][Number(m[2]) - 1] ?? '';
+  return idioma === 'en'
+    ? ` Remember: you can already go online and take trips, and you have until ${mes} ${dia} to finish your documents.`
+    : ` Recuerda: ya puedes conectarte y recibir viajes, y tienes hasta el ${dia} de ${mes} para terminar tus papeles.`;
+}
 
 const sitio = (env: Pick<Env, 'SITIO_URL'>) =>
   (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
@@ -320,6 +369,8 @@ export type Candidato = {
   enTotal: number;
   ultimoEn: string | null;
   aceptaSms: boolean;
+  /** Hasta cuándo corre su plazo de papeles, si lo tiene. */
+  plazoVence: string | null;
   baja: boolean;
   /** El recordatorio que le toca ahora (1, 2 o 3), o null si todavía no o ya no. */
   toca: number | null;
@@ -346,6 +397,7 @@ const SQL_CANDIDATOS = (zonas: string[]) => `
            OR EXISTS (SELECT 1 FROM equipos ql WHERE ql.lider_id = u.id)) AS en_linea,
          EXISTS (SELECT 1 FROM equipos q JOIN lineas l ON l.equipo_id = q.id
                   WHERE q.zona_id = z.id AND q.activo = 1) AS zona_con_lineas,
+         (SELECT pp.vence_en FROM plazo_papeles pp WHERE pp.conductor_id = u.id AND pp.estado = 'en_plazo') AS plazo_vence,
          EXISTS (SELECT 1 FROM rezagados_bajas b WHERE b.usuario_id = u.id) AS baja
     FROM usuarios u
     LEFT JOIN repartidores r ON r.usuario_id = u.id
@@ -371,6 +423,7 @@ type FilaCandidato = {
   ultimo_paso: string | null;
   en_linea: number;
   zona_con_lineas: number;
+  plazo_vence: string | null;
   baja: number;
 };
 
@@ -471,6 +524,7 @@ export async function candidatos(
       enTotal: suyos.length,
       ultimoEn,
       aceptaSms,
+      plazoVence: f.plazo_vence && f.plazo_vence > sqlFecha(ahora) ? f.plazo_vence : null,
       baja: Boolean(f.baja),
       toca: motivo ? null : siguiente,
       motivo,
@@ -605,7 +659,9 @@ export async function enviarMensajeRegistro(env: Env, db: D1Database, e: Envio) 
 export function envioDePlantilla(
   env: Env,
   a: AjustesRezagados,
-  p: Pick<Candidato, 'id' | 'rol' | 'nombre' | 'telefono' | 'idioma' | 'zona'>,
+  p: Pick<Candidato, 'id' | 'rol' | 'nombre' | 'telefono' | 'idioma' | 'zona'> & {
+    plazoVence?: string | null;
+  },
   paso: PasoRezagado,
 ): Pick<
   Envio,
@@ -621,7 +677,11 @@ export function envioDePlantilla(
   | 'aviso'
 > {
   const pl = plantillaDe(a, paso, p.idioma, p.zona);
-  const d = { nombre: p.nombre, enlace: enlaceDelPaso(env, p.rol) };
+  const d = {
+    nombre: p.nombre,
+    enlace: enlaceDelPaso(env, p.rol),
+    plazo: frasePlazo(p.plazoVence ?? null, p.idioma),
+  };
   return {
     usuarioId: p.id,
     rol: p.rol,
