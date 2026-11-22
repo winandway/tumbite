@@ -216,6 +216,86 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja', () => {
   });
 });
 
+/**
+ * C-VERIFICACIONES-SIN-ENVIAR (22 nov 2026) — todos los países. Quien se registró y todavía no mandó
+ * sus fotos tiene su pestaña con contador; su fila dice hace cuánto se registró y qué le falta, y
+ * lleva a su ficha completa (no hay fotos que revisar).
+ */
+describe('C-VERIFICACIONES-SIN-ENVIAR · la pestaña', () => {
+  const sinEnviar = (x: Record<string, unknown> = {}) =>
+    fila({
+      estado: 'sin_enviar',
+      enviado: '',
+      miniatura: null,
+      comprobaciones: [],
+      cara: null,
+      creado: haceHoras(30),
+      correoConfirmado: false,
+      fotosSubidas: 0,
+      ...x,
+    });
+
+  it('la pestaña «Sin enviar» sale con su contador y pide su estado; con 100 dice «99+»', async () => {
+    const llamadas = bandeja([fila()], { pendiente: 1, sin_enviar: 100 });
+    render(<SuperKyc base={BASE} idioma="es" id={null} />);
+    const pestana = await screen.findByRole('tab', { name: 'Sin enviar (99+)' });
+    await userEvent.click(pestana);
+    await waitFor(() =>
+      expect(llamadas.some((l) => l.url.includes('estado=sin_enviar'))).toBe(true),
+    );
+  });
+
+  it('la fila dice hace cuánto se registró y qué le falta, y lleva a su ficha', async () => {
+    servidor((url) => {
+      if (url.startsWith('/datos/admin/kyc?'))
+        return {
+          solicitudes: [
+            sinEnviar(),
+            sinEnviar({
+              id: 'otra-cuenta',
+              nombre: 'Persona Dos',
+              creado: haceHoras(2),
+              correoConfirmado: true,
+              fotosSubidas: 2,
+            }),
+          ],
+          siguiente: null,
+          totales: { sin_enviar: 2 },
+        };
+      if (url.includes('/preferencias/'))
+        return { valor: { estado: 'sin_enviar' }, guardada: true };
+      return {};
+    });
+    render(<SuperKyc base={BASE} idioma="es" id={null} />);
+    const filas = await screen.findAllByTestId('kyc-fila');
+    expect(filas).toHaveLength(2);
+    const una = within(filas[0]!);
+    expect(una.getByTestId('kyc-registro')).toHaveTextContent('Se registró hace 1 día');
+    expect(una.getByText('No ha enviado sus fotos')).toBeInTheDocument();
+    expect(una.getByText('Correo sin confirmar')).toBeInTheDocument();
+    expect(una.getByRole('link', { name: 'Persona Uno' })).toHaveAttribute(
+      'href',
+      `${BASE}/drivers/${ID}`,
+    );
+    expect(una.getByRole('link', { name: 'Ficha completa' })).toHaveAttribute(
+      'href',
+      `${BASE}/drivers/${ID}`,
+    );
+    // No hay fotos que revisar: no ofrece «Revisar».
+    expect(una.queryByRole('link', { name: 'Revisar' })).toBeNull();
+    const dos = within(filas[1]!);
+    expect(dos.getByTestId('kyc-registro')).toHaveTextContent('Se registró hace 2 h');
+    expect(dos.getByText('Subió 2 fotos y no las ha enviado')).toBeInTheDocument();
+    expect(dos.queryByText('Correo sin confirmar')).toBeNull();
+  });
+
+  it('en inglés', async () => {
+    bandeja([fila()], { pendiente: 1, sin_enviar: 3 });
+    render(<SuperKyc base={BASE} idioma="en" id={null} />);
+    expect(await screen.findByRole('tab', { name: 'Not submitted (3)' })).toBeInTheDocument();
+  });
+});
+
 describe('C-VERIFICACIONES-BANDEJA · Configuración de verificaciones', () => {
   it('tiene su propia dirección, que no se confunde con la ficha de una persona', () => {
     const admin = { id: 'a1', nombre: 'Equipo', correo: 'e@ejemplo.com', rol: 'admin' } as never;

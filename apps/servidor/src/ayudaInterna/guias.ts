@@ -292,7 +292,7 @@ const en: Guia[] = [
       'The search bar at the top of the operations panel finds an order, a ride, a customer, a driver, a restaurant, a vehicle, a ticket or any part of the panel from the first letter you type.',
     explicacion: [
       'The search bar is at the top of every screen of Divoox’s operations panel. Press “/” (or Ctrl+K, or ⌘K on a Mac) from anywhere and start typing. There is no button to press: results appear while you type, grouped by what they are: Orders, Rides, Customers, Drivers, Restaurants and stores, Vehicles and Tickets. The sections of the panel show up too, under “Go to”.',
-      'You can type almost anything people remember. The short order code, with or without the “#”. The full ID. A name, without worrying about capitals or accents: “jose” finds “José”. A phone number: the last four digits, or the beginning. An email. A license plate. A driver code such as US-NOV-000014. Or an amount, with a dollar sign or decimals; amounts are searched only in the last 30 days, and the screen says so.',
+      'You can type almost anything people remember. The short order code, with or without the “#”. The full ID. A first or last name, without worrying about capitals or accents: “jose” finds “José”, and a last name or middle name alone is enough to find the person, even if they just created their account and haven’t confirmed their email. A phone number: the last four digits, or the beginning. An email. A license plate. A driver code such as US-NOV-000014. Or an amount, with a dollar sign or decimals; amounts are searched only in the last 30 days, and the screen says so.',
       'The short code is the one customers read to you: the first four characters of the order. The panel shows six and writes those four in bold. You don’t need the whole code: from the very first character, the search already suggests every order and ride whose code starts that way. Type “7” and you see the ones that start with 7; type “73” and the list narrows at once. Capitals don’t matter, and the “#” is optional.',
       'When many share the first characters, the ones still in progress come first, with the ones in trouble at the top, then the closed ones, newest first. The group title says how many there are in total (for example “Orders · 312”), and “See all” at the bottom of the group opens Live orders with the same search, where you can keep loading every match.',
       'If nothing matches, the panel says exactly what you searched for and helps you: when a code has a letter that looks like a number (an “O” instead of a zero, an “l” instead of a one), it asks “Did you mean #B4290C?” and one click searches it.',
@@ -735,7 +735,7 @@ const es: Guia[] = [
       'El buscador de arriba del panel de operaciones encuentra un pedido, un viaje, un cliente, un repartidor, un restaurante, un vehículo, un ticket o cualquier parte del panel desde la primera letra.',
     explicacion: [
       'El buscador está arriba en todas las pantallas del panel de operaciones de Divoox. Presiona «/» (o Ctrl+K, o ⌘K en Mac) desde cualquier lugar y escribe. No hay botón que apretar: los resultados salen mientras escribes, agrupados por tipo: Pedidos, Viajes, Clientes, Repartidores y conductores, Restaurantes y tiendas, Vehículos y Tickets. Las secciones del panel también aparecen, en «Ir a».',
-      'Puedes escribir casi cualquier dato que la gente recuerda. El código corto del pedido, con o sin «#». El id completo. Un nombre, sin preocuparte por mayúsculas ni acentos: «jose» encuentra «José». Un teléfono: los últimos cuatro dígitos o el comienzo. Un correo. Una placa. Un código de repartidor como VE-ELV-000003. O un monto, con signo de dólar o decimales; los montos se buscan solo en los últimos 30 días y la pantalla lo dice.',
+      'Puedes escribir casi cualquier dato que la gente recuerda. El código corto del pedido, con o sin «#». El id completo. Un nombre o un apellido, sin preocuparte por mayúsculas ni acentos: «jose» encuentra «José», y basta el apellido o el segundo nombre para encontrar a la persona, aunque acabe de crear su cuenta y no haya confirmado su correo. Un teléfono: los últimos cuatro dígitos o el comienzo. Un correo. Una placa. Un código de repartidor como VE-ELV-000003. O un monto, con signo de dólar o decimales; los montos se buscan solo en los últimos 30 días y la pantalla lo dice.',
       'El código corto es el que te lee el cliente: los primeros cuatro caracteres del pedido. El panel muestra seis y escribe esos cuatro en negrita. No hace falta el código completo: desde el primer carácter el buscador ya sugiere todos los pedidos y viajes cuyo código empieza así. Escribe «7» y ves los que empiezan por 7; escribe «73» y la lista se afina al instante. Da igual mayúsculas o minúsculas, y el «#» es opcional.',
       'Cuando muchos comparten los primeros caracteres, salen primero los que siguen en curso, con los que están en problemas arriba, y después los cerrados, del más reciente al más viejo. El título del grupo dice cuántos hay en total (por ejemplo «Pedidos · 312»), y «Ver todos», al pie del grupo, abre Pedidos en curso con la misma búsqueda, donde puedes seguir cargando todas las coincidencias.',
       'Si no hay nada, el panel dice exactamente qué buscaste y te ayuda: cuando un código trae una letra que parece un número (una «O» en vez de un cero, una «l» en vez de un uno), pregunta «¿Quisiste decir #B4290C?» y con un clic lo busca.',
@@ -1628,7 +1628,9 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'Cómo ver de dónde vino el alta de una cuenta y en qué paso quedó, leer la línea de tiempo de un viaje con minutos y kilómetros, y usar el embudo de registro.',
     explicacion: [
       'En la ficha de un conductor o de un cliente, la sección «Actividad» dice cuándo se creó la cuenta, desde qué app y versión, si fue en Android, iPhone o navegador, y el país y la ciudad aproximados según la red. No se guarda la dirección de internet de la persona.',
-      'Debajo, «Registro» muestra cada paso en orden con su estado: en verde lo hecho, en gris lo pendiente, y en ámbar el paso que le falta. Así se sabe a quién llamar y qué pedirle.',
+      'Debajo, «Registro» muestra cada paso en el orden en que lo hace la persona, con uno de tres estados: «Hecho» en verde, «Pendiente» en ámbar y «No le toca» en gris (por ejemplo, el teléfono donde no se pide). Cada paso se lee de su fuente real: las fotos, los papeles, el vehículo, lo que aprobó el equipo y la primera conexión. Así se sabe a quién llamar y qué pedirle.',
+      'El correo y el teléfono salen tapados. El ojito los muestra completos y deja anotado quién los vio.',
+      'En Verificaciones, la pestaña «Sin enviar» junta a los conductores y dueños de comercio que crearon su cuenta y todavía no mandan sus fotos, del más nuevo al más viejo, con hace cuánto se registraron. Ahí no hay nada que aprobar: sirve para saber quién se quedó a medias. El contador se detiene en «99+».',
       'La «Línea de tiempo» junta lo demás: fotos que subió y qué dijo la comprobación automática, decisiones del equipo con el nombre de quien las tomó, vehículos, habilitaciones, viajes, pedidos y conversaciones con soporte. Los viajes y pedidos llevan su enlace a la ficha.',
       'En la ficha de un viaje o de un pedido, la línea de tiempo dice cuánto pasó entre un paso y el siguiente y cuántos metros se movió el conductor entre ellos. Si el viaje se canceló o el conductor lo soltó, sale el motivo. En el mapa, los puntos grises numerados dicen dónde estaba el conductor en cada paso.',
       'El «Embudo de registro» (menú, grupo Personas) cuenta cuántas personas llegan a cada paso y marca en ámbar el paso donde se queda la mayoría. Se puede ver por app, por fechas, por país y por zona. Solo cuenta cuentas reales.',
@@ -1659,6 +1661,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       '¿En qué paso del registro se quedó un conductor?',
       '¿Cuánto tardó el conductor en llegar?',
       '¿Dónde abandonan el registro?',
+      '¿Quién se registró y no ha enviado sus fotos?',
     ],
     pasos: [
       'Abre la ficha del conductor o del cliente y baja a «Actividad».',
@@ -1674,7 +1677,9 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'How to see where an account signed up from and which step it stopped at, read a ride timeline with minutes and distance, and use the sign-up funnel.',
     explicacion: [
       'On a driver or customer file, the “Activity” section shows when the account was created, from which app and version, whether it was Android, iPhone or a browser, and the approximate country and city based on the network. The person’s internet address is not stored.',
-      'Below it, “Sign-up” lists every step in order with its status: green for done, gray for pending, and amber for the step still missing. That tells you who to call and what to ask for.',
+      'Below it, “Sign-up” lists every step in the order the person takes it, with one of three statuses: “Done” in green, “Pending” in amber and “Not required” in gray (for example, the phone number where it isn’t requested). Each step is read from its real source: photos, documents, the vehicle, what the team approved and the first time online. That tells you who to call and what to ask for.',
+      'Email and phone are partly hidden. The eye icon shows them in full and records who viewed them.',
+      'In Verifications, the “Not submitted” tab lists drivers and store owners who created their account and haven’t sent their photos yet, newest first, with how long ago they signed up. There is nothing to approve there: it shows who stopped halfway. The counter stops at “99+”.',
       'The “Timeline” gathers everything else: photos uploaded and what the automatic check said, team decisions with the name of who made them, vehicles, service access, rides, orders and support conversations. Rides and orders link to their file.',
       'On a ride or order file, the timeline shows how long passed between one step and the next and how far the driver moved between them. If the ride was canceled or released, the reason is shown. On the map, the numbered gray dots show where the driver was at each step.',
       'The “Sign-up funnel” (menu, People group) counts how many people reach each step and flags in amber the step where most people stop. You can view it by app, dates, country and zone. Only real accounts are counted.',
@@ -1705,6 +1710,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'Which sign-up step did a driver stop at?',
       'How long did the driver take to arrive?',
       'Where do people drop out of sign-up?',
+      'Who signed up and hasn’t sent their photos?',
     ],
     pasos: [
       'Open the driver or customer file and scroll to “Activity.”',

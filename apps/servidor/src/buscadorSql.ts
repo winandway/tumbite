@@ -28,7 +28,27 @@ export const CON_TELEFONO = "telefono IS NOT NULL AND telefono != ''";
 
 export const NOMBRE_PLANO = sqlPlano('nombre');
 
+/**
+ * C-BUSCADOR-APELLIDO (22 nov 2026). Todos los países. El nombre a partir de su segunda, tercera y
+ * cuarta palabra, sin acentos ni mayúsculas: «Andrés José Peñalver» → «jose penalver», «penalver».
+ * Con esto un apellido (o un segundo nombre) se encuentra por su comienzo, con índice, igual que el
+ * nombre. Quien tiene menos palabras da NULL en las que le faltan (nunca coincide ni estorba).
+ * Dos espacios seguidos no rompen nada (ltrim).
+ */
+const resto = (e: string) =>
+  `CASE WHEN instr(${e}, ' ') > 0 THEN ltrim(substr(${e}, instr(${e}, ' ') + 1)) END`;
+const DESDE_2 = resto('nombre');
+const DESDE_3 = resto(`(${DESDE_2})`);
+const DESDE_4 = resto(`(${DESDE_3})`);
+export const NOMBRE_DESDE_PALABRA = [DESDE_2, DESDE_3, DESDE_4].map((e) => sqlPlano(`(${e})`));
+
 export const INDICES_BUSCADOR = [
+  // C-BUSCADOR-APELLIDO: una fila más por cada índice al crear una cuenta o un comercio, o al
+  // cambiarle el nombre (tres por tabla). Medido en buscadorCuentas.test.ts y anotado en CANDADOS.md.
+  ...NOMBRE_DESDE_PALABRA.flatMap((e, i) => [
+    `CREATE INDEX IF NOT EXISTS usuarios_rol_nombre_palabra${i + 2} ON usuarios(rol, ${e})`,
+    `CREATE INDEX IF NOT EXISTS restaurantes_nombre_palabra${i + 2} ON restaurantes(${e})`,
+  ]),
   // Nombre por comienzo sin acentos ni mayúsculas (clientes, repartidores): «jose» encuentra «José».
   `CREATE INDEX IF NOT EXISTS usuarios_rol_nombre_plano ON usuarios(rol, ${NOMBRE_PLANO})`,
   // Restaurantes y tiendas por comienzo del nombre, sin acentos.

@@ -27,7 +27,8 @@ import './verificaciones.css';
  * profesional») — todos los países. Verificaciones del superadmin:
  * - ARRIBA, lo primero, la lista de personas por verificar: miniatura (se abre en grande), nombre,
  *   ID, zona, cuánto lleva esperando y lo que dijo la comprobación automática de CADA foto.
- * - Pestañas Pendientes / Aprobadas / Rechazadas, buscador por todo desde la primera letra y filtros
+ * - Pestañas Pendientes / Aprobadas / Rechazadas / Sin enviar (quien se registró y no mandó sus
+ *   fotos, C-VERIFICACIONES-SIN-ENVIAR), buscador por todo desde la primera letra y filtros
  *   de zona y de cuentas reales o de prueba (se recuerdan por empleado).
  * - Las reglas y el gasto de la comprobación automática viven en «Configuración de verificaciones».
  * La comprobación automática nunca aprueba ni rechaza aquí: decide una persona.
@@ -53,6 +54,10 @@ type Solicitud = {
   miniatura: 'mini' | 'selfie' | null;
   comprobaciones: Comprobacion[];
   cara: ResumenCara;
+  /** Solo en «Sin enviar»: cuándo creó la cuenta y qué le falta. */
+  creado?: string;
+  correoConfirmado?: boolean;
+  fotosSubidas?: number;
 };
 type Respuesta = {
   solicitudes: Solicitud[];
@@ -61,7 +66,10 @@ type Respuesta = {
 };
 type Ciudad = { id: string; nombre: string; pais: string };
 
-const ESTADOS = ['pendiente', 'aprobado', 'rechazado'] as const;
+// C-VERIFICACIONES-SIN-ENVIAR: la cuarta pestaña son las cuentas que todavía no mandan sus fotos.
+const ESTADOS = ['pendiente', 'aprobado', 'rechazado', 'sin_enviar'] as const;
+/** El contador de «Sin enviar» se detiene en 100 en el servidor: se muestra «99+». */
+const TOPE_SIN_ENVIAR = 100;
 type Estado = (typeof ESTADOS)[number];
 const leerEstado = (v: string | undefined): Estado =>
   (ESTADOS as readonly string[]).includes(v ?? '') ? (v as Estado) : 'pendiente';
@@ -189,7 +197,17 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
   };
 
   const nombreDe = (e: Estado) =>
-    e === 'pendiente' ? t.pendientes : e === 'aprobado' ? t.aprobadas : t.rechazadas;
+    e === 'pendiente'
+      ? t.pendientes
+      : e === 'aprobado'
+        ? t.aprobadas
+        : e === 'rechazado'
+          ? t.rechazadas
+          : t.sinEnviar;
+  const cuantas = (e: Estado) => {
+    const n = totales.get(e) ?? 0;
+    return e === 'sin_enviar' && n >= TOPE_SIN_ENVIAR ? `${TOPE_SIN_ENVIAR - 1}+` : String(n);
+  };
   const totales = new Map(Object.entries(r?.totales ?? {}));
   const lista = r?.solicitudes ?? [];
   const otras = ESTADOS.filter((e) => e !== estado && (totales.get(e) ?? 0) > 0);
@@ -213,10 +231,12 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
             onClick={() => pref.cambiar('estado', e)}
           >
             {nombreDe(e)}
-            {totales.has(e) ? ` (${totales.get(e)})` : ''}
+            {totales.has(e) ? ` (${cuantas(e)})` : ''}
           </button>
         ))}
       </div>
+
+      {estado === 'sin_enviar' ? <p className="suave">{t.sinEnviarDetalle}</p> : null}
 
       <div className="super-busqueda kyc-busqueda" role="search">
         <input
@@ -283,7 +303,10 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
       <ul className="kyc-lista" data-testid="kyc-lista">
         {lista.map((s) => {
           const ficha = enlaceFicha(base, s);
-          const horas = horasDesde(s.enviado);
+          const sinEnviar = s.estado === 'sin_enviar';
+          const horas = horasDesde(sinEnviar ? (s.creado ?? '') : s.enviado);
+          // Quien no ha enviado no tiene fotos que revisar: su nombre lleva a su ficha completa.
+          const destino = sinEnviar && ficha ? ficha : `${base}/verifications/${s.id}`;
           const src =
             s.miniatura === 'mini'
               ? `/datos/admin/kyc/${s.id}/foto/selfie?mini=1`
@@ -308,7 +331,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
               )}
               <div className="kyc-fila-cuerpo">
                 <p className="kyc-fila-nombre">
-                  <Enlace a={`${base}/verifications/${s.id}`}>
+                  <Enlace a={destino}>
                     <strong>
                       <Resaltado texto={s.nombre} q={q} />
                     </strong>
@@ -331,6 +354,20 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                   cara={s.cara ?? null}
                   idioma={idioma}
                 />
+                {sinEnviar ? (
+                  <ul className="kyc-comprobaciones">
+                    <li>
+                      <Insignia tono="pendiente">
+                        {s.fotosSubidas ? t.fotosSinEnviar(s.fotosSubidas) : t.sinFotos}
+                      </Insignia>
+                    </li>
+                    {s.correoConfirmado === false ? (
+                      <li>
+                        <Insignia tono="apagado">{t.correoSinConfirmar}</Insignia>
+                      </li>
+                    ) : null}
+                  </ul>
+                ) : null}
                 {s.estado === 'rechazado' && s.motivo ? (
                   <p className="suave">
                     {t.motivoRechazo}: {s.motivo}
@@ -338,7 +375,11 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                 ) : null}
               </div>
               <div className="kyc-fila-lado">
-                {s.estado === 'pendiente' ? (
+                {sinEnviar ? (
+                  <Insignia tono="apagado" testId="kyc-registro">
+                    {t.registro(horas)}
+                  </Insignia>
+                ) : s.estado === 'pendiente' ? (
                   <Insignia
                     tono={horas >= HORAS_URGENTE ? 'problema' : 'pendiente'}
                     testId="kyc-espera"
@@ -353,11 +394,16 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                   </Insignia>
                 )}
                 <div className="kyc-fila-acciones">
-                  <Enlace a={`${base}/verifications/${s.id}`} className="boton secundario chico">
-                    {t.revisar}
-                  </Enlace>
+                  {sinEnviar ? null : (
+                    <Enlace a={`${base}/verifications/${s.id}`} className="boton secundario chico">
+                      {t.revisar}
+                    </Enlace>
+                  )}
                   {ficha ? (
-                    <Enlace a={ficha} className="boton terciario chico">
+                    <Enlace
+                      a={ficha}
+                      className={sinEnviar ? 'boton secundario chico' : 'boton terciario chico'}
+                    >
                       {t.ficha}
                     </Enlace>
                   ) : null}

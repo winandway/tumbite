@@ -4,7 +4,13 @@ import { mundo } from '../pruebas/ayuda';
 import { medidorDeLecturas, sembrarVolumen } from '../pruebas/lecturas';
 import { olvidarSegundoFactor } from '../segundoFactor';
 import { olvidarAnotadosRecientes } from '../accesoInterno';
-import { condicionBusqueda, resumenCara, resumenComprobacion } from './kycBandeja';
+import {
+  condicionBusqueda,
+  consultaTotalSinEnviar,
+  consultasSinEnviar,
+  resumenCara,
+  resumenComprobacion,
+} from './kycBandeja';
 
 /**
  * C-VERIFICACIONES-BANDEJA (22 nov 2026, Gerencia) — todos los países. La bandeja de Verificaciones:
@@ -164,7 +170,7 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja del superadmin', () => {
       'José Pérez',
       'Ana Ruiz',
     ]);
-    expect(r.datos.totales).toEqual({ pendiente: 2, aprobado: 1, rechazado: 1 });
+    expect(r.datos.totales).toEqual({ pendiente: 2, aprobado: 1, rechazado: 1, sin_enviar: 0 });
     expect(nombres(await bandeja(m, admin.token, 'estado=aprobado'))).toEqual(['Marta Lista']);
     expect(nombres(await bandeja(m, admin.token, 'estado=rechazado'))).toEqual(['Pablo Otro']);
   });
@@ -230,7 +236,7 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja del superadmin', () => {
     const { m, admin } = await preparar();
     const r = await bandeja(m, admin.token, 'q=marta');
     expect(r.datos.solicitudes).toEqual([]);
-    expect(r.datos.totales).toEqual({ aprobado: 1 });
+    expect(r.datos.totales).toEqual({ aprobado: 1, sin_enviar: 0 });
   });
 
   it('filtra por zona y por cuentas reales (por defecto), de prueba o todas', async () => {
@@ -334,8 +340,189 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja del superadmin', () => {
     const sur = a.datos.token as string;
     const r = await bandeja(m, sur);
     expect(nombres(r)).toEqual(['Ana Ruiz']);
-    expect(r.datos.totales).toEqual({ pendiente: 1 });
+    expect(r.datos.totales).toEqual({ pendiente: 1, sin_enviar: 0 });
     expect(nombres(await bandeja(m, sur, 'q=jose'))).toEqual([]);
+  });
+});
+
+/**
+ * C-VERIFICACIONES-SIN-ENVIAR (22 nov 2026, Richard buscó en Verificaciones a un conductor que solo
+ * había creado su cuenta y no entendió por qué no salía) — todos los países. La pestaña «Sin enviar»
+ * trae a los conductores y dueños de comercio que se registraron y todavía no mandaron sus fotos,
+ * con su contador, los más nuevos primero, con los mismos filtros, búsqueda y alcance.
+ */
+describe('C-VERIFICACIONES-SIN-ENVIAR · quien se registró y no mandó sus fotos', () => {
+  async function preparar() {
+    const m = mundo();
+    await zonas(m);
+    const admin = await m.cuenta('admin', 'Soporte Bandeja');
+    await conductor(m, { nombre: 'Marta Lista', estado: 'aprobado' });
+    await conductor(m, { nombre: 'José Pérez' });
+    const nuevo = async (
+      nombre: string,
+      rol: 'repartidor' | 'restaurante' | 'cliente',
+      zona: string,
+      horas: number,
+      extra: { prueba?: boolean; telefono?: string; codigo?: string } = {},
+    ) => {
+      const c = await m.cuenta(rol, nombre);
+      await m.DB.prepare(
+        "UPDATE usuarios SET zona_id = ?, creado_en = datetime('now', ?), es_prueba = ?, telefono = ? WHERE id = ?",
+      )
+        .bind(zona, `-${horas} hours`, extra.prueba ? 1 : 0, extra.telefono ?? null, c.id)
+        .run();
+      if (rol === 'repartidor')
+        await m.DB.prepare(
+          `INSERT INTO repartidores (usuario_id, zona_id, codigo) VALUES (?, ?, ?)
+           ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, codigo = excluded.codigo`,
+        )
+          .bind(c.id, zona, extra.codigo ?? null)
+          .run();
+      return c;
+    };
+    const andres = await nuevo('Andrés Peñalver Ejemplo', 'repartidor', ZONA_NORTE, 30, {
+      telefono: '+1 (313) 555-0188',
+      codigo: 'US-ZZN-000044',
+    });
+    const rosa = await nuevo('Rosa Campos', 'repartidor', ZONA_SUR, 2);
+    const duena = await nuevo('Dueña Cocina', 'restaurante', ZONA_SUR, 5);
+    await nuevo('Luis Prueba', 'repartidor', ZONA_NORTE, 1, { prueba: true });
+    // Un cliente no pasa por verificación: nunca sale aquí.
+    await nuevo('Clienta Normal', 'cliente', ZONA_NORTE, 1);
+    // Quien empezó la verificación anterior y el equipo le pidió repetir la cara vuelve a «sin enviar».
+    const repite = await nuevo('Pedro Repite', 'repartidor', ZONA_NORTE, 50);
+    await m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado, doc_tipo) VALUES (?, 'sin_enviar', 'identificacion')",
+    )
+      .bind(repite.id)
+      .run();
+    return { m, admin, andres, rosa, duena, repite };
+  }
+
+  it('la pestaña trae solo a quien no ha enviado, lo más nuevo primero, con su contador en todas las pestañas', async () => {
+    const { m, admin, andres } = await preparar();
+    const r = await bandeja(m, admin.token, 'estado=sin_enviar');
+    expect(r.estado).toBe(200);
+    expect(r.datos.solicitudes.map((s: { nombre: string }) => s.nombre)).toEqual([
+      'Rosa Campos',
+      'Dueña Cocina',
+      'Andrés Peñalver Ejemplo',
+      'Pedro Repite',
+    ]);
+    expect(r.datos.totales).toMatchObject({ sin_enviar: 4 });
+    const fila = r.datos.solicitudes.find((s: { id: string }) => s.id === andres.id);
+    expect(fila).toMatchObject({
+      estado: 'sin_enviar',
+      rol: 'repartidor',
+      codigo: 'US-ZZN-000044',
+      zonaId: ZONA_NORTE,
+      zona: 'Ciudad Norte',
+      correoConfirmado: false,
+      fotosSubidas: 0,
+      miniatura: null,
+      comprobaciones: [],
+    });
+    expect(String(fila.creado)).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    // El contador sale también al abrir Pendientes (lo primero que se ve).
+    expect((await bandeja(m, admin.token)).datos.totales).toEqual({
+      pendiente: 1,
+      aprobado: 1,
+      sin_enviar: 4,
+    });
+  });
+
+  it('busca por nombre, apellido, correo, teléfono e ID; filtra por zona y por cuentas de prueba', async () => {
+    const { m, admin } = await preparar();
+    const con = async (q: string) =>
+      nombres(await bandeja(m, admin.token, `estado=sin_enviar&${q}`));
+    for (const q of ['andres', 'peñalver', 'penalver ej', '555-0188', 'US-ZZN-000044', '%23000044'])
+      expect(await con(`q=${q}`), q).toEqual(['Andrés Peñalver Ejemplo']);
+    expect(await con(`zona=${ZONA_SUR}`)).toEqual(['Dueña Cocina', 'Rosa Campos']);
+    expect(await con('cuentas=prueba')).toEqual(['Luis Prueba']);
+    expect((await bandeja(m, admin.token, 'q=penalver')).datos.totales).toEqual({ sin_enviar: 1 });
+  });
+
+  it('quien ya envió deja de salir; la cuenta borrada tampoco sale', async () => {
+    const { m, admin, rosa, duena } = await preparar();
+    await m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado, doc_tipo, enviado_en) VALUES (?, 'pendiente', 'identificacion', datetime('now'))",
+    )
+      .bind(rosa.id)
+      .run();
+    await m.DB.prepare("UPDATE usuarios SET activo = 0, nombre = 'Cuenta borrada' WHERE id = ?")
+      .bind(duena.id)
+      .run();
+    const r = await bandeja(m, admin.token, 'estado=sin_enviar');
+    expect(nombres(r)).toEqual(['Andrés Peñalver Ejemplo', 'Pedro Repite']);
+    expect(r.datos.totales.sin_enviar).toBe(2);
+  });
+
+  it('pagina sin repetir ni perder a nadie y el contador se detiene en 100', async () => {
+    const { m, admin } = await preparar();
+    await m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 120)
+       INSERT INTO usuarios (id, correo, nombre, rol, clave_hash, creado_en)
+       SELECT 'se-' || i, 'se' || i || '@ejemplo.com', 'Nueva ' || i, 'repartidor', 'x', datetime('now', '-' || (i % 7) || ' days') FROM n`,
+    ).run();
+    const vistos = new Set<string>();
+    let despues = '';
+    for (let vuelta = 0; vuelta < 6; vuelta++) {
+      const r = await bandeja(
+        m,
+        admin.token,
+        `estado=sin_enviar${despues ? `&despues=${encodeURIComponent(despues)}` : ''}`,
+      );
+      if (vuelta === 0) expect(r.datos.totales.sin_enviar).toBe(100);
+      for (const s of r.datos.solicitudes as { id: string }[]) {
+        expect(vistos.has(s.id), s.id).toBe(false);
+        vistos.add(s.id);
+      }
+      despues = r.datos.siguiente ?? '';
+      if (!despues) break;
+    }
+    expect(vistos.size).toBe(124);
+  });
+
+  it('la página baja por el índice de cuentas por rol y fecha: no recorre ni ordena la tabla de cuentas', async () => {
+    const { m } = await preparar();
+    const filtros = { zona: '', cuentas: undefined, q: '', alcance: { sql: '', valores: [] } };
+    for (const q of consultasSinEnviar(filtros, '')) {
+      const plan = await m.DB.prepare(`EXPLAIN QUERY PLAN ${q.sql}`)
+        .bind(...q.valores)
+        .all<{ detail: string }>();
+      const detalle = plan.results.map((x) => x.detail).join(' | ');
+      expect(detalle).toMatch(/SEARCH u USING INDEX usuarios_rol_creado \(rol=\?\)/);
+      expect(detalle).not.toMatch(/SCAN u\b/);
+      // Solo ordena los empates de fecha (lo último del ORDER BY), nunca toda la lista.
+      expect(detalle).not.toMatch(/USE TEMP B-TREE FOR ORDER BY/);
+    }
+  });
+
+  it('quien trabaja en una zona solo ve a los de su zona, también en el contador', async () => {
+    const { m, admin } = await preparar();
+    const correo = `emp-${Math.random().toString(36).slice(2)}@ejemplo.com`;
+    const inv = await m.llamar(
+      'POST',
+      '/datos/admin/equipo/invitaciones',
+      {
+        correo,
+        nombre: 'Persona Equipo',
+        plantillas: ['total'],
+        motivo: 'Alta de prueba',
+        alcance: { zonas: [ZONA_SUR] },
+      },
+      admin.token,
+    );
+    expect(inv.estado, JSON.stringify(inv.datos)).toBe(201);
+    const a = await m.llamar('POST', '/datos/equipo-interno/invitacion/aceptar', {
+      codigo: new URL(inv.datos.enlace).searchParams.get('code'),
+      nombre: 'Persona Equipo',
+      clave: 'clave-segura-1',
+    });
+    const r = await bandeja(m, a.datos.token as string, 'estado=sin_enviar');
+    // La dueña todavía no tiene comercio, así que no tiene zona: la ve quien tiene alcance total.
+    expect(nombres(r)).toEqual(['Rosa Campos']);
+    expect(r.datos.totales).toEqual({ sin_enviar: 1 });
   });
 });
 
@@ -378,8 +565,29 @@ describe('C-VERIFICACIONES-BANDEJA · mirar no escribe y lee poco (con el volume
     });
     expect(escrituras, escrituras.join('\n')).toEqual([]);
     expect(conteo.cuenta.escritas - antes.escritas).toBe(0);
-    const filas = medida.lecturas.reduce((n, l) => n + l.filas, 0);
+    // C-VERIFICACIONES-SIN-ENVIAR: el contador de «Sin enviar» corta al juntar 100 cuentas (LIMIT).
+    // El medidor estima con el plan y no ve ese corte (cuenta el rol entero), así que ese contador se
+    // mide aparte, con lo que de verdad devuelve y con su tope escrito en la consulta.
+    const esContador = (sql: string) =>
+      /SELECT COUNT\(\*\) AS n FROM \(SELECT 1 FROM usuarios u/.test(sql);
+    const contadores = medida.lecturas.filter((l) => esContador(l.sql));
+    expect(contadores.length).toBe(5);
+    for (const l of contadores) {
+      expect(
+        consultaTotalSinEnviar({
+          zona: '',
+          cuentas: undefined,
+          q: '',
+          alcance: { sql: '', valores: [] },
+        }).sql,
+      ).toMatch(/LIMIT 100\)$/);
+      expect(l.escaneos.join(' '), l.sql).not.toMatch(/^usuarios \(|, usuarios \(/);
+    }
+    const filas = medida.lecturas
+      .filter((l) => !esContador(l.sql))
+      .reduce((n, l) => n + l.filas, 0);
     const detalle = medida.lecturas
+      .filter((l) => !esContador(l.sql))
       .filter((l) => l.filas > 20)
       .map((l) => `${l.filas} (${l.escaneos.join(', ')}): ${l.sql.slice(0, 160)}`)
       .join('\n');

@@ -416,6 +416,9 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS repartidores_zona_codigo ON repartidores(zona_id, codigo)',
   'CREATE INDEX IF NOT EXISTS usuarios_rol_nombre ON usuarios(rol, nombre COLLATE NOCASE)',
   'CREATE INDEX IF NOT EXISTS usuarios_rol_zona ON usuarios(rol, zona_id, creado_en)',
+  // C-VERIFICACIONES-SIN-ENVIAR: «Sin enviar» baja desde la cuenta más nueva de cada rol y corta al
+  // llenar la página (una fila más por cuenta creada).
+  'CREATE INDEX IF NOT EXISTS usuarios_rol_creado ON usuarios(rol, creado_en)',
   'CREATE INDEX IF NOT EXISTS usuarios_telefono ON usuarios(telefono)',
   // C-CUENTA-PRUEBA: solo las cuentas de prueba (pocas): los reportes arman su lista sin recorrer a todos.
   'CREATE INDEX IF NOT EXISTS usuarios_es_prueba ON usuarios(es_prueba) WHERE es_prueba = 1',

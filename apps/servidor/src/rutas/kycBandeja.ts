@@ -13,8 +13,11 @@ import { sqlFiltroCuentas } from './cuentaPrueba';
  * dijo, para que decida una persona.
  */
 
-/** Las tres pestañas de la bandeja. */
-export const ESTADOS_BANDEJA = ['pendiente', 'aprobado', 'rechazado'] as const;
+/**
+ * Las pestañas de la bandeja. «sin_enviar» (C-VERIFICACIONES-SIN-ENVIAR) no sale de la tabla de
+ * verificaciones: son las cuentas que se registraron y todavía no mandaron sus fotos.
+ */
+export const ESTADOS_BANDEJA = ['pendiente', 'aprobado', 'rechazado', 'sin_enviar'] as const;
 export type EstadoBandeja = (typeof ESTADOS_BANDEJA)[number];
 export const leerEstadoBandeja = (v: string | undefined | null): EstadoBandeja =>
   (ESTADOS_BANDEJA as readonly string[]).includes(v ?? '') ? (v as EstadoBandeja) : 'pendiente';
@@ -144,7 +147,11 @@ export const ZONA_BANDEJA_SQL = `CASE WHEN u.rol = 'restaurante' THEN COALESCE(r
  * de la cuenta. Todo «contiene»: la tabla de verificaciones es chica (una fila por persona) y la
  * consulta ya va acotada por la pestaña.
  */
-export function condicionBusqueda(entrada: string): { sql: string; valores: string[] } | null {
+export function condicionBusqueda(
+  entrada: string,
+  /** La columna con el id de la persona («u.id» en la pestaña «Sin enviar»). */
+  persona = 'k.usuario_id',
+): { sql: string; valores: string[] } | null {
   const texto = entrada.replace(/\s+/g, ' ').trim().slice(0, 80).replace(/^#\s*/, '');
   if (!texto) return null;
   const plano = `%${escaparLike(textoPlano(texto))}%`;
@@ -156,8 +163,8 @@ export function condicionBusqueda(entrada: string): { sql: string; valores: stri
     `lower(u.correo) LIKE ? ESCAPE '\\'`,
     `upper(COALESCE(d.codigo, '')) LIKE ? ESCAPE '\\'`,
     `upper(COALESCE(${ZONA_BANDEJA_SQL}, '')) LIKE ? ESCAPE '\\'`,
-    `k.usuario_id IN (SELECT usuario_id FROM codigos_repartidor_anteriores WHERE upper(codigo) LIKE ? ESCAPE '\\')`,
-    'k.usuario_id = ?',
+    `${persona} IN (SELECT usuario_id FROM codigos_repartidor_anteriores WHERE upper(codigo) LIKE ? ESCAPE '\\')`,
+    `${persona} = ?`,
   ];
   const valores = [
     plano,
@@ -186,7 +193,7 @@ export type FiltrosBandeja = {
 };
 
 /** Los filtros comunes (sin la pestaña): los usan la página y los totales de cada pestaña. */
-export function condicionesBandeja(f: Omit<FiltrosBandeja, 'estado'>) {
+export function condicionesBandeja(f: Omit<FiltrosBandeja, 'estado'>, persona = 'k.usuario_id') {
   const sql: string[] = [];
   const valores: unknown[] = [];
   const cuentas = sqlFiltroCuentas(f.cuentas);
@@ -195,7 +202,7 @@ export function condicionesBandeja(f: Omit<FiltrosBandeja, 'estado'>) {
     sql.push(`${ZONA_BANDEJA_SQL} = ?`);
     valores.push(f.zona);
   }
-  const b = condicionBusqueda(f.q);
+  const b = condicionBusqueda(f.q, persona);
   if (b) {
     sql.push(b.sql);
     valores.push(...b.valores);
@@ -277,6 +284,123 @@ export function consultaTotales(f: Omit<FiltrosBandeja, 'estado'>) {
       WHERE k.estado IN ('pendiente', 'aprobado', 'rechazado')${comun.sql.map((s) => ` AND ${s}`).join('')}
       GROUP BY k.estado`,
     valores: comun.valores,
+  };
+}
+
+// ───────────────────────── «Sin enviar» (C-VERIFICACIONES-SIN-ENVIAR) ─────────────────────────
+
+/** Los roles que pasan por verificación. */
+export const ROLES_SIN_ENVIAR = ['repartidor', 'restaurante'] as const;
+/** El contador de «Sin enviar» se detiene aquí (se muestra «99+»): nunca cuenta una tabla entera. */
+export const TOPE_CONTADOR_SIN_ENVIAR = 100;
+
+const DESDE_SIN_ENVIAR = `FROM usuarios u LEFT JOIN kyc k ON k.usuario_id = u.id
+  LEFT JOIN repartidores d ON d.usuario_id = u.id
+  LEFT JOIN restaurantes rs ON rs.dueno_id = u.id
+  LEFT JOIN zonas z ON z.id = ${ZONA_BANDEJA_SQL}`;
+/** Sin fila de verificación, o devuelta a «sin enviar»; nunca una cuenta borrada por su dueño. */
+const ES_SIN_ENVIAR =
+  "(k.usuario_id IS NULL OR k.estado = 'sin_enviar') AND NOT (u.activo = 0 AND u.nombre = 'Cuenta borrada')";
+
+/**
+ * Una página de «Sin enviar»: una consulta por rol (cada una baja por el índice `usuarios_rol_creado`
+ * desde la cuenta más nueva y corta al llenar la página); la ruta las junta y ordena.
+ */
+export function consultasSinEnviar(f: Omit<FiltrosBandeja, 'estado'>, despues: string) {
+  const comun = condicionesBandeja(f, 'u.id');
+  const cursor = leerCursor(despues);
+  const donde = ['u.rol = ?', ES_SIN_ENVIAR, ...comun.sql];
+  const valores: unknown[] = [...comun.valores];
+  if (cursor) {
+    donde.push('(u.creado_en < ? OR (u.creado_en = ? AND u.id < ?))');
+    valores.push(cursor.fecha, cursor.fecha, cursor.id);
+  }
+  const sql = `SELECT u.id, u.creado_en AS creado, u.correo_confirmado_en IS NOT NULL AS confirmado,
+      (SELECT COUNT(*) FROM verificacion_fotos f WHERE f.conductor_id = u.id AND f.estado = 'vigente') AS fotos_subidas,
+      u.nombre, u.correo, u.telefono, u.rol, COALESCE(u.es_prueba, 0) AS es_prueba,
+      d.codigo, rs.id AS restaurante_id, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre
+    ${DESDE_SIN_ENVIAR}
+    WHERE ${donde.join(' AND ')}
+    ORDER BY u.creado_en DESC, u.id DESC LIMIT ${POR_PAGINA_BANDEJA + 1}`;
+  return ROLES_SIN_ENVIAR.map((rol) => ({ sql, valores: [rol, ...valores] }));
+}
+
+/**
+ * Cuántas cuentas hay «sin enviar» con los mismos filtros, hasta el tope: la consulta corta en cuanto
+ * junta 100 (por eso el panel dice «99+»). Sin búsqueda, zona ni alcance solo mira la cuenta y su
+ * verificación (por su llave), sin las demás tablas.
+ */
+export function consultaTotalSinEnviar(f: Omit<FiltrosBandeja, 'estado'>) {
+  const comun = condicionesBandeja(f, 'u.id');
+  const sencilla = !f.zona && !f.q.trim() && !f.alcance.sql;
+  const desde = sencilla
+    ? 'FROM usuarios u LEFT JOIN kyc k ON k.usuario_id = u.id'
+    : DESDE_SIN_ENVIAR;
+  return {
+    sql: `SELECT COUNT(*) AS n FROM (SELECT 1 ${desde}
+      WHERE u.rol IN ('repartidor', 'restaurante') AND ${ES_SIN_ENVIAR}${comun.sql.map((s) => ` AND ${s}`).join('')}
+      LIMIT ${TOPE_CONTADOR_SIN_ENVIAR})`,
+    valores: comun.valores,
+  };
+}
+
+export type FilaSinEnviar = {
+  id: string;
+  creado: string;
+  confirmado: number;
+  fotos_subidas: number;
+  nombre: string;
+  correo: string;
+  telefono: string | null;
+  rol: string;
+  es_prueba: number;
+  codigo: string | null;
+  restaurante: string | null;
+  restaurante_id: string | null;
+  zona_id: string | null;
+  zona_nombre: string | null;
+};
+
+/** Junta las páginas de cada rol: lo más nuevo primero, sin repetir a nadie. */
+export function juntarSinEnviar(listas: FilaSinEnviar[][]): FilaSinEnviar[] {
+  const vistos = new Set<string>();
+  return listas
+    .flat()
+    .filter((r) => (vistos.has(r.id) ? false : (vistos.add(r.id), true)))
+    .sort((a, b) =>
+      a.creado === b.creado ? (a.id < b.id ? 1 : -1) : a.creado < b.creado ? 1 : -1,
+    );
+}
+
+/** La fila de «Sin enviar», con la misma forma que las demás pestañas. */
+export function filaSinEnviar(r: FilaSinEnviar) {
+  return {
+    id: r.id,
+    estado: 'sin_enviar',
+    docTipo: '',
+    nombre: r.nombre,
+    correo: r.correo,
+    telefono: r.telefono ?? '',
+    rol: r.rol,
+    codigo: r.codigo ?? null,
+    restaurante: r.restaurante ?? null,
+    restauranteId: r.restaurante_id ?? null,
+    enviado: '',
+    revisado: null,
+    motivo: '',
+    distancia: null,
+    lejos: false,
+    zonaId: r.zona_id ?? '',
+    zona: r.zona_nombre ?? '',
+    esPrueba: Number(r.es_prueba) === 1,
+    miniatura: null,
+    comprobaciones: [],
+    cara: null,
+    /** Cuándo creó la cuenta. */
+    creado: r.creado,
+    correoConfirmado: Number(r.confirmado) === 1,
+    /** Fotos que ya subió en el asistente sin llegar a enviar. */
+    fotosSubidas: Number(r.fotos_subidas ?? 0),
   };
 }
 

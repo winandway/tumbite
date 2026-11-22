@@ -16,6 +16,21 @@ export const T_VERIFICACIONES = {
     pendientes: 'Pendientes',
     aprobadas: 'Aprobadas',
     rechazadas: 'Rechazadas',
+    sinEnviar: 'Sin enviar',
+    sinEnviarDetalle:
+      'Se registraron y todavía no mandan sus fotos. Aquí no hay nada que aprobar: sirve para saber quién se quedó a medias.',
+    registro: (h: number) =>
+      h < 1
+        ? 'Se registró hace menos de 1 h'
+        : h < 24
+          ? `Se registró hace ${h} h`
+          : Math.floor(h / 24) === 1
+            ? 'Se registró hace 1 día'
+            : `Se registró hace ${Math.floor(h / 24)} días`,
+    sinFotos: 'No ha enviado sus fotos',
+    fotosSinEnviar: (n: number) =>
+      n === 1 ? 'Subió 1 foto y no la ha enviado' : `Subió ${n} fotos y no las ha enviado`,
+    correoSinConfirmar: 'Correo sin confirmar',
     buscar: 'Nombre, ID, correo, teléfono o zona',
     zona: 'Zona',
     todasZonas: 'Todas las zonas',
@@ -23,6 +38,7 @@ export const T_VERIFICACIONES = {
       pendiente: 'No hay verificaciones pendientes.',
       aprobado: 'No hay verificaciones aprobadas.',
       rechazado: 'No hay verificaciones rechazadas.',
+      sin_enviar: 'Nadie se quedó sin enviar sus fotos.',
     } as Record<string, string>,
     sinResultados: 'Nada coincide con esa búsqueda en esta pestaña.',
     enOtra: (n: number, pestana: string) =>
@@ -95,6 +111,23 @@ export const T_VERIFICACIONES = {
     pendientes: 'Pending',
     aprobadas: 'Approved',
     rechazadas: 'Rejected',
+    sinEnviar: 'Not submitted',
+    sinEnviarDetalle:
+      'They signed up and haven’t sent their photos yet. There’s nothing to approve here: it shows who stopped halfway.',
+    registro: (h: number) =>
+      h < 1
+        ? 'Signed up less than 1 h ago'
+        : h < 24
+          ? `Signed up ${h} h ago`
+          : Math.floor(h / 24) === 1
+            ? 'Signed up 1 day ago'
+            : `Signed up ${Math.floor(h / 24)} days ago`,
+    sinFotos: 'Hasn’t sent their photos',
+    fotosSinEnviar: (n: number) =>
+      n === 1
+        ? 'Uploaded 1 photo but hasn’t submitted it'
+        : `Uploaded ${n} photos but hasn’t submitted them`,
+    correoSinConfirmar: 'Email not confirmed',
     buscar: 'Name, ID, email, phone or area',
     zona: 'Area',
     todasZonas: 'All areas',
@@ -102,6 +135,7 @@ export const T_VERIFICACIONES = {
       pendiente: 'No pending verifications.',
       aprobado: 'No approved verifications.',
       rechazado: 'No rejected verifications.',
+      sin_enviar: 'No one is missing their photos.',
     } as Record<string, string>,
     sinResultados: 'Nothing in this tab matches that search.',
     enOtra: (n: number, pestana: string) => `${n} in ${pestana}.`,

@@ -32,10 +32,15 @@ import { guardarDecision, motorEncendido, pedirDecision, textoMotivos } from '..
 import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
 import {
   type FilaBandeja,
+  type FilaSinEnviar,
   POR_PAGINA_BANDEJA,
   consultaPagina,
+  consultaTotalSinEnviar,
   consultaTotales,
+  consultasSinEnviar,
   filaDeBandeja,
+  filaSinEnviar,
+  juntarSinEnviar,
   leerEstadoBandeja,
   resumenCara,
   resumenComprobacion,
@@ -436,6 +441,40 @@ kyc.get('/admin/kyc', async (c) => {
   };
   const despues = (c.req.query('despues') ?? '').slice(0, 120);
   const db = base(c);
+  // C-VERIFICACIONES-SIN-ENVIAR: quien se registró y no mandó sus fotos sale de las cuentas (no de
+  // la tabla de verificaciones), con los mismos filtros y el alcance sobre la persona.
+  const deCuentas = {
+    ...filtros,
+    alcance: alcanceObjetoSql(accesoDe(c), 'persona', 'u.id'),
+  };
+  const totales = despues
+    ? null
+    : await (async () => {
+        const t = consultaTotales(filtros);
+        const s = consultaTotalSinEnviar(deCuentas);
+        const [porEstado, sinEnviar] = await db.batch<{ estado?: string; n: number }>([
+          db.prepare(t.sql).bind(...t.valores),
+          db.prepare(s.sql).bind(...s.valores),
+        ]);
+        return {
+          ...Object.fromEntries((porEstado?.results ?? []).map((x) => [x.estado, Number(x.n)])),
+          sin_enviar: Number(sinEnviar?.results[0]?.n ?? 0),
+        };
+      })();
+  if (filtros.estado === 'sin_enviar') {
+    const listas = await db.batch<FilaSinEnviar>(
+      consultasSinEnviar(deCuentas, despues).map((q) => db.prepare(q.sql).bind(...q.valores)),
+    );
+    const todas = juntarSinEnviar(listas.map((l) => l.results));
+    const pagina = todas.slice(0, POR_PAGINA_BANDEJA);
+    const ultima = pagina.at(-1);
+    return c.json({
+      solicitudes: pagina.map(filaSinEnviar),
+      siguiente:
+        todas.length > POR_PAGINA_BANDEJA && ultima ? `${ultima.creado}|${ultima.id}` : null,
+      totales,
+    });
+  }
   const p = consultaPagina(filtros, despues);
   const { results } = await db
     .prepare(p.sql)
@@ -443,16 +482,6 @@ kyc.get('/admin/kyc', async (c) => {
     .all<FilaBandeja>();
   const pagina = results.slice(0, POR_PAGINA_BANDEJA);
   const ultima = pagina.at(-1);
-  const totales = despues
-    ? null
-    : await (async () => {
-        const t = consultaTotales(filtros);
-        const { results: filas } = await db
-          .prepare(t.sql)
-          .bind(...t.valores)
-          .all<{ estado: string; n: number }>();
-        return Object.fromEntries(filas.map((x) => [x.estado, Number(x.n)]));
-      })();
   return c.json({
     solicitudes: pagina.map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M)),
     siguiente:

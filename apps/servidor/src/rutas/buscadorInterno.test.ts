@@ -790,29 +790,33 @@ describe('C-BUSCADOR-SERIO · lecturas estimadas por búsqueda', () => {
     const admin = await m.cuenta('admin');
     await sembrar(m.DB);
     await m.llamar('GET', '/datos/admin/buscar?q=x', undefined, admin.token);
+    // C-BUSCADOR-APELLIDO (22 nov 2026): toda búsqueda con letras suma tres consultas por rol (y tres
+    // por comercios), una por la segunda, tercera y cuarta palabra del nombre. Cada una va por su
+    // índice y corta en cinco filas; el medidor las estima más caras (rango de dos lados). Por eso
+    // los topes de las búsquedas con letras pasaron de 100 a 160 (y de 400 a 520 en la lista).
     const topes: [string, number][] = [
       ['/datos/admin/buscar?q=407F', 500],
       ['/datos/admin/buscar?q=c0ffee', 500],
       ['/datos/admin/buscar?q=4821', 500],
-      ['/datos/admin/buscar?q=a', 100],
+      ['/datos/admin/buscar?q=a', 160],
       // C-BUSCADOR-INSTANTANEO: una y dos letras de código.
       ['/datos/admin/buscar?q=7', 100],
-      ['/datos/admin/buscar?q=b4', 100],
+      ['/datos/admin/buscar?q=b4', 160],
       ['/datos/admin/buscar?q=40', 150],
       ['/datos/admin/pedidos?estado=vivos&q=7', 100],
       ['/datos/admin/pedidos?estado=vivos&q=b4', 100],
-      ['/datos/admin/buscar?q=persona%2012', 100],
+      ['/datos/admin/buscar?q=persona%2012', 160],
       ['/datos/admin/buscar?q=restaurante%204', 100],
       ['/datos/admin/buscar?q=(305)%20555', 150],
       ['/datos/admin/buscar?q=vol1%40', 100],
-      ['/datos/admin/buscar?q=US-MIA-0001', 100],
-      ['/datos/admin/buscar?q=AB-123', 100],
-      ['/datos/admin/buscar?q=XYZ9', 100],
+      ['/datos/admin/buscar?q=US-MIA-0001', 160],
+      ['/datos/admin/buscar?q=AB-123', 160],
+      ['/datos/admin/buscar?q=XYZ9', 160],
       ['/datos/admin/buscar?q=%2412.34', 100],
       [`/datos/admin/buscar?q=${P_NOVI}`, 100],
       ['/datos/admin/pedidos?estado=cerrados&zona=US-FL-MIAMI', 500],
       ['/datos/admin/pedidos?estado=vivos&zona=US-FL-MIAMI', 1_200],
-      ['/datos/admin/pedidos?estado=todos&q=persona%201', 400],
+      ['/datos/admin/pedidos?estado=todos&q=persona%201', 520],
       ['/datos/admin/pedidos?estado=todos&q=407f', 500],
       // C-MONITOREO-SERVICIOS: pestañas, viajes y contadores, con el mismo cuidado.
       ['/datos/admin/pedidos?estado=cerrados&servicio=tiendas', 1_500],

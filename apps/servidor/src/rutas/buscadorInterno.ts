@@ -26,7 +26,13 @@ import {
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { TELEFONO_DIEZ } from '../esquema';
-import { CON_TELEFONO, NOMBRE_PLANO, TELEFONO_DIGITOS, TELEFONO_FINAL } from '../buscadorSql';
+import {
+  CON_TELEFONO,
+  NOMBRE_DESDE_PALABRA,
+  NOMBRE_PLANO,
+  TELEFONO_DIGITOS,
+  TELEFONO_FINAL,
+} from '../buscadorSql';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
 import {
@@ -134,7 +140,7 @@ const todasSinAlcance = todas;
  */
 export const SIN_BORRADAS = "NOT (activo = 0 AND nombre = 'Cuenta borrada')";
 
-/** Ids de cuentas de un rol por comienzo del nombre (sin acentos), del teléfono o del correo. */
+/** Ids de cuentas de un rol por comienzo de cualquier palabra del nombre (sin acentos), del teléfono o del correo. */
 async function idsDeCuentas(
   db: D1Database,
   rol: 'cliente' | 'repartidor' | 'restaurante',
@@ -179,6 +185,18 @@ async function idsDeCuentas(
         tope,
       ),
     );
+    // C-BUSCADOR-APELLIDO: también por el comienzo de su segunda, tercera o cuarta palabra.
+    for (const palabra of NOMBRE_DESDE_PALABRA)
+      consultas.push(
+        todas(
+          db,
+          `SELECT id FROM usuarios WHERE rol = ? AND ${palabra} >= ? AND ${palabra} < ? AND ${SIN_BORRADAS} LIMIT ?`,
+          rol,
+          desde,
+          hasta,
+          tope,
+        ),
+      );
   }
   if (b.telefono) {
     const d = b.telefono;
@@ -345,6 +363,17 @@ async function idsDeComercios(
         tope,
       ),
     );
+    for (const palabra of NOMBRE_DESDE_PALABRA)
+      consultas.push(
+        todas(
+          db,
+          `SELECT id FROM restaurantes WHERE ${palabra} >= ? AND ${palabra} < ?${al.sql} LIMIT ?`,
+          desde,
+          hasta,
+          ...al.valores,
+          tope,
+        ),
+      );
   }
   if (b.id)
     consultas.push(

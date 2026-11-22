@@ -182,3 +182,109 @@ describe('C-BUSCADOR-INSTANTANEO · una cuenta se encuentra en cada estado', () 
     expect((await encontrar('envios', 'empresas', 'e-1'))?.estado).toBe('pausada');
   });
 });
+
+/**
+ * C-BUSCADOR-APELLIDO (22 nov 2026). Todos los países. Gerencia escribió el apellido de un conductor
+ * real recién creado y el buscador contestó que no existía: el nombre solo se buscaba por el COMIENZO
+ * del nombre completo, así que un apellido (o un segundo nombre) no encontraba a nadie, en ningún
+ * estado. Ahora cada palabra del nombre (hasta la cuarta) se encuentra por su comienzo, con índice.
+ */
+describe('C-BUSCADOR-APELLIDO · toda cuenta se encuentra por cualquier palabra de su nombre', () => {
+  it('un conductor recién creado, sin confirmar el correo y sin papeles, sale por nombre, apellido, correo, teléfono e ID nuevo y viejo', async () => {
+    const { m, registrar, encontrar, sql } = await escenario();
+    const id = await registrar({
+      nombre: 'Andrés José Peñalver Ejemplo',
+      correo: 'conductor.nuevo@ejemplo.com',
+      rol: 'repartidor',
+      telefono: '+1 248 555 0177',
+    });
+    const fila = await m.DB.prepare(
+      'SELECT correo_confirmado_en AS confirmado FROM usuarios WHERE id = ?',
+    )
+      .bind(id)
+      .first<{ confirmado: string | null }>();
+    expect(fila?.confirmado ?? null).toBeNull();
+    // Su ID del país (se lo da la app al fijar su ciudad).
+    const codigo = 'ZZ-NUE-000004';
+    await sql(
+      "INSERT INTO repartidores (usuario_id, codigo, zona_id) VALUES (?, ?, 'US-FL-MIAMI') ON CONFLICT(usuario_id) DO UPDATE SET codigo = excluded.codigo",
+      id,
+      codigo,
+    );
+    // Su ID de antes de una reasignación también lo encuentra.
+    await sql(
+      "INSERT INTO codigos_repartidor_anteriores (codigo, usuario_id, motivo) VALUES (?, ?, 'reasignado')",
+      'ZZ-VIE-000099',
+      id,
+    );
+    for (const q of [
+      'Andrés',
+      'andres jose',
+      'José',
+      'jos',
+      'Peñalver',
+      'penalver',
+      'peñ',
+      'peñalver ejemplo',
+      'Ejemplo',
+      'conductor.nuevo',
+      'conductor.nuevo@ejemplo.com',
+      '0177',
+      '248 555 0177',
+      codigo,
+      'ZZ-VIE-000099',
+      id,
+    ])
+      expect(await encontrar(q, 'repartidores', id), q).toMatchObject({
+        estado: 'sin_verificar',
+        enlace: `/drivers/${id}`,
+      });
+  });
+
+  it('un cliente y un comercio también salen por una palabra de en medio; quien tiene una sola palabra no se rompe', async () => {
+    const { m, registrar, encontrar, sql } = await escenario();
+    const cliente = await registrar({
+      nombre: 'María  Fernanda Ruiz',
+      correo: 'cliente.nuevo@ejemplo.com',
+      rol: 'cliente',
+    });
+    const solo = await registrar({
+      nombre: 'Unapalabra',
+      correo: 'una.palabra@ejemplo.com',
+      rol: 'cliente',
+    });
+    for (const q of ['fernanda', 'ruiz', 'Fer'])
+      expect(await encontrar(q, 'clientes', cliente), q).toBeTruthy();
+    expect(await encontrar('unapal', 'clientes', solo)).toBeTruthy();
+    const dueno = await m.cuenta('restaurante');
+    await sql(
+      "INSERT INTO restaurantes (id, dueno_id, nombre, lat, lng, estado, zona_id) VALUES ('r-palabras', ?, 'Casa del Sabor Andino', 42.48, -83.47, 'pendiente', 'US-FL-MIAMI')",
+      dueno.id,
+    );
+    const comercio = { id: 'r-palabras' };
+    for (const q of ['sabor', 'andino', 'del sabor'])
+      expect(await encontrar(q, 'restaurantes', String(comercio?.id)), q).toBeTruthy();
+  });
+
+  it('las búsquedas por palabra usan su índice: no recorren la tabla de cuentas', async () => {
+    const { m } = await escenario();
+    const { NOMBRE_DESDE_PALABRA } = await import('../buscadorSql');
+    for (const expresion of NOMBRE_DESDE_PALABRA) {
+      const plan = await m.DB.prepare(
+        `EXPLAIN QUERY PLAN SELECT id FROM usuarios WHERE rol = ? AND ${expresion} >= ? AND ${expresion} < ? LIMIT ?`,
+      )
+        .bind('repartidor', 'a', 'b', 5)
+        .all<{ detail: string }>();
+      const detalle = plan.results.map((p) => p.detail).join(' | ');
+      expect(detalle).toMatch(/USING INDEX usuarios_rol_nombre_palabra/);
+      const planR = await m.DB.prepare(
+        `EXPLAIN QUERY PLAN SELECT id FROM restaurantes WHERE ${expresion} >= ? AND ${expresion} < ? LIMIT ?`,
+      )
+        .bind('a', 'b', 5)
+        .all<{ detail: string }>();
+      expect(planR.results.map((p) => p.detail).join(' | ')).toMatch(
+        /USING INDEX restaurantes_nombre_palabra/,
+      );
+    }
+  });
+});
