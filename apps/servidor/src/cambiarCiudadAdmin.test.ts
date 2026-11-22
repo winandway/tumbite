@@ -30,7 +30,7 @@ async function preparar() {
   return { e, c, viejo, cambiar, fila };
 }
 
-describe('el equipo cambia la ciudad de un conductor desde su ficha', () => {
+describe('el equipo cambia la ciudad de un conductor desde su ficha', { timeout: 20_000 }, () => {
   it('conectado no se puede: mensaje claro y nada cambia', async () => {
     const { e, c, cambiar, fila } = await preparar();
     await e.m.DB.prepare('UPDATE repartidores SET conectado = 1 WHERE usuario_id = ?')

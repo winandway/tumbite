@@ -14,6 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
+import sharp from 'sharp';
 import { CIUDAD_NEUTRA, mapaSinRotulos } from './neutro.mjs';
 import { SQL_TASA_EJEMPLO } from './tasaEjemplo.mjs';
 
@@ -122,6 +123,25 @@ const sinEnlaceDeInvitacion = (p) =>
       x.style.visibility = 'hidden';
     })
     .catch(() => null);
+
+// Una tesela dibujada: fondo claro, dos avenidas, dos calles y una plaza. Se repite sin costuras.
+const TESELA_DE_EJEMPLO = await sharp(
+  Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+<rect width="256" height="256" fill="#F4F1EA"/>
+<rect x="118" y="86" width="84" height="84" rx="10" fill="#DCEBD2"/>
+<g stroke="#E3DCCB" stroke-linecap="butt">
+<line x1="0" y1="64" x2="256" y2="64" stroke-width="20"/><line x1="224" y1="0" x2="224" y2="256" stroke-width="20"/>
+<line x1="0" y1="192" x2="256" y2="192" stroke-width="13"/><line x1="96" y1="0" x2="96" y2="256" stroke-width="13"/>
+<line x1="0" y1="128" x2="96" y2="128" stroke-width="9"/><line x1="32" y1="192" x2="32" y2="256" stroke-width="9"/>
+</g>
+<g stroke="#FFFFFF" stroke-linecap="butt">
+<line x1="0" y1="64" x2="256" y2="64" stroke-width="15"/><line x1="224" y1="0" x2="224" y2="256" stroke-width="15"/>
+<line x1="0" y1="192" x2="256" y2="192" stroke-width="9"/><line x1="96" y1="0" x2="96" y2="256" stroke-width="9"/>
+<line x1="0" y1="128" x2="96" y2="128" stroke-width="6"/><line x1="32" y1="192" x2="32" y2="256" stroke-width="6"/>
+</g></svg>`),
+)
+  .png()
+  .toBuffer();
 
 const navegador = mapaSinRotulos(await chromium.launch());
 let n = 0;
@@ -352,18 +372,57 @@ async function correr(idioma, tokens) {
       ).viaje;
     };
     const ctxK = await telefono(idioma, k, CONDUCTOR_USD);
+    // El mapa de estas dos piezas es un DIBUJO de ejemplo (calles y una plaza inventadas), igual en
+    // todas las teselas: no deja reconocer ninguna ciudad (dictamen del auditor de tiendas, 22 nov
+    // 2026). La atribución del mapa sigue en su sitio. Esta ruta manda sobre la de `mapaSinRotulos`.
+    await ctxK.route(/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png/, (ruta) =>
+      ruta.fulfill({ body: TESELA_DE_EJEMPLO, contentType: 'image/png' }),
+    );
+    await ctxK.clock.install();
     const o = await ctxK.newPage();
     if (toca('01')) {
       const viaje = await pedirViaje();
       await o.goto('/driver/');
-      await o.getByTestId('oferta-viaje').waitFor({ timeout: 90_000 });
-      await foto(o, '01-oferta');
+      const oferta = o.getByTestId('oferta-viaje');
+      await oferta.waitFor({ timeout: 90_000 });
+      // El mismo segundo en los dos idiomas: al llegar a 25 s, el reloj de la página se queda quieto.
+      await oferta.getByText('25s', { exact: true }).waitFor({ timeout: 30_000 });
+      await ctxK.clock.setFixedTime(await o.evaluate(() => Date.now()));
+      // La oferta ocupa la pantalla: la foto empieza donde empieza la oferta, sin el encabezado de
+      // la app asomando recortado detrás.
+      await espera(900);
+      const chip = await oferta.getByText('25s', { exact: true }).boundingBox();
+      const entera = await o.screenshot();
+      // El borde de arriba de la hoja blanca de la oferta: desde el renglón del título se sube por
+      // una columna vacía de la hoja mientras siga blanca.
+      const { data, info } = await sharp(entera).raw().toBuffer({ resolveWithObject: true });
+      const columna = Math.round((chip.x - 24) * 3);
+      const blanca = (y) => {
+        const p = (y * info.width + columna) * info.channels;
+        return data[p] > 250 && data[p + 1] > 250 && data[p + 2] > 250;
+      };
+      let arriba = Math.round((chip.y + chip.height / 2) * 3);
+      if (!blanca(arriba)) throw new Error('no se encontró la hoja de la oferta');
+      while (arriba > 0 && blanca(arriba - 1)) arriba--;
+      // La hoja llega hasta abajo y es blanca: lo que se quitó arriba se completa abajo con su blanco.
+      await sharp(entera)
+        .extract({ left: 0, top: arriba, width: info.width, height: info.height - arriba })
+        .extend({ bottom: arriba, background: '#FFFFFF' })
+        .toFile(join(SALIDA, idioma, '01-oferta.png'));
+      console.log(`✓ ${idioma}/01-oferta.png`);
       await pedir('POST', `/datos/viajes/${viaje.id}/cancelar`, {}, c.token, {
         'idempotency-key': `ficha-cancelar-${viaje.id}`,
       });
     }
+    await ctxK.close();
     if (toca('07')) {
-      // Otro viaje, aceptado por la ruta normal en cuanto se le ofrece (la oferta dura segundos).
+      // Otro teléfono (el reloj del anterior quedó quieto y el mapa no terminaría de pintarse), con el
+      // mismo mapa dibujado; y otro viaje, aceptado por la ruta normal en cuanto se le ofrece.
+      const ctx7 = await telefono(idioma, k, CONDUCTOR_USD);
+      await ctx7.route(/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png/, (ruta) =>
+        ruta.fulfill({ body: TESELA_DE_EJEMPLO, contentType: 'image/png' }),
+      );
+      const o = await ctx7.newPage();
       const viaje = await pedirViaje();
       for (let i = 0; ; i++) {
         await sql(
@@ -378,7 +437,7 @@ async function correr(idioma, tokens) {
           { 'idempotency-key': `ficha-aceptar-${i}-${Date.now().toString(36)}` },
         ).then(
           () => true,
-          () => false,
+          (e) => (i === 20 && console.log(e.message), false),
         );
         if (ok) break;
         if (i > 20) throw new Error('el conductor no pudo aceptar el viaje');
@@ -387,12 +446,12 @@ async function correr(idioma, tokens) {
       await o.goto('/driver/');
       await o.getByTestId('viaje-activo').waitFor({ timeout: 60_000 });
       await o.getByTestId('recogida-foto').waitFor({ timeout: 30_000 });
-      await o.getByTestId('viaje-mapa').evaluate((x) => x.scrollIntoView({ block: 'start' }));
       // La pantalla del viaje, limpia: el mapa, la dirección y la tarjeta con la foto de la entrada.
       await o.getByTestId('viaje-mapa').evaluate((x) => x.scrollIntoView({ block: 'start' }));
+      await espera(1500);
       await foto(o, '07-foto-entrada');
+      await ctx7.close();
     }
-    await ctxK.close();
     await interno('moto/limpiar', { sufijo: m.sufijo }).catch(() => null);
   }
 
@@ -538,11 +597,18 @@ async function correr(idioma, tokens) {
       await q.getByTestId('chat-soporte-enviar').click();
       await q.getByTestId('chat-enlace-guia').first().waitFor({ timeout: 60_000 });
       await q.evaluate(() => document.activeElement?.blur());
-      // La pregunta arriba y la respuesta entera a la vista.
+      // La pregunta arriba, en un borde limpio, y la respuesta entera a la vista: si la lista ya no
+      // baja más, se le da aire al final para que la pregunta llegue al tope.
       await q
         .getByTestId('chat-mensaje-persona')
         .last()
-        .evaluate((x) => x.scrollIntoView({ block: 'start' }))
+        .evaluate((x) => {
+          let caja = x.parentElement;
+          while (caja && caja.scrollHeight <= caja.clientHeight + 4) caja = caja.parentElement;
+          if (caja?.lastElementChild) caja.lastElementChild.style.marginBottom = '320px';
+          x.scrollIntoView({ block: 'start' });
+          if (caja) caja.scrollTop -= 5;
+        })
         .catch(() => null);
       await foto(q, '08-camila');
     }
