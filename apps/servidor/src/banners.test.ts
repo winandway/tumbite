@@ -5,9 +5,11 @@ import {
   aplicaA,
   elegirPorPeso,
   olvidarCacheBanners,
+  necesitaServicios,
   ordenarPromociones,
   reservarImagenes,
   saludBanners,
+  segunServicio,
   urlDeFal,
   vigente,
   visiblesPara,
@@ -189,6 +191,18 @@ async function preparar(extra: Record<string, unknown> = {}) {
   const subida = await m.foto('/datos/admin/banners/imagen', admin.token);
   expect(subida.estado).toBe(201);
   const imagen = subida.datos.url as string;
+  // Moto abierto al público en El Vigía (construido, encendido y con tarifa): C-BANNER-SEGUN-SERVICIO.
+  // Va después de crear las cuentas: la primera cuenta arma el esquema y apaga lo no implementado.
+  for (const sql of [
+    "INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('moto', 1)",
+    "UPDATE servicios SET estado = 'disponible' WHERE id = 'moto'",
+    "INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('moto', 'VE-MER-ELVIGIA', 'disponible') ON CONFLICT DO UPDATE SET estado = 'disponible'",
+    `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
+       espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion, cargo_no_se_presento,
+       tope_dinamico_pb, redondeo, activa, motivo)
+     VALUES ('t-moto-vigia', 'moto', 'VE-MER-ELVIGIA', 'USD', 100, 50, 5, 100, 180, 5, 120, 50, 50, 10000, 1, 1, 'prueba')`,
+  ])
+    await m.DB.prepare(sql).run();
   const nuevo = (cambios: Record<string, unknown> = {}) => ({
     lugar: 'cabecera',
     imagen,
@@ -241,7 +255,13 @@ describe('C-BANNERS · la ruta pública', () => {
   it('por país: sale en cualquier ciudad de ese país (el país sale de la ciudad)', async () => {
     const { crear, publicar, ver } = await preparar();
     await publicar(
-      await crear({ zonas: [], paises: ['US'], lugar: 'promociones', codigo: 'hola10' }),
+      await crear({
+        zonas: [],
+        paises: ['US'],
+        lugar: 'promociones',
+        codigo: 'hola10',
+        destinoValor: 'comida',
+      }),
     );
     const r = await ver('lugar=promociones&ciudad=US-FL-MIAMI');
     expect(r.datos.banners).toHaveLength(1);
@@ -309,6 +329,50 @@ describe('C-BANNERS · la ruta pública', () => {
     expect(
       (await publicar(await crear({ destinoTipo: 'cupon', destinoValor: 'NOEXISTE' }))).estado,
     ).toBe(422);
+  });
+
+  it('C-BANNER-SEGUN-SERVICIO: el anuncio de un servicio solo sale donde se puede pedir', async () => {
+    const { m, crear, publicar, ver } = await preparar();
+    const moto = await crear({ zonas: [], lugar: 'promociones' });
+    const comida = await crear({ zonas: [], lugar: 'promociones', destinoValor: 'comida' });
+    await publicar(moto);
+    await publicar(comida);
+    const ids = async (ciudad: string) =>
+      ((await ver(`lugar=promociones&ciudad=${ciudad}`)).datos.banners as { id: string }[]).map(
+        (b) => b.id,
+      );
+    const abierto = await ids('VE-MER-ELVIGIA');
+    // Donde moto no está encendido, o sin ciudad: el de moto no sale; el de comida sí.
+    const cerrado = await ids('US-FL-MIAMI');
+    const sinCiudad = ((await ver('lugar=promociones')).datos.banners as { id: string }[]).map(
+      (b) => b.id,
+    );
+    expect(cerrado).toEqual([comida]);
+    expect(sinCiudad).toEqual([comida]);
+    expect(abierto.sort()).toEqual([moto, comida].sort());
+    // Se apaga moto en la ciudad: el anuncio deja de salir (en cuanto vence el minuto de memoria).
+    await m.DB.prepare(
+      "UPDATE servicios_zona SET estado = 'suspendido' WHERE servicio_id = 'moto' AND zona_id = 'VE-MER-ELVIGIA'",
+    ).run();
+    olvidarCacheBanners();
+    expect(await ids('VE-MER-ELVIGIA')).toEqual([comida]);
+  });
+
+  it('segunServicio: regla pura', () => {
+    const b = (destinoTipo: Banner['destinoTipo'], destinoValor: string) => ({
+      destinoTipo,
+      destinoValor,
+    });
+    const l = [
+      b('servicio', 'moto'),
+      b('servicio', 'comida'),
+      b('cupon', 'HOLA'),
+      b('servicio', 'carro'),
+    ];
+    expect(segunServicio(l, new Set(['moto']))).toEqual([l[0], l[1], l[2]]);
+    expect(segunServicio(l, null)).toEqual([l[1], l[2]]);
+    expect(necesitaServicios([l[1]!, l[2]!])).toBe(false);
+    expect(necesitaServicios(l)).toBe(true);
   });
 
   it('solo el equipo maneja los banners', async () => {

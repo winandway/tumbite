@@ -217,6 +217,20 @@ export async function estadoServicioEnZona(
   // La cotización mira la tarifa aparte, con su propio mensaje («todavía no tiene precio»).
   return s ? estadoSinTarifa(s, ahoraSql(), participante, prueba) : 'no_disponible_zona';
 }
+/**
+ * C-BANNER-SEGUN-SERVICIO (22 nov 2026) — todos los países. Los servicios que el PÚBLICO puede abrir
+ * en una zona (sin piloto ni cuentas de prueba, con tarifa cuando la necesita). Lo usa la ruta pública
+ * de banners para no anunciar un servicio donde no funciona. Sin zona: ninguno.
+ */
+export async function serviciosPublicosEnZona(db: Db, zonaId: string | null): Promise<Set<string>> {
+  if (!zonaId) return new Set();
+  const ahora = ahoraSql();
+  return new Set(
+    (await catalogo(db, zonaId))
+      .filter((s) => estadoEfectivo(s, ahora) === 'disponible')
+      .map((s) => s.id),
+  );
+}
 const ACCION = new Map([
   ['disponible', 'abrir'],
   ['proximamente', 'muy_pronto'],

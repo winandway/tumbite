@@ -135,6 +135,29 @@ export function visiblesPara(
 }
 
 /**
+ * C-BANNER-SEGUN-SERVICIO (22 nov 2026, Richard vía Gerencia) — todos los países. Un banner que lleva
+ * a un servicio (moto, carro, envíos…) solo sale donde ese servicio está abierto al público: nunca se
+ * anuncia el mototaxi en una ciudad donde no se puede pedir. Comida queda fuera de la regla, igual
+ * que en el inicio de la app (es la puerta de entrada de la portada). `abiertos` es null cuando no se
+ * pudo saber (sin ciudad): entonces solo pasan los que no llevan a un servicio con regla.
+ */
+export function segunServicio<T extends Pick<Banner, 'destinoTipo' | 'destinoValor'>>(
+  l: T[],
+  abiertos: Set<string> | null,
+): T[] {
+  return l.filter(
+    (b) =>
+      b.destinoTipo !== 'servicio' ||
+      b.destinoValor === 'comida' ||
+      Boolean(abiertos?.has(b.destinoValor)),
+  );
+}
+
+/** ¿Hace falta mirar los servicios de la ciudad? Solo si algún banner lleva a uno con regla. */
+export const necesitaServicios = (l: Pick<Banner, 'destinoTipo' | 'destinoValor'>[]) =>
+  l.some((b) => b.destinoTipo === 'servicio' && b.destinoValor !== 'comida');
+
+/**
  * Rotación de la cabecera: uno al azar según su peso (peso 3 sale tres veces más que peso 1). Si hay
  * más de uno, nunca repite el que se mostró la vez anterior (`excluir`), así cada apertura cambia.
  * `azar` es un número en [0, 1).
@@ -168,10 +191,26 @@ export function ordenarPromociones<T extends { orden: number; peso: number; id: 
 export const CACHE_BANNERS_MS = 60_000;
 const cachePublicos = new Map<Lugar, { hasta: number; banners: Banner[] }>();
 const cacheZonas = new Map<string, { hasta: number; pais: string | null }>();
+const cacheServicios = new Map<string, { hasta: number; abiertos: Set<string> }>();
+
+/** Los servicios abiertos al público en una ciudad, recordados 60 s (mirar no escribe y casi no lee). */
+export async function abiertosDeZona(
+  zona: string,
+  ahoraMs: number,
+  leer: (zona: string) => Promise<Set<string>>,
+) {
+  const g = cacheServicios.get(zona);
+  if (g && g.hasta > ahoraMs) return g.abiertos;
+  const abiertos = await leer(zona);
+  if (cacheServicios.size > 500) cacheServicios.clear();
+  cacheServicios.set(zona, { hasta: ahoraMs + CACHE_BANNERS_MS, abiertos });
+  return abiertos;
+}
 
 /** Al aprobar, pausar o borrar se olvida lo guardado en ESTE aislado (los demás esperan su minuto). */
 export function olvidarCacheBanners() {
   cachePublicos.clear();
+  cacheServicios.clear();
 }
 
 /** Los publicados de un lugar, con una lectura por minuto como mucho. */

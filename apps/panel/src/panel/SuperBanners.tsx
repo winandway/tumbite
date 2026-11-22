@@ -66,6 +66,8 @@ const T = {
     ayuda:
       'Los banners del inicio de la app del cliente. La cabecera muestra uno distinto cada vez que se abre la app (sale más el de más peso); promociones es el carrusel de tarjetas rojas. Nada sale al público sin «Aprobar y publicar».',
     nuevo: 'Nuevo banner',
+    soloDondeServicio:
+      'Un banner que lleva a un servicio solo sale en las ciudades donde ese servicio está encendido para el público (Comida sale siempre).',
     cabecera: 'Cabecera',
     promociones: 'Promociones',
     vacioLugar: 'Todavía no hay banners en este lugar.',
@@ -79,6 +81,7 @@ const T = {
     siBorrar: 'Sí, borrar',
     cancelar: 'Cancelar',
     todas: 'Todas las ciudades',
+    dondeServicio: (servicio: string) => `Donde ${servicio} está abierto`,
     sinFin: 'sin fecha de fin',
     desde: 'Desde',
     hasta: 'hasta',
@@ -158,6 +161,8 @@ const T = {
     ayuda:
       'The banners on the home screen of the customer app. The header shows a different one each time the app opens (higher weight shows more often); promotions is the carousel of red cards. Nothing goes live without “Approve and publish.”',
     nuevo: 'New banner',
+    soloDondeServicio:
+      'A banner that opens a service only shows in the cities where that service is on for the public (Food always shows).',
     cabecera: 'Header',
     promociones: 'Promotions',
     vacioLugar: 'There are no banners in this placement yet.',
@@ -171,6 +176,7 @@ const T = {
     siBorrar: 'Yes, delete',
     cancelar: 'Cancel',
     todas: 'All cities',
+    dondeServicio: (servicio: string) => `Where ${servicio} is open`,
     sinFin: 'no end date',
     desde: 'From',
     hasta: 'to',
@@ -550,10 +556,15 @@ export function SuperBanners({ idioma }: { idioma: Idioma }) {
     if (!x.inicio && !x.fin) return t.siempre;
     return `${x.inicio ? `${t.desde} ${hora.fecha(x.inicio)} ` : ''}${x.fin ? `${t.hasta} ${hora.fecha(x.fin)}` : t.sinFin}`;
   };
+  // C-BANNER-SEGUN-SERVICIO: el que lleva a un servicio (no Comida) solo sale donde está abierto.
+  const conServicio = (x: BannerPanel, texto: string) =>
+    x.destinoTipo === 'servicio' && x.destinoValor && x.destinoValor !== 'comida'
+      ? `${texto} · ${t.dondeServicio(new Map(Object.entries(t.servicios)).get(x.destinoValor) ?? x.destinoValor)}`
+      : texto;
   const alcance = (x: BannerPanel) =>
     !x.zonas.length && !x.paises.length
-      ? t.todas
-      : [...x.paises, ...x.zonas.map((z) => nombreZona.get(z) ?? z)].join(' · ');
+      ? conServicio(x, t.todas)
+      : conServicio(x, [...x.paises, ...x.zonas.map((z) => nombreZona.get(z) ?? z)].join(' · '));
 
   const nombreDestino = (d: TipoDestino) =>
     d === 'servicio'
@@ -830,6 +841,11 @@ export function SuperBanners({ idioma }: { idioma: Idioma }) {
                   </select>
                 </label>
               </div>
+              {v.destinoTipo === 'servicio' && v.destinoValor && v.destinoValor !== 'comida' ? (
+                <p className="pista" data-testid="banner-solo-donde-servicio">
+                  {t.soloDondeServicio}
+                </p>
+              ) : null}
 
               {v.lugar === 'promociones' && (
                 <label className="campo">

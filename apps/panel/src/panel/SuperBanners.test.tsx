@@ -80,6 +80,8 @@ describe('C-BANNERS en el panel', () => {
     expect(within(cabecera).getByText('Tu carrera, te llevamos a donde quieras')).toBeTruthy();
     expect(within(cabecera).getByText('Borrador')).toBeTruthy();
     expect(within(cabecera).getByText(/El Vigía/)).toBeTruthy();
+    // C-BANNER-SEGUN-SERVICIO: el que lleva a Moto dice que solo sale donde Moto está abierto.
+    expect(within(cabecera).getByText(/Donde Moto está abierto/)).toBeTruthy();
     await userEvent.click(within(cabecera).getByRole('button', { name: 'Aprobar y publicar' }));
     await waitFor(() =>
       expect(llamadas.some((l) => l.url === '/datos/admin/banners/b1/publicar')).toBe(true),

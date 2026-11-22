@@ -13,9 +13,11 @@ import {
   LUGARES,
   type Lugar,
   SERVICIOS_DESTINO,
+  abiertosDeZona,
   elegirPorPeso,
   filaABanner,
   generarOpciones,
+  necesitaServicios,
   imagenesDeHoy,
   olvidarCacheBanners,
   ordenarPromociones,
@@ -23,10 +25,12 @@ import {
   paraLaApp,
   publicadosDe,
   reservarImagenes,
+  segunServicio,
   topeImagenes,
   visiblesPara,
 } from '../banners';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
+import { serviciosPublicosEnZona } from './servicios';
 
 /**
  * C-BANNERS (17 nov 2026) — todos los países. La ruta pública que lee la app y el administrador del
@@ -61,11 +65,18 @@ banners.get('/banners', async (c) => {
   // El inglés es el idioma principal (EE. UU.); el español, cuando la app lo pide.
   const idioma = c.req.query('idioma') === 'es' ? 'es' : 'en';
   const origen = new URL(c.req.url).origin;
-  const visibles = visiblesPara(
+  const porCiudad = visiblesPara(
     await publicadosDe(db, lugar as Lugar, ahora),
     { zona, pais },
     ahora,
   );
+  // C-BANNER-SEGUN-SERVICIO: el anuncio de un servicio solo donde ese servicio se puede pedir.
+  const visibles = necesitaServicios(porCiudad)
+    ? segunServicio(
+        porCiudad,
+        zona ? await abiertosDeZona(zona, ahora, (z) => serviciosPublicosEnZona(db, z)) : null,
+      )
+    : porCiudad;
   if (lugar === 'cabecera') {
     const elegido = elegirPorPeso(visibles, Math.random(), c.req.query('excluir'));
     const res = c.json({
