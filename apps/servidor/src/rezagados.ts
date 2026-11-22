@@ -47,7 +47,7 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
     es: {
       asunto: 'Te falta un paso para empezar a ganar con Divoox',
       texto:
-        'Hola, {nombre}. Soy Camila, de Divoox. ¡Ya casi estás listo para ganar con Divoox! Solo faltan tus fotos: tu cara, tu documento y tu licencia. Se toman desde la app en pocos minutos.{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi algo no te deja avanzar, respóndeme este correo y te ayudo.',
+        'Hola, {nombre}. Soy Camila, de Divoox. ¡Ya casi terminas tu registro para ganar con Divoox! Solo faltan tus fotos: tu cara, tu documento y tu licencia. Se toman desde la app en pocos minutos.{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi algo no te deja avanzar, respóndeme este correo y te ayudo.',
       sms: 'Divoox: {nombre}, te faltan tus fotos para empezar a recibir viajes. Son pocos minutos. Continua aqui: {enlace_corto} Camila',
     },
     en: {
