@@ -96,6 +96,14 @@ const TE = {
     pagoTransfer: 'Transferencia al repartidor',
     pagoTransferAyuda: 'Verás el nombre y la cuenta del repartidor en el seguimiento.',
     pedirDirecto: 'Pedir y pagar al recibir',
+    comidaTitulo: '¿Cómo pagas el envío?',
+    comidaAviso:
+      'La comida se la pagas al restaurante por pago móvil, cuando ya tengamos un conductor para tu pedido. Te mostramos sus datos y el monto exacto en bolívares. El envío se lo pagas al conductor al recibir.',
+    comidaEfectivo: 'Envío en efectivo',
+    comidaTransfer: 'Envío por pago móvil al conductor',
+    comidaTransferAyuda: 'Verás el nombre y la cuenta del conductor en el seguimiento.',
+    comidaEfectivoAyuda: 'Le pagas el envío al conductor cuando llegue.',
+    pedirComida: 'Hacer el pedido',
     guardadas: 'Tus direcciones',
     guardar: 'Guardar esta dirección para la próxima',
     etiqueta: 'Nombre (Casa, Trabajo…)',
@@ -134,6 +142,14 @@ const TE = {
     pagoTransfer: 'Transfer to the driver',
     pagoTransferAyuda: 'You’ll see the driver’s name and account in the tracking screen.',
     pedirDirecto: 'Order and pay on delivery',
+    comidaTitulo: 'How do you pay for delivery?',
+    comidaAviso:
+      'You pay the restaurant for your food by mobile payment, once we have a driver for your order. We show you its details and the exact amount in bolívares. You pay the delivery fee to the driver on arrival.',
+    comidaEfectivo: 'Delivery fee in cash',
+    comidaTransfer: 'Delivery fee by mobile payment to the driver',
+    comidaTransferAyuda: 'You’ll see the driver’s name and account in the tracking screen.',
+    comidaEfectivoAyuda: 'You pay the driver the delivery fee when they arrive.',
+    pedirComida: 'Place order',
     guardadas: 'Your addresses',
     guardar: 'Save this address for next time',
     etiqueta: 'Name (Home, Work…)',
@@ -192,6 +208,7 @@ function PantallaCarrito() {
     efectivoActivo: boolean;
     transferenciaRepartidorActiva: boolean;
     tarjetaActiva?: boolean;
+    comidaPagoRestaurante?: boolean;
   } | null>(null);
   // C-PAIS-DEL-RESTAURANTE: las formas de pago son las del país del RESTAURANTE del carrito (antes,
   // las de la ciudad guardada del cliente: uno nuevo caía en Miami y no veía el efectivo de su país).
@@ -592,6 +609,8 @@ function PantallaCarrito() {
   const modoActual = conEdad && modoElegido === 'puerta' ? 'mano' : modoElegido;
   const directoPermitido =
     modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
+  // C-COMIDA-PAGO-RESTAURANTE: la comida va directo al restaurante; aquí se elige cómo se paga el envío.
+  const pagoRest = Boolean(pais?.comidaPagoRestaurante);
   // C-TARIFAS-PAIS y C-COMIDA-VENEZUELA: la tarjeta solo en Estados Unidos (Venezuela cobra en
   // dólares, pero en mano). Un servidor viejo sin `tarjetaActiva`: la regla de antes (dólares).
   const tarjetaPermitida = pais?.tarjetaActiva ?? (pais?.moneda ?? 'USD') === 'USD';
@@ -1113,16 +1132,29 @@ function PantallaCarrito() {
       ) : null}
       {directoPermitido ? (
         <>
-          {titulo(te.pagoTitulo)}
+          {titulo(pagoRest ? te.comidaTitulo : te.pagoTitulo)}
+          {pagoRest ? (
+            <Text
+              testID="carrito-pago-restaurante"
+              style={{ color: C.secundario, fontSize: 13, marginBottom: 8 }}
+            >
+              {te.comidaAviso}
+            </Text>
+          ) : null}
           <View style={{ gap: 8, marginBottom: 12 }}>
             {(
               [
                 ['tarjeta', te.pagoTarjeta, te.pagoTarjetaAyuda, tarjetaPermitida],
-                ['efectivo', te.pagoEfectivo, te.pagoEfectivoAyuda, pais?.efectivoActivo],
+                [
+                  'efectivo',
+                  pagoRest ? te.comidaEfectivo : te.pagoEfectivo,
+                  pagoRest ? te.comidaEfectivoAyuda : te.pagoEfectivoAyuda,
+                  pais?.efectivoActivo,
+                ],
                 [
                   'transferencia_repartidor',
-                  te.pagoTransfer,
-                  te.pagoTransferAyuda,
+                  pagoRest ? te.comidaTransfer : te.pagoTransfer,
+                  pagoRest ? te.comidaTransferAyuda : te.pagoTransferAyuda,
                   pais?.transferenciaRepartidorActiva,
                 ],
               ] as const
@@ -1612,7 +1644,7 @@ function PantallaCarrito() {
         </>
       ) : (
         <Boton
-          texto={`${metodoPago === 'tarjeta' ? t.continuarPago : te.pedirDirecto}${desgloseFiable ? ` · ${formatearMonto(d.totalCliente, moneda, idioma)}` : ''}`}
+          texto={`${metodoPago === 'tarjeta' ? t.continuarPago : pagoRest ? te.pedirComida : te.pedirDirecto}${desgloseFiable ? ` · ${formatearMonto(d.totalCliente, moneda, idioma)}` : ''}`}
           alTocar={() => void pagar()}
           cargando={pagando}
         />

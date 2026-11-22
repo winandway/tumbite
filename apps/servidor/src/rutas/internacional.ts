@@ -838,6 +838,9 @@ internacional.get('/pais', async (c) => {
     efectivoActivo:
       cfg.efectivoActivo || (deRest ? await efectivoDeJuego(c.req.url, db, rid) : false),
     transferenciaRepartidorActiva: cfg.transferenciaRepartidorActiva,
+    // C-COMIDA-PAGO-RESTAURANTE: en este país la comida se paga directo al restaurante (pago móvil)
+    // y al conductor solo el envío. El carrito lo dice antes de pedir.
+    comidaPagoRestaurante: Boolean(cfg.comidaPagoRestaurante),
     // C-COMIDA-VENEZUELA: la tarjeta (Stripe) solo en Estados Unidos. Venezuela cobra en dólares,
     // pero en mano: que la moneda sea USD no enciende la tarjeta.
     tarjetaActiva: pais === 'US',
