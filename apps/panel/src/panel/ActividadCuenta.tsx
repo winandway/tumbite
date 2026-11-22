@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
+import { nombreEstado } from './BuscadorSuper';
 import { Insignia } from './diseno/Insignia';
 import { useHora } from './horario';
 
@@ -64,6 +65,17 @@ const T = {
     verMenos: 'Ver menos',
     por: 'por',
     abrir: 'Abrir',
+    mensajes: (n: number) => (n === 1 ? '1 mensaje' : `${n} mensajes`),
+    otros: {
+      aprobado: 'aprobado',
+      pendiente: 'pendiente',
+      rechazado: 'rechazado',
+      suspendido: 'suspendido',
+      moto: 'moto',
+      carro: 'carro',
+      comida: 'comida',
+      envios: 'envíos',
+    },
     apps: {
       cliente: 'App de clientes',
       repartidor: 'Divoox Driver',
@@ -80,34 +92,35 @@ const T = {
       alta: 'Creó la cuenta',
       entrada: 'Entró a la cuenta',
       acepto_sms: 'Aceptó recibir SMS',
-      foto: 'Subió la foto de',
-      foto_aprobada: 'Se aprobó la foto de',
-      foto_rechazada: 'Se rechazó la foto de',
+      foto: 'Foto subida:',
+      foto_aprobada: 'Foto aprobada:',
+      foto_rechazada: 'Foto rechazada:',
       verificacion_aprobado: 'Verificación aprobada',
       verificacion_rechazado: 'Verificación rechazada',
       verificacion_pendiente: 'Verificación devuelta a revisión',
-      vehiculo: 'Registró un vehículo',
-      vehiculo_aprobado: 'Se aprobó el vehículo',
-      habilitacion: 'Habilitación de',
+      vehiculo: 'Vehículo registrado:',
+      vehiculo_aprobado: 'Vehículo aprobado:',
+      habilitacion: 'Habilitación:',
       viaje_conductor: 'Viaje como conductor',
       viaje_pasajero: 'Viaje como pasajero',
       pedido_repartidor: 'Pedido como repartidor',
       pedido_cliente: 'Pedido como cliente',
-      chat: 'Habló con soporte (mensajes · canal)',
+      chat: 'Habló con soporte',
       equipo: 'Cambio del equipo',
     },
     fotos: {
-      cara: 'la cara',
-      doc_frente: 'el documento (frente)',
-      doc_reverso: 'el documento (reverso)',
-      licencia_frente: 'la licencia (frente)',
-      licencia_reverso: 'la licencia (reverso)',
-      seguro: 'el seguro',
+      cara: 'cara',
+      doc_frente: 'documento (frente)',
+      doc_reverso: 'documento (reverso)',
+      licencia_frente: 'licencia (frente)',
+      licencia_reverso: 'licencia (reverso)',
+      seguro: 'seguro',
     },
     comprobacion: {
       verde: 'la comprobación automática no vio problemas',
-      ambar: 'la comprobación automática tiene dudas',
+      amarillo: 'la comprobación automática tiene dudas',
       rojo: 'la comprobación automática vio un problema',
+      sin_ia: 'sin comprobación automática',
     },
   },
   en: {
@@ -127,6 +140,17 @@ const T = {
     verMenos: 'Show less',
     por: 'by',
     abrir: 'Open',
+    mensajes: (n: number) => (n === 1 ? '1 message' : `${n} messages`),
+    otros: {
+      aprobado: 'approved',
+      pendiente: 'pending',
+      rechazado: 'rejected',
+      suspendido: 'suspended',
+      moto: 'moto',
+      carro: 'car',
+      comida: 'food',
+      envios: 'deliveries',
+    },
     apps: { cliente: 'Customer app', repartidor: 'Divoox Driver', restaurante: 'Restaurant app' },
     plataformas: {
       android: 'Android',
@@ -139,20 +163,20 @@ const T = {
       alta: 'Created the account',
       entrada: 'Signed in',
       acepto_sms: 'Agreed to receive SMS',
-      foto: 'Uploaded photo of',
+      foto: 'Photo uploaded:',
       foto_aprobada: 'Photo approved:',
       foto_rechazada: 'Photo rejected:',
       verificacion_aprobado: 'Verification approved',
       verificacion_rechazado: 'Verification rejected',
       verificacion_pendiente: 'Verification sent back to review',
-      vehiculo: 'Added a vehicle',
-      vehiculo_aprobado: 'Vehicle approved',
+      vehiculo: 'Vehicle added:',
+      vehiculo_aprobado: 'Vehicle approved:',
       habilitacion: 'Service access:',
       viaje_conductor: 'Ride as driver',
       viaje_pasajero: 'Ride as rider',
       pedido_repartidor: 'Order as courier',
       pedido_cliente: 'Order as customer',
-      chat: 'Talked to support (messages · channel)',
+      chat: 'Talked to support',
       equipo: 'Team change',
     },
     fotos: {
@@ -165,8 +189,9 @@ const T = {
     },
     comprobacion: {
       verde: 'automatic check found no issues',
-      ambar: 'automatic check has doubts',
+      amarillo: 'automatic check has doubts',
       rojo: 'automatic check found an issue',
+      sin_ia: 'no automatic check',
     },
   },
 };
@@ -188,7 +213,8 @@ export function textoEvento(evento: string, tipo: string, idioma: Idioma): strin
   const base = eventos.get(clave) ?? clave;
   if (!resto) return base;
   const fotos = new Map(Object.entries(t.fotos));
-  return `${base} ${fotos.get(resto) ?? resto}`;
+  const otros = new Map(Object.entries(t.otros));
+  return `${base} ${fotos.get(resto) ?? otros.get(resto) ?? resto}`;
 }
 
 export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
@@ -231,6 +257,7 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
   const apps = new Map(Object.entries(t.apps));
   const plataformas = new Map(Object.entries(t.plataformas));
   const comprobacion = new Map(Object.entries(t.comprobacion));
+  const otros = new Map(Object.entries(t.otros));
   const desde = [
     a.alta.app
       ? [apps.get(a.alta.app) ?? a.alta.app, a.alta.version].filter(Boolean).join(' ')
@@ -245,14 +272,31 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
   const pasos = [...a.dondeQuedo.hechos, ...a.dondeQuedo.falta];
   const hechos = new Set<string>(a.dondeQuedo.hechos);
   const linea = todo ? a.linea : a.linea.slice(0, VISIBLES);
-  // El detalle de una foto trae el color de la comprobación automática: se dice en palabras.
-  const detalle = (d: string | null) =>
-    d
-      ? d
-          .split(' · ')
-          .map((x) => comprobacion.get(x) ?? x)
-          .join(' · ')
-      : null;
+  /** El origen de un alta o una entrada («app|versión|plataforma|lugar|red»), en palabras. */
+  const origen = (d: string) => {
+    const [app = '', version = '', plataforma = '', lugar = '', operadora = ''] = d.split('|');
+    return [
+      app ? [apps.get(app) ?? app, version].filter(Boolean).join(' ') : '',
+      plataforma ? (plataformas.get(plataforma) ?? plataforma) : '',
+      lugar,
+      operadora,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+  };
+  // Cada detalle se dice en palabras: el origen, los mensajes del chat y el color de la comprobación.
+  const detalle = (d: string | null, tipo: string) => {
+    if (!d) return null;
+    if (tipo === 'alta' || tipo === 'entrada') return origen(d) || null;
+    if (tipo === 'chat') {
+      const [n = '0', canal = ''] = d.split('|');
+      return [t.mensajes(Number(n)), canal].filter(Boolean).join(' · ');
+    }
+    return d
+      .split(' · ')
+      .map((x) => comprobacion.get(x) ?? otros.get(x) ?? nombreEstado(x, idioma))
+      .join(' · ');
+  };
   return (
     <section
       className="tarjeta-form actividad"
@@ -300,9 +344,9 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
             <li key={`${p.evento}-${p.fecha}-${i}`} className={`ficha-paso-${p.tipo}`}>
               <time dateTime={p.fecha}>{h.fecha(p.fecha, null, 'hora')}</time>
               <strong>{textoEvento(p.evento, p.tipo, idioma)}</strong>
-              {detalle(p.detalle) || p.quien ? (
+              {detalle(p.detalle, p.tipo) || p.quien ? (
                 <span>
-                  {[detalle(p.detalle), p.quien ? `${t.por} ${p.quien}` : null]
+                  {[detalle(p.detalle, p.tipo), p.quien ? `${t.por} ${p.quien}` : null]
                     .filter(Boolean)
                     .join(' · ')}
                 </span>

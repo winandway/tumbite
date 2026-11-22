@@ -264,21 +264,31 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
     const f = t(fecha);
     if (f) linea.push({ fecha: f, tipo, evento, detalle, quien: t(quien), enlace });
   };
+  // El origen viaja en partes («app|versión|plataforma|lugar|red») y el panel lo dice en su idioma.
   const origen = (r: Record<string, string | number | null>) =>
     [
-      [t(r.app), t(r.version)].filter(Boolean).join(' '),
-      t(r.plataforma),
+      t(r.app) ?? '',
+      t(r.version) ?? '',
+      t(r.plataforma) ?? '',
       [t(r.ciudad_red), t(r.region_red), t(r.pais_red)].filter(Boolean).join(', '),
-      t(r.red),
-    ]
-      .filter(Boolean)
-      .join(' · ') || null;
+      t(r.red) ?? '',
+    ].join('|');
   for (const r of rastro ?? []) poner(r.fecha, String(r.tipo), String(r.tipo), origen(r));
   // Una cuenta de antes del rastro no tiene fila de alta: la fecha de creación la da igual.
   if (!(rastro ?? []).some((r) => r.tipo === 'alta')) poner(u.creado_en, 'alta', 'alta', null);
   const yaAnotados = new Set((pasos ?? []).map((p) => String(p.paso)));
+  // Los pasos que ya salen con más detalle por su propia fuente (fotos, vehículo, decisión del equipo)
+  // no se repiten como paso.
+  const conDetalle = new Set([
+    'cuenta',
+    'foto_cara',
+    'foto_documento',
+    'foto_licencia',
+    'vehiculo',
+  ]);
+  if ((kyc ?? []).some((k) => k.revisado_en)) conDetalle.add('aprobado');
   for (const p of pasos ?? [])
-    if (p.paso !== 'cuenta') poner(p.fecha, 'paso', String(p.paso), t(p.plataforma));
+    if (!conDetalle.has(String(p.paso))) poner(p.fecha, 'paso', String(p.paso));
   // Lo que pasó antes de que existiera el rastro se lee de donde quedó guardado.
   if (!yaAnotados.has('correo')) poner(u.correo_confirmado_en, 'paso', 'correo');
   if (!yaAnotados.has('telefono')) poner(u.telefono_verificado_en, 'paso', 'telefono');
@@ -322,12 +332,13 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
   for (const p of pedidos ?? [])
     poner(p.fecha, 'pedido', `pedido_${p.papel}`, t(p.estado), null, `/orders/${p.id}`);
   for (const c of chat ?? [])
-    poner(
-      c.actualizado_en ?? c.creado_en,
-      'chat',
-      'chat',
-      `${c.mensajes ?? 0} · ${c.canal_ultimo ?? ''}`,
-    );
+    if (Number(c.mensajes ?? 0) > 0)
+      poner(
+        c.actualizado_en ?? c.creado_en,
+        'chat',
+        'chat',
+        `${c.mensajes}|${c.canal_ultimo ?? ''}`,
+      );
   for (const a of equipo ?? []) poner(a.fecha, 'equipo', `equipo:${a.accion}`, null, a.quien);
   linea.sort((a, b) => b.fecha.localeCompare(a.fecha));
 
@@ -372,12 +383,19 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
   };
 }
 
-export type FilaEmbudo = { paso: PasoRegistro; personas: number };
+export type FilaEmbudo = {
+  paso: PasoRegistro;
+  /** Cuántas personas llegaron a este paso. */
+  personas: number;
+  /** Cuántas se quedaron aquí: no llegaron a ningún paso posterior. null en el último paso. */
+  seQuedan: number | null;
+};
 
 /**
- * El embudo del registro entre dos días (inclusive), para una app. Los pasos de antes de crear la cuenta
- * salen de los contadores; los de después, de las cuentas REALES (las de prueba no cuentan), con filtro
- * de país y de zona. Solo lee.
+ * El embudo del registro de una app. Los pasos de antes de crear la cuenta salen de los contadores del
+ * período; los de después, de las cuentas REALES creadas en ese período (las de prueba no cuentan) y de
+ * hasta dónde llegó cada una, con filtro de país y de zona. «Se quedaron aquí» es el paso MÁS avanzado
+ * de cada cuenta (algunos pasos se pueden hacer en otro orden). Solo lee.
  */
 export async function embudoRegistro(
   db: D1Database,
@@ -395,7 +413,18 @@ export async function embudoRegistro(
   // Con una zona elegida, o con alcance limitado, los pasos sin cuenta no se pueden atribuir: fuera.
   const soloCuentas = Boolean(f.zona) || al.sql !== '';
   const rol = f.app === 'repartidor' ? 'repartidor' : 'cliente';
-  const [anon, cuentas, porPais] = await db.batch<Record<string, string | number | null>>([
+  const orden = pasosDe(f.app);
+  const deCuenta = orden.filter((p) => !esPasoAnonimo(p));
+  // Las cuentas reales creadas en el período (su paso «cuenta» cae dentro), con los filtros.
+  const cohorte = `SELECT c.usuario_id FROM embudo_cuenta c JOIN usuarios u ON u.id = c.usuario_id
+         LEFT JOIN repartidores r ON r.usuario_id = u.id
+         WHERE c.paso = 'cuenta' AND c.creado_en >= ?1 AND c.creado_en < date(?2, '+1 day')
+           AND u.rol = ?3 AND u.es_prueba = 0
+           AND (?4 IS NULL OR c.pais = ?4)
+           AND (?5 IS NULL OR COALESCE(u.zona_id, r.zona_id) = ?5)${al.sql}`;
+  const valores = [f.desde, f.hasta, rol, f.pais ?? null, f.zona ?? null, ...al.valores];
+  const ordenSql = `CASE e.paso ${deCuenta.map((p, i) => `WHEN '${p}' THEN ${i}`).join(' ')} ELSE -1 END`;
+  const [anon, cuentas, ultimos, porPais] = await db.batch<Record<string, string | number | null>>([
     db
       .prepare(
         `SELECT paso, SUM(personas) AS personas FROM embudo_anonimo
@@ -404,20 +433,23 @@ export async function embudoRegistro(
       .bind(f.desde, f.hasta, f.app, f.pais ?? null),
     db
       .prepare(
-        `SELECT e.paso, COUNT(*) AS personas
-         FROM embudo_cuenta e JOIN usuarios u ON u.id = e.usuario_id
-         LEFT JOIN repartidores r ON r.usuario_id = u.id
-         WHERE e.creado_en >= ?1 AND e.creado_en < date(?2, '+1 day') AND u.rol = ?3 AND u.es_prueba = 0
-           AND (?4 IS NULL OR e.pais = ?4)
-           AND (?5 IS NULL OR COALESCE(u.zona_id, r.zona_id) = ?5)${al.sql}
-         GROUP BY e.paso`,
+        `SELECT e.paso, COUNT(*) AS personas FROM embudo_cuenta e
+         WHERE e.usuario_id IN (${cohorte}) GROUP BY e.paso`,
       )
-      .bind(f.desde, f.hasta, rol, f.pais ?? null, f.zona ?? null, ...al.valores),
+      .bind(...valores),
     db
       .prepare(
-        `SELECT COALESCE(e.pais, '') AS pais, COUNT(*) AS personas
-         FROM embudo_cuenta e JOIN usuarios u ON u.id = e.usuario_id
-         WHERE e.paso = 'cuenta' AND e.creado_en >= ?1 AND e.creado_en < date(?2, '+1 day') AND u.rol = ?3 AND u.es_prueba = 0${al.sql}
+        `SELECT o AS orden, COUNT(*) AS personas FROM (
+           SELECT MAX(${ordenSql}) AS o FROM embudo_cuenta e
+            WHERE e.usuario_id IN (${cohorte}) GROUP BY e.usuario_id
+         ) GROUP BY o`,
+      )
+      .bind(...valores),
+    db
+      .prepare(
+        `SELECT COALESCE(c.pais, '') AS pais, COUNT(*) AS personas
+         FROM embudo_cuenta c JOIN usuarios u ON u.id = c.usuario_id
+         WHERE c.paso = 'cuenta' AND c.creado_en >= ?1 AND c.creado_en < date(?2, '+1 day') AND u.rol = ?3 AND u.es_prueba = 0${al.sql}
          GROUP BY 1 ORDER BY 2 DESC LIMIT 30`,
       )
       .bind(f.desde, f.hasta, rol, ...al.valores),
@@ -426,9 +458,21 @@ export async function embudoRegistro(
   if (!soloCuentas)
     for (const r of anon?.results ?? []) cuenta.set(String(r.paso), Number(r.personas ?? 0));
   for (const r of cuentas?.results ?? []) cuenta.set(String(r.paso), Number(r.personas ?? 0));
-  const pasos: FilaEmbudo[] = pasosDe(f.app)
-    .filter((p) => !(soloCuentas && esPasoAnonimo(p)))
-    .map((paso) => ({ paso, personas: cuenta.get(paso) ?? 0 }));
+  const quedan = new Map<string, number>();
+  for (const r of ultimos?.results ?? []) {
+    const p = deCuenta.at(Number(r.orden));
+    if (p && Number(r.orden) >= 0) quedan.set(p, Number(r.personas ?? 0));
+  }
+  const visibles = orden.filter((p) => !(soloCuentas && esPasoAnonimo(p)));
+  const pasos: FilaEmbudo[] = visibles.map((paso, i) => {
+    const personas = cuenta.get(paso) ?? 0;
+    if (i === visibles.length - 1) return { paso, personas, seQuedan: null };
+    // Antes de la cuenta los pasos sí van en fila: se queda quien no llegó al siguiente.
+    const seQuedan = esPasoAnonimo(paso)
+      ? Math.max(0, personas - (cuenta.get(visibles.at(i + 1) ?? '') ?? 0))
+      : (quedan.get(paso) ?? 0);
+    return { paso, personas, seQuedan };
+  });
   return {
     pasos,
     porPais: (porPais?.results ?? []).map((r) => ({

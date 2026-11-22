@@ -1644,7 +1644,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       capRastro(
         'viaje',
         'es',
-        'Línea de tiempo de un viaje con los minutos y los metros entre cada paso y el mapa con los puntos numerados.',
+        'Ficha de un viaje con la tarjeta de tiempos y la línea de tiempo con los minutos y los kilómetros entre cada paso.',
         'Cada paso del viaje con su hora, el tiempo y la distancia desde el paso anterior.',
       ),
       capRastro(
@@ -1690,7 +1690,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       capRastro(
         'viaje',
         'en',
-        'A ride timeline with minutes and meters between each step and the map with numbered dots.',
+        'A ride file with the times card and the timeline showing minutes and distance between each step.',
         'Each ride step with its time, and the time and distance from the previous step.',
       ),
       capRastro(

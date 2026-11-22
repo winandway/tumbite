@@ -364,6 +364,14 @@ describe('C-RASTRO · el embudo', () => {
     expect(de(todo, 'abrio')).toBe(1);
     expect(de(todo, 'cuenta')).toBe(2); // la de prueba no cuenta
     expect(de(todo, 'correo')).toBe(1);
+    // «Se quedaron aquí»: una cuenta real se quedó en «cuenta» y la otra en «correo».
+    const quedan = (p: string) =>
+      (todo.pasos as { paso: string; seQuedan: number | null }[]).find((x) => x.paso === p)
+        ?.seQuedan;
+    expect(quedan('cuenta')).toBe(1);
+    expect(quedan('correo')).toBe(1);
+    expect(quedan('telefono')).toBe(0);
+    expect(quedan('primer_viaje')).toBeNull();
     expect(todo.porPais).toEqual(
       expect.arrayContaining([
         { pais: 'VE', cuentas: 1 },

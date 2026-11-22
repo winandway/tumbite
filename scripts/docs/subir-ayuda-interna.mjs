@@ -37,6 +37,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capSaldo\(\s*'([a-z0-9-]+)',\s*
   archivos.add(`saldo-conductores-${nombre}-${idioma}.webp`);
 for (const [, nombre, idioma] of guias.matchAll(/capRef\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`referidos-${nombre}-${idioma}.webp`);
+// C-RASTRO: las del rastro de actividad (capRastro).
+for (const [, nombre, idioma] of guias.matchAll(/capRastro\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`rastro-${nombre}-${idioma}.webp`);
 // C-LINEAS-TAXI: las de «Líneas de taxi y mototaxi» (capLineas).
 for (const [, nombre, idioma] of guias.matchAll(/capLineas\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`lineas-${nombre}-${idioma}.webp`);

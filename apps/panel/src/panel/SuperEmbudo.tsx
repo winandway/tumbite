@@ -21,7 +21,7 @@ type Embudo = {
   app: 'repartidor' | 'cliente';
   desde: string;
   hasta: string;
-  pasos: { paso: PasoRegistro; personas: number }[];
+  pasos: { paso: PasoRegistro; personas: number; seQuedan: number | null }[];
   porPais: { pais: string; cuentas: number }[];
 };
 type Zona = { id: string; nombre: string; pais: string };
@@ -30,7 +30,7 @@ const T = {
   es: {
     titulo: 'Embudo de registro',
     ayuda:
-      'Cuántas personas llegan a cada paso del registro y en cuál se quedan. Solo cuentas reales; las de prueba no cuentan.',
+      'De las cuentas creadas en el período: cuántas llegaron a cada paso y en cuál se quedó cada una. Solo cuentas reales; las de prueba no cuentan.',
     app: 'App',
     apps: { repartidor: 'Divoox Driver (conductores)', cliente: 'App de clientes' },
     desde: 'Desde',
@@ -42,8 +42,8 @@ const T = {
     ver: 'Ver embudo',
     paso: 'Paso',
     personas: 'Personas',
-    siguen: 'Siguen',
-    seVan: 'Se quedan aquí',
+    seVan: 'Se quedaron aquí',
+    completaron: 'Llegaron al final',
     vacio: 'No hay registros en ese período.',
     anonimos:
       'Los tres primeros pasos pasan antes de crear la cuenta: se cuentan sin saber quién es la persona. Con una zona elegida no se muestran, porque todavía no se sabe de qué zona son.',
@@ -55,7 +55,7 @@ const T = {
   en: {
     titulo: 'Sign-up funnel',
     ayuda:
-      'How many people reach each sign-up step and where they stop. Real accounts only; test accounts are not counted.',
+      'For accounts created in the period: how many reached each step and where each one stopped. Real accounts only; test accounts are not counted.',
     app: 'App',
     apps: { repartidor: 'Divoox Driver (drivers)', cliente: 'Customer app' },
     desde: 'From',
@@ -67,8 +67,8 @@ const T = {
     ver: 'See funnel',
     paso: 'Step',
     personas: 'People',
-    siguen: 'Continue',
-    seVan: 'Stop here',
+    seVan: 'Stopped here',
+    completaron: 'Reached the end',
     vacio: 'No sign-ups in that period.',
     anonimos:
       'The first three steps happen before the account exists: they are counted without knowing who the person is. They are hidden when a zone is selected, because the zone is not known yet.',
@@ -86,18 +86,15 @@ const nombrePaso = (p: string, idioma: Idioma) => {
 };
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-/** Para cada paso: cuántos siguen al siguiente (%) y cuántos se quedan. */
-export function caidas(pasos: { paso: string; personas: number }[]) {
-  return pasos.map((p, i) => {
-    const sig = pasos[i + 1];
-    if (!sig || p.personas <= 0) return { ...p, siguenPct: null, seVan: null };
-    const seVan = Math.max(0, p.personas - sig.personas);
-    return {
-      ...p,
-      siguenPct: Math.round((Math.min(sig.personas, p.personas) / p.personas) * 100),
-      seVan,
-    };
-  });
+/** El paso donde se queda más gente (null si nadie se quedó en ninguno). */
+export function dondeSeQuedanMas(pasos: { paso: string; seQuedan: number | null }[]) {
+  return pasos.reduce<{ paso: string; seQuedan: number } | null>(
+    (m, f) =>
+      f.seQuedan != null && f.seQuedan > (m?.seQuedan ?? 0)
+        ? { paso: f.paso, seQuedan: f.seQuedan }
+        : m,
+    null,
+  );
 }
 
 export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
@@ -134,12 +131,9 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
   }, [consulta, pref.listo]);
   const x = res?.x ?? null;
   const error = res?.consulta === consulta ? (res.error ?? '') : '';
-  const filas = caidas(x?.pasos ?? []);
+  const filas = x?.pasos ?? [];
   const maximo = Math.max(1, ...filas.map((f) => f.personas));
-  const peor = filas.reduce<{ paso: string; seVan: number } | null>(
-    (m, f) => (f.seVan != null && f.seVan > (m?.seVan ?? 0) ? { paso: f.paso, seVan: f.seVan } : m),
-    null,
-  );
+  const peor = dondeSeQuedanMas(filas);
   const paises = [...new Set([...(x?.porPais ?? []).map((p) => p.pais), pais])].filter(Boolean);
   const apps = new Map(Object.entries(t.apps));
   return (
@@ -195,16 +189,15 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
                 <th scope="col">{t.paso}</th>
                 <th scope="col">{t.personas}</th>
                 <th scope="col" aria-hidden="true" />
-                <th scope="col">{t.siguen}</th>
                 <th scope="col">{t.seVan}</th>
               </tr>
             </thead>
             <tbody>
               {filas.map((f, i) => (
                 <tr key={f.paso} data-paso={f.paso}>
-                  <th scope="row">
+                  <td className="embudo-paso">
                     {i + 1}. {nombrePaso(f.paso, idioma)}
-                  </th>
+                  </td>
                   <td>{f.personas}</td>
                   <td className="embudo-barra-celda" aria-hidden="true">
                     <span
@@ -212,10 +205,17 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
                       style={{ width: `${Math.round((f.personas / maximo) * 100)}%` }}
                     />
                   </td>
-                  <td>{f.siguenPct == null ? '—' : `${f.siguenPct} %`}</td>
                   <td>
-                    {f.seVan == null ? '—' : f.seVan}
-                    {peor && peor.paso === f.paso && peor.seVan > 0 ? (
+                    {f.seQuedan == null ? (
+                      f.personas > 0 ? (
+                        <Insignia tono="hecho">{t.completaron}</Insignia>
+                      ) : (
+                        '—'
+                      )
+                    ) : (
+                      f.seQuedan
+                    )}
+                    {peor && peor.paso === f.paso ? (
                       <Insignia tono="pendiente" clase="embudo-mayor" testId="embudo-mayor">
                         {t.mayor}
                       </Insignia>

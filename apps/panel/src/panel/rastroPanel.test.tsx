@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ActividadCuenta, textoEvento } from './ActividadCuenta';
 import { LineaTiempo, puntosDeLinea, type Paso } from './FichaPiezas';
-import { SuperEmbudo, caidas } from './SuperEmbudo';
+import { SuperEmbudo, dondeSeQuedanMas } from './SuperEmbudo';
 
 /**
  * C-RASTRO en el panel (22 nov 2026): la actividad de una cuenta en su ficha, la línea de tiempo del
@@ -52,7 +52,7 @@ const ACTIVIDAD = {
       fecha: '2026-11-22 10:05:00',
       tipo: 'verificacion',
       evento: 'foto:cara',
-      detalle: 'ambar',
+      detalle: 'amarillo',
       quien: null,
       enlace: null,
     },
@@ -68,7 +68,7 @@ const ACTIVIDAD = {
       fecha: '2026-11-22 10:00:00',
       tipo: 'alta',
       evento: 'alta',
-      detalle: 'repartidor 0.9.4 · android',
+      detalle: 'repartidor|0.9.4|android|Ciudad de ejemplo, VE|Operadora de ejemplo',
       quien: null,
       enlace: null,
     },
@@ -93,7 +93,7 @@ describe('C-RASTRO · la actividad de una cuenta en su ficha', () => {
       'Ciudad de ejemplo, Región de ejemplo, VE · Operadora de ejemplo',
     );
     const sigue = screen.getByTestId('actividad-sigue');
-    expect(sigue.textContent).toContain('Le falta: Subió su documento');
+    expect(sigue.textContent).toContain('Le falta: Foto del documento');
     expect(sigue.querySelector('[data-tono="pendiente"]')).toBeTruthy();
     // Lo hecho en verde y lo pendiente en gris (sistema de diseño), nunca en rojo.
     expect(caja.querySelectorAll('.actividad-pasos [data-tono="hecho"]')).toHaveLength(3);
@@ -103,11 +103,14 @@ describe('C-RASTRO · la actividad de una cuenta en su ficha', () => {
       .getAllByRole('listitem')
       .map((li) => li.textContent ?? '');
     expect(
-      linea.some(
-        (x) => x.includes('Se rechazó la foto de la cara') && x.includes('por Soporte Ejemplo'),
-      ),
+      linea.some((x) => x.includes('Foto rechazada: cara') && x.includes('por Soporte Ejemplo')),
     ).toBe(true);
     expect(linea.some((x) => x.includes('la comprobación automática tiene dudas'))).toBe(true);
+    expect(
+      linea.some((x) =>
+        x.includes('Divoox Driver 0.9.4 · Android · Ciudad de ejemplo, VE · Operadora de ejemplo'),
+      ),
+    ).toBe(true);
     expect(within(caja).getByRole('link', { name: 'Abrir' }).getAttribute('href')).toContain(
       '/rides/EJEMPLO01',
     );
@@ -136,10 +139,8 @@ describe('C-RASTRO · la actividad de una cuenta en su ficha', () => {
     await screen.findByTestId('actividad');
     expect(screen.queryByTestId('actividad-desde')).toBeNull();
     expect(screen.getByText(/created before sign-up app and network were recorded/)).toBeTruthy();
-    expect(screen.getAllByText('Confirmed email').length).toBeGreaterThan(0);
-    expect(textoEvento('foto:doc_frente', 'verificacion', 'en')).toBe(
-      'Uploaded photo of ID (front)',
-    );
+    expect(screen.getAllByText('Email confirmation').length).toBeGreaterThan(0);
+    expect(textoEvento('foto:doc_frente', 'verificacion', 'en')).toBe('Photo uploaded: ID (front)');
     expect(textoEvento('algo_nuevo', 'otro', 'es')).toBe('algo_nuevo');
   });
 
@@ -215,18 +216,15 @@ describe('C-RASTRO · el embudo del registro', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => vi.unstubAllGlobals());
 
-  it('calcula cuántos siguen y cuántos se quedan en cada paso', () => {
+  it('encuentra el paso donde se queda más gente; el último paso no cuenta como quedarse', () => {
     expect(
-      caidas([
-        { paso: 'a', personas: 10 },
-        { paso: 'b', personas: 4 },
-        { paso: 'c', personas: 4 },
+      dondeSeQuedanMas([
+        { paso: 'a', seQuedan: 2 },
+        { paso: 'b', seQuedan: 6 },
+        { paso: 'c', seQuedan: null },
       ]),
-    ).toEqual([
-      { paso: 'a', personas: 10, siguenPct: 40, seVan: 6 },
-      { paso: 'b', personas: 4, siguenPct: 100, seVan: 0 },
-      { paso: 'c', personas: 4, siguenPct: null, seVan: null },
-    ]);
+    ).toEqual({ paso: 'b', seQuedan: 6 });
+    expect(dondeSeQuedanMas([{ paso: 'a', seQuedan: 0 }])).toBeNull();
   });
 
   it('pinta la tabla, marca en ámbar dónde se queda la mayoría y vuelve a pedir al cambiar la app', async () => {
@@ -243,10 +241,10 @@ describe('C-RASTRO · el embudo del registro', () => {
           desde: '2026-10-24',
           hasta: '2026-11-22',
           pasos: [
-            { paso: 'abrio', personas: 40 },
-            { paso: 'formulario', personas: 30 },
-            { paso: 'cuenta', personas: 20 },
-            { paso: 'foto_cara', personas: 5 },
+            { paso: 'abrio', personas: 40, seQuedan: 10 },
+            { paso: 'formulario', personas: 30, seQuedan: 10 },
+            { paso: 'cuenta', personas: 20, seQuedan: 15 },
+            { paso: 'foto_cara', personas: 5, seQuedan: null },
           ],
           porPais: [{ pais: 'VE', cuentas: 20 }],
         });
@@ -259,7 +257,9 @@ describe('C-RASTRO · el embudo del registro', () => {
     const mayor = screen.getByTestId('embudo-mayor');
     expect(mayor.getAttribute('data-tono')).toBe('pendiente');
     expect(mayor.closest('tr')?.getAttribute('data-paso')).toBe('cuenta');
-    expect(caja.querySelector('tr[data-paso="cuenta"]')?.textContent).toContain('25 %');
+    expect(caja.querySelector('tr[data-paso="cuenta"]')?.textContent).toContain('15');
+    // Quien llegó al último paso no «se queda»: va en verde.
+    expect(caja.querySelector('tr[data-paso="foto_cara"] [data-tono="hecho"]')).toBeTruthy();
     expect(pedidas.at(-1)).toContain('app=repartidor');
     expect(pedidas.at(-1)).not.toContain('zona=');
     await userEvent.selectOptions(screen.getByLabelText('App'), 'cliente');

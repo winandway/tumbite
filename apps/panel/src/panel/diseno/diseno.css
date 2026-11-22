@@ -216,20 +216,36 @@
   color: var(--pd-apagado);
 }
 .embudo-filtros {
+  display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.75rem 1rem;
   margin-bottom: 1rem;
 }
+.embudo-filtros > * {
+  flex: 1 1 170px;
+  max-width: 260px;
+  min-width: 0;
+}
 .embudo-filtros label {
   display: grid;
   gap: 0.25rem;
   font-size: var(--pd-texto-chico);
-}
-.embudo-tabla th[scope='row'] {
-  font-family: var(--pd-fuente-texto);
   font-weight: 600;
-  text-align: left;
+}
+.embudo-filtros select,
+.embudo-filtros input {
+  width: 100%;
+}
+.embudo-paso {
+  font-weight: 600;
+}
+/* Las líneas de tiempo llevan puntos neutros (el rojo es solo para problemas). */
+.ficha-linea li::before {
+  background: var(--pd-negro);
+}
+.actividad .ficha-linea .ficha-paso-equipo::before {
+  background: var(--pd-apagado-punto);
 }
 .embudo-barra-celda {
   width: 34%;
