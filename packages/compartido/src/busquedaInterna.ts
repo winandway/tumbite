@@ -242,6 +242,8 @@ export const PANTALLAS_PREFERENCIAS = [
   'lineas',
   // C-RASTRO: la app y la zona del embudo del registro.
   'embudo',
+  // C-VERIFICACIONES-BANDEJA: la pestaña, la zona y «Cuentas» de Verificaciones.
+  'verificaciones',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [

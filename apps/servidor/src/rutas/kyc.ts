@@ -30,6 +30,17 @@ import {
 } from '../antecedentes';
 import { guardarDecision, motorEncendido, pedirDecision, textoMotivos } from '../verificacionAuto';
 import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
+import {
+  type FilaBandeja,
+  POR_PAGINA_BANDEJA,
+  consultaPagina,
+  consultaTotales,
+  filaDeBandeja,
+  leerEstadoBandeja,
+  resumenCara,
+  resumenComprobacion,
+  ZONA_BANDEJA_SQL,
+} from './kycBandeja';
 
 /**
  * KYC: verificación de identidad de repartidores y dueños de restaurante, hecha por Divoox.
@@ -406,34 +417,49 @@ kyc.post('/kyc/enviar', async (c) => {
 
 // ───────────────────────── Superadmin ─────────────────────────
 
+/**
+ * C-VERIFICACIONES-BANDEJA (22 nov 2026): la bandeja de Verificaciones. UNA consulta por página con la
+ * miniatura, el ID, la zona, la espera, si es de prueba y lo que dijo la comprobación automática de
+ * cada foto; filtros de pestaña, zona, cuentas reales o de prueba y búsqueda. Los totales de cada
+ * pestaña salen con los mismos filtros (solo en la primera página). Mirar no escribe.
+ */
 kyc.get('/admin/kyc', async (c) => {
   exigir(c, 'admin');
-  const estado = c.req.query('estado') || 'pendiente';
-  const despues = c.req.query('despues') ?? '';
-  // C-PERMISOS-FINOS: las verificaciones de las personas de su alcance (también los totales).
-  const alc = alcanceObjetoSql(accesoDe(c), 'persona', 'k.usuario_id');
-  const { results } = await base(c)
-    .prepare(
-      `SELECT k.usuario_id AS id, k.estado, k.doc_tipo AS docTipo, k.enviado_en AS enviado, k.local_distancia_m AS distancia,
-        k.proxima_revision AS proxima, u.nombre, u.correo, u.rol, d.codigo, r.nombre AS restaurante
-       FROM kyc k JOIN usuarios u ON u.id = k.usuario_id
-       LEFT JOIN repartidores d ON d.usuario_id = k.usuario_id LEFT JOIN restaurantes r ON r.dueno_id = k.usuario_id
-       WHERE k.estado = ? ${despues ? 'AND k.enviado_en > ?' : ''}${alc.sql} ORDER BY k.enviado_en LIMIT 51`,
-    )
-    .bind(estado, ...(despues ? [despues] : []), ...alc.valores)
-    .all<Record<string, unknown>>();
-  const pagina = results.slice(0, 50);
-  const { results: totales } = await base(c)
-    .prepare(`SELECT estado, COUNT(*) AS n FROM kyc k WHERE 1${alc.sql} GROUP BY estado`)
-    .bind(...alc.valores)
-    .all<{ estado: string; n: number }>();
+  const zona = c.req.query('zona') ?? '';
+  const filtros = {
+    estado: leerEstadoBandeja(c.req.query('estado')),
+    zona: /^[A-Za-z0-9_-]{1,40}$/.test(zona) ? zona : '',
+    cuentas: c.req.query('cuentas'),
+    q: c.req.query('q') ?? '',
+    // C-PERMISOS-FINOS: las verificaciones de las personas de su alcance (también los totales).
+    alcance: alcanceObjetoSql(accesoDe(c), 'persona', 'k.usuario_id'),
+  };
+  const despues = (c.req.query('despues') ?? '').slice(0, 120);
+  const db = base(c);
+  const p = consultaPagina(filtros, despues);
+  const { results } = await db
+    .prepare(p.sql)
+    .bind(...p.valores)
+    .all<FilaBandeja>();
+  const pagina = results.slice(0, POR_PAGINA_BANDEJA);
+  const ultima = pagina.at(-1);
+  const totales = despues
+    ? null
+    : await (async () => {
+        const t = consultaTotales(filtros);
+        const { results: filas } = await db
+          .prepare(t.sql)
+          .bind(...t.valores)
+          .all<{ estado: string; n: number }>();
+        return Object.fromEntries(filas.map((x) => [x.estado, Number(x.n)]));
+      })();
   return c.json({
-    solicitudes: pagina.map((x) => ({
-      ...x,
-      lejos: x.distancia != null && Number(x.distancia) > DISTANCIA_MAXIMA_M,
-    })),
-    siguiente: results.length > 50 ? String(pagina.at(-1)?.enviado ?? '') : null,
-    totales: Object.fromEntries(totales.map((t) => [t.estado, Number(t.n)])),
+    solicitudes: pagina.map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M)),
+    siguiente:
+      results.length > POR_PAGINA_BANDEJA && ultima
+        ? `${p.fecha(ultima) ?? ''}|${ultima.id}`
+        : null,
+    totales,
   });
 });
 
@@ -444,7 +470,12 @@ kyc.get('/admin/kyc/:id', async (c) => {
   const f = await db.prepare('SELECT * FROM kyc WHERE usuario_id = ?').bind(id).first<FilaKyc>();
   const u = await db
     .prepare(
-      'SELECT u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.rol, r.nombre AS restaurante, r.direccion FROM usuarios u LEFT JOIN restaurantes r ON r.dueno_id = u.id WHERE u.id = ?',
+      `SELECT u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.rol, rs.nombre AS restaurante, rs.direccion,
+              COALESCE(u.es_prueba, 0) AS es_prueba, d.codigo, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona
+         FROM usuarios u LEFT JOIN restaurantes rs ON rs.dueno_id = u.id
+         LEFT JOIN repartidores d ON d.usuario_id = u.id
+         LEFT JOIN zonas z ON z.id = ${ZONA_BANDEJA_SQL}
+        WHERE u.id = ?`,
     )
     .bind(id)
     .first<Record<string, unknown>>();
@@ -471,12 +502,76 @@ kyc.get('/admin/kyc/:id', async (c) => {
       parecidas_json: string;
       creada_en: string;
     }>();
+  // C-VERIFICACIONES-BANDEJA: lo que leyó la comprobación automática de cada foto vigente (para
+  // compararlo con lo que escribió la persona) y lo que la persona declaró de su vehículo y papeles.
+  const { results: fotosIa } = await db
+    .prepare(
+      `SELECT paso, clave, estado, ia_color AS color, ia_clase AS clase, ia_confianza AS confianza, ia_json AS lectura
+         FROM verificacion_fotos WHERE conductor_id = ? AND estado IN ('vigente', 'repetir') ORDER BY creado_en`,
+    )
+    .bind(id)
+    .all<{
+      paso: string;
+      clave: string;
+      estado: string;
+      color: string;
+      clase: string;
+      confianza: number | null;
+      lectura: string;
+    }>();
+  const declarado =
+    u.rol === 'repartidor'
+      ? await db
+          .prepare(
+            `SELECT vehiculo_tipo AS vehiculo, marca, modelo, placa, licencia_numero AS licenciaNumero,
+                    licencia_vence AS licenciaVence, seguro_poliza AS seguroPoliza, seguro_vence AS seguroVence
+               FROM repartidor_datos WHERE usuario_id = ?`,
+          )
+          .bind(id)
+          .first<Record<string, unknown>>()
+      : null;
+  const lejosLocal = f?.local_distancia_m != null && f.local_distancia_m > DISTANCIA_MAXIMA_M;
+  const deClave = (clave: string | null | undefined) =>
+    clave ? (fotosIa.find((x) => x.clave === clave) ?? null) : null;
+  const leerLectura = (s: string) => {
+    try {
+      return s ? (JSON.parse(s) as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  };
   return c.json({
     persona: u,
     kyc: {
       ...aKyc(f),
-      lejos: f?.local_distancia_m != null && f.local_distancia_m > DISTANCIA_MAXIMA_M,
+      lejos: lejosLocal,
     },
+    comprobaciones: (
+      [
+        ['doc_frente', f?.doc_frente],
+        ['doc_reverso', f?.doc_reverso],
+        ['selfie', f?.selfie],
+        ['local', f?.local],
+      ] as const
+    )
+      .filter(([, clave]) => Boolean(clave))
+      .map(([p, clave]) =>
+        resumenComprobacion(
+          p,
+          p === 'local' ? null : deClave(clave),
+          p === 'local'
+            ? { distanciaM: f?.local_distancia_m ?? null, lejos: lejosLocal }
+            : undefined,
+        ),
+      ),
+    lecturas: fotosIa.map((x) => ({
+      paso: x.paso,
+      color: x.color,
+      clase: x.clase,
+      confianza: x.confianza,
+      lectura: leerLectura(x.lectura),
+    })),
+    declarado: declarado ?? null,
     // C-KYC-AUTO: lo que decidió el motor y por qué (las caras parecidas, con la cuenta cerrada).
     motor: auto.map((a) => ({
       decision: a.decision,
@@ -486,6 +581,14 @@ kyc.get('/admin/kyc/:id', async (c) => {
       en: a.creada_en,
     })),
     ...(u.rol === 'repartidor' ? await extrasRepartidor(db, id) : {}),
+    cara: resumenCara(
+      (
+        await db
+          .prepare('SELECT resultado FROM verificacion_caras WHERE conductor_id = ?')
+          .bind(id)
+          .first<{ resultado: string }>()
+      )?.resultado,
+    ),
     selfiesControl: controles.map((x) => ({
       id: String(x.id),
       pedidaEn: String(x.pedida_en),
@@ -542,8 +645,12 @@ kyc.get('/admin/kyc/:id/foto/:pieza', async (c) => {
   exigir(c, 'admin');
   const pieza = c.req.param('pieza');
   if (!esPieza(pieza)) throw new ErrorDatos('Esa foto no existe.', undefined, 404);
+  // C-VERIFICACIONES-BANDEJA: «?mini=1» en la cara sirve la miniatura (la fila de la bandeja), si existe.
+  const mini = pieza === 'selfie' && c.req.query('mini') === '1';
   const f = await base(c)
-    .prepare(`SELECT ${pieza} AS clave FROM kyc WHERE usuario_id = ?`)
+    .prepare(
+      `SELECT ${mini ? 'COALESCE(selfie_miniatura, selfie)' : pieza} AS clave FROM kyc WHERE usuario_id = ?`,
+    )
     .bind(c.req.param('id'))
     .first<{ clave: string | null }>();
   if (!f?.clave) throw new ErrorDatos('Esa foto no existe.', undefined, 404);
