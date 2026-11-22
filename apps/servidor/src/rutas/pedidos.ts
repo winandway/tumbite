@@ -84,6 +84,7 @@ import { anotarEvento, cancelarConReembolso } from '../manager';
 import { avisoPedidoAlRestaurante, reciboDePedido } from '../avisos';
 import { AVISOS, notificar } from '../notificaciones';
 import { enviarCorreo } from '../correo';
+import { cortoRegalo } from '../smsVenezuelaTextos';
 import { alcoholAhora, lineasDeTienda } from './tiendas';
 import { aceptarSiEsAutomatico } from './operacion';
 
@@ -1808,6 +1809,7 @@ export async function avisoDeRegalo(env: Env, db: D1Database, pedidoId: string) 
     tipo: 'regalo_destinatario',
     telefono: String(f.para_telefono),
     texto,
+    textoCorto: cortoRegalo(en ? 'en' : 'es', de, String(f.restaurante), url),
   });
 }
 

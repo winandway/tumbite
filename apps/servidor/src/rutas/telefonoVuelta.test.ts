@@ -108,3 +108,85 @@ describe('C-TELEFONO-VUELTA · el teléfono se confirma por SMS al volver', () =
     expect(tarde.estado).toBe(409);
   });
 });
+
+/**
+ * C-SMS-VENEZUELA (22 nov 2026, Venezuela): a un +58 el código sale por el proveedor local (simulado
+ * aquí), sin Twilio. Y solo se exige si hoy puede salir: con el tope alcanzado o el proveedor averiado,
+ * el conductor se conecta sin código (nadie queda trancado por créditos agotados).
+ */
+describe('C-SMS-VENEZUELA · el código de verificación a un número de Venezuela', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const LLAVE = 'llave-de-prueba-0123456789';
+  const LOCAL = {
+    SMSMASIVO_API_KEY: LLAVE,
+    SMSMASIVO_ENCENDIDO: 'si',
+    SELFIE_CONTROL_SIEMPRE: '0',
+  };
+  const VE = '+584165550100';
+  function espiarLocal(estado = 202) {
+    const sms: string[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (String(url).startsWith('https://smsmasivovenezuela.com/')) {
+        sms.push(JSON.parse(String(init?.body)).message);
+        return Response.json(
+          estado === 202
+            ? { requestId: `req-${sms.length}`, status: 'ACCEPTED' }
+            : { error: 'sin creditos' },
+          { status: estado },
+        );
+      }
+      return new Response('{}', { status: 200 });
+    });
+    return sms;
+  }
+
+  it('pide el código por el proveedor local, sin acentos y en un SMS, y conecta con el bueno', async () => {
+    const sms = espiarLocal();
+    const { m, rep, conectar } = await vuelve(LOCAL, VE);
+    await m.DB.prepare("UPDATE usuarios SET idioma = 'es' WHERE id = ?").bind(rep.id).run();
+    const estado = await m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
+    expect(estado.datos.telefonoPorVerificar).toBe('0100');
+    expect((await conectar()).estado).toBe(409);
+    expect(
+      (await m.llamar('POST', '/datos/repartidor/telefono/codigo', {}, rep.token)).estado,
+    ).toBe(200);
+    expect(sms).toHaveLength(1);
+    expect(sms[0]).toMatch(
+      /^Divoox: tu codigo es \d{6}\. Vence en 10 minutos\. No lo compartas\.$/,
+    );
+    const fila = await m.DB.prepare('SELECT tipo, estado, proveedor FROM sms_enviados').first();
+    expect(fila).toEqual({ tipo: 'codigo_telefono', estado: 'enviado', proveedor: 'smsmasivo' });
+    const codigo = /(\d{6})/.exec(sms[0] ?? '')?.[1];
+    const bueno = await m.llamar(
+      'POST',
+      '/datos/repartidor/telefono/verificar',
+      { codigo },
+      rep.token,
+    );
+    expect(bueno.estado).toBe(200);
+    expect((await conectar()).estado).toBe(200);
+  });
+
+  it('apagado (solo la llave, sin el interruptor) no se exige ni se manda nada', async () => {
+    const sms = espiarLocal();
+    const { conectar } = await vuelve({ ...LOCAL, SMSMASIVO_ENCENDIDO: undefined }, VE);
+    expect((await conectar()).estado).toBe(200);
+    expect(sms).toHaveLength(0);
+  });
+
+  it('con el tope del día alcanzado no se exige: el conductor se conecta', async () => {
+    const sms = espiarLocal();
+    const { conectar } = await vuelve({ ...LOCAL, SMSMASIVO_TOPE_DIA: '0' }, VE);
+    expect((await conectar()).estado).toBe(200);
+    expect(sms).toHaveLength(0);
+  });
+
+  it('si el proveedor falla (sin créditos), se dice y al volver a intentar ya no se exige', async () => {
+    espiarLocal(402);
+    const { m, rep, conectar } = await vuelve(LOCAL, VE);
+    expect((await conectar()).estado).toBe(409);
+    const pedido = await m.llamar('POST', '/datos/repartidor/telefono/codigo', {}, rep.token);
+    expect(pedido.estado).toBe(503);
+    expect((await conectar()).estado).toBe(200);
+  });
+});

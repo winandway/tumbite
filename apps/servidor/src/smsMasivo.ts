@@ -89,6 +89,28 @@ export async function smsMasivoDeHoy(db: D1Database): Promise<number> {
 }
 
 /**
+ * ¿Se puede contar con este proveedor AHORA para algo que la persona necesita para seguir (su código)?
+ * Encendido, con cupo del día y sin que su último envío (en la última media hora) haya fallado. Si no,
+ * no se le exige el código a nadie: nadie queda trancado por créditos agotados o por el tope.
+ */
+export async function smsMasivoDisponible(env: Env, db: D1Database): Promise<boolean> {
+  if (!smsMasivoEncendido(env)) return false;
+  try {
+    if ((await smsMasivoDeHoy(db)) >= topeSmsMasivo(env)) return false;
+    const ultimo = await db
+      .prepare(
+        "SELECT estado FROM sms_enviados WHERE proveedor = ? AND creado_en >= datetime('now', '-30 minutes') ORDER BY creado_en DESC, rowid DESC LIMIT 1",
+      )
+      .bind(PROVEEDOR_SMSMASIVO)
+      .first<{ estado: string }>();
+    return ultimo?.estado !== 'error';
+  } catch (e) {
+    console.error('sms venezuela: no se pudo comprobar si está disponible', String(e));
+    return false;
+  }
+}
+
+/**
  * Manda UN SMS. «referencia» es nuestro id del envío: va como Idempotency-Key (el proveedor no cobra dos
  * veces el mismo) y como «reference». Devuelve el requestId del proveedor o lanza con el motivo.
  */

@@ -91,7 +91,7 @@ describe('C-SMS-VENEZUELA · SMS Masivo Venezuela simulado', () => {
     expect(l.url).toBe('https://smsmasivovenezuela.com/api/v1/messages');
     expect(l.metodo).toBe('POST');
     expect(l.cabeceras.authorization).toBe(`Bearer ${LLAVE}`);
-    expect(l.cuerpo).toMatchObject({ channel: 'SMS', to: VE, message: 'Tu código es 123456' });
+    expect(l.cuerpo).toMatchObject({ channel: 'SMS', to: VE, message: 'Tu codigo es 123456' });
     expect(l.cabeceras['idempotency-key']).toBeTruthy();
     expect(l.cuerpo.reference).toBe(l.cabeceras['idempotency-key']);
     expect(await filas()).toEqual([

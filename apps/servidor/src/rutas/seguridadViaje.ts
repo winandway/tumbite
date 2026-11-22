@@ -6,6 +6,7 @@ import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { enviarSms } from '../sms';
+import { cortoViajeCompartido } from '../smsVenezuelaTextos';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { registrarEmergencia } from './viajesPasajero';
 
@@ -132,6 +133,11 @@ export async function avisarContactos(c: Ctx, operacionId: string): Promise<numb
         pedidoId: null,
         tipo: 'viaje_compartido',
         telefono: k.telefono,
+        textoCorto: cortoViajeCompartido(
+          f.idioma === 'es' ? 'es' : 'en',
+          nombre,
+          `${sitio}/ride/${codigo}`,
+        ),
         texto:
           f.idioma === 'es'
             ? `Divoox: ${nombre} empezó un viaje y lo compartió contigo. Síguelo en vivo: ${sitio}/ride/${codigo}`

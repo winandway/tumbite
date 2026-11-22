@@ -5,6 +5,7 @@ import type { Env } from './env';
 import { notificar } from './notificaciones';
 import { crearEquipo, resolverCodigo, vincularConductor } from './programaReferidos';
 import { enviarSms, telefonoE164 } from './sms';
+import { cortoEmergenciaLinea } from './smsVenezuelaTextos';
 import { ErrorDatos } from './validar';
 
 /**
@@ -968,6 +969,7 @@ export async function avisarLinea(
         tipo: TIPO_SMS_LINEA,
         telefono: e164,
         texto: cuerpo,
+        textoCorto: texto ? undefined : cortoEmergenciaLinea(p, l.nombre),
       })
     )
       enviados++;

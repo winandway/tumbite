@@ -16,6 +16,7 @@ import { nuevoToken, sha256 } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { cortoInvitarConductor } from '../smsVenezuelaTextos';
 import {
   type ActorFlex,
   actorDeEmpresa,
@@ -722,6 +723,7 @@ flexEmpresas.post('/empresas/:id/conductores/invitaciones', async (c) => {
         tipo: 'flex_invitar_conductor',
         telefono: d.telefono,
         texto,
+        textoCorto: cortoInvitarConductor(ingles ? 'en' : 'es', e?.nombre ?? '', enlace),
       }),
     );
   if (d.correo)

@@ -1,12 +1,14 @@
 import type { Env } from './env';
 import { sha256 } from './cripto';
 import { destinoPermitido, enviarSms, smsConfigurado, telefonoE164 } from './sms';
+import { smsMasivoDisponible, smsMasivoEncendido, vaPorSmsMasivo } from './smsMasivo';
 import { ErrorDatos } from './validar';
 
 /**
  * C-TELEFONO-VUELTA (D8, 1 nov 2026, como DoorDash al volver a la app): quien lleva
  * DIAS_SIN_CONECTAR o más sin conectarse confirma su teléfono con un código de seis cifras por SMS.
- * Solo donde el SMS sale (Twilio y país encendido): si no, no se exige y nadie queda trancado.
+ * Solo donde el SMS sale (Twilio y país encendido, o Venezuela con su proveedor local encendido, con cupo
+ * y sin averías: C-SMS-VENEZUELA): si no, no se exige y nadie queda trancado.
  */
 export const DIAS_SIN_CONECTAR = 14;
 const MINUTOS_VIGENCIA = 10;
@@ -19,7 +21,7 @@ export async function telefonoPorVerificar(
   db: D1Database,
   usuarioId: string,
 ): Promise<string | null> {
-  if (!smsConfigurado(env)) return null;
+  if (!smsConfigurado(env) && !smsMasivoEncendido(env)) return null;
   const f = await db
     .prepare(
       `SELECT u.telefono FROM usuarios u JOIN repartidores r ON r.usuario_id = u.id
@@ -31,7 +33,11 @@ export async function telefonoPorVerificar(
     .bind(usuarioId)
     .first<{ telefono: string | null }>();
   const para = telefonoE164(f?.telefono);
-  if (!para || !destinoPermitido(env, para)) return null;
+  if (!para) return null;
+  // C-SMS-VENEZUELA: a +58 el código sale por el proveedor local; solo se exige si hoy puede salir.
+  if (vaPorSmsMasivo(env, para))
+    return (await smsMasivoDisponible(env, db)) ? para.slice(-4) : null;
+  if (!smsConfigurado(env) || !destinoPermitido(env, para)) return null;
   return para.slice(-4);
 }
 

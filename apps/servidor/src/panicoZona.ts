@@ -3,6 +3,7 @@ import { notificar } from './notificaciones';
 import { zonaPara } from './rutas/zonas';
 import { avisarLinea } from './lineas';
 import { enviarSms, telefonoE164 } from './sms';
+import { cortoPanico } from './smsVenezuelaTextos';
 
 /**
  * C-PANICO-ZONA (16 nov 2026, piloto de El Vigía y Tucaní; aplica a todos los países).
@@ -101,6 +102,7 @@ export async function avisarResponsableZona(env: Env, db: D1Database, p: Panico)
       tipo: TIPO_SMS_PANICO,
       telefono: para,
       texto,
+      textoCorto: cortoPanico(p, ROL[p.rol], z.nombre),
     })
   )
     enviados++;

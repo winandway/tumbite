@@ -63,6 +63,7 @@ import { paradasDe } from './paradasViaje';
 import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
 import { conductorDeConfianzaParaPedir } from './viajesFijos';
 import { aparatoDe } from './regalosDivoox';
+import { cortoEnvioDestinatario } from '../smsVenezuelaTextos';
 import {
   COLUMNAS_REGALO_PASAJERO,
   type FilaRegaloPasajero,
@@ -950,6 +951,12 @@ export async function avisarDestinatario(
     pedidoId: null,
     tipo: 'envio_destinatario',
     telefono: telefonoCanonico(paquete.destinatario.telefono),
+    textoCorto: cortoEnvioDestinatario(
+      idioma,
+      nombre,
+      `${sitio}${idioma === 'es' ? '/es' : ''}/ride/${codigo}`,
+      pin,
+    ),
     texto: textoSmsDestinatario(
       idioma,
       nombre,

@@ -13,6 +13,7 @@ import {
   topeSmsMasivo,
   vaPorSmsMasivo,
 } from './smsMasivo';
+import { textoParaSmsVenezuela } from './smsVenezuelaTextos';
 
 /**
  * SMS de respaldo y llamadas con número oculto, por Twilio. Como dicen los estudios: el push no
@@ -208,6 +209,8 @@ export async function enviarSms(
     tipo: string;
     telefono: string | null;
     texto: string;
+    /** C-SMS-VENEZUELA-TEXTOS: la versión de un solo SMS para el proveedor de Venezuela. */
+    textoCorto?: string;
   },
 ): Promise<boolean> {
   const para = telefonoE164(a.telefono);
@@ -248,6 +251,8 @@ export async function enviarSms(
     }
   }
   const id = nuevoId();
+  // C-SMS-VENEZUELA-TEXTOS: sin montos ni datos de pago, sin acentos y en un solo SMS.
+  let bloqueado: string | null = null;
   // Por dónde se intenta, en orden. El pánico a Venezuela tiene respaldo en Twilio si el local falla.
   const caminos: string[] = local
     ? [PROVEEDOR_SMSMASIVO, ...(dePanico && smsConfigurado(env) ? [proveedorSms(env).nombre] : [])]
@@ -263,8 +268,15 @@ export async function enviarSms(
           anotarErrorSmsMasivo(`tope diario alcanzado (${tope})`);
           throw new Error(`tope diario de SMS a Venezuela alcanzado (${tope})`);
         }
+        const listo = textoParaSmsVenezuela(a.textoCorto ?? a.texto);
+        if (listo.bloqueado) {
+          bloqueado = listo.bloqueado;
+          throw new Error(
+            `el SMS «${a.tipo}» no sale por el proveedor de Venezuela: ${listo.bloqueado === 'dinero' ? 'lleva montos o datos de pago' : 'no cabe en un solo SMS'}`,
+          );
+        }
         try {
-          referencia = await enviarPorSmsMasivo(env, para, a.texto, id);
+          referencia = await enviarPorSmsMasivo(env, para, listo.texto, id);
         } catch (e) {
           anotarErrorSmsMasivo(String(e));
           throw e;
@@ -288,9 +300,17 @@ export async function enviarSms(
   }
   await db
     .prepare(
-      "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado, proveedor) VALUES (?, ?, ?, ?, 'error', ?)",
+      'INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado, proveedor) VALUES (?, ?, ?, ?, ?, ?)',
     )
-    .bind(id, a.usuarioId, a.pedidoId, a.tipo, caminos[0] ?? null)
+    // Un texto frenado por la compuerta no gastó nada: queda «bloqueado» y sin proveedor (no cuenta en el tope).
+    .bind(
+      id,
+      a.usuarioId,
+      a.pedidoId,
+      a.tipo,
+      bloqueado ? 'bloqueado' : 'error',
+      bloqueado ? null : (caminos[0] ?? null),
+    )
     .run()
     .catch((e: unknown) => console.error('sms: no se pudo anotar el fallo', String(e)));
   return false;

@@ -3,6 +3,7 @@ import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { notificar, type Aviso } from '../notificaciones';
 import { enviarSms, llamarConVoz } from '../sms';
+import { cortoPaqueteEmpresa } from '../smsVenezuelaTextos';
 import type { Ctx } from './autorizacion';
 
 /**
@@ -583,6 +584,7 @@ export async function invitarDestinatarios(env: Env, db: D1Database, envioIds: s
         tipo: 'flex_invitacion',
         telefono: f.tel,
         texto,
+        textoCorto: cortoPaqueteEmpresa(idioma, f.empresa, enlace),
       });
     if (f.correo)
       await enviarCorreo(env, {
