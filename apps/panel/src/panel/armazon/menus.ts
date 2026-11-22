@@ -1,4 +1,5 @@
 import {
+  BellRing,
   Flag,
   BadgePercent,
   Bike,
@@ -90,6 +91,8 @@ export const ICONOS_MENU = {
   lines: Route,
   // C-CAMILA-BUZON: el buzón de Camila, la asistente de soporte.
   camila: MessagesSquare,
+  // C-REZAGADOS: los recordatorios de registro que manda Camila.
+  'signup-reminders': BellRing,
   approvals: ClipboardCheck,
   rides: Navigation,
   moto: Bike,
@@ -279,7 +282,16 @@ export function gruposAdmin(
       [
         [
           g.operacion,
-          ['inicio', 'orders', 'tickets', 'camila', 'moderation', 'approvals', 'verifications'],
+          [
+            'inicio',
+            'orders',
+            'tickets',
+            'camila',
+            'signup-reminders',
+            'moderation',
+            'approvals',
+            'verifications',
+          ],
         ],
         [g.personas, ['customers', 'restaurants', 'drivers', 'lines', 'signups']],
         [

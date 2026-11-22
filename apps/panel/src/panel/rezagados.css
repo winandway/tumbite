@@ -1,0 +1,191 @@
+/* C-REZAGADOS: «Recordatorios de registro» y la ventana «Enviar mensaje» de la ficha. Sobrio: borde
+   fino, sin franjas de color ni degradados. */
+.rezagados .rez-tarjeta {
+  margin: 0 0 16px;
+}
+.rezagados .rez-tarjeta h3 {
+  margin: 0 0 4px;
+}
+.rez-franja {
+  border: 1px solid #d0d2d6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  background: #f6f6f7;
+}
+.rez-franja p {
+  margin: 4px 0;
+}
+.rez-sin-marco {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.rez-guardar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+}
+.rez-buscar {
+  font: inherit;
+  width: min(360px, 100%);
+  padding: 10px 12px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  margin: 6px 0 8px;
+}
+.rez-zonas {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.rez-zonas li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid #e6e6e6;
+}
+.rez-zonas li:last-child {
+  border-bottom: 0;
+}
+.rez-zona-nombre {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rez-modos {
+  display: inline-flex;
+  border: 1px solid #d0d2d6;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.rez-modo {
+  font: inherit;
+  font-size: 0.9rem;
+  border: 0;
+  border-right: 1px solid #d0d2d6;
+  background: #fff;
+  color: #101010;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rez-modo:last-child {
+  border-right: 0;
+}
+.rez-modo.activo {
+  background: #101010;
+  color: #fff;
+  font-weight: 700;
+}
+.rez-modo.activo.rez-modo-encendido {
+  background: #0d7a3a;
+}
+.rez-modo:disabled {
+  cursor: default;
+}
+.rez-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0 16px;
+  margin: 10px 0 4px;
+}
+.rez-rejilla .campo small {
+  color: #666b73;
+}
+.rez-ambito {
+  max-width: 420px;
+  margin-top: 12px;
+}
+.rez-idiomas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.rez-idioma h4 {
+  margin: 4px 0 8px;
+}
+.rez-idioma textarea {
+  resize: vertical;
+}
+.rez-casi {
+  color: #c20a1a;
+}
+.rez-tabla .rez-celda-texto {
+  white-space: normal;
+  min-width: 220px;
+}
+.rez-rol {
+  display: block;
+}
+.rez-velo {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 16, 16, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 60;
+}
+.rez-dialogo {
+  background: #fff;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  padding: 20px;
+  width: min(480px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.rez-dialogo.ancho {
+  width: min(640px, 100%);
+}
+.rez-dialogo h2 {
+  margin-top: 0;
+}
+.rez-dialogo-botones {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.rez-canales {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+.rez-vista {
+  border: 1px solid #d0d2d6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: #f6f6f7;
+}
+.rez-vista p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rez-resultados {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  gap: 6px;
+}
+.rez-sin-marco legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0;
+  margin: 0 0 4px;
+}

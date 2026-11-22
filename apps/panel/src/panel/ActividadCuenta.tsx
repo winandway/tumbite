@@ -11,6 +11,7 @@ import { pedir } from './api';
 import { nombreEstado } from './BuscadorSuper';
 import { Insignia } from './diseno/Insignia';
 import { useHora } from './horario';
+import { mensajeDeLinea, palabraEstado, tonoMensaje } from './rezagadosTextos';
 
 /**
  * C-RASTRO (22 nov 2026, Richard): la actividad de una cuenta en su ficha del superadmin. De dónde
@@ -126,6 +127,7 @@ const T = {
       pedido_cliente: 'Pedido como cliente',
       chat: 'Habló con soporte',
       equipo: 'Cambio del equipo',
+      mensaje: 'Mensaje de registro',
     },
     fotos: {
       cara: 'cara',
@@ -205,6 +207,7 @@ const T = {
       pedido_cliente: 'Order as customer',
       chat: 'Talked to support',
       equipo: 'Team change',
+      mensaje: 'Sign-up message',
     },
     fotos: {
       cara: 'face',
@@ -232,9 +235,16 @@ const nombrePaso = (p: string, idioma: Idioma) => {
   return n ? enIdioma(n, idioma) : p;
 };
 
-export function textoEvento(evento: string, tipo: string, idioma: Idioma): string {
+export function textoEvento(
+  evento: string,
+  tipo: string,
+  idioma: Idioma,
+  detalle: string | null = null,
+): string {
   const t = enIdioma(T, idioma);
   if (tipo === 'paso' && NOMBRES.has(evento)) return nombrePaso(evento, idioma);
+  // C-REZAGADOS: «Camila le envió un correo: recordatorio de sus fotos».
+  if (tipo === 'mensaje') return mensajeDeLinea(evento, detalle, idioma).texto;
   const [clave, resto] = evento.split(':') as [string, string | undefined];
   const eventos = new Map(Object.entries(t.eventos));
   const base = eventos.get(clave) ?? clave;
@@ -244,7 +254,16 @@ export function textoEvento(evento: string, tipo: string, idioma: Idioma): strin
   return `${base} ${fotos.get(resto) ?? otros.get(resto) ?? resto}`;
 }
 
-export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
+export function ActividadCuenta({
+  ruta,
+  idioma,
+  recarga = 0,
+}: {
+  ruta: string;
+  idioma: Idioma;
+  /** Sube cuando la ficha cambió algo que sale en la actividad (C-REZAGADOS: un mensaje enviado). */
+  recarga?: number;
+}) {
   const t = enIdioma(T, idioma);
   const h = useHora(idioma);
   // La respuesta se guarda con la ruta que la pidió: al cambiar de cuenta no se muestra la anterior.
@@ -263,7 +282,7 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
     return () => {
       vivo = false;
     };
-  }, [ruta]);
+  }, [ruta, recarga]);
   const actual = res?.ruta === ruta ? res : null;
   const a = actual?.actividad ?? null;
   const error = actual?.error ?? '';
@@ -342,6 +361,8 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
       const [n = '0', canal = ''] = d.split('|');
       return [t.mensajes(Number(n)), canal].filter(Boolean).join(' · ');
     }
+    // El estado del mensaje va en su insignia; aquí solo el motivo si no salió.
+    if (tipo === 'mensaje') return mensajeDeLinea('', d, idioma).motivo || null;
     return d
       .split(' · ')
       .map((x) => comprobacion.get(x) ?? otros.get(x) ?? nombreEstado(x, idioma))
@@ -396,7 +417,10 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
           {linea.map((p, i) => (
             <li key={`${p.evento}-${p.fecha}-${i}`} className={`ficha-paso-${p.tipo}`}>
               <time dateTime={p.fecha}>{h.fecha(p.fecha, null, 'hora')}</time>
-              <strong>{textoEvento(p.evento, p.tipo, idioma)}</strong>
+              <strong>{textoEvento(p.evento, p.tipo, idioma, p.detalle)}</strong>
+              {p.tipo === 'mensaje' ? (
+                <EstadoMensajeLinea detalle={p.detalle} idioma={idioma} />
+              ) : null}
               {detalle(p.detalle, p.tipo) || p.quien ? (
                 <span>
                   {[detalle(p.detalle, p.tipo), p.quien ? `${t.por} ${p.quien}` : null]
@@ -421,5 +445,16 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
         </button>
       ) : null}
     </section>
+  );
+}
+
+/** El estado de un mensaje de registro en la línea de tiempo, con su color (verde salió, rojo falló). */
+function EstadoMensajeLinea({ detalle, idioma }: { detalle: string | null; idioma: Idioma }) {
+  const estado = (detalle ?? '').split('|')[2] ?? '';
+  if (!estado) return null;
+  return (
+    <Insignia tono={tonoMensaje(estado)} testId="mensaje-estado">
+      {palabraEstado(estado, idioma)}
+    </Insignia>
   );
 }

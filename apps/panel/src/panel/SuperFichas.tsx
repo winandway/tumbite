@@ -24,6 +24,8 @@ import {
   HistorialCorreo,
 } from './CorregirCorreo';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
+import { EnviarMensaje } from './EnviarMensaje';
+import { usePermisos } from './permisosPanel';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { usePreferencias } from './usePreferencias';
 import { FiltroPapeles, InsigniaPapeles, PapelesConductor } from './SuperPapeles';
@@ -287,6 +289,7 @@ const T_SUSPENDER = {
     mas: 'Más acciones de la cuenta',
     borrarCuenta: 'Borrar la cuenta',
     cambiarCiudad: 'Cambiar ciudad',
+    enviarMensaje: 'Enviar mensaje',
     confirmarBorrar:
       'Se borran sus datos personales (igual que cuando la persona la borra desde la app) y no se puede deshacer. Escribe BORRAR para confirmar:',
     motivoBorrar: 'Motivo del borrado (queda en el registro, con tu nombre y la hora):',
@@ -305,6 +308,7 @@ const T_SUSPENDER = {
     mas: 'More account actions',
     borrarCuenta: 'Delete the account',
     cambiarCiudad: 'Change city',
+    enviarMensaje: 'Send message',
     confirmarBorrar:
       'Their personal data is deleted (the same as when the person deletes it from the app) and this can’t be undone. Type DELETE to confirm:',
     motivoBorrar: 'Reason for the deletion (kept in the log, with your name and the time):',
@@ -321,11 +325,16 @@ function BotonSuspender({
   recargar,
   ciudad,
   esPrueba,
+  rol,
+  alMensaje,
 }: {
   id: string;
   activo: boolean;
   idioma: Idioma;
   recargar: () => void;
+  /** C-REZAGADOS: «Enviar mensaje» a esta cuenta (y qué hacer después de enviarlo). */
+  rol?: 'repartidor' | 'cliente';
+  alMensaje?: () => void;
   /** C-CUENTA-PRUEBA: la marca de cuenta de prueba de hoy. */
   esPrueba?: boolean;
   /** C-CAMBIAR-CIUDAD-ADMIN: solo en la ficha del repartidor (su ciudad de hoy). */
@@ -334,6 +343,8 @@ function BotonSuspender({
   const t = enIdioma(T_SUSPENDER, idioma);
   const [error, setError] = useState('');
   const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
+  const [escribiendo, setEscribiendo] = useState(false);
+  const puedeEscribir = usePermisos().puedeVer('tickets.responder') && Boolean(rol);
   const [aviso, setAviso] = useState('');
   const [borrada, setBorrada] = useState(false);
   // C-BORRAR-DESDE-SUPERADMIN: el mismo borrado de la app, escondido en los tres puntos.
@@ -389,6 +400,9 @@ function BotonSuspender({
         <MenuTresPuntos
           etiqueta={t.mas}
           opciones={[
+            ...(puedeEscribir
+              ? [{ texto: t.enviarMensaje, alTocar: () => setEscribiendo(true) }]
+              : []),
             ...(ciudad !== undefined
               ? [{ texto: t.cambiarCiudad, alTocar: () => setCambiandoCiudad(true) }]
               : []),
@@ -404,6 +418,15 @@ function BotonSuspender({
         </span>
       ) : null}
       {aviso ? <strong role="status"> {aviso}</strong> : null}
+      {escribiendo && rol ? (
+        <EnviarMensaje
+          id={id}
+          rol={rol}
+          idioma={idioma}
+          alCerrar={() => setEscribiendo(false)}
+          alEnviar={() => alMensaje?.()}
+        />
+      ) : null}
       {cambiandoCiudad && ciudad !== undefined ? (
         <CambiarCiudadConductor
           id={id}
@@ -872,6 +895,8 @@ export function SuperRepartidor({
   const { x, error, recargar } = useCargar<{ repartidor: Repartidor }>(
     `/datos/admin/repartidores/${id}`,
   );
+  // C-REZAGADOS: después de «Enviar mensaje» la actividad se vuelve a leer.
+  const [vueltaActividad, setVueltaActividad] = useState(0);
   async function revisar(cambios: Record<string, unknown>) {
     await pedir('PATCH', `/datos/admin/repartidores/${id}`, cambios);
     recargar();
@@ -913,6 +938,8 @@ export function SuperRepartidor({
         recargar={recargar}
         ciudad={r.ciudad}
         esPrueba={r.esPrueba}
+        rol="repartidor"
+        alMensaje={() => setVueltaActividad((n) => n + 1)}
       />
       <HistorialCorreo lista={r.historialCorreo} idioma={idioma} />
       <p>
@@ -1100,7 +1127,11 @@ export function SuperRepartidor({
         </div>
       </div>
       {/* C-RASTRO: de dónde vino el alta, qué pasos dio y todo lo que ha hecho. */}
-      <ActividadCuenta ruta={`/datos/admin/repartidores/${id}/actividad`} idioma={idioma} />
+      <ActividadCuenta
+        ruta={`/datos/admin/repartidores/${id}/actividad`}
+        idioma={idioma}
+        recarga={vueltaActividad}
+      />
       <div className="tarjeta-form">
         <h2>{t.historial}</h2>
         <ul className="super-lista">
@@ -1215,6 +1246,7 @@ type Cliente = {
 export function SuperCliente({ base, id, idioma }: { base: string; id: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const { x, error, recargar } = useCargar<{ cliente: Cliente }>(`/datos/admin/clientes/${id}`);
+  const [vueltaActividad, setVueltaActividad] = useState(0);
   if (!x) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const c = x.cliente;
   return (
@@ -1231,6 +1263,8 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         idioma={idioma}
         recargar={recargar}
         esPrueba={c.esPrueba}
+        rol="cliente"
+        alMensaje={() => setVueltaActividad((n) => n + 1)}
       />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
@@ -1290,7 +1324,11 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
       </div>
       <HistorialCorreo lista={c.historialCorreo} idioma={idioma} />
       {/* C-RASTRO: de dónde vino el alta, qué pasos dio y todo lo que ha hecho. */}
-      <ActividadCuenta ruta={`/datos/admin/clientes/${id}/actividad`} idioma={idioma} />
+      <ActividadCuenta
+        ruta={`/datos/admin/clientes/${id}/actividad`}
+        idioma={idioma}
+        recarga={vueltaActividad}
+      />
       <div className="tarjeta-form">
         <h2>{t.historial}</h2>
         <ul className="super-lista">

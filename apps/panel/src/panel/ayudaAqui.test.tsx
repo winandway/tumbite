@@ -36,6 +36,8 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperLineas.tsx', 'driver-lines'],
   ['SuperBanners.tsx', 'app-banners'],
   ['SuperCamila.tsx', 'camila-support-inbox'],
+  ['SuperRezagados.tsx', 'signup-reminders'],
+  ['EnviarMensaje.tsx', 'signup-reminders'],
   ['CambiarCiudadConductor.tsx', 'change-driver-city'],
   ['CorregirCorreo.tsx', 'fix-account-email'],
   ['SuperFichas.tsx', 'test-accounts'],

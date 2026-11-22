@@ -78,6 +78,7 @@ import { SuperAgentes } from './SuperAgentes';
 import { SuperReferidosEquipos } from './SuperReferidosEquipos';
 import { SuperLineas } from './SuperLineas';
 import { SuperCamila } from './SuperCamila';
+import { SuperRezagados } from './SuperRezagados';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
 import { SuperViajesFijos } from './SuperViajesFijos';
@@ -199,6 +200,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/lines') return <SuperLineas idioma={idioma} />;
   // C-CAMILA-BUZON: el buzón de Camila (casos, conversaciones, aprendizaje, líderes y ajustes).
   if (sub === '/camila') return <SuperCamila idioma={idioma} />;
+  // C-REZAGADOS: Camila le recuerda su paso a quien se quedó a medio registro (por zona).
+  if (sub === '/signup-reminders') return <SuperRezagados base={base} idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
   // C-RASTRO: el embudo del registro.
   if (sub === '/signups') return <SuperEmbudo idioma={idioma} />;

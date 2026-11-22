@@ -39,6 +39,17 @@ export const SINONIMOS_SECCIONES: Readonly<Record<string, Palabras>> = {
     es: ['asistente', 'chat de soporte', 'buzón', 'conversaciones'],
     en: ['assistant', 'support chat', 'conversations'],
   },
+  'signup-reminders': {
+    es: [
+      'recordatorios',
+      'rezagados',
+      'registro a medias',
+      'medio registro',
+      'plantillas',
+      'recordar',
+    ],
+    en: ['reminders', 'stalled sign-ups', 'unfinished sign-up', 'templates', 'nudge'],
+  },
   moderation: {
     es: ['moderación', 'denuncias', 'reportados', 'contenido reportado', 'bloquear'],
     en: ['moderation', 'reports', 'reported', 'flagged', 'block'],

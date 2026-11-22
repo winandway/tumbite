@@ -97,6 +97,8 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   tickets: 'tickets.ver',
   // C-CAMILA-BUZON: el buzón de Camila es parte del soporte.
   camila: 'tickets.ver',
+  // C-REZAGADOS: los recordatorios de registro son parte del soporte (guardar pide tickets.configurar).
+  'signup-reminders': 'tickets.ver',
   // C-MODERACION: la bandeja de reportes de mensajes y reseñas.
   moderation: 'tickets.ver',
   approvals: ['dinero.solicitar', 'dinero.ver', 'dinero.aprobar'],
