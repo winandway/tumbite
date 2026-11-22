@@ -55,4 +55,11 @@ export const MENSAJES_EN_CAMILA: [string, string][] = [
     'Hoy no podemos recibir más capturas. Escribe «sin captura» y el reporte queda igual.',
     'We can’t take more screenshots today. Write “no screenshot” and the report still goes through.',
   ],
+  // C-REZAGADOS: recordatorios de registro y «Enviar mensaje» de la ficha.
+  [
+    'Cada recordatorio va después del anterior: revisa las horas.',
+    'Each reminder goes after the previous one: check the hours.',
+  ],
+  ['La hora de inicio va antes que la de fin.', 'The start time goes before the end time.'],
+  ['Escribe el mensaje o elige una plantilla.', 'Write the message or pick a template.'],
 ];

@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-object-injection -- las claves son pasos, idiomas y zonas de listas propias, validadas con zod */
 import { momentoEn } from '@tumbite/compartido';
 import { z } from 'zod';
 import type { Env } from './env';
@@ -331,7 +332,9 @@ const SQL_CANDIDATOS = (zonas: string[]) => `
          u.sms_consentido_en, z.id AS zona, z.nombre AS zona_nombre, z.zona_horaria,
          (SELECT group_concat(e.paso) FROM embudo_cuenta e WHERE e.usuario_id = u.id) AS pasos,
          (SELECT MAX(e.creado_en) FROM embudo_cuenta e WHERE e.usuario_id = u.id) AS ultimo_paso,
-         EXISTS (SELECT 1 FROM miembros_equipo m WHERE m.usuario_id = u.id) AS en_linea,
+         -- Está en una línea quien es miembro o quien la lidera (al líder no se le pide «únete a tu línea»).
+         (EXISTS (SELECT 1 FROM miembros_equipo m WHERE m.usuario_id = u.id)
+           OR EXISTS (SELECT 1 FROM equipos ql WHERE ql.lider_id = u.id)) AS en_linea,
          EXISTS (SELECT 1 FROM equipos q JOIN lineas l ON l.equipo_id = q.id
                   WHERE q.zona_id = z.id AND q.activo = 1) AS zona_con_lineas,
          EXISTS (SELECT 1 FROM rezagados_bajas b WHERE b.usuario_id = u.id) AS baja
@@ -480,7 +483,8 @@ type Envio = {
   asunto: string;
   texto: string;
   sms: string;
-  aviso: { titulo: string; cuerpo: string };
+  /** El aviso de la app, en el idioma de cada aparato. */
+  aviso: (i: Idioma) => { titulo: string; cuerpo: string };
   actorId?: string | null;
 };
 
@@ -548,8 +552,8 @@ export async function enviarMensajeRegistro(env: Env, db: D1Database, e: Envio) 
         }
       }
     } else {
-      const r = await notificar(env, db, e.usuarioId, () => ({
-        ...e.aviso,
+      const r = await notificar(env, db, e.usuarioId, (i) => ({
+        ...e.aviso(i),
         datos: { tipo: 'registro', paso: e.paso },
       }));
       if (!r.enviados) {
@@ -572,7 +576,10 @@ export async function enviarMensajeRegistro(env: Env, db: D1Database, e: Envio) 
         estado,
         detalle.slice(0, 200),
         referencia,
-        (canal === 'sms' ? e.sms : canal === 'aviso' ? e.aviso.cuerpo : e.texto).slice(0, 1500),
+        (canal === 'sms' ? e.sms : canal === 'aviso' ? e.aviso(e.idioma).cuerpo : e.texto).slice(
+          0,
+          1500,
+        ),
         e.actorId ?? null,
       )
       .run();
@@ -612,7 +619,7 @@ export function envioDePlantilla(
     asunto: llenar(pl.asunto, d),
     texto: llenar(pl.texto, d),
     sms: llenar(pl.sms, d),
-    aviso: AVISO[paso][p.idioma],
+    aviso: (i) => AVISO[paso][i],
   };
 }
 

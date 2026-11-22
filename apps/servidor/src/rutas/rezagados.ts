@@ -39,7 +39,7 @@ function exigirAlcanceTotal(c: Ctx) {
     );
 }
 
-rezagadosRutas.get('/admin/rezagados', async (c) => {
+rezagadosRutas.get('/admin/camila/recordatorios', async (c) => {
   exigir(c, 'admin');
   exigirAlcanceTotal(c);
   const db = base(c);
@@ -86,7 +86,7 @@ rezagadosRutas.get('/admin/rezagados', async (c) => {
   });
 });
 
-rezagadosRutas.put('/admin/rezagados', async (c) => {
+rezagadosRutas.put('/admin/camila/recordatorios', async (c) => {
   const yo = exigir(c, 'admin');
   exigirAlcanceTotal(c);
   const d = await leerCuerpo(c, esquemaAjustesRezagados);
@@ -128,7 +128,7 @@ const cuerpoMensaje = z.object({
   soloVista: z.boolean().optional(),
 });
 
-rezagadosRutas.post('/admin/usuarios/:id/mensaje', async (c) => {
+rezagadosRutas.post('/admin/camila/recordatorios/:id/mensaje', async (c) => {
   const yo = exigir(c, 'admin');
   const d = await leerCuerpo(c, cuerpoMensaje);
   const db = base(c);
@@ -168,11 +168,10 @@ rezagadosRutas.post('/admin/usuarios/:id/mensaje', async (c) => {
     (idioma === 'en' ? 'A message from Divoox' : 'Un mensaje de Divoox');
   // El SMS de un texto libre es el mismo texto, recortado a un SMS.
   const sms = d.texto ? texto.slice(0, 160) : (deFabrica?.sms ?? texto.slice(0, 160));
-  const aviso =
-    d.texto || !deFabrica
-      ? { titulo: asunto.slice(0, 60), cuerpo: texto.slice(0, 140) }
-      : deFabrica.aviso;
-  if (d.soloVista) return c.json({ vista: { asunto, texto, sms, aviso, idioma } });
+  const fijo = { titulo: asunto.slice(0, 60), cuerpo: texto.slice(0, 140) };
+  // Un texto libre se manda tal como lo escribió el equipo; una plantilla, en el idioma de cada aparato.
+  const aviso = d.texto || !deFabrica ? () => fijo : deFabrica.aviso;
+  if (d.soloVista) return c.json({ vista: { asunto, texto, sms, aviso: aviso(idioma), idioma } });
   const resultados = await enviarMensajeRegistro(c.env, db, {
     usuarioId: u.id,
     rol: u.rol,

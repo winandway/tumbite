@@ -162,7 +162,7 @@ describe('C-REZAGADOS: la vuelta del reloj', () => {
     await correrRezagados(env(m), m.DB);
     expect(enviados).toHaveLength(0);
     expect(await mensajes(m)).toHaveLength(0);
-    const r = await m.llamar('GET', '/datos/admin/rezagados', undefined, admin.token);
+    const r = await m.llamar('GET', '/datos/admin/camila/recordatorios', undefined, admin.token);
     expect(r.estado).toBe(200);
     const fila = (r.datos.lista as { id: string; paso: string; toca: number; modo: string }[]).find(
       (x) => x.id === c.id,
@@ -399,6 +399,39 @@ describe('C-REZAGADOS: la vuelta del reloj', () => {
     });
   });
 
+  it('donde hay líneas se le recuerda unirse a la suya; al líder y a quien ya está en una, no', async () => {
+    const m = mundo();
+    const enviados = correos();
+    const listo = [
+      'foto_cara',
+      'foto_documento',
+      'foto_licencia',
+      'enviado',
+      'vehiculo',
+      'aprobado',
+      'conectado',
+    ];
+    const lider = await rezagado(m, 'repartidor', 5, listo, 'Lidera Ejemplo');
+    const miembro = await rezagado(m, 'repartidor', 5, listo, 'Miembro Ejemplo');
+    const suelto = await rezagado(m, 'repartidor', 5, listo, 'Suelta Ejemplo');
+    for (const c of [lider, miembro, suelto]) await m.confirmarCorreo(c.id);
+    // Confirmar el correo es un avance: para la prueba, que haya pasado hace cinco horas.
+    await m.DB.prepare('UPDATE embudo_cuenta SET creado_en = ?').bind(hace(5)).run();
+    await m.DB.prepare(
+      "INSERT INTO equipos (id, nombre, zona_id, lider_id, codigo) VALUES ('eq-1', 'Línea de ejemplo', ?, ?, 'EJEMPLO01')",
+    )
+      .bind(ZONA, lider.id)
+      .run();
+    await m.DB.prepare("INSERT INTO lineas (equipo_id) VALUES ('eq-1')").run();
+    await m.DB.prepare("INSERT INTO miembros_equipo (usuario_id, equipo_id) VALUES (?, 'eq-1')")
+      .bind(miembro.id)
+      .run();
+    await ajustar(m);
+    await correrRezagados(env(m), m.DB);
+    expect(enviados.map((e) => e.asunto)).toEqual([PLANTILLAS_DE_FABRICA.linea.es.asunto]);
+    expect((await mensajes(m)).every((f) => f.usuario_id === suelto.id)).toBe(true);
+  });
+
   it('la tarea está en el reloj, una vez por hora, con sus escrituras declaradas', () => {
     const t = TAREAS_RELOJ.find((x) => x.nombre === 'rezagados');
     expect(t).toMatchObject({ cada: 'hora', critica: false });
@@ -412,7 +445,7 @@ describe('C-REZAGADOS: «Enviar mensaje» desde la ficha', () => {
     const enviados = correos();
     const admin = await m.cuenta('admin', 'Soporte Divoox');
     const c = await rezagado(m, 'repartidor', 1);
-    const ruta = `/datos/admin/usuarios/${c.id}/mensaje`;
+    const ruta = `/datos/admin/camila/recordatorios/${c.id}/mensaje`;
     // Los correos del alta (confirmar el correo) no son de esta prueba.
     enviados.length = 0;
     const vista = await m.llamar(
@@ -459,14 +492,14 @@ describe('C-REZAGADOS: «Enviar mensaje» desde la ficha', () => {
     const admin = await m.cuenta('admin', 'Soporte Divoox');
     const cliente = await m.cuenta('cliente');
     const nuevos = { ...AJUSTES_REZAGADOS_DE_FABRICA, zonas: { [ZONA]: 'previa' as const } };
-    expect((await m.llamar('PUT', '/datos/admin/rezagados', nuevos, cliente.token)).estado).toBe(
-      403,
-    );
+    expect(
+      (await m.llamar('PUT', '/datos/admin/camila/recordatorios', nuevos, cliente.token)).estado,
+    ).toBe(403);
     expect(
       (
         await m.llamar(
           'PUT',
-          '/datos/admin/rezagados',
+          '/datos/admin/camila/recordatorios',
           { ...nuevos, plazosHoras: [24, 3, 72] },
           admin.token,
         )
@@ -476,13 +509,15 @@ describe('C-REZAGADOS: «Enviar mensaje» desde la ficha', () => {
       (
         await m.llamar(
           'PUT',
-          '/datos/admin/rezagados',
+          '/datos/admin/camila/recordatorios',
           { ...nuevos, topeDiario: 5000 },
           admin.token,
         )
       ).estado,
     ).toBe(400);
-    expect((await m.llamar('PUT', '/datos/admin/rezagados', nuevos, admin.token)).estado).toBe(200);
+    expect(
+      (await m.llamar('PUT', '/datos/admin/camila/recordatorios', nuevos, admin.token)).estado,
+    ).toBe(200);
     expect((await leerAjustesRezagados(m.DB)).zonas).toEqual({ [ZONA]: 'previa' });
   });
 });
