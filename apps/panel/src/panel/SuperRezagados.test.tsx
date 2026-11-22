@@ -38,6 +38,8 @@ const FABRICA: AjustesRezagados = {
   zonas: {},
   plantillas: {},
   plantillasZona: {},
+  autorizados: [],
+  enlaceCorto: 'divoox.com/go',
 };
 const DATOS = {
   ajustes: { ...FABRICA, zonas: { 'ZZ-EJEMPLO-A': 'previa' } },
@@ -276,6 +278,69 @@ describe('C-REZAGADOS · «Recordatorios de registro»', () => {
   });
 });
 
+describe('C-REZAGADOS · autorizados y dirección corta del SMS', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('guardar manda los autorizados y la dirección corta (sin ellos el servidor responde 400)', async () => {
+    const original = DATOS.ajustes;
+    DATOS.ajustes = { ...original, autorizados: ['u-9'], enlaceCorto: 'divoox.com/v' };
+    try {
+      const llamadas = servidor();
+      render(<SuperRezagados base="/panel/control-x" idioma="es" />);
+      const ritmo = await screen.findByTestId('rez-ritmo');
+      const corto = within(ritmo).getByLabelText(/^Dirección corta del SMS/);
+      await userEvent.clear(corto);
+      await userEvent.type(corto, 'divoox.com/video');
+      await userEvent.click(screen.getAllByRole('button', { name: 'Guardar los cambios' })[0]!);
+      await waitFor(() => expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(true));
+      const put = llamadas.find((l) => l.metodo === 'PUT')?.cuerpo as AjustesRezagados;
+      expect(put.autorizados).toEqual(['u-9']);
+      expect(put.enlaceCorto).toBe('divoox.com/video');
+    } finally {
+      DATOS.ajustes = original;
+    }
+  });
+
+  it('el contador del SMS cuenta con un nombre de 14 letras y la dirección corta puestos', async () => {
+    servidor();
+    render(<SuperRezagados base="/panel/control-x" idioma="es" />);
+    const caja = await screen.findByTestId('rez-plantillas');
+    const sms = within(within(caja).getByTestId('rez-plantilla-es')).getByLabelText(/^SMS/);
+    await userEvent.clear(sms);
+    await userEvent.type(sms, 'Divoox: {{nombre}, sigue: {{enlace_corto}');
+    // «Divoox: » 8 + 14 + «, sigue: » 9 + «divoox.com/go» 13 = 44.
+    expect(within(caja).getByTestId('rez-sms-largo-es').textContent).toMatch(/^44 de 160/);
+  });
+
+  it('autorizar a una persona de una zona en vista previa pide confirmación y guarda su id', async () => {
+    const llamadas = servidor();
+    render(<SuperRezagados base="/panel/control-x" idioma="es" />);
+    const lista = await screen.findByTestId('rez-lista');
+    const fila = within(lista).getAllByTestId('rez-fila')[0]!;
+    await userEvent.click(within(fila).getByLabelText('Autorizar'));
+    const dialogo = screen.getByTestId('rez-confirmar-autorizar');
+    expect(dialogo.textContent).toContain(
+      'Camila le escribirá a esta persona real en la próxima vuelta, aunque su zona siga en vista previa',
+    );
+    expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(false);
+    await userEvent.click(within(dialogo).getByRole('button', { name: 'Sí, autorizar' }));
+    await waitFor(() => expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(true));
+    const put = llamadas.find((l) => l.metodo === 'PUT')?.cuerpo as AjustesRezagados;
+    expect(put.autorizados).toEqual(['u-1']);
+    expect(put.enlaceCorto).toBe('divoox.com/go');
+    expect(put.zonas).toEqual({ 'ZZ-EJEMPLO-A': 'previa' });
+    await waitFor(() =>
+      expect(within(fila).getByTestId('rez-autorizada').textContent).toBe(
+        'Autorizada: se le escribe',
+      ),
+    );
+    expect(within(fila).getByTestId('rez-que-pasa').textContent).toBe(
+      'Le toca el 2.º recordatorio, por correo y aviso en la app',
+    );
+  });
+});
+
 describe('C-REZAGADOS · «Enviar mensaje» desde la ficha', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => vi.unstubAllGlobals());
@@ -297,7 +362,7 @@ describe('C-REZAGADOS · «Enviar mensaje» desde la ficha', () => {
     expect(screen.getByTestId('enviar-mensaje-motivo').textContent).toContain(
       'Primero toca «Ver cómo queda»',
     );
-    await userEvent.click(screen.getByLabelText('SMS'));
+    await userEvent.click(screen.getByLabelText(/^SMS/));
     await userEvent.click(screen.getByRole('button', { name: 'Ver cómo queda' }));
     const vista = await screen.findByTestId('enviar-mensaje-vista');
     expect(vista.textContent).toContain('Hola, Marina. Te faltan tus fotos.');

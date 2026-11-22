@@ -201,3 +201,19 @@
   white-space: normal;
   min-width: 260px;
 }
+.rez-autorizar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 6px;
+}
+.pd-contenido .rez-autorizar label.casilla-fila.rez-opcion:has(> input) {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+  white-space: nowrap;
+}
+.rez-enlace-corto {
+  max-width: 420px;
+}

@@ -47,6 +47,10 @@ export type AjustesRezagados = {
   zonas: Record<string, Modo>;
   plantillas: PorPaso;
   plantillasZona: Record<string, PorPaso>;
+  /** Cuentas a las que sí se les escribe aunque su zona siga en vista previa. */
+  autorizados: string[];
+  /** Lo que rellena {enlace_corto} en los SMS. */
+  enlaceCorto: string;
 };
 type FilaLista = {
   id: string;
@@ -62,6 +66,7 @@ type FilaLista = {
   toca: number | null;
   motivo: string | null;
   canales: string[];
+  autorizado?: boolean;
 };
 type Reciente = {
   creado_en: string;
@@ -132,7 +137,7 @@ const T = {
     volverFabrica: 'Volver a los de fábrica',
     plantillas: 'Plantillas',
     plantillasAyuda:
-      '{nombre} se cambia solo por el primer nombre de la persona y {enlace} por la dirección que la lleva a seguir. El correo y el aviso salen con la firma de Camila.',
+      '{nombre} se cambia solo por el primer nombre de la persona, {enlace} por la dirección completa que la lleva a seguir y {enlace_corto} por la dirección corta del SMS. El correo y el aviso salen con la firma de Camila.',
     ambito: 'Para',
     general: 'General (todas las zonas)',
     espanol: 'Español',
@@ -140,7 +145,19 @@ const T = {
     asunto: 'Asunto del correo',
     texto: 'Texto del correo',
     sms: 'SMS',
-    caracteres: (n: number) => `${n} de 160 caracteres`,
+    caracteres: (n: number) =>
+      `${n} de 160 caracteres, con un nombre de 14 letras y la dirección corta ya puestos`,
+    enlaceCorto: 'Dirección corta del SMS',
+    enlaceCortoAyuda:
+      'Es lo que rellena {enlace_corto}. Cada letra cuenta dentro de los 160 del SMS; puedes cambiarla por la del video.',
+    autorizar: 'Autorizar',
+    autorizada: 'Autorizada: se le escribe',
+    autorizarTitulo: (n: string) => `¿Autorizar a ${n}?`,
+    autorizarTexto:
+      'Camila le escribirá a esta persona real en la próxima vuelta, aunque su zona siga en vista previa. Se guarda en cuanto confirmas.',
+    siAutorizar: 'Sí, autorizar',
+    autorizadaOk: 'Guardado: se le escribe a esta persona.',
+    desautorizadaOk: 'Guardado: ya no se le escribe a esta persona.',
     deFabricaEstado: 'Es la de fábrica.',
     cambiadaEstado: 'La cambió el equipo.',
     usaGeneral: 'Esta zona usa la general. Si la cambias aquí, la zona tendrá la suya.',
@@ -186,6 +203,7 @@ const T = {
     sinNombre: 'Cuenta sin nombre',
     error: {
       numero: (campo: string) => `Revisa «${campo}»: tiene que ser un número entero válido.`,
+      enlaceCorto: 'La dirección corta del SMS va de 4 a 60 caracteres.',
       orden: 'Cada recordatorio va después del anterior: revisa las horas.',
       horario: 'La hora de inicio va antes que la de fin.',
       plantilla: (paso: string, idioma: string, campo: string, min: number, max: number) =>
@@ -234,7 +252,7 @@ const T = {
     volverFabrica: 'Back to defaults',
     plantillas: 'Templates',
     plantillasAyuda:
-      '{nombre} is replaced by the person’s first name and {enlace} by the link that takes them to continue. The email and the notification go out signed by Camila.',
+      '{nombre} is replaced by the person’s first name, {enlace} by the full link that takes them to continue and {enlace_corto} by the SMS short link. The email and the notification go out signed by Camila.',
     ambito: 'For',
     general: 'General (all zones)',
     espanol: 'Spanish',
@@ -242,7 +260,19 @@ const T = {
     asunto: 'Email subject',
     texto: 'Email text',
     sms: 'SMS',
-    caracteres: (n: number) => `${n} of 160 characters`,
+    caracteres: (n: number) =>
+      `${n} of 160 characters, with a 14-letter name and the short link filled in`,
+    enlaceCorto: 'SMS short link',
+    enlaceCortoAyuda:
+      'This is what fills {enlace_corto}. Every letter counts within the SMS’s 160; you can change it to the one in the video.',
+    autorizar: 'Authorize',
+    autorizada: 'Authorized: she writes to them',
+    autorizarTitulo: (n: string) => `Authorize ${n}?`,
+    autorizarTexto:
+      'Camila will write to this real person in the next round, even though their zone is still in preview. It is saved as soon as you confirm.',
+    siAutorizar: 'Yes, authorize',
+    autorizadaOk: 'Saved: she writes to this person.',
+    desautorizadaOk: 'Saved: she no longer writes to this person.',
     deFabricaEstado: 'This is the default.',
     cambiadaEstado: 'Changed by the team.',
     usaGeneral: 'This zone uses the general one. If you change it here, the zone gets its own.',
@@ -288,6 +318,7 @@ const T = {
     sinNombre: 'Unnamed account',
     error: {
       numero: (campo: string) => `Check “${campo}”: it has to be a valid whole number.`,
+      enlaceCorto: 'The SMS short link must be 4 to 60 characters.',
       orden: 'Each reminder comes after the previous one: check the hours.',
       horario: 'The start hour goes before the end hour.',
       plantilla: (paso: string, idioma: string, campo: string, min: number, max: number) =>
@@ -311,6 +342,8 @@ type Valores = {
   zonas: string;
   plantillas: string;
   plantillasZona: string;
+  autorizados: string;
+  enlaceCorto: string;
 };
 
 export function valoresDe(a: AjustesRezagados): Valores {
@@ -327,6 +360,8 @@ export function valoresDe(a: AjustesRezagados): Valores {
     zonas: JSON.stringify(a.zonas ?? {}),
     plantillas: JSON.stringify(a.plantillas ?? {}),
     plantillasZona: JSON.stringify(a.plantillasZona ?? {}),
+    autorizados: JSON.stringify(a.autorizados ?? []),
+    enlaceCorto: a.enlaceCorto ?? '',
   };
 }
 
@@ -364,6 +399,8 @@ export function ajustesDe(
     const horaDesde = entero(v.horaDesde, 0, 23, t.horaDesde);
     const horaHasta = entero(v.horaHasta, 1, 24, t.horaHasta);
     if (horaDesde >= horaHasta) return { error: t.error.horario };
+    const enlaceCorto = v.enlaceCorto.trim();
+    if (enlaceCorto.length < 4 || enlaceCorto.length > 60) return { error: t.error.enlaceCorto };
     const plantillas = leerJson<PorPaso>(v.plantillas, {});
     const plantillasZona = leerJson<Record<string, PorPaso>>(v.plantillasZona, {});
     // Lo que quedó igual a lo que heredaría no se guarda como cambio.
@@ -424,6 +461,8 @@ export function ajustesDe(
           t.ventana(limites.ventanaDiasMaxima),
         ),
         zonas: leerJson<Record<string, Modo>>(v.zonas, {}),
+        autorizados: leerJson<string[]>(v.autorizados, []),
+        enlaceCorto,
         plantillas: limpias,
         plantillasZona: limpiasZona,
       },
@@ -505,7 +544,7 @@ function FormRezagados({
   const [ok, setOk] = useState('');
   const [enviando, setEnviando] = useState(false);
   // Los mensajes salen junto a la barra que se tocó (hay una arriba y otra abajo).
-  const [donde, setDonde] = useState<'arriba' | 'abajo'>('arriba');
+  const [donde, setDonde] = useState<'arriba' | 'abajo' | 'lista'>('arriba');
   const cambiado = !igual(v, guardadoBase);
 
   async function guardar(lugar: 'arriba' | 'abajo') {
@@ -533,6 +572,39 @@ function FormRezagados({
     }
   }
 
+  /**
+   * Autorizar (o dejar de autorizar) a una persona de una zona en vista previa se guarda en el acto,
+   * sobre lo último GUARDADO: no se lleva consigo lo que el equipo tenga a medio escribir arriba.
+   */
+  async function autorizar(id: string, si: boolean) {
+    setDonde('lista');
+    setError('');
+    setOk('');
+    const r = ajustesDe(guardadoBase, datos.fabrica.plantillas, datos.limites, t);
+    if ('error' in r) return setError(r.error);
+    const antes = new Set(r.ajustes.autorizados);
+    if (si) antes.add(id);
+    else antes.delete(id);
+    const autorizados = [...antes];
+    setEnviando(true);
+    try {
+      const res = await pedir<{ ajustes: AjustesRezagados }>(
+        'PUT',
+        '/datos/admin/camila/recordatorios',
+        { ...r.ajustes, autorizados },
+      );
+      const lista = JSON.stringify(res?.ajustes?.autorizados ?? autorizados);
+      setGuardadoBase((g) => ({ ...g, autorizados: lista }));
+      b.setValores((x) => ({ ...x, autorizados: lista }));
+      setOk(si ? t.autorizadaOk : t.desautorizadaOk);
+      recargar();
+    } catch (x) {
+      setError(mensajeDe(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   const barra = (lugar: 'arriba' | 'abajo') => (
     <div className="rez-guardar">
       {cambiado ? <span className="pista">{t.sinGuardar}</span> : null}
@@ -546,7 +618,7 @@ function FormRezagados({
       </button>
     </div>
   );
-  const mensajes = (lugar: 'arriba' | 'abajo') =>
+  const mensajes = (lugar: 'arriba' | 'abajo' | 'lista') =>
     lugar !== donde ? null : (
       <>
         {error ? (
@@ -592,7 +664,15 @@ function FormRezagados({
           </>
         ) : null}
       </fieldset>
-      <Lista t={t} idioma={idioma} base={base} datos={datos} />
+      <Lista
+        t={t}
+        idioma={idioma}
+        base={base}
+        datos={datos}
+        autorizados={new Set(leerJson<string[]>(guardadoBase.autorizados, []))}
+        autorizar={puedeGuardar && !enviando ? autorizar : null}
+        mensajes={mensajes('lista')}
+      />
       <Recientes t={t} idioma={idioma} base={base} datos={datos} />
     </>
   );
@@ -799,12 +879,29 @@ function Ritmo({
           </label>
         ))}
       </div>
+      <label className="campo rez-enlace-corto">
+        {t.enlaceCorto}
+        <input
+          type="text"
+          inputMode="url"
+          maxLength={60}
+          value={valores.enlaceCorto}
+          onChange={(e) => {
+            const valor = e.target.value;
+            setValores((x) => ({ ...x, enlaceCorto: valor }));
+          }}
+        />
+        <small>
+          {t.enlaceCortoAyuda} {t.deFabrica(f.enlaceCorto)}
+        </small>
+      </label>
       <button
         type="button"
         className="boton secundario"
         onClick={() =>
           setValores((x) => ({
             ...x,
+            enlaceCorto: f.enlaceCorto,
             plazo1: f.plazo1,
             plazo2: f.plazo2,
             plazo3: f.plazo3,
@@ -934,9 +1031,17 @@ function Plantillas({
                 maxLength={160}
                 onChange={(e) => poner(lengua, 'sms', e.target.value)}
               />
-              <small className={actual[lengua].sms.length > 150 ? 'rez-casi' : undefined}>
-                {t.caracteres(actual[lengua].sms.length)}
-              </small>
+              {(() => {
+                const largo = largoSms(actual[lengua].sms, valores.enlaceCorto);
+                return (
+                  <small
+                    className={largo > 150 ? 'rez-casi' : undefined}
+                    data-testid={`rez-sms-largo-${lengua}`}
+                  >
+                    {t.caracteres(largo)}
+                  </small>
+                );
+              })()}
             </label>
           </div>
         ))}
@@ -950,6 +1055,16 @@ function Plantillas({
   );
 }
 
+/**
+ * Cuánto mide el SMS de verdad: con un nombre largo (14 letras) y la dirección corta ya puestos, y la
+ * dirección completa si la plantilla usa {enlace}.
+ */
+export const largoSms = (sms: string, enlaceCorto: string) =>
+  sms
+    .replaceAll('{nombre}', 'N'.repeat(14))
+    .replaceAll('{enlace_corto}', enlaceCorto.trim())
+    .replaceAll('{enlace}', 'https://divoox.com/driver').length;
+
 function enlaceFicha(base: string, id: string, rol: string | null) {
   return `${base}/${rol === 'repartidor' ? 'drivers' : 'customers'}/${id}`;
 }
@@ -959,18 +1074,28 @@ function Lista({
   idioma,
   base,
   datos,
+  autorizados,
+  autorizar,
+  mensajes,
 }: {
   t: Textos;
   idioma: Idioma;
   base: string;
   datos: DatosRezagados;
+  /** Lo último guardado (la fila lo dice aunque la lista todavía no se haya vuelto a leer). */
+  autorizados: ReadonlySet<string>;
+  /** null: sin permiso para guardar, o guardando. */
+  autorizar: ((id: string, si: boolean) => Promise<void>) | null;
+  mensajes: React.ReactNode;
 }) {
+  const [porAutorizar, setPorAutorizar] = useState<FilaLista | null>(null);
   const plazos = datos.ajustes.plazosHoras;
+  const esAutorizada = (p: FilaLista) => autorizados.has(p.id);
   const queHay = (p: FilaLista) => {
     if (p.toca) {
       const canales = p.canales.map((c) => nombreCanal(c, idioma).toLowerCase()).join(t.y);
       const texto = t.toca(p.toca, canales);
-      return p.modo === 'previa' ? `${texto} (${t.soloPrevia})` : texto;
+      return p.modo === 'previa' && !esAutorizada(p) ? `${texto} (${t.soloPrevia})` : texto;
     }
     if (p.motivo === 'aun_no') return t.aunNo(plazos[p.delPaso] ?? plazos[2]);
     return new Map(Object.entries(t.motivo)).get(p.motivo ?? '') ?? p.motivo ?? '';
@@ -981,6 +1106,7 @@ function Lista({
         {t.lista} ({datos.lista.length})
       </h3>
       <p className="pista">{t.listaAyuda}</p>
+      {mensajes}
       {datos.lista.length === 0 ? (
         <p className="pista">{t.listaVacia}</p>
       ) : (
@@ -1012,6 +1138,28 @@ function Lista({
                     <Insignia tono={p.modo === 'encendido' ? 'hecho' : 'pendiente'}>
                       {new Map(Object.entries(t.modo)).get(p.modo) ?? p.modo}
                     </Insignia>
+                    {p.modo === 'previa' ? (
+                      <span className="rez-autorizar">
+                        <label className="casilla-fila rez-opcion">
+                          <input
+                            type="checkbox"
+                            checked={esAutorizada(p)}
+                            disabled={!autorizar}
+                            onChange={(e) => {
+                              if (!autorizar) return;
+                              if (e.target.checked) setPorAutorizar(p);
+                              else void autorizar(p.id, false);
+                            }}
+                          />
+                          {t.autorizar}
+                        </label>
+                        {esAutorizada(p) ? (
+                          <Insignia tono="hecho" testId="rez-autorizada">
+                            {t.autorizada}
+                          </Insignia>
+                        ) : null}
+                      </span>
+                    ) : null}
                   </td>
                   <td>{nombrePasoMensaje(p.paso, idioma)}</td>
                   <td>{t.horas(p.horasQuieto)}</td>
@@ -1024,6 +1172,35 @@ function Lista({
           </table>
         </div>
       )}
+      {porAutorizar && autorizar ? (
+        <Dialogo
+          titulo={t.autorizarTitulo(porAutorizar.nombre || t.sinNombre)}
+          alCerrar={() => setPorAutorizar(null)}
+          testId="rez-confirmar-autorizar"
+        >
+          <p>{t.autorizarTexto}</p>
+          <div className="rez-dialogo-botones">
+            <button
+              type="button"
+              className="boton secundario"
+              onClick={() => setPorAutorizar(null)}
+            >
+              {t.cancelar}
+            </button>
+            <button
+              type="button"
+              className="boton"
+              onClick={() => {
+                const id = porAutorizar.id;
+                setPorAutorizar(null);
+                void autorizar(id, true);
+              }}
+            >
+              {t.siAutorizar}
+            </button>
+          </div>
+        </Dialogo>
+      ) : null}
     </section>
   );
 }
