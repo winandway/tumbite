@@ -20,6 +20,7 @@ import {
   esquemaAjustesRezagados,
   guardarAjustesRezagados,
   leerAjustesRezagados,
+  smsDeRegistroEncendido,
 } from '../rezagados';
 
 /**
@@ -82,7 +83,10 @@ rezagadosRutas.get('/admin/camila/recordatorios', async (c) => {
     })),
     recientes,
     // Qué proveedor de SMS puede entregar hoy (solo configuración; no manda nada).
-    sms: { venezuela: smsMasivoEncendido(c.env), general: smsConfigurado(c.env) },
+    sms: {
+      venezuela: smsDeRegistroEncendido(c.env) && smsMasivoEncendido(c.env),
+      general: smsDeRegistroEncendido(c.env) && smsConfigurado(c.env),
+    },
   });
 });
 

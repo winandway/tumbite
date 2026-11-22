@@ -366,7 +366,11 @@ type FilaCandidato = {
 };
 
 /** ¿Puede salir un SMS a ese teléfono hoy? (proveedor encendido para su país). Solo mira la configuración. */
+/** El SMS de los recordatorios tiene su propia llave: apagado hasta que Gerencia ponga REZAGADOS_SMS=si. */
+export const smsDeRegistroEncendido = (env: Env) => env.REZAGADOS_SMS === 'si';
+
 export function smsDisponible(env: Env, telefono: string | null): boolean {
+  if (!smsDeRegistroEncendido(env)) return false;
   const para = telefonoE164(telefono);
   if (!para) return false;
   return vaPorSmsMasivo(env, para) || (smsConfigurado(env) && destinoPermitido(env, para));

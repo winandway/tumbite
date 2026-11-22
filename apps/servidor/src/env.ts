@@ -147,6 +147,8 @@ export const esquemaEnv = z.object({
    */
   SMSMASIVO_API_KEY: z.string().min(16).optional(),
   SMSMASIVO_ENCENDIDO: z.string().optional(),
+  /** C-REZAGADOS: «si» deja salir por SMS el segundo recordatorio de registro y el SMS de «Enviar mensaje». Lo enciende Gerencia. */
+  REZAGADOS_SMS: z.string().optional(),
   SMSMASIVO_TOPE_DIA: z.string().optional(),
   /** Solo para el recorrido y las pruebas: el proveedor simulado en localhost. */
   SMSMASIVO_API_URL: z.string().optional(),

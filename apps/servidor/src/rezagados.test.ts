@@ -384,11 +384,18 @@ describe('C-REZAGADOS: la vuelta del reloj', () => {
       sms.push(new URLSearchParams(String(init.body)).get('Body') ?? '');
       return new Response(JSON.stringify({ sid: 'SM-ejemplo' }), { status: 201 });
     });
-    const conTwilio = env(m, {
+    const twilio = {
       TWILIO_ACCOUNT_SID: 'AC00000000000000000000000000000000',
       TWILIO_AUTH_TOKEN: 'token-de-prueba-0000000000000000',
       TWILIO_FROM: '+18005550100',
-    });
+    };
+    // Con el proveedor listo pero sin la llave propia de estos recordatorios, tampoco sale un SMS.
+    expect(
+      (await candidatos(env(m, twilio), m.DB, await leerAjustesRezagados(m.DB), [ZONA])).find(
+        (c) => c.id === otro.id,
+      )?.canales,
+    ).toEqual(['correo', 'aviso']);
+    const conTwilio = env(m, { ...twilio, REZAGADOS_SMS: 'si' });
     await correrRezagados(conTwilio, m.DB);
     expect(sms).toHaveLength(1);
     expect(sms[0]).toContain('Camila');
