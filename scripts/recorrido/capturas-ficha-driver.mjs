@@ -14,15 +14,15 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { CIUDAD_NEUTRA, DIRECCION, mapaSinRotulos } from './neutro.mjs';
+import { CIUDAD_NEUTRA, mapaSinRotulos } from './neutro.mjs';
 import { SQL_TASA_EJEMPLO } from './tasaEjemplo.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
 const URL = DATOS.url;
 const SALIDA = join(RAIZ, 'docs', 'tiendas', 'capturas-ficha-driver', 'originales');
-// El teléfono de la ficha: 400 × 820 puntos a 3× (1200 × 2460).
-const TELEFONO = { width: 400, height: 820 };
+// El teléfono de la ficha: 400 × 752 puntos a 3× (1200 × 2256); entra entero en la pieza de 9:16.
+const TELEFONO = { width: 400, height: 752 };
 const SOLO = (process.env.SOLO ?? '').split(',').filter(Boolean);
 const toca = (n) => !SOLO.length || SOLO.includes(n);
 
@@ -66,6 +66,8 @@ const ORIGEN = { lat: 8.6219, lng: -71.6506 };
 const ZONA_USD = 'US-FL-MIAMI';
 const ORIGEN_USD = { lat: 25.7652, lng: -80.3012 };
 const DESTINO_USD = { lat: 25.7498, lng: -80.3301 };
+// El conductor espera a unos 0,8 km de la recogida.
+const CONDUCTOR_USD = { lat: 25.7722, lng: -80.2992 };
 const VERSION_TERMINOS = /VERSION_TERMINOS = '([^']+)'/.exec(
   readFileSync(join(RAIZ, 'packages', 'compartido', 'src', 'terminos.ts'), 'utf8'),
 )[1];
@@ -79,6 +81,8 @@ const L = {
     miembros: ['Pedro Gil', 'Ana Silva', 'Luis Mora'],
     pendientes: ['Raúl Soto'],
     casa: 'Casa',
+    recogida: 'Calle Las Flores 24',
+    destino: 'Avenida Central 456',
     pregunta: '¿Cómo me uno a una línea?',
   },
   en: {
@@ -89,6 +93,8 @@ const L = {
     miembros: ['Tom Clark', 'Emma Hill', 'Luke Moore'],
     pendientes: ['Dan Wright'],
     casa: 'Home',
+    recogida: '24 Oak Street',
+    destino: '456 Central Avenue',
     pregunta: 'How do I join a line?',
   },
 };
@@ -102,6 +108,20 @@ function fotografo(idioma) {
     console.log(`✓ ${idioma}/${nombre}.png`);
   };
 }
+
+/**
+ * El enlace «¿Una empresa o un restaurante te invitó? Pega su enlace» no es de lo que habla la pieza
+ * y distrae (revisión de Gerencia, 22 nov 2026): se deja invisible SIN mover nada de su sitio, que es
+ * lo mismo que recortarlo. El resto de la pantalla queda tal cual.
+ */
+const sinEnlaceDeInvitacion = (p) =>
+  p
+    .getByText(/te invitó\? Pega su enlace|invite you\? Paste its link/)
+    .first()
+    .evaluate((x) => {
+      x.style.visibility = 'hidden';
+    })
+    .catch(() => null);
 
 const navegador = mapaSinRotulos(await chromium.launch());
 let n = 0;
@@ -162,7 +182,6 @@ async function preparar() {
 async function correr(idioma, tokens) {
   const T = L[idioma];
   const en = idioma === 'en';
-  const D = DIRECCION[idioma];
   const foto = fotografo(idioma);
   await sql(`UPDATE zonas SET nombre = '${CIUDAD_NEUTRA[idioma]}' WHERE id = '${ZONA}'`);
   await sql(
@@ -208,8 +227,22 @@ async function correr(idioma, tokens) {
 
   // 02 · Conéctate cuando quieras: el inicio, conectado y esperando viajes.
   if (toca('02')) {
-    await espera(1500);
-    await foto(d, '02-conectado');
+    // «En línea» cuenta desde que la app lo vio conectado: el reloj de la página avanza 3 h 20 min,
+    // como un conductor que lleva la tarde conectado (sus viajes de hoy ya están hechos).
+    const ctxR = await telefono(idioma, yo);
+    await ctxR.clock.install();
+    const r = await ctxR.newPage();
+    await r.goto('/driver/');
+    await r.getByTestId('estado-servicios').waitFor({ timeout: 90_000 });
+    await r.getByTestId('desconectarme').waitFor({ timeout: 30_000 });
+    await ctxR.clock.fastForward('03:20:00');
+    await r
+      .getByTestId('resumen-dia')
+      .getByText(/3h 2\dm/)
+      .waitFor({ timeout: 20_000 });
+    await sinEnlaceDeInvitacion(r);
+    await foto(r, '02-conectado');
+    await ctxR.close();
   }
 
   // 05 · Tu saldo claro: Ganancias, con el saldo y para cuántas carreras alcanza.
@@ -224,9 +257,18 @@ async function correr(idioma, tokens) {
         return ruta.fulfill({ response: r, json: { ...cuerpo, cuentasACelular: [] } });
       return ruta.fulfill({ response: r });
     });
+    // Los viajes de ejemplo de hoy, cobrados en dólares: el total de hoy no nombra la moneda de un país.
+    await sql(
+      `UPDATE viajes SET ref_monto = NULL WHERE operacion_id IN (SELECT id FROM operaciones WHERE conductor_id = '${IDS.conductor}')`,
+    );
     await d.reload();
     await tab('Ganancias', 'Earnings');
     await d.getByTestId('saldo-prepago').waitFor({ timeout: 30_000 });
+    // «Ganancias» arriba (el enlace de invitaciones queda fuera) y el total de hoy entero abajo.
+    await d
+      .getByText(en ? 'Earnings' : 'Ganancias', { exact: true })
+      .first()
+      .evaluate((x) => x.scrollIntoView({ block: 'start' }));
     await foto(d, '05-saldo');
     await ctx.unroute('**/datos/**');
   }
@@ -261,7 +303,7 @@ async function correr(idioma, tokens) {
       `UPDATE vehiculos SET marca = 'Honda', modelo = 'PCX', color = '${en ? 'Gray' : 'Gris'}', placa = 'EJ${String(m.sufijo).slice(-4).toUpperCase()}' WHERE conductor_id = '${k.id}'`,
     );
     await sql(
-      `UPDATE repartidores SET lat = ${ORIGEN_USD.lat}, lng = ${ORIGEN_USD.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${k.id}'`,
+      `UPDATE repartidores SET lat = ${CONDUCTOR_USD.lat}, lng = ${CONDUCTOR_USD.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${k.id}'`,
     );
     await pedir(
       'POST',
@@ -275,7 +317,7 @@ async function correr(idioma, tokens) {
       await pedir(
         'POST',
         '/datos/mis-direcciones',
-        { etiqueta: T.casa, direccion: D.casa, ...ORIGEN_USD },
+        { etiqueta: T.casa, direccion: T.recogida, ...ORIGEN_USD },
         c.token,
       )
     ).direccion;
@@ -287,42 +329,53 @@ async function correr(idioma, tokens) {
       ),
     });
     if (!subida.ok) throw new Error(`foto de la entrada: ${subida.status}`);
-    const cot = (
-      await pedir(
-        'POST',
-        '/datos/viajes/cotizar',
-        {
-          servicio: 'moto',
-          origen: { ...ORIGEN_USD, direccion: D.casa },
-          destino: { ...DESTINO_USD, direccion: D.destino },
-        },
-        c.token,
-      )
-    ).cotizacion;
-    const viaje = (
-      await pedir(
-        'POST',
-        '/datos/viajes',
-        { cotizacionId: cot.id, metodoPago: 'efectivo' },
-        c.token,
-      )
-    ).viaje;
-    const ctxK = await telefono(idioma, k, ORIGEN_USD);
+    const pedirViaje = async () => {
+      const cot = (
+        await pedir(
+          'POST',
+          '/datos/viajes/cotizar',
+          {
+            servicio: 'moto',
+            origen: { ...ORIGEN_USD, direccion: T.recogida },
+            destino: { ...DESTINO_USD, direccion: T.destino },
+          },
+          c.token,
+        )
+      ).cotizacion;
+      return (
+        await pedir(
+          'POST',
+          '/datos/viajes',
+          { cotizacionId: cot.id, metodoPago: 'efectivo' },
+          c.token,
+        )
+      ).viaje;
+    };
+    const ctxK = await telefono(idioma, k, CONDUCTOR_USD);
     const o = await ctxK.newPage();
-    await o.goto('/driver/');
-    await o.getByTestId('oferta-viaje').waitFor({ timeout: 90_000 });
-    if (toca('01')) await foto(o, '01-oferta');
+    if (toca('01')) {
+      const viaje = await pedirViaje();
+      await o.goto('/driver/');
+      await o.getByTestId('oferta-viaje').waitFor({ timeout: 90_000 });
+      await foto(o, '01-oferta');
+      await pedir('POST', `/datos/viajes/${viaje.id}/cancelar`, {}, c.token, {
+        'idempotency-key': `ficha-cancelar-${viaje.id}`,
+      });
+    }
     if (toca('07')) {
-      // La oferta dura segundos: si venció mientras se tomaba la foto, la app la vuelve a recibir.
+      // Otro viaje, aceptado por la ruta normal en cuanto se le ofrece (la oferta dura segundos).
+      const viaje = await pedirViaje();
       for (let i = 0; ; i++) {
+        await sql(
+          `UPDATE repartidores SET ubicacion_en = datetime('now') WHERE usuario_id = '${k.id}'`,
+        );
+        await pedir('GET', '/datos/viajes/actual', undefined, c.token);
         const ok = await pedir(
           'POST',
           `/datos/conductor/operaciones/${viaje.id}/aceptar`,
           {},
           k.token,
-          {
-            'idempotency-key': `ficha-aceptar-${i}-${Date.now().toString(36)}`,
-          },
+          { 'idempotency-key': `ficha-aceptar-${i}-${Date.now().toString(36)}` },
         ).then(
           () => true,
           () => false,
@@ -331,13 +384,12 @@ async function correr(idioma, tokens) {
         if (i > 20) throw new Error('el conductor no pudo aceptar el viaje');
         await espera(1_500);
       }
-      await o.reload();
+      await o.goto('/driver/');
       await o.getByTestId('viaje-activo').waitFor({ timeout: 60_000 });
       await o.getByTestId('recogida-foto').waitFor({ timeout: 30_000 });
       await o.getByTestId('viaje-mapa').evaluate((x) => x.scrollIntoView({ block: 'start' }));
-      await o.getByTestId('recogida-foto').click();
-      await o.getByTestId('puerta-hoja').waitFor({ timeout: 15_000 });
-      await espera(1200);
+      // La pantalla del viaje, limpia: el mapa, la dirección y la tarjeta con la foto de la entrada.
+      await o.getByTestId('viaje-mapa').evaluate((x) => x.scrollIntoView({ block: 'start' }));
       await foto(o, '07-foto-entrada');
     }
     await ctxK.close();
@@ -363,6 +415,18 @@ async function correr(idioma, tokens) {
     )
       await seccion.click();
     await d.getByTestId('vehiculo-moto').first().waitFor({ timeout: 15_000 });
+    // «Mi perfil» arriba: el enlace de invitaciones queda fuera de la vista.
+    await d
+      .getByText(en ? 'My profile' : 'Mi perfil', { exact: true })
+      .first()
+      .evaluate((x) => {
+        x.scrollIntoView({ block: 'start' });
+        // …con aire arriba: la foto de perfil es más alta que el renglón del nombre.
+        let caja = x.parentElement;
+        while (caja && caja.scrollTop === 0) caja = caja.parentElement;
+        if (caja) caja.scrollTop -= 60;
+      });
+    await sinEnlaceDeInvitacion(d);
     await foto(d, '03-moto-o-carro');
     // El inicio de las demás fotos no ofrece un servicio que esta cuenta de ejemplo no tiene.
     await sql(`DELETE FROM servicios_zona WHERE servicio_id = 'carro' AND zona_id = '${ZONA}'`);

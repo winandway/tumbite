@@ -4,13 +4,13 @@
 // docs/tiendas/capturas-ficha-driver/originales/<es|en>/ (node scripts/recorrido/capturas-ficha-driver.mjs)
 // y arma cada pieza a 1080 × 1920 (9:16, dentro de lo que pide Google Play: PNG de 24 bits sin
 // transparencia, lado largo que no pase del doble del corto, menos de 8 MB): fondo del color de
-// Driver, para quién es, titular corto (máximo seis palabras) y la pantalla dentro de un marco de
-// teléfono, sin estirarla. Una idea por imagen y la misma composición en toda la serie.
+// Driver, para quién es, titular corto (máximo seis palabras) y la pantalla entera dentro de un marco
+// de teléfono, sin estirarla ni cortarla. Una idea por imagen y la misma composición en toda la serie.
 //   → docs/tiendas/capturas-ficha-driver/finales/<es|en>/NN-nombre.png
 //   → y una copia en ~/Documents/Entregas/Divoox/ficha-driver-google-play/<es|en>/ (ENTREGA=0 la omite)
 // NO sube nada a Play Console: eso lo hace Gerencia con el dictamen del auditor de tiendas.
 // Uso: node scripts/marca/ficha-driver-google-play.mjs
-/* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion local: carpetas fijas del repositorio y de Entregas */
+/* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection, security/detect-non-literal-regexp -- guion local: carpetas fijas del repositorio y de Entregas; los nombres de color son fijos */
 import { chromium } from '@playwright/test';
 import { cpSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -35,9 +35,16 @@ export const PIEZAS = [
   ['08-camila', 'Camila *te ayuda*', 'Camila is *here to help*'],
 ];
 const ETIQUETA = { es: 'PARA CONDUCTORES', en: 'FOR DRIVERS' };
-// Colores de Divoox Driver (C-ICONOS-POR-APP): azul de logística y su azul claro de resalte.
-const FONDO = '#1F4D69';
-const RESALTE = '#7CC4EE';
+// Colores de Divoox Driver, del sistema de diseño (`MARCA.colores` en packages/compartido/src/marca.ts,
+// C-ICONOS-POR-APP): `logistica` es el fondo de la app y de su ícono; `logisticaAccion`, su azul claro.
+const marca = readFileSync(join(RAIZ, 'packages', 'compartido', 'src', 'marca.ts'), 'utf8');
+const colorDe = (nombre) => {
+  const m = new RegExp(`\\b${nombre}: '(#[0-9A-Fa-f]{6})'`).exec(marca);
+  if (!m) throw new Error(`la marca no tiene el color ${nombre}`);
+  return m[1];
+};
+const FONDO = colorDe('logistica');
+const RESALTE = colorDe('logisticaAccion');
 
 const titular = (texto) =>
   texto
@@ -60,16 +67,16 @@ for (const idioma of ['es', 'en']) {
       `<!doctype html><meta charset="utf-8"><style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&display=swap');
 html,body{margin:0;width:${W}px;height:${H}px;background:${FONDO};overflow:hidden}
-.t{box-sizing:border-box;height:410px;padding:70px 72px 0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:22px;font-family:Poppins,sans-serif;text-align:center}
+.t{box-sizing:border-box;height:400px;padding:56px 72px 0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;font-family:Poppins,sans-serif;text-align:center}
 .t i{font-style:normal;font-weight:600;font-size:30px;letter-spacing:.14em;color:${RESALTE}}
-.t span{font-weight:800;font-size:82px;line-height:1.1;color:#fff}
+.t span{font-weight:800;font-size:80px;line-height:1.1;color:#fff}
 .t b{color:${RESALTE}}
-/* El teléfono: marco negro de esquinas redondas que sigue por debajo del borde de la pieza. */
-.f{position:absolute;left:50%;top:440px;width:880px;margin-left:-440px;box-sizing:border-box;
-  padding:22px 22px 0;background:#101010;border-radius:78px 78px 0 0;
-  box-shadow:0 0 0 3px #3a3a3a, 0 30px 80px rgba(0,0,0,.35)}
-.f img{display:block;width:100%;border-radius:58px 58px 0 0}
+/* El teléfono entero: marco negro de esquinas redondas, con la pantalla completa adentro. */
+.f{position:absolute;left:50%;top:412px;width:800px;margin-left:-400px;box-sizing:border-box;
+  padding:20px;background:#101010;border-radius:76px;
+  box-shadow:0 0 0 3px #3a3a3a, 0 24px 60px rgba(0,0,0,.3)}
+.f img{display:block;width:100%;border-radius:57px}
 </style><div class="t"><i>${ETIQUETA[idioma]}</i><span>${titular(texto)}</span></div>
 <div class="f"><img src="${datos}"></div>`,
       { waitUntil: 'networkidle' },

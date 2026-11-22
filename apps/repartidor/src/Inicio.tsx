@@ -82,6 +82,7 @@ import type { ZonaDemanda } from './piezas/mapaWeb';
 import { Progreso } from './piezas/Progreso';
 import { MiniaturaPuerta } from './piezas/FotosPuerta';
 import { ResumenDia } from './piezas/ResumenDia';
+import { palabraDeHoy } from './piezas/resumenDiaLogica';
 import { SaldoInicio } from './piezas/SaldoInicio';
 import { IMG } from './piezas/recursos';
 import { textosDriver } from './piezas/textos';
@@ -1813,6 +1814,7 @@ export function Inicio() {
   // C-GANANCIAS-CARRERAS y C-GANANCIAS-EN-MANO: billetera y cobrado en mano, cada moneda aparte.
   const hoyConEnMano = resumenConEnMano(deHoy, cobrosDelPeriodo(cobrosEnMano, 'hoy', new Date()));
   const entregasHoy = hoyConEnMano.entregas + hoyConEnMano.carreras;
+  const palabraHoy = palabraDeHoy(hoyConEnMano.entregas, hoyConEnMano.carreras);
   const segundosConectado =
     estado?.conectado && conectadoDesde
       ? Math.max(0, Math.floor((tic - conectadoDesde) / 1000))
@@ -3432,6 +3434,7 @@ export function Inicio() {
           idioma={idioma}
           partes={hoyConEnMano.partes}
           entregas={entregasHoy}
+          palabra={palabraHoy}
           segundosConectado={segundosConectado}
         />
       }
@@ -3460,6 +3463,7 @@ export function Inicio() {
         idioma={idioma}
         partes={hoyConEnMano.partes}
         entregas={entregasHoy}
+        palabra={palabraHoy}
         segundosConectado={segundosConectado}
       />
       {mensajesInicio}

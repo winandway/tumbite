@@ -8,12 +8,15 @@ export function ResumenDia({
   idioma,
   partes,
   entregas,
+  palabra = 'entregas',
   segundosConectado,
 }: {
   idioma: Idioma;
   /** Lo ganado hoy: billetera (dólares) más lo cobrado en mano, un total por moneda. */
   partes: { monto: number; moneda: string }[];
   entregas: number;
+  /** C-HOY-VIAJES: «Viajes» cuando lo de hoy fueron solo viajes de pasajeros. */
+  palabra?: 'entregas' | 'viajes';
   segundosConectado: number;
 }) {
   const t = textosDriver(idioma);
@@ -46,7 +49,7 @@ export function ResumenDia({
       {/* C-GANANCIAS-EN-MANO: un total por moneda, nunca sumados entre monedas. */}
       {celda(partes.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + '), t.hoy)}
       <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
-      {celda(String(entregas), t.entregas)}
+      {celda(String(entregas), palabra === 'viajes' ? t.viajes : t.entregas)}
       <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
       {celda(`${h}h ${m}m`, t.conectadoTiempo)}
     </View>

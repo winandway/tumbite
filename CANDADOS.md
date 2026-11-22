@@ -6414,3 +6414,12 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Dónde se ve hoy:** en Driver web (divoox.com/driver) al publicar. En las apps de las tiendas entra con la próxima compilación de Driver (no se compiló: la 0.1.68 está en revisión de Google).
 - **Docs:** la captura de «Instalar desde el navegador» se rehízo (`scripts/recorrido/capturas-driver-conductor.mjs`). La guía y la captura de «Repartidor destacado» se quedan como la app de las tiendas hasta esa compilación; entonces se cambia el título de la guía y se rehace la captura con `scripts/docs/capturas-guias-faltantes.mjs solo=driver`.
 - **No tocar:** no volver a escribir «repartidor» en un texto de Driver; el cliente y el restaurante sí dicen «repartidor» cuando hablan de quien lleva su comida.
+
+## C-HOY-VIAJES: la tarjeta «Hoy» de Driver dice «Viajes» cuando solo hubo viajes (22 nov 2026, Gerencia) — todos los países
+
+- **Qué se veía:** un conductor de moto con pasajero veía «4 Entregas» en su inicio. No entregó nada: hizo viajes.
+- **Causa:** la tarjeta sumaba entregas y carreras y siempre les decía «Entregas».
+- **Arreglo:** `palabraDeHoy` (`apps/repartidor/src/piezas/resumenDiaLogica.ts`): solo viajes de pasajeros → «Viajes» / «Trips»; solo entregas, las dos cosas o nada todavía → «Entregas». `ResumenDia` recibe la palabra; `Inicio.tsx` la pasa en sus dos usos.
+- **Candado:** `apps/repartidor/src/piezas/resumenDiaLogica.test.ts`, visto en rojo antes del arreglo.
+- **Dónde se ve hoy:** Driver web al publicar; en las tiendas, con la próxima compilación de Driver (no se compiló).
+- **No tocar:** no volver a una sola palabra fija para la cuenta del día.
