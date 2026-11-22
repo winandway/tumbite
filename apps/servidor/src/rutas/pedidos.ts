@@ -1,3 +1,4 @@
+import { frenarSinCelularConfirmado } from '../telefonoVuelta';
 import { recobroDesdeAviso } from '../autorizacionVencida';
 import { direccionDelPedido } from './fotoPuerta';
 import { apartarSaldo, avisoTarjetaRegalo, saldoRegalo } from '../tarjetasRegalo';
@@ -765,6 +766,8 @@ const SIN_PAGAR_STRIPE = new Set([
 
 pedidos.post('/pedidos', async (c) => {
   const u = exigir(c, 'cliente');
+  // C-TELEFONO-AL-REGISTRARSE: antes que nada, la cuenta nueva confirma su celular.
+  await frenarSinCelularConfirmado(c.env, base(c), u.id);
   const d = await leerCuerpo(c, esquemaNuevoPedido);
   const db = base(c);
   const rest = await db

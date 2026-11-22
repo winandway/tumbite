@@ -34,7 +34,9 @@ afterEach(() => vi.unstubAllGlobals());
 // +1 (22 nov 2026, C-SMS-VENEZUELA): la pieza nueva «smsVenezuela» suma su fila del estado del canario.
 // +1 (22 nov 2026, C-RASTRO-FUENTES): la marca del relleno hacia atrás de los pasos del registro (una
 // fila, solo dentro de la migración completa).
-const TOPE_CANARIO = 1155;
+// +1 (22 nov 2026, C-SMS-GASTO): la pieza «smsGasto» cuenta los SMS cobrados de las últimas 24 h (por
+// el índice nuevo de sms_enviados por fecha: solo las filas del día).
+const TOPE_CANARIO = 1156;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

@@ -1,3 +1,4 @@
+import { frenarSinCelularConfirmado } from '../telefonoVuelta';
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
 import { UMBRALES_VIAJE_REAL } from '../viajeReal';
@@ -701,6 +702,7 @@ function claveDe(c: Ctx, accion: string, id: string): string {
 viajesPasajero.post('/viajes', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
+  await frenarSinCelularConfirmado(c.env, db, u.id);
   const d = await leerCuerpo(
     c,
     z.object({

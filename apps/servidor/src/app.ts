@@ -149,6 +149,7 @@ import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
 import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludSmsMasivo } from './smsMasivo';
+import { saludGastoSms } from './telefonoVuelta';
 import { rastroRutas } from './rutas/rastro';
 import { rezagadosRutas } from './rutas/rezagados';
 import { saludDinero } from './conciliacion';
@@ -278,6 +279,12 @@ app.use('/datos/cuentas/registro', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
+// C-TELEFONO-TOPES: el código por SMS cuesta dinero; además de los topes por cuenta, número y red del
+// día, una ráfaga desde la misma red se frena aquí. Probar el código también tiene su límite.
+app.use('/datos/cuentas/telefono/codigo', limiteIntentos(5, 60_000));
+app.use('/datos/repartidor/telefono/codigo', limiteIntentos(5, 60_000));
+app.use('/datos/cuentas/telefono/verificar', limiteIntentos(10, 60_000));
+app.use('/datos/repartidor/telefono/verificar', limiteIntentos(10, 60_000));
 app.use('/datos/equipo-interno/invitacion/*', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
@@ -375,6 +382,11 @@ app.get('/datos/salud', async (c) => {
   // C-SMS-VENEZUELA: «pendiente» mientras esté apagado; «tope» si se alcanzó el máximo del día.
   piezas.smsVenezuela = await saludSmsMasivo(c.env, c.env.DB).catch((e: unknown) => {
     console.error('salud: sms venezuela', e);
+    return 'error' as const;
+  });
+  // C-SMS-GASTO: el gasto de SMS de las últimas 24 horas contra el presupuesto del día.
+  piezas.smsGasto = await saludGastoSms(c.env, c.env.DB).catch((e: unknown) => {
+    console.error('salud: gasto de sms', e);
     return 'error' as const;
   });
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que

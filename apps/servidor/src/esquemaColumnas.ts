@@ -2320,6 +2320,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "enviados_hoy",
     "creado_en"
   ],
+  "envios_codigo_telefono": [
+    "id",
+    "usuario_id",
+    "telefono",
+    "ip",
+    "creado_en"
+  ],
   "invitaciones_conductor": [
     "id",
     "empresa_id",

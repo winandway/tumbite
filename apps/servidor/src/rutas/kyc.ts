@@ -1,3 +1,12 @@
+import {
+  CLAVE_PAISES,
+  COSTO_SMS_USD,
+  paisesApagados,
+  presupuestoSmsDia,
+  smsCobradosHoy,
+  smsSaleHoy,
+  topeCodigosDia,
+} from '../telefonoVuelta';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { guardarFoto } from '../fotoLimpia';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
@@ -874,6 +883,92 @@ kyc.put('/admin/interruptores-repartidor', async (c) => {
       .bind(d.papelesVehiculo ? '1' : '0'),
   ]);
   return c.json(d);
+});
+
+/**
+ * C-TELEFONO-POR-PAIS (22 nov 2026): el código por SMS al registrarse, país por país. Muestra si el SMS
+ * sale hoy, si la exigencia está encendida, el gasto del día contra el presupuesto y las últimas cuentas
+ * que confirmaron (o que todavía no). El teléfono, solo con sus últimos cuatro números.
+ */
+const PAISES_CODIGO = [
+  { pais: 'VE', prueba: '+584140000000' },
+  { pais: 'US', prueba: '+13055550100' },
+] as const;
+
+kyc.get('/admin/telefono-codigo', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const apagados = await paisesApagados(db);
+  const paises = await Promise.all(
+    PAISES_CODIGO.map(async ({ pais, prueba }) => ({
+      pais,
+      exigido: !apagados.has(pais),
+      smsSale: await smsSaleHoy(c.env, db, prueba),
+    })),
+  );
+  const conteo = await db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM envios_codigo_telefono WHERE creado_en >= datetime('now','-1 day')) AS codigos,
+         (SELECT COUNT(*) FROM usuarios WHERE telefono_exigido_en IS NOT NULL AND telefono_verificado_en IS NULL) AS pendientes,
+         (SELECT COUNT(*) FROM usuarios WHERE telefono_verificado_en >= datetime('now','-7 days')) AS verificadas`,
+    )
+    .first<{ codigos: number; pendientes: number; verificadas: number }>();
+  const { results } = await db
+    .prepare(
+      `SELECT id, nombre, rol, telefono, telefono_exigido_en AS exigido, telefono_verificado_en AS verificado
+         FROM usuarios
+        WHERE telefono_exigido_en IS NOT NULL OR telefono_verificado_en >= datetime('now','-30 days')
+        ORDER BY COALESCE(telefono_verificado_en, telefono_exigido_en) DESC LIMIT 50`,
+    )
+    .all<{
+      id: string;
+      nombre: string;
+      rol: string;
+      telefono: string | null;
+      exigido: string | null;
+      verificado: string | null;
+    }>();
+  const smsHoy = await smsCobradosHoy(db);
+  return c.json({
+    paises,
+    codigosHoy: Number(conteo?.codigos ?? 0),
+    topeCodigos: topeCodigosDia(c.env),
+    pendientes: Number(conteo?.pendientes ?? 0),
+    verificadas7Dias: Number(conteo?.verificadas ?? 0),
+    gasto: {
+      smsHoy,
+      usdHoy: Math.round(smsHoy * COSTO_SMS_USD * 100) / 100,
+      presupuestoUsd: presupuestoSmsDia(c.env),
+    },
+    cuentas: results.map((r) => ({
+      id: r.id,
+      nombre: r.nombre,
+      rol: r.rol,
+      ultimos:
+        String(r.telefono ?? '')
+          .replace(/\D/g, '')
+          .slice(-4) || null,
+      exigido: r.exigido,
+      verificado: r.verificado,
+    })),
+  });
+});
+
+kyc.put('/admin/telefono-codigo', async (c) => {
+  exigir(c, 'admin');
+  const d = await leerCuerpo(c, z.object({ pais: z.enum(['VE', 'US']), exigido: z.boolean() }));
+  const db = base(c);
+  const apagados = await paisesApagados(db);
+  if (d.exigido) apagados.delete(d.pais);
+  else apagados.add(d.pais);
+  await db
+    .prepare(
+      "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+    )
+    .bind(CLAVE_PAISES, JSON.stringify(Object.fromEntries([...apagados].map((p) => [p, false]))))
+    .run();
+  return c.json({ ok: true, pais: d.pais, exigido: d.exigido });
 });
 
 const esquemaRevision = z.object({

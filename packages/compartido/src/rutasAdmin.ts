@@ -310,6 +310,9 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PUT /admin/despacho-catalogo/:zona': 'config.editar',
   'GET /admin/interruptores-repartidor': 'config.ver',
   'PUT /admin/interruptores-repartidor': 'config.editar',
+  // C-TELEFONO-POR-PAIS: el código por SMS al registrarse, país por país, y quién lo confirmó.
+  'GET /admin/telefono-codigo': 'config.ver',
+  'PUT /admin/telefono-codigo': 'config.editar',
   'GET /admin/ganar-por-tiempo': 'config.ver',
   'PUT /admin/ganar-por-tiempo': 'config.editar',
   'GET /admin/pago-pico': 'config.ver',
@@ -715,6 +718,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PUT /admin/despacho-catalogo/:zona': CONFIG,
   'GET /admin/interruptores-repartidor': CONFIG,
   'PUT /admin/interruptores-repartidor': CONFIG,
+  'GET /admin/telefono-codigo': CONFIG,
+  'PUT /admin/telefono-codigo': CONFIG,
   'GET /admin/ganar-por-tiempo': CONFIG,
   'PUT /admin/ganar-por-tiempo': CONFIG,
   'GET /admin/pago-pico': CONFIG,

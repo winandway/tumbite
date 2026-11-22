@@ -150,6 +150,13 @@ export const esquemaEnv = z.object({
   /** C-REZAGADOS: «si» deja salir por SMS el segundo recordatorio de registro y el SMS de «Enviar mensaje». Lo enciende Gerencia. */
   REZAGADOS_SMS: z.string().optional(),
   SMSMASIVO_TOPE_DIA: z.string().optional(),
+  /**
+   * C-TELEFONO-TOPES y C-SMS-GASTO (22 nov 2026): máximo de códigos por SMS en 24 horas (de fábrica 300)
+   * y presupuesto diario de todos los SMS en dólares (de fábrica 15, a 0,045 cada uno). Al llegar al
+   * presupuesto, el código deja de exigirse y el canario marca «tope».
+   */
+  TELEFONO_CODIGO_TOPE_DIA: z.string().optional(),
+  SMS_PRESUPUESTO_DIA_USD: z.string().optional(),
   /** Solo para el recorrido y las pruebas: el proveedor simulado en localhost. */
   SMSMASIVO_API_URL: z.string().optional(),
   /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */

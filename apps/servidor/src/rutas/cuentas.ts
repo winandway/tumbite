@@ -63,6 +63,13 @@ import {
   zonaPorUbicacionDelRegistro,
 } from '../cuentaPais';
 import { unirLineaQueEspera } from '../lineas';
+import {
+  algunSmsEncendido,
+  anularCodigoAnterior,
+  comprobarCodigo,
+  mandarCodigo,
+  puertaTelefono,
+} from '../telefonoVuelta';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
 const esquemaRecuperar = z.object({
@@ -288,7 +295,9 @@ cuentas.post('/registro', async (c) => {
   const id = nuevoId();
   await db
     .prepare(
-      'INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico, zona_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      // C-TELEFONO-AL-REGISTRARSE: la cuenta de cliente o de conductor creada en una app con la
+      // pantalla del código queda obligada a confirmar su celular (la puerta decide si HOY se exige).
+      "INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico, zona_id, telefono_exigido_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END)",
     )
     .bind(
       id,
@@ -310,6 +319,7 @@ cuentas.post('/registro', async (c) => {
               (c.req.raw as { cf?: { latitude?: unknown; longitude?: unknown } }).cf,
             )
           : null),
+      d.verificaTelefono && (rol === 'cliente' || rol === 'repartidor') ? 1 : 0,
     )
     .run();
   // C-TERMINOS-ACTUALIZADOS: al crear la cuenta acepta los términos vigentes (casilla del registro).
@@ -762,6 +772,111 @@ cuentas.get('/yo', async (c) => {
     console.error('confirmación: reintento tras el freno', e),
   );
   return c.json({ usuario: usuarioPublico(u) });
+});
+
+// ---------- C-TELEFONO-AL-REGISTRARSE: el celular se confirma con un código por SMS ----------
+
+const esquemaCodigo = z.object({
+  codigo: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, { error: 'El código tiene 6 números.' }),
+});
+const esquemaCambiarTelefono = z.object({
+  telefono: z.string().trim().min(6, { error: 'Escribe tu número de celular.' }).max(30),
+  paisTelefono: z.string().trim().toUpperCase().length(2).optional(),
+});
+
+/** Qué toca con el celular de esta cuenta: confirmarlo (obligatorio), sugerirlo, o nada. */
+cuentas.get('/telefono', async (c) => {
+  const u = exigir(c);
+  const p = await puertaTelefono(c.env, base(c), u.id);
+  return c.json({
+    puerta: p ? { motivo: p.motivo, ultimos: p.ultimos, obligatorio: p.obligatorio } : null,
+  });
+});
+
+cuentas.post('/telefono/codigo', async (c) => {
+  const u = exigir(c);
+  const r = await mandarCodigo(
+    c.env,
+    base(c),
+    u.id,
+    u.idioma === 'en' ? 'en' : 'es',
+    c.req.header('cf-connecting-ip') ?? null,
+  );
+  return c.json({ ok: true, ...r });
+});
+
+cuentas.post('/telefono/verificar', async (c) => {
+  const u = exigir(c);
+  const { codigo } = await leerCuerpo(c, esquemaCodigo);
+  await comprobarCodigo(base(c), u.id, codigo);
+  return c.json({ ok: true });
+});
+
+/**
+ * Un número mal escrito no deja a nadie atrapado: mientras no esté confirmado, se cambia aquí, con la
+ * misma lectura por país y la misma regla de «un teléfono, una cuenta de cada tipo» del registro.
+ */
+cuentas.put('/telefono', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  if (!algunSmsEncendido(c.env))
+    throw new ErrorDatos('No hace falta confirmar tu teléfono ahora.', undefined, 409);
+  const d = await leerCuerpo(c, esquemaCambiarTelefono);
+  const f = await db
+    .prepare('SELECT rol, telefono_verificado_en FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ rol: string; telefono_verificado_en: string | null }>();
+  if (f?.telefono_verificado_en)
+    throw new ErrorDatos(
+      'Tu celular ya está confirmado. Para cambiarlo, escribe a soporte.',
+      'telefono',
+      409,
+    );
+  const pais = paisParaTelefono(
+    d.telefono,
+    d.paisTelefono && datosPais(d.paisTelefono) ? d.paisTelefono : await paisDeCuenta(db, u.id),
+    c.req.header('cf-ipcountry'),
+  );
+  let tel: { telefono: string | null; canonico: string | null };
+  try {
+    tel = telefonoParaGuardar(d.telefono, pais);
+  } catch (e) {
+    if (e instanceof TelefonoInvalido)
+      throw new ErrorDatos(
+        mensajeTelefono(e.motivo, u.idioma === 'en' ? 'en' : 'es'),
+        'telefono',
+        422,
+      );
+    throw e;
+  }
+  if (tel.canonico) {
+    const otro = await db
+      .prepare(
+        `SELECT 1 FROM usuarios WHERE telefono_canonico = ?2 AND rol = ?1 AND id != ?3
+         UNION ALL
+         SELECT 1 FROM usuarios WHERE ${TELEFONO_DIEZ} = substr(?2, -10)
+           AND telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != '' AND rol = ?1 AND id != ?3
+         LIMIT 1`,
+      )
+      .bind(f?.rol ?? u.rol, tel.canonico, u.id)
+      .first();
+    if (otro)
+      throw new ErrorDatos(
+        'Ese teléfono ya tiene una cuenta. Entra con ella o escríbenos a soporte.',
+        'telefono',
+        409,
+      );
+  }
+  await db
+    .prepare('UPDATE usuarios SET telefono = ?, telefono_canonico = ? WHERE id = ?')
+    .bind(tel.telefono, tel.canonico, u.id)
+    .run();
+  await anularCodigoAnterior(db, u.id);
+  const p = await puertaTelefono(c.env, db, u.id);
+  return c.json({ puerta: p });
 });
 
 // ---------- Configuración de la cuenta ----------

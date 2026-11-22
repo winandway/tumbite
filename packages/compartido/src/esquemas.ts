@@ -32,6 +32,9 @@ export const esquemaRegistro = z
     invitacion: z.string().trim().max(20).optional(),
     // C-TELEFONO-E164: el país del celular que eligió en la pantalla (el número se lee con él).
     paisTelefono: z.string().trim().toUpperCase().length(2).optional(),
+    // C-TELEFONO-AL-REGISTRARSE (22 nov 2026): la app trae la pantalla del código por SMS. Solo esas
+    // cuentas quedan obligadas a confirmar el celular (las apps viejas no la tienen: nadie se atrapa).
+    verificaTelefono: z.boolean().optional(),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

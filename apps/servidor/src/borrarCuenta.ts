@@ -338,6 +338,8 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare('DELETE FROM accesibilidad_repartidor WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM codigos_telefono WHERE usuario_id = ?').bind(u.id),
+    // C-TELEFONO-TOPES: el celular y la red de cada código enviado también son datos de la persona.
+    db.prepare('DELETE FROM envios_codigo_telefono WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),

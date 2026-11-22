@@ -40,7 +40,12 @@ import {
 } from '../internacional/pagoLocal';
 import { liberarReserva } from '../internacional/libro';
 import { cuentaVigente } from '../internacional/cuentasCobro';
-import { comprobarCodigo, mandarCodigo, telefonoPorVerificar } from '../telefonoVuelta';
+import {
+  comprobarCodigo,
+  mandarCodigo,
+  puertaTelefono,
+  telefonoPorVerificar,
+} from '../telefonoVuelta';
 import { pagoPicoPara } from '../pagoPico';
 import { sentenciasCobroAnuncio } from '../anuncios';
 import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
@@ -1287,8 +1292,14 @@ operacion.post('/repartidor/terminos', async (c) => {
 
 operacion.post('/repartidor/telefono/codigo', async (c) => {
   const { u, db } = await miFicha(c);
-  const ultimos = await mandarCodigo(c.env, db, u.id, u.idioma === 'en' ? 'en' : 'es');
-  return c.json({ ok: true, ultimos });
+  const r = await mandarCodigo(
+    c.env,
+    db,
+    u.id,
+    u.idioma === 'en' ? 'en' : 'es',
+    c.req.header('cf-connecting-ip') ?? null,
+  );
+  return c.json({ ok: true, ...r });
 });
 
 operacion.post('/repartidor/telefono/verificar', async (c) => {
@@ -1604,16 +1615,18 @@ export async function conectarRepartidor(
     );
   // C-TELEFONO-VUELTA (D8, como DoorDash): tras 14 días sin conectarse, el teléfono se confirma
   // por SMS. Solo donde el SMS sale; al revisor de las tiendas no se le pide.
-  if (
-    d.conectado &&
-    !(await esRevisor(c, u.correo)) &&
-    (await telefonoPorVerificar(c.env, db, u.id))
-  )
-    throw new ErrorDatos(
-      'Bienvenido de vuelta. Confirma tu teléfono con el código que te mandamos por SMS.',
-      'telefono',
-      409,
-    );
+  // C-TELEFONO-AL-REGISTRARSE: la cuenta nueva tampoco se conecta sin confirmar su celular.
+  if (d.conectado && !(await esRevisor(c, u.correo))) {
+    const puerta = await puertaTelefono(c.env, db, u.id);
+    if (puerta?.obligatorio)
+      throw new ErrorDatos(
+        puerta.motivo === 'vuelta'
+          ? 'Bienvenido de vuelta. Confirma tu teléfono con el código que te mandamos por SMS.'
+          : 'Confirma tu celular con el código que te mandamos por SMS para conectarte.',
+        'telefono',
+        409,
+      );
+  }
   // Identidad continua: al conectarse, a algunos se les pide una selfie de control (al azar, no
   // más de una por semana). Mientras esté pendiente, no se conecta. Al revisor de las tiendas no
   // se le pide (27 oct 2026): probaría la app y se quedaría trancado en una selfie.

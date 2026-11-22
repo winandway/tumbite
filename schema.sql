@@ -892,6 +892,9 @@ CREATE TABLE IF NOT EXISTS sms_enviados (
   referencia TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-SMS-GASTO (22 nov 2026): el gasto del día, el tope de Venezuela y el de pánico cuentan las últimas 24 h;
+-- sin este índice cada cuenta recorría la tabla entera.
+CREATE INDEX IF NOT EXISTS sms_enviados_dia ON sms_enviados(creado_en);
 
 -- Llamadas con número oculto entre repartidor y cliente (Twilio puentea con el número de Tumbite).
 CREATE TABLE IF NOT EXISTS llamadas (
@@ -3631,6 +3634,18 @@ CREATE TABLE IF NOT EXISTS codigos_telefono (
   enviados_hoy INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-TELEFONO-TOPES (22 nov 2026): cada código por SMS que salió, para los topes por número, por red (IP) y
+-- del día, que valen aunque la persona cambie de cuenta. Una fila por envío; los índices son los que leen los topes.
+CREATE TABLE IF NOT EXISTS envios_codigo_telefono (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  ip TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS envios_codigo_telefono_numero ON envios_codigo_telefono(telefono, creado_en);
+CREATE INDEX IF NOT EXISTS envios_codigo_telefono_ip ON envios_codigo_telefono(ip, creado_en);
+CREATE INDEX IF NOT EXISTS envios_codigo_telefono_dia ON envios_codigo_telefono(creado_en);
 
 -- C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invita a su conductor con
 -- nombre y celular o correo; queda vinculado solo cuando él acepta en Divoox Driver. Solo el hash del enlace.

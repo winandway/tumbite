@@ -328,6 +328,32 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-TELEFONO-VUELTA
   ['No hace falta confirmar tu teléfono ahora.', 'You don’t need to confirm your phone right now.'],
   ['Espera un minuto para pedir otro código.', 'Wait a minute before requesting another code.'],
+  // C-TELEFONO-AL-REGISTRARSE y C-TELEFONO-TOPES
+  [
+    'Escribe tu número de celular para mandarte el código.',
+    'Enter your cell phone number so we can text you the code.',
+  ],
+  [
+    'Ese número ya recibió varios códigos hoy. Inténtalo mañana o escribe a soporte.',
+    'That number already got several codes today. Try again tomorrow or contact support.',
+  ],
+  [
+    'Se pidieron demasiados códigos desde esta conexión. Inténtalo más tarde o escribe a soporte.',
+    'Too many codes were requested from this connection. Try again later or contact support.',
+  ],
+  [
+    'Confirma tu celular con el código que te mandamos por SMS para seguir.',
+    'Confirm your cell phone with the code we texted you to continue.',
+  ],
+  [
+    'Confirma tu celular con el código que te mandamos por SMS para conectarte.',
+    'Confirm your cell phone with the code we texted you to go online.',
+  ],
+  [
+    'Tu celular ya está confirmado. Para cambiarlo, escribe a soporte.',
+    'Your cell phone is already confirmed. To change it, contact support.',
+  ],
+  ['Escribe tu número de celular.', 'Enter your cell phone number.'],
   [
     'Pediste demasiados códigos hoy. Inténtalo mañana o escribe a soporte.',
     'You requested too many codes today. Try again tomorrow or contact support.',
@@ -2324,6 +2350,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  // C-TELEFONO-TOPES: la espera creciente entre códigos.
+  [
+    /^Espera (\d+) segundos para pedir otro código\.$/,
+    (m) => `Wait ${m[1]} seconds before requesting another code.`,
+  ],
   [/^Un viaje puede llevar hasta (\d+) paradas\.$/, (m) => `A ride can have up to ${m[1]} stops.`],
   // C-TASA-CORDURA
   [
