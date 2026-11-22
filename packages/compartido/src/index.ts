@@ -135,3 +135,4 @@ export * from './pais/paises';
 export * from './pais/telefono';
 export * from './invitacionEnlace';
 export * from './rastro';
+export * from './pagoComidaVista';
