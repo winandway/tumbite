@@ -3,10 +3,12 @@
 // hace por la API, como las apps y el panel, el pedido de comida en El Vigía (estado Mérida):
 //   el equipo abre Comida en El Vigía (paso del panel) → el restaurante venezolano se registra con su
 //   ubicación, el equipo lo aprueba y él carga su menú → el repartidor recarga en dólares en el punto
-//   de venta del equipo → pedido en EFECTIVO (acepta el restaurante, acepta el repartidor con la
-//   comisión apartada, listo, paga en el local, recoge, entrega, «cobré») con la comisión cobrada una
-//   sola vez y conciliado → un repartidor SIN saldo no recibe la oferta → un pedido cancelado devuelve
-//   lo apartado → pedido por PAGO MÓVIL con «sí me llegó».
+//   de venta del equipo → pedido en EFECTIVO con el PAGO DIRECTO AL RESTAURANTE (C-COMIDA-PAGO-
+//   RESTAURANTE, 22 nov 2026: acepta el restaurante, acepta el conductor con la comisión apartada,
+//   el cliente ve la cuenta del restaurante y el monto en bolívares, escribe la referencia, el
+//   restaurante dice «Me llegó», listo, recoge SIN pagar en el local, entrega, «cobré» solo el envío)
+//   con la comisión cobrada una sola vez y conciliado → un conductor SIN saldo no recibe la oferta →
+//   un pedido cancelado devuelve lo apartado → pedido con el envío por PAGO MÓVIL con «sí me llegó».
 // Cuentas FIJAS que se reutilizan (zz-cmve-…): el saldo, los pedidos y el libro no se borran nunca.
 // Cuenta sus filas con la vuelta de pruebas (x-vuelta-pruebas) y respeta su presupuesto. Nunca
 // escribe en producción.
@@ -129,6 +131,12 @@ try {
   );
   exigir(abierta.zona.moneda === 'USD', 'El Vigía debería cobrar la comida en dólares');
   casos.push(`Comida abierta en El Vigía (${abierta.estado}), en dólares`);
+  // C-COMIDA-PAGO-RESTAURANTE: Venezuela usa el pago directo al restaurante (bandera del país).
+  const ve = ok(await equipo('GET', '/datos/admin/paises/VE'), 'configuración de Venezuela').config;
+  exigir(
+    ve.comidaPagoRestaurante === true,
+    'Venezuela debería tener el pago directo al restaurante',
+  );
   // C-TASA-CORDURA: el guion ya no escribe ninguna tasa (antes dejaba 250 por dólar en el sitio de
   // pruebas). Usa la oficial que lee el servidor; sin ella, falla y lo dice.
   const tasas = ok(await equipo('GET', '/datos/admin/tasas-referencia'), 'tasas').tasas;
@@ -173,6 +181,22 @@ try {
     'horario',
   );
   ok(await resto('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }), 'abrir el local');
+  // C-COMIDA-PAGO-RESTAURANTE: el restaurante tiene su cuenta de pago móvil (sin ella no recibe pedidos).
+  const cobroRest = ok(
+    await resto('GET', '/datos/restaurante/cuenta-cobro'),
+    'cuenta del restaurante',
+  );
+  if (!cobroRest.cuenta)
+    ok(
+      await resto('POST', '/datos/restaurante/cuenta-cobro', {
+        clave,
+        banco: 'Banco de ejemplo',
+        telefono: '04140000000',
+        documento: 'J-000000001',
+        titular: 'Restaurante de prueba',
+      }),
+      'cuenta de cobro del restaurante',
+    );
   casos.push('el restaurante de El Vigía quedó aprobado, con su menú y abierto');
 
   // 3. Repartidores: términos, conectados en el local; el de saldo recarga en dólares.
@@ -247,24 +271,38 @@ try {
   /** Del «acepto» del repartidor hasta la puerta del cliente; devuelve lo apartado. */
   async function llevar(id) {
     const antes = await saldo();
-    exigir((await ofertasDe(yo)).includes(id), 'el repartidor con saldo no recibió la oferta');
-    ok(await yo('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}), 'acepta el repartidor');
+    exigir((await ofertasDe(yo)).includes(id), 'el conductor con saldo no recibió la oferta');
+    ok(await yo('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}), 'acepta el conductor');
     const tras = await saldo();
     const apartado = tras.reservado - antes.reservado;
     exigir(
       apartado > 0 && tras.disponible === antes.disponible - apartado,
       'no apartó la comisión',
     );
-    ok(await resto('POST', `/datos/restaurante/pedidos/${id}/listo`, {}), 'listo');
-    const l = ok(await yo('GET', `/datos/repartidor/pedidos/${id}/pago-local`), 'pago en el local');
-    ok(
-      await yo('POST', `/datos/repartidor/pedidos/${id}/pago-local`, {
-        montoPagado: l.montoEsperado,
-        importeTicket: l.subtotal,
-        metodo: 'efectivo',
-      }),
-      'registra el pago en el local',
+    // C-COMIDA-PAGO-RESTAURANTE: con el conductor asegurado, el cliente paga la comida al restaurante.
+    const pc = ok(
+      await cliente('GET', `/datos/pedidos/${id}/pago-comida`),
+      'pago de la comida',
+    ).pagoComida;
+    exigir(
+      pc?.estado === 'por_pagar',
+      `el pago de la comida debería esperar al cliente (${pc?.estado})`,
     );
+    exigir(pc.cuenta?.telefono, 'el cliente no ve la cuenta de pago móvil del restaurante');
+    exigir(pc.montoLocal?.moneda === 'VES', 'el cliente no ve el monto en bolívares congelado');
+    const sinPago = await resto('POST', `/datos/restaurante/pedidos/${id}/listo`, {});
+    exigir(sinPago.estado === 409, 'PELIGRO: se marcó listo sin el pago confirmado');
+    ok(
+      await cliente('POST', `/datos/pedidos/${id}/pago-comida`, {
+        referencia: `${Date.now()}`.slice(-8),
+      }),
+      'el cliente escribe la referencia',
+    );
+    ok(
+      await resto('POST', `/datos/restaurante/pedidos/${id}/pago-comida`, { llego: true }),
+      'el restaurante dice «Me llegó»',
+    );
+    ok(await resto('POST', `/datos/restaurante/pedidos/${id}/listo`, {}), 'listo');
     await ubicar(LOCAL_REST);
     ok(
       await foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, tokens.repartidor, LOCAL_REST),
@@ -284,7 +322,7 @@ try {
       await yo('POST', `/datos/repartidor/pedidos/${id}/entregado`, { ...CASA, modo: 'puerta' }),
       'desliza para entregar',
     );
-    return { antes, apartado };
+    return { antes, apartado, comida: pc.comida, envio: pc.envioAlConductor };
   }
   const verPedido = async (id) =>
     ok(await cliente('GET', `/datos/pedidos/${id}`), 'el pedido').pedido;
@@ -298,7 +336,8 @@ try {
   exigir(v1.referencia?.moneda === 'VES', 'el cliente no ve el equivalente en bolívares');
   const c1 = ok(
     await yo('POST', `/datos/repartidor/pedidos/${p1.pedidoId}/cobre`, {
-      montoRecibido: v1.total - v1.propina,
+      // El conductor cobra SOLO el envío: la comida ya se la pagó el cliente al restaurante.
+      montoRecibido: v1.total - v1.propina - e1.comida,
     }),
     'cobré',
   );
@@ -311,7 +350,7 @@ try {
     'la comisión no salió del saldo una sola vez',
   );
   casos.push(
-    `pedido en efectivo de ${v1.total} centavos: comisión ${e1.apartado} cobrada una vez, conciliado`,
+    `pedido de ${v1.total} centavos: comida ${e1.comida} pagada directo al restaurante, envío ${e1.envio} en efectivo, comisión ${e1.apartado} cobrada una vez, conciliado`,
   );
 
   // 5. Sin saldo no hay oferta; y un pedido cancelado devuelve lo apartado.
@@ -341,7 +380,7 @@ try {
   );
   casos.push('el pedido cancelado devolvió lo apartado al saldo');
 
-  // 6. Pedido por PAGO MÓVIL con «sí me llegó».
+  // 6. Pedido con el envío por PAGO MÓVIL al conductor con «sí me llegó».
   const cuentas = ok(await yo('GET', '/datos/repartidor/cuentas-cobro'), 'cuentas').cuentas ?? [];
   if (!cuentas.some((cu) => cu.tipo === 'pago_movil' && cu.vigente)) {
     const cu = ok(
@@ -373,7 +412,7 @@ try {
     `conciliación pago móvil: ${f3.conciliacionEstado}`,
   );
   casos.push(
-    `pedido por pago móvil de ${f3.total} centavos: «sí me llegó», comisión ${e3.apartado}, conciliado`,
+    `pedido de ${f3.total} centavos con el envío por pago móvil: «sí me llegó», comisión ${e3.apartado}, conciliado`,
   );
 
   const salud = ok(await pedir('GET', '/datos/salud'), 'salud');
@@ -381,7 +420,11 @@ try {
     salud.piezas?.comidaPaises === 'ok',
     `salud comida por país: ${salud.piezas?.comidaPaises}`,
   );
-  casos.push('la salud de comida por país sigue en verde');
+  exigir(
+    salud.piezas?.pagoComida === 'ok',
+    `salud del pago de la comida: ${salud.piezas?.pagoComida}`,
+  );
+  casos.push('la salud de comida por país y del pago de la comida sigue en verde');
 } finally {
   await cerrarColgados().catch(() => null);
   const l = await interno('limpiar');

@@ -36,12 +36,13 @@ type Guardados = {
   regalo: number | null;
   tipo: string | null;
   valor: number | null;
+  pago_directo?: number | null;
 };
 
 export async function recalcularConDescuentos(
   db: D1Database,
   pedido: { id: string; cupon: unknown; descuento: unknown },
-  p: Parameters<typeof calcularPedido>[0],
+  entrada: Parameters<typeof calcularPedido>[0],
   promo: PromocionRestaurante | null | undefined,
   /** En un recálculo que quita algo (plato agotado), el total cobrado antes: nunca se pasa. */
   totalMaximo?: number,
@@ -51,10 +52,13 @@ export async function recalcularConDescuentos(
       `SELECT (SELECT descuento FROM pedidos_plus WHERE pedido_id = ?1) AS plus,
         (SELECT centavos FROM pedidos_saldo_regalo WHERE pedido_id = ?1) AS regalo,
         (SELECT tipo FROM cupones WHERE codigo = ?2) AS tipo,
-        (SELECT valor FROM cupones WHERE codigo = ?2) AS valor`,
+        (SELECT valor FROM cupones WHERE codigo = ?2) AS valor,
+        (SELECT 1 FROM pagos_comida WHERE pedido_id = ?1) AS pago_directo`,
     )
     .bind(pedido.id, pedido.cupon ? String(pedido.cupon) : '')
     .first<Guardados>();
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo al restaurante, su comisión sigue en 0 al recalcular.
+  const p = g?.pago_directo ? { ...entrada, comisionRestaurantePb: 0 } : entrada;
   const plusAntes = Math.max(0, Number(g?.plus ?? 0));
   const regaloAntes = Math.max(0, Number(g?.regalo ?? 0));
   const cuponAntes = Math.max(0, Number(pedido.descuento ?? 0) - plusAntes - regaloAntes);

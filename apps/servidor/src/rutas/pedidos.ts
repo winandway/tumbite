@@ -15,6 +15,15 @@ import {
   recalcularConDescuentos,
 } from '../descuentosPedido';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
+import {
+  abrirPagoComida,
+  anularPagoComida,
+  comidaAlRestaurante,
+  exigirCuentaRestaurante,
+  exigirSaldoRestaurante,
+  usaPagoRestaurante,
+  vistaDePedido,
+} from '../internacional/pagoComida';
 import { efectivoDeJuego } from '../ciudadJuego';
 import { acreditarRecargaStripe } from '../internacional/recargas';
 import {
@@ -354,6 +363,13 @@ export function sentenciasRecalculo(
     db
       .prepare('UPDATE pedidos_promocion SET descuento = ? WHERE pedido_id = ?')
       .bind(desglose.descuentoRestaurante, pedidoId),
+    // C-COMIDA-PAGO-RESTAURANTE: si el cliente todavía no pagó, lo que le paga al restaurante sigue
+    // a la comida nueva (sin fila, no hace nada).
+    db
+      .prepare(
+        "UPDATE pagos_comida SET monto = ? WHERE pedido_id = ? AND estado = 'esperando_conductor'",
+      )
+      .bind(desglose.pagoRestaurante, pedidoId),
     ...guardarDescuentos(db, pedidoId, descuentos),
   ];
 }
@@ -913,6 +929,12 @@ pedidos.post('/pedidos', async (c) => {
       'metodoPago',
       409,
     );
+  // C-COMIDA-PAGO-RESTAURANTE: en los países con la bandera, la comida se le paga DIRECTO al
+  // restaurante (que necesita su cuenta de cobro) y el restaurante no paga comisión por la venta.
+  const pagoRestaurante =
+    d.metodoPago !== 'tarjeta' && !enEeuu && (await usaPagoRestaurante(db, pais));
+  if (pagoRestaurante) await exigirCuentaRestaurante(db, String(rest.id), pais);
+  const sinComision = pagoRestaurante ? { comisionRestaurantePb: 0 } : {};
   let regalo = 0;
   if (d.regalo) {
     const subtotal = lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
@@ -932,6 +954,7 @@ pedidos.post('/pedidos', async (c) => {
     config,
     regalo,
     recogida,
+    ...sinComision,
   });
   // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
   // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
@@ -1000,7 +1023,7 @@ pedidos.post('/pedidos', async (c) => {
         )
       : null;
   const conPromo = (p: Parameters<typeof calcularPedido>[0]) =>
-    calcularConPromocion(p, promo, { envioCubierto });
+    calcularConPromocion({ ...p, ...sinComision }, promo, { envioCubierto });
   const sinPlus = conPromo({
     lineas,
     plan,
@@ -1078,6 +1101,14 @@ pedidos.post('/pedidos', async (c) => {
 
   // C-PILOTO-LIMITES: un participante del piloto no pasa del tope por pedido ni por día.
   await exigirTopePiloto(db, u.id, desglose.totalCliente);
+  // C-SALDO-RESTAURANTE: con una comisión del restaurante encendida, sin saldo no recibe pedidos.
+  if (pagoRestaurante)
+    await exigirSaldoRestaurante(c.env, db, {
+      rid: String(rest.id),
+      pais,
+      moneda,
+      comida: desglose.pagoRestaurante,
+    });
   // C-PENDIENTE-ABANDONADO: con los mismos datos, ya validados (cupón, topes), y el mismo total, se
   // devuelve el cobro que la otra petición acaba de crear en vez de crear y anular otro.
   if (vigente && vigente.total === desglose.totalCliente) {
@@ -1280,21 +1311,45 @@ pedidos.post('/pedidos', async (c) => {
   // Fase 2 · cobro directo: sin Stripe. El pedido queda confirmado para el restaurante y el
   // cliente paga al repartidor al recibir (efectivo o transferencia a su cuenta).
   if (d.metodoPago !== 'tarjeta') {
-    const { pais, moneda } = await abrirPedidoDirecto(db, {
-      pedidoId: id,
-      zonaId: String(rest.zona_id ?? ZONA_INICIAL),
-      clienteId: u.id,
-      metodo: d.metodoPago,
-      // C-CIUDAD-JUEGO: los restaurantes robot del juego aceptan efectivo (solo pruebas y local).
-      efectivoDeJuego:
-        d.metodoPago === 'efectivo' && (await efectivoDeJuego(c.req.url, db, String(rest.id))),
-    });
+    // C-COMIDA-PAGO-RESTAURANTE: la fila del pago nace ANTES de confirmar el pedido, así ningún
+    // restaurante lo ve sin ella (sin la fila correría el cobro en mano de siempre).
+    if (pagoRestaurante)
+      await abrirPagoComida(db, {
+        pedidoId: id,
+        restauranteId: String(rest.id),
+        clienteId: u.id,
+        moneda,
+        monto: desglose.pagoRestaurante,
+      });
+    let abierto: { pais: string; moneda: string };
+    try {
+      abierto = await abrirPedidoDirecto(db, {
+        pedidoId: id,
+        zonaId: String(rest.zona_id ?? ZONA_INICIAL),
+        clienteId: u.id,
+        metodo: d.metodoPago,
+        // C-CIUDAD-JUEGO: los restaurantes robot del juego aceptan efectivo (solo pruebas y local).
+        efectivoDeJuego:
+          d.metodoPago === 'efectivo' && (await efectivoDeJuego(c.req.url, db, String(rest.id))),
+      });
+    } catch (e) {
+      if (pagoRestaurante) await anularPagoComida(db, id);
+      throw e;
+    }
     await anotar(db, id, 'pagado', u.id);
     await correosDePedidoPagado(c.env, db, id).catch((e: unknown) =>
       console.error('cobro directo: avisos', e),
     );
     return c.json(
-      { pedidoId: id, directo: true, metodoPago: d.metodoPago, pais, moneda, desglose },
+      {
+        pedidoId: id,
+        directo: true,
+        metodoPago: d.metodoPago,
+        pais: abierto.pais,
+        moneda: abierto.moneda,
+        desglose,
+        pagoComida: pagoRestaurante ? await vistaDePedido(db, id, 'cliente') : null,
+      },
       201,
     );
   }
@@ -1853,11 +1908,31 @@ pedidos.get('/pedidos/:id', async (c) => {
   const referencia =
     f.moneda === 'USD' && f.zona_id ? await referenciaDePedido(db, f, Number(f.total)) : null;
   // Con pago al recibir: lo que se paga en mano (sin la propina), lo mismo que cobra el repartidor.
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo al restaurante, en mano va solo el envío.
   const enMano =
     f.metodo_pago === 'efectivo' || f.metodo_pago === 'transferencia_repartidor'
-      ? await enManoDePedido(db, f, Number(f.total) - Number(f.propina ?? 0))
+      ? await enManoDePedido(
+          db,
+          f,
+          Number(f.total) - Number(f.propina ?? 0) - (await comidaAlRestaurante(db, String(f.id))),
+        )
       : null;
-  return c.json({ pedido: { ...aPedido(f), referencia, enMano } });
+  const rolPago =
+    u.rol === 'admin'
+      ? 'admin'
+      : f.cliente_id === u.id
+        ? 'cliente'
+        : f.dueno_id === u.id
+          ? 'restaurante'
+          : 'conductor';
+  return c.json({
+    pedido: {
+      ...aPedido(f),
+      referencia,
+      enMano,
+      pagoComida: await vistaDePedido(db, String(f.id), rolPago),
+    },
+  });
 });
 
 /**

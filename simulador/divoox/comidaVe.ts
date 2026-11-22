@@ -103,6 +103,20 @@ async function efectivo(ctx: Ctx) {
         'horario',
       );
       ok(ctx, await resto.patch('/datos/mi-restaurante/abierto', { abierto: true }), 'abrir');
+      // C-COMIDA-PAGO-RESTAURANTE: el restaurante recibe el pago de la comida en su pago móvil.
+      const cobro = ok(ctx, await resto.get('/datos/restaurante/cuenta-cobro'), 'cuenta de cobro');
+      if (!cobro.cuenta)
+        ok(
+          ctx,
+          await resto.post('/datos/restaurante/cuenta-cobro', {
+            clave: a.clave,
+            banco: 'Banco de ejemplo',
+            telefono: '04140000000',
+            documento: 'J-000000001',
+            titular: 'Restaurante de prueba',
+          }),
+          'cuenta de cobro del restaurante',
+        );
       return { r: rest, plato: p };
     },
   );
@@ -151,74 +165,93 @@ async function efectivo(ctx: Ctx) {
     ok(ctx, await rep.post('/datos/repartidor/recargar', { codigo }), 'recargar');
   });
 
-  await ctx.e.paso('pedido en efectivo de punta a punta, comisión una sola vez', async () => {
-    const p = ok(
-      ctx,
-      await cliente.post('/datos/pedidos', {
-        restauranteId: r.id,
-        lineas: [{ platoId: plato.id, cantidad: 2 }],
-        propinaCentavos: 50,
-        direccion: 'Calle 5 con avenida 3, El Vigía',
-        ...CASA,
-        metodoPago: 'efectivo',
-      }),
-      'pedir',
-    );
-    const id = p.pedidoId as string;
-    ok(ctx, await resto.post(`/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }), 'acepta');
-    const antes = ok(ctx, await rep.get('/datos/repartidor/saldo-prepago'), 'saldo');
-    const ofertas = (ok(ctx, await rep.get('/datos/repartidor/ofertas'), 'ofertas').ofertas ??
-      []) as Datos[];
-    ctx.e.comprobar(
-      ofertas.some((o) => o.id === id),
-      'el repartidor recibe la oferta',
-      ofertas,
-    );
-    ok(ctx, await rep.post(`/datos/repartidor/ofertas/${id}/aceptar`, {}), 'acepta el repartidor');
-    const tras = ok(ctx, await rep.get('/datos/repartidor/saldo-prepago'), 'saldo');
-    const apartado = Number(tras.reservado) - Number(antes.reservado);
-    ctx.e.comprobar(apartado > 0, 'la comisión queda apartada al aceptar', tras);
-    ok(ctx, await resto.post(`/datos/restaurante/pedidos/${id}/listo`, {}), 'listo');
-    const l = ok(ctx, await rep.get(`/datos/repartidor/pedidos/${id}/pago-local`), 'pago local');
-    ok(
-      ctx,
-      await rep.post(`/datos/repartidor/pedidos/${id}/pago-local`, {
-        montoPagado: l.montoEsperado,
-        importeTicket: l.subtotal,
-        metodo: 'efectivo',
-      }),
-      'paga en el local',
-    );
-    const enviarFoto = (ruta: string, donde: { lat: number; lng: number }) =>
-      rep.post(`${ruta}?lat=${donde.lat}&lng=${donde.lng}`, { bytes: FOTO, tipo: 'image/jpeg' });
-    for (const donde of [LOCAL, LOCAL])
-      ok(ctx, await rep.post('/datos/repartidor/ubicacion', { ...donde, precision: 8 }), 'GPS');
-    ok(ctx, await enviarFoto(`/datos/repartidor/pedidos/${id}/foto-recogida`, LOCAL), 'recoge');
-    ok(
-      ctx,
-      await resto.post(`/datos/restaurante/pedidos/${id}/confirmar-recogida`, {}),
-      'confirma',
-    );
-    for (const donde of [CASA, CASA])
-      ok(ctx, await rep.post('/datos/repartidor/ubicacion', { ...donde, precision: 8 }), 'GPS');
-    ok(ctx, await enviarFoto(`/datos/repartidor/pedidos/${id}/entregado`, CASA), 'entrega');
-    const v = ok(ctx, await cliente.get(`/datos/pedidos/${id}`), 'pedido').pedido;
-    ok(
-      ctx,
-      await rep.post(`/datos/repartidor/pedidos/${id}/cobre`, {
-        montoRecibido: v.total - v.propina,
-      }),
-      'cobré',
-    );
-    const fin = ok(ctx, await cliente.get(`/datos/pedidos/${id}`), 'pedido').pedido;
-    ctx.e.comprobar(fin.conciliacionEstado === 'conciliado', 'el pedido queda conciliado', fin);
-    const s = ok(ctx, await rep.get('/datos/repartidor/saldo-prepago'), 'saldo');
-    ctx.e.comprobar(
-      s.disponible === antes.disponible - apartado && s.reservado === antes.reservado,
-      'la comisión salió del saldo una sola vez',
-      { antes, s, apartado },
-    );
-  });
+  await ctx.e.paso(
+    'pedido con la comida pagada directo al restaurante, comisión una sola vez',
+    async () => {
+      const p = ok(
+        ctx,
+        await cliente.post('/datos/pedidos', {
+          restauranteId: r.id,
+          lineas: [{ platoId: plato.id, cantidad: 2 }],
+          propinaCentavos: 50,
+          direccion: 'Calle 5 con avenida 3, El Vigía',
+          ...CASA,
+          metodoPago: 'efectivo',
+        }),
+        'pedir',
+      );
+      const id = p.pedidoId as string;
+      ok(
+        ctx,
+        await resto.post(`/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }),
+        'acepta',
+      );
+      const antes = ok(ctx, await rep.get('/datos/repartidor/saldo-prepago'), 'saldo');
+      const ofertas = (ok(ctx, await rep.get('/datos/repartidor/ofertas'), 'ofertas').ofertas ??
+        []) as Datos[];
+      ctx.e.comprobar(
+        ofertas.some((o) => o.id === id),
+        'el repartidor recibe la oferta',
+        ofertas,
+      );
+      ok(
+        ctx,
+        await rep.post(`/datos/repartidor/ofertas/${id}/aceptar`, {}),
+        'acepta el repartidor',
+      );
+      const tras = ok(ctx, await rep.get('/datos/repartidor/saldo-prepago'), 'saldo');
+      const apartado = Number(tras.reservado) - Number(antes.reservado);
+      ctx.e.comprobar(apartado > 0, 'la comisión queda apartada al aceptar', tras);
+      // C-COMIDA-PAGO-RESTAURANTE: con el conductor asegurado, el cliente paga la comida al
+      // restaurante con su referencia y el restaurante dice «Me llegó»; recién ahí, listo.
+      const pc = ok(ctx, await cliente.get(`/datos/pedidos/${id}/pago-comida`), 'pago de la comida')
+        .pagoComida as Datos;
+      ctx.e.comprobar(pc?.estado === 'por_pagar', 'el cliente ya puede pagar la comida', pc);
+      ok(
+        ctx,
+        await cliente.post(`/datos/pedidos/${id}/pago-comida`, {
+          referencia: `${Date.now()}`.slice(-8),
+        }),
+        'referencia del pago',
+      );
+      ok(
+        ctx,
+        await resto.post(`/datos/restaurante/pedidos/${id}/pago-comida`, { llego: true }),
+        'me llegó',
+      );
+      ok(ctx, await resto.post(`/datos/restaurante/pedidos/${id}/listo`, {}), 'listo');
+      const enviarFoto = (ruta: string, donde: { lat: number; lng: number }) =>
+        rep.post(`${ruta}?lat=${donde.lat}&lng=${donde.lng}`, { bytes: FOTO, tipo: 'image/jpeg' });
+      for (const donde of [LOCAL, LOCAL])
+        ok(ctx, await rep.post('/datos/repartidor/ubicacion', { ...donde, precision: 8 }), 'GPS');
+      ok(ctx, await enviarFoto(`/datos/repartidor/pedidos/${id}/foto-recogida`, LOCAL), 'recoge');
+      ok(
+        ctx,
+        await resto.post(`/datos/restaurante/pedidos/${id}/confirmar-recogida`, {}),
+        'confirma',
+      );
+      for (const donde of [CASA, CASA])
+        ok(ctx, await rep.post('/datos/repartidor/ubicacion', { ...donde, precision: 8 }), 'GPS');
+      ok(ctx, await enviarFoto(`/datos/repartidor/pedidos/${id}/entregado`, CASA), 'entrega');
+      const v = ok(ctx, await cliente.get(`/datos/pedidos/${id}`), 'pedido').pedido;
+      ok(
+        ctx,
+        await rep.post(`/datos/repartidor/pedidos/${id}/cobre`, {
+          // Solo el envío: la comida se la pagó el cliente al restaurante.
+          montoRecibido: v.total - v.propina - Number(pc.comida),
+        }),
+        'cobré',
+      );
+      const fin = ok(ctx, await cliente.get(`/datos/pedidos/${id}`), 'pedido').pedido;
+      ctx.e.comprobar(fin.conciliacionEstado === 'conciliado', 'el pedido queda conciliado', fin);
+      const s = ok(ctx, await rep.get('/datos/repartidor/saldo-prepago'), 'saldo');
+      ctx.e.comprobar(
+        s.disponible === antes.disponible - apartado && s.reservado === antes.reservado,
+        'la comisión salió del saldo una sola vez',
+        { antes, s, apartado },
+      );
+    },
+  );
 }
 
 export const ESCENARIOS_COMIDA_VE: readonly Esc[] = [

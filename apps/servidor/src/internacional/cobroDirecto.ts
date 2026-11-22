@@ -38,12 +38,21 @@ type FilaPedidoDirecto = {
   conciliacion_estado: string;
   entregado_en: string | null;
   descuento: number | null;
+  /** C-COMIDA-PAGO-RESTAURANTE: lo que el cliente le paga directo al restaurante (null = no aplica). */
+  comida_directa: number | null;
 };
+
+/** Lo que el conductor cobra en mano: el total sin propina y, con pago directo, sin la comida. */
+export const esperadoEnMano = (
+  f: Pick<FilaPedidoDirecto, 'total' | 'propina' | 'comida_directa'>,
+) => Math.max(0, Number(f.total) - Number(f.propina) - Number(f.comida_directa ?? 0));
 
 async function filaDirecta(db: D1Database, pedidoId: string) {
   return db
     .prepare(
-      'SELECT id, estado, zona_id, subtotal, total, propina, ganancia, pago_restaurante, cliente_id, repartidor_id, metodo_pago, cobro_estado, monto_recibido, conciliacion_estado, entregado_en, descuento FROM pedidos WHERE id = ?',
+      `SELECT id, estado, zona_id, subtotal, total, propina, ganancia, pago_restaurante, cliente_id, repartidor_id, metodo_pago, cobro_estado, monto_recibido, conciliacion_estado, entregado_en, descuento,
+         (SELECT pc.monto FROM pagos_comida pc WHERE pc.pedido_id = pedidos.id) AS comida_directa
+       FROM pedidos WHERE id = ?`,
     )
     .bind(pedidoId)
     .first<FilaPedidoDirecto>();
@@ -283,8 +292,9 @@ export async function confirmarCobro(
     throw new ErrorDatos('Confirma el cobro cuando estés con el cliente.', undefined, 409);
   if (!Number.isSafeInteger(p.montoRecibido) || p.montoRecibido < 0)
     throw new ErrorDatos('El monto no es válido.', 'montoRecibido', 400);
-  // La propina en efectivo es del repartidor y no entra aquí: se compara contra el total sin propina.
-  const esperado = f.total - f.propina;
+  // La propina en efectivo es del repartidor y no entra aquí: se compara contra el total sin propina
+  // (y, con pago directo al restaurante, sin la comida: C-COMIDA-PAGO-RESTAURANTE).
+  const esperado = esperadoEnMano(f);
   const estado =
     p.montoRecibido >= esperado ? 'confirmado' : p.montoRecibido > 0 ? 'parcial' : 'no_pagado';
   const r = await db
@@ -352,7 +362,7 @@ export async function clienteNoPago(
     bolsillo: 'deuda_cliente',
     pais,
     moneda,
-    monto: f.total - f.propina,
+    monto: esperadoEnMano(f),
     concepto: 'cliente_no_pago',
     pedidoId: p.pedidoId,
     referencia: `deuda:${p.pedidoId}`,
@@ -376,7 +386,7 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
   )
     return null;
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
-  const esperado = f.total - f.propina;
+  const esperado = esperadoEnMano(f);
   const recibido = Number(f.monto_recibido ?? 0);
   const diferencia = esperado - recibido;
   // Lo que el repartidor dice que pagó en el local, y cuánto decía el ticket (C-COBRO-DIRECTO-LOCAL).
@@ -428,17 +438,32 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
           }),
         ]
       : []),
-    // Informativo: el restaurante recibió su parte en el local, de manos del repartidor.
-    sentenciaLibro(db, {
-      cuentaId: `restaurante-de:${pedidoId}`,
-      bolsillo: 'directo',
-      pais,
-      moneda,
-      monto: local ? Number(local.monto_pagado) : f.pago_restaurante,
-      concepto: 'pagado_en_local_por_repartidor',
-      pedidoId,
-      referencia: `local:${pedidoId}`,
-    }),
+    // Informativo: el restaurante recibió su parte en el local, de manos del repartidor; o, con pago
+    // directo (C-COMIDA-PAGO-RESTAURANTE), del cliente por pago móvil. Divoox nunca tuvo ese dinero.
+    sentenciaLibro(
+      db,
+      f.comida_directa != null
+        ? {
+            cuentaId: `restaurante-de:${pedidoId}`,
+            bolsillo: 'directo',
+            pais,
+            moneda,
+            monto: Number(f.comida_directa),
+            concepto: 'pagado_directo_por_cliente',
+            pedidoId,
+            referencia: `local:${pedidoId}`,
+          }
+        : {
+            cuentaId: `restaurante-de:${pedidoId}`,
+            bolsillo: 'directo',
+            pais,
+            moneda,
+            monto: local ? Number(local.monto_pagado) : f.pago_restaurante,
+            concepto: 'pagado_en_local_por_repartidor',
+            pedidoId,
+            referencia: `local:${pedidoId}`,
+          },
+    ),
     db
       .prepare(
         "UPDATE pedidos SET conciliacion_estado = ? WHERE id = ? AND conciliacion_estado = 'pendiente'",

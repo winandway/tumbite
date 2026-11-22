@@ -53,6 +53,7 @@ import {
   comisionTipicaComida as comisionTipicaComidaDe,
   confirmarCobro,
   deudaCliente,
+  esperadoEnMano,
 } from '../internacional/cobroDirecto';
 import { leerPagoLocal, registrarPagoLocal } from '../internacional/pagoLocal';
 import { anotarEvento } from '../manager';
@@ -492,7 +493,9 @@ internacional.post('/repartidor/pedidos/:id/pago-movil', async (c) => {
   const id = c.req.param('id');
   const f = await db
     .prepare(
-      'SELECT estado, zona_id, total, propina, metodo_pago, cobro_estado, repartidor_id FROM pedidos WHERE id = ?',
+      `SELECT estado, zona_id, total, propina, metodo_pago, cobro_estado, repartidor_id,
+         (SELECT pc.monto FROM pagos_comida pc WHERE pc.pedido_id = pedidos.id) AS comida_directa
+       FROM pedidos WHERE id = ?`,
     )
     .bind(id)
     .first<{
@@ -503,6 +506,7 @@ internacional.post('/repartidor/pedidos/:id/pago-movil', async (c) => {
       metodo_pago: string;
       cobro_estado: string;
       repartidor_id: string | null;
+      comida_directa: number | null;
     }>();
   if (!f || f.repartidor_id !== u.id)
     throw new ErrorDatos('Este pedido no es tuyo.', undefined, 404);
@@ -511,7 +515,8 @@ internacional.post('/repartidor/pedidos/:id/pago-movil', async (c) => {
   if (!['en_camino', 'entregado'].includes(f.estado))
     throw new ErrorDatos('Confirma el cobro cuando estés con el cliente.', undefined, 409);
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
-  const esperado = Number(f.total) - Number(f.propina ?? 0);
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo, el conductor cobra solo el envío.
+  const esperado = esperadoEnMano(f);
   const nota = `Pago móvil: sí me llegó${d.referencia ? ` (referencia ${d.referencia})` : ''}.`;
   const ya = await db
     .prepare(

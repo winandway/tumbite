@@ -14,7 +14,8 @@ import { z } from 'zod';
 
 export const SERVICIOS_FINANCIEROS = ['flex', 'express', 'food', 'ride', 'car', 'grocery'] as const;
 export type ServicioFinanciero = (typeof SERVICIOS_FINANCIEROS)[number];
-export const TIPOS_CUENTA = ['empresa', 'conductor'] as const;
+// C-SALDO-RESTAURANTE (22 nov 2026): el restaurante también tiene su saldo prepago (Venezuela).
+export const TIPOS_CUENTA = ['empresa', 'conductor', 'restaurante'] as const;
 export const MODALIDADES = ['prepago', 'connect', 'sin_cobro'] as const;
 
 export const esquemaRegla = z.discriminatedUnion('tipo', [
@@ -101,8 +102,13 @@ export function elegirPolitica(
       (!p.empresaId || p.empresaId === c.empresaId) &&
       p.moneda.toUpperCase() === c.moneda.toUpperCase() &&
       vigente(p, c.en) &&
-      // Prepago de conductores: solo con revisión legal y comercial del mercado aprobada.
-      !(p.tipoCuenta === 'conductor' && p.modalidad === 'prepago' && !p.revisionLegalAprobada),
+      // Prepago de conductores y de restaurantes (C-SALDO-RESTAURANTE): solo con revisión legal y
+      // comercial del mercado aprobada.
+      !(
+        (p.tipoCuenta === 'conductor' || p.tipoCuenta === 'restaurante') &&
+        p.modalidad === 'prepago' &&
+        !p.revisionLegalAprobada
+      ),
   );
   candidatas.sort(
     (a, b) =>

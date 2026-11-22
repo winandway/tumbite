@@ -36,7 +36,10 @@ afterEach(() => vi.unstubAllGlobals());
 // fila, solo dentro de la migración completa).
 // +1 (22 nov 2026, C-SMS-GASTO): la pieza «smsGasto» cuenta los SMS cobrados de las últimas 24 h (por
 // el índice nuevo de sms_enviados por fecha: solo las filas del día).
-const TOPE_CANARIO = 1156;
+// +5 (22 nov 2026, C-COMIDA-PAGO-RESTAURANTE): la pieza nueva «pagoComida» (tres búsquedas por el
+// índice de estado de `pagos_comida` y una por la llave del pedido) y su fila del estado del canario.
+// Medido contra la base: cinco lecturas más que sin la pieza; nada más cambió.
+const TOPE_CANARIO = 1161;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

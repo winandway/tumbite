@@ -23,13 +23,36 @@ export async function escenarioVe(host = 'staging.tumbite.com') {
 }
 type E = Awaited<ReturnType<typeof escenarioVe>>;
 
-export const abrirComida = (e: E, extra: Record<string, unknown> = {}) =>
-  e.m.llamar(
+/**
+ * Abre Comida en El Vigía. C-COMIDA-PAGO-RESTAURANTE (22 nov 2026): de fábrica Venezuela usa el pago
+ * directo al restaurante; las pruebas del cobro en mano de antes (el conductor paga en el local)
+ * apagan la bandera en su armado para seguir cubriendo ese flujo, que es el de los países sin ella.
+ * Las pruebas del flujo nuevo piden `{ pagoRestaurante: true }`.
+ */
+export async function abrirComida(
+  e: E,
+  extra: Record<string, unknown> = {},
+  op: { pagoRestaurante?: boolean } = {},
+) {
+  const r = await e.m.llamar(
     'POST',
     '/datos/admin/comida/ciudades',
     { zona: EL_VIGIA, motivo: 'Comida de pruebas en El Vigía', ...extra },
     e.admin.token,
   );
+  if (r.estado === 201 && !op.pagoRestaurante)
+    expect(
+      (
+        await e.m.llamar(
+          'PUT',
+          '/datos/admin/paises/VE',
+          { comidaPagoRestaurante: false },
+          e.admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+  return r;
+}
 
 /** Un restaurante de El Vigía se registra (su país sale de su ubicación) y el equipo lo aprueba. */
 export async function restauranteVe(e: E) {

@@ -176,6 +176,10 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   liquidaciones: 'dinero',
   movimientos: 'dinero',
   pagos_local: 'dinero',
+  // C-SALDO-RESTAURANTE: las recargas y cargas del saldo del restaurante son dinero de un negocio.
+  // (`pagos_comida` y `cuentas_cobro_restaurante` se limpian en borrarCuenta.)
+  recargas_restaurante: 'dinero',
+  cargas_saldo_restaurante: 'dinero',
   pagos_regalo_conductor: 'dinero',
   pedidos_anuncio: 'dinero',
   pedidos_pago_movil: 'dinero',
