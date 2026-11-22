@@ -160,7 +160,13 @@ tableroPanel.get('/admin/tablero', async (c) => {
  * reales (nunca las marcadas de prueba) y solo de la zona de trabajo de quien mira. Es UNA lectura
  * de solo conteos: mirar no escribe nada en la base (regla de la nube). La clave es la del menú.
  */
-export type PendienteMenu = { clave: string; cantidad: number; tono: 'trabajo' | 'urgente' };
+export type PendienteMenu = {
+  clave: string;
+  cantidad: number;
+  tono: 'trabajo' | 'urgente';
+  /** Cuántas de esas pasaron su límite (lo que vuelve rojo el punto); se dice en el texto. */
+  urgentes?: number;
+};
 const REAL = (col: string) => `${col} NOT IN (SELECT id FROM usuarios WHERE es_prueba = 1)`;
 /** Horas que una verificación enviada puede esperar antes de volverse urgente. */
 export const HORAS_VERIFICACION_URGENTE = 24;
@@ -213,12 +219,18 @@ export async function pendientesDelMenu(
       clave: 'verifications',
       cantidad: n('verificaciones'),
       tono: n('verificaciones_viejas') > 0 ? 'urgente' : 'trabajo',
+      urgentes: n('verificaciones_viejas'),
     },
     { clave: 'restaurants', cantidad: n('restaurantes'), tono: 'trabajo' },
     { clave: 'lines', cantidad: n('lineas'), tono: 'trabajo' },
     { clave: 'drivers', cantidad: n('sin_zona'), tono: 'trabajo' },
     // Una emergencia de viaje sin atender es lo más urgente del panel.
-    { clave: 'rides', cantidad: n('emergencias'), tono: 'urgente' },
+    {
+      clave: 'rides',
+      cantidad: n('emergencias'),
+      tono: 'urgente',
+      urgentes: n('emergencias'),
+    },
   ];
   return lista.filter((x) => x.cantidad > 0);
 }

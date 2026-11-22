@@ -36,9 +36,16 @@ describe('C-AVISOS-MENU · lo que espera en cada sección del menú', () => {
       clave: 'verifications',
       cantidad: 1,
       tono: 'trabajo',
+      urgentes: 0,
     });
     await e.kyc(e.real.id, '-30 hours');
-    expect((await e.menu()).find((x) => x.clave === 'verifications')?.tono).toBe('urgente');
+    // Rojo solo porque una pasó las 24 h, y lo dice: cuántas pasaron su límite.
+    expect((await e.menu()).find((x) => x.clave === 'verifications')).toEqual({
+      clave: 'verifications',
+      cantidad: 1,
+      tono: 'urgente',
+      urgentes: 1,
+    });
   });
 
   it('una sección sin nada pendiente no sale (el punto se apaga al atender)', async () => {

@@ -157,7 +157,12 @@ export function IconoDe({
  * C-AVISOS-MENU: lo que espera en esa sección (el número) y el tono del punto que palpita:
  * `trabajo` verde, `urgente` rojo. Sin pendientes, no se dibuja nada.
  */
-export type PendienteItem = { cantidad: number; tono: 'trabajo' | 'urgente' };
+export type PendienteItem = {
+  cantidad: number;
+  tono: 'trabajo' | 'urgente';
+  /** Cuántas pasaron su límite (por qué el punto está rojo). */
+  urgentes?: number;
+};
 export type ItemMenu = {
   clave: string;
   texto: string;
@@ -169,7 +174,7 @@ export type ItemMenu = {
 /** Pone a cada ítem lo que espera en su sección (por su clave). */
 export function conPendientes(
   grupos: GrupoMenu[],
-  menu: { clave: string; cantidad: number; tono: 'trabajo' | 'urgente' }[],
+  menu: ({ clave: string } & PendienteItem)[],
 ): GrupoMenu[] {
   if (!menu.length) return grupos;
   const por = new Map(menu.map((m) => [m.clave, m]));
@@ -177,7 +182,9 @@ export function conPendientes(
     ...g,
     items: g.items.map((i) => {
       const m = por.get(i.clave);
-      return m && m.cantidad > 0 ? { ...i, pendiente: { cantidad: m.cantidad, tono: m.tono } } : i;
+      return m && m.cantidad > 0
+        ? { ...i, pendiente: { cantidad: m.cantidad, tono: m.tono, urgentes: m.urgentes } }
+        : i;
     }),
   }));
 }

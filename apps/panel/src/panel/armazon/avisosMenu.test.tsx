@@ -36,7 +36,8 @@ describe('C-AVISOS-MENU', () => {
   it('pone el número y el tono a cada sección con pendientes', () => {
     montar([
       { clave: 'verifications', cantidad: 3, tono: 'trabajo' },
-      { clave: 'rides', cantidad: 1, tono: 'urgente' },
+      { clave: 'rides', cantidad: 1, tono: 'urgente', urgentes: 1 },
+      { clave: 'tickets', cantidad: 3, tono: 'urgente', urgentes: 1 },
     ]);
     const v = screen.getByTestId('pendiente-verifications');
     expect(v).toHaveTextContent('3');
@@ -44,8 +45,17 @@ describe('C-AVISOS-MENU', () => {
     expect(v).toHaveAttribute('aria-label', '3 pendientes');
     const r = screen.getByTestId('pendiente-rides');
     expect(r).toHaveClass('pd-item-urgente');
-    expect(r).toHaveAttribute('aria-label', '1 pendiente urgente');
-    expect(screen.queryByTestId('pendiente-tickets')).toBeNull();
+    expect(r).toHaveAttribute(
+      'aria-label',
+      '1 pendiente · 1 pasó su límite (más de 24 h o una emergencia)',
+    );
+    // El rojo dice por qué: de 3, solo 1 pasó su límite (Gerencia, 21 nov).
+    const tk = screen.getByTestId('pendiente-tickets');
+    expect(tk).toHaveAttribute(
+      'title',
+      '3 pendientes · 1 pasó su límite (más de 24 h o una emergencia)',
+    );
+    expect(v).toHaveAttribute('title', '3 pendientes');
   });
 
   it('sin pendientes, el menú queda igual (el punto se apaga al atender)', () => {

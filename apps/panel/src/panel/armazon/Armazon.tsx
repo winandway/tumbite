@@ -65,7 +65,8 @@ const T = {
     inicioSitio: 'Ir al inicio de Divoox',
     ayuda: 'Ayuda del equipo',
     pendiente: (n: number) => (n === 1 ? '1 pendiente' : `${n} pendientes`),
-    pendienteUrgente: (n: number) => (n === 1 ? '1 pendiente urgente' : `${n} pendientes, urgente`),
+    pendienteUrgente: (n: number, u: number) =>
+      `${n === 1 ? '1 pendiente' : `${n} pendientes`} · ${u <= 1 ? '1 pasó su límite (más de 24 h o una emergencia)' : `${u} pasaron su límite (más de 24 h o una emergencia)`}`,
   },
   en: {
     menu: 'Dashboard',
@@ -85,7 +86,8 @@ const T = {
     inicioSitio: 'Go to the Divoox home page',
     ayuda: 'Team help',
     pendiente: (n: number) => (n === 1 ? '1 pending' : `${n} pending`),
-    pendienteUrgente: (n: number) => (n === 1 ? '1 pending, urgent' : `${n} pending, urgent`),
+    pendienteUrgente: (n: number, u: number) =>
+      `${n} pending · ${u <= 1 ? '1 is past its limit (over 24 h or an emergency)' : `${u} are past their limit (over 24 h or an emergency)`}`,
   },
 };
 
@@ -341,6 +343,11 @@ export function Armazon({
   const sesion = useContext(SesionArmazon);
   const { idioma } = sesion;
   const t = idioma === 'en' ? T.en : T.es;
+  // C-AVISOS-MENU: el rojo dice por qué (cuántas pasaron su límite); el verde, cuántas esperan.
+  const textoPendiente = (p: NonNullable<ItemMenu['pendiente']>) =>
+    p.tono === 'urgente'
+      ? t.pendienteUrgente(p.cantidad, p.urgentes ?? p.cantidad)
+      : t.pendiente(p.cantidad);
   const [abierto, setAbierto] = useState(false);
   const logistica = variante === 'logistica';
   const idLateral = useId();
@@ -423,9 +430,8 @@ export function Armazon({
                     <span
                       className={`pd-item-pendiente pd-item-${i.pendiente.tono}`}
                       data-testid={`pendiente-${i.clave}`}
-                      aria-label={(i.pendiente.tono === 'urgente'
-                        ? t.pendienteUrgente
-                        : t.pendiente)(i.pendiente.cantidad)}
+                      aria-label={textoPendiente(i.pendiente)}
+                      title={textoPendiente(i.pendiente)}
                     >
                       <span className="pd-item-punto" aria-hidden="true" />
                       <span aria-hidden="true">
