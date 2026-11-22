@@ -47,7 +47,7 @@ export function AyudaPedido({
       .pedir('POST', '/datos/quejas', {
         tipo: 'soporte',
         pedidoId,
-        texto: '[EMERGENCIA] El repartidor llamó al 911 desde la app.',
+        texto: '[EMERGENCIA] El conductor llamó al 911 desde la app.',
       })
       .catch(() => undefined);
     await Linking.openURL('tel:911');

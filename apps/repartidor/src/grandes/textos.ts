@@ -25,7 +25,7 @@ const es = {
     aceptar: 'Aceptar',
     rechazar: 'No, gracias',
     segundos: 's para decidir',
-    vence: 'Si no respondes, pasa al siguiente repartidor.',
+    vence: 'Si no respondes, pasa al siguiente conductor.',
     sinCastigo: 'Rechazar no te baja de nivel.',
   },
   calif: {

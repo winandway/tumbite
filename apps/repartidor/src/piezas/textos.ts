@@ -34,7 +34,7 @@ const es = {
   sinMovimientos: 'Todavía no hay entregas en este periodo.',
   sinPedidos: 'Todavía no has hecho entregas. Conéctate y te llegará la primera.',
   miCuenta: 'Mi cuenta',
-  repartidor: 'Repartidor',
+  repartidor: 'Conductor',
   verificado: 'Verificado',
   sinVerificar: 'Sin verificar',
   miVehiculo: 'Mi vehículo',

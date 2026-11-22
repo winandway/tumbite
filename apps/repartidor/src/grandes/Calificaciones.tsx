@@ -21,9 +21,9 @@ type Datos = {
 
 const TD = {
   es: {
-    titulo: 'Repartidor destacado',
-    si: 'Eres repartidor destacado: a igual distancia, las ofertas te llegan antes.',
-    no: 'Cumple los cinco para ser repartidor destacado y recibir las ofertas antes.',
+    titulo: 'Conductor destacado',
+    si: 'Eres conductor destacado: a igual distancia, las ofertas te llegan antes.',
+    no: 'Cumple los cinco para ser conductor destacado y recibir las ofertas antes.',
     nombres: {
       estrellas: 'Calificación de clientes',
       aceptacion: 'Aceptación',

@@ -1597,7 +1597,7 @@ export async function conectarRepartidor(
   // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): si cambiaron, se aceptan antes.
   if (d.conectado && (await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo))))
     throw new ErrorDatos(
-      'Actualizamos los términos para repartidores. Léelos y acéptalos para conectarte.',
+      'Actualizamos los términos para conductores. Léelos y acéptalos para conectarte.',
       'terminos',
       409,
     );

@@ -5315,7 +5315,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-instalar-driver-navegador-es.webp',
-            alt: 'La app Divoox Driver abierta en el navegador del celular, en la pantalla «Entrar» con la etiqueta «Para repartidores».',
+            alt: 'La app Divoox Driver abierta en el navegador del celular, en la pantalla «Entrar» con la etiqueta «Para conductores».',
             pie: 'Divoox Driver, para repartir, también se abre desde el navegador.',
           },
           {

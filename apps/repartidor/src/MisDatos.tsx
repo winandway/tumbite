@@ -16,7 +16,7 @@ import {
 
 const T = {
   es: {
-    tuId: 'Tu ID de repartidor',
+    tuId: 'Tu ID de conductor',
     idAyuda: 'Dáselo a soporte si tienes un problema: con él te encontramos al instante.',
     vehiculo: 'Tu vehículo',
     tipos: {

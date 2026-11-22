@@ -376,11 +376,11 @@ const T = {
     tomarSelfie: 'Tomarme la foto ahora',
     selfieLista: 'Foto enviada. Ya puedes conectarte.',
     pasoFrente: 'Paso 1 de 2: mira de frente a la cámara.',
-    terminosTitulo: 'Actualizamos los términos para repartidores',
+    terminosTitulo: 'Actualizamos los términos para conductores',
     terminosAyuda:
       'Antes de conectarte, léelos y acéptalos. Explican cómo funcionan tus ganancias, la seguridad y cómo se resuelven los desacuerdos.',
     terminosLeer: 'Leer los términos',
-    terminosAcepto: 'He leído, comprendo y acepto los términos para repartidores',
+    terminosAcepto: 'He leído, comprendo y acepto los términos para conductores',
     terminosDeAcuerdo: 'De acuerdo',
     pasoGiro: 'Paso 2 de 2: gira la cabeza ligeramente a la derecha y toma la foto.',
     tomarGiro: 'Tomar la foto mirando a la derecha',
@@ -403,7 +403,7 @@ const T = {
       'Código verificado: es tu pedido. Ahora toma la foto de la bolsa y sales de una, sin esperar al restaurante.',
     cerrar: 'Cerrar',
     noPuedo: 'No puedo seguir con este pedido',
-    motivo: 'Cuéntanos por qué. Se le ofrece a otro repartidor y no te baja de nivel.',
+    motivo: 'Cuéntanos por qué. Se le ofrece a otro conductor y no te baja de nivel.',
     soltar: 'Soltar el pedido',
     pidio: {
       puerta: 'El cliente pidió: dejar en la puerta',

@@ -28,7 +28,7 @@ function Portada() {
         }}
       >
         <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14, letterSpacing: 1 }}>
-          {idioma === 'en' ? 'For drivers' : 'Para repartidores'}
+          {idioma === 'en' ? 'For drivers' : 'Para conductores'}
         </Text>
       </View>
     </View>
