@@ -11,6 +11,7 @@ import {
   PLANTILLAS_DE_FABRICA,
   candidatos,
   correrRezagados,
+  envioDePlantilla,
   guardarAjustesRezagados,
   leerAjustesRezagados,
   pasoPendiente,
@@ -437,6 +438,45 @@ describe('C-REZAGADOS: la vuelta del reloj', () => {
     await correrRezagados(env(m), m.DB);
     expect(enviados.map((e) => e.asunto)).toEqual([PLANTILLAS_DE_FABRICA.linea.es.asunto]);
     expect((await mensajes(m)).every((f) => f.usuario_id === suelto.id)).toBe(true);
+  });
+
+  it('una cuenta autorizada recibe aunque su zona siga en vista previa; las demás de esa zona, no', async () => {
+    const m = mundo();
+    const enviados = correos();
+    const si = await rezagado(m, 'repartidor', 5, [], 'Autorizada Ejemplo');
+    await rezagado(m, 'repartidor', 6, [], 'Pendiente Ejemplo');
+    await ajustar(m, { zonas: { [ZONA]: 'previa' }, autorizados: [si.id] });
+    await correrRezagados(env(m), m.DB);
+    expect(enviados).toHaveLength(1);
+    expect(enviados[0]!.texto).toContain('Hola, Autorizada.');
+    expect((await mensajes(m)).every((f) => f.usuario_id === si.id)).toBe(true);
+    // En una zona apagada no recibe ni la autorizada.
+    await ajustar(m, { zonas: { [ZONA]: 'apagado' }, autorizados: [si.id] });
+    await correrRezagados(env(m), m.DB, dentroDe(30));
+    expect(enviados).toHaveLength(1);
+  });
+
+  it('cada SMS de fábrica cabe en uno solo, sin acentos, empieza por «Divoox:» y no lleva dinero', () => {
+    for (const p of PASOS_REZAGADO)
+      for (const i of ['es', 'en'] as const) {
+        const e = envioDePlantilla(
+          env(mundo()),
+          AJUSTES_REZAGADOS_DE_FABRICA,
+          {
+            id: 'x',
+            rol: 'repartidor',
+            nombre: 'Maximiliano Alejandro Ejemplo',
+            telefono: null,
+            idioma: i,
+            zona: ZONA,
+          },
+          p,
+        );
+        expect(e.sms.length, `${p} ${i}: ${e.sms}`).toBeLessThanOrEqual(160);
+        expect(e.sms, `${p} ${i}`).toMatch(/^Divoox: [\x20-\x7E]+$/);
+        expect(e.sms).not.toMatch(/\$|USD|Bs\.?\b|\d+[.,]\d{2}/);
+        expect(e.sms).not.toContain('{');
+      }
   });
 
   it('la tarea está en el reloj, una vez por hora, con sus escrituras declaradas', () => {

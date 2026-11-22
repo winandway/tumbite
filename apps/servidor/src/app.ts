@@ -237,6 +237,8 @@ app.use('*', async (c, next) => {
   // La app web del repartidor se llama /driver (antes /repartidor).
   if (ruta === '/repartidor' || ruta.startsWith('/repartidor/'))
     return c.redirect(`/driver${ruta.slice(11)}${url.search}`, 301);
+  // C-REZAGADOS: la dirección corta de los SMS de registro (cada letra cuenta dentro de los 160).
+  if (ruta === '/go') return c.redirect('/driver', 302);
   if (/^\/(datos|media|panel|app|driver|restaurant|t)(\/|$)/.test(ruta)) return next();
   let destino: string | null = null;
   if (ruta === '/en' || ruta.startsWith('/en/')) {

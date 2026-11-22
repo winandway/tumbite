@@ -44,13 +44,13 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       asunto: 'Te falta un paso para empezar a ganar con Divoox',
       texto:
         'Hola, {nombre}. Soy Camila, de Divoox. Vi que creaste tu cuenta de conductor y todavía faltan tus fotos: tu cara, tu documento y tu licencia. Son tres fotos y se toman desde la app en un par de minutos.\n\nAbre Divoox Driver y toca «Tus papeles» para terminarlas:\n{enlace}\n\nSi algo no te deja avanzar, respóndeme y te ayudo.',
-      sms: 'Divoox: {nombre}, te faltan tus fotos para empezar a recibir viajes. Abre Divoox Driver y toca «Tus papeles». Camila',
+      sms: 'Divoox: {nombre}, te faltan tus fotos para empezar a recibir viajes. Son pocos minutos. Continua aqui: {enlace_corto} Camila',
     },
     en: {
       asunto: 'One step left to start earning with Divoox',
       texto:
         'Hi {nombre}, this is Camila from Divoox. You created your driver account and your photos are still missing: your face, your ID and your license. It is three photos and they take a couple of minutes in the app.\n\nOpen Divoox Driver and tap “Your documents” to finish them:\n{enlace}\n\nIf something is stopping you, reply to me and I will help.',
-      sms: 'Divoox: {nombre}, your photos are missing to start getting trips. Open Divoox Driver and tap "Your documents". Camila',
+      sms: 'Divoox: {nombre}, your photos are missing to start getting trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
     },
   },
   vehiculo: {
@@ -58,13 +58,13 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       asunto: 'Falta registrar tu vehículo en Divoox',
       texto:
         'Hola, {nombre}. Soy Camila, de Divoox. Tu cuenta va bien, pero todavía no has registrado tu vehículo, y sin él no podemos enviarte viajes.\n\nAbre Divoox Driver, entra en «Tu vehículo» y escribe la marca, el modelo y la placa:\n{enlace}\n\nSi tienes una duda con algún dato, respóndeme y lo vemos.',
-      sms: 'Divoox: {nombre}, falta registrar tu vehículo para recibir viajes. Abre Divoox Driver y entra en «Tu vehículo». Camila',
+      sms: 'Divoox: {nombre}, solo falta registrar tu vehiculo para recibir viajes. Son pocos minutos. Continua aqui: {enlace_corto} Camila',
     },
     en: {
       asunto: 'Your vehicle is not registered yet',
       texto:
         'Hi {nombre}, this is Camila from Divoox. Your account is doing well, but your vehicle is not registered yet, and without it we cannot send you trips.\n\nOpen Divoox Driver, go to “Your vehicle” and enter the make, model and plate:\n{enlace}\n\nIf you are unsure about any detail, reply to me and we will sort it out.',
-      sms: 'Divoox: {nombre}, register your vehicle to get trips. Open Divoox Driver and go to "Your vehicle". Camila',
+      sms: 'Divoox: {nombre}, just register your vehicle to get trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
     },
   },
   servicio: {
@@ -72,13 +72,13 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       asunto: 'Tu cuenta de Divoox ya está aprobada',
       texto:
         'Hola, {nombre}. Soy Camila, de Divoox. Tu cuenta ya está aprobada y lista para trabajar. Solo falta que te conectes para empezar a recibir viajes.\n\nAbre Divoox Driver y toca «Conectarme»:\n{enlace}\n\nSi la app te muestra algún aviso al conectarte, respóndeme y te digo qué hacer.',
-      sms: 'Divoox: {nombre}, tu cuenta ya está aprobada. Abre Divoox Driver y toca «Conectarme» para recibir viajes. Camila',
+      sms: 'Divoox: {nombre}, tu cuenta ya esta aprobada. Abre Divoox Driver y toca Conectarme para recibir viajes: {enlace_corto} Camila',
     },
     en: {
       asunto: 'Your Divoox account is approved',
       texto:
         'Hi {nombre}, this is Camila from Divoox. Your account is approved and ready to work. All that is left is going online to start getting trips.\n\nOpen Divoox Driver and tap “Go online”:\n{enlace}\n\nIf the app shows you a notice when you go online, reply to me and I will tell you what to do.',
-      sms: 'Divoox: {nombre}, your account is approved. Open Divoox Driver and tap "Go online" to get trips. Camila',
+      sms: 'Divoox: {nombre}, your account is approved. Open Divoox Driver and tap Go online to get trips: {enlace_corto} Camila',
     },
   },
   linea: {
@@ -86,13 +86,13 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       asunto: 'Únete a tu línea en Divoox',
       texto:
         'Hola, {nombre}. Soy Camila, de Divoox. En tu ciudad los conductores trabajan por línea y tu cuenta todavía no está en ninguna.\n\nPídele a tu líder su código o su enlace, abre Divoox Driver y entra en «Tu línea» para unirte:\n{enlace}\n\nSi no sabes cuál es tu línea, respóndeme con el nombre de tu líder y te ayudo.',
-      sms: 'Divoox: {nombre}, tu cuenta todavía no está en una línea. Pide el código a tu líder y entra en «Tu línea» en Divoox Driver. Camila',
+      sms: 'Divoox: {nombre}, tu cuenta aun no esta en una linea. Pide el codigo a tu lider y entra en Tu linea: {enlace_corto} Camila',
     },
     en: {
       asunto: 'Join your line on Divoox',
       texto:
         'Hi {nombre}, this is Camila from Divoox. In your city drivers work in lines and your account is not in one yet.\n\nAsk your leader for the code or link, open Divoox Driver and go to “Your line” to join:\n{enlace}\n\nIf you do not know which line is yours, reply with your leader’s name and I will help.',
-      sms: 'Divoox: {nombre}, your account is not in a line yet. Ask your leader for the code and go to "Your line" in Divoox Driver. Camila',
+      sms: 'Divoox: {nombre}, your account is not in a line yet. Ask your leader for the code and open Your line: {enlace_corto} Camila',
     },
   },
   correo: {
@@ -182,6 +182,10 @@ export const esquemaAjustesRezagados = z.object({
   horaHasta: z.number().int().min(1).max(24),
   ventanaDias: z.number().int().min(1).max(LIMITES_REZAGADOS.ventanaDiasMaxima),
   zonas: z.record(z.string().min(1).max(60), z.enum(['apagado', 'previa', 'encendido'])),
+  /** Cuentas a las que sí se les escribe aunque su zona siga en vista previa (lista confirmada por Gerencia). */
+  autorizados: z.array(z.string().min(8).max(64)).max(200),
+  /** La dirección corta que va en el SMS (cada letra cuenta dentro de los 160). */
+  enlaceCorto: z.string().trim().min(4).max(60),
   /** Lo que el equipo cambió de las plantillas generales. */
   plantillas: porPaso,
   /** Plantillas propias de una zona (mandan sobre las generales). */
@@ -198,6 +202,8 @@ export const AJUSTES_REZAGADOS_DE_FABRICA: AjustesRezagados = {
   horaHasta: 20,
   ventanaDias: 21,
   zonas: {},
+  autorizados: [],
+  enlaceCorto: 'divoox.com/go',
   plantillas: {},
   plantillasZona: {},
 };
@@ -250,8 +256,11 @@ export function plantillaDe(
 }
 
 const primerNombre = (nombre: string) => nombre.trim().split(/\s+/)[0] || nombre.trim();
-export const llenar = (t: string, d: { nombre: string; enlace: string }) =>
-  t.replaceAll('{nombre}', primerNombre(d.nombre)).replaceAll('{enlace}', d.enlace);
+export const llenar = (t: string, d: { nombre: string; enlace: string; enlaceCorto?: string }) =>
+  t
+    .replaceAll('{nombre}', primerNombre(d.nombre))
+    .replaceAll('{enlace_corto}', d.enlaceCorto ?? d.enlace)
+    .replaceAll('{enlace}', d.enlace);
 
 const sitio = (env: Pick<Env, 'SITIO_URL'>) =>
   (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
@@ -622,7 +631,12 @@ export function envioDePlantilla(
     paso,
     asunto: llenar(pl.asunto, d),
     texto: llenar(pl.texto, d),
-    sms: llenar(pl.sms, d),
+    // En el SMS el nombre va corto: cada letra cuenta dentro de los 160.
+    sms: llenar(pl.sms, {
+      ...d,
+      nombre: primerNombre(p.nombre).slice(0, 14),
+      enlaceCorto: a.enlaceCorto,
+    }),
     aviso: (i) => AVISO[paso][i],
   };
 }
@@ -637,12 +651,21 @@ const esDeCobro = (c: CanalRezagado) => c === 'correo' || c === 'sms';
  */
 export async function correrRezagados(env: Env, db: D1Database, ahora = new Date()) {
   const a = await leerAjustesRezagados(db);
+  const encendidas = new Set(
+    Object.entries(a.zonas)
+      .filter(([, m]) => m === 'encendido')
+      .map(([z]) => z),
+  );
+  // Las cuentas autorizadas una por una reciben aunque su zona siga en vista previa (nunca en una apagada).
+  const autorizados = new Set(a.autorizados);
   const zonas = Object.entries(a.zonas)
-    .filter(([, m]) => m === 'encendido')
+    .filter(([z, m]) => encendidas.has(z) || (m === 'previa' && autorizados.size > 0))
     .map(([z]) => z);
   const cuenta = { zonas: zonas.length, vistos: 0, enviados: 0, tope: false, entregados: 0 };
   if (!zonas.length) return cuenta;
-  const lista = (await candidatos(env, db, a, zonas, ahora)).filter((c) => c.toca !== null);
+  const lista = (await candidatos(env, db, a, zonas, ahora)).filter(
+    (c) => c.toca !== null && (encendidas.has(c.zona) || autorizados.has(c.id)),
+  );
   cuenta.vistos = lista.length;
   if (lista.length) {
     const hoy = await db

@@ -73,6 +73,7 @@ rezagadosRutas.get('/admin/camila/recordatorios', async (c) => {
       zona: p.zona,
       zonaNombre: p.zonaNombre,
       modo: ajustes.zonas[p.zona] ?? 'apagado',
+      autorizado: ajustes.autorizados.includes(p.id),
       creadoEn: p.creadoEn,
       paso: p.paso,
       horasQuieto: p.horasQuieto,
