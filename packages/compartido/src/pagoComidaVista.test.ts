@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   REFERENCIA_PAGO_VALIDA,
   TEXTOS_PAGO_COMIDA_CLIENTE,
+  TEXTOS_PAGO_COMIDA_RESTAURANTE,
   limpiarReferenciaPago,
   relojPago,
   segundosHasta,
@@ -49,5 +50,25 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     expect(pieza).toMatch(/\/pago-comida\/comprobante`/);
     // La captura es opcional: el botón de enviar no depende de ella.
     expect(pieza).not.toMatch(/disabled=\{[^}]*captura/);
+  });
+
+  it('el restaurante confirma mirando su banco, tiene su cuenta de cobro y su saldo', () => {
+    const { es, en } = TEXTOS_PAGO_COMIDA_RESTAURANTE;
+    expect(Object.keys(en).sort()).toEqual(Object.keys(es).sort());
+    expect(es.miraTuBanco).toMatch(/captura no es prueba/);
+    expect(JSON.stringify(es).toLowerCase()).not.toContain('repartidor');
+    const inicio = leer('apps/restaurante/src/Inicio.tsx');
+    expect(inicio).toMatch(/<PagoComidaPedido\b/);
+    expect(inicio).toMatch(/<CuentaCobroRestaurante\b/);
+    expect(inicio).toMatch(/<SaldoRestaurante\b/);
+    const pieza = leer('apps/restaurante/src/PagoComidaRest.tsx');
+    expect(pieza).toMatch(/\/pago-comida`, \{ llego/);
+    expect(pieza).toMatch(/\/pago-comida\/devolucion`/);
+    expect(pieza).toMatch(/\/datos\/restaurante\/cuenta-cobro/);
+    expect(pieza).toMatch(/\/datos\/restaurante\/saldo\/recargas/);
+    // Tres formularios, los tres con borrador; la contraseña nunca se guarda en el borrador.
+    expect(pieza.match(/useBorrador\(/g)?.length).toBe(3);
+    expect(pieza).not.toMatch(/b\.cambiar\('clave'/);
+    expect(pieza).toMatch(/fotoConCamara\(/);
   });
 });

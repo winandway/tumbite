@@ -19,6 +19,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { FaltaTienda } from './FaltaTienda';
 import { imprimirComanda, useComandaAlAceptar } from './comanda';
 import { PesoReal } from './PesoReal';
+import { CuentaCobroRestaurante, PagoComidaPedido, SaldoRestaurante } from './PagoComidaRest';
 import {
   ErrorApi,
   type Idioma,
@@ -40,6 +41,7 @@ import {
   OPCIONES_COCINA_OCUPADA,
   type OpcionMas,
   ESPERA_MAXIMA_CRITICA_MS,
+  type VistaPagoComida,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -91,6 +93,8 @@ type Pedido = {
   requiereEdad?: boolean;
   /** Fase 2 · cobro directo: el cliente le paga al repartidor y él paga en el local. */
   metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+  /** C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al restaurante. */
+  pagoComida?: VistaPagoComida | null;
   total: number;
   subtotal: number;
   /** C-MONEDA-RECORRIDO: la moneda del pedido. */
@@ -358,6 +362,8 @@ const TEXTOS_LOCAL = {
 export function Inicio() {
   useKeepAwake(); // La tablet del mostrador no se apaga mientras la app está abierta.
   const { api, idioma, cambiarIdioma } = useSesion();
+  // C-COMIDA-PAGO-RESTAURANTE: en su país el cliente le paga la comida directo (lo dice su cuenta de cobro).
+  const [pagoDirecto, setPagoDirecto] = useState(false);
   const t = enIdioma(T, idioma);
   const tr = textosRest(idioma);
   const { width } = useWindowDimensions();
@@ -1018,6 +1024,8 @@ export function Inicio() {
   const columnaNuevos = (
     <View style={columna}>
       {tarjetaRestaurante}
+      <CuentaCobroRestaurante alSaber={setPagoDirecto} />
+      <SaldoRestaurante visible={pagoDirecto} />
       {contadores}
       {nuevos.length ? (
         <View
@@ -1241,6 +1249,9 @@ export function Inicio() {
             alTocar={() => void imprimir(p)}
           />
         ) : null}
+        {p.pagoComida ? (
+          <PagoComidaPedido pedidoId={p.id} pago={p.pagoComida} alCambiar={() => void cargar()} />
+        ) : null}
         {p.estado === 'pagado' ? <Tarjeta>{aceptarBloque(p)}</Tarjeta> : null}
         {p.estado === 'aceptado' ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -1261,7 +1272,8 @@ export function Inicio() {
             ) : null}
             {/* C-LISTO-SIN-AJUSTE: mientras el cliente decide el plato que falta, no hay «Listo»;
                 el aviso de la espera se ve arriba, en la tarjeta del pedido. */}
-            {p.ajuste?.estado !== 'pendiente' ? (
+            {p.ajuste?.estado !== 'pendiente' &&
+            (!p.pagoComida || p.pagoComida.estado === 'confirmado') ? (
               <BotonGrande
                 texto={tr.marcarListo}
                 etiqueta={t.listo}
