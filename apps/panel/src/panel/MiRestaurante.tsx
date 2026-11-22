@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { CuentaSaldoRestaurante } from './CuentaSaldoRestaurante';
 import { Icono } from '../sitio/Icono';
 import {
   ErrorApi,
@@ -238,6 +239,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           )}
         </div>
       )}
+      <CuentaSaldoRestaurante idioma={idioma} usuarioId={usuario.id} />
       {rest?.activacion && (
         <div className="activacion" aria-label={t.activacion}>
           <h2>{t.activacion}</h2>
