@@ -78,6 +78,41 @@ export const esquemaConfigPais = z.object({
       aprobacionAutomatica: z.boolean(),
     })
     .optional(),
+  /**
+   * C-COMIDA-PAGO-RESTAURANTE (22 nov 2026): el cliente le paga la comida DIRECTO al restaurante (pago
+   * móvil) y el envío al conductor; el conductor ya no adelanta nada en el local. De fábrica, solo
+   * Venezuela. Sin la bandera, el cobro en mano de siempre (C-COBRO-DIRECTO-LOCAL).
+   */
+  comidaPagoRestaurante: z.boolean().optional(),
+  /** Los tiempos del pago directo, en minutos (ver `TIEMPOS_PAGO_COMIDA`). */
+  pagoComida: z
+    .object({
+      minutosConductor: z.number().int().min(2).max(60),
+      minutosPagar: z.number().int().min(5).max(60),
+      avisoConfirmar1: z.number().int().min(1).max(30),
+      avisoConfirmar2: z.number().int().min(1).max(30),
+      minutosConfirmar: z.number().int().min(3).max(60),
+    })
+    .refine(
+      (t) => t.avisoConfirmar1 < t.avisoConfirmar2 && t.avisoConfirmar2 < t.minutosConfirmar,
+      {
+        error: 'Los avisos al restaurante van antes de la cancelación, en orden.',
+      },
+    )
+    .optional(),
+  /**
+   * C-SALDO-RESTAURANTE (22 nov 2026): la recarga del saldo prepago del restaurante. Apagada de
+   * fábrica (con la comisión en 0 % no hace falta); a dónde paga lo escribe el equipo.
+   */
+  saldoRestaurante: z
+    .object({
+      recargasActivas: z.boolean(),
+      minimo: z.number().int().min(1),
+      maximo: z.number().int().min(1),
+      instruccionesEs: z.string().max(1000),
+      instruccionesEn: z.string().max(1000),
+    })
+    .optional(),
   topes: z
     .object({
       bonoOfertaAbierta: z.number().int().min(0),
@@ -132,9 +167,33 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     tarifas: null,
     propinasPb: null,
     plazoPapeles: politicaPlazoDeFabrica(pais),
+    comidaPagoRestaurante: pais === 'VE',
+    pagoComida: { ...TIEMPOS_PAGO_COMIDA },
+    saldoRestaurante: { ...SALDO_RESTAURANTE_DE_FABRICA },
     topes: null,
   };
 }
+
+/**
+ * C-COMIDA-PAGO-RESTAURANTE: sin conductor en 10 minutos desde que el restaurante acepta, se cancela
+ * (nadie pagó); el cliente tiene 15 minutos para pagar y escribir la referencia; el restaurante recibe
+ * avisos a los 2 y 5 minutos y a los 10 sin responder se cancela con caso para el equipo.
+ */
+export const TIEMPOS_PAGO_COMIDA = {
+  minutosConductor: 10,
+  minutosPagar: 15,
+  avisoConfirmar1: 2,
+  avisoConfirmar2: 5,
+  minutosConfirmar: 10,
+} as const;
+
+export const SALDO_RESTAURANTE_DE_FABRICA = {
+  recargasActivas: false,
+  minimo: 100,
+  maximo: 100_000,
+  instruccionesEs: '',
+  instruccionesEn: '',
+} as const;
 
 export async function leerConfigPais(db: D1Database, pais: string): Promise<ConfigPais> {
   const f = await db

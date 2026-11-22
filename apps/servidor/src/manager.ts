@@ -3,6 +3,7 @@ import { actualizarTurnos } from './rutas/turnos';
 import { correosEquipo } from './avisosEquipo';
 import { cerrarReservasPorCancelacion } from './internacional/cobroDirecto';
 import { registrarPerdidaComida } from './internacional/pagoLocal';
+import { alCancelarPedido } from './internacional/pagoComida';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 import { anotar } from './historial';
@@ -165,6 +166,13 @@ export async function cancelarConReembolso(
   await cerrarReservasPorCancelacion(db, pedidoId).catch((e: unknown) =>
     console.error('cancelación: cerrar reservas', e),
   );
+  // C-COMIDA-PAGO-RESTAURANTE: si el cliente ya le había pagado la comida al restaurante, la
+  // devolución queda pendiente (la hace el restaurante) con su caso para el equipo. Si esto falla, el
+  // error queda guardado en el registro de errores (lo ve el equipo), nunca solo en la consola.
+  await alCancelarPedido(env, db, pedidoId).catch(async (e: unknown) => {
+    console.error('cancelación: pago de la comida', e);
+    await guardarError(db, 'CANCELAR', `pago-comida:${pedidoId}`, e).catch(() => undefined);
+  });
   // Cobro directo: si el repartidor ya había pagado la comida, queda registrada como pérdida
   // pendiente de decisión (nunca se pierde el rastro de ese dinero).
   await registrarPerdidaComida(db, pedidoId, 'cancelado').catch((e: unknown) =>

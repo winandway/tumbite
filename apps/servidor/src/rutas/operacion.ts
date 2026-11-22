@@ -39,6 +39,16 @@ import {
   registrarPerdidaComida,
 } from '../internacional/pagoLocal';
 import { liberarReserva } from '../internacional/libro';
+import {
+  ESCRITURAS_VIGILANTE_PAGO_COMIDA,
+  alAceptarRestaurante,
+  exigirPagoComidaConfirmado,
+  pagosComidaDe,
+  pedirPagoComida,
+  vigilarPagosComida,
+  vistaDePedido,
+  vistaPagoComida,
+} from '../internacional/pagoComida';
 import { cuentaVigente } from '../internacional/cuentasCobro';
 import { comprobarCodigo, mandarCodigo, telefonoPorVerificar } from '../telefonoVuelta';
 import { pagoPicoPara } from '../pagoPico';
@@ -129,6 +139,7 @@ import { enIdiomaDePeticion, idiomaDeLaPeticion } from '../mensajesEn';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { nuevoId } from '../cripto';
+import { guardarError } from '../errores';
 import { avanzarPrueba, crearPedidoPrueba, esPedidoPrueba, pedidosPrueba } from '../pedidoPrueba';
 import { ofertasPractica, practicaActiva } from '../entregaPractica';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
@@ -559,11 +570,19 @@ operacion.get('/restaurante/pedidos', async (c) => {
     .all<FilaPedido>();
   // C-PEDIDO-PRUEBA: los de prueba van arriba, marcados; salen de su propia tabla.
   const prueba = await pedidosPrueba(base(c), rid);
+  // C-COMIDA-PAGO-RESTAURANTE: el pago de la comida de cada pedido (una consulta para toda la lista).
+  const pagos = await pagosComidaDe(
+    base(c),
+    results.map((f) => String(f.id)),
+  );
   return c.json({
     pedidos: [
       ...prueba,
       ...results.map((f) => ({
         ...aPedido(f),
+        pagoComida: ((pc) => (pc ? vistaPagoComida(pc, 'restaurante') : null))(
+          pagos.get(String(f.id)),
+        ),
         repartidor: repartidorParaRestaurante(f),
         // LAN-3y: para la comanda, solo el nombre y la inicial (como DoorDash y Uber Eats).
         clienteCorto: nombreCorto(f.cliente_nombre == null ? '' : String(f.cliente_nombre)),
@@ -711,6 +730,9 @@ export async function aceptarPedido(
   );
   if (!cambio) return;
   await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.pedidoAceptado(i, f.restaurante));
+  // C-COMIDA-PAGO-RESTAURANTE: en la recogida en el local no hay conductor que esperar: el cliente
+  // ya puede pagarle la comida al restaurante.
+  await alAceptarRestaurante(env, db, pedidoId);
 }
 
 /**
@@ -738,6 +760,8 @@ export async function aceptarSiEsAutomatico(env: Env, db: D1Database, pedidoId: 
 /** Marcar listo (panel, app y API de punto de venta). */
 export async function marcarListo(env: Env, db: D1Database, pedidoId: string, rid: string) {
   await sinAjustePendiente(db, pedidoId);
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo, la cocina arranca con «Me llegó», nunca antes.
+  await exigirPagoComidaConfirmado(db, pedidoId);
   if (
     !(await cambiarEstado(db, pedidoId, rid, ['aceptado'], 'listo', ", listo_en = datetime('now')"))
   )
@@ -1353,6 +1377,12 @@ operacion.get('/repartidor/estado', async (c) => {
   // Días sin conectarse (desde su última ubicación), solo si son DIAS_PARA_VERIFICAR_AL_VOLVER o más.
   const ultima = ficha.ubicacion_en ? Date.parse(`${String(ficha.ubicacion_en)}Z`) : NaN;
   const dias = Number.isFinite(ultima) ? Math.floor((Date.now() - ultima) / 86_400_000) : 0;
+  const pagoActivo = activo
+    ? ((await pagosComidaDe(db, [String(activo.id)])).get(String(activo.id)) ?? null)
+    : null;
+  const enManoActivo = activo
+    ? Number(activo.total) - Number(activo.propina ?? 0) - Number(pagoActivo?.monto ?? 0)
+    : 0;
   return c.json({
     terminosPorAceptar: terminos,
     vuelveTrasDias:
@@ -1397,20 +1427,19 @@ operacion.get('/repartidor/estado', async (c) => {
           // la app dice «Divoox te paga Y» y se le acredita al conciliar.
           regaloDivoox: (await regaloDeOperacion(db, String(activo.id)))?.monto ?? 0,
           // C-COMIDA-VENEZUELA: lo que cobra en mano (sin propina), en bolívares de referencia.
+          // C-COMIDA-PAGO-RESTAURANTE: con pago directo al restaurante, solo el envío.
           referenciaCobro:
             activo.moneda === 'USD' &&
             (activo.metodo_pago === 'efectivo' || activo.metodo_pago === 'transferencia_repartidor')
-              ? await referenciaDePedido(
-                  db,
-                  activo,
-                  Number(activo.total) - Number(activo.propina ?? 0),
-                )
+              ? await referenciaDePedido(db, activo, enManoActivo)
               : null,
           // C-BS-EN-MANO: lo mismo con «sinTasa» (la pantalla lo dice), igual al que ve el cliente.
           enManoCobro:
             activo.metodo_pago === 'efectivo' || activo.metodo_pago === 'transferencia_repartidor'
-              ? await enManoDePedido(db, activo, Number(activo.total) - Number(activo.propina ?? 0))
+              ? await enManoDePedido(db, activo, enManoActivo)
               : null,
+          // «Espera: el cliente está pagando» o «ya puedes ir al restaurante».
+          pagoComida: pagoActivo ? vistaPagoComida(pagoActivo, 'conductor') : null,
         }
       : await practicaActiva(db, u.id),
     agrupados: await agrupadosDe(db, u.id, activo),
@@ -1963,6 +1992,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
   const { results: pendientes } = await db
     .prepare(
       `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash,
+        EXISTS (SELECT 1 FROM pagos_comida pc WHERE pc.pedido_id = p.id) AS pago_directo,
         p.lat AS e_lat, p.lng AS e_lng, p.restaurante_id, r.flota_modo, r.flota_respaldo, r.dueno_id, p.flota_aviso_en, p.cliente_id,
         CAST((julianday(p.programado_para) - julianday('now')) * 1440 AS INTEGER) AS min_franja
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
@@ -1992,6 +2022,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       dueno_id: string;
       flota_aviso_en: string | null;
       cliente_id: string;
+      pago_directo: number;
     }>();
   if (!pendientes.length) return;
   // C-MODERACION: el pedido de un cliente nunca se le ofrece a un repartidor que él bloqueó (ni a
@@ -2025,10 +2056,15 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     let excluir = vistos;
     // Despacho con reloj: solo a quien llegaría cuando la comida esté lista (ni antes a esperar).
     // C-PEDIDO-PROGRAMADO: la comida debe estar lista 15 minutos antes de la franja, no antes.
-    const faltan = Math.max(
-      minutosParaListo(p.estado, p.aceptado_en, p.tiempo_prep_min),
-      p.min_franja == null ? 0 : p.min_franja - 15,
-    );
+    // C-COMIDA-PAGO-RESTAURANTE: con pago directo, el conductor se asegura ANTES de que el cliente
+    // pague y la cocina no arranca sin ese pago: la oferta sale de inmediato.
+    const faltan =
+      Number(p.pago_directo) === 1
+        ? 0
+        : Math.max(
+            minutosParaListo(p.estado, p.aceptado_en, p.tiempo_prep_min),
+            p.min_franja == null ? 0 : p.min_franja - 15,
+          );
     const noVa = bloqueadas.get(p.cliente_id);
     const ordenar = (libres: Libre[]) =>
       libres
@@ -2331,10 +2367,19 @@ operacion.get('/repartidor/ofertas', async (c) => {
   // dólares y, donde aplica, en bolívares con la tasa del pedido; el mismo número del pedido activo.
   // Solo lee (nada se escribe por mirar la oferta). Con tarjeta no hay nada en mano (null). En otra
   // moneda (pesos de Colombia, por ejemplo) va el monto en su moneda, sin bolívares ni aviso de tasa.
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo al restaurante, en mano va solo el envío y el
+  // conductor no adelanta nada en el local.
+  const pagosOferta = await pagosComidaDe(
+    db,
+    results.map((f) => String(f.id)),
+  );
   const cobros = await Promise.all(
     results.map(async (f) => {
       if (!esDirecto(String(f.metodo_pago ?? 'tarjeta'))) return null;
-      const centavos = Number(f.total) - Number(f.propina ?? 0);
+      const centavos =
+        Number(f.total) -
+        Number(f.propina ?? 0) -
+        Number(pagosOferta.get(String(f.id))?.monto ?? 0);
       return (
         (await enManoDePedido(db, f, centavos)) ??
         montoEnMano(centavos, String(f.moneda ?? 'USD'), null, null)
@@ -2368,10 +2413,14 @@ operacion.get('/repartidor/ofertas', async (c) => {
           segundos: SEGUNDOS_OFERTA,
           // Cobro en mano (como DiDi y Rappi en efectivo): lo que el repartidor adelanta en el local
           // con su dinero, para que decida ANTES de aceptar.
-          adelantoLocal: esDirecto(String(f.metodo_pago ?? 'tarjeta'))
-            ? Number(f.pago_restaurante)
-            : 0,
+          adelantoLocal:
+            esDirecto(String(f.metodo_pago ?? 'tarjeta')) && !pagosOferta.has(String(f.id))
+              ? Number(f.pago_restaurante)
+              : 0,
           enManoCobro: cobros.at(i) ?? null,
+          pagoComida: ((pc) => (pc ? vistaPagoComida(pc, 'conductor') : null))(
+            pagosOferta.get(String(f.id)),
+          ),
         };
       }),
       ...practica,
@@ -2486,6 +2535,12 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
     await soltarRegaloConductor(db, id, u.id);
     throw e;
   }
+  // C-COMIDA-PAGO-RESTAURANTE: con el conductor asegurado, el cliente ya puede pagarle la comida al
+  // restaurante. Si esto se corta, el vigilante del reloj lo pide en la vuelta siguiente.
+  await pedirPagoComida(c.env, db, id).catch(async (e: unknown) => {
+    console.error('pago de la comida: pedir el pago', id, e);
+    await guardarError(db, 'POST', `pago-comida:pedir:${id}`, e, u.id).catch(() => undefined);
+  });
   if (grupo && activa) {
     await db.batch([
       db
@@ -3283,6 +3338,14 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // mucho una fila por ciudad y solo cuando cambia (o cada 5 minutos mientras dura un recargo).
   { nombre: 'dinamica', critica: false, correr: (_env, db) => recalcularDinamica(db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
+  // C-COMIDA-PAGO-RESTAURANTE: los tiempos del pago directo al restaurante (sin conductor, pago
+  // vencido, restaurante que no responde). Mirar no escribe; como mucho 50 pagos por vuelta.
+  {
+    nombre: 'pagos_comida',
+    critica: true,
+    escriturasEsperadas: ESCRITURAS_VIGILANTE_PAGO_COMIDA,
+    correr: (env, db) => vigilarPagosComida(env, db),
+  },
   // Divoox Rewards · Fase 2: reputación en MODO SOMBRA (solo en pruebas; en producción no hace nada).
   { nombre: 'rewards_sombra', critica: false, correr: (env, db) => correrSombra(env, db) },
   // C-AGOTADO-HOY: los platos agotados «por hoy» vuelven a la medianoche del restaurante.
@@ -3479,6 +3542,10 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   await vigilarPedidos(c.env, base(c), c.req.param('id')).catch((e: unknown) =>
     console.error('manager: seguimiento', e),
   );
+  // C-COMIDA-PAGO-RESTAURANTE: y los tiempos del pago directo de ESTE pedido (más puntual que el reloj).
+  await vigilarPagosComida(c.env, base(c), c.req.param('id')).catch((e: unknown) =>
+    console.error('pago de la comida: seguimiento', e),
+  );
   const f = await base(c)
     .prepare(
       `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en,
@@ -3497,7 +3564,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
     f.estado === 'cancelado'
       ? await base(c)
           .prepare(
-            "SELECT evento FROM bitacora_pedidos WHERE pedido_id = ? AND evento IN ('cancelado_por_cliente','rechazado_por_restaurante','cancelado_sin_respuesta') ORDER BY id DESC LIMIT 1",
+            "SELECT evento FROM bitacora_pedidos WHERE pedido_id = ? AND evento IN ('cancelado_por_cliente','rechazado_por_restaurante','cancelado_sin_respuesta','cancelado_sin_conductor','cancelado_pago_vencido','cancelado_restaurante_no_confirmo','cancelado_sin_cuenta_restaurante') ORDER BY id DESC LIMIT 1",
           )
           .bind(c.req.param('id'))
           .first<{ evento: string }>()
@@ -3512,7 +3579,16 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
           ? 'restaurante'
           : motivo?.evento === 'cancelado_sin_respuesta'
             ? 'sin_respuesta'
-            : null;
+            : // C-COMIDA-PAGO-RESTAURANTE: los tiempos del pago directo al restaurante.
+              motivo?.evento === 'cancelado_sin_conductor'
+              ? 'sin_conductor'
+              : motivo?.evento === 'cancelado_pago_vencido'
+                ? 'pago_vencido'
+                : motivo?.evento === 'cancelado_restaurante_no_confirmo'
+                  ? 'restaurante_no_confirmo'
+                  : motivo?.evento === 'cancelado_sin_cuenta_restaurante'
+                    ? 'restaurante_sin_cuenta'
+                    : null;
   const { results: historial } = await base(c)
     .prepare(
       'SELECT estado, creado_en AS fecha FROM historial_estados WHERE pedido_id = ? ORDER BY id',
@@ -3558,6 +3634,12 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
       ...aPedido(f),
       historial,
       motivoCancelacion,
+      // C-COMIDA-PAGO-RESTAURANTE: a dónde y cuánto pagarle al restaurante, la tasa y el vencimiento.
+      pagoComida: await vistaDePedido(
+        base(c),
+        String(f.id),
+        f.cliente_id === u.id ? 'cliente' : 'admin',
+      ),
       restaurante: rest,
       minutosEstimados,
       llegaAMasTardar,

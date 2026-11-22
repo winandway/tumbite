@@ -43,6 +43,10 @@ export const TIPOS_DUAL = [
   'autorizacion_sin_cobro',
   // C-SALDO-CONDUCTOR (17 nov 2026): cargarle saldo prepago a mano a un conductor.
   'saldo_conductor',
+  // C-SALDO-RESTAURANTE (22 nov 2026): cargarle saldo prepago a mano a un restaurante y acreditar la
+  // recarga que el restaurante declaró (referencia + comprobante).
+  'saldo_restaurante',
+  'recarga_restaurante',
 ] as const;
 export type TipoDual = (typeof TIPOS_DUAL)[number];
 
@@ -195,6 +199,20 @@ export async function ejecutarDual(
         autorId: aprobadorId ?? actorId,
       });
     }
+    case 'saldo_restaurante': {
+      const { cargarSaldoRestaurante } = await import('../internacional/saldoRestaurante');
+      return cargarSaldoRestaurante(db, {
+        rid: texto(d, 'restauranteId'),
+        monto: numero(d, 'monto'),
+        motivo: texto(d, 'motivo'),
+        comprobante: texto(d, 'comprobante'),
+        autorId: aprobadorId ?? actorId,
+      });
+    }
+    case 'recarga_restaurante': {
+      const { acreditarRecargaRestaurante } = await import('../internacional/saldoRestaurante');
+      return acreditarRecargaRestaurante(db, texto(d, 'recargaId'), aprobadorId ?? actorId);
+    }
     case 'fondo_punto':
       return {
         fondo: await fondearPunto(db, {
@@ -294,13 +312,19 @@ async function monedaYMonto(
             ? await una('SELECT moneda FROM empresas WHERE id = ?')
             : tipo === 'fondo_punto'
               ? await una('SELECT moneda FROM puntos_venta WHERE id = ?')
-              : tipo === 'saldo_conductor'
-                ? await una(
-                    "SELECT z.moneda FROM usuarios u JOIN repartidores r ON r.usuario_id = u.id JOIN zonas z ON z.id = r.zona_id WHERE u.id = ? AND u.rol = 'repartidor'",
-                  )
-                : await una(
-                    "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado <> 'capturada'",
-                  );
+              : tipo === 'recarga_restaurante'
+                ? await una('SELECT moneda FROM recargas_restaurante WHERE id = ?')
+                : tipo === 'saldo_restaurante'
+                  ? await una(
+                      'SELECT z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = ?',
+                    )
+                  : tipo === 'saldo_conductor'
+                    ? await una(
+                        "SELECT z.moneda FROM usuarios u JOIN repartidores r ON r.usuario_id = u.id JOIN zonas z ON z.id = r.zona_id WHERE u.id = ? AND u.rol = 'repartidor'",
+                      )
+                    : await una(
+                        "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado <> 'capturada'",
+                      );
   if (!f) return null;
   return {
     moneda: f.moneda || 'USD',

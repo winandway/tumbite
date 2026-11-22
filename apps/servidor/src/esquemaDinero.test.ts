@@ -14,20 +14,29 @@ describe('aprobaciones_dinero acepta «recarga_local» sin perder filas', () => 
   it('la tabla que ya acepta «recarga_local» pero no «autorizacion_sin_cobro» también se rehace', () => {
     // C-AUTORIZACION-VENCIDA (16 nov 2026): la de producción del 13 nov no acepta los tipos nuevos.
     const del13 = APROBACIONES_DINERO_DDL.replace(
-      ", 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor'",
+      ", 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor', 'saldo_restaurante', 'recarga_restaurante'",
       '',
     );
     expect(aprobacionesViejas(del13)).toBe(true);
     // C-SALDO-CONDUCTOR (17 nov 2026): la del 16 nov no acepta «saldo_conductor».
-    const del16 = APROBACIONES_DINERO_DDL.replace(", 'saldo_conductor'", '');
+    const del16 = APROBACIONES_DINERO_DDL.replace(
+      ", 'saldo_conductor', 'saldo_restaurante', 'recarga_restaurante'",
+      '',
+    );
     expect(aprobacionesViejas(del16)).toBe(true);
+    // C-SALDO-RESTAURANTE (22 nov 2026): la del 17 nov no acepta el saldo ni la recarga del restaurante.
+    const del17 = APROBACIONES_DINERO_DDL.replace(
+      ", 'saldo_restaurante', 'recarga_restaurante'",
+      '',
+    );
+    expect(aprobacionesViejas(del17)).toBe(true);
     expect(aprobacionesViejas(APROBACIONES_DINERO_DDL)).toBe(false);
   });
 
   it('rehace la tabla vieja y conserva lo que había', async () => {
     const db = crearBasePruebas();
     const vieja = APROBACIONES_DINERO_DDL.replace(
-      ", 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor'",
+      ", 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor', 'saldo_restaurante', 'recarga_restaurante'",
       '',
     );
     expect(aprobacionesViejas(vieja)).toBe(true);

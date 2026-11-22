@@ -14,6 +14,7 @@ import {
 } from './resumenCatalogo';
 import { rehacerConductorDocumentos } from './esquemaPapeles';
 import { rehacerCuentasCobro } from './esquemaCuentasCobro';
+import { rehacerPoliticasFinancieras } from './esquemaPoliticas';
 import {
   DISPARADORES_HABILITACION,
   rehacerElegibilidad,
@@ -718,6 +719,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerAprobacionesDinero),
         String(rehacerConductorDocumentos),
         String(rehacerCuentasCobro),
+        String(rehacerPoliticasFinancieras),
         DISPARADORES_HABILITACION,
         String(rehacerElegibilidad),
         DISPARADORES_RASTRO,
@@ -802,6 +804,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await rehacerConductorDocumentos(db);
   // C-PAGO-A-CELULAR: Yape y Plin en los tipos de cuenta de cobro (Perú).
   await rehacerCuentasCobro(db);
+  // C-SALDO-RESTAURANTE: la política de comisión también puede ser de un restaurante.
+  await rehacerPoliticasFinancieras(db);
   // C-PLAZO-PAPELES: la vista y los disparadores que conocen el plazo, y la política de cada país
   // en la forma que la base lee.
   await rehacerElegibilidad(db);

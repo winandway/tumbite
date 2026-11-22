@@ -52,7 +52,8 @@ export async function borrarCuenta(
          UNION SELECT foto_recogida FROM envios_persona WHERE foto_recogida IS NOT NULL AND operacion_id IN (${misOperaciones})
          UNION SELECT foto_entrega FROM envios_persona WHERE foto_entrega IS NOT NULL AND operacion_id IN (${misOperaciones})
          UNION SELECT clave FROM selfies_casco WHERE usuario_id = ?1
-         UNION SELECT clave FROM selfies_control WHERE usuario_id = ?1 AND clave != ''`,
+         UNION SELECT clave FROM selfies_control WHERE usuario_id = ?1 AND clave != ''
+         UNION SELECT comprobante_clave FROM pagos_comida WHERE cliente_id = ?1 AND comprobante_clave IS NOT NULL`,
       )
       .bind(u.id)
       .all<{ clave: string }>()
@@ -257,6 +258,20 @@ export async function borrarCuenta(
     db
       .prepare(
         'DELETE FROM fotos_entrega_publicas WHERE pedido_id IN (SELECT id FROM pedidos WHERE cliente_id = ?)',
+      )
+      .bind(u.id),
+    // C-COMIDA-PAGO-RESTAURANTE: la foto del pago móvil que el cliente le mandó al restaurante (el
+    // importe y la referencia se quedan, sin nombre, como dinero) y la cuenta de cobro del restaurante
+    // de un dueño que se va (banco, teléfono, documento y titular).
+    db
+      .prepare(
+        "UPDATE pagos_comida SET comprobante_clave = NULL, banco_emisor = '' WHERE cliente_id = ?",
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE cuentas_cobro_restaurante SET banco = '', telefono = '', documento = '', titular = 'Cuenta borrada', activa = 0
+          WHERE restaurante_id IN (SELECT id FROM restaurantes WHERE dueno_id = ?)`,
       )
       .bind(u.id),
     // Conductor: su cuenta de cobro (banco, titular, pago móvil) y sus selfies con casco y de control.

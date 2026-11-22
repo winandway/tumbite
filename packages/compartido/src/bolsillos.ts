@@ -109,6 +109,12 @@ export function calcularPedido(p: {
    * y la ganancia de Divoox no cambia. Nunca deja el pago del restaurante por debajo de cero.
    */
   descuentoRestaurante?: Centavos;
+  /**
+   * C-COMIDA-PAGO-RESTAURANTE (22 nov 2026, Venezuela): comisión del restaurante fijada desde fuera
+   * (puntos base), también en la recogida. En el pago directo al restaurante es 0: el cliente le
+   * paga la comida completa al restaurante y Divoox gana solo con el envío y el servicio.
+   */
+  comisionRestaurantePb?: number;
 }): Desglose {
   const c = p.config ?? CONFIG_DINERO_INICIAL;
   entero(p.propina, 'propina');
@@ -141,7 +147,7 @@ export function calcularPedido(p: {
   entero(descuento, 'descuento');
   const comisionRestaurante = porcentajeDe(
     aCobrar,
-    p.recogida ? COMISION_RECOGIDA_PB : c.comisionPb[p.plan],
+    p.comisionRestaurantePb ?? (p.recogida ? COMISION_RECOGIDA_PB : c.comisionPb[p.plan]),
   );
   // La promoción del restaurante sale de lo que le toca por la comida (nunca de la propina) y no
   // puede pasar de lo que paga el cliente después del cupón.

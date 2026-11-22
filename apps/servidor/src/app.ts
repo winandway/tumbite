@@ -134,6 +134,8 @@ import { dinamicaViaje } from './rutas/dinamicaViaje';
 import { comidaCiudad } from './rutas/comidaCiudad';
 import { pruebasComidaVe } from './rutas/pruebasComidaVe';
 import { saludComidaPaises } from './internacional/tarifas';
+import { saludPagoComida } from './internacional/pagoComida';
+import { pagoComidaRutas } from './rutas/pagoComida';
 import { viajesHistorial } from './rutas/viajesHistorial';
 import { seguridadViaje } from './rutas/seguridadViaje';
 import { ajustesViaje } from './rutas/ajustesViaje';
@@ -290,6 +292,10 @@ app.use('/datos/lugares/*', limiteIntentos(40, 60_000));
 app.use('/datos/mi-restaurante/productos/codigo/*', limiteIntentos(30, 60_000));
 // C-OCHO-ICONOS-SIEMPRE: «Avísame cuando llegue» (en memoria: el límite no escribe en la base).
 app.use('/datos/servicios/avisame', limiteIntentos(10, 60_000));
+// C-COMIDA-PAGO-RESTAURANTE: la referencia del pago, la cuenta de cobro y la recarga del restaurante.
+app.use('/datos/pedidos/:id/pago-comida', limiteIntentos(20, 60_000));
+app.use('/datos/restaurante/cuenta-cobro', limiteIntentos(20, 60_000));
+app.use('/datos/restaurante/saldo/recargas', limiteIntentos(20, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
   ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
@@ -434,6 +440,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.comidaPaises = await saludComidaPaises(c.env.DB).catch((e: unknown) => {
       console.error('salud: comida por país', e);
+      return 'error' as const;
+    });
+  // C-COMIDA-PAGO-RESTAURANTE: ningún pago de la comida atascado (el vigilante los cierra a tiempo).
+  if (c.env.DB)
+    piezas.pagoComida = await saludPagoComida(c.env.DB).catch((e: unknown) => {
+      console.error('salud: pago de la comida', e);
       return 'error' as const;
     });
   // Fase 2: tiempo real (apagado = «pendiente»; las apps siguen con la consulta normal).
@@ -787,6 +799,7 @@ app.route('/datos', lugares);
 app.route('/datos', tiendas);
 app.route('/datos', tiendasPeso);
 app.route('/datos', interno);
+app.route('/datos', pagoComidaRutas);
 app.route('/datos', pedidos);
 app.route('/datos', operacion);
 app.route('/datos', regalos);

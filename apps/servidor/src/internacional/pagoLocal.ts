@@ -2,6 +2,7 @@ import { anotarEvento } from '../manager';
 import { ErrorDatos } from '../validar';
 import { anotarLibro } from './libro';
 import { paisDeZona } from './paises';
+import { esPagoComida, exigirPagoComidaConfirmado } from './pagoComida';
 
 /**
  * Fase 2 · cobro directo, paso 2 y 3 del recorrido aprobado (C-COBRO-DIRECTO-LOCAL): el repartidor
@@ -67,6 +68,8 @@ function aPagoLocal(r: Record<string, unknown>, f: FilaBase): PagoLocal {
 export async function leerPagoLocal(db: D1Database, pedidoId: string) {
   const f = await filaPedido(db, pedidoId);
   if (!f || !directo(f.metodo_pago)) return null;
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo al restaurante, el conductor no paga nada en el local.
+  if (await esPagoComida(db, pedidoId)) return null;
   const r = await db
     .prepare('SELECT * FROM pagos_local WHERE pedido_id = ?')
     .bind(pedidoId)
@@ -86,6 +89,9 @@ export async function leerPagoLocal(db: D1Database, pedidoId: string) {
 export async function exigirPagoLocal(db: D1Database, pedidoId: string) {
   const f = await filaPedido(db, pedidoId);
   if (!f || !directo(f.metodo_pago)) return;
+  // C-COMIDA-PAGO-RESTAURANTE: con pago directo, lo que hace falta es la confirmación del restaurante
+  // («Me llegó»); el pago en el local de siempre no aplica.
+  if (await exigirPagoComidaConfirmado(db, pedidoId)) return;
   const r = await db
     .prepare('SELECT 1 FROM pagos_local WHERE pedido_id = ?')
     .bind(pedidoId)
@@ -114,7 +120,12 @@ export async function registrarPagoLocal(
   },
 ) {
   const f = await filaPedido(db, p.pedidoId);
-  if (!f || !directo(f.metodo_pago) || f.repartidor_id !== p.repartidorId)
+  if (
+    !f ||
+    !directo(f.metodo_pago) ||
+    f.repartidor_id !== p.repartidorId ||
+    (await esPagoComida(db, p.pedidoId))
+  )
     throw new ErrorDatos('Este pedido no se paga en el local.', undefined, 409);
   if (!['aceptado', 'listo'].includes(f.estado))
     throw new ErrorDatos('Registra el pago cuando estés en el restaurante.', undefined, 409);

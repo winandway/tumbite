@@ -34,7 +34,10 @@ afterEach(() => vi.unstubAllGlobals());
 // +1 (22 nov 2026, C-SMS-VENEZUELA): la pieza nueva «smsVenezuela» suma su fila del estado del canario.
 // +1 (22 nov 2026, C-RASTRO-FUENTES): la marca del relleno hacia atrás de los pasos del registro (una
 // fila, solo dentro de la migración completa).
-const TOPE_CANARIO = 1155;
+// +5 (22 nov 2026, C-COMIDA-PAGO-RESTAURANTE): la pieza nueva «pagoComida» (tres búsquedas por el
+// índice de estado de `pagos_comida` y una por la llave del pedido) y su fila del estado del canario.
+// Medido contra la base: 1155 sin la pieza, 1160 con ella; nada más cambió.
+const TOPE_CANARIO = 1160;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>
