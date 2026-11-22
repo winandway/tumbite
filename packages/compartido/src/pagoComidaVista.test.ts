@@ -83,4 +83,14 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     const pieza = leer('apps/repartidor/src/grandes/SalidaPagoComida.tsx');
     expect(pieza).toMatch(/listoParaIr/);
   });
+
+  it('el panel web del restaurante tiene lo mismo que su app', () => {
+    const pedidos = leer('apps/panel/src/panel/Pedidos.tsx');
+    expect(pedidos).toMatch(/<PagoComidaPanel\b/);
+    expect(pedidos).toMatch(/pagoComida\.estado === 'confirmado'/);
+    const pieza = leer('apps/panel/src/panel/PagoComidaPanel.tsx');
+    expect(pieza).toMatch(/\/pago-comida`, \{ llego/);
+    expect(pieza).toMatch(/useBorrador\(/);
+    expect(pieza).toMatch(/miraTuBanco/);
+  });
 });
