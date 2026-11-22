@@ -1,0 +1,53 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import {
+  REFERENCIA_PAGO_VALIDA,
+  TEXTOS_PAGO_COMIDA_CLIENTE,
+  limpiarReferenciaPago,
+  relojPago,
+  segundosHasta,
+} from './pagoComidaVista';
+
+const raiz = resolve(__dirname, '../../..');
+const leer = (ruta: string) => readFileSync(resolve(raiz, ruta), 'utf8');
+
+describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
+  it('la cuenta atrás nunca es negativa y se lee como reloj', () => {
+    expect(relojPago(900)).toBe('15:00');
+    expect(relojPago(65)).toBe('1:05');
+    expect(relojPago(-4)).toBe('0:00');
+    expect(relojPago(null)).toBe('0:00');
+    const ahora = Date.parse('2026-01-01T00:00:00Z');
+    expect(segundosHasta('2026-01-01T00:14:30Z', ahora)).toBe(870);
+    expect(segundosHasta('2025-12-31T23:59:00Z', ahora)).toBe(0);
+    expect(segundosHasta(null, ahora)).toBe(0);
+  });
+
+  it('la referencia pegada del banco se limpia y se valida como en el servidor', () => {
+    expect(limpiarReferenciaPago(' 0012 3456.78 ')).toBe('0012345678');
+    expect(REFERENCIA_PAGO_VALIDA.test('0012345678')).toBe(true);
+    expect(REFERENCIA_PAGO_VALIDA.test('123')).toBe(false);
+    expect(REFERENCIA_PAGO_VALIDA.test('12 34')).toBe(false);
+  });
+
+  it('español e inglés tienen los mismos textos, y dicen «conductor» / «driver»', () => {
+    const { es, en } = TEXTOS_PAGO_COMIDA_CLIENTE;
+    expect(Object.keys(en).sort()).toEqual(Object.keys(es).sort());
+    for (const v of Object.values(es)) expect(v.toLowerCase()).not.toContain('repartidor');
+    for (const [k, v] of Object.entries(en)) expect(v, k).not.toMatch(/[áéíóúñ¿¡]/);
+    expect(es.capturaNota).toMatch(/mirando su banco/);
+  });
+
+  it('la pantalla del pedido del cliente monta la pieza, con borrador y cámara', () => {
+    const pedido = leer('apps/cliente/src/app/order/[id].tsx');
+    expect(pedido).toMatch(/<PagoComida\b/);
+    const pieza = leer('apps/cliente/src/PagoComida.tsx');
+    expect(pieza).toMatch(/useBorrador\(/);
+    expect(pieza).toMatch(/fotoConCamara\(/);
+    expect(pieza).toMatch(/\/pago-comida`/);
+    expect(pieza).toMatch(/\/pago-comida\/comprobante`/);
+    // La captura es opcional: el botón de enviar no depende de ella.
+    expect(pieza).not.toMatch(/disabled=\{[^}]*captura/);
+  });
+});

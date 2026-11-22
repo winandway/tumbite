@@ -42,6 +42,7 @@ import {
   textoReferencia,
   nombreFormaPago,
   ESPERA_MAXIMA_CRITICA_MS,
+  type VistaPagoComida,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -60,6 +61,7 @@ import {
   useSondeo,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
+import { PagoComida } from '../../PagoComida';
 import { usePedirOtraVez } from '../../pedirOtraVez';
 import { MapaEntrega } from '../../MapaEntrega';
 import { FotoRepartidor } from '../../FotoRepartidor';
@@ -111,6 +113,8 @@ type Pedido = {
   /** Fase 2 · cobro directo. */
   metodoPago?: 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
   cobroEstado?: string;
+  /** C-COMIDA-PAGO-RESTAURANTE: la comida se paga directo al restaurante; al conductor, el envío. */
+  pagoComida?: VistaPagoComida | null;
   cuentaCobro?: {
     tipo: string;
     banco: string;
@@ -205,6 +209,9 @@ const T = {
     propina: 'Propina',
     comentario: 'Cuéntanos más (opcional): qué estuvo bien o qué mejorar',
     pagoAlRecibir: 'Pagas al recibir',
+    envioAlRecibir: 'El envío lo pagas al recibir',
+    envioEfectivo: 'En efectivo, al conductor: {monto} (sin contar la propina).',
+    envioTransfer: 'Transfiere al conductor {monto} (sin contar la propina) a:',
     enEfectivo: 'En efectivo, al repartidor: {monto} (sin contar la propina).',
     aPagarEnMano: 'A pagar en mano al repartidor',
     transfiereA: 'Transfiere al repartidor {monto} (sin contar la propina) a:',
@@ -356,6 +363,9 @@ const T = {
     propina: 'Tip',
     comentario: 'Tell us more (optional): what was good or what to improve',
     pagoAlRecibir: 'You pay on delivery',
+    envioAlRecibir: 'You pay the delivery fee on arrival',
+    envioEfectivo: 'In cash, to the driver: {monto} (tip not included).',
+    envioTransfer: 'Transfer {monto} (tip not included) to the driver at:',
     enEfectivo: 'In cash, to the driver: {monto} (tip not included).',
     aPagarEnMano: 'To pay the driver in hand',
     transfiereA: 'Transfer {monto} (tip not included) to the driver at:',
@@ -1028,6 +1038,13 @@ function SeguirPedido() {
                 ) : null}
               </View>
             ) : null}
+            {p.pagoComida ? (
+              <PagoComida
+                pedidoId={String(id)}
+                pago={p.pagoComida}
+                alCambiar={() => void cargarSeguimiento()}
+              />
+            ) : null}
             {p.metodoPago && p.metodoPago !== 'tarjeta' && p.estado !== 'cancelado' ? (
               <View
                 style={{
@@ -1040,7 +1057,9 @@ function SeguirPedido() {
                 }}
                 testID="pago-al-recibir"
               >
-                <Text style={{ fontWeight: '700', color: C.secundario }}>{t.pagoAlRecibir}</Text>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>
+                  {p.pagoComida ? t.envioAlRecibir : t.pagoAlRecibir}
+                </Text>
                 {p.cobroEstado === 'confirmado' || p.cobroEstado === 'parcial' ? (
                   <Text style={{ color: C.exito, fontWeight: '700', marginTop: 4 }}>
                     {t.cobroConfirmado}
@@ -1048,9 +1067,13 @@ function SeguirPedido() {
                 ) : p.metodoPago === 'efectivo' ? (
                   <>
                     <Text style={{ color: '#666B73', marginTop: 4 }}>
-                      {t.enEfectivo.replace(
+                      {(p.pagoComida ? t.envioEfectivo : t.enEfectivo).replace(
                         '{monto}',
-                        formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
+                        formatearMonto(
+                          p.pagoComida ? p.pagoComida.envioAlConductor : p.total - (p.propina ?? 0),
+                          moneda,
+                          idioma,
+                        ),
                       )}
                     </Text>
                     {/* C-BS-EN-MANO: lo mismo que cobra el repartidor, en dólares y en bolívares. */}
@@ -1066,9 +1089,13 @@ function SeguirPedido() {
                 ) : p.cuentaCobro ? (
                   <>
                     <Text style={{ color: '#666B73', marginTop: 4 }}>
-                      {t.transfiereA.replace(
+                      {(p.pagoComida ? t.envioTransfer : t.transfiereA).replace(
                         '{monto}',
-                        formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
+                        formatearMonto(
+                          p.pagoComida ? p.pagoComida.envioAlConductor : p.total - (p.propina ?? 0),
+                          moneda,
+                          idioma,
+                        ),
                       )}
                     </Text>
                     <MontoEnMano
