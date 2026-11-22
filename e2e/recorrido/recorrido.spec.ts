@@ -118,7 +118,11 @@ for (const idioma of ['en', 'es'] as const) {
     // Un teléfono no abre dos cuentas del mismo tipo (29 oct): en el sitio de pruebas, cuyas cuentas
     // se quedan, cada corrida usa sus propios números; aquí, los de siempre.
     const corrida = String(Date.now() % 100_000).padStart(5, '0');
-    const tel = (fijo: string) => (STAGING ? `305${fijo.slice(-2)}${corrida}` : fijo);
+    // C-TELEFONO-E164: en el sitio de pruebas cada corrida usa un celular distinto, y tiene que ser un
+    // número de EE. UU. que exista: la central (los tres dígitos después del 305) no puede empezar
+    // por 0 ni por 1. Antes salía «305-10x» o «305-00x» y el registro lo rechazaba (22 nov 2026).
+    const tel = (fijo: string) =>
+      STAGING ? `305${5 + Number(fijo.slice(-2, -1))}${fijo.slice(-1)}${corrida}` : fijo;
 
     const nuevoContexto = async (tipo: 'computadora' | 'celular' | 'tableta', donde = MIAMI) => {
       const t = TIENDA && tipo !== 'computadora' ? PANTALLAS[TIENDA][tipo] : null;
