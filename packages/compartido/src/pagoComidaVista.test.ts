@@ -62,6 +62,11 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     expect(inicio).toMatch(/<PagoComidaPedido\b/);
     expect(inicio).toMatch(/<CuentaCobroRestaurante\b/);
     expect(inicio).toMatch(/<SaldoRestaurante\b/);
+    // La fila del pedido avisa del pago por confirmar sin tener que abrirla (visto al tomar las capturas).
+    expect(inicio).toMatch(/fila-pago-por-confirmar/);
+    expect(es.filaConfirma).toMatch(/mira tu banco/);
+    // Con pago directo, el restaurante no ve «el conductor paga en el mostrador» (lo contradecía).
+    expect(inicio).toMatch(/metodoPago !== 'tarjeta' && !p\.pagoComida \?/);
     const pieza = leer('apps/restaurante/src/PagoComidaRest.tsx');
     expect(pieza).toMatch(/\/pago-comida`, \{ llego/);
     expect(pieza).toMatch(/\/pago-comida\/devolucion`/);
@@ -92,6 +97,14 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     expect(pieza).toMatch(/\/pago-comida`, \{ llego/);
     expect(pieza).toMatch(/useBorrador\(/);
     expect(pieza).toMatch(/miraTuBanco/);
+    // Y su cuenta de pago móvil con su saldo, en «Mi restaurante» (la contraseña fuera del borrador).
+    const mio = leer('apps/panel/src/panel/MiRestaurante.tsx');
+    expect(mio).toMatch(/<CuentaSaldoRestaurante\b/);
+    const cuenta = leer('apps/panel/src/panel/CuentaSaldoRestaurante.tsx');
+    expect(cuenta).toMatch(/useBorrador\(/);
+    expect(cuenta).toMatch(/<CampoClave\b/);
+    expect(cuenta).not.toMatch(/b\.cambiar\('clave'/);
+    expect(cuenta).toMatch(/\/datos\/restaurante\/saldo/);
   });
 
   it('el superadmin revisa las recargas de restaurantes y puede poner su comisión', () => {

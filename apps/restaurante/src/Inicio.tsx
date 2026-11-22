@@ -24,6 +24,7 @@ import {
   ErrorApi,
   type Idioma,
   type Restaurante,
+  TEXTOS_PAGO_COMIDA_RESTAURANTE,
   enIdioma,
   formatearMonto,
   type RepartidorEnPedido,
@@ -643,7 +644,9 @@ export function Inicio() {
                 />
               </View>
             ))}
-          {p.metodoPago && p.metodoPago !== 'tarjeta' ? (
+          {/* C-COMIDA-PAGO-RESTAURANTE: si el cliente le paga la comida al restaurante, el conductor
+              no paga nada en el mostrador: ese aviso y su cobro no van. */}
+          {p.metodoPago && p.metodoPago !== 'tarjeta' && !p.pagoComida ? (
             <>
               <Text style={{ marginTop: 6, color: C.primario, fontWeight: '800', fontSize: 13 }}>
                 {t.pagoDirecto}
@@ -1085,6 +1088,26 @@ export function Inicio() {
     </View>
   );
 
+  // C-COMIDA-PAGO-RESTAURANTE: la fila dice si hay un pago por confirmar, sin tener que abrirla.
+  const avisoPagoFila = (p: Pedido) => {
+    const e = p.pagoComida?.estado;
+    if (e !== 'reportado' && e !== 'por_pagar' && e !== 'esperando_conductor') return null;
+    const tp = enIdioma(TEXTOS_PAGO_COMIDA_RESTAURANTE, idioma === 'en' ? 'en' : 'es');
+    return (
+      <Text
+        testID={e === 'reportado' ? 'fila-pago-por-confirmar' : 'fila-pago-espera'}
+        accessibilityRole={e === 'reportado' ? 'alert' : undefined}
+        style={{
+          marginTop: 6,
+          fontWeight: '800',
+          color: e === 'reportado' ? '#8A5300' : '#666B73',
+        }}
+      >
+        {e === 'reportado' ? tp.filaConfirma : tp.filaEspera}
+      </Text>
+    );
+  };
+
   const filaPedido = (p: Pedido) => (
     <Pressable
       key={p.id}
@@ -1095,7 +1118,7 @@ export function Inicio() {
       <Tarjeta
         style={[
           { flexDirection: 'row', gap: 12, alignItems: 'center', padding: 10 },
-          fotoSinConfirmar(p) && {
+          (fotoSinConfirmar(p) || p.pagoComida?.estado === 'reportado') && {
             borderWidth: 3,
             borderColor: '#E0A000',
             backgroundColor: '#FFF8E1',
@@ -1136,6 +1159,7 @@ export function Inicio() {
               </Text>
             ) : null}
           </View>
+          {avisoPagoFila(p)}
         </View>
       </Tarjeta>
     </Pressable>

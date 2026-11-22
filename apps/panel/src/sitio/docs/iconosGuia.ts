@@ -71,7 +71,7 @@ const REGLAS: [RegExp, LucideIcon][] = [
   [/address|location|gps|area|map|pickup-point|route/, MapPin],
   [/coupon|reward|gift|bonus|promo/, Tag],
   [/apple-pay|pay-on|cash|payment/, CreditCard],
-  [/wallet|earning|payout|calculator|top-up/, Wallet],
+  [/wallet|earning|payout|calculator|top-up|restaurant-balance|restaurant-direct-payment/, Wallet],
   [/shop|store|catalog|grocery/, ShoppingBasket],
   [/alert|notif/, Bell],
   [/problem|support|help|cant-continue|not-opening|not-receiving/, LifeBuoy],

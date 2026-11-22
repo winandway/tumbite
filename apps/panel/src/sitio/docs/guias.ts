@@ -884,7 +884,7 @@ const es: SeccionDocs[] = [
         resumen:
           'En las ciudades donde está activo, puedes elegir pagar cuando llega tu pedido: en efectivo al repartidor, o con una transferencia a la cuenta que él tiene publicada. Tu pedido queda confirmado al instante, sin tarjeta.',
         explicacion: [
-          'En el carrito, debajo de «¿Cómo quieres recibirlo?», aparece «¿Cómo pagas?» con las opciones que tu ciudad permite: tarjeta, efectivo al recibir o transferencia al repartidor. Si tu ciudad solo acepta tarjeta, esa pregunta no aparece.',
+          'En el carrito, debajo de «¿Cómo quieres recibirlo?», aparece «¿Cómo pagas?» con las opciones que tu ciudad permite: tarjeta, efectivo al recibir o transferencia al repartidor. Si tu ciudad solo acepta tarjeta, esa pregunta no aparece. En Venezuela la comida se le paga directo al restaurante por pago móvil y al conductor solo el envío: está en la guía «Pagar tu comida en Venezuela».',
           'Con efectivo: el restaurante recibe tu pedido de inmediato y el repartidor te lo trae. Al llegar le pagas el total que ves en el seguimiento (la propina que dejaste en la app no se le cobra en efectivo: es aparte y es toda para él).',
           'Con transferencia: en el seguimiento ves el nombre del titular y la cuenta publicada del repartidor (por ejemplo, su número de pago móvil o su cuenta de banco) y el monto exacto. Transfieres cuando lo tengas enfrente; él lo confirma en su banco.',
           'Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte.',
@@ -3253,7 +3253,7 @@ const es: SeccionDocs[] = [
         resumen:
           'En las ciudades donde está activo, algunos pedidos se pagan al recibir: el cliente te paga a ti en efectivo o por transferencia, tú pagas la comida en el mostrador y la comisión de Divoox sale de un saldo que recargas por adelantado.',
         explicacion: [
-          'La oferta te avisa antes de aceptar: dice si el cliente paga en efectivo o por transferencia, y cuánto vas a pagar en el local con tu dinero. Así decides con todo a la vista.',
+          'La oferta te avisa antes de aceptar: dice si el cliente paga en efectivo o por transferencia, y cuánto vas a pagar en el local con tu dinero. Así decides con todo a la vista. En Venezuela ya no pagas la comida en el mostrador: el cliente se la paga al restaurante y tú cobras solo el envío.',
           'Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí).',
           'Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera.',
           'En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Divoox. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Divoox no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si quieres, toma también la foto del ticket: la ven el restaurante, el cliente y soporte si hay un reclamo. Si algo no cuadra, se anota y lo revisa soporte; no te frena.',

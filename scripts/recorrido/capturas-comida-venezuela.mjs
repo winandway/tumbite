@@ -3,7 +3,9 @@
 // puerto 8790), con las apps web reales del cliente y del Driver:
 //   1. corre probar-comida-venezuela.mjs (restaurante aprobado con su menú y repartidor con saldo);
 //   2. el cliente ve los precios con su equivalente en bolívares y elige pagar al recibir;
-//   3. pedido por pago móvil hasta la puerta: el repartidor confirma «sí me llegó / no me llegó»;
+//   3. con el conductor asegurado, el cliente le paga la comida al restaurante por pago móvil con su
+//      número de referencia; el restaurante confirma «Me llegó» y el conductor cobra solo el envío
+//      (C-COMIDA-PAGO-RESTAURANTE, 22 nov 2026);
 //   4. el saldo para comisiones del repartidor con «te alcanza para unos N pedidos» y la recarga por código.
 // Datos neutros («Arepera de pruebas»). Originales en docs/capturas/recorrido/comida-ve-*-es.png.
 // C-CAPTURAS-POR-IDIOMA (15 nov 2026, EE. UU. y Venezuela): cada idioma con SUS ejemplos. El español se
@@ -65,6 +67,18 @@ const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Venezuela (El Vigía): pagar al recibir, pago móvil, el saldo para comisiones y el cliente que no aparece. */
 async function correrVe(idiomas) {
+  // C-PLAZO-PAPELES: en una base recién creada los conductores de prueba nacen dentro del plazo de
+  // papeles, y para conectarse necesitan la foto de su cara. Se les deja su identidad aprobada antes
+  // de correr el guion (en el sitio de pruebas esas cuentas ya la tienen).
+  const previo = await pedir('POST', '/datos/interno/pruebas/comida-ve/armar', {}, undefined, {
+    'x-reloj-secreto': SECRETO,
+  });
+  for (const quien of [previo.ids.repartidor, previo.ids.sinSaldo])
+    await sql(
+      `INSERT INTO kyc (usuario_id, estado, doc_tipo, doc_frente, selfie, enviado_en, revisado_en, revisado_por)
+       VALUES ('${quien}', 'aprobado', 'identificacion', 'zz', 'zz', datetime('now'), datetime('now'), '${previo.ids.equipo}')
+       ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', selfie = 'zz', revisado_en = datetime('now')`,
+    );
   execFileSync('node', ['scripts/staging/probar-comida-venezuela.mjs'], {
     cwd: RAIZ,
     env: { ...process.env, URL_PRUEBAS: URL, RELOJ_SECRETO: SECRETO },
@@ -78,6 +92,18 @@ async function correrVe(idiomas) {
     await sql(
       `UPDATE sesiones SET expira_en = datetime('now', '+90 minutes') WHERE id = '${createHash('sha256').update(t).digest('hex')}'`,
     );
+  // El aviso del permiso de la asistente ya quedó respondido: no es parte de lo que se enseña aquí.
+  await pedir(
+    'POST',
+    '/datos/conductor/aviso-ia',
+    { acepto: true, plataforma: 'web', desde: 'aviso' },
+    tokens.repartidor,
+  );
+  // En las fotos: «conductor» y un banco de ejemplo (solo en este servidor local).
+  await sql(`UPDATE usuarios SET nombre = 'Conductor de prueba' WHERE id = '${ids.repartidor}'`);
+  await sql(
+    `UPDATE cuentas_cobro SET banco = 'Banco de ejemplo', titular = 'Conductor de prueba' WHERE usuario_id = '${ids.repartidor}'`,
+  );
   const cliente = (m, r, c) => pedir(m, r, c, tokens.cliente);
   const resto = (m, r, c) => pedir(m, r, c, tokens.restaurante);
   const yo = (m, r, c) => pedir(m, r, c, tokens.repartidor);
@@ -147,7 +173,7 @@ async function correrVe(idiomas) {
     return ctx;
   };
   const captura = (p, nombre, idioma) =>
-    p.screenshot({ path: join(SALIDA, `comida-ve-${nombre}-v2-${idioma}.png`) });
+    p.screenshot({ path: join(SALIDA, `comida-ve-${nombre}-v3-${idioma}.png`) });
   const arriba = (l, extra = 0) =>
     l.evaluate((x, e) => {
       x.scrollIntoView({ block: 'start' });
@@ -173,9 +199,55 @@ async function correrVe(idiomas) {
     ],
   });
 
+  // C-COMIDA-PAGO-RESTAURANTE: el pedido llega hasta que el conductor queda asegurado; ahí el pago
+  // de la comida espera al cliente («por pagar»), con el monto en bolívares congelado.
+  const hastaElPago = async (quien, metodoPago, cantidad, propinaCentavos) => {
+    await recargar();
+    await yo('POST', '/datos/repartidor/conectar', { conectado: true, ...LOCAL_REST });
+    await ubicar(LOCAL_REST);
+    const p = await quien('POST', '/datos/pedidos', {
+      restauranteId: rest.id,
+      lineas: [{ platoId: plato.id, cantidad }],
+      propinaCentavos,
+      direccion: 'Avenida Principal 12, casa 4',
+      ...CASA,
+      metodoPago,
+    });
+    const id = p.pedidoId;
+    await resto('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 });
+    await ubicar(LOCAL_REST);
+    // La oferta llega al pedir la lista (como la app): se espera a que sea suya y se acepta.
+    for (let i = 0; ; i++) {
+      const ofertas = (await yo('GET', '/datos/repartidor/ofertas')).ofertas ?? [];
+      if (ofertas.some((o) => o.id === id)) break;
+      if (i > 20) throw new Error(`la oferta ${id} no le llegó al conductor`);
+      await espera(3_000);
+    }
+    await yo('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {});
+    return id;
+  };
+  // Con el «Me llegó» del restaurante: listo, recogida con su foto y el conductor en la puerta.
+  const delLocalALaPuerta = async (id) => {
+    await resto('POST', `/datos/restaurante/pedidos/${id}/listo`, {});
+    await ubicar(LOCAL_REST);
+    await foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, tokens.repartidor, LOCAL_REST);
+    await resto('POST', `/datos/restaurante/pedidos/${id}/confirmar-recogida`, {});
+    await ubicar(CASA);
+  };
+  // El aviso de las notificaciones del navegador no es parte de lo que se enseña.
+  const sinAvisos = async (p, en) => {
+    const ahoraNo = p.getByText(en ? 'Not now' : 'Ahora no', { exact: true });
+    if (await ahoraNo.count()) await ahoraNo.first().click();
+  };
+  const tarjeta = async (p, testId, extra = 80) => {
+    await p.getByTestId(testId).first().waitFor({ timeout: 60_000 });
+    await arriba(p.getByTestId(testId).first(), extra);
+    await espera(800);
+  };
+
   for (const idioma of idiomas) {
     const en = idioma === 'en';
-    // ───────── Cliente: el restaurante con sus precios y el carrito con «pagar al recibir»
+    // ───────── Cliente: el restaurante con sus precios y el carrito: la comida se paga al restaurante
     const ctxC = await telefono(tokens.cliente, ids.cliente, idioma, carrito);
     const c = await ctxC.newPage();
     await c.goto(`/app/restaurant/${rest.id}`);
@@ -189,59 +261,84 @@ async function correrVe(idiomas) {
     await captura(c, 'restaurante', idioma);
     await c.goto('/app/cart');
     await c.getByTestId('carrito-total-bs').waitFor({ timeout: 60_000 });
-    await c
-      .getByText(en ? 'How do you pay?' : '¿Cómo pagas?', { exact: true })
-      .first()
-      .evaluate((x) => x.scrollIntoView({ block: 'start' }));
-    await espera(800);
+    await tarjeta(c, 'carrito-pago-restaurante', 60);
     await captura(c, 'carrito-pago', idioma);
     await c.getByTestId('carrito-total-bs').evaluate((x) => x.scrollIntoView({ block: 'center' }));
     await espera(600);
     await captura(c, 'carrito-total', idioma);
 
-    // ───────── Pedido por pago móvil hasta la puerta del cliente
-    await recargar();
-    await yo('POST', '/datos/repartidor/conectar', { conectado: true, ...LOCAL_REST });
-    await ubicar(LOCAL_REST);
-    const p = await cliente('POST', '/datos/pedidos', {
-      restauranteId: rest.id,
-      lineas: [{ platoId: plato.id, cantidad: 2 }],
-      propinaCentavos: 50,
-      direccion: 'Avenida Principal 12, casa 4',
-      ...CASA,
-      metodoPago: 'transferencia_repartidor',
-    });
-    const id = p.pedidoId;
-    await resto('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 });
-    await ubicar(LOCAL_REST);
-    // La oferta llega al pedir la lista (como la app): se espera a que sea suya y se acepta.
-    for (let i = 0; ; i++) {
-      const ofertas = (await yo('GET', '/datos/repartidor/ofertas')).ofertas ?? [];
-      if (ofertas.some((o) => o.id === id)) break;
-      if (i > 20) throw new Error(`la oferta ${id} no le llegó al repartidor`);
-      await espera(3_000);
-    }
-    await yo('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {});
-    await resto('POST', `/datos/restaurante/pedidos/${id}/listo`, {});
-    const l = await yo('GET', `/datos/repartidor/pedidos/${id}/pago-local`);
-    await yo('POST', `/datos/repartidor/pedidos/${id}/pago-local`, {
-      montoPagado: l.montoEsperado,
-      importeTicket: l.subtotal,
-      metodo: 'efectivo',
-    });
-    await foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, tokens.repartidor, LOCAL_REST);
-    await resto('POST', `/datos/restaurante/pedidos/${id}/confirmar-recogida`, {});
-    await ubicar(CASA);
+    // ───────── El pedido, con el conductor ya asegurado: el cliente le paga la comida al restaurante
+    const id = await hastaElPago(cliente, 'transferencia_repartidor', 2, 50);
+    await c.goto(`/app/order/${id}`);
+    await c.getByTestId('pago-comida-monto').waitFor({ timeout: 60_000 });
+    await tarjeta(c, 'pago-comida', 70);
+    await captura(c, 'pago-comida-datos', idioma);
 
-    // Cliente: su pedido en camino, con lo que paga al recibir.
+    // Driver: mientras el restaurante no confirme, el conductor espera sin adelantar nada.
+    const ctxD = await telefono(tokens.repartidor, ids.repartidor, idioma);
+    const d = await ctxD.newPage();
+    await d.goto('/driver/');
+    await tarjeta(d, 'pago-comida-espera');
+    await captura(d, 'driver-espera-pago', idioma);
+
+    // Cliente: escribe el número de referencia de su pago móvil y lo envía.
+    // Una referencia no se puede usar dos veces: cada vuelta escribe la suya.
+    await c.getByTestId('pago-comida-referencia').fill(`0012${String(Date.now()).slice(-4)}`);
+    await c.getByTestId('pago-comida-referencia').evaluate((x) => {
+      x.blur();
+      x.scrollIntoView({ block: 'center' });
+    });
+    await espera(800);
+    await captura(c, 'pago-comida-referencia', idioma);
+    await c.getByTestId('pago-comida-enviar').click();
+    await c.getByTestId('pago-comida-reportado').waitFor({ timeout: 30_000 });
+
+    // ───────── Restaurante: mira su banco y confirma «Me llegó»
+    const ctxR = await telefono(tokens.restaurante, ids.restaurante, idioma);
+    const r = await ctxR.newPage();
+    await r.goto('/restaurant/');
+    await r.getByTestId('cuenta-cobro-restaurante').waitFor({ timeout: 60_000 });
+    await sinAvisos(r, en);
+    // Su cuenta de pago móvil y su saldo, en el inicio de la app.
+    await tarjeta(r, 'cuenta-cobro-restaurante', 20);
+    await captura(r, 'rest-cuenta-cobro', idioma);
+    await tarjeta(r, 'saldo-restaurante', 20);
+    await captura(r, 'rest-saldo', idioma);
+    // La fila del pedido avisa del pago por confirmar; al abrirla están la referencia y los botones.
+    await tarjeta(r, 'fila-pago-por-confirmar', 260);
+    await captura(r, 'rest-fila-pago', idioma);
+    await r.getByTestId('fila-pago-por-confirmar').first().click();
+    await r.getByTestId('pago-comida-me-llego').waitFor({ timeout: 60_000 });
+    await tarjeta(r, 'pago-comida-restaurante', 120);
+    await captura(r, 'rest-pago-por-confirmar', idioma);
+    await r.getByTestId('pago-comida-me-llego').click();
+    await r.getByTestId('pago-comida-ok').waitFor({ timeout: 30_000 });
+    await tarjeta(r, 'pago-comida-restaurante', 120);
+    await captura(r, 'rest-pago-confirmado', idioma);
+    await ctxR.close();
+
+    // Cliente: el restaurante confirmó; ya preparan su pedido.
+    await c.goto(`/app/order/${id}`);
+    await c.getByTestId('pago-comida-confirmado').waitFor({ timeout: 60_000 });
+    await tarjeta(c, 'pago-comida', 70);
+    await captura(c, 'pago-comida-confirmado', idioma);
+
+    // Driver: con el «Me llegó», sale a recoger.
+    await d.goto('/driver/');
+    await tarjeta(d, 'pago-comida-salida');
+    await captura(d, 'driver-salida', idioma);
+
+    await delLocalALaPuerta(id);
+
+    // Cliente: su pedido en camino, con el envío que paga al recibir.
     await c.goto(`/app/order/${id}`);
     await espera(4_000);
+    await sinAvisos(c, en);
+    await espera(500);
     await captura(c, 'pedido-cliente', idioma);
     await ctxC.close();
 
-    // ───────── Driver: en la puerta, cobra y confirma el pago móvil
-    const ctxD = await telefono(tokens.repartidor, ids.repartidor, idioma);
-    const d = await ctxD.newPage();
+    // ───────── Driver: en la puerta cobra solo el envío y confirma el pago móvil
     await d.goto('/driver/');
     await d.getByTestId('cobro-directo').waitFor({ timeout: 60_000 });
     await arriba(d.getByTestId('cobro-directo'), 80);
@@ -251,7 +348,9 @@ async function correrVe(idiomas) {
       recibido: true,
       referencia: '000000',
     });
-    await foto(`/datos/repartidor/pedidos/${id}/entregado`, tokens.repartidor, CASA);
+    // C-DESLIZAR-SIEMPRE: la foto de la puerta no cierra; se cierra deslizando.
+    await foto(`/datos/repartidor/pedidos/${id}/foto-entrega`, tokens.repartidor, CASA);
+    await yo('POST', `/datos/repartidor/pedidos/${id}/entregado`, { ...CASA, modo: 'puerta' });
 
     // ───────── Driver: el saldo para comisiones y la recarga por código
     await d.goto('/driver/');
@@ -264,7 +363,7 @@ async function correrVe(idiomas) {
     await ctxD.close();
   }
 
-  // ───────── El cliente no aparece (pedido en efectivo): el repartidor avisa, espera y lo cierra.
+  // ───────── El cliente no aparece (envío en efectivo): el conductor avisa, espera y lo cierra.
   // Con un cliente nuevo en cada vuelta: «El cliente no pagó» le deja una deuda que no lo deja volver a
   // pedir, y así no frena al cliente fijo del guion de pruebas.
   const nuevo = await pedir('POST', '/datos/cuentas/registro', {
@@ -274,36 +373,13 @@ async function correrVe(idiomas) {
     rol: 'cliente',
   });
   const ausente = (m, r, c) => pedir(m, r, c, nuevo.token);
-  await recargar();
-  await yo('POST', '/datos/repartidor/conectar', { conectado: true, ...LOCAL_REST });
-  await ubicar(LOCAL_REST);
-  const p2 = await ausente('POST', '/datos/pedidos', {
-    restauranteId: rest.id,
-    lineas: [{ platoId: plato.id, cantidad: 1 }],
-    propinaCentavos: 0,
-    direccion: 'Avenida Principal 12, casa 4',
-    ...CASA,
-    metodoPago: 'efectivo',
+  const id2 = await hastaElPago(ausente, 'efectivo', 1, 0);
+  // La comida ya quedó pagada al restaurante; lo que falta cobrar en la puerta es el envío.
+  await ausente('POST', `/datos/pedidos/${id2}/pago-comida`, {
+    referencia: `0013${String(Date.now()).slice(-4)}`,
   });
-  const id2 = p2.pedidoId;
-  await resto('POST', `/datos/restaurante/pedidos/${id2}/aceptar`, { minutos: 5 });
-  for (let i = 0; ; i++) {
-    const ofertas = (await yo('GET', '/datos/repartidor/ofertas')).ofertas ?? [];
-    if (ofertas.some((o) => o.id === id2)) break;
-    if (i > 20) throw new Error(`la oferta ${id2} no le llegó al repartidor`);
-    await espera(3_000);
-  }
-  await yo('POST', `/datos/repartidor/ofertas/${id2}/aceptar`, {});
-  await resto('POST', `/datos/restaurante/pedidos/${id2}/listo`, {});
-  const l2 = await yo('GET', `/datos/repartidor/pedidos/${id2}/pago-local`);
-  await yo('POST', `/datos/repartidor/pedidos/${id2}/pago-local`, {
-    montoPagado: l2.montoEsperado,
-    importeTicket: l2.subtotal,
-    metodo: 'efectivo',
-  });
-  await foto(`/datos/repartidor/pedidos/${id2}/foto-recogida`, tokens.repartidor, LOCAL_REST);
-  await resto('POST', `/datos/restaurante/pedidos/${id2}/confirmar-recogida`, {});
-  await ubicar(CASA);
+  await resto('POST', `/datos/restaurante/pedidos/${id2}/pago-comida`, { llego: true });
+  await delLocalALaPuerta(id2);
   await yo('POST', `/datos/repartidor/pedidos/${id2}/no-aparece`, {});
   const driverEn = async (idioma, nombre, listo) => {
     const ctx = await telefono(tokens.repartidor, ids.repartidor, idioma);
@@ -339,6 +415,8 @@ async function correrVe(idiomas) {
     const c2 = await ctx.newPage();
     await c2.goto(`/app/order/${id2}`);
     await espera(4_000);
+    await sinAvisos(c2, idioma === 'en');
+    await espera(500);
     await captura(c2, 'pedido-no-entregado', idioma);
     await ctx.close();
   }

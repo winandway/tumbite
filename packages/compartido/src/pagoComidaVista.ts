@@ -152,6 +152,8 @@ const REST_ES = {
     'Estamos asegurando un conductor. El cliente todavía no paga: no prepares este pedido.',
   porPagar: 'El cliente está pagando {monto} a tu pago móvil. No prepares todavía.',
   reportado: 'El cliente dice que ya pagó {monto}.',
+  filaConfirma: 'Pago por confirmar: abre el pedido y mira tu banco',
+  filaEspera: 'Esperando el pago del cliente: no prepares todavía',
   referencia: 'Referencia',
   bancoEmisor: 'Banco del cliente',
   miraTuBanco:
@@ -210,6 +212,7 @@ const REST_ES = {
   recargaEnviar: 'Enviar recarga',
   recargaEnviada: 'Recibimos tu recarga. Nuestro equipo la revisa y te acredita el saldo.',
   recargasApagadas: 'Las recargas todavía no están disponibles en tu país.',
+  recargaEnApp: 'Para recargar, abre la app Divoox Restaurants: ahí envías tu comprobante.',
   recargasLista: 'Tus recargas',
   estadoRecarga: { pendiente: 'En revisión', acreditada: 'Acreditada', rechazada: 'Rechazada' },
 };
@@ -220,6 +223,8 @@ const REST_EN: typeof REST_ES = {
     'We are securing a driver. The customer has not paid yet: do not prepare this order.',
   porPagar: 'The customer is paying {monto} to your mobile payment. Do not prepare yet.',
   reportado: 'The customer says they already paid {monto}.',
+  filaConfirma: 'Payment to confirm: open the order and check your bank',
+  filaEspera: 'Waiting for the customer’s payment: do not prepare yet',
   referencia: 'Reference',
   bancoEmisor: 'Customer’s bank',
   miraTuBanco:
@@ -278,6 +283,7 @@ const REST_EN: typeof REST_ES = {
   recargaEnviar: 'Send top-up',
   recargaEnviada: 'We got your top-up. Our team reviews it and credits your balance.',
   recargasApagadas: 'Top-ups are not available in your country yet.',
+  recargaEnApp: 'To top up, open the Divoox Restaurants app: you send your receipt there.',
   recargasLista: 'Your top-ups',
   estadoRecarga: { pendiente: 'In review', acreditada: 'Credited', rechazada: 'Rejected' },
 };

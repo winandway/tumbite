@@ -108,14 +108,14 @@ export function PagoComidaPanel({
               <p role="alert">{t.seguroNo}</p>
               <button
                 type="button"
-                className="boton-borde"
+                className="boton secundario"
                 data-testid="pago-comida-si-no-llego"
                 disabled={enviando}
                 onClick={() => void responder(false)}
               >
                 {t.siNoLlego}
               </button>{' '}
-              <button type="button" className="boton-borde" onClick={() => setDudando(false)}>
+              <button type="button" className="boton secundario" onClick={() => setDudando(false)}>
                 {t.volver}
               </button>
             </>
@@ -132,7 +132,7 @@ export function PagoComidaPanel({
               </button>{' '}
               <button
                 type="button"
-                className="boton-borde"
+                className="boton secundario"
                 data-testid="pago-comida-no-me-llego"
                 onClick={() => setDudando(true)}
               >

@@ -333,7 +333,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Toca «Pedir y pagar al recibir»: el pedido queda confirmado.",
    "Cuando llegue, paga el total (sin la propina) en efectivo o transfiere a la cuenta que ves en el seguimiento."
   ],
-  "cuerpo": "En el carrito, debajo de «¿Cómo quieres recibirlo?», aparece «¿Cómo pagas?» con las opciones que tu ciudad permite: tarjeta, efectivo al recibir o transferencia al repartidor. Si tu ciudad solo acepta tarjeta, esa pregunta no aparece. Con efectivo: el restaurante recibe tu pedido de inmediato y el repartidor te lo trae. Al llegar le pagas el total que ves en el seguimiento (la propina que dejaste en la app no se le cobra en efectivo: es aparte y es toda para él). Con transferencia: en el seguimiento ves el nombre del titular y la cuenta publicada del repartidor (por ejemplo, su número de pago móvil o su cuenta de banco) y el monto exacto. Transfieres cuando lo tengas enfrente; él lo confirma en su banco. Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte. Si transferiste y el repartidor dice que no le llegó, o el monto no cuadra, toca «Tengo un problema con el cobro» en tu pedido: soporte revisa el caso con los dos. Los precios, el envío, el servicio, la propina y el total se muestran en la moneda de la ciudad del restaurante, en las ciudades donde Divoox opere. Nada se convierte: el monto que ves en el carrito y en el seguimiento es el que pagas."
+  "cuerpo": "En el carrito, debajo de «¿Cómo quieres recibirlo?», aparece «¿Cómo pagas?» con las opciones que tu ciudad permite: tarjeta, efectivo al recibir o transferencia al repartidor. Si tu ciudad solo acepta tarjeta, esa pregunta no aparece. En Venezuela la comida se le paga directo al restaurante por pago móvil y al conductor solo el envío: está en la guía «Pagar tu comida en Venezuela». Con efectivo: el restaurante recibe tu pedido de inmediato y el repartidor te lo trae. Al llegar le pagas el total que ves en el seguimiento (la propina que dejaste en la app no se le cobra en efectivo: es aparte y es toda para él). Con transferencia: en el seguimiento ves el nombre del titular y la cuenta publicada del repartidor (por ejemplo, su número de pago móvil o su cuenta de banco) y el monto exacto. Transfieres cuando lo tengas enfrente; él lo confirma en su banco. Si no pagas al recibir, el pedido se cancela y queda un saldo pendiente en tu cuenta: no podrás volver a pedir al recibir hasta resolverlo con soporte. Si transferiste y el repartidor dice que no le llegó, o el monto no cuadra, toca «Tengo un problema con el cobro» en tu pedido: soporte revisa el caso con los dos. Los precios, el envío, el servicio, la propina y el total se muestran en la moneda de la ciudad del restaurante, en las ciudades donde Divoox opere. Nada se convierte: el monto que ves en el carrito y en el seguimiento es el que pagas."
  },
  {
   "idioma": "es",
@@ -960,20 +960,24 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "es",
   "ruta": "ordering/pay-on-delivery-venezuela",
-  "titulo": "Pagar tu comida al recibir: efectivo o pago móvil",
-  "resumen": "En Venezuela pagas tu pedido cuando llega, en efectivo o con una transferencia por pago móvil al repartidor, y ves el total también en bolívares.",
+  "titulo": "Pagar tu comida en Venezuela: pago móvil al restaurante y el envío al conductor",
+  "resumen": "En Venezuela le pagas la comida directo al restaurante por pago móvil, con tu número de referencia, y el envío se lo pagas al conductor cuando te entrega. Ves el monto exacto en bolívares.",
   "preguntas": [
+   "¿Cómo pago mi comida en Venezuela?",
    "¿Puedo pagar la comida en efectivo?",
-   "¿Cómo pago mi pedido por pago móvil?",
+   "¿A quién le hago el pago móvil de la comida?",
+   "¿Dónde escribo el número de referencia?",
+   "¿Qué le pago al conductor cuando llega?",
    "¿Cuánto es en bolívares?"
   ],
   "pasos": [
-   "Arma tu pedido y abre el carrito.",
-   "En «¿Cómo pagas?», elige «Efectivo al recibir» o «Transferencia al repartidor».",
-   "Revisa el total en dólares y su equivalente en bolívares, y toca para pedir y pagar al recibir.",
-   "Si elegiste transferencia, en el seguimiento verás los datos del repartidor: págale cuando llegue."
+   "Arma tu pedido, abre el carrito y elige cómo pagas el envío.",
+   "Haz el pedido y espera el aviso: cuando aparezca «Paga la comida al restaurante», copia los datos y el monto exacto.",
+   "Paga por pago móvil desde la app de tu banco, antes de que se acabe el tiempo.",
+   "Escribe el número de referencia y toca «Ya pagué».",
+   "Cuando el restaurante confirme, tu pedido se prepara y sale. Al recibirlo, págale al conductor solo el envío."
   ],
-  "cuerpo": "En los países donde se cobra en mano, como Venezuela, al pedir eliges «Efectivo al recibir» o «Transferencia al repartidor» (pago móvil). No hace falta tarjeta. Los precios van en dólares y el total de tu carrito trae al lado su equivalente en bolívares con la tasa del día, para que sepas cuánto vas a pagar. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Si eliges transferencia, en el seguimiento de tu pedido ves el nombre del repartidor y los datos de su cuenta para pagarle cuando llegue. El repartidor confirma en su app que le llegó. La propina en efectivo se la das directamente al repartidor: es toda suya."
+  "cuerpo": "En Venezuela la comida se la pagas al restaurante, no al conductor. En el carrito eliges solo cómo pagas el envío: «Envío en efectivo» o «Envío por pago móvil al conductor». No hace falta tarjeta. La comida no se paga en efectivo: va por pago móvil; en efectivo puedes pagar el envío. Cuando el restaurante acepta tu pedido y ya hay un conductor para llevarlo, en tu pedido aparece «Paga la comida al restaurante» con el monto exacto en bolívares, el banco, el teléfono, el documento y el nombre del titular. Cada dato tiene su botón «Copiar» para pegarlo en la app de tu banco. Antes de eso no pagues nada: la pantalla te avisa cuándo. El monto en bolívares queda fijo durante quince minutos, con la tasa del día a la vista. Paga desde tu banco, escribe el número de referencia que te dio y toca «Ya pagué». Si quieres, agrega el banco desde el que pagaste y una captura: ayudan si hay un reclamo. Si se acaba el tiempo sin que pagues, el pedido se cancela solo y la pantalla te lo dice: no pagues ese monto, haz el pedido otra vez. El restaurante revisa su banco y confirma. En tu pedido ves «El restaurante confirmó tu pago. Ya está preparando tu pedido». Si dice que no le llegó, puedes corregir la referencia ahí mismo y nuestro equipo lo revisa contigo. Y si un pedido se cancela después de confirmado tu pago, el restaurante te devuelve el dinero por pago móvil y en tu pedido ves la referencia de esa devolución. Cuando llega tu pedido le pagas al conductor solo el envío, en efectivo o por pago móvil a la cuenta que ves en el seguimiento. La propina en efectivo es toda suya."
  },
  {
   "idioma": "es",
@@ -989,7 +993,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Si te avisamos que el repartidor llegó y no te encuentra, sal a recibirlo o escríbele por el chat.",
    "Si no llegaste a tiempo, abre tu pedido para ver lo que pasó y, si algo salió mal, toca «¿Problemas con tu pedido? Cuéntanos»."
   ],
-  "cuerpo": "Cuando el repartidor llega a tu puerta y no te encuentra, toca «El cliente no aparece»: te avisamos al celular y él te espera unos minutos mientras te escribe por el chat. Si pasa la espera y no apareces, en los pedidos que se pagan al recibir la comida no se deja en la puerta: el repartidor cierra el pedido y en tu pedido ves «Pedido cancelado». Lo que costó la comida queda como saldo pendiente con Divoox y hay que resolverlo con soporte antes de volver a pedir. En los pedidos con tarjeta y PIN, la comida tampoco se deja sola: el repartidor cierra el pedido con una foto del lugar donde te esperó, y en tu pedido ves «No pudimos entregar tu pedido» con esa foto. Si algo salió mal (la dirección estaba bien, nadie te avisó), escríbenos desde ese mismo pedido con «¿Problemas con tu pedido? Cuéntanos»."
+  "cuerpo": "Cuando el repartidor llega a tu puerta y no te encuentra, toca «El cliente no aparece»: te avisamos al celular y él te espera unos minutos mientras te escribe por el chat. Si pasa la espera y no apareces, en los pedidos que se pagan al recibir la comida no se deja en la puerta: el repartidor cierra el pedido y en tu pedido ves «Pedido cancelado». Lo que quedó sin pagar queda como saldo pendiente con Divoox y hay que resolverlo con soporte antes de volver a pedir. En los pedidos con tarjeta y PIN, la comida tampoco se deja sola: el repartidor cierra el pedido con una foto del lugar donde te esperó, y en tu pedido ves «No pudimos entregar tu pedido» con esa foto. Si algo salió mal (la dirección estaba bien, nadie te avisó), escríbenos desde ese mismo pedido con «¿Problemas con tu pedido? Cuéntanos»."
  },
  {
   "idioma": "es",
@@ -1276,7 +1280,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Entrega el ticket con el pedido.",
    "En la puerta, cobra el total sin la propina y toca «Cobré» con lo recibido."
   ],
-  "cuerpo": "La oferta te avisa antes de aceptar: dice si el cliente paga en efectivo o por transferencia, y cuánto vas a pagar en el local con tu dinero. Así decides con todo a la vista. Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí). Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera. En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Divoox. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Divoox no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si quieres, toma también la foto del ticket: la ven el restaurante, el cliente y soporte si hay un reclamo. Si algo no cuadra, se anota y lo revisa soporte; no te frena. Entrega el ticket al cliente con el pedido. En la puerta ves cuánto debe darte (sin la propina). Toca «Cobré» y escribe lo que recibiste. Es una confirmación tuya, no una verificación del banco: queda quién confirmó, cuánto y cuándo. Si pagó de menos, la diferencia queda como deuda del cliente, no tuya; si pagó de más (por ejemplo, una transferencia repetida), queda anotado que le debes devolver la diferencia. Si es por transferencia y todavía no la ves en tu banco, toca «La transferencia a…"
+  "cuerpo": "La oferta te avisa antes de aceptar: dice si el cliente paga en efectivo o por transferencia, y cuánto vas a pagar en el local con tu dinero. Así decides con todo a la vista. En Venezuela ya no pagas la comida en el mostrador: el cliente se la paga al restaurante y tú cobras solo el envío. Antes de aceptar un pedido cobrado en mano necesitas saldo para la comisión. Ese saldo se recarga comprando un código en un punto de venta autorizado y canjeándolo en Ganancias → «Saldo para comisiones». Sin saldo no te llegan ofertas de pedidos en efectivo (las de tarjeta sí). Al aceptar, la comisión se aparta de tu saldo; al entregar y confirmar el cobro, se cobra. Si el pedido se cancela o lo sueltas, vuelve a tu saldo entera. En el restaurante la app te dice cuánto pagar en el mostrador: la comida menos la comisión de Divoox. La pagas con tu dinero, en efectivo o con tu tarjeta (es tu capital de trabajo: Divoox no lo presta), y en «Paga la comida en el restaurante» anotas lo que pagaste y el total del ticket. Sin ese registro el pedido no sale. Si quieres, toma también la foto del ticket: la ven el restaurante, el cliente y soporte si hay un reclamo. Si algo no cuadra, se anota y lo revisa soporte; no te frena. Entrega el ticket al cliente con el pedido. En la puerta ves cuánto debe darte (sin la propina). Toca «Cobré» y escribe lo que recibiste. Es una confirmación tuya, no una verificación del banco: queda quién confirmó, cuánto y cuándo. Si pagó de menos, la diferencia queda como deuda del cliente, no tuya; si pagó de más (por ejemplo, una transferencia repetida), queda anotado qu…"
  },
  {
   "idioma": "es",
@@ -1755,20 +1759,22 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "es",
   "ruta": "drivers/driver-cash-mobile-payment-venezuela",
-  "titulo": "Cobrar pedidos en mano: efectivo y pago móvil",
-  "resumen": "En los pedidos que se pagan al recibir, cobras al cliente en su puerta y confirmas el pago móvil con «Sí, me llegó» o «No me llegó».",
+  "titulo": "Pedidos de comida en Venezuela: no pagas en el local y cobras solo el envío",
+  "resumen": "En Venezuela el cliente le paga la comida directo al restaurante. Tú no adelantas dinero: esperas el aviso, recoges y en la puerta cobras solo el envío, en efectivo o por pago móvil.",
   "preguntas": [
-   "¿Cómo cobro un pedido en efectivo?",
+   "¿Tengo que pagar la comida en el restaurante?",
+   "¿Cuándo salgo a recoger el pedido?",
+   "¿Cuánto le cobro al cliente en la puerta?",
    "¿Cómo confirmo que me llegó el pago móvil?",
    "¿Qué hago si el cliente no aparece?"
   ],
   "pasos": [
-   "Al llegar a la puerta, mira el monto a cobrar en «Cobra al cliente».",
-   "En efectivo, escribe lo que recibiste y toca «Cobré».",
-   "Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó».",
+   "Acepta el pedido y espera mientras el cliente le paga al restaurante. Cuando veas «Ya puedes ir al restaurante», ve a recoger: no pagas nada en el local.",
+   "En la puerta, mira el monto del envío en «Cobra al cliente».",
+   "En efectivo, escribe lo que recibiste y toca «Cobré». Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó».",
    "Si el cliente no aparece, toca «El cliente no aparece» y espera; pasado el tiempo, toca «El cliente no pagó»."
   ],
-  "cuerpo": "Cuando el cliente paga al recibir, al llegar a su puerta tu app te muestra «Cobra al cliente» con el monto sin la propina y su equivalente en bolívares a la tasa del día. En efectivo, escribe lo que recibiste y toca «Cobré». Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó». Si la transferencia todavía no aparece, toca «La transferencia aún no me llega». Si el cliente no aparece, toca «El cliente no aparece»: le avisamos y esperas unos minutos. Un pedido que se cobra en mano nunca se deja en un lugar seguro: pasada la espera, toca «El cliente no pagó» y lleva la comida de vuelta al restaurante. La propina en efectivo es tuya y no se cuenta en el cobro."
+  "cuerpo": "En los pedidos de comida de Venezuela ya no pagas la comida en el mostrador. El cliente se la paga al restaurante por pago móvil cuando tú ya aceptaste el pedido. Mientras el cliente paga, tu app dice «Espera un momento». Cuando el restaurante confirma que le llegó el dinero, cambia a «Ya puedes ir al restaurante»: ahí sales a recoger. En el local no pagas nada, solo recoges el pedido. En la puerta del cliente tu app muestra «Cobra al cliente» con el monto del envío, sin la propina, y su equivalente en bolívares a la tasa del día. En efectivo, escribe lo que recibiste y toca «Cobré». Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó». Si el cliente no aparece, toca «El cliente no aparece»: le avisamos y esperas unos minutos. Un pedido que se cobra en mano nunca se deja en un lugar seguro: pasada la espera, toca «El cliente no pagó» y lleva la comida de vuelta al restaurante. La comisión de Divoox sale de tu saldo para comisiones, como siempre, y la propina en efectivo es tuya: no se cuenta en el cobro."
  },
  {
   "idioma": "es",
@@ -3502,9 +3508,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Build your order and open the cart.",
    "Choose when you want it and how to receive it, and check your delivery address.",
    "Pick a tip, review the total and tap “Continue to payment” to pay by card.",
-   "Follow your order in tracking; if you chose “Hand it to me,” give the driver your PIN when they arrive."
+   "Follow your order in tracking; if you chose “Hand it to me,” give the driver your PIN when they arrive.",
+   "When your order arrives there is nothing left to pay: just receive it."
   ],
-  "cuerpo": "In the United States, food orders are paid by card in the app. You don’t pay the driver at the door: when your order arrives, you only have to receive it. Prices are in US dollars. Before you pay, your cart shows the food, the delivery fee, the service fee, the tip and the total, and “What are these fees?” explains each one. After you pay, your order tracking shows the receipt, where your driver is and, if you chose “Hand it to me,” the PIN you give the driver to receive your order. The tip you add in the app goes to your driver in full. Paying in cash or by bank transfer on delivery is offered only in countries where Divoox collects in person; it isn’t available in the United States."
+  "cuerpo": "In the United States, food orders are paid by card in the app. You don’t pay the driver at the door: when your order arrives, you only have to receive it. Prices are in US dollars. Before you pay, your cart shows the food, the delivery fee, the service fee, the tip and the total, and “What are these fees?” explains each one. After you pay, your order tracking shows the receipt, where your driver is and, if you chose “Hand it to me,” the PIN you give the driver to receive your order. The tip you add in the app goes to your driver in full. Paying in cash or by bank transfer on delivery is offered only in countries where Divoox collects in person; it isn’t available in the United States. Your card is authorized when you order and charged when the order is delivered. If you cancel before the restaurant accepts, you aren’t charged."
  },
  {
   "idioma": "en",
