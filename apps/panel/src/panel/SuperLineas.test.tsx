@@ -136,4 +136,31 @@ describe('C-CONTACTO2-EDITABLE en el panel', () => {
       contacto2Telefono: '+13055550404',
     });
   });
+  // C-EDITAR-LINEA: «Editar datos» de un líder invitado: nombre, tipo, conductores y su correo.
+  it('un líder invitado: tres puntos → «Editar datos» guarda nombre, tipo y el correo nuevo', async () => {
+    const cambios: { ruta: string; cuerpo: Record<string, unknown> }[] = [];
+    servidor(cambios);
+    render(<SuperLineas idioma="es" />);
+    await screen.findByTestId('lineas-invitados');
+    await userEvent.click(screen.getByRole('button', { name: 'Más opciones' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Editar datos' }));
+    const form = await screen.findByTestId('lineas-editar-datos');
+    const [nombre, conductores, lider] = Array.from(form.querySelectorAll('input'));
+    await userEvent.clear(nombre!);
+    await userEvent.type(nombre!, 'Línea Ejemplo Norte');
+    await userEvent.selectOptions(form.querySelector('select')!, 'taxi');
+    await userEvent.type(conductores!, '30');
+    await userEvent.clear(lider!);
+    await userEvent.type(lider!, 'lider.nuevo@ejemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar los cambios' }));
+    await waitFor(() => expect(cambios).toHaveLength(1));
+    expect(cambios[0]!.ruta).toContain('/datos/admin/lineas-invitaciones/i1');
+    expect(cambios[0]!.ruta).not.toContain('contacto2');
+    expect(cambios[0]!.cuerpo).toEqual({
+      nombre: 'Línea Ejemplo Norte',
+      tipo: 'taxi',
+      conductores: 30,
+      lider: 'lider.nuevo@ejemplo.com',
+    });
+  });
 });

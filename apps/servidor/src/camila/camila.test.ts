@@ -770,14 +770,15 @@ describe('Revisión de calidad del 18 nov: borrado, fallo del modelo y chat anó
     expect((await decir(1, 'una más')).estado).toBe(429);
     // Mensajes con IA al día por visitante: pasados, se le contesta SIN IA (y nunca «no entendí»).
     await e.m.DB.prepare(
-      "UPDATE camila_mensajes SET creado_en = datetime('now', '-10 minutes') WHERE autor = 'persona'",
+      // Hace unos minutos, pero dentro de hoy (UTC): pasada la medianoche no cae ayer.
+      "UPDATE camila_mensajes SET creado_en = MAX(datetime('now', 'start of day'), datetime('now', '-10 minutes')) WHERE autor = 'persona'",
     ).run();
     const persona = await e.m.DB.prepare(
       'SELECT id FROM camila_personas WHERE usuario_id IS NULL AND correo IS NULL',
     ).first<{ id: string }>();
     for (let i = 0; i < MENSAJES_IA_POR_ANONIMO_DIA; i++)
       await e.m.DB.prepare(
-        "INSERT INTO camila_mensajes (id, persona_id, canal, autor, texto, creado_en) VALUES (?, ?, 'web', 'persona', 'x', datetime('now', '-10 minutes'))",
+        "INSERT INTO camila_mensajes (id, persona_id, canal, autor, texto, creado_en) VALUES (?, ?, 'web', 'persona', 'x', MAX(datetime('now', 'start of day'), datetime('now', '-10 minutes')))",
       )
         .bind(`relleno-${i}`, persona!.id)
         .run();

@@ -50,7 +50,9 @@ async function escenario() {
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
          pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, zona_id, moneda, metodo_pago, creado_en, entregado_en)
        VALUES (?, ?, ?, ?, 'entregado', '[]', ?, 0, 0, 0, 0, ?, 0, ?, 0, 0, 100, 'inicial', '', '', 'US-FL-MIAMI', 'USD', 'tarjeta',
-         datetime('now', '-1 hours'), datetime('now', '-1 hours'))`,
+         -- Hace un rato, pero siempre dentro del día de hoy (UTC): pasada la medianoche no cae ayer.
+         MAX(datetime('now', 'start of day'), datetime('now', '-1 hours')),
+         MAX(datetime('now', 'start of day'), datetime('now', '-1 hours')))`,
     )
       .bind(
         id,

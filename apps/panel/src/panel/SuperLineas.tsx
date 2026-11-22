@@ -66,6 +66,14 @@ const T = {
     anular: 'Anular la invitación',
     opciones: 'Más opciones',
     editarContactos: 'Editar contactos de emergencia',
+    editarDatos: 'Editar datos',
+    editarDatosTitulo: 'Editar los datos de la línea',
+    editarDatosAyuda:
+      'Corrige el nombre, el tipo o los conductores. Si cambias el correo del líder, le mandamos su mismo enlace al correo nuevo.',
+    conductoresCampo: 'Conductores (aproximado, opcional)',
+    guardarDatos: 'Guardar los cambios',
+    datosGuardados: 'Listo: guardamos los cambios.',
+    datosGuardadosCorreo: 'Listo: guardamos los cambios y le mandamos su enlace al correo nuevo.',
     editarContactosAyuda:
       'El segundo contacto recibe el aviso con la ubicación si un conductor de la línea pide ayuda. Escribe el celular completo otra vez, con el código del país.',
     actual: 'Ahora',
@@ -138,6 +146,14 @@ const T = {
     anular: 'Cancel the invitation',
     opciones: 'More options',
     editarContactos: 'Edit emergency contacts',
+    editarDatos: 'Edit details',
+    editarDatosTitulo: 'Edit the line’s details',
+    editarDatosAyuda:
+      'Fix the name, the type or the drivers. If you change the leader’s email, we send their same link to the new email.',
+    conductoresCampo: 'Drivers (approximate, optional)',
+    guardarDatos: 'Save changes',
+    datosGuardados: 'Done: we saved the changes.',
+    datosGuardadosCorreo: 'Done: we saved the changes and sent their link to the new email.',
     editarContactosAyuda:
       'The second contact gets the alert with the location if a driver on the line asks for help. Enter the full cell phone again, with the country code.',
     actual: 'Now',
@@ -180,6 +196,7 @@ type Invitado = {
   enlace: string;
   correo: string | null;
   correoEnviadoEn: string | null;
+  conductores?: number | null;
 };
 
 /** wa.me con el celular del líder (si lo invitaron por celular) y el mensaje con su enlace. */
@@ -286,6 +303,129 @@ function EditarContacto2({
     </form>
   );
 }
+/**
+ * C-EDITAR-LINEA (21 nov 2026, Gerencia): «Editar datos» de una línea o de una invitación pendiente:
+ * nombre, tipo, conductores y (en la invitación) el correo o celular del líder. Lo escrito se guarda
+ * solo y vuelve si se cierra la ventana (useBorrador); se borra al guardar o cancelar.
+ */
+function EditarDatosLinea({
+  ruta,
+  clave,
+  actual,
+  conLider,
+  t,
+  idioma,
+  alGuardar,
+  alCerrar,
+  setError,
+}: {
+  ruta: string;
+  clave: string;
+  actual: { nombre: string; tipo: string; conductores: number | null; lider?: string };
+  conLider: boolean;
+  t: Textos;
+  idioma: Idioma;
+  alGuardar: (m: string) => void;
+  alCerrar: () => void;
+  setError: (m: string) => void;
+}) {
+  const b = useBorrador({
+    formulario: `datos-linea-${clave}`,
+    cuenta: 'superadmin',
+    inicial: {
+      nombre: actual.nombre,
+      tipo: actual.tipo,
+      conductores: actual.conductores == null ? '' : String(actual.conductores),
+      lider: actual.lider ?? '',
+    },
+    almacen: almacenNavegador,
+  });
+  const nombreMal = pareceTelefono(b.valores.nombre);
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    const n = b.valores.conductores.trim();
+    try {
+      const r = await pedir<{ correoEnviado?: boolean | null }>('PATCH', ruta, {
+        nombre: b.valores.nombre,
+        tipo: b.valores.tipo,
+        conductores: n === '' ? null : Number(n),
+        ...(conLider && b.valores.lider.trim() !== (actual.lider ?? '')
+          ? { lider: b.valores.lider }
+          : {}),
+      });
+      await b.limpiar();
+      alGuardar(r.correoEnviado ? t.datosGuardadosCorreo : t.datosGuardados);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+  return (
+    <form
+      className="formulario flex-tarjeta"
+      noValidate
+      onSubmit={(e) => void guardar(e)}
+      data-testid="lineas-editar-datos"
+    >
+      <h4>{t.editarDatosTitulo}</h4>
+      <p className="pista">{t.editarDatosAyuda}</p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      <label className="campo">
+        {t.nombre}
+        <input
+          value={b.valores.nombre}
+          aria-invalid={nombreMal || undefined}
+          onChange={(e) => b.cambiar('nombre', e.target.value)}
+        />
+      </label>
+      <label className="campo">
+        {t.tipo}
+        <select value={b.valores.tipo} onChange={(e) => b.cambiar('tipo', e.target.value)}>
+          {Object.entries(t.tipos).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="campo">
+        {t.conductoresCampo}
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={b.valores.conductores}
+          onChange={(e) => b.cambiar('conductores', e.target.value)}
+        />
+      </label>
+      {conLider ? (
+        <label className="campo">
+          {t.lider}
+          <input value={b.valores.lider} onChange={(e) => b.cambiar('lider', e.target.value)} />
+        </label>
+      ) : null}
+      <div className="flex-inline" style={{ gap: 8 }}>
+        <button type="submit" className="boton" disabled={nombreMal}>
+          {t.guardarDatos}
+        </button>
+        <button
+          type="button"
+          className="boton secundario"
+          onClick={() => {
+            void b.limpiar();
+            alCerrar();
+          }}
+        >
+          {t.cancelar}
+        </button>
+      </div>
+    </form>
+  );
+}
 type Linea = {
   id: string;
   nombre: string;
@@ -303,6 +443,7 @@ type Linea = {
   miembros: number;
   pendientes: number;
   verificada: boolean;
+  conductores?: number | null;
 };
 type Solicitud = {
   id: string;
@@ -483,10 +624,32 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
                     ...(i.correo
                       ? [{ texto: t.reenviar, alTocar: () => void reenviar(i.id) }]
                       : []),
+                    { texto: t.editarDatos, alTocar: () => setEditando(`datos-inv-${i.id}`) },
                     { texto: t.editarContactos, alTocar: () => setEditando(`inv-${i.id}`) },
                     { texto: t.anular, peligro: true, alTocar: () => void anular(i.id) },
                   ]}
                 />
+                {editando === `datos-inv-${i.id}` ? (
+                  <EditarDatosLinea
+                    ruta={`/datos/admin/lineas-invitaciones/${i.id}`}
+                    clave={`inv-${i.id}`}
+                    actual={{
+                      nombre: i.nombre,
+                      tipo: i.tipo,
+                      conductores: i.conductores ?? null,
+                      lider: i.lider,
+                    }}
+                    conLider
+                    t={t}
+                    idioma={idioma}
+                    alGuardar={(m) => {
+                      setEditando(null);
+                      recargar(m);
+                    }}
+                    alCerrar={() => setEditando(null)}
+                    setError={setError}
+                  />
+                ) : null}
                 {editando === `inv-${i.id}` ? (
                   <EditarContacto2
                     ruta={`/datos/admin/lineas-invitaciones/${i.id}/contacto2`}
@@ -561,8 +724,18 @@ export function SuperLineas({ idioma }: { idioma: Idioma }) {
               vuelta={vuelta}
               setError={setError}
               idioma={idioma}
-              editando={editando === `lin-${l.id}`}
-              alEditar={(si) => setEditando(si ? `lin-${l.id}` : null)}
+              editando={
+                editando === `lin-${l.id}`
+                  ? 'contactos'
+                  : editando === `datos-lin-${l.id}`
+                    ? 'datos'
+                    : null
+              }
+              alEditar={(m) =>
+                setEditando(
+                  m === 'datos' ? `datos-lin-${l.id}` : m === 'contactos' ? `lin-${l.id}` : null,
+                )
+              }
             />
           ))}
         </ul>
@@ -832,8 +1005,8 @@ function TarjetaLinea({
   vuelta: number;
   setError: (m: string) => void;
   idioma: Idioma;
-  editando: boolean;
-  alEditar: (si: boolean) => void;
+  editando: 'contactos' | 'datos' | null;
+  alEditar: (modo: 'contactos' | 'datos' | null) => void;
 }) {
   const [miembros, setMiembros] = useState<Miembro[]>([]);
   const [enlace, setEnlace] = useState('');
@@ -895,13 +1068,32 @@ function TarjetaLinea({
         </button>
         <MenuTresPuntos
           etiqueta={t.opciones}
-          opciones={[{ texto: t.editarContactos, alTocar: () => alEditar(true) }]}
+          opciones={[
+            { texto: t.editarDatos, alTocar: () => alEditar('datos') },
+            { texto: t.editarContactos, alTocar: () => alEditar('contactos') },
+          ]}
         />
       </div>
       <p className="pista">
         {t.contacto2Nombre}: {l.contacto2Nombre} · {l.contacto2Telefono}
       </p>
-      {editando ? (
+      {editando === 'datos' ? (
+        <EditarDatosLinea
+          ruta={`/datos/admin/lineas/${l.id}`}
+          clave={`lin-${l.id}`}
+          actual={{ nombre: l.nombre, tipo: l.tipo, conductores: l.conductores ?? null }}
+          conLider={false}
+          t={t}
+          idioma={idioma}
+          alGuardar={(m) => {
+            alEditar(null);
+            recargar(m);
+          }}
+          alCerrar={() => alEditar(null)}
+          setError={setError}
+        />
+      ) : null}
+      {editando === 'contactos' ? (
         <EditarContacto2
           ruta={`/datos/admin/lineas/${l.id}/contacto2`}
           clave={`lin-${l.id}`}
@@ -909,10 +1101,10 @@ function TarjetaLinea({
           t={t}
           idioma={idioma}
           alGuardar={(m) => {
-            alEditar(false);
+            alEditar(null);
             recargar(m);
           }}
-          alCerrar={() => alEditar(false)}
+          alCerrar={() => alEditar(null)}
           setError={setError}
         />
       ) : null}

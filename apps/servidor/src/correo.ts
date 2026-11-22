@@ -440,6 +440,9 @@ function etiquetaBoton(url: string, en: boolean): string {
   if (/^\/t\//.test(ruta)) return en ? 'Open the conversation' : 'Ver la conversación';
   if (/\/tickets\//.test(ruta)) return en ? 'Reply in the panel' : 'Responder en el panel';
   if (ruta.includes('/panel')) return en ? 'Open my panel' : 'Abrir mi panel';
+  // C-INVITAR-LIDER-UN-PASO: el enlace personal del líder abre Driver con su correo y su línea.
+  if (ruta.includes('/driver/lead/'))
+    return en ? 'Create my leader account' : 'Crear mi cuenta de líder';
   if (ruta.includes('/driver')) return en ? 'Open Divoox Driver' : 'Abrir Divoox Driver';
   return en ? 'Open Divoox' : 'Abrir Divoox';
 }

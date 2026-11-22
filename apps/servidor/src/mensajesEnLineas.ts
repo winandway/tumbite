@@ -4,6 +4,10 @@
  */
 export const MENSAJES_EN_LINEAS: [string, string][] = [
   [
+    'Ese líder ya tiene otra invitación pendiente. Anúlala antes.',
+    'That leader already has another pending invitation. Cancel it first.',
+  ],
+  [
     'Escribe el nombre y el celular completo (con el código del país) del segundo contacto de emergencia.',
     'Enter the name and full cell phone number (with the country code) of the second emergency contact.',
   ],

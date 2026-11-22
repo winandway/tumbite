@@ -46,6 +46,8 @@ export type Linea = {
   pendientes: number;
   verificada: boolean;
   creadaEn: string;
+  /** C-EDITAR-LINEA: cuántos conductores dice tener (opcional). */
+  conductores: number | null;
 };
 
 type FilaLinea = Record<string, unknown>;
@@ -67,10 +69,11 @@ const mapear = (r: FilaLinea): Linea => ({
   pendientes: Number(r.pendientes ?? 0),
   verificada: r.telefono_verificado_en != null,
   creadaEn: String(r.creado_en),
+  conductores: r.conductores_estimados == null ? null : Number(r.conductores_estimados),
 });
 
 const SELECT_LINEA = `SELECT e.id, e.nombre, e.zona_id, e.codigo, e.activo, e.lider_id, e.creado_en, l.tipo,
-    l.contacto2_nombre, l.contacto2_telefono, l.telefono_verificado_en, u.nombre AS lider, u.telefono AS lider_telefono, u.es_prueba AS lider_prueba,
+    l.contacto2_nombre, l.contacto2_telefono, l.telefono_verificado_en, l.conductores_estimados, u.nombre AS lider, u.telefono AS lider_telefono, u.es_prueba AS lider_prueba,
     (SELECT nombre FROM zonas WHERE id = e.zona_id) AS ciudad,
     (SELECT COUNT(*) FROM miembros_equipo m WHERE m.equipo_id = e.id) AS miembros,
     (SELECT COUNT(*) FROM pedidos_linea p WHERE p.equipo_id = e.id AND p.estado = 'pendiente') AS pendientes
@@ -361,6 +364,8 @@ export type InvitacionLider = {
   token: string | null;
   correo: string | null;
   correoEnviadoEn: string | null;
+  /** C-EDITAR-LINEA: cuántos conductores dice tener (opcional). */
+  conductores: number | null;
 };
 
 /** Código del error de `crearEquipo` cuando nadie en Driver tiene ese correo o celular. */
@@ -476,7 +481,7 @@ export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLid
       .run();
   const { results } = await db
     .prepare(
-      "SELECT id, nombre, zona_id, tipo, lider, contacto2_nombre, contacto2_telefono, creado_en, token, lider_correo, correo_enviado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
+      "SELECT id, nombre, zona_id, tipo, conductores, lider, contacto2_nombre, contacto2_telefono, creado_en, token, lider_correo, correo_enviado_en FROM invitaciones_lider WHERE estado = 'pendiente' ORDER BY creado_en DESC LIMIT 100",
     )
     .all<Record<string, unknown>>();
   return results.map((r) => ({
@@ -491,6 +496,7 @@ export async function invitacionesDeLider(db: D1Database): Promise<InvitacionLid
     token: r.token ? String(r.token) : null,
     correo: r.lider_correo ? String(r.lider_correo) : null,
     correoEnviadoEn: r.correo_enviado_en ? String(r.correo_enviado_en) : null,
+    conductores: r.conductores == null ? null : Number(r.conductores),
   }));
 }
 
@@ -1063,4 +1069,135 @@ export async function editarContacto2(
       ),
   ]);
   return { nombre, telefono };
+}
+
+/**
+ * C-EDITAR-LINEA (21 nov 2026, Gerencia) — todos los países. «Editar» (tres puntos) el nombre y los
+ * datos de una línea ya creada: nombre, tipo y conductores estimados. Queda en la auditoría.
+ */
+export async function editarLinea(
+  db: D1Database,
+  d: {
+    id: string;
+    nombre?: string;
+    tipo?: (typeof TIPOS_LINEA)[number];
+    conductores?: number | null;
+    actorId: string;
+  },
+) {
+  const antes = await db
+    .prepare(
+      `SELECT e.nombre, l.tipo, l.conductores_estimados AS conductores FROM equipos e
+         JOIN lineas l ON l.equipo_id = e.id WHERE e.id = ?`,
+    )
+    .bind(d.id)
+    .first<{ nombre: string; tipo: string; conductores: number | null }>();
+  if (!antes) throw new ErrorDatos('Eso ya no está disponible.', undefined, 404);
+  const nombre = d.nombre?.trim() ?? antes.nombre;
+  validarNombres({ nombre, contacto2Nombre: 'x' });
+  if (nombre.length < 3) throw new ErrorDatos('Escribe el nombre de la línea.', 'nombre', 422);
+  const tipo = d.tipo ?? antes.tipo;
+  const conductores = d.conductores === undefined ? antes.conductores : d.conductores;
+  const despues = { nombre, tipo, conductores };
+  if (JSON.stringify(despues) === JSON.stringify(antes)) return despues;
+  await db.batch([
+    db.prepare('UPDATE equipos SET nombre = ? WHERE id = ?').bind(nombre, d.id),
+    db
+      .prepare('UPDATE lineas SET tipo = ?, conductores_estimados = ? WHERE equipo_id = ?')
+      .bind(tipo, conductores, d.id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(d.actorId, 'linea_editar', d.id, JSON.stringify(antes), JSON.stringify(despues)),
+  ]);
+  return despues;
+}
+
+/**
+ * C-EDITAR-LINEA: «Editar» una invitación de líder que sigue pendiente: el nombre de la línea, el tipo,
+ * los conductores y el contacto del líder (su correo o su celular). Si cambia el correo, el enlace
+ * sigue siendo el mismo y se le manda al correo nuevo (lo hace la ruta). Queda en la auditoría.
+ */
+export async function editarInvitacionLider(
+  db: D1Database,
+  d: {
+    id: string;
+    nombre?: string;
+    tipo?: (typeof TIPOS_LINEA)[number];
+    conductores?: number | null;
+    lider?: string;
+    actorId: string;
+  },
+): Promise<{ correoNuevo: boolean }> {
+  const antes = await db
+    .prepare(
+      `SELECT nombre, tipo, conductores, lider, lider_correo AS correo, lider_telefono_canonico AS tel
+         FROM invitaciones_lider WHERE id = ? AND estado = 'pendiente'`,
+    )
+    .bind(d.id)
+    .first<{
+      nombre: string;
+      tipo: string;
+      conductores: number | null;
+      lider: string;
+      correo: string | null;
+      tel: string | null;
+    }>();
+  if (!antes) throw new ErrorDatos('Eso ya no está disponible.', undefined, 404);
+  const nombre = d.nombre?.trim() ?? antes.nombre;
+  validarNombres({ nombre, contacto2Nombre: 'x' });
+  if (nombre.length < 3) throw new ErrorDatos('Escribe el nombre de la línea.', 'nombre', 422);
+  const tipo = d.tipo ?? antes.tipo;
+  const conductores = d.conductores === undefined ? antes.conductores : d.conductores;
+  let lider = antes.lider;
+  let correo = antes.correo;
+  let tel = antes.tel;
+  if (d.lider != null && d.lider.trim() !== antes.lider) {
+    const texto = d.lider.trim();
+    correo = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(texto) ? texto.toLowerCase() : null;
+    tel = correo ? null : telefonoE164(texto) ? telefonoCanonico(texto) : null;
+    if (!correo && !tel)
+      throw new ErrorDatos(
+        'Para invitar al líder escribe su correo o su celular completo, con el código del país.',
+        'lider',
+        422,
+      );
+    const ya = await db
+      .prepare(
+        `SELECT id FROM invitaciones_lider WHERE estado = 'pendiente' AND id != ?3
+           AND ((?1 IS NOT NULL AND lider_telefono_canonico = ?1) OR (?2 IS NOT NULL AND lider_correo = ?2)) LIMIT 1`,
+      )
+      .bind(tel, correo, d.id)
+      .first();
+    if (ya)
+      throw new ErrorDatos(
+        'Ese líder ya tiene otra invitación pendiente. Anúlala antes.',
+        'lider',
+        409,
+      );
+    lider = texto;
+  }
+  const despues = { nombre, tipo, conductores, lider, correo, tel };
+  if (JSON.stringify(despues) === JSON.stringify(antes)) return { correoNuevo: false };
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE invitaciones_lider SET nombre = ?, tipo = ?, conductores = ?, lider = ?, lider_correo = ?,
+           lider_telefono_canonico = ? WHERE id = ? AND estado = 'pendiente'`,
+      )
+      .bind(nombre, tipo, conductores, lider, correo, tel, d.id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        d.actorId,
+        'invitacion_lider_editar',
+        d.id,
+        JSON.stringify({ ...antes, correo: undefined, tel: undefined }),
+        JSON.stringify({ nombre, tipo, conductores, lider }),
+      ),
+  ]);
+  return { correoNuevo: Boolean(correo) && correo !== antes.correo };
 }

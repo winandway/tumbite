@@ -16,6 +16,8 @@ import {
   invitacionesDeLider,
   invitacionPorToken,
   editarContacto2,
+  editarInvitacionLider,
+  editarLinea,
   invitarLider,
   lineaPorId,
   lineasDeCiudad,
@@ -246,6 +248,10 @@ lineas.patch('/admin/lineas/:id', async (c) => {
       activa: z.boolean().optional(),
       contacto2Nombre: z.string().trim().min(2).max(80).optional(),
       contacto2Telefono: celular.optional(),
+      // C-EDITAR-LINEA: el nombre y los datos de la línea.
+      nombre: z.string().trim().min(3).max(80).optional(),
+      tipo: tipo.optional(),
+      conductores: z.number().int().min(0).max(5000).nullable().optional(),
     }),
   );
   const db = base(c);
@@ -265,7 +271,34 @@ lineas.patch('/admin/lineas/:id', async (c) => {
       telefono: d.contacto2Telefono,
       actorId: u.id,
     });
+  if (d.nombre != null || d.tipo != null || d.conductores !== undefined)
+    await editarLinea(db, {
+      id,
+      nombre: d.nombre,
+      tipo: d.tipo,
+      conductores: d.conductores,
+      actorId: u.id,
+    });
   return c.json({ linea: await lineaPorId(db, id) });
+});
+
+// C-EDITAR-LINEA: «Editar» una invitación pendiente. Si cambia el correo, el enlace le llega al nuevo.
+lineas.patch('/admin/lineas-invitaciones/:id', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      nombre: z.string().trim().min(3).max(80).optional(),
+      tipo: tipo.optional(),
+      conductores: z.number().int().min(0).max(5000).nullable().optional(),
+      lider: z.string().trim().min(5).max(120).optional(),
+    }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const r = await editarInvitacionLider(db, { id, ...d, actorId: u.id });
+  const correo = r.correoNuevo ? await mandarInvitacionLider(c.env, db, id, sitioPublico(c)) : null;
+  return c.json({ ok: true, correoEnviado: correo ? correo.ok : null });
 });
 
 // C-CONTACTO2-EDITABLE: «Editar contactos de emergencia» (tres puntos) de una línea o de un líder invitado.
