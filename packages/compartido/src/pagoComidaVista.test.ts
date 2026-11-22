@@ -93,4 +93,14 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     expect(pieza).toMatch(/useBorrador\(/);
     expect(pieza).toMatch(/miraTuBanco/);
   });
+
+  it('el superadmin revisa las recargas de restaurantes y puede poner su comisión', () => {
+    const fin = leer('apps/panel/src/panel/SuperFinanzas.tsx');
+    expect(fin).toMatch(/<RecargasRestaurantesAdmin\b/);
+    expect(fin).toMatch(/restaurante: 'Restaurante'/);
+    const pieza = leer('apps/panel/src/panel/RecargasRestaurantesAdmin.tsx');
+    expect(pieza).toMatch(/restaurantes-saldo\/recargas\/\$\{id\}\/acreditar/);
+    // Rechazar va dentro de los tres puntos, nunca a la vista.
+    expect(pieza).toMatch(/MenuTresPuntos[\s\S]{0,200}t\.rechazar/);
+  });
 });

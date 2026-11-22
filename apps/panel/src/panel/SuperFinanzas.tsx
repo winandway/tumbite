@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { RecargasRestaurantesAdmin } from './RecargasRestaurantesAdmin';
 import { Insignia } from './diseno/Insignia';
 import { RecargasLocalesAdmin } from './flex/RecargaLocal';
 import { Hora } from './horario';
@@ -33,7 +34,11 @@ const T = {
     nombre: 'Nombre',
     servicio: 'Servicio',
     tipoCuenta: 'Quién paga',
-    tiposCuenta: { empresa: 'Empresa', conductor: 'Conductor' } as Record<string, string>,
+    tiposCuenta: {
+      empresa: 'Empresa',
+      conductor: 'Conductor',
+      restaurante: 'Restaurante',
+    } as Record<string, string>,
     pais: 'País (dos letras o *)',
     ciudad: 'Ciudad (opcional)',
     empresaId: 'Empresa (opcional, id)',
@@ -133,7 +138,10 @@ const T = {
     nombre: 'Name',
     servicio: 'Service',
     tipoCuenta: 'Who pays',
-    tiposCuenta: { empresa: 'Company', conductor: 'Driver' } as Record<string, string>,
+    tiposCuenta: { empresa: 'Company', conductor: 'Driver', restaurante: 'Restaurant' } as Record<
+      string,
+      string
+    >,
     pais: 'Country (two letters or *)',
     ciudad: 'City (optional)',
     empresaId: 'Company (optional, id)',
@@ -291,6 +299,7 @@ export function SuperFinanzas({
       <Cancelaciones idioma={idioma} />
       <LimitesRecarga t={t} idioma={idioma} />
       <RecargasLocalesAdmin idioma={idioma} />
+      <RecargasRestaurantesAdmin idioma={idioma} />
       <Empresas t={t} idioma={idioma} base={base} />
       <Conciliacion t={t} />
       <Simulador t={t} idioma={idioma} />
