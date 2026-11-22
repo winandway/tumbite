@@ -57,6 +57,33 @@ function conNavegacionReintentada(p: Page): Page {
   };
   return p;
 }
+/**
+ * C-AVISO-IA-UNICO (21 nov 2026): Driver muestra el aviso de IA una vez, en su propia pantalla, a la
+ * cuenta que no lo contestó. Los conductores de los recorridos lo aceptan de verdad (la misma ruta
+ * del servidor que usa la pantalla, como si fueran la web) la primera vez que Driver pregunta; así
+ * cada recorrido sigue probando lo suyo. La pantalla del aviso la prueban sus propias pruebas
+ * (`avisoIaUnico.test.ts` y `papeles/logica.test.ts`).
+ */
+async function avisoIaContestado(c: BrowserContext) {
+  await c.route('**/datos/conductor/verificacion', async (ruta) => {
+    const r = await ruta.fetch();
+    let cuerpo = (await r.json().catch(() => null)) as Record<string, unknown> | null;
+    if (ruta.request().method() === 'GET' && cuerpo?.avisoIaPendiente === true) {
+      const url = new URL(ruta.request().url());
+      const cabeceras = await ruta.request().allHeaders();
+      const ok = await c.request.post(`${url.origin}/datos/conductor/aviso-ia`, {
+        headers: {
+          ...(cabeceras.authorization ? { authorization: cabeceras.authorization } : {}),
+          ...(cabeceras.cookie ? { cookie: cabeceras.cookie } : {}),
+          'content-type': 'application/json',
+        },
+        data: { acepto: true, plataforma: 'web', desde: 'aviso' },
+      });
+      if (ok.ok()) cuerpo = { ...cuerpo, avisoIaPendiente: false, permisoIa: true };
+    }
+    await ruta.fulfill({ response: r, ...(cuerpo ? { json: cuerpo } : {}) });
+  });
+}
 function contextoReintentado(c: BrowserContext): BrowserContext {
   const nueva = c.newPage.bind(c);
   c.newPage = async () => conNavegacionReintentada(await nueva());
@@ -68,12 +95,17 @@ export const test = base.extend<object, { browser: Browser }>({
     await usar(conReintentos(request));
   },
   page: async ({ page }, usar) => {
+    await avisoIaContestado(page.context());
     await usar(conNavegacionReintentada(page));
   },
   browser: [
     async ({ browser }, usar) => {
       const nuevo = browser.newContext.bind(browser);
-      browser.newContext = async (opciones) => contextoReintentado(await nuevo(opciones));
+      browser.newContext = async (opciones) => {
+        const c = await nuevo(opciones);
+        await avisoIaContestado(c);
+        return contextoReintentado(c);
+      };
       await usar(browser);
     },
     { scope: 'worker' },
