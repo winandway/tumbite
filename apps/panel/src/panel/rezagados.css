@@ -189,3 +189,15 @@
   padding: 0;
   margin: 0 0 4px;
 }
+/* Las opciones de la ventana van en una fila corta, no una por línea a todo el ancho. */
+.pd-contenido .rez-dialogo .rez-canales label.casilla-fila.rez-opcion:has(> input),
+.rez-canales label.casilla-fila.rez-opcion {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+}
+/* Lo que explica qué pasa con cada persona se lee entero (las tablas del panel no parten líneas). */
+.super .tabla td.rez-celda-texto {
+  white-space: normal;
+  min-width: 260px;
+}

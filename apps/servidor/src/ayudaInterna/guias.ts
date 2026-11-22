@@ -1964,6 +1964,137 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ─────────────── Recordatorios de registro (C-REZAGADOS, 22 nov 2026) ───────────────
+
+const capRez = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `rezagados-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const recordatoriosRegistro: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'signup-reminders',
+    titulo: 'Recordatorios de registro: Camila le escribe a quien se quedó a medias',
+    resumen:
+      'Cómo Camila le recuerda su paso exacto a quien empezó el registro y no lo terminó: los tres modos por zona, el ritmo y los topes, las plantillas, «Enviar mensaje» desde la ficha y cómo se detiene.',
+    explicacion: [
+      'Qué hace: una vez por hora, Camila mira las cuentas nuevas y, con el registro de cada una, ve en qué paso exacto se quedó: sus fotos, registrar el vehículo, conectarse por primera vez después de la aprobación, unirse a su línea o confirmar el correo. Si la persona lleva quieta en ese paso el tiempo que toca, le manda el recordatorio de ESE paso. Lo que depende del equipo, como aprobar una verificación, nunca genera recordatorio.',
+      'El orden: primero un correo y un aviso en la app; después un SMS corto (si la persona marcó la casilla de SMS y el SMS está activo en su país; si no, otro correo); y un último correo. Luego se detiene. En cuanto la persona da el paso, deja de recibir recordatorios de ese paso. Las cuentas de prueba no reciben nada.',
+      'Los tres modos, zona por zona: Apagado (así viene de fábrica) no hace nada. Vista previa calcula a quién le escribiría y lo muestra en la tabla «A quiénes les escribiría hoy», sin enviar nada. Encendido: Camila escribe de verdad. Al pasar una zona a Encendido, la pantalla pide confirmación. Lo recomendable es dejar la zona un día en Vista previa y revisar la tabla antes de encender.',
+      'Ritmo y topes: las horas quieta antes del 1.er, 2.º y 3.er recordatorio; cuántos recordatorios como mucho por paso y por persona; cuántos correos y SMS automáticos al día entre todas las zonas (cuida la reputación del correo); el horario local en que se puede escribir (fuera de ese horario espera); y la ventana de días (solo cuentas creadas en esos últimos días). Nunca recibe más de uno al día. Debajo de cada casilla está el valor de fábrica, y «Volver a los de fábrica» los pone todos.',
+      'Plantillas: hay una por paso, en español y en inglés lado a lado, con asunto del correo, texto del correo y SMS (con su contador de 160 caracteres). Cada persona la recibe en el idioma de su cuenta. {nombre} se cambia solo por su primer nombre y {enlace} por la dirección que la lleva a seguir. En «Para» eliges General o una zona: la de una zona manda sobre la general, y una zona sin plantilla propia usa la general. «Restablecer la de fábrica» (o «Quitar la de esta zona») deshace el cambio.',
+      'A quiénes les escribiría hoy: cada persona a medio registro de las zonas encendidas o en vista previa, con su zona, el paso que le falta, cuánto lleva quieta y qué le toca ahora (qué recordatorio y por dónde) o por qué no le toca todavía: aún no pasó el plazo, ya recibió uno hoy, es fuera del horario, ya recibió todos los de ese paso o pidió no recibir más. El nombre lleva a su ficha.',
+      'Últimos mensajes enviados: cada envío con su canal, si lo mandó Camila o el equipo, y su estado: enviado o entregado en verde, rebotó o no salió en rojo, y en gris lo que no tenía por dónde salir (por ejemplo, un SMS a quien no marcó la casilla). En la ficha de cada cuenta, la línea de tiempo dice lo mismo: «Camila le envió un correo: recordatorio de sus fotos».',
+      'Enviar mensaje desde la ficha: en los tres puntos de la ficha de un conductor o de un cliente está «Enviar mensaje». Eliges una plantilla de registro o escribes un texto, y los canales (correo, SMS, aviso en la app; varios a la vez). Primero tocas «Ver cómo queda» para ver el mensaje tal como saldrá; solo entonces se puede enviar. Al terminar, la ventana dice el resultado por canal en palabras, y el envío queda en la línea de tiempo con tu nombre. Lo que mandas a mano no cuenta para los topes automáticos.',
+      'Cómo se detiene: pon la zona en Apagado y guarda. La persona también puede pedir que no le escriban más con el enlace del pie del correo: desde ese momento no recibe más recordatorios de registro (los mensajes de sus viajes y de su cuenta no cambian). Si alguien del equipo está atendiendo la conversación de esa persona en Camila, los recordatorios automáticos esperan.',
+      'El SMS: arriba de la pantalla se dice si el SMS está activo. Mientras el SMS a Venezuela no esté activo, en Venezuela el segundo recordatorio sale por correo. Si la persona responde un correo, la conversación llega a la bandeja de Camila como cualquier otra.',
+    ],
+    capturas: [
+      capRez(
+        'zonas',
+        'es',
+        'La pantalla Recordatorios de registro con la explicación de arriba, el aviso del SMS y las zonas con sus tres modos: Apagado, Vista previa y Encendido.',
+        'Cada zona con su modo; encender pide confirmación.',
+      ),
+      capRez(
+        'plantillas',
+        'es',
+        'Las plantillas de un paso en español y en inglés lado a lado, con el asunto, el texto del correo y el SMS con su contador de caracteres.',
+        'Las plantillas en los dos idiomas, generales o de una zona.',
+      ),
+      capRez(
+        'lista',
+        'es',
+        'La tabla «A quiénes les escribiría hoy» con cada persona, su zona, el paso que le falta, cuánto lleva quieta y qué recordatorio le toca o por qué no.',
+        'A quién le escribiría hoy y por qué.',
+      ),
+      capRez(
+        'mensaje',
+        'es',
+        'La ventana «Enviar mensaje» de la ficha de un conductor con la plantilla elegida, los canales y la vista previa del correo tal como saldrá.',
+        '«Enviar mensaje»: primero ves cómo queda, después envías.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo enciendo los recordatorios en una ciudad?',
+      '¿Cómo veo a quién le escribiría Camila sin enviar nada?',
+      '¿Cómo cambio el texto de un recordatorio?',
+      '¿Cómo le mando un recordatorio a una persona concreta?',
+      '¿Cómo detengo los recordatorios?',
+      '¿Por qué no le llegó el SMS?',
+    ],
+    pasos: [
+      'Abre «Recordatorios de registro» en el menú de Operación.',
+      'Pon la zona en «Vista previa», guarda y revisa la tabla «A quiénes les escribiría hoy».',
+      'Si todo está bien, pásala a «Encendido», confirma y toca «Guardar los cambios».',
+      'Para cambiar un texto, elige el paso en Plantillas, General o una zona, edita los dos idiomas y guarda.',
+      'Para escribirle a una persona, abre su ficha, toca los tres puntos y «Enviar mensaje»: elige la plantilla y los canales, toca «Ver cómo queda» y después «Enviar».',
+    ],
+    nota: 'Para detener todo en una zona, ponla en Apagado y guarda. Nunca se le escribe a una cuenta de prueba.',
+  },
+  en: {
+    id: 'signup-reminders',
+    titulo: 'Sign-up reminders: Camila writes to people who stopped halfway',
+    resumen:
+      'How Camila reminds people who started signing up and did not finish about their exact step: the three modes per zone, pace and limits, templates, “Send message” from the account file and how it stops.',
+    explicacion: [
+      'What it does: once an hour, Camila looks at new accounts and, using each one’s sign-up record, sees the exact step where they stopped: their photos, registering the vehicle, going online for the first time after approval, joining their line or confirming their email. If the person has been stuck on that step long enough, she sends the reminder for THAT step. Anything that depends on the team, like approving a verification, never triggers a reminder.',
+      'The order: first an email and an app notification; then a short SMS (if the person checked the SMS box and SMS is active in their country; otherwise another email); and one last email. Then she stops. As soon as the person takes the step, reminders for that step stop. Test accounts never get anything.',
+      'The three modes, zone by zone: Off (the default) does nothing. Preview works out who she would write to and shows it in the “Who she would write to today” table, without sending anything. On: Camila really writes. Switching a zone to On asks for confirmation. The best practice is to leave the zone in Preview for a day and check the table before turning it on.',
+      'Pace and limits: the hours stuck before the 1st, 2nd and 3rd reminder; the most reminders per step and per person; how many automatic emails and SMS per day across all zones (this protects the email reputation); the local hours when she may write (outside them she waits); and the window in days (only accounts created in those last days). Nobody gets more than one a day. Under each box is the default value, and “Back to defaults” restores them all.',
+      'Templates: there is one per step, in Spanish and English side by side, with the email subject, the email text and the SMS (with its 160-character counter). Each person gets it in their account language. {nombre} is replaced by their first name and {enlace} by the link that takes them to continue. In “For” you choose General or a zone: a zone’s template overrides the general one, and a zone without its own uses the general one. “Reset to default” (or “Remove this zone’s own”) undoes the change.',
+      'Who she would write to today: every person halfway through sign-up in zones that are on or in preview, with their zone, the step they are missing, how long they have been stuck and what is due now (which reminder and by which channel) or why nothing is due yet: the wait is not over, they already got one today, it is outside the hours, they already got every reminder for that step or they asked for no more. The name opens their account file.',
+      'Latest messages sent: each send with its channel, whether Camila or the team sent it, and its status: sent or delivered in green, bounced or not sent in red, and in gray what had no way to go out (for example, an SMS to someone who did not check the box). In each account file, the timeline says the same: “Camila sent them an email: photos reminder.”',
+      'Send message from the account file: in the three-dot menu of a driver’s or customer’s file there is “Send message.” You choose a sign-up template or write a text, and the channels (email, SMS, app notification; several at once). First you tap “Preview” to see the message exactly as it will go out; only then can you send it. When it is done, the window says the result per channel in words, and the send stays in the timeline with your name. What you send by hand does not count toward the automatic limits.',
+      'How it stops: set the zone to Off and save. The person can also ask not to be written to anymore with the link at the bottom of the email: from then on they get no more sign-up reminders (messages about their trips and their account do not change). If someone on the team is handling that person’s conversation in Camila, automatic reminders wait.',
+      'SMS: the top of the screen says whether SMS is active. While SMS to Venezuela is not active, the second reminder in Venezuela goes out by email. If the person replies to an email, the conversation lands in Camila’s inbox like any other.',
+    ],
+    capturas: [
+      capRez(
+        'zonas',
+        'en',
+        'The Sign-up reminders screen with the explanation at the top, the SMS notice and the zones with their three modes: Off, Preview and On.',
+        'Each zone with its mode; turning it on asks for confirmation.',
+      ),
+      capRez(
+        'plantillas',
+        'en',
+        'A step’s templates in Spanish and English side by side, with the subject, the email text and the SMS with its character counter.',
+        'Templates in both languages, general or for one zone.',
+      ),
+      capRez(
+        'lista',
+        'en',
+        'The “Who she would write to today” table with each person, their zone, the missing step, how long they have been stuck and which reminder is due or why not.',
+        'Who she would write to today and why.',
+      ),
+      capRez(
+        'mensaje',
+        'en',
+        'The “Send message” window from a driver’s file with the chosen template, the channels and the preview of the email exactly as it will go out.',
+        '“Send message”: first you see how it looks, then you send.',
+      ),
+    ],
+    preguntas: [
+      'How do I turn on reminders in a city?',
+      'How do I see who Camila would write to without sending anything?',
+      'How do I change a reminder’s text?',
+      'How do I send a reminder to one specific person?',
+      'How do I stop the reminders?',
+      'Why didn’t the SMS arrive?',
+    ],
+    pasos: [
+      'Open “Sign-up reminders” in the Operations menu.',
+      'Set the zone to “Preview,” save and check the “Who she would write to today” table.',
+      'If everything looks right, switch it to “On,” confirm and tap “Save changes.”',
+      'To change a text, choose the step in Templates, General or a zone, edit both languages and save.',
+      'To write to one person, open their file, tap the three dots and “Send message”: choose the template and channels, tap “Preview” and then “Send.”',
+    ],
+    nota: 'To stop everything in a zone, set it to Off and save. Test accounts are never written to.',
+  },
+};
+
 // ───────────────────── Referidos y equipos (C-REFERIDOS-EQUIPOS, 17 nov 2026) ─────────────────────
 
 const capRef = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
@@ -2622,6 +2753,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       titulo: esp ? 'Soporte' : 'Support',
       guias: [
         de(camilaBuzon),
+        de(recordatoriosRegistro),
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
         de(cambiarCiudad),

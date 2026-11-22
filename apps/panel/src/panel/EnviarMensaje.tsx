@@ -234,7 +234,7 @@ export function EnviarMensaje({
           <fieldset className="rez-sin-marco">
             <legend className="campo-leyenda">{t.que}</legend>
             <div className="rez-canales">
-              <label className="casilla-fila">
+              <label className="casilla-fila rez-opcion">
                 <input
                   type="radio"
                   name={`modo-${id}`}
@@ -243,7 +243,7 @@ export function EnviarMensaje({
                 />
                 {t.plantilla}
               </label>
-              <label className="casilla-fila">
+              <label className="casilla-fila rez-opcion">
                 <input
                   type="radio"
                   name={`modo-${id}`}
@@ -293,7 +293,7 @@ export function EnviarMensaje({
             <legend className="campo-leyenda">{t.canales}</legend>
             <div className="rez-canales">
               {CANALES.map((c) => (
-                <label key={c} className="casilla-fila">
+                <label key={c} className="casilla-fila rez-opcion">
                   <input
                     type="checkbox"
                     checked={v[c]}
