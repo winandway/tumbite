@@ -201,14 +201,124 @@
   margin: 0.5rem 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.375rem 1rem;
+  /* En columnas que se leen de arriba abajo: el orden en que la persona hace los pasos. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: 0.625rem 1.5rem;
 }
 .actividad-pasos li {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 6.75rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.625rem;
   font-size: var(--pd-texto-chico);
+}
+.actividad-pasos li > .insignia {
+  justify-self: start;
+}
+.actividad-paso-texto {
+  display: grid;
+  gap: 0.125rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.actividad-paso-texto small {
+  color: var(--pd-gris);
+}
+/* Lo que a esa cuenta no le toca se lee más bajo que lo pendiente. */
+.actividad-pasos li[data-estado='no_aplica'] strong {
+  font-weight: 500;
+  color: var(--pd-gris);
+}
+
+/* C-FICHA-SIN-CORTES (22 nov 2026, Gerencia): en una ficha nada se corta ni se monta sobre la tarjeta de
+   al lado, a ningún ancho. La columna del dato puede encogerse y el texto largo parte de renglón. */
+.pd-contenido .super-dos {
+  /* Dos columnas parejas (cada tarjeta con ancho de sobra para un correo); una sola en ventana
+     estrecha; y en pantallas grandes, todas en una fila. Nunca una tarjeta sola colgando. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+@media (max-width: 899px) {
+  .pd-contenido .super-dos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (min-width: 1800px) {
+  .pd-contenido .super-dos {
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  }
+}
+.pd-contenido .super-dos > * {
+  min-width: 0;
+}
+.pd-contenido .super-dl {
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+}
+.pd-contenido .super-dos .super-dl {
+  grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr);
+}
+.pd-contenido .super-dl dt,
+.pd-contenido .super-dl dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pd-contenido .super-dl dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+.pd-contenido .super-dl dd .insignia {
+  white-space: normal;
+  max-width: 100%;
+}
+.pd-contenido .eq-dato {
+  min-width: 0;
+  max-width: 100%;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+}
+.pd-contenido .eq-dato-mascara,
+.pd-contenido .eq-dato-valor {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.eq-dato-ojo {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--pd-gris, #666b73);
+  cursor: pointer;
+}
+.eq-dato-ojo:hover,
+.eq-dato-ojo[aria-pressed='true'] {
+  background: #f1f1f1;
+  color: #101010;
+}
+.eq-dato-ojo:focus-visible {
+  outline: 2px solid #101010;
+  outline-offset: 2px;
+}
+/* Las cifras de una ficha van en UNA fila pareja; en una ventana estrecha, de dos en dos, y si queda
+   una sola al final ocupa el renglón entero. */
+.pd-contenido .super-tarjetas {
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+}
+.pd-contenido .super-tarjeta strong {
+  font-size: clamp(1.15rem, 0.9rem + 0.9vw, 1.55rem);
+}
+@media (max-width: 900px) {
+  .pd-contenido .super-tarjetas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pd-contenido .super-tarjetas > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 .ficha-motivo {
   display: block;

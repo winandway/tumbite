@@ -21,7 +21,13 @@ import {
 } from './esquemaPlazo';
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
-import { DISPARADORES_RASTRO, asegurarRastro } from './esquemaRastro';
+import {
+  DISPARADORES_RASTRO,
+  FUENTES_PASO,
+  VERSION_RELLENO,
+  asegurarRastro,
+  rellenarRastro,
+} from './esquemaRastro';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -713,6 +719,9 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerElegibilidad),
         DISPARADORES_RASTRO,
         String(asegurarRastro),
+        FUENTES_PASO,
+        VERSION_RELLENO,
+        String(rellenarRastro),
         String(sincronizarPoliticaRequisitos),
         PAISES_CON_PLAZO.map((p) => [p, politicaPlazoDeFabrica(p)]),
         String(sincronizarServicios),

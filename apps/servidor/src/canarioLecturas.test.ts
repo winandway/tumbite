@@ -32,7 +32,9 @@ afterEach(() => vi.unstubAllGlobals());
 // +1 (20 nov 2026, C-CAMILA-CORREO-HILO): al juntarse con la pieza del correo entrante, que lee su fila.
 // +1 (21 nov 2026, C-REPARACION-PAIS): la marca de la reparación de cuentas de país (una vez por servidor).
 // +1 (22 nov 2026, C-SMS-VENEZUELA): la pieza nueva «smsVenezuela» suma su fila del estado del canario.
-const TOPE_CANARIO = 1154;
+// +1 (22 nov 2026, C-RASTRO-FUENTES): la marca del relleno hacia atrás de los pasos del registro (una
+// fila, solo dentro de la migración completa).
+const TOPE_CANARIO = 1155;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

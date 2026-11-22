@@ -116,6 +116,67 @@ describe('C-RASTRO · la actividad de una cuenta en su ficha', () => {
     );
   });
 
+  it('C-RASTRO-FUENTES: los pasos van en el orden de la persona y cada uno dice cómo se sabe y qué vio la comprobación', async () => {
+    const paso = (p: string, estado: string, extra: Record<string, string | null> = {}) => ({
+      paso: p,
+      estado,
+      fecha: null,
+      fuente: null,
+      comprobacion: null,
+      nota: null,
+      ...extra,
+    });
+    vi.stubGlobal('fetch', async () =>
+      json({
+        actividad: {
+          ...ACTIVIDAD,
+          dondeQuedo: {
+            ultimo: 'aprobado',
+            sigue: 'correo',
+            hechos: ['cuenta', 'foto_cara', 'foto_documento', 'aprobado'],
+            falta: ['correo'],
+            pasos: [
+              paso('cuenta', 'hecho', { fecha: '2026-11-01 10:00:00', fuente: 'cuenta' }),
+              paso('correo', 'pendiente', { nota: 'correo_frenado' }),
+              paso('telefono', 'no_aplica', { nota: 'solo_al_volver' }),
+              paso('aviso_ia', 'no_aplica', { nota: 'verificacion_anterior' }),
+              paso('foto_cara', 'hecho', { fuente: 'foto', comprobacion: 'amarillo' }),
+              paso('foto_documento', 'hecho', {
+                fuente: 'verificacion',
+                nota: 'verificacion_anterior',
+              }),
+              paso('aprobado', 'hecho', { fuente: 'equipo' }),
+            ],
+          },
+        },
+      }),
+    );
+    render(<ActividadCuenta ruta="/datos/admin/repartidores/u2/actividad" idioma="es" />);
+    const caja = await screen.findByTestId('actividad');
+    const filas = [...caja.querySelectorAll('.actividad-pasos li')];
+    // En el orden en que los hace la persona, no «lo hecho primero».
+    expect(filas.map((li) => li.getAttribute('data-testid'))).toEqual([
+      'paso-cuenta',
+      'paso-correo',
+      'paso-telefono',
+      'paso-aviso_ia',
+      'paso-foto_cara',
+      'paso-foto_documento',
+      'paso-aprobado',
+    ]);
+    const texto = (id: string) => screen.getByTestId(id).textContent ?? '';
+    expect(texto('paso-foto_cara')).toContain('Hecho');
+    expect(texto('paso-foto_cara')).toContain('la comprobación automática tiene dudas');
+    expect(texto('paso-foto_documento')).toContain('entró por la verificación anterior');
+    expect(texto('paso-correo')).toContain('Pendiente');
+    expect(texto('paso-correo')).toContain('el correo rebotó y está frenado');
+    // Lo que no le toca no se cuenta como pendiente.
+    expect(texto('paso-telefono')).toContain('No le toca');
+    expect(texto('paso-aviso_ia')).toContain('que no llevaba este aviso');
+    expect(caja.querySelectorAll('.actividad-pasos [data-tono="hecho"]')).toHaveLength(4);
+    expect(caja.querySelector('[data-tono="problema"]')).toBeNull();
+  });
+
   it('una cuenta de antes del rastro lo dice, sin inventar el origen; y en inglés sale en inglés', async () => {
     vi.stubGlobal('fetch', async () =>
       json({

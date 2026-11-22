@@ -181,14 +181,30 @@ describe('C-RASTRO · de dónde vino el alta y dónde lo dejó', () => {
     )
       .bind(u.id)
       .all<{ paso: string; pais: string | null }>();
-    expect(pasos.results.map((p) => p.paso)).toEqual(['aprobado', 'correo', 'cuenta', 'enviado']);
+    // C-RASTRO-FUENTES: lo que el equipo aprobó deja hechas también la cara y el documento.
+    expect(pasos.results.map((p) => p.paso)).toEqual([
+      'aprobado',
+      'correo',
+      'cuenta',
+      'enviado',
+      'foto_cara',
+      'foto_documento',
+    ]);
     // Los pasos que anota la base heredan el país del alta.
     expect(new Set(pasos.results.map((p) => p.pais))).toEqual(new Set(['VE']));
     const a = (
       await m.llamar('GET', `/datos/admin/repartidores/${u.id}/actividad`, undefined, admin.token)
     ).datos.actividad;
-    expect(a.dondeQuedo.hechos).toEqual(['cuenta', 'correo', 'enviado', 'aprobado']);
-    expect(a.dondeQuedo.sigue).toBe('telefono');
+    expect(a.dondeQuedo.hechos).toEqual([
+      'cuenta',
+      'correo',
+      'foto_cara',
+      'foto_documento',
+      'enviado',
+      'aprobado',
+    ]);
+    // El teléfono y el aviso no le tocan a quien ya pasó la verificación: no salen como pendientes.
+    expect(a.dondeQuedo.sigue).toBe('foto_licencia');
     expect(a.linea.map((p: { evento: string }) => p.evento)).toEqual(
       expect.arrayContaining(['alta', 'correo', 'enviado', 'verificacion_aprobado']),
     );
@@ -383,5 +399,215 @@ describe('C-RASTRO · el embudo', () => {
     expect(de(zona, 'cuenta')).toBe(1);
     expect(de(zona, 'abrio')).toBeUndefined();
     expect(otra.id).toBeTruthy();
+  });
+});
+
+/**
+ * C-RASTRO-FUENTES (22 nov 2026, Gerencia) — todos los países. La ficha no se contradice: cada paso del
+ * registro se lee de TODAS sus fuentes reales (las dos rutas de fotos, los papeles, lo aprobado por el
+ * equipo, la conexión) y las cuentas de antes del rastro se rellenan hacia atrás con su fecha real.
+ */
+describe('C-RASTRO-FUENTES · un paso aprobado nunca sale pendiente', () => {
+  /** Un conductor que entró por la verificación anterior, aprobado por el equipo, de ANTES del rastro. */
+  async function conductorDeAntes(m: ReturnType<typeof mundo>) {
+    const u = await registrar(m, 'repartidor');
+    await m.DB.batch([
+      m.DB.prepare(
+        `INSERT INTO kyc (usuario_id, estado, doc_tipo, doc_frente, doc_reverso, selfie, enviado_en, revisado_en)
+         VALUES (?, 'aprobado', 'licencia', 'kyc/doc-frente', 'kyc/doc-reverso', 'kyc/cara', '2026-11-01 10:00:00', '2026-11-01 12:00:00')
+         ON CONFLICT(usuario_id) DO UPDATE SET estado = excluded.estado, doc_tipo = excluded.doc_tipo, doc_frente = excluded.doc_frente,
+           selfie = excluded.selfie, enviado_en = excluded.enviado_en, revisado_en = excluded.revisado_en`,
+      ).bind(u.id),
+      m.DB.prepare(
+        `INSERT INTO repartidores (usuario_id, conectado, ubicacion_en) VALUES (?, 1, '2026-11-02 08:00:00')
+         ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, ubicacion_en = excluded.ubicacion_en`,
+      ).bind(u.id),
+      // Como si todo hubiera pasado antes de que existieran los disparadores: sin un solo paso anotado.
+      m.DB.prepare('DELETE FROM embudo_cuenta WHERE usuario_id = ?').bind(u.id),
+    ]);
+    return u;
+  }
+  const pasosDeFicha = async (m: ReturnType<typeof mundo>, id: string, token: string) =>
+    (await m.llamar('GET', `/datos/admin/repartidores/${id}/actividad`, undefined, token)).datos
+      .actividad.dondeQuedo as {
+      sigue: string | null;
+      hechos: string[];
+      falta: string[];
+      pasos: {
+        paso: string;
+        estado: string;
+        fuente: string | null;
+        nota: string | null;
+        fecha: string | null;
+        comprobacion: string | null;
+      }[];
+    };
+
+  it('fotos aprobadas por la verificación anterior → cara, documento, licencia, envío, aprobación y conexión salen «Hecho»', async () => {
+    const m = mundo();
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const u = await conductorDeAntes(m);
+    const d = await pasosDeFicha(m, u.id, admin.token);
+    const estado = Object.fromEntries(d.pasos.map((p) => [p.paso, p.estado]));
+    expect(estado).toMatchObject({
+      cuenta: 'hecho',
+      foto_cara: 'hecho',
+      foto_documento: 'hecho',
+      foto_licencia: 'hecho',
+      enviado: 'hecho',
+      aprobado: 'hecho',
+      conectado: 'hecho',
+      // Lo que de verdad no hizo sigue pendiente; lo que no le toca no cuenta como pendiente.
+      correo: 'pendiente',
+      vehiculo: 'pendiente',
+      telefono: 'no_aplica',
+      aviso_ia: 'no_aplica',
+    });
+    expect(d.falta).toEqual(['correo', 'vehiculo', 'primer_viaje']);
+    expect(d.sigue).toBe('correo');
+    // Dice cómo se sabe: por la verificación anterior, con su fecha real.
+    const cara = d.pasos.find((p) => p.paso === 'foto_cara');
+    expect(cara).toMatchObject({
+      fuente: 'verificacion',
+      nota: 'verificacion_anterior',
+      fecha: '2026-11-01 10:00:00',
+    });
+    // Y los pasos van en el orden en que los hace la persona, no los hechos primero.
+    expect(d.pasos.map((p) => p.paso)).toEqual([
+      'cuenta',
+      'correo',
+      'telefono',
+      'aviso_ia',
+      'foto_cara',
+      'foto_documento',
+      'foto_licencia',
+      'vehiculo',
+      'enviado',
+      'aprobado',
+      'conectado',
+      'primer_viaje',
+    ]);
+  });
+
+  it('aprobado por el equipo sin fotos guardadas: la cara, el documento y el envío no salen pendientes', async () => {
+    const m = mundo();
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const u = await registrar(m, 'repartidor');
+    await m.DB.prepare(
+      `INSERT INTO kyc (usuario_id, estado, revisado_en) VALUES (?, 'aprobado', '2026-11-03 09:00:00')
+       ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado', revisado_en = excluded.revisado_en`,
+    )
+      .bind(u.id)
+      .run();
+    await m.DB.prepare("DELETE FROM embudo_cuenta WHERE usuario_id = ? AND paso <> 'cuenta'")
+      .bind(u.id)
+      .run();
+    const d = await pasosDeFicha(m, u.id, admin.token);
+    for (const p of ['foto_cara', 'foto_documento', 'enviado'])
+      expect(d.pasos.find((x) => x.paso === p)).toMatchObject({
+        estado: 'hecho',
+        fuente: 'equipo',
+        nota: 'aprobado_equipo',
+      });
+    expect(d.pasos.find((x) => x.paso === 'aprobado')?.estado).toBe('hecho');
+  });
+
+  it('la foto del asistente dice lo que vio la comprobación automática', async () => {
+    const m = mundo();
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const u = await registrar(m, 'repartidor');
+    await m.DB.prepare(
+      "INSERT INTO verificacion_fotos (id, conductor_id, paso, clave, ia_color) VALUES ('f-1', ?, 'cara', 'verif/cara', 'amarillo')",
+    )
+      .bind(u.id)
+      .run();
+    const cara = (await pasosDeFicha(m, u.id, admin.token)).pasos.find(
+      (p) => p.paso === 'foto_cara',
+    );
+    expect(cara).toMatchObject({ estado: 'hecho', fuente: 'foto', comprobacion: 'amarillo' });
+  });
+
+  it('el relleno hacia atrás anota cada paso con su fecha real, una sola vez, y el embudo los cuenta', async () => {
+    const m = mundo();
+    const u = await conductorDeAntes(m);
+    const { rellenarRastro } = await import('./esquemaRastro');
+    const escritas = await rellenarRastro(m.DB);
+    expect(escritas).toBeGreaterThanOrEqual(7);
+    const { results } = await m.DB.prepare(
+      'SELECT paso, creado_en FROM embudo_cuenta WHERE usuario_id = ? ORDER BY paso',
+    )
+      .bind(u.id)
+      .all<{ paso: string; creado_en: string }>();
+    const fechas = Object.fromEntries(results.map((r) => [r.paso, r.creado_en]));
+    expect(Object.keys(fechas).sort()).toEqual(
+      [
+        'aprobado',
+        'conectado',
+        'cuenta',
+        'enviado',
+        'foto_cara',
+        'foto_documento',
+        'foto_licencia',
+      ].sort(),
+    );
+    expect(fechas).toMatchObject({
+      foto_cara: '2026-11-01 10:00:00',
+      enviado: '2026-11-01 10:00:00',
+      aprobado: '2026-11-01 12:00:00',
+      conectado: '2026-11-02 08:00:00',
+    });
+    // La segunda vez no escribe nada (regla de la nube: solo lo que cambió).
+    expect(await rellenarRastro(m.DB)).toBe(0);
+  });
+
+  it('quien acepta el aviso DESPUÉS (cambio sobre una fila que ya existía) queda anotado', async () => {
+    const m = mundo();
+    const u = await registrar(m, 'repartidor');
+    await m.DB.prepare('DROP TRIGGER rastro_aviso_ia').run();
+    await m.DB.prepare('INSERT INTO verificacion_permiso_ia (conductor_id, acepto) VALUES (?, 0)')
+      .bind(u.id)
+      .run();
+    const anotado = () =>
+      m.DB.prepare("SELECT 1 AS si FROM embudo_cuenta WHERE usuario_id = ? AND paso = 'aviso_ia'")
+        .bind(u.id)
+        .first();
+    expect(await anotado()).toBeNull();
+    await m.DB.prepare(
+      `INSERT INTO verificacion_permiso_ia (conductor_id, acepto) VALUES (?, 1)
+       ON CONFLICT(conductor_id) DO UPDATE SET acepto = excluded.acepto`,
+    )
+      .bind(u.id)
+      .run();
+    expect(await anotado()).not.toBeNull();
+  });
+
+  it('la verificación anterior y los papeles también dejan su paso cuando ocurren', async () => {
+    const m = mundo();
+    const u = await registrar(m, 'repartidor');
+    await m.DB.prepare(
+      `INSERT INTO kyc (usuario_id, selfie, doc_frente, doc_tipo) VALUES (?, 'kyc/cara', 'kyc/doc', 'identificacion')
+       ON CONFLICT(usuario_id) DO UPDATE SET selfie = excluded.selfie, doc_frente = excluded.doc_frente, doc_tipo = excluded.doc_tipo`,
+    )
+      .bind(u.id)
+      .run();
+    await m.DB.prepare(
+      "INSERT INTO conductor_documentos (id, conductor_id, tipo, clave) VALUES ('d-1', ?, 'licencia_moto', 'papeles/licencia')",
+    )
+      .bind(u.id)
+      .run();
+    const { results } = await m.DB.prepare('SELECT paso FROM embudo_cuenta WHERE usuario_id = ?')
+      .bind(u.id)
+      .all<{ paso: string }>();
+    expect(results.map((r) => r.paso)).toEqual(
+      expect.arrayContaining(['foto_cara', 'foto_documento', 'foto_licencia']),
+    );
+  });
+
+  it('ninguna consulta de las fuentes va unida con UNION (la base de la nube admite muy pocos términos)', async () => {
+    const { sqlFuentesDeCuenta, FUENTES_PASO } = await import('./esquemaRastro');
+    const consultas = sqlFuentesDeCuenta();
+    expect(consultas).toHaveLength(FUENTES_PASO.length);
+    for (const q of consultas) expect(q).not.toMatch(/\bUNION\b/i);
+    expect(String((await import('./esquemaRastro')).rellenarRastro)).not.toMatch(/UNION/i);
   });
 });

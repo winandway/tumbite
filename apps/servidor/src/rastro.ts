@@ -5,6 +5,7 @@ import {
   type PasoAnonimo,
   type PasoRegistro,
 } from '@tumbite/compartido';
+import { sqlFuentesDeCuenta } from './esquemaRastro';
 import { leerCabeceraApp } from './versionApp';
 
 /**
@@ -161,6 +162,119 @@ export type PasoLineaCuenta = {
   enlace: string | null;
 };
 
+/**
+ * C-RASTRO-FUENTES: un paso del registro de una cuenta, leído de TODAS sus fuentes reales.
+ * `no_aplica` = a esta cuenta ese paso no le toca (no cuenta como pendiente).
+ */
+export type PasoCuenta = {
+  paso: PasoRegistro;
+  estado: 'hecho' | 'pendiente' | 'no_aplica';
+  fecha: string | null;
+  /** Cómo se sabe: rastro, cuenta, aviso, foto, verificacion (la anterior), papeles, vehiculo, equipo, actividad, viaje. */
+  fuente: string | null;
+  /** Lo que vio la comprobación automática en la foto vigente de ese paso (verde, amarillo, rojo, sin_ia). */
+  comprobacion: string | null;
+  /** Por qué, en una clave que el panel dice en palabras (correo_frenado, verificacion_anterior, solo_al_volver…). */
+  nota: string | null;
+};
+
+/** Qué fuente se nombra cuando hay varias: la más concreta primero. */
+const ORDEN_FUENTE = [
+  'foto',
+  'aviso',
+  'papeles',
+  'vehiculo',
+  'verificacion',
+  'cuenta',
+  'equipo',
+  'viaje',
+  'actividad',
+  'rastro',
+];
+const FOTO_DE = new Map<PasoRegistro, string>([
+  ['foto_cara', 'cara'],
+  ['foto_documento', 'doc_frente'],
+  ['foto_licencia', 'licencia_frente'],
+]);
+
+/**
+ * Los pasos del registro de una cuenta, en el orden en que los hace la persona. Pieza pura: recibe lo
+ * que dijeron el rastro guardado y las fuentes reales. Un paso que el equipo aprobó nunca sale pendiente.
+ */
+export function pasosDeCuenta(d: {
+  app: AppRastro;
+  anotados: { paso: string; fecha: string | null }[];
+  fuentes: { paso: string; fuente: string; fecha: string | null }[];
+  fotos: { paso: string; estado: string; ia_color: string }[];
+  /** La cuenta pasó por la verificación (enviada o aprobada). */
+  conVerificacion: boolean;
+  correoFrenado: boolean;
+}): PasoCuenta[] {
+  const orden = pasosDe(d.app).filter((p) => !esPasoAnonimo(p));
+  return orden.map((paso) => {
+    const de = [
+      ...d.anotados
+        .filter((a) => a.paso === paso)
+        .map((a) => ({ fuente: 'rastro', fecha: a.fecha })),
+      ...d.fuentes.filter((f) => f.paso === paso),
+    ];
+    const foto = FOTO_DE.get(paso);
+    const vigente = foto
+      ? d.fotos.find((f) => f.paso === foto && f.estado !== 'reemplazada')
+      : undefined;
+    if (paso === 'cuenta' || de.length) {
+      const fechas = de
+        .map((x) => x.fecha)
+        .filter((x): x is string => Boolean(x))
+        .sort();
+      const fuente =
+        ORDEN_FUENTE.find((f) => de.some((x) => x.fuente === f)) ??
+        (paso === 'cuenta' ? 'cuenta' : null);
+      return {
+        paso,
+        estado: 'hecho',
+        fecha: fechas[0] ?? null,
+        fuente,
+        comprobacion: vigente ? vigente.ia_color : null,
+        nota:
+          fuente === 'verificacion' && foto
+            ? 'verificacion_anterior'
+            : fuente === 'equipo' && paso !== 'aprobado'
+              ? 'aprobado_equipo'
+              : null,
+      };
+    }
+    // El teléfono solo se confirma al volver tras muchos días sin conectarse: no es un paso pendiente.
+    if (paso === 'telefono')
+      return {
+        paso,
+        estado: 'no_aplica',
+        fecha: null,
+        fuente: null,
+        comprobacion: null,
+        nota: 'solo_al_volver',
+      };
+    // Quien pasó por la verificación anterior nunca vio el aviso: no le falta.
+    if (paso === 'aviso_ia' && d.conVerificacion)
+      return {
+        paso,
+        estado: 'no_aplica',
+        fecha: null,
+        fuente: null,
+        comprobacion: null,
+        nota: 'verificacion_anterior',
+      };
+    return {
+      paso,
+      estado: 'pendiente',
+      fecha: null,
+      fuente: null,
+      comprobacion: null,
+      nota: paso === 'correo' && d.correoFrenado ? 'correo_frenado' : null,
+    };
+  });
+}
+
 const LIMITE = 40;
 
 /**
@@ -171,7 +285,9 @@ const LIMITE = 40;
 export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
   const u = await db
     .prepare(
-      'SELECT rol, creado_en, correo_confirmado_en, telefono_verificado_en, sms_consentido_en, es_prueba FROM usuarios WHERE id = ?',
+      `SELECT rol, creado_en, correo_confirmado_en, telefono_verificado_en, sms_consentido_en, es_prueba,
+              EXISTS (SELECT 1 FROM correos_rebotados b WHERE b.correo = lower(usuarios.correo)) AS frenado
+         FROM usuarios WHERE id = ?`,
     )
     .bind(usuarioId)
     .first<{
@@ -181,6 +297,7 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
       telefono_verificado_en: string | null;
       sms_consentido_en: string | null;
       es_prueba: number;
+      frenado: number;
     }>();
   if (!u) return null;
   const consultas = [
@@ -251,6 +368,13 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
   const [rastro, pasos, fotos, kyc, vehiculos, habilitaciones, viajes, pedidos, chat, equipo] = (
     await db.batch<Record<string, string | number | null>>(consultas)
   ).map((r) => r.results);
+  // C-RASTRO-FUENTES: lo que dice cada fuente real de cada paso (fotos por las dos rutas, papeles,
+  // vehículo, lo aprobado por el equipo, la conexión y los viajes). Una consulta corta por fuente.
+  const fuentes = (
+    await db.batch<Record<string, string | number | null>>(
+      sqlFuentesDeCuenta().map((q) => db.prepare(q).bind(usuarioId)),
+    )
+  ).flatMap((r) => r.results);
   const t = (v: unknown) => (v == null || v === '' ? null : String(v));
   const linea: PasoLineaCuenta[] = [];
   const poner = (
@@ -342,22 +466,27 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
   for (const a of equipo ?? []) poner(a.fecha, 'equipo', `equipo:${a.accion}`, null, a.quien);
   linea.sort((a, b) => b.fecha.localeCompare(a.fecha));
 
-  // Dónde lo dejó: el paso más avanzado que alcanzó y el que le sigue.
+  // Dónde lo dejó: cada paso leído de todas sus fuentes, en el orden en que lo hace la persona.
   const app: AppRastro = u.rol === 'repartidor' ? 'repartidor' : 'cliente';
-  const orden = pasosDe(app).filter((p) => !esPasoAnonimo(p));
-  const hechos = new Set<string>(['cuenta', ...yaAnotados]);
-  if (u.correo_confirmado_en) hechos.add('correo');
-  if (u.telefono_verificado_en) hechos.add('telefono');
-  if ((kyc ?? []).some((k) => k.enviado_en)) hechos.add('enviado');
-  if ((kyc ?? []).some((k) => k.estado === 'aprobado')) hechos.add('aprobado');
-  if (
-    (viajes ?? []).some((v) => v.estado === 'terminado') ||
-    (pedidos ?? []).some((p) => p.estado === 'entregado')
-  )
-    hechos.add('primer_viaje');
-  let ultimo: PasoRegistro = 'cuenta';
-  for (const p of orden) if (hechos.has(p)) ultimo = p;
-  const falta = orden.filter((p) => !hechos.has(p));
+  const pasosCuenta = pasosDeCuenta({
+    app,
+    anotados: (pasos ?? []).map((p) => ({ paso: String(p.paso), fecha: t(p.fecha) })),
+    fuentes: fuentes.map((f) => ({
+      paso: String(f.paso),
+      fuente: String(f.fuente),
+      fecha: t(f.fecha),
+    })),
+    fotos: (fotos ?? []).map((f) => ({
+      paso: String(f.paso),
+      estado: String(f.estado),
+      ia_color: String(f.ia_color),
+    })),
+    conVerificacion: (kyc ?? []).some((k) => k.enviado_en || k.estado === 'aprobado'),
+    correoFrenado: Number(u.frenado) === 1 && !u.correo_confirmado_en,
+  });
+  const hechos = pasosCuenta.filter((p) => p.estado === 'hecho').map((p) => p.paso);
+  const falta = pasosCuenta.filter((p) => p.estado === 'pendiente').map((p) => p.paso);
+  const ultimo: PasoRegistro = hechos.at(-1) ?? 'cuenta';
   const alta = (rastro ?? []).find((r) => r.tipo === 'alta');
   return {
     alta: {
@@ -376,8 +505,9 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
     dondeQuedo: {
       ultimo,
       sigue: falta[0] ?? null,
-      hechos: orden.filter((p) => hechos.has(p)),
+      hechos,
       falta,
+      pasos: pasosCuenta,
     },
     linea,
   };

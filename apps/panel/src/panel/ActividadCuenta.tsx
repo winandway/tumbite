@@ -35,6 +35,8 @@ export type Actividad = {
     sigue: PasoRegistro | null;
     hechos: PasoRegistro[];
     falta: PasoRegistro[];
+    /** C-RASTRO-FUENTES: cada paso en el orden en que lo hace la persona, leído de todas sus fuentes. */
+    pasos?: PasoCuenta[];
   };
   linea: {
     fecha: string;
@@ -44,6 +46,15 @@ export type Actividad = {
     quien: string | null;
     enlace: string | null;
   }[];
+};
+
+export type PasoCuenta = {
+  paso: PasoRegistro;
+  estado: 'hecho' | 'pendiente' | 'no_aplica';
+  fecha: string | null;
+  fuente: string | null;
+  comprobacion: string | null;
+  nota: string | null;
 };
 
 const T = {
@@ -59,6 +70,14 @@ const T = {
     sigue: 'Le falta',
     hecho: 'Hecho',
     pendiente: 'Pendiente',
+    noAplica: 'No le toca',
+    notas: {
+      verificacion_anterior: 'entró por la verificación anterior',
+      aprobado_equipo: 'lo aprobó el equipo',
+      solo_al_volver: 'solo se pide al volver tras muchos días sin conectarse',
+      correo_frenado: 'el correo rebotó y está frenado',
+    },
+    notaAviso: 'pasó por la verificación anterior, que no llevaba este aviso',
     linea: 'Línea de tiempo',
     vacia: 'Todavía no hay actividad.',
     verMas: 'Ver todo',
@@ -134,6 +153,14 @@ const T = {
     sigue: 'Still missing',
     hecho: 'Done',
     pendiente: 'Pending',
+    noAplica: 'Not required',
+    notas: {
+      verificacion_anterior: 'came in through the previous verification',
+      aprobado_equipo: 'approved by the team',
+      solo_al_volver: 'only asked when coming back after many days offline',
+      correo_frenado: 'the email bounced and is on hold',
+    },
+    notaAviso: 'went through the previous verification, which had no such notice',
     linea: 'Timeline',
     vacia: 'No activity yet.',
     verMas: 'Show all',
@@ -269,8 +296,31 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
   const red = [[a.alta.ciudad, a.alta.region, a.alta.pais].filter(Boolean).join(', '), a.alta.red]
     .filter(Boolean)
     .join(' · ');
-  const pasos = [...a.dondeQuedo.hechos, ...a.dondeQuedo.falta];
-  const hechos = new Set<string>(a.dondeQuedo.hechos);
+  // Un servidor de antes no manda `pasos`: se arman con lo que sí manda.
+  const pasos: PasoCuenta[] =
+    a.dondeQuedo.pasos ??
+    [...a.dondeQuedo.hechos, ...a.dondeQuedo.falta].map((paso) => ({
+      paso,
+      estado: a.dondeQuedo.hechos.includes(paso) ? 'hecho' : 'pendiente',
+      fecha: null,
+      fuente: null,
+      comprobacion: null,
+      nota: null,
+    }));
+  const notas = new Map(Object.entries(t.notas));
+  /** Lo que se dice debajo de cada paso: cuándo, cómo se sabe y qué vio la comprobación automática. */
+  const explicacion = (p: PasoCuenta) =>
+    [
+      p.fecha ? h.fecha(p.fecha, null, 'hora') : null,
+      p.nota
+        ? p.paso === 'aviso_ia' && p.nota === 'verificacion_anterior'
+          ? t.notaAviso
+          : (notas.get(p.nota) ?? null)
+        : null,
+      p.comprobacion ? (comprobacion.get(p.comprobacion) ?? null) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
   const linea = todo ? a.linea : a.linea.slice(0, VISIBLES);
   /** El origen de un alta o una entrada («app|versión|plataforma|lugar|red»), en palabras. */
   const origen = (d: string) => {
@@ -329,11 +379,14 @@ export function ActividadCuenta({ ruta, idioma }: { ruta: string; idioma: Idioma
       </p>
       <ol className="actividad-pasos">
         {pasos.map((p) => (
-          <li key={p}>
-            <Insignia tono={hechos.has(p) ? 'hecho' : 'apagado'}>
-              {hechos.has(p) ? t.hecho : t.pendiente}
+          <li key={p.paso} data-estado={p.estado} data-testid={`paso-${p.paso}`}>
+            <Insignia tono={p.estado === 'hecho' ? 'hecho' : 'apagado'}>
+              {p.estado === 'hecho' ? t.hecho : p.estado === 'pendiente' ? t.pendiente : t.noAplica}
             </Insignia>
-            <span>{nombrePaso(p, idioma)}</span>
+            <span className="actividad-paso-texto">
+              <strong>{nombrePaso(p.paso, idioma)}</strong>
+              {explicacion(p) ? <small>{explicacion(p)}</small> : null}
+            </span>
           </li>
         ))}
       </ol>

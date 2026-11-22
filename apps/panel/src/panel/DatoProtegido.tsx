@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, ErrorApi, enIdioma } from '@tumbite/compartido';
+import { Icono } from '../sitio/Icono';
 import { pedir } from './api';
 import { ConfirmarCodigo, usePermisos } from './permisosPanel';
 
@@ -73,12 +74,16 @@ export function VerDato({
     <span className="eq-dato">
       <span className={valor ? 'eq-dato-valor' : 'eq-dato-mascara'}>{valor ?? mascara}</span>
       {puedeVer('clientes.datos_personales') ? (
+        // C-FICHA-SIN-CORTES: el ojito (como en las contraseñas). Verlo completo queda en la auditoría.
         <button
           type="button"
-          className="enlace"
+          className="eq-dato-ojo"
+          aria-label={valor ? t.ocultar : t.verDato}
+          title={valor ? t.ocultar : t.verDato}
+          aria-pressed={Boolean(valor)}
           onClick={() => (valor ? setValor(null) : void ver())}
         >
-          {valor ? t.ocultar : t.verDato}
+          <Icono nombre={valor ? 'ocultar' : 'ver'} tamano={18} />
         </button>
       ) : null}
       {pideCodigo ? (

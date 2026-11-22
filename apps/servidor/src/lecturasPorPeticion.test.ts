@@ -410,11 +410,14 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // que tiene un puñado de filas).
       // +2 (21 nov 2026, C-ID-DEL-PAIS): borrar la cuenta borra también sus ID viejos.
       // +2 (22 nov 2026, C-RASTRO): cada una de las dos cuentas que crea deja su paso «cuenta» (una lectura).
-      ['f1', 512 + 2 * objetosEsquema],
+      // +1 (22 nov 2026, C-RASTRO-FUENTES): la marca del relleno hacia atrás, al migrar (una fila).
+      ['f1', 513 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
       // +11 (22 nov 2026, C-RASTRO): cada vehículo nuevo deja el paso «vehículo» del registro (una lectura).
-      ['migraciones-prueba', 3_031],
+      // +20 (22 nov 2026, C-RASTRO-FUENTES): la verificación aprobada deja además los pasos de la cara,
+      // el documento y el envío de cada cuenta (una vez por cuenta; dos lecturas por paso).
+      ['migraciones-prueba', 3_051],
       ['f2', 76_000],
       ['reloj', 25_500],
     ];
