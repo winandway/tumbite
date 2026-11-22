@@ -52,12 +52,23 @@ export async function borrarCuenta(
          UNION SELECT foto_recogida FROM envios_persona WHERE foto_recogida IS NOT NULL AND operacion_id IN (${misOperaciones})
          UNION SELECT foto_entrega FROM envios_persona WHERE foto_entrega IS NOT NULL AND operacion_id IN (${misOperaciones})
          UNION SELECT clave FROM selfies_casco WHERE usuario_id = ?1
-         UNION SELECT clave FROM selfies_control WHERE usuario_id = ?1 AND clave != ''
-         UNION SELECT comprobante_clave FROM pagos_comida WHERE cliente_id = ?1 AND comprobante_clave IS NOT NULL`,
+         UNION SELECT clave FROM selfies_control WHERE usuario_id = ?1 AND clave != ''`,
       )
       .bind(u.id)
       .all<{ clave: string }>()
   ).results.map((f) => f.clave);
+  // C-UNIONES-D1: la base real no admite más de cinco consultas unidas; el comprobante del pago de
+  // la comida (C-COMIDA-PAGO-RESTAURANTE) va en su propia consulta.
+  fotosServicios.push(
+    ...(
+      await db
+        .prepare(
+          'SELECT comprobante_clave AS clave FROM pagos_comida WHERE cliente_id = ? AND comprobante_clave IS NOT NULL',
+        )
+        .bind(u.id)
+        .all<{ clave: string }>()
+    ).results.map((f) => f.clave),
+  );
   const comoPasajero = 'SELECT id FROM operaciones WHERE cliente_id = ?1';
   // C-BORRADO-SERVICIOS, tercera vuelta: el correo y el teléfono canónicos, para encontrar las
   // invitaciones de empresas y restaurantes que lo nombran aunque no las haya aceptado.
