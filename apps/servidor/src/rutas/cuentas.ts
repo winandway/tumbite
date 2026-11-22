@@ -68,8 +68,10 @@ import {
   anularCodigoAnterior,
   comprobarCodigo,
   mandarCodigo,
+  paisDeE164,
   puertaTelefono,
 } from '../telefonoVuelta';
+import { telefonoE164 } from '../sms';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
 const esquemaRecuperar = z.object({
@@ -790,9 +792,19 @@ const esquemaCambiarTelefono = z.object({
 /** Qué toca con el celular de esta cuenta: confirmarlo (obligatorio), sugerirlo, o nada. */
 cuentas.get('/telefono', async (c) => {
   const u = exigir(c);
-  const p = await puertaTelefono(c.env, base(c), u.id);
+  const db = base(c);
+  const p = await puertaTelefono(c.env, db, u.id);
+  // El país del celular guardado (o el de la cuenta): el selector de la pantalla arranca ahí.
+  const f = p
+    ? await db
+        .prepare('SELECT telefono FROM usuarios WHERE id = ?')
+        .bind(u.id)
+        .first<{ telefono: string | null }>()
+    : null;
+  const e164 = telefonoE164(f?.telefono);
+  const pais = p ? ((e164 ? paisDeE164(e164) : null) ?? (await paisDeCuenta(db, u.id))) : null;
   return c.json({
-    puerta: p ? { motivo: p.motivo, ultimos: p.ultimos, obligatorio: p.obligatorio } : null,
+    puerta: p ? { motivo: p.motivo, ultimos: p.ultimos, obligatorio: p.obligatorio, pais } : null,
   });
 });
 

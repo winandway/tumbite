@@ -17,7 +17,13 @@ function seguirMirando() {
 export function conCuenta<P extends object>(Pantalla: ComponentType<P>) {
   function ConCuenta(props: P) {
     return (
-      <ConSesion rolRegistro="cliente" pideCumple exigeCorreo seguirMirando={seguirMirando}>
+      <ConSesion
+        rolRegistro="cliente"
+        pideCumple
+        exigeTelefono
+        exigeCorreo
+        seguirMirando={seguirMirando}
+      >
         <Pantalla {...props} />
       </ConSesion>
     );

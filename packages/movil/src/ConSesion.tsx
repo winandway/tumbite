@@ -3,6 +3,7 @@ import { Text } from './diseno';
 import { ActivityIndicator, View } from 'react-native';
 import { Acceso } from './Acceso';
 import { PuertaCorreo } from './VerificarCorreo';
+import { PuertaTelefono } from './PuertaTelefono';
 import { useSesion } from './sesion';
 import { Boton, C } from './ui';
 import { TEXTOS_MOVIL } from './textos';
@@ -18,6 +19,7 @@ export function ConSesion({
   rolRegistro,
   pideCumple,
   exigeCorreo,
+  exigeTelefono,
   seguirMirando,
 }: {
   children: ReactNode;
@@ -25,6 +27,8 @@ export function ConSesion({
   pideCumple?: boolean;
   /** C-CORREO-OBLIGATORIO: no deja entrar hasta confirmar el correo (app del cliente). */
   exigeCorreo?: boolean;
+  /** C-TELEFONO-AL-REGISTRARSE: la cuenta nueva confirma su celular por SMS antes de usar la app. */
+  exigeTelefono?: boolean;
   /** C-MIRAR-SIN-CUENTA: en la pantalla de entrar, volver a mirar sin cuenta. */
   seguirMirando?: () => void;
 }) {
@@ -50,7 +54,17 @@ export function ConSesion({
       <Acceso rolRegistro={rolRegistro} pideCumple={pideCumple} seguirMirando={seguirMirando} />
     );
   // La puerta se arma de nuevo con cada cuenta (key), para no heredar lo que vio la anterior.
-  return exigeCorreo ? <PuertaCorreo key={usuario.id}>{children}</PuertaCorreo> : <>{children}</>;
+  const conCorreo = exigeCorreo ? (
+    <PuertaCorreo key={usuario.id}>{children}</PuertaCorreo>
+  ) : (
+    <>{children}</>
+  );
+  // Primero el celular (un código, al momento) y después el correo.
+  return exigeTelefono ? (
+    <PuertaTelefono key={`tel-${usuario.id}`}>{conCorreo}</PuertaTelefono>
+  ) : (
+    conCorreo
+  );
 }
 
 /**

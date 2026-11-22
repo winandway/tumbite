@@ -83,7 +83,12 @@ describe('C-TELEFONO-AL-REGISTRARSE · el celular se confirma por SMS al crear l
     const m = mundo(TWILIO);
     const cli = await registrar(m, 'cliente', '+13055559876');
     const puerta = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
-    expect(puerta.datos.puerta).toEqual({ motivo: 'registro', ultimos: '9876', obligatorio: true });
+    expect(puerta.datos.puerta).toEqual({
+      motivo: 'registro',
+      ultimos: '9876',
+      obligatorio: true,
+      pais: 'US',
+    });
     // El servidor frena aunque la app se salte la pantalla.
     const pedido = await m.llamar('POST', '/datos/pedidos', { restauranteId: 'x' }, cli.token);
     expect(pedido.estado).toBe(409);
@@ -146,7 +151,11 @@ describe('C-TELEFONO-AL-REGISTRARSE · el celular se confirma por SMS al crear l
     const m = mundo(TWILIO);
     const vieja = await registrar(m, 'cliente', '+13055551111', false);
     const p = await m.llamar('GET', '/datos/cuentas/telefono', undefined, vieja.token);
-    expect(p.datos.puerta).toEqual({ motivo: 'sugerido', ultimos: '1111', obligatorio: false });
+    expect(p.datos.puerta).toMatchObject({
+      motivo: 'sugerido',
+      ultimos: '1111',
+      obligatorio: false,
+    });
     const pedido = await m.llamar('POST', '/datos/pedidos', { restauranteId: 'x' }, vieja.token);
     expect(pedido.datos.campo).not.toBe('telefono');
     // Puede confirmarlo si quiere.
@@ -225,7 +234,7 @@ describe('C-TELEFONO-AL-REGISTRARSE · el celular se confirma por SMS al crear l
     const m = mundo(TWILIO);
     const cli = await registrar(m, 'cliente', undefined);
     const p = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
-    expect(p.datos.puerta).toEqual({ motivo: 'registro', ultimos: null, obligatorio: true });
+    expect(p.datos.puerta).toMatchObject({ motivo: 'registro', ultimos: null, obligatorio: true });
     const envio = await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
     expect(envio.estado).toBe(422);
     expect(sms).toHaveLength(0);

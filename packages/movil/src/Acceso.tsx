@@ -258,6 +258,8 @@ export function Acceso({
         // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
         smsConsentimiento: v.sms,
         canal: 'app',
+        // C-TELEFONO-AL-REGISTRARSE: esta app trae la pantalla del código por SMS.
+        verificaTelefono: true,
         ...(v.invitacion.trim() ? { invitacion: v.invitacion.trim().toUpperCase() } : {}),
       });
       if (!rolesPermitidos.includes(sesion.usuario.rol)) {

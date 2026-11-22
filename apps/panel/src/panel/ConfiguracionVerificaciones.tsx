@@ -4,6 +4,7 @@ import { EncabezadoPagina } from './armazon/Piezas';
 import { DespachoCatalogo } from './DespachoCatalogo';
 import { InterruptoresRepartidor } from './InterruptoresRepartidor';
 import { TableroVerificacionIa } from './SuperPapeles';
+import { VerificacionCelular } from './VerificacionCelular';
 import './verificaciones.css';
 
 const T = {
@@ -15,6 +16,7 @@ const T = {
     reglas: 'Reglas para conductores',
     reparto: 'Reparto de Comida',
     comprobacion: 'Comprobación automática: gasto, tope y acierto',
+    celular: 'Código por SMS al registrarse',
   },
   en: {
     volver: '← Verifications',
@@ -24,6 +26,7 @@ const T = {
     reglas: 'Rules for drivers',
     reparto: 'Food dispatch',
     comprobacion: 'Automatic check: spend, cap and accuracy',
+    celular: 'Text code at sign-up',
   },
 };
 
@@ -46,6 +49,9 @@ export function ConfiguracionVerificaciones({ base, idioma }: { base: string; id
       </section>
       <section className="kyc-config-bloque" aria-label={t.reparto}>
         <DespachoCatalogo idioma={idioma} />
+      </section>
+      <section className="kyc-config-bloque" aria-label={t.celular}>
+        <VerificacionCelular idioma={idioma} />
       </section>
       <section className="kyc-config-bloque" aria-label={t.comprobacion}>
         <TableroVerificacionIa idioma={idioma} />

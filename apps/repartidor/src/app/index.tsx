@@ -1,5 +1,5 @@
 import { ActivityIndicator, Image, View } from 'react-native';
-import { Acceso, C, useSesion, Text } from '@tumbite/movil';
+import { Acceso, C, PuertaTelefono, useSesion, Text } from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 
@@ -51,5 +51,12 @@ export default function Entrada() {
       </View>
     );
   }
-  return usuario ? <Inicio /> : <Acceso rolRegistro="repartidor" portada={<Portada />} />;
+  // C-TELEFONO-AL-REGISTRARSE: la cuenta nueva confirma su celular por SMS antes de entrar.
+  return usuario ? (
+    <PuertaTelefono key={usuario.id}>
+      <Inicio />
+    </PuertaTelefono>
+  ) : (
+    <Acceso rolRegistro="repartidor" portada={<Portada />} />
+  );
 }

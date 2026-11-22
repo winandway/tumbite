@@ -6,6 +6,7 @@ import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
 import { GUIAS_LINEAS, LINEAS_PUBLICADA } from './lineas';
 import { GUIAS_PERU, PERU_PUBLICADA } from './peru';
 import { GUIAS_VIAJES_FIJOS, VIAJES_FIJOS_PUBLICADA } from './viajesFijos';
+import { GUIA_VERIFICAR_CELULAR, VERIFICAR_CELULAR_PUBLICADA } from './verificarCelular';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
@@ -11119,7 +11120,15 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
     if (s.id === 'account')
       return {
         ...s,
-        guias: [...s.guias, ...de(s.id), ...(idioma === 'es' ? GUIAS_DOCS.es : GUIAS_DOCS.en)],
+        guias: [
+          ...s.guias,
+          // C-TELEFONO-AL-REGISTRARSE: «Confirma tu celular», con sus capturas reales.
+          ...(VERIFICAR_CELULAR_PUBLICADA
+            ? [idioma === 'es' ? GUIA_VERIFICAR_CELULAR.es : GUIA_VERIFICAR_CELULAR.en]
+            : []),
+          ...de(s.id),
+          ...(idioma === 'es' ? GUIAS_DOCS.es : GUIAS_DOCS.en),
+        ],
       };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
