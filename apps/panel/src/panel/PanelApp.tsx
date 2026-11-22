@@ -52,6 +52,7 @@ import { PanelEmpresa } from './flex/PanelEmpresa';
 import { TableroRestaurante } from './TableroRestaurante';
 import { MiEmpresa } from './MiEmpresa';
 import { SuperKyc } from './SuperKyc';
+import { ConfiguracionVerificaciones } from './ConfiguracionVerificaciones';
 import { SuperBandeja } from './SuperBandeja';
 import { SuperReportes } from './SuperReportes';
 import { SuperPedido, SuperPedidos } from './SuperPedido';
@@ -166,6 +167,9 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/franchises') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
   if (sub === '/cities') return <SuperCiudades base={base} idioma={idioma} />;
   if (sub === '/verifications') return <SuperKyc base={base} idioma={idioma} id={null} />;
+  // C-VERIFICACIONES-BANDEJA: las reglas y el gasto de la comprobación automática, fuera de la bandeja.
+  if (sub === '/verifications/settings')
+    return <ConfiguracionVerificaciones base={base} idioma={idioma} />;
   if (sub === '/cash') return <SuperBandeja base={base} idioma={idioma} clave={null} />;
   const caso = /^\/cash\/([^/]+)$/.exec(sub);
   if (caso?.[1])

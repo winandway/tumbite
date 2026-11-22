@@ -28,6 +28,9 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
       '«Pedir de nuevo» pide UNA sola foto, con el motivo. A la persona le llega el aviso con ese motivo y en su app se abre justo ese paso. Lo demás que ya subió se queda como está.',
       'Las decisiones del equipo se guardan al lado de lo que dijo la comprobación automática. De ahí sale el acierto por país y por tipo de foto, que se ve en Verificaciones y en Ajustes.',
       'La «Aprobación automática» viene apagada. Encendida en un país, lo que llegue todo en verde, con confianza alta y con la cara coincidiendo, se aprueba solo en minutos y a la persona le llega «Verificamos tus documentos». Todo lo demás sigue llegando a Verificaciones. Solo aprueba; nunca rechaza. Se enciende cuando el acierto medido convenza.',
+      'La pantalla Verificaciones empieza por la lista de personas por verificar: su foto (tócala para verla en grande; se cierra con Escape o tocando fuera), su nombre, su ID, su zona, cuánto lleva esperando (ámbar; rojo después de 24 horas) y lo que dijo la comprobación automática de cada foto: verde si todo cuadra, ámbar con el motivo en palabras si hay duda, gris si se revisa a mano. Arriba están las pestañas Pendientes, Aprobadas y Rechazadas, el buscador (nombre, ID con o sin «#», correo, teléfono o zona, sin importar acentos ni mayúsculas, desde la primera letra) y los filtros de zona y de cuentas reales o de prueba, que se recuerdan para tu próxima visita. Si lo que buscas está en otra pestaña, la pantalla te lo dice.',
+      'Al abrir a una persona ves sus fotos grandes lado a lado, la tabla «Lo que leyó la comprobación automática» frente a «Lo que escribió la persona» (lo que no coincide va en ámbar) y la decisión: «Aprobar», o «Rechazar» con un motivo frecuente o escrito por ti, que es obligatorio y le llega a la persona en su idioma. La comprobación automática nunca decide aquí: decide una persona.',
+      'Las reglas para conductores, el reparto de Comida por habilitaciones y el gasto, el tope y el acierto de la comprobación automática están en el botón «Configuración», arriba a la derecha de Verificaciones.',
       'A quien se registró antes de que existiera el plazo no se le cambia nada. Si hace falta, en su ficha está «Dar plazo de papeles», que le empieza a contar desde ese día.',
     ],
     capturas: [
@@ -66,7 +69,7 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
     ],
     pasos: [
       'Para ver quién está por vencer: Conductores → filtro «Papeles» → «Plazo por vencer».',
-      'Para revisar: Verificaciones → abre a la persona. Mira la tarjeta «Papeles»: los colores, lo leído y la comparación de la cara.',
+      'Para revisar: Verificaciones → busca o elige a la persona en la lista y toca «Revisar». Mira las fotos, la tabla de lo leído frente a lo escrito y la tarjeta «Papeles».',
       'Si una foto está mal: «Pedir de nuevo» en esa foto, escribe el motivo y toca «Pedir esta foto otra vez».',
       'Si todo está bien: aprueba la identidad ahí mismo, y la licencia y el seguro en su sección de siempre.',
       'Para cambiar la política de un país: Ajustes → elige el país → «Plazo de papeles del conductor» → cambia y toca «Guardar el plazo de papeles». Queda en el historial de cambios con tu nombre.',
@@ -90,6 +93,9 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
       '“Ask again” requests ONE photo, with the reason. The person gets a notification with that reason and their app opens right at that step. Everything else they uploaded stays as is.',
       'The team’s decisions are stored next to what the automatic check said. That’s where the accuracy by country and photo type comes from, shown in Verifications and in Settings.',
       '“Automatic approval” is off by default. Turned on for a country, whatever comes all green, with high confidence and a matching face, is approved on its own within minutes and the person gets “We verified your documents.” Everything else still goes to Verifications. It only approves; it never rejects. Turn it on once the measured accuracy is convincing.',
+      'The Verifications screen starts with the list of people to verify: their photo (tap it to see it full size; Escape or tapping outside closes it), their name, ID, area, how long they have been waiting (amber; red after 24 hours) and what the automatic check said about each photo: green if everything checks out, amber with the reason in words if there is a doubt, gray if it is reviewed by hand. At the top are the Pending, Approved and Rejected tabs, the search box (name, ID with or without “#”, email, phone or area, ignoring accents and capitals, from the first letter) and the area and real or test accounts filters, which are remembered for your next visit. If what you search for is in another tab, the screen tells you.',
+      'When you open a person you see their photos full size side by side, the table “What the automatic check read” next to “What the person typed” (mismatches show in amber) and the decision: “Approve,” or “Reject” with a common reason or one you write, which is required and reaches the person in their language. The automatic check never decides here: a person does.',
+      'The rules for drivers, Food dispatch by service approvals, and the spend, cap and accuracy of the automatic check are under the “Settings” button, top right of Verifications.',
       'Nothing changes for people who signed up before the grace period existed. If needed, their page has “Give a documents grace period,” which starts counting that day.',
     ],
     capturas: [
@@ -128,7 +134,7 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
     ],
     pasos: [
       'To see who is ending soon: Drivers → “Documents” filter → “Grace period ending.”',
-      'To review: Verifications → open the person. Check the “Documents” card: the colors, what was read, and the face comparison.',
+      'To review: Verifications → search for or pick the person in the list and tap “Review.” Check the photos, the table of what was read versus what was typed, and the “Documents” card.',
       'If a photo is wrong: “Ask again” on that photo, write the reason, and tap “Ask for this photo again.”',
       'If everything is fine: approve the identity right there, and the license and insurance in their usual section.',
       'To change a country’s policy: Settings → pick the country → “Driver documents grace period” → change it and tap “Save the documents grace period.” It’s recorded in the change history with your name.',

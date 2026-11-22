@@ -251,7 +251,7 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
       k.selfie IS NOT NULL AS con_selfie, k.local IS NOT NULL AS con_local,
       k.selfie_miniatura IS NOT NULL AS con_miniatura,
       u.nombre, u.correo, u.telefono, u.rol, COALESCE(u.es_prueba, 0) AS es_prueba,
-      d.codigo, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre,
+      d.codigo, rs.id AS restaurante_id, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre,
       vc.resultado AS cara,
       (SELECT json_group_array(json_object('paso', f.paso, 'clave', f.clave, 'estado', f.estado,
                 'color', f.ia_color, 'clase', f.ia_clase, 'lectura', f.ia_json))
@@ -301,6 +301,7 @@ export type FilaBandeja = {
   es_prueba: number;
   codigo: string | null;
   restaurante: string | null;
+  restaurante_id: string | null;
   zona_id: string | null;
   zona_nombre: string | null;
   cara: string | null;
@@ -342,6 +343,8 @@ export function filaDeBandeja(r: FilaBandeja, distanciaMaxima: number) {
     rol: r.rol,
     codigo: r.codigo ?? null,
     restaurante: r.restaurante ?? null,
+    /** El restaurante del dueño (para abrir su ficha completa). */
+    restauranteId: r.restaurante_id ?? null,
     enviado: r.enviado ?? '',
     revisado: r.revisado ?? null,
     motivo: r.estado === 'rechazado' ? r.motivo : '',

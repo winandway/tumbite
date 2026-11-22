@@ -470,7 +470,7 @@ kyc.get('/admin/kyc/:id', async (c) => {
   const f = await db.prepare('SELECT * FROM kyc WHERE usuario_id = ?').bind(id).first<FilaKyc>();
   const u = await db
     .prepare(
-      `SELECT u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.rol, rs.nombre AS restaurante, rs.direccion,
+      `SELECT u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.rol, u.idioma, rs.id AS restaurante_id, rs.nombre AS restaurante, rs.direccion,
               COALESCE(u.es_prueba, 0) AS es_prueba, d.codigo, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona
          FROM usuarios u LEFT JOIN restaurantes rs ON rs.dueno_id = u.id
          LEFT JOIN repartidores d ON d.usuario_id = u.id

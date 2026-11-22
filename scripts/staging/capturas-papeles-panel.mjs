@@ -164,8 +164,9 @@ try {
     await espera(1500);
     await foto('ficha-conductor-a-medias', { elemento: tarjeta2 });
 
-    // 6. Verificaciones: el tablero de consultas y acierto, y la tarjeta completa con fotos grandes.
-    await ir('/verifications');
+    // 6. Verificaciones: el tablero de consultas y acierto (desde el 22 nov 2026 vive en
+    // «Configuración de verificaciones», C-VERIFICACIONES-BANDEJA), y la tarjeta completa con fotos grandes.
+    await ir('/verifications/settings');
     const tablero = p.getByTestId('tablero-ia');
     await tablero.waitFor({ timeout: 30_000 });
     await tablero.locator('summary').click();

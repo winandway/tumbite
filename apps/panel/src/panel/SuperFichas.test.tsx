@@ -320,6 +320,8 @@ describe('verificaciones (KYC) y empresa', () => {
               restaurante: null,
               enviado: '2026-10-12',
               lejos: true,
+              // C-VERIFICACIONES-BANDEJA: la comprobación de cada foto viene en la fila.
+              comprobaciones: [{ pieza: 'local', tono: 'pendiente', motivo: 'lejos' }],
             },
           ],
         };
@@ -351,8 +353,13 @@ describe('verificaciones (KYC) y empresa', () => {
       'src',
       `/datos/admin/kyc/${REP_ID}/foto/selfie`,
     );
-    await userEvent.type(screen.getByRole('textbox'), 'La foto está borrosa');
+    // C-VERIFICACIONES-BANDEJA: «Rechazar» abre el motivo; el rechazo sale con su motivo escrito.
     await userEvent.click(screen.getByRole('button', { name: 'Rechazar' }));
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /Motivo del rechazo/ }),
+      'La foto está borrosa',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Rechazar con este motivo' }));
     await waitFor(() =>
       expect(llamadas.find((l) => l.metodo === 'PATCH')?.cuerpo).toMatchObject({
         estado: 'rechazado',

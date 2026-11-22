@@ -1,0 +1,274 @@
+import { useEffect } from 'react';
+import { type Idioma, enIdioma } from '@tumbite/compartido';
+import { Insignia } from './diseno/Insignia';
+
+/**
+ * C-VERIFICACIONES-BANDEJA (22 nov 2026, Gerencia) — todos los países. Las piezas que comparten la
+ * bandeja de Verificaciones y la ficha de una persona: los textos, las insignias de la comprobación
+ * automática de cada foto, la foto en grande y el enlace a la ficha completa.
+ */
+export const T_VERIFICACIONES = {
+  es: {
+    titulo: 'Verificaciones',
+    detalle:
+      'La comprobación automática de cada foto solo adelanta trabajo: siempre decide una persona.',
+    configuracion: 'Configuración',
+    pendientes: 'Pendientes',
+    aprobadas: 'Aprobadas',
+    rechazadas: 'Rechazadas',
+    buscar: 'Nombre, ID, correo, teléfono o zona',
+    zona: 'Zona',
+    todasZonas: 'Todas las zonas',
+    vacio: {
+      pendiente: 'No hay verificaciones pendientes.',
+      aprobado: 'No hay verificaciones aprobadas.',
+      rechazado: 'No hay verificaciones rechazadas.',
+    } as Record<string, string>,
+    sinResultados: 'Nada coincide con esa búsqueda en esta pestaña.',
+    enOtra: (n: number, pestana: string) =>
+      n === 1 ? `Hay 1 en ${pestana}.` : `Hay ${n} en ${pestana}.`,
+    verEn: (pestana: string) => `Ver ${pestana}`,
+    resultados: (n: number, mas: boolean) =>
+      `${n}${mas ? '+' : ''} ${n === 1 ? 'persona' : 'personas'}`,
+    cargando: 'Cargando…',
+    error: 'No pudimos cargar las verificaciones. Revisa tu conexión.',
+    reintentar: 'Reintentar',
+    verMas: 'Ver más',
+    revisar: 'Revisar',
+    ficha: 'Ficha completa',
+    verFoto: (n: string) => `Ver la foto de ${n} en grande`,
+    sinFoto: 'Sin foto',
+    cerrar: 'Cerrar',
+    repartidor: 'Conductor',
+    restaurante: 'Restaurante',
+    sinZona: 'Sin zona',
+    lejos: 'El local está lejos de su dirección',
+    espera: (h: number) =>
+      h < 1
+        ? 'Llegó hace menos de 1 h'
+        : h < 48
+          ? `Espera hace ${h} h`
+          : `Espera hace ${Math.floor(h / 24)} días`,
+    aprobadaEl: (f: string) => `Aprobada · ${f}`,
+    rechazadaEl: (f: string) => `Rechazada · ${f}`,
+    motivoRechazo: 'Motivo',
+    piezas: {
+      doc_frente: 'Documento (frente)',
+      doc_reverso: 'Documento (reverso)',
+      selfie: 'Cara',
+      local: 'Local',
+    } as Record<string, string>,
+    motivos: {
+      cuadra: 'todo cuadra',
+      otra_clase: 'parece otra cosa',
+      vencido: 'parece vencido',
+      ilegible: 'no se lee bien',
+      foto_de_foto: 'parece foto de una pantalla o de otra foto',
+      confianza_baja: 'poca confianza, míralo',
+      repetir: 'se le pidió repetirla',
+      a_mano: 'a mano',
+      cerca: 'en su dirección',
+      lejos: 'lejos de su dirección',
+    } as Record<string, string>,
+    clases: {
+      identidad_frente: 'el frente de un documento',
+      identidad_reverso: 'el reverso de un documento',
+      licencia_frente: 'el frente de una licencia',
+      licencia_reverso: 'el reverso de una licencia',
+      seguro: 'un seguro',
+      cara: 'una cara',
+      otra_cosa: 'otra cosa',
+    } as Record<string, string>,
+    cara: 'Cara y documento',
+    caras: {
+      misma: 'misma persona',
+      dudoso: 'dudoso',
+      distinta: 'no parece la misma persona',
+      sin_ia: 'sin comparar',
+    } as Record<string, string>,
+    comprobacion: 'Comprobación automática',
+  },
+  en: {
+    titulo: 'Verifications',
+    detalle: 'The automatic check of each photo only saves work: a person always decides.',
+    configuracion: 'Settings',
+    pendientes: 'Pending',
+    aprobadas: 'Approved',
+    rechazadas: 'Rejected',
+    buscar: 'Name, ID, email, phone or area',
+    zona: 'Area',
+    todasZonas: 'All areas',
+    vacio: {
+      pendiente: 'No pending verifications.',
+      aprobado: 'No approved verifications.',
+      rechazado: 'No rejected verifications.',
+    } as Record<string, string>,
+    sinResultados: 'Nothing in this tab matches that search.',
+    enOtra: (n: number, pestana: string) => `${n} in ${pestana}.`,
+    verEn: (pestana: string) => `See ${pestana}`,
+    resultados: (n: number, mas: boolean) =>
+      `${n}${mas ? '+' : ''} ${n === 1 ? 'person' : 'people'}`,
+    cargando: 'Loading…',
+    error: 'We couldn’t load the verifications. Check your connection.',
+    reintentar: 'Try again',
+    verMas: 'Show more',
+    revisar: 'Review',
+    ficha: 'Full profile',
+    verFoto: (n: string) => `See ${n}’s photo full size`,
+    sinFoto: 'No photo',
+    cerrar: 'Close',
+    repartidor: 'Driver',
+    restaurante: 'Restaurant',
+    sinZona: 'No area',
+    lejos: 'The storefront is far from its address',
+    espera: (h: number) =>
+      h < 1
+        ? 'Arrived less than 1 h ago'
+        : h < 48
+          ? `Waiting ${h} h`
+          : `Waiting ${Math.floor(h / 24)} days`,
+    aprobadaEl: (f: string) => `Approved · ${f}`,
+    rechazadaEl: (f: string) => `Rejected · ${f}`,
+    motivoRechazo: 'Reason',
+    piezas: {
+      doc_frente: 'ID (front)',
+      doc_reverso: 'ID (back)',
+      selfie: 'Face',
+      local: 'Storefront',
+    } as Record<string, string>,
+    motivos: {
+      cuadra: 'all good',
+      otra_clase: 'looks like something else',
+      vencido: 'looks expired',
+      ilegible: 'hard to read',
+      foto_de_foto: 'looks like a photo of a screen or another photo',
+      confianza_baja: 'low confidence, check it',
+      repetir: 'asked to retake',
+      a_mano: 'by hand',
+      cerca: 'at its address',
+      lejos: 'far from its address',
+    } as Record<string, string>,
+    clases: {
+      identidad_frente: 'the front of an ID',
+      identidad_reverso: 'the back of an ID',
+      licencia_frente: 'the front of a license',
+      licencia_reverso: 'the back of a license',
+      seguro: 'an insurance card',
+      cara: 'a face',
+      otra_cosa: 'something else',
+    } as Record<string, string>,
+    cara: 'Face and ID',
+    caras: {
+      misma: 'same person',
+      dudoso: 'unsure',
+      distinta: 'doesn’t look like the same person',
+      sin_ia: 'not compared',
+    } as Record<string, string>,
+    comprobacion: 'Automatic check',
+  },
+};
+
+/** Un texto de una tabla por su clave (sin acceso dinámico a objetos). */
+export const deTabla = (tabla: Record<string, string>, clave: string, porDefecto = clave) =>
+  new Map(Object.entries(tabla)).get(clave) ?? porDefecto;
+
+export type Comprobacion = {
+  pieza: string;
+  tono: 'hecho' | 'pendiente' | 'apagado';
+  motivo: string;
+  clase?: string;
+};
+export type ResumenCara = { resultado: string; tono: 'hecho' | 'pendiente' | 'apagado' } | null;
+
+/** El texto de la comprobación de una foto: «Documento (frente): todo cuadra». */
+export function textoComprobacion(c: Comprobacion, idioma: Idioma): string {
+  const t = enIdioma(T_VERIFICACIONES, idioma);
+  const pieza = t.piezas[c.pieza] ?? c.pieza;
+  const motivo = t.motivos[c.motivo] ?? c.motivo;
+  const clase = c.motivo === 'otra_clase' && c.clase ? ` (${t.clases[c.clase] ?? c.clase})` : '';
+  return `${pieza}: ${motivo}${clase}`;
+}
+
+/** Las insignias de la comprobación automática de cada foto (y de la cara contra el documento). */
+export function InsigniasComprobacion({
+  comprobaciones,
+  cara,
+  idioma,
+}: {
+  comprobaciones: Comprobacion[];
+  cara: ResumenCara;
+  idioma: Idioma;
+}) {
+  const t = enIdioma(T_VERIFICACIONES, idioma);
+  if (!comprobaciones.length && !cara) return null;
+  return (
+    <ul className="kyc-comprobaciones" aria-label={t.comprobacion}>
+      {comprobaciones.map((c) => (
+        <li key={c.pieza}>
+          <Insignia tono={c.tono} testId={`comprobacion-${c.pieza}`}>
+            {textoComprobacion(c, idioma)}
+          </Insignia>
+        </li>
+      ))}
+      {cara ? (
+        <li>
+          <Insignia tono={cara.tono} testId="comprobacion-cara">
+            {t.cara}: {t.caras[cara.resultado] ?? cara.resultado}
+          </Insignia>
+        </li>
+      ) : null}
+    </ul>
+  );
+}
+
+/** La foto en grande, en una capa que se cierra con Escape o tocando fuera. */
+export function FotoGrande({
+  foto,
+  cerrar,
+  idioma,
+}: {
+  foto: { src: string; titulo: string } | null;
+  cerrar: () => void;
+  idioma: Idioma;
+}) {
+  const t = enIdioma(T_VERIFICACIONES, idioma);
+  useEffect(() => {
+    if (!foto) return;
+    const alTecla = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cerrar();
+    };
+    window.addEventListener('keydown', alTecla);
+    return () => window.removeEventListener('keydown', alTecla);
+  }, [foto, cerrar]);
+  if (!foto) return null;
+  return (
+    <div
+      className="foto-grande"
+      role="dialog"
+      aria-modal="true"
+      aria-label={foto.titulo}
+      data-testid="foto-grande"
+      onClick={cerrar}
+    >
+      <div className="foto-grande-barra">
+        <strong>{foto.titulo}</strong>
+        <button type="button" className="boton secundario chico" onClick={cerrar}>
+          {t.cerrar}
+        </button>
+      </div>
+      <img src={foto.src} alt={foto.titulo} onClick={(e) => e.stopPropagation()} />
+    </div>
+  );
+}
+
+/** El enlace a la ficha completa de la persona (correo, teléfono, vehículo, papeles). */
+export function enlaceFicha(
+  base: string,
+  p: { id: string; rol: string; restauranteId?: string | null },
+): string | null {
+  if (p.rol === 'repartidor') return `${base}/drivers/${p.id}`;
+  if (p.rol === 'restaurante')
+    return p.restauranteId ? `${base}/restaurants/${p.restauranteId}` : null;
+  if (p.rol === 'cliente') return `${base}/customers/${p.id}`;
+  return null;
+}

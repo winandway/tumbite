@@ -1,0 +1,252 @@
+/*
+ * C-VERIFICACIONES-BANDEJA (22 nov 2026, Gerencia) — todos los países. La bandeja de Verificaciones,
+ * la ficha de una persona y su Configuración. Solo forma y espacio: los colores de cada estado salen
+ * del sistema de diseño (diseno.css), nunca de aquí. Tarjetas con borde fino y sombra suave, sin
+ * franjas de color. Se ve bien desde 375 px.
+ */
+
+/* ───────── Bandeja ───────── */
+.kyc-busqueda {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.kyc-busqueda input[type='search'] {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.kyc-busqueda select {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+.kyc-vacio {
+  padding: 16px;
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 12px;
+  background: #fff;
+  margin: 8px 0 16px;
+}
+.kyc-vacio p {
+  margin: 4px 0;
+}
+.kyc-lista {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 16px;
+  display: grid;
+  gap: 10px;
+}
+.kyc-fila {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 12px;
+  box-shadow: var(--pd-sombra, 0 1px 2px rgb(16 16 16 / 5%));
+}
+.kyc-mini {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--pd-fondo, #f4f5f7);
+  cursor: zoom-in;
+  display: block;
+}
+.kyc-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.kyc-mini-vacia {
+  cursor: default;
+}
+.kyc-mini:focus-visible,
+.kyc-foto-boton:focus-visible {
+  outline: 2px solid var(--pd-negro, #101010);
+  outline-offset: 2px;
+}
+.kyc-fila-cuerpo {
+  min-width: 0;
+}
+.kyc-fila-cuerpo p {
+  margin: 0 0 4px;
+}
+.kyc-fila-nombre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pd-t3, 1.0625rem);
+}
+.kyc-fila-nombre a {
+  color: inherit;
+  text-decoration: none;
+}
+.kyc-fila-nombre a:hover {
+  text-decoration: underline;
+}
+.kyc-fila-cuerpo mark {
+  background: var(--pd-pendiente-fondo, #fff3d4);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.kyc-fila-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: var(--pd-texto-chico, 0.8125rem);
+  color: var(--pd-gris, #666b73);
+}
+.kyc-fila-correo {
+  overflow-wrap: anywhere;
+}
+.kyc-comprobaciones {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pd .kyc-comprobaciones .insignia {
+  white-space: normal;
+}
+.kyc-fila-lado {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+.kyc-fila-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* ───────── Ficha ───────── */
+.kyc-ficha-datos {
+  overflow-wrap: anywhere;
+}
+.kyc-fotos-grandes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin: 8px 0 12px;
+}
+.kyc-foto {
+  margin: 0;
+  background: #fff;
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.kyc-foto-boton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--pd-fondo, #f4f5f7);
+  cursor: zoom-in;
+}
+.kyc-foto-boton img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: contain;
+}
+.kyc-foto figcaption {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+}
+.pd .kyc-foto .insignia {
+  white-space: normal;
+}
+.pd .pd-contenido .kyc-comparar th[scope='row'],
+.kyc-comparar th[scope='row'] {
+  font-family: var(--pd-fuente-texto, inherit);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: var(--pd-texto-chico, 0.8125rem);
+  color: var(--pd-negro, #101010);
+  white-space: nowrap;
+}
+.kyc-comparar td {
+  overflow-wrap: anywhere;
+}
+.kyc-comparar tr.kyc-no-coincide td,
+.kyc-comparar tr.kyc-no-coincide th {
+  background: var(--pd-pendiente-fondo, #fff3d4);
+}
+.kyc-decision {
+  margin-top: 16px;
+}
+.kyc-rechazo {
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 0 0 12px;
+}
+.kyc-motivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+.kyc-motivo {
+  font: inherit;
+  font-size: var(--pd-texto-chico, 0.8125rem);
+  text-align: left;
+  padding: 8px 12px;
+  border: 1px solid var(--pd-borde-campo, #cfd3da);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--pd-negro, #101010);
+  cursor: pointer;
+}
+.kyc-motivo:hover {
+  border-color: var(--pd-negro, #101010);
+}
+.kyc-motivo.activo {
+  border-color: var(--pd-negro, #101010);
+  box-shadow: inset 0 0 0 1px var(--pd-negro, #101010);
+}
+
+/* ───────── Configuración ───────── */
+.kyc-config-bloque {
+  margin: 0 0 16px;
+}
+
+/* ───────── Celular (375 px) ───────── */
+@media (max-width: 640px) {
+  .kyc-fila {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+  .kyc-mini {
+    width: 48px;
+    height: 48px;
+  }
+  .kyc-fila-lado {
+    grid-column: 1 / -1;
+    justify-items: start;
+  }
+  .kyc-fila-acciones {
+    justify-content: flex-start;
+  }
+  .kyc-foto-boton img {
+    height: 220px;
+  }
+  .kyc-busqueda input[type='search'],
+  .kyc-busqueda select {
+    flex: 1 1 100%;
+  }
+}

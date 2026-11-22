@@ -1,150 +1,88 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Settings } from 'lucide-react';
+import { type Idioma, enIdioma, tramoCoincidente } from '@tumbite/compartido';
+import { Enlace } from '../Enlace';
+import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
+import { EtiquetaPrueba, FiltroCuentas } from './CuentasPrueba';
+import { EncabezadoPagina } from './armazon/Piezas';
+import { pedir } from './api';
 import { HORAS_URGENTE, horasDesde } from './diseno/estados';
 import { Insignia } from './diseno/Insignia';
-import { useCallback, useEffect, useState } from 'react';
+import { fechaSuper } from './horario';
 import {
-  ErrorApi,
-  type Idioma,
-  almacenNavegador,
-  enIdioma,
-  useBorrador,
-} from '@tumbite/compartido';
-import { Enlace } from '../Enlace';
-import { AvisoBorrador } from './AvisoBorrador';
-import { DespachoCatalogo } from './DespachoCatalogo';
-import { InterruptoresRepartidor } from './InterruptoresRepartidor';
-import { api, pedir } from './api';
-import { miniaturaWebp } from './SubirFoto';
-import { PapelesConductor, TableroVerificacionIa } from './SuperPapeles';
+  type Comprobacion,
+  FotoGrande,
+  InsigniasComprobacion,
+  type ResumenCara,
+  T_VERIFICACIONES,
+  deTabla,
+  enlaceFicha,
+} from './KycPiezas';
+import { RevisarKyc } from './SuperKycFicha';
+import { usePreferencias } from './usePreferencias';
+import './verificaciones.css';
 
-/** Reduce la selfie aprobada a una miniatura y la guarda; si no se puede, el pasajero no ve foto. */
-async function guardarMiniatura(id: string) {
-  try {
-    const r = await fetch(`/datos/admin/kyc/${id}/foto/selfie`, { credentials: 'same-origin' });
-    if (!r.ok) return;
-    const mini = await miniaturaWebp(await r.blob());
-    if (mini) await api.subirFoto(mini, `/datos/admin/kyc/${id}/miniatura`);
-  } catch (e) {
-    console.error('kyc: miniatura de la selfie', e);
-  }
-}
-
-const T = {
-  es: {
-    titulo: 'Verificaciones (KYC)',
-    pendientes: 'Pendientes',
-    aprobadas: 'Aprobadas',
-    rechazadas: 'Rechazadas',
-    vacio: 'No hay verificaciones aquí.',
-    repartidor: 'Repartidor',
-    restaurante: 'Restaurante',
-    lejos: 'El local está lejos de su dirección',
-    espera: (h: number) =>
-      h < 1
-        ? 'Llegó hace menos de 1 h'
-        : h < 48
-          ? `Espera hace ${h} h`
-          : `Espera hace ${Math.floor(h / 24)} días`,
-    estadoFila: { aprobado: 'Aprobada', rechazado: 'Rechazada' } as Record<string, string>,
-    volver: '← Verificaciones',
-    piezas: {
-      doc_frente: 'Documento (frente)',
-      doc_reverso: 'Documento (reverso)',
-      selfie: 'Cara',
-      local: 'Local',
-    },
-    distancia: 'Distancia entre la foto del local y la dirección registrada',
-    metros: 'metros',
-    aprobar: 'Aprobar',
-    compararCara:
-      'Compara la cara de la selfie con la del documento. Si apruebas, esa selfie queda como su foto de perfil y él no la puede cambiar.',
-    liberarFoto: 'Pedir una foto nueva',
-    motivoFoto: 'Motivo para pedir una foto nueva (queda en el registro):',
-    rechazar: 'Rechazar',
-    antecedentes: 'Antecedentes (Checkr)',
-    antecedentesEstados: {
-      sin_pedir: 'Sin empezar',
-      invitado: 'Invitación enviada',
-      en_proceso: 'En proceso',
-      aprobado: 'Aprobados',
-      revisar: 'Para revisar (Checkr no dio «clear»)',
-    } as Record<string, string>,
-    controles: 'Fotos de control (identidad continua)',
-    giroDerecha: 'Mirando a la derecha',
-    conPruebaVida: 'con prueba de vida (frente y giro)',
-    sinControles: 'Todavía no se le pidió ninguna.',
-    pedida: 'Pedida',
-    sinTomar: 'sin tomar',
-    coincide: 'Coincide',
-    noCoincide: 'No coincide',
-    motivo: 'Motivo del rechazo (le llega a la persona)',
-    compara:
-      'Compara la cara con la foto del documento, el nombre y la fecha de nacimiento, y que el documento no esté vencido.',
-  },
-  en: {
-    titulo: 'Verifications (KYC)',
-    pendientes: 'Pending',
-    aprobadas: 'Approved',
-    rechazadas: 'Rejected',
-    vacio: 'No verifications here.',
-    repartidor: 'Driver',
-    restaurante: 'Restaurant',
-    lejos: 'The storefront is far from its address',
-    espera: (h: number) =>
-      h < 1
-        ? 'Arrived less than 1 h ago'
-        : h < 48
-          ? `Waiting ${h} h`
-          : `Waiting ${Math.floor(h / 24)} days`,
-    estadoFila: { aprobado: 'Approved', rechazado: 'Rejected' } as Record<string, string>,
-    volver: '← Verifications',
-    piezas: {
-      doc_frente: 'Document (front)',
-      doc_reverso: 'Document (back)',
-      selfie: 'Face',
-      local: 'Storefront',
-    },
-    distancia: 'Distance between the storefront photo and the registered address',
-    metros: 'meters',
-    aprobar: 'Approve',
-    compararCara:
-      'Compare the face in the selfie with the one on the ID. If you approve, that selfie becomes their profile photo and they can’t change it.',
-    liberarFoto: 'Ask for a new photo',
-    motivoFoto: 'Reason for asking for a new photo (kept in the log):',
-    rechazar: 'Reject',
-    antecedentes: 'Background check (Checkr)',
-    antecedentesEstados: {
-      sin_pedir: 'Not started',
-      invitado: 'Invitation sent',
-      en_proceso: 'In progress',
-      aprobado: 'Approved',
-      revisar: 'Needs review (Checkr didn’t return “clear”)',
-    } as Record<string, string>,
-    controles: 'Identity check photos',
-    giroDerecha: 'Looking to the right',
-    conPruebaVida: 'with liveness check (front and turn)',
-    sinControles: 'None requested yet.',
-    pedida: 'Requested',
-    sinTomar: 'not taken',
-    coincide: 'Matches',
-    noCoincide: 'Doesn’t match',
-    motivo: 'Rejection reason (the person receives it)',
-    compara:
-      'Compare the face with the document photo, the name and date of birth, and check the document isn’t expired.',
-  },
-};
+/**
+ * C-VERIFICACIONES-BANDEJA (22 nov 2026, Gerencia: «está mal organizada… un arreglo serio,
+ * profesional») — todos los países. Verificaciones del superadmin:
+ * - ARRIBA, lo primero, la lista de personas por verificar: miniatura (se abre en grande), nombre,
+ *   ID, zona, cuánto lleva esperando y lo que dijo la comprobación automática de CADA foto.
+ * - Pestañas Pendientes / Aprobadas / Rechazadas, buscador por todo desde la primera letra y filtros
+ *   de zona y de cuentas reales o de prueba (se recuerdan por empleado).
+ * - Las reglas y el gasto de la comprobación automática viven en «Configuración de verificaciones».
+ * La comprobación automática nunca aprueba ni rechaza aquí: decide una persona.
+ */
 
 type Solicitud = {
   id: string;
+  estado: string;
   nombre: string;
   correo: string;
+  telefono: string;
   rol: string;
   codigo: string | null;
   restaurante: string | null;
+  restauranteId?: string | null;
   enviado: string;
+  revisado: string | null;
+  motivo: string;
   lejos: boolean;
+  zonaId: string;
+  zona: string;
+  esPrueba: boolean;
+  miniatura: 'mini' | 'selfie' | null;
+  comprobaciones: Comprobacion[];
+  cara: ResumenCara;
 };
+type Respuesta = {
+  solicitudes: Solicitud[];
+  siguiente: string | null;
+  totales: Record<string, number> | null;
+};
+type Ciudad = { id: string; nombre: string; pais: string };
 
-/** Cola de verificaciones del superadmin (paginada) y, con id, la revisión lado a lado. */
+const ESTADOS = ['pendiente', 'aprobado', 'rechazado'] as const;
+type Estado = (typeof ESTADOS)[number];
+const leerEstado = (v: string | undefined): Estado =>
+  (ESTADOS as readonly string[]).includes(v ?? '') ? (v as Estado) : 'pendiente';
+
+/** El nombre con lo que coincidió con la búsqueda resaltado. */
+function Resaltado({ texto, q }: { texto: string; q: string }) {
+  const tramo = q ? tramoCoincidente(texto, q) : null;
+  if (!tramo) return <>{texto}</>;
+  return (
+    <>
+      {texto.slice(0, tramo[0])}
+      <mark>{texto.slice(tramo[0], tramo[1])}</mark>
+      {texto.slice(tramo[1])}
+    </>
+  );
+}
+
+/** Lo que tarda la búsqueda en salir mientras se escribe (sugiere desde la primera letra). */
+export const ESPERA_BUSQUEDA_MS = 250;
+
+/** Verificaciones: la bandeja y, con id, la ficha de una persona. */
 export function SuperKyc({
   base,
   idioma,
@@ -154,315 +92,287 @@ export function SuperKyc({
   idioma: Idioma;
   id: string | null;
 }) {
-  const t = enIdioma(T, idioma);
-  const [estado, setEstado] = useState('pendiente');
-  const [lista, setLista] = useState<Solicitud[] | null>(null);
-  const [siguiente, setSiguiente] = useState<string | null>(null);
-  const [totales, setTotales] = useState<Record<string, number>>({});
-  useEffect(() => {
-    if (id) return;
-    pedir<{ solicitudes: Solicitud[]; siguiente: string | null; totales: Record<string, number> }>(
-      'GET',
-      `/datos/admin/kyc?estado=${estado}`,
-    )
-      .then((r) => {
-        setLista(r.solicitudes);
-        setSiguiente(r.siguiente);
-        setTotales(r.totales ?? {});
-      })
-      .catch(() => setLista([]));
-  }, [estado, id]);
-  // Punto 27: la bandeja pagina (antes se quedaba en 50 sin avisar).
-  const verMas = () =>
-    siguiente &&
-    pedir<{ solicitudes: Solicitud[]; siguiente: string | null }>(
-      'GET',
-      `/datos/admin/kyc?estado=${estado}&despues=${encodeURIComponent(siguiente)}`,
-    )
-      .then((r) => {
-        setLista((l) => [...(l ?? []), ...r.solicitudes]);
-        setSiguiente(r.siguiente);
-      })
-      .catch(() => undefined);
   if (id) return <RevisarKyc base={base} idioma={idioma} id={id} />;
-  return (
-    <section className="super">
-      <h1>{t.titulo}</h1>
-      <InterruptoresRepartidor idioma={idioma} />
-      <DespachoCatalogo idioma={idioma} />
-      <TableroVerificacionIa idioma={idioma} />
-      <div className="super-filtros" role="tablist">
-        {(
-          [
-            ['pendiente', t.pendientes],
-            ['aprobado', t.aprobadas],
-            ['rechazado', t.rechazadas],
-          ] as const
-        ).map(([v, n]) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={estado === v}
-            className={estado === v ? 'activa' : undefined}
-            onClick={() => setEstado(v)}
-          >
-            {n}
-            {new Map(Object.entries(totales)).has(v)
-              ? ` (${new Map(Object.entries(totales)).get(v)})`
-              : ''}
-          </button>
-        ))}
-      </div>
-      {lista?.length === 0 && <p>{t.vacio}</p>}
-      <ul className="super-bandeja">
-        {lista?.map((s) => (
-          <li key={s.id}>
-            <Enlace a={`${base}/verifications/${s.id}`}>
-              <span className="insignia">
-                {s.rol === 'repartidor' ? t.repartidor : t.restaurante}
-              </span>{' '}
-              <strong>{s.nombre}</strong>{' '}
-              {s.codigo ? <span className="super-id">{s.codigo}</span> : null}{' '}
-              {/* C-PANEL-DISENO: el estado de cada fila con su color (ámbar espera, rojo pasado de un día). */}
-              {estado === 'pendiente' ? (
-                <Insignia tono={horasDesde(s.enviado) >= HORAS_URGENTE ? 'problema' : 'pendiente'}>
-                  {t.espera(horasDesde(s.enviado))}
-                </Insignia>
-              ) : (
-                <Insignia estado={estado}>
-                  {new Map(Object.entries(t.estadoFila)).get(estado) ?? estado}
-                </Insignia>
-              )}
-              {s.restaurante ? ` · ${s.restaurante}` : ''}
-              <small>
-                {s.correo} · {s.enviado}
-                {s.lejos ? ` · ${t.lejos}` : ''}
-              </small>
-            </Enlace>
-          </li>
-        ))}
-      </ul>
-      {siguiente ? (
-        <button type="button" className="boton secundario" onClick={() => void verMas()}>
-          {idioma === 'en' ? 'Show more' : 'Ver más'}
-        </button>
-      ) : null}
-    </section>
-  );
+  return <Bandeja base={base} idioma={idioma} />;
 }
 
-type Detalle = {
-  antecedentes?: { estado: string; url: string };
-  selfiesControl?: {
-    id: string;
-    pedidaEn: string;
-    tomadaEn: string | null;
-    revisadaEn: string | null;
-    resultado: string;
-    conFoto: boolean;
-    /** C-PRUEBA-DE-VIDA: trae también la foto mirando a la derecha. */
-    conGiro?: boolean;
-  }[];
-  persona: {
-    nombre: string;
-    correo: string;
-    telefono: string;
-    fecha_nacimiento: string | null;
-    rol: string;
-    restaurante: string | null;
-    direccion: string | null;
-  };
-  kyc: {
-    estado: string;
-    docTipo: string;
-    tiene: Record<string, boolean>;
-    localDistanciaM: number | null;
-    lejos: boolean;
-  };
-};
-
-function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: string }) {
-  const t = enIdioma(T, idioma);
-  const [d, setD] = useState<Detalle | null>(null);
-  const [error, setError] = useState('');
-  const b = useBorrador({
-    formulario: 'kyc-motivo',
-    cuenta: id,
-    inicial: { motivo: '' },
-    almacen: almacenNavegador,
+function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
+  const t = enIdioma(T_VERIFICACIONES, idioma);
+  const pref = usePreferencias('verificaciones', {
+    estado: 'pendiente',
+    zona: '',
+    cuentas: 'reales',
   });
-  const cargar = useCallback(() => {
-    pedir<Detalle>('GET', `/datos/admin/kyc/${id}`)
-      .then(setD)
-      .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
-  }, [id]);
-  useEffect(cargar, [cargar]);
+  const estado = leerEstado(pref.valores.estado);
+  const zona = pref.valores.zona ?? '';
+  const cuentas = pref.valores.cuentas || 'reales';
+  const [texto, setTexto] = useState('');
+  const [q, setQ] = useState('');
+  const [resultado, setResultado] = useState<{
+    clave: string;
+    r: Respuesta | null;
+    error: boolean;
+  } | null>(null);
+  const [vuelta, setVuelta] = useState(0);
+  const [grande, setGrande] = useState<{ src: string; titulo: string } | null>(null);
+  const [ciudades, setCiudades] = useState<Ciudad[]>([]);
 
-  async function decidir(estado: 'aprobado' | 'rechazado') {
-    setError('');
-    try {
-      await pedir('PATCH', `/datos/admin/kyc/${id}`, { estado, motivo: b.valores.motivo });
-      // C-FOTO-CONDUCTOR-MINIATURA: al aprobar, la miniatura que verá el pasajero (nunca la original).
-      if (estado === 'aprobado') await guardarMiniatura(id);
-      await b.limpiar();
-      cargar();
-    } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
-    }
-  }
+  // La búsqueda sale mientras se escribe, con un respiro corto (desde la primera letra).
+  useEffect(() => {
+    const reloj = setTimeout(() => setQ(texto.trim()), ESPERA_BUSQUEDA_MS);
+    return () => clearTimeout(reloj);
+  }, [texto]);
 
-  async function liberarFoto() {
-    const motivo = window.prompt(t.motivoFoto) ?? '';
-    if (motivo.trim().length < 5) return;
-    try {
-      await pedir('POST', `/datos/admin/kyc/${id}/liberar-foto`, { motivo });
-      cargar();
-    } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
-    }
-  }
+  useEffect(() => {
+    pedir<{ ciudades: Ciudad[] }>('GET', '/datos/admin/horario/ciudades')
+      .then((x) => setCiudades(Array.isArray(x?.ciudades) ? x.ciudades : []))
+      .catch(() => setCiudades([]));
+  }, []);
 
-  async function calificar(cid: string, resultado: 'coincide' | 'no_coincide') {
-    try {
-      await pedir('PATCH', `/datos/admin/kyc/${id}/control/${cid}`, { resultado });
-      cargar();
-    } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
-    }
-  }
-  if (!d) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
-  const tiene = new Map(Object.entries(d.kyc.tiene));
+  const parametros = useCallback(
+    (despues?: string) => {
+      const p = new URLSearchParams({ estado, cuentas });
+      if (zona) p.set('zona', zona);
+      if (q) p.set('q', q);
+      if (despues) p.set('despues', despues);
+      return p.toString();
+    },
+    [estado, cuentas, zona, q],
+  );
+
+  const consulta = parametros();
+  const clave = `${consulta}#${vuelta}`;
+  useEffect(() => {
+    let vivo = true; // una respuesta vieja (otra búsqueda) no pisa la última
+    pedir<Respuesta>('GET', `/datos/admin/kyc?${consulta}`)
+      .then((x) => {
+        if (!vivo) return;
+        setResultado({
+          clave,
+          error: false,
+          r: {
+            solicitudes: Array.isArray(x?.solicitudes) ? x.solicitudes : [],
+            siguiente: x?.siguiente ?? null,
+            totales: x?.totales ?? null,
+          },
+        });
+      })
+      .catch(() => {
+        if (vivo) setResultado((ant) => ({ clave, error: true, r: ant?.r ?? null }));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [consulta, clave]);
+  const r = resultado?.r ?? null;
+  const cargando = resultado?.clave !== clave;
+  const error = resultado?.clave === clave && resultado.error;
+
+  const verMas = () => {
+    if (!r?.siguiente) return;
+    pedir<Respuesta>('GET', `/datos/admin/kyc?${parametros(r.siguiente)}`)
+      .then((x) =>
+        setResultado((ant) =>
+          ant?.r
+            ? {
+                ...ant,
+                r: {
+                  ...ant.r,
+                  solicitudes: [...ant.r.solicitudes, ...(x?.solicitudes ?? [])],
+                  siguiente: x?.siguiente ?? null,
+                },
+              }
+            : ant,
+        ),
+      )
+      .catch(() => setResultado((ant) => (ant ? { ...ant, error: true } : ant)));
+  };
+
+  const nombreDe = (e: Estado) =>
+    e === 'pendiente' ? t.pendientes : e === 'aprobado' ? t.aprobadas : t.rechazadas;
+  const totales = new Map(Object.entries(r?.totales ?? {}));
+  const lista = r?.solicitudes ?? [];
+  const otras = ESTADOS.filter((e) => e !== estado && (totales.get(e) ?? 0) > 0);
+
   return (
-    <section className="super">
-      <Enlace a={`${base}/verifications`} className="docs-volver">
-        {t.volver}
-      </Enlace>
-      <h1>{d.persona.nombre}</h1>
-      <p>
-        {d.persona.correo} · {d.persona.telefono || '—'} · {d.persona.fecha_nacimiento ?? '—'}
-        {d.persona.restaurante ? ` · ${d.persona.restaurante} · ${d.persona.direccion ?? ''}` : ''}
-      </p>
-      <p className="como-nota">{t.compara}</p>
-      {d.persona.rol === 'repartidor' ? (
-        <PapelesConductor id={id} idioma={idioma} completa />
-      ) : null}
-      <div className="kyc-fotos">
-        {Object.entries(t.piezas)
-          .filter(([p]) => tiene.get(p))
-          .map(([p, nombre]) => (
-            <figure key={p}>
-              <img src={`/datos/admin/kyc/${id}/foto/${p}`} alt={nombre} loading="lazy" />
-              <figcaption>{nombre}</figcaption>
-            </figure>
-          ))}
+    <section className="super kyc-bandeja-pantalla">
+      <EncabezadoPagina titulo={t.titulo} detalle={t.detalle}>
+        <Enlace a={`${base}/verifications/settings`} className="boton secundario chico">
+          <Settings size={16} aria-hidden="true" /> {t.configuracion}
+        </Enlace>
+      </EncabezadoPagina>
+
+      <div className="super-filtros" role="tablist" aria-label={t.titulo}>
+        {ESTADOS.map((e) => (
+          <button
+            key={e}
+            type="button"
+            role="tab"
+            aria-selected={estado === e}
+            className={estado === e ? 'activa' : undefined}
+            onClick={() => pref.cambiar('estado', e)}
+          >
+            {nombreDe(e)}
+            {totales.has(e) ? ` (${totales.get(e)})` : ''}
+          </button>
+        ))}
       </div>
-      {d.antecedentes ? (
-        <p>
-          <strong>{t.antecedentes}:</strong>{' '}
-          {t.antecedentesEstados[d.antecedentes.estado] ?? d.antecedentes.estado}
-        </p>
-      ) : null}
-      {d.selfiesControl ? (
-        <div className="kyc-controles">
-          <h2>{t.controles}</h2>
-          {d.selfiesControl.length === 0 ? <p className="suave">{t.sinControles}</p> : null}
-          <div className="kyc-fotos">
-            {d.selfiesControl.map((c) => (
-              <figure key={c.id}>
-                {c.conFoto ? (
-                  <img
-                    src={`/datos/admin/kyc/${id}/control/${c.id}`}
-                    alt={t.controles}
-                    loading="lazy"
-                  />
-                ) : null}
-                {c.conGiro ? (
-                  <img
-                    src={`/datos/admin/kyc/${id}/control/${c.id}?pose=giro`}
-                    alt={t.giroDerecha}
-                    loading="lazy"
-                  />
-                ) : null}
-                <figcaption>
-                  {t.pedida} {c.pedidaEn}
-                  {c.conGiro ? ` · ${t.conPruebaVida}` : ''}
-                  {c.tomadaEn ? '' : ` · ${t.sinTomar}`}
-                  {c.resultado
-                    ? ` · ${c.resultado === 'coincide' ? t.coincide : t.noCoincide}`
-                    : ''}
-                </figcaption>
-                {c.tomadaEn && !c.resultado ? (
-                  <div className="fila-botones">
-                    <button
-                      type="button"
-                      className="boton chico"
-                      onClick={() => void calificar(c.id, 'coincide')}
-                    >
-                      {t.coincide}
-                    </button>
-                    <button
-                      type="button"
-                      className="boton secundario chico"
-                      onClick={() => void calificar(c.id, 'no_coincide')}
-                    >
-                      {t.noCoincide}
-                    </button>
-                  </div>
-                ) : null}
-              </figure>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      {d.kyc.localDistanciaM != null && (
-        <p className={d.kyc.lejos ? 'error-general' : 'ok'}>
-          {t.distancia}: {d.kyc.localDistanciaM} {t.metros}
-        </p>
-      )}
-      {d.kyc.estado === 'pendiente' && (
-        <form className="formulario tarjeta-form" onSubmit={(e) => e.preventDefault()} noValidate>
-          <AvisoBorrador
-            visible={b.recuperado}
-            idioma={idioma}
-            empezar={() => void b.empezarDeNuevo()}
-          />
-          <p className="suave">{t.compararCara}</p>
-          <label className="campo">
-            <span>{t.motivo}</span>
-            <textarea
-              rows={3}
-              value={b.valores.motivo}
-              onChange={(e) => b.cambiar('motivo', e.target.value)}
-            />
-          </label>
-          {error && (
-            <p className="error-general" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="fila-botones">
-            <button type="button" className="boton" onClick={() => void decidir('aprobado')}>
-              {t.aprobar}
-            </button>
-            <button
-              type="button"
-              className="boton secundario"
-              onClick={() => void decidir('rechazado')}
-            >
-              {t.rechazar}
-            </button>
-          </div>
-        </form>
-      )}
-      {/* C-FOTO-VERIFICADA: solo soporte libera la foto aprobada, con motivo. */}
-      {d.kyc.estado === 'aprobado' && tiene.get('selfie') ? (
-        <p>
-          <button type="button" className="enlace" onClick={() => void liberarFoto()}>
-            {t.liberarFoto}
+
+      <div className="super-busqueda kyc-busqueda" role="search">
+        <input
+          type="search"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder={t.buscar}
+          aria-label={t.buscar}
+          autoComplete="off"
+        />
+        <select
+          value={zona}
+          onChange={(e) => pref.cambiar('zona', e.target.value)}
+          aria-label={t.zona}
+          data-testid="filtro-zona"
+        >
+          <option value="">{t.todasZonas}</option>
+          {ciudades.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre} ({c.pais})
+            </option>
+          ))}
+        </select>
+        <FiltroCuentas
+          valor={cuentas}
+          cambiar={(v) => pref.cambiar('cuentas', v)}
+          idioma={idioma}
+        />
+      </div>
+      <AvisoFiltrosGuardados
+        visible={pref.guardados}
+        idioma={idioma}
+        restablecer={pref.restablecer}
+      />
+
+      {error ? (
+        <p className="error-general" role="alert">
+          {t.error}{' '}
+          <button type="button" className="enlace" onClick={() => setVuelta((v) => v + 1)}>
+            {t.reintentar}
           </button>
         </p>
       ) : null}
+      {!r && cargando ? <p role="status">{t.cargando}</p> : null}
+      {r && q ? (
+        <p className="suave" role="status" aria-live="polite">
+          {t.resultados(lista.length, Boolean(r.siguiente))}
+        </p>
+      ) : null}
+      {r && lista.length === 0 ? (
+        <div className="kyc-vacio">
+          <p>{q ? t.sinResultados : deTabla(t.vacio, estado)}</p>
+          {otras.map((e) => (
+            <p key={e}>
+              {t.enOtra(totales.get(e) ?? 0, nombreDe(e))}{' '}
+              <button type="button" className="enlace" onClick={() => pref.cambiar('estado', e)}>
+                {t.verEn(nombreDe(e))}
+              </button>
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      <ul className="kyc-lista" data-testid="kyc-lista">
+        {lista.map((s) => {
+          const ficha = enlaceFicha(base, s);
+          const horas = horasDesde(s.enviado);
+          const src =
+            s.miniatura === 'mini'
+              ? `/datos/admin/kyc/${s.id}/foto/selfie?mini=1`
+              : s.miniatura === 'selfie'
+                ? `/datos/admin/kyc/${s.id}/foto/selfie`
+                : null;
+          return (
+            <li key={s.id} className="kyc-fila" data-testid="kyc-fila">
+              {src ? (
+                <button
+                  type="button"
+                  className="kyc-mini"
+                  aria-label={t.verFoto(s.nombre)}
+                  onClick={() =>
+                    setGrande({ src: `/datos/admin/kyc/${s.id}/foto/selfie`, titulo: s.nombre })
+                  }
+                >
+                  <img src={src} alt="" loading="lazy" />
+                </button>
+              ) : (
+                <span className="kyc-mini kyc-mini-vacia" aria-label={t.sinFoto} role="img" />
+              )}
+              <div className="kyc-fila-cuerpo">
+                <p className="kyc-fila-nombre">
+                  <Enlace a={`${base}/verifications/${s.id}`}>
+                    <strong>
+                      <Resaltado texto={s.nombre} q={q} />
+                    </strong>
+                  </Enlace>{' '}
+                  <EtiquetaPrueba si={s.esPrueba} idioma={idioma} />
+                </p>
+                <p className="kyc-fila-datos">
+                  {s.codigo ? (
+                    <span className="super-id">
+                      <Resaltado texto={s.codigo} q={q} />
+                    </span>
+                  ) : null}
+                  <span>{s.rol === 'restaurante' ? t.restaurante : t.repartidor}</span>
+                  <span>{s.zona || s.zonaId || t.sinZona}</span>
+                  {s.restaurante ? <span>{s.restaurante}</span> : null}
+                  <span className="kyc-fila-correo">{s.correo}</span>
+                </p>
+                <InsigniasComprobacion
+                  comprobaciones={s.comprobaciones ?? []}
+                  cara={s.cara ?? null}
+                  idioma={idioma}
+                />
+                {s.estado === 'rechazado' && s.motivo ? (
+                  <p className="suave">
+                    {t.motivoRechazo}: {s.motivo}
+                  </p>
+                ) : null}
+              </div>
+              <div className="kyc-fila-lado">
+                {s.estado === 'pendiente' ? (
+                  <Insignia
+                    tono={horas >= HORAS_URGENTE ? 'problema' : 'pendiente'}
+                    testId="kyc-espera"
+                  >
+                    {t.espera(horas)}
+                  </Insignia>
+                ) : (
+                  <Insignia estado={s.estado}>
+                    {(s.estado === 'aprobado' ? t.aprobadaEl : t.rechazadaEl)(
+                      fechaSuper(s.revisado ?? s.enviado, idioma, { estilo: 'fecha' }),
+                    )}
+                  </Insignia>
+                )}
+                <div className="kyc-fila-acciones">
+                  <Enlace a={`${base}/verifications/${s.id}`} className="boton secundario chico">
+                    {t.revisar}
+                  </Enlace>
+                  {ficha ? (
+                    <Enlace a={ficha} className="boton terciario chico">
+                      {t.ficha}
+                    </Enlace>
+                  ) : null}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {r?.siguiente ? (
+        <button type="button" className="boton secundario" onClick={verMas}>
+          {t.verMas}
+        </button>
+      ) : null}
+      <FotoGrande foto={grande} cerrar={() => setGrande(null)} idioma={idioma} />
     </section>
   );
 }
