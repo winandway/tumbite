@@ -143,6 +143,18 @@ const TESELA_DE_EJEMPLO = await sharp(
   .png()
   .toBuffer();
 
+/**
+ * El mapa de las piezas 01 y 07. Por decisión de Richard (22 nov 2026) es el mapa de siempre, sin
+ * rótulos (calles reales, ningún nombre). Con MAPA_DIBUJADO=1 se cambia por el dibujo de ejemplo que
+ * pidió el auditor de tiendas (ninguna ciudad reconocible), por si hiciera falta.
+ */
+const mapaDibujado = async (ctx) => {
+  if (process.env.MAPA_DIBUJADO !== '1') return;
+  await ctx.route(/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png/, (ruta) =>
+    ruta.fulfill({ body: TESELA_DE_EJEMPLO, contentType: 'image/png' }),
+  );
+};
+
 const navegador = mapaSinRotulos(await chromium.launch());
 let n = 0;
 
@@ -296,7 +308,8 @@ async function correr(idioma, tokens) {
   // 01 y 07 · La oferta con lo que ganas antes de aceptar, y la foto de la entrada del pasajero.
   // Con otra cuenta de ejemplo, en una ciudad que cobra solo en dólares: la oferta no muestra
   // moneda local de ningún país.
-  if (toca('01') || toca('07')) {
+  // Cada pieza con su propia cuenta de ejemplo recién armada: así una no le deja restos a la otra.
+  for (const pieza of ['01', '07'].filter(toca)) {
     // Ningún conductor de una pasada anterior se queda con la oferta.
     await sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id = '${ZONA_USD}'`);
     // …ni queda buscando conductor un viaje de una pasada que se cortó.
@@ -372,26 +385,48 @@ async function correr(idioma, tokens) {
       ).viaje;
     };
     const ctxK = await telefono(idioma, k, CONDUCTOR_USD);
-    // El mapa de estas dos piezas es un DIBUJO de ejemplo (calles y una plaza inventadas), igual en
-    // todas las teselas: no deja reconocer ninguna ciudad (dictamen del auditor de tiendas, 22 nov
-    // 2026). La atribución del mapa sigue en su sitio. Esta ruta manda sobre la de `mapaSinRotulos`.
-    await ctxK.route(/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png/, (ruta) =>
-      ruta.fulfill({ body: TESELA_DE_EJEMPLO, contentType: 'image/png' }),
-    );
-    await ctxK.clock.install();
+    await mapaDibujado(ctxK);
     const o = await ctxK.newPage();
-    if (toca('01')) {
-      const viaje = await pedirViaje();
-      await o.goto('/driver/');
+    if (pieza === '01') {
+      const mapaPintado = () =>
+        o
+          .waitForFunction(
+            () => {
+              const t = [...document.querySelectorAll('.leaflet-tile')];
+              return t.length > 0 && t.every((x) => x.complete && x.naturalWidth > 0);
+            },
+            undefined,
+            { timeout: 27_000 },
+          )
+          .then(
+            () => true,
+            () => false,
+          );
       const oferta = o.getByTestId('oferta-viaje');
+      // Primera oferta, de calentamiento: el mapa sin rótulos se pinta tesela por tesela y la primera
+      // vez tarda más que la oferta. Se cancela y la segunda ya lo encuentra pintado.
+      const previa = await pedirViaje();
+      await o.goto('/driver/');
       await oferta.waitFor({ timeout: 90_000 });
-      // El mismo segundo en los dos idiomas: al llegar a 25 s, el reloj de la página se queda quieto.
-      await oferta.getByText('25s', { exact: true }).waitFor({ timeout: 30_000 });
-      await ctxK.clock.setFixedTime(await o.evaluate(() => Date.now()));
+      await mapaPintado();
+      await pedir('POST', `/datos/viajes/${previa.id}/cancelar`, {}, c.token, {
+        'idempotency-key': `ficha-cancelar-${previa.id}`,
+      });
+      await oferta.waitFor({ state: 'detached', timeout: 60_000 }).catch(() => null);
+      const viaje = await pedirViaje();
+      await o.reload();
+      await oferta.waitFor({ timeout: 90_000 });
+      if (!(await mapaPintado())) throw new Error('el mapa de la oferta no terminó de pintarse');
+      // El mismo segundo en los dos idiomas: al llegar a 20 s, el reloj de la página se queda quieto.
+      await oferta.getByText('20s', { exact: true }).waitFor({ timeout: 30_000 });
+      await o.evaluate(() => {
+        const quieto = Date.now();
+        Date.now = () => quieto;
+      });
       // La oferta ocupa la pantalla: la foto empieza donde empieza la oferta, sin el encabezado de
       // la app asomando recortado detrás.
       await espera(900);
-      const chip = await oferta.getByText('25s', { exact: true }).boundingBox();
+      const chip = await oferta.getByText('20s', { exact: true }).boundingBox();
       const entera = await o.screenshot();
       // El borde de arriba de la hoja blanca de la oferta: desde el renglón del título se sube por
       // una columna vacía de la hoja mientras siga blanca.
@@ -415,13 +450,11 @@ async function correr(idioma, tokens) {
       });
     }
     await ctxK.close();
-    if (toca('07')) {
+    if (pieza === '07') {
       // Otro teléfono (el reloj del anterior quedó quieto y el mapa no terminaría de pintarse), con el
-      // mismo mapa dibujado; y otro viaje, aceptado por la ruta normal en cuanto se le ofrece.
+      // mismo mapa; y otro viaje, aceptado por la ruta normal en cuanto se le ofrece.
       const ctx7 = await telefono(idioma, k, CONDUCTOR_USD);
-      await ctx7.route(/tile\.openstreetmap\.org\/\d+\/\d+\/\d+\.png/, (ruta) =>
-        ruta.fulfill({ body: TESELA_DE_EJEMPLO, contentType: 'image/png' }),
-      );
+      await mapaDibujado(ctx7);
       const o = await ctx7.newPage();
       const viaje = await pedirViaje();
       for (let i = 0; ; i++) {

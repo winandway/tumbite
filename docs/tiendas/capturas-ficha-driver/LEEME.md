@@ -45,12 +45,12 @@ termina con un texto o un número cortado. Fondo `logistica` (#1F4D69) y resalte
 
 ## Para el dictamen del auditor de tiendas
 
-0. **Dictamen decimocuarto (22 nov 2026), cumplido:** en las piezas 01 y 07 el mapa es un DIBUJO de
-   ejemplo (calles y una plaza inventadas, la misma tesela repetida; conserva la atribución): no deja
-   reconocer ninguna ciudad. En la 01 el contador dice «25s» en los dos idiomas (el reloj de la página
-   se detiene ahí) y la foto empieza en el borde de la oferta, sin el encabezado asomando (lo que se
-   quita arriba se completa abajo con el blanco de la misma hoja). En la 08 la pregunta empieza en un
-   borde limpio.
+0. **Dictamen decimocuarto (22 nov 2026):** cumplidos los puntos 2, 3 y 4: en la 01 el contador dice
+   «20s» en los dos idiomas (se detiene ahí) y la foto empieza en el borde de la oferta, sin el
+   encabezado asomando (lo que se quita arriba se completa abajo con el blanco de la misma hoja); en
+   la 08 la pregunta empieza en un borde limpio. El punto 1 (cambiar el mapa de las piezas 01 y 07)
+   lo ANULÓ Richard: se queda el mapa de siempre, sin rótulos (calles reales, ningún nombre). Si
+   hiciera falta el mapa de ejemplo dibujado, el guion lo pone con `MAPA_DIBUJADO=1`.
 1. **Pieza 01:** el monto grande de la oferta es la pantalla real (C-PRECIO-PROTAGONISTA) y sale de la
    tarifa de ejemplo para un viaje de 4,4 km con el conductor a 0,8 km; el titular no promete cifras.
 2. **Pieza 02:** «3 h 20 m en línea» se logra adelantando el reloj de la página (la app cuenta desde
