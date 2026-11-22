@@ -5,6 +5,14 @@ import {
 } from '@tumbite/compartido';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
+import {
+  PROVEEDOR_SMSMASIVO,
+  anotarErrorSmsMasivo,
+  enviarPorSmsMasivo,
+  smsMasivoDeHoy,
+  topeSmsMasivo,
+  vaPorSmsMasivo,
+} from './smsMasivo';
 
 /**
  * SMS de respaldo y llamadas con número oculto, por Twilio. Como dicen los estudios: el push no
@@ -202,10 +210,16 @@ export async function enviarSms(
     texto: string;
   },
 ): Promise<boolean> {
-  if (!smsConfigurado(env)) return false;
   const para = telefonoE164(a.telefono);
-  // C-PANICO-ZONA: el SMS de pánico al responsable de la zona sale a cualquier país (también +58).
-  if (!para || (!SMS_DE_PANICO.has(a.tipo) && !destinoPermitido(env, para))) return false;
+  if (!para) return false;
+  // C-SMS-VENEZUELA: a +58 sale por el proveedor local SOLO si está encendido; si no, lo de siempre.
+  const local = vaPorSmsMasivo(env, para);
+  const dePanico = SMS_DE_PANICO.has(a.tipo);
+  if (!local) {
+    if (!smsConfigurado(env)) return false;
+    // C-PANICO-ZONA: el SMS de pánico al responsable de la zona sale a cualquier país (también +58).
+    if (!dePanico && !destinoPermitido(env, para)) return false;
+  }
   // C-SMS-CONSENTIMIENTO: sin la casilla marcada, al titular no se le manda nada que no pidió.
   if (!smsSinConsentimientoDelTitular(a.tipo) && !(await aceptoSms(db, a.usuarioId))) return false;
   // C-PANICO-ZONA: tope diario del SMS de pánico (cada envío queda en sms_enviados).
@@ -234,27 +248,52 @@ export async function enviarSms(
     }
   }
   const id = nuevoId();
-  try {
-    await proveedorSms(env).enviar(env, para, a.texto);
-    await db
-      .prepare(
-        "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado) VALUES (?, ?, ?, ?, 'enviado')",
-      )
-      .bind(id, a.usuarioId, a.pedidoId, a.tipo)
-      .run();
-    return true;
-  } catch (e) {
-    ultimoErrorSms = { cuando: new Date().toISOString(), motivo: String(e) };
-    console.error('sms:', ultimoErrorSms.motivo);
-    await db
-      .prepare(
-        "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado) VALUES (?, ?, ?, ?, 'error')",
-      )
-      .bind(id, a.usuarioId, a.pedidoId, a.tipo)
-      .run()
-      .catch(() => undefined);
-    return false;
+  // Por dónde se intenta, en orden. El pánico a Venezuela tiene respaldo en Twilio si el local falla.
+  const caminos: string[] = local
+    ? [PROVEEDOR_SMSMASIVO, ...(dePanico && smsConfigurado(env) ? [proveedorSms(env).nombre] : [])]
+    : [proveedorSms(env).nombre];
+  for (const camino of caminos) {
+    try {
+      let referencia: string;
+      if (camino === PROVEEDOR_SMSMASIVO) {
+        // C-SMS-VENEZUELA: tope de gasto del día. Si no se puede contar, no se manda.
+        const hoy = await smsMasivoDeHoy(db);
+        const tope = topeSmsMasivo(env);
+        if (hoy >= tope) {
+          anotarErrorSmsMasivo(`tope diario alcanzado (${tope})`);
+          throw new Error(`tope diario de SMS a Venezuela alcanzado (${tope})`);
+        }
+        try {
+          referencia = await enviarPorSmsMasivo(env, para, a.texto, id);
+        } catch (e) {
+          anotarErrorSmsMasivo(String(e));
+          throw e;
+        }
+      } else {
+        referencia = await proveedorSms(env).enviar(env, para, a.texto);
+      }
+      await db
+        .prepare(
+          "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado, proveedor, referencia) VALUES (?, ?, ?, ?, 'enviado', ?, ?)",
+        )
+        .bind(id, a.usuarioId, a.pedidoId, a.tipo, camino, referencia)
+        .run();
+      return true;
+    } catch (e) {
+      const fallo = String(e);
+      if (camino !== PROVEEDOR_SMSMASIVO)
+        ultimoErrorSms = { cuando: new Date().toISOString(), motivo: fallo };
+      console.error('sms:', fallo);
+    }
   }
+  await db
+    .prepare(
+      "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado, proveedor) VALUES (?, ?, ?, ?, 'error', ?)",
+    )
+    .bind(id, a.usuarioId, a.pedidoId, a.tipo, caminos[0] ?? null)
+    .run()
+    .catch((e: unknown) => console.error('sms: no se pudo anotar el fallo', String(e)));
+  return false;
 }
 
 const codificar = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

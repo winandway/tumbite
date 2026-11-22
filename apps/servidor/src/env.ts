@@ -141,6 +141,15 @@ export const esquemaEnv = z.object({
   TWILIO_API_URL: z.string().optional(),
   /** C-SMS-PROVEEDOR: por dónde salen los SMS («twilio», el único hoy). */
   SMS_PROVEEDOR: z.string().optional(),
+  /**
+   * C-SMS-VENEZUELA: SMS Masivo Venezuela para los celulares +58. Solo manda con la llave Y
+   * SMSMASIVO_ENCENDIDO=si. SMSMASIVO_TOPE_DIA: máximo de SMS en 24 horas (de fábrica 150).
+   */
+  SMSMASIVO_API_KEY: z.string().min(16).optional(),
+  SMSMASIVO_ENCENDIDO: z.string().optional(),
+  SMSMASIVO_TOPE_DIA: z.string().optional(),
+  /** Solo para el recorrido y las pruebas: el proveedor simulado en localhost. */
+  SMSMASIVO_API_URL: z.string().optional(),
   /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */
   SMS_PREFIJOS: z.string().optional(),
   /**

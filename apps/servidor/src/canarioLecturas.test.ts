@@ -31,7 +31,8 @@ afterEach(() => vi.unstubAllGlobals());
 // +1 (19 nov 2026, C-VERIFICACION-IA): la pieza del canario lee la fila del gasto de IA de hoy.
 // +1 (20 nov 2026, C-CAMILA-CORREO-HILO): al juntarse con la pieza del correo entrante, que lee su fila.
 // +1 (21 nov 2026, C-REPARACION-PAIS): la marca de la reparación de cuentas de país (una vez por servidor).
-const TOPE_CANARIO = 1153;
+// +1 (22 nov 2026, C-SMS-VENEZUELA): la pieza nueva «smsVenezuela» suma su fila del estado del canario.
+const TOPE_CANARIO = 1154;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

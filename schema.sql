@@ -883,6 +883,9 @@ CREATE TABLE IF NOT EXISTS sms_enviados (
   pedido_id TEXT REFERENCES pedidos(id),
   tipo TEXT NOT NULL,
   estado TEXT NOT NULL,
+  -- C-SMS-VENEZUELA: por qué proveedor salió y su número de solicitud (también en COLUMNAS).
+  proveedor TEXT,
+  referencia TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

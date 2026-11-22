@@ -28,6 +28,10 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-SMS-VENEZUELA (22 nov 2026): por qué proveedor salió cada SMS y su número de solicitud; con eso
+  // se cuenta el tope diario del proveedor de Venezuela y se le pregunta el estado de un envío.
+  ['sms_enviados', 'proveedor', 'TEXT'],
+  ['sms_enviados', 'referencia', 'TEXT'],
   // C-CUENTA-PRUEBA (21 nov 2026): la marca única de «cuenta de prueba». La pone solo el equipo desde el
   // panel (con auditoría). Habilita los servicios encendidos solo para pruebas en una ciudad y deja la
   // cuenta fuera de reportes, conteos y registros nuevos.

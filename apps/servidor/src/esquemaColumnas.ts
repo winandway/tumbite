@@ -639,6 +639,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "tipo",
     "estado",
+    "proveedor",
+    "referencia",
     "creado_en"
   ],
   "llamadas": [
