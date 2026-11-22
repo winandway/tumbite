@@ -17,6 +17,7 @@ import {
   FotoEvidencia,
   IconoServicio,
   LineaTiempo,
+  puntosDeLinea,
   MapaFicha,
   type Paso,
   type PuntoFicha,
@@ -258,6 +259,8 @@ export function SuperViaje({ base, id, idioma }: { base: string; id: string; idi
       ? { id: 'd', ...v.destino.lugar, color: '#f20d20', etiqueta: v.destino.direccion }
       : null,
   ].filter((x): x is PuntoFicha => x !== null);
+  // C-RASTRO: dónde estaba el conductor en cada paso, numerado en el mapa.
+  const puntosConPasos = [...puntos, ...puntosDeLinea(v.linea, t.eventos)];
   return (
     <section className="super ficha-op">
       <button type="button" className="enlace docs-volver" onClick={() => window.history.back()}>
@@ -324,7 +327,7 @@ export function SuperViaje({ base, id, idioma }: { base: string; id: string; idi
                 : ''}
             </dd>
           </dl>
-          <MapaFicha puntos={puntos} idioma={idioma} etiqueta={t.mapa} />
+          <MapaFicha puntos={puntosConPasos} idioma={idioma} etiqueta={t.mapa} />
           {v.esEnvio ? null : <p className="ficha-nota">{t.sinFotos}</p>}
         </section>
         <section className="tarjeta-form">

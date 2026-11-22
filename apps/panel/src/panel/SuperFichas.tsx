@@ -1,4 +1,5 @@
 import { Insignia } from './diseno/Insignia';
+import { ActividadCuenta } from './ActividadCuenta';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fechaSuper } from './horario';
 import { ImportarMenu } from './ImportarMenu';
@@ -1098,6 +1099,8 @@ export function SuperRepartidor({
           </div>
         </div>
       </div>
+      {/* C-RASTRO: de dónde vino el alta, qué pasos dio y todo lo que ha hecho. */}
+      <ActividadCuenta ruta={`/datos/admin/repartidores/${id}/actividad`} idioma={idioma} />
       <div className="tarjeta-form">
         <h2>{t.historial}</h2>
         <ul className="super-lista">
@@ -1286,6 +1289,8 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         <Quejas base={base} quejas={c.quejas} idioma={idioma} />
       </div>
       <HistorialCorreo lista={c.historialCorreo} idioma={idioma} />
+      {/* C-RASTRO: de dónde vino el alta, qué pasos dio y todo lo que ha hecho. */}
+      <ActividadCuenta ruta={`/datos/admin/clientes/${id}/actividad`} idioma={idioma} />
       <div className="tarjeta-form">
         <h2>{t.historial}</h2>
         <ul className="super-lista">

@@ -1607,6 +1607,114 @@ const agentesDivoox: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────────── C-RASTRO: el rastro de actividad (22 nov 2026) ─────────────────────────
+const capRastro = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({
+  archivo: `rastro-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const rastroActividad: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'activity-trail',
+    titulo:
+      'Rastro de actividad: qué hizo cada cuenta, cómo fue cada viaje y dónde se quedan los registros',
+    resumen:
+      'Cómo ver de dónde vino el alta de una cuenta y en qué paso quedó, leer la línea de tiempo de un viaje con minutos y kilómetros, y usar el embudo de registro.',
+    explicacion: [
+      'En la ficha de un conductor o de un cliente, la sección «Actividad» dice cuándo se creó la cuenta, desde qué app y versión, si fue en Android, iPhone o navegador, y el país y la ciudad aproximados según la red. No se guarda la dirección de internet de la persona.',
+      'Debajo, «Registro» muestra cada paso en orden con su estado: en verde lo hecho, en gris lo pendiente, y en ámbar el paso que le falta. Así se sabe a quién llamar y qué pedirle.',
+      'La «Línea de tiempo» junta lo demás: fotos que subió y qué dijo la comprobación automática, decisiones del equipo con el nombre de quien las tomó, vehículos, habilitaciones, viajes, pedidos y conversaciones con soporte. Los viajes y pedidos llevan su enlace a la ficha.',
+      'En la ficha de un viaje o de un pedido, la línea de tiempo dice cuánto pasó entre un paso y el siguiente y cuántos metros se movió el conductor entre ellos. Si el viaje se canceló o el conductor lo soltó, sale el motivo. En el mapa, los puntos grises numerados dicen dónde estaba el conductor en cada paso.',
+      'El «Embudo de registro» (menú, grupo Personas) cuenta cuántas personas llegan a cada paso y marca en ámbar el paso donde se queda la mayoría. Se puede ver por app, por fechas, por país y por zona. Solo cuenta cuentas reales.',
+      'Los tres primeros pasos del embudo pasan antes de que exista la cuenta: son contadores, sin saber quién es la persona. Las cuentas creadas antes del 22 de noviembre de 2026 no tienen guardado de dónde vino el alta.',
+    ],
+    capturas: [
+      capRastro(
+        'actividad',
+        'es',
+        'Sección «Actividad» de la ficha de un conductor con el alta, la app, la red aproximada, los pasos del registro y la línea de tiempo.',
+        'La actividad de una cuenta: de dónde vino, qué pasos dio y cuál le falta.',
+      ),
+      capRastro(
+        'viaje',
+        'es',
+        'Línea de tiempo de un viaje con los minutos y los metros entre cada paso y el mapa con los puntos numerados.',
+        'Cada paso del viaje con su hora, el tiempo y la distancia desde el paso anterior.',
+      ),
+      capRastro(
+        'embudo',
+        'es',
+        'Pantalla «Embudo de registro» con los filtros, la tabla de pasos y la marca en el paso donde se queda la mayoría.',
+        'El embudo: cuántas personas llegan a cada paso y dónde se quedan.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo sé desde qué app se registró alguien?',
+      '¿En qué paso del registro se quedó un conductor?',
+      '¿Cuánto tardó el conductor en llegar?',
+      '¿Dónde abandonan el registro?',
+    ],
+    pasos: [
+      'Abre la ficha del conductor o del cliente y baja a «Actividad».',
+      'Lee «Le falta» para saber cuál es su siguiente paso.',
+      'Para un viaje, abre su ficha y mira la línea de tiempo y el mapa.',
+      'Para el embudo, entra a «Embudo de registro», elige la app y las fechas.',
+    ],
+  },
+  en: {
+    id: 'activity-trail',
+    titulo: 'Activity trail: what each account did, how each ride went and where sign-ups stop',
+    resumen:
+      'How to see where an account signed up from and which step it stopped at, read a ride timeline with minutes and distance, and use the sign-up funnel.',
+    explicacion: [
+      'On a driver or customer file, the “Activity” section shows when the account was created, from which app and version, whether it was Android, iPhone or a browser, and the approximate country and city based on the network. The person’s internet address is not stored.',
+      'Below it, “Sign-up” lists every step in order with its status: green for done, gray for pending, and amber for the step still missing. That tells you who to call and what to ask for.',
+      'The “Timeline” gathers everything else: photos uploaded and what the automatic check said, team decisions with the name of who made them, vehicles, service access, rides, orders and support conversations. Rides and orders link to their file.',
+      'On a ride or order file, the timeline shows how long passed between one step and the next and how far the driver moved between them. If the ride was canceled or released, the reason is shown. On the map, the numbered gray dots show where the driver was at each step.',
+      'The “Sign-up funnel” (menu, People group) counts how many people reach each step and flags in amber the step where most people stop. You can view it by app, dates, country and zone. Only real accounts are counted.',
+      'The first three funnel steps happen before the account exists: they are counters, with no way to know who the person is. Accounts created before November 22, 2026 have no stored sign-up origin.',
+    ],
+    capturas: [
+      capRastro(
+        'actividad',
+        'en',
+        'The “Activity” section of a driver file with sign-up, app, approximate network, sign-up steps and timeline.',
+        'An account’s activity: where it came from, which steps it took and which one is missing.',
+      ),
+      capRastro(
+        'viaje',
+        'en',
+        'A ride timeline with minutes and meters between each step and the map with numbered dots.',
+        'Each ride step with its time, and the time and distance from the previous step.',
+      ),
+      capRastro(
+        'embudo',
+        'en',
+        'The “Sign-up funnel” screen with filters, the steps table and the flag on the step where most people stop.',
+        'The funnel: how many people reach each step and where they stop.',
+      ),
+    ],
+    preguntas: [
+      'How do I know which app someone signed up from?',
+      'Which sign-up step did a driver stop at?',
+      'How long did the driver take to arrive?',
+      'Where do people drop out of sign-up?',
+    ],
+    pasos: [
+      'Open the driver or customer file and scroll to “Activity.”',
+      'Read “Still missing” to know their next step.',
+      'For a ride, open its file and check the timeline and the map.',
+      'For the funnel, go to “Sign-up funnel,” then choose the app and dates.',
+    ],
+  },
+};
+
 const saldoConductores: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'driver-balance-top-up',
@@ -2500,6 +2608,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         ...tomar(['search-orders-rides-people', 'monitor-live-orders-rides']),
         de(semaforo),
         ...tomar(['read-order-ride-file']),
+        de(rastroActividad),
       ],
     },
     {

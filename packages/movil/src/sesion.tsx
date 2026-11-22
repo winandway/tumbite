@@ -139,7 +139,8 @@ export function SesionProvider({
         token: () => token,
         idioma: () => idioma,
         pase: paseTurnstile,
-        app: () => `${roles[0] ?? 'cliente'}/${versionApp()}`,
+        // C-RASTRO: la plataforma (android, ios o web) viaja al final; el servidor la lee del alta.
+        app: () => `${roles[0] ?? 'cliente'}/${versionApp()} ${Platform.OS}`,
         aparato: idAparato,
         alSesionTerminada: terminarSesion,
       }),

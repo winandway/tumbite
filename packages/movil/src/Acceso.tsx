@@ -22,6 +22,7 @@ import {
 } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
+import { usePasoRegistro } from './rastroRegistro';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
 import { SugerenciaCorreo } from './SugerenciaCorreo';
@@ -129,6 +130,11 @@ export function Acceso({
   // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
   const [acepto, setAcepto] = useState(false);
   const v = b.valores;
+  // C-RASTRO: los pasos de antes de crear la cuenta, una vez por aparato (solo un contador).
+  const registrando = modo === 'registro';
+  usePasoRegistro(api, rolRegistro, 'abrio', registrando);
+  usePasoRegistro(api, rolRegistro, 'formulario', registrando && Boolean(v.nombre || v.correo));
+  usePasoRegistro(api, rolRegistro, 'revisar', registrando && paso === 'revisar');
   const errorDe = (c: CasillaRegistro) =>
     fallos.find((f) => f.campo === c)?.mensaje ?? (error?.campo === c ? error.mensaje : undefined);
   // El error de una casilla se va en cuanto la persona la corrige (antes quedaba en rojo aunque ya

@@ -324,6 +324,9 @@ export function crearApi(op: OpcionesApi) {
     subirArchivo,
     verFoto,
     registro: (d: DatosRegistro) => pedir<RespuestaSesion>('POST', '/datos/cuentas/registro', d),
+    /** C-RASTRO: un paso del registro de antes de crear la cuenta (el servidor solo suma a un contador). */
+    pasoRegistro: (app: 'cliente' | 'repartidor', paso: 'abrio' | 'formulario' | 'revisar') =>
+      pedir<{ ok: boolean }>('POST', '/datos/rastro/paso', { app, paso }),
     entrar: (d: DatosEntrar) => pedir<RespuestaSesion>('POST', '/datos/cuentas/entrar', d),
     salir: () => pedir<{ ok: true }>('POST', '/datos/cuentas/salir', {}),
     yo: () => pedir<{ usuario: Usuario }>('GET', '/datos/cuentas/yo'),

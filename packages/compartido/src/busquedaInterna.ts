@@ -240,6 +240,8 @@ export const PANTALLAS_PREFERENCIAS = [
   // C-CUENTA-PRUEBA: el filtro «Cuentas» de Restaurantes y Líneas.
   'restaurantes',
   'lineas',
+  // C-RASTRO: la app y la zona del embudo del registro.
+  'embudo',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [

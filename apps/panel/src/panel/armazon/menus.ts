@@ -6,6 +6,7 @@ import {
   Building,
   Building2,
   ChartColumn,
+  Filter,
   ClipboardCheck,
   FileUp,
   FlaskConical,
@@ -96,6 +97,8 @@ export const ICONOS_MENU = {
   zones: IconoMapa,
   waitlist: Hourglass,
   reports: ChartColumn,
+  // C-RASTRO: el embudo del registro.
+  signups: Filter,
   team: UserCog,
   pilot: FlaskConical,
   'test-city': Building,
@@ -278,7 +281,7 @@ export function gruposAdmin(
           g.operacion,
           ['inicio', 'orders', 'tickets', 'camila', 'moderation', 'approvals', 'verifications'],
         ],
-        [g.personas, ['customers', 'restaurants', 'drivers', 'lines']],
+        [g.personas, ['customers', 'restaurants', 'drivers', 'lines', 'signups']],
         [
           g.dinero,
           [

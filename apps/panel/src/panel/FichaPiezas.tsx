@@ -307,7 +307,27 @@ export type Paso = {
   detalle: string | null;
   capa: 'principal' | 'manager';
   desdeAnteriorS: number | null;
+  /** C-RASTRO: dónde estaba el conductor en ese paso y los metros desde el paso anterior con lugar. */
+  lugar?: { lat: number; lng: number } | null;
+  desdeAnteriorM?: number | null;
 };
+
+/**
+ * C-RASTRO: los pasos que guardaron dónde estaba el conductor, como puntos para el mapa de la ficha
+ * (gris, para no competir con la recogida en negro y el destino en rojo).
+ */
+export function puntosDeLinea(pasos: Paso[], eventos: Record<string, string>): PuntoFicha[] {
+  const nombres = new Map(Object.entries(eventos));
+  return pasos
+    .filter((p) => p.capa === 'principal' && p.lugar)
+    .map((p, i) => ({
+      id: `paso-${i}`,
+      lat: p.lugar!.lat,
+      lng: p.lugar!.lng,
+      color: '#666b73',
+      etiqueta: `${i + 1}. ${nombres.get(p.evento) ?? p.evento}`,
+    }));
+}
 
 const TL = {
   es: {
@@ -316,6 +336,8 @@ const TL = {
     ocultarManager: 'Ocultar lo que hizo el Manager',
     manager: 'Manager',
     despues: 'después',
+    motivo: 'Motivo',
+    conLugar: 'Los pasos numerados en el mapa dicen dónde estaba el conductor en ese momento.',
     roles: {
       cliente: 'cliente',
       restaurante: 'restaurante',
@@ -331,6 +353,8 @@ const TL = {
     ocultarManager: 'Hide what the Manager did',
     manager: 'Manager',
     despues: 'later',
+    motivo: 'Reason',
+    conLugar: 'Numbered steps on the map show where the driver was at that moment.',
     roles: {
       cliente: 'customer',
       restaurante: 'restaurant',
@@ -402,12 +426,20 @@ export function LineaTiempo({
                       · {textoDuracion(p.desdeAnteriorS)} {t.despues}
                     </span>
                   ) : null}
+                  {p.desdeAnteriorM != null && p.desdeAnteriorM >= 50 ? (
+                    <span className="ficha-desde"> · {textoMetros(p.desdeAnteriorM, idioma)}</span>
+                  ) : null}
                 </time>
                 <strong>
                   {p.capa === 'manager' ? `${t.manager}: ` : ''}
                   {mapa.get(p.evento) ?? p.evento}
                   {p.detalle && p.tipo === 'ticket' ? ` · ${p.detalle}` : ''}
                 </strong>
+                {p.detalle && p.tipo === 'estado' ? (
+                  <span className="ficha-motivo">
+                    {t.motivo}: {p.detalle}
+                  </span>
+                ) : null}
                 {quien || p.rol ? (
                   <span>
                     {[quien, p.rol ? roles.get(p.rol) : null].filter(Boolean).join(' · ')}
@@ -417,6 +449,7 @@ export function LineaTiempo({
             );
           })}
       </ol>
+      {pasos.some((p) => p.lugar) ? <p className="ficha-nota">{t.conLugar}</p> : null}
     </section>
   );
 }

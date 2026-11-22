@@ -81,6 +81,7 @@ import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
 import { SuperViajesFijos } from './SuperViajesFijos';
 import { SuperViaje } from './SuperViaje';
+import { SuperEmbudo } from './SuperEmbudo';
 import { SuperConfiguracion } from './SuperConfiguracion';
 import { ProveedorHorario } from './horario';
 import { SuperMoto } from './SuperMoto';
@@ -195,6 +196,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   // C-CAMILA-BUZON: el buzón de Camila (casos, conversaciones, aprendizaje, líderes y ajustes).
   if (sub === '/camila') return <SuperCamila idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
+  // C-RASTRO: el embudo del registro.
+  if (sub === '/signups') return <SuperEmbudo idioma={idioma} />;
   if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;
   if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;

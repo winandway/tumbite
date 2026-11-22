@@ -181,8 +181,16 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    expect(PRIVACIDAD.es.actualizado).toContain('21 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 21, 2026');
+    expect(PRIVACIDAD.es.actualizado).toContain('22 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 22, 2026');
+  });
+  it('C-RASTRO: dice que se guardan la app, la versión, la red aproximada y el avance del registro', () => {
+    expect(texto(PRIVACIDAD.es)).toMatch(
+      /la app que usas y su versión.*Android, iPhone o un navegador.*país y la ciudad aproximados.*Avance de tu registro.*sin identificar a nadie/,
+    );
+    expect(texto(PRIVACIDAD.en)).toMatch(
+      /the app you use and its version.*Android, iPhone or a browser.*approximate country and city.*Sign-up progress.*without identifying anyone/,
+    );
   });
 });
 

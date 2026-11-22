@@ -31,9 +31,11 @@ const SITIO = 'https://divoox.com';
 // soporte con la asistente virtual, Google Gemini como proveedor y su borrado con la cuenta.
 // C-PRIVACIDAD-REGALO-LINEAS (19 nov 2026): Privacidad cuenta la ubicación del pasajero en un viaje
 // con regalo (antifraude, sin guardar el punto) y lo que comparten las líneas de taxi y mototaxi.
+// C-RASTRO (22 nov 2026): la app y su versión, la plataforma, el país y la ciudad aproximados de la red y
+// el avance del registro.
 const FECHA_PRIVACIDAD = {
-  es: 'Actualizado: 21 de noviembre de 2026',
-  en: 'Last updated: November 21, 2026',
+  es: 'Actualizado: 22 de noviembre de 2026',
+  en: 'Last updated: November 22, 2026',
 };
 const FECHA_CHAT = {
   es: 'Actualizado: 18 de noviembre de 2026',
@@ -78,7 +80,8 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Selfie con casco y selfies de control (conductores): en las ciudades que lo exigen, el conductor de Divoox Moto se toma una selfie con el casco puesto antes de conectarse; vale 12 horas. También podemos pedirte una selfie al azar para confirmar que eres tú quien maneja. Una persona del equipo puede revisarlas; no creamos plantillas biométricas. Se guardan en un almacén privado y se borran cuando borras tu cuenta.',
           'Ubicación: solo con tu permiso. Ver la sección 4.',
           'Pagos con tarjeta: los procesa Stripe. Nunca recibimos ni guardamos el número completo de tu tarjeta ni el código de seguridad. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta. Los pagos a restaurantes y repartidores en Estados Unidos van por Stripe Connect, donde los datos bancarios se escriben en la pantalla de Stripe.',
-          'Datos técnicos: el identificador del teléfono y su idioma para enviarte avisos en tu idioma (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
+          'Datos técnicos: el identificador del teléfono y su idioma para enviarte avisos en tu idioma (si los permites); la app que usas y su versión, si entras desde Android, iPhone o un navegador, y la fecha de cada acceso. Usamos tu dirección IP para la seguridad de tu cuenta y para frenar abusos, y con ella calculamos el país y la ciudad aproximados desde donde te registras y entras, que guardamos con cada acceso.',
+          'Avance de tu registro: anotamos qué pasos del registro completaste y cuándo, para ayudarte a terminarlo y para mejorar el proceso. Antes de que crees tu cuenta solo contamos cuántas personas llegan a cada pantalla del registro, sin identificar a nadie.',
           'Lista de espera: si te anotas en divoox.com, tu nombre, correo, ciudad y, si lo das, tu teléfono.',
         ],
       },
@@ -209,7 +212,8 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Helmet selfie and identity check selfies (drivers): in cities that require it, Divoox Moto drivers take a selfie with their helmet on before going online; it’s valid for 12 hours. We may also ask for a selfie at random to confirm it’s you driving. A person on our team may review them; we don’t create biometric templates. They’re stored privately and deleted when you delete your account.',
           'Location: only with your permission. See section 4.',
           'Card payments: processed by Stripe. We never receive or store your full card number or security code. Stripe only sends us a payment ID, the card brand, and its last four digits. Payouts to restaurants and drivers in the United States go through Stripe Connect, where bank details are entered on Stripe’s screen.',
-          'Technical information: your device token and its language, to send you notifications in your language (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
+          'Technical information: your device token and its language, to send you notifications in your language (if you allow them); the app you use and its version, whether you sign in from Android, iPhone or a browser, and the time of each sign-in. We use your IP address to protect your account and prevent abuse, and to estimate the approximate country and city you sign up and sign in from, which we store with each sign-in.',
+          'Sign-up progress: we record which sign-up steps you completed and when, to help you finish and to improve the process. Before you create an account we only count how many people reach each sign-up screen, without identifying anyone.',
           'Waitlist: if you sign up on divoox.com, your name, email, city, and, if you share it, your phone number.',
         ],
       },

@@ -28,6 +28,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['ResolverAutorizacion.tsx', 'resolve-expired-card-authorization'],
   ['SuperRegalosDivoox.tsx', 'create-divoox-gift-code'],
   ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
+  ['SuperEmbudo.tsx', 'activity-trail'],
   ['SuperAgentes.tsx', 'divoox-agents'],
   ['SuperMoto.tsx', 'bolivar-reference-rate'],
   ['SuperMoto.tsx', 'open-peru-city'],

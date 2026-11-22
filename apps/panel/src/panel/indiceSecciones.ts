@@ -149,6 +149,18 @@ export const SINONIMOS_SECCIONES: Readonly<Record<string, Palabras>> = {
     es: ['efectivo', 'cobro en mano', 'pago móvil', 'evidencias de pago', 'comprobantes'],
     en: ['cash', 'paid in person', 'mobile payment', 'payment proof', 'receipts'],
   },
+  signups: {
+    es: [
+      'embudo',
+      'registro',
+      'registros',
+      'altas',
+      'abandono',
+      'dónde se quedan',
+      'cuentas nuevas',
+    ],
+    en: ['funnel', 'sign-ups', 'signups', 'drop-off', 'new accounts', 'onboarding'],
+  },
   'driver-balance': {
     es: ['saldo', 'recargas', 'recargar', 'billetera', 'ganancias de conductores', 'prepago'],
     en: ['balance', 'top-ups', 'top up', 'wallet', 'driver earnings', 'prepaid'],

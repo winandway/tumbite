@@ -37,6 +37,7 @@ import {
   IconoServicio,
   LineaTiempo,
   MapaFicha,
+  puntosDeLinea,
   type Paso,
   type PuntoFicha,
   TarjetaTiempos,
@@ -746,7 +747,11 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
             </li>
           ) : null}
         </ul>
-        <MapaFicha puntos={puntos} idioma={idioma} etiqueta={tf.mapa} />
+        <MapaFicha
+          puntos={[...puntos, ...puntosDeLinea(p.linea ?? [], eventos)]}
+          idioma={idioma}
+          etiqueta={tf.mapa}
+        />
       </section>
       <div className="ficha-dos">
         <section className="tarjeta-form ficha-cierre">
