@@ -667,6 +667,7 @@ export function Inicio() {
   >('inicio');
   // C-ASISTENTE-DRIVER: los papeles del conductor (asistente de verificación y «Tus papeles»).
   const papeles = usePapeles(api);
+  const recargarPapeles = papeles.recargar;
   // A dónde vuelve el asistente al salir: al inicio o al perfil, según desde dónde se abrió.
   const [vueltaPapeles, setVueltaPapeles] = useState<'inicio' | 'datos'>('inicio');
   const abrirPapeles = (desde: 'inicio' | 'datos') => {
@@ -834,10 +835,12 @@ export function Inicio() {
         if (r.cambio) {
           void recargarPanel();
           void cargar();
+          // C-PAPELES-TRAS-CIUDAD: con la ciudad ya real, sus papeles son los de su país.
+          void recargarPapeles();
         }
       })
       .catch((e: unknown) => console.warn('zona por ubicación', e));
-  }, [aqui, api, cargar, recargarPanel]);
+  }, [aqui, api, cargar, recargarPanel, recargarPapeles]);
   const [vencidasAqui, setVencidasAqui] = useState<ReadonlySet<string>>(() => new Set());
   const vencer = (clave: string) =>
     setVencidasAqui((v) => (v.has(clave) ? v : new Set([...v, clave].slice(-50))));
