@@ -55,6 +55,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capBanners\(\s*'([a-z0-9-]+)',\
 // C-CAMILA-BUZON: las del buzón de Camila (capCamila).
 for (const [, nombre, idioma] of guias.matchAll(/capCamila\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`camila-${nombre}-${idioma}.webp`);
+// C-SALDO-RESTAURANTE: la de «Saldo de restaurantes» (capSaldoRest).
+for (const [, idioma] of guias.matchAll(/capSaldoRest\(\s*'(es|en)'/g))
+  archivos.add(`saldo-restaurantes-super-${idioma}.webp`);
 // C-REZAGADOS: las de «Recordatorios de registro» (capRez).
 for (const [, nombre, idioma] of guias.matchAll(/capRez\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`rezagados-${nombre}-${idioma}.webp`);

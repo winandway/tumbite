@@ -1721,6 +1721,77 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────── Saldo de restaurantes (C-SALDO-RESTAURANTE, 22 nov 2026) — Venezuela ─────────
+
+const capSaldoRest = (idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `saldo-restaurantes-super-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const saldoRestaurantes: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'restaurant-balance-top-ups',
+    titulo: 'Saldo de restaurantes: recargas por revisar, carga a mano y comisión',
+    resumen:
+      'Cómo revisar y acreditar la recarga que declara un restaurante, cargarle saldo a mano y dónde se pone la comisión que paga el restaurante. Hoy en Venezuela esa comisión es 0 %.',
+    explicacion: [
+      'En Venezuela el cliente le paga la comida directo al restaurante por pago móvil; Divoox no recibe ese dinero. El restaurante tiene un saldo prepago, igual que los conductores: si algún día paga comisión, saldrá de ahí. Hoy no hay política para restaurantes, así que su comisión es 0 % y no necesita saldo para recibir pedidos.',
+      'El bloque «Saldo de restaurantes» está al final de Dinero. En «Recargas por revisar» aparece cada recarga que un restaurante declaró desde su app, con el monto, la referencia y su comprobante. Antes de tocar «Acreditar», busca ese pago en el banco de Divoox por el monto y la referencia: la foto no es prueba. Acreditar pide la doble firma, como todo movimiento de dinero. «Rechazar» está dentro de los tres puntos y pide el motivo, que el restaurante ve en su app.',
+      'Las recargas de restaurantes están apagadas de fábrica en cada país. Encenderlas es un cambio del perfil del país que hace el equipo técnico con la orden de Gerencia. Mientras estén apagadas, el restaurante ve en su app que todavía no están disponibles y aquí no llega ninguna recarga.',
+      '«Cargar saldo a mano» suma saldo a un restaurante sin recarga declarada: pide el identificador del restaurante, el monto en dólares y el motivo, que queda en el registro con tu nombre. La comisión del restaurante se crea en Políticas eligiendo «Restaurante» en quién paga; mientras no exista, es 0 %.',
+    ],
+    capturas: [
+      capSaldoRest(
+        'es',
+        'El final de la pantalla Dinero del panel de operaciones: el bloque «Saldo de restaurantes» con «Recargas por revisar» vacío y el formulario «Cargar saldo a mano» con restaurante, monto, motivo y comprobante.',
+        '«Saldo de restaurantes», al final de Dinero.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo acredito la recarga de un restaurante?',
+      '¿Dónde pongo la comisión que paga el restaurante?',
+      '¿Cómo le cargo saldo a mano a un restaurante?',
+      '¿Por qué un restaurante no puede recargar?',
+    ],
+    pasos: [
+      'Abre Dinero y baja hasta «Saldo de restaurantes».',
+      'En «Recargas por revisar», abre el comprobante y busca el pago en el banco de Divoox por el monto y la referencia.',
+      'Si está, toca «Acreditar» y espera la segunda firma. Si no está, abre los tres puntos, toca «Rechazar» y escribe el motivo.',
+    ],
+  },
+  en: {
+    id: 'restaurant-balance-top-ups',
+    titulo: 'Restaurant balance: top-ups to review, manual top-up and fee',
+    resumen:
+      'How to review and credit a top-up reported by a restaurant, add balance manually, and where the restaurant fee is set. Today in Venezuela that fee is 0%.',
+    explicacion: [
+      'In Venezuela the customer pays the restaurant directly for the food by mobile payment; Divoox does not receive that money. The restaurant has a prepaid balance, just like drivers: if it ever pays a fee, it comes out of there. Today there is no policy for restaurants, so their fee is 0% and they need no balance to receive orders.',
+      'The “Restaurant balance” block is at the end of Money. “Top-ups to review” lists every top-up a restaurant reported from its app, with the amount, the reference and its receipt. Before you tap “Credit,” find that payment in the Divoox bank by amount and reference: the photo is not proof. Crediting needs the second signature, like every money movement. “Reject” is inside the three dots and asks for the reason, which the restaurant sees in its app.',
+      'Restaurant top-ups are off by default in every country. Turning them on is a change to the country profile made by the technical team on an order from management. While they are off, the restaurant sees in its app that they are not available yet and no top-up reaches this list.',
+      '“Add balance manually” adds balance to a restaurant without a reported top-up: it asks for the restaurant identifier, the amount in dollars and the reason, which stays in the log under your name. The restaurant fee is created in Policies by choosing “Restaurant” as who pays; until one exists, it is 0%.',
+    ],
+    capturas: [
+      capSaldoRest(
+        'en',
+        'The end of the Money screen in the operations panel: the “Restaurant balance” block with an empty “Top-ups to review” list and the “Add balance manually” form with restaurant, amount, reason and receipt.',
+        '“Restaurant balance,” at the end of Money.',
+      ),
+    ],
+    preguntas: [
+      'How do I credit a restaurant top-up?',
+      'Where do I set the fee a restaurant pays?',
+      'How do I add balance to a restaurant manually?',
+      'Why can’t a restaurant top up?',
+    ],
+    pasos: [
+      'Open Money and scroll down to “Restaurant balance.”',
+      'Under “Top-ups to review,” open the receipt and find the payment in the Divoox bank by amount and reference.',
+      'If it is there, tap “Credit” and wait for the second signature. If it is not, open the three dots, tap “Reject” and write the reason.',
+    ],
+  },
+};
+
 const saldoConductores: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'driver-balance-top-up',
@@ -2777,6 +2848,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       guias: [
         de(regalosDivoox),
         de(saldoConductores),
+        de(saldoRestaurantes),
         de(abrirPeru),
         de(agentesDivoox),
         de(referidosEquipos),
