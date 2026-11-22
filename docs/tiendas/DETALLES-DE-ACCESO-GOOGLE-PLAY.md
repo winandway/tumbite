@@ -5,22 +5,42 @@ inglés y bajo 500 caracteres. Salen del dictamen del auditor de tiendas; la ses
 consola: los pone Gerencia. Las claves van en sus casillas, nunca en el texto ni en este archivo
 (están en el archivo de cuentas de revisión de la Mac, fuera del repositorio).
 
-## Divoox Driver (décimo dictamen, 21 nov 2026; valen para la compilación 67)
+## Divoox Driver (propuesta del 22 nov 2026 para la compilación con el aviso único de IA; falta el dictamen del auditor)
 
-Cuenta 1, la estándar (387 caracteres):
+La pantalla «How we check your documents» (C-AVISO-IA-UNICO) reemplazó los dos «Yes / No». Las dos
+cuentas de revisión entran (comprobado el 22 nov) y a las dos les sale ese aviso UNA vez al entrar,
+porque ninguna lo ha contestado: en Android hay que marcar la casilla y tocar «Accept and continue»
+(no hay otra salida); en iPhone también vale «I prefer review by a person only». Después llegan a lo
+de siempre. El chat de ayuda ya no pregunta nada aparte.
+
+Cuenta 1, la estándar (405 caracteres):
 
 ```
-Standard driver account. Slide "Slide to go online" fully to the right (a tap does not connect), accept the practice delivery and complete it with the photo and the slide. Help > Talk to support asks for your permission before the first message (Yes / No; either works). No 2-step code. Valid from any location. Delete account: Profile > three-dot menu > Delete my account > type DELETE.
+Standard driver account. On first sign-in the app shows "How we check your documents" once: check the box and tap "Accept and continue". Then slide "Slide to go online" fully to the right (a tap does not connect), accept the practice delivery and complete it with the photo and the slide. No 2-step code. Valid from any location. Delete account: Profile > three-dot menu > Delete my account > type DELETE.
 ```
 
-Cuenta 2, la del asistente de papeles (403 caracteres):
+Cuenta 2, la del asistente de papeles (457 caracteres):
 
 ```
-Driver account with the document assistant (30-day grace period for documents). Profile > "Your documents": before the first photo the app asks for your permission (Yes / No; either works). Photos are live in-app camera only, by design. Help > Talk to support asks a similar permission. No 2-step code. Valid from any location. Delete account: Profile > three-dot menu > Delete my account > type DELETE.
+Driver account with the document assistant (30-day grace period for documents). On first sign-in the app shows "How we check your documents" once (AI check of document photos and help chat; a person always decides): check the box and tap "Accept and continue". Then Profile > "Your documents": photos are live in-app camera only, by design. No 2-step code. Valid from any location. Delete account: Profile > three-dot menu > Delete my account > type DELETE.
 ```
 
-No hacer registro ni subir fotos con la cuenta 2: tiene que llegarle intacta al revisor (con el permiso
-de las fotos y el del chat sin contestar).
+Para las notas del revisor de Apple, la misma instrucción con esta frase añadida después de
+«Accept and continue»: `(or "I prefer review by a person only"; either works)`.
+
+No entrar con ninguna de las dos desde una app ni contestar su aviso: tienen que llegarle intactas al
+revisor. La cuenta 2 tiene su plazo de papeles corriendo (vence hacia el 21 dic 2026): si la revisión
+se alarga, se le renueva el plazo desde el panel antes de enviar.
+
+Notas de la versión (Google Play, «Novedades»):
+
+```
+Nuevo: una sola pantalla te explica cómo revisamos tus documentos antes de tu primera foto. Además, si te registras desde una ciudad nueva, tus papeles aparecen de inmediato, sin cerrar la app. Mejoras de estabilidad.
+```
+
+```
+New: a single screen explains how we check your documents before your first photo. Also, when you sign up from a new city, your documents show up right away, without closing the app. Stability improvements.
+```
 
 ## Divoox, la app de clientes
 
