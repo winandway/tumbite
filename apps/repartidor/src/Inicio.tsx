@@ -56,6 +56,7 @@ import {
   type MontoEnMano as MontoEnManoTipo,
   type Referencia,
   ESPERA_MAXIMA_CRITICA_MS,
+  type VistaPagoComida,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -104,6 +105,7 @@ import { AyudaPedido } from './grandes/Ayuda';
 import { AyudaDriver } from './soporte/AyudaDriver';
 import { textosSoporte } from './soporte/textos';
 import { PagoEnLocal } from './grandes/PagoEnLocal';
+import { SalidaPagoComida } from './grandes/SalidaPagoComida';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
 import {
@@ -234,6 +236,8 @@ type Pedido = {
   referenciaCobro?: Referencia | null;
   /** C-BS-EN-MANO: lo que cobra en mano (sin propina), con «sinTasa»; igual al que ve el cliente. */
   enManoCobro?: MontoEnManoTipo | null;
+  /** C-COMIDA-PAGO-RESTAURANTE: la comida la paga el cliente directo al restaurante. */
+  pagoComida?: VistaPagoComida | null;
   /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del cliente (0 sin regalo). */
   regaloDivoox?: number;
   lineas: {
@@ -2842,7 +2846,12 @@ export function Inicio() {
                       secundario
                     />
                   ) : null}
-                  {activo.metodoPago &&
+                  {activo.pagoComida &&
+                  (activo.estado === 'aceptado' || activo.estado === 'listo') ? (
+                    <SalidaPagoComida pago={activo.pagoComida} idioma={idioma} />
+                  ) : null}
+                  {!activo.pagoComida &&
+                  activo.metodoPago &&
                   activo.metodoPago !== 'tarjeta' &&
                   (activo.estado === 'aceptado' || activo.estado === 'listo') ? (
                     <PagoEnLocal
