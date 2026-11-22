@@ -389,6 +389,10 @@ CREATE TABLE IF NOT EXISTS historial_estados (
   pedido_id TEXT NOT NULL REFERENCES pedidos(id),
   estado TEXT NOT NULL,
   actor_id TEXT,
+  -- C-RASTRO (22 nov 2026): dónde estaba el repartidor en ese paso (también en COLUMNAS). Va en la
+  -- misma fila que ya se escribía: cero escrituras de más.
+  lat REAL,
+  lng REAL,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS historial_pedido ON historial_estados(pedido_id, creado_en);
@@ -883,6 +887,9 @@ CREATE TABLE IF NOT EXISTS sms_enviados (
   pedido_id TEXT REFERENCES pedidos(id),
   tipo TEXT NOT NULL,
   estado TEXT NOT NULL,
+  -- C-SMS-VENEZUELA: por qué proveedor salió y su número de solicitud (también en COLUMNAS).
+  proveedor TEXT,
+  referencia TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -4402,6 +4409,47 @@ CREATE TABLE IF NOT EXISTS aparatos_usuario (
   PRIMARY KEY (usuario_id, huella)
 ) WITHOUT ROWID;
 CREATE INDEX IF NOT EXISTS aparatos_usuario_huella ON aparatos_usuario(huella);
+-- C-RASTRO (22 nov 2026, Richard) — todos los países. El rastro de actividad de cada cuenta, para el
+-- equipo (nunca público). `rastro_cuenta`: el alta y cada entrada, con la app, su versión, la
+-- plataforma y el país y la ciudad APROXIMADOS de la red (la dirección IP no se guarda). Una fila por
+-- alta y una por entrada; nada por mirar. Se borra con la cuenta.
+CREATE TABLE IF NOT EXISTS rastro_cuenta (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  usuario_id TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('alta', 'entrada')),
+  app TEXT,
+  version TEXT,
+  plataforma TEXT,
+  pais_red TEXT,
+  region_red TEXT,
+  ciudad_red TEXT,
+  red TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS rastro_cuenta_usuario ON rastro_cuenta(usuario_id, creado_en);
+-- Cada paso del registro que la cuenta alcanzó, UNA vez (la primera), con su hora: dice dónde lo
+-- dejó y alimenta el embudo de cuentas. Se borra con la cuenta.
+CREATE TABLE IF NOT EXISTS embudo_cuenta (
+  usuario_id TEXT NOT NULL,
+  paso TEXT NOT NULL,
+  app TEXT,
+  plataforma TEXT,
+  pais TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, paso)
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS embudo_cuenta_dia ON embudo_cuenta(creado_en);
+-- Los pasos de ANTES de crear la cuenta (abrió, empezó a llenar, revisó): solo contadores por día,
+-- app, plataforma, país y paso. No guarda persona, aparato ni dirección IP.
+CREATE TABLE IF NOT EXISTS embudo_anonimo (
+  dia TEXT NOT NULL,
+  app TEXT NOT NULL,
+  plataforma TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  paso TEXT NOT NULL,
+  personas INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (dia, app, plataforma, pais, paso)
+) WITHOUT ROWID;
 -- C-BANNERS (17 nov 2026, Richard) — todos los países. El administrador de banners del inicio de la app:
 -- dos lugares (cabecera y promociones), sin límite de banners. Nada sale al público sin «Aprobar y
 -- publicar» (estado publicado). Destino al tocar, ciudades y países, fechas, peso y orden. La app los
