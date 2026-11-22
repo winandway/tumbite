@@ -44,7 +44,9 @@ test('peso real de un pesable con Stripe en modo prueba (autoriza con margen, ca
         correo,
         clave,
         rol,
-        telefono: `3${String(Date.now()).slice(-8)}${n++ % 10}`,
+        // C-TELEFONO-E164: un número de EE. UU. que exista (área 305, central 5xx); uno al azar podía
+        // caer en un código de área que no existe y el registro lo rechazaba (falló el 22 nov 2026).
+        telefono: `3055${String(Date.now()).slice(-5)}${n++ % 10}`,
       },
     });
     expect(r.ok(), await r.text()).toBe(true);
