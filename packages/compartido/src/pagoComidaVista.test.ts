@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   REFERENCIA_PAGO_VALIDA,
   TEXTOS_PAGO_COMIDA_CLIENTE,
+  TEXTOS_PAGO_COMIDA_CONDUCTOR,
   TEXTOS_PAGO_COMIDA_RESTAURANTE,
   limpiarReferenciaPago,
   relojPago,
@@ -70,5 +71,16 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     expect(pieza.match(/useBorrador\(/g)?.length).toBe(3);
     expect(pieza).not.toMatch(/b\.cambiar\('clave'/);
     expect(pieza).toMatch(/fotoConCamara\(/);
+  });
+
+  it('Driver: el conductor no paga en el local, espera el «Me llegó» y cobra solo el envío', () => {
+    const { es, en } = TEXTOS_PAGO_COMIDA_CONDUCTOR;
+    expect(Object.keys(en).sort()).toEqual(Object.keys(es).sort());
+    const inicio = leer('apps/repartidor/src/Inicio.tsx');
+    expect(inicio).toMatch(/<SalidaPagoComida\b/);
+    // Con pago directo al restaurante no se muestra el formulario de «pagué en el local».
+    expect(inicio).toMatch(/!activo\.pagoComida &&[\s\S]{0,200}<PagoEnLocal/);
+    const pieza = leer('apps/repartidor/src/grandes/SalidaPagoComida.tsx');
+    expect(pieza).toMatch(/listoParaIr/);
   });
 });

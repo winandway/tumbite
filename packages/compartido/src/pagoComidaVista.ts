@@ -283,3 +283,25 @@ const REST_EN: typeof REST_ES = {
 };
 
 export const TEXTOS_PAGO_COMIDA_RESTAURANTE = { es: REST_ES, en: REST_EN };
+
+/** Driver: el conductor ya no paga nada en el local; espera el «Me llegó» y sale. */
+export const TEXTOS_PAGO_COMIDA_CONDUCTOR = {
+  es: {
+    espera: 'Espera un momento',
+    esperaDetalle:
+      'El cliente le está pagando la comida al restaurante. Te avisamos en cuanto el restaurante confirme para que salgas a recoger.',
+    salida: 'Ya puedes ir al restaurante',
+    salidaDetalle:
+      'El restaurante confirmó el pago de la comida. Tú no pagas nada en el local: solo recoges el pedido.',
+    cobras: 'Al entregar le cobras al cliente solo el envío.',
+  },
+  en: {
+    espera: 'Wait a moment',
+    esperaDetalle:
+      'The customer is paying the restaurant for the food. We will let you know as soon as the restaurant confirms so you can head out.',
+    salida: 'You can go to the restaurant now',
+    salidaDetalle:
+      'The restaurant confirmed the food payment. You pay nothing at the restaurant: just pick up the order.',
+    cobras: 'On delivery you collect only the delivery fee from the customer.',
+  },
+};
