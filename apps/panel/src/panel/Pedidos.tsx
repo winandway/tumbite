@@ -20,10 +20,12 @@ import {
   ANCHOS_COMANDA,
   type AnchoComanda,
   escposPrueba,
+  type VistaPagoComida,
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { ReportarPanel } from './ReportarPanel';
 import { PedirCancelacion } from './PedirCancelacion';
+import { PagoComidaPanel } from './PagoComidaPanel';
 import { LuzSemaforo } from './LuzSemaforo';
 import QRCode from 'qrcode';
 import { pedir } from './api';
@@ -53,6 +55,8 @@ const leerImprimir = () => {
 type Pedido = {
   id: string;
   estado: string;
+  /** C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al restaurante. */
+  pagoComida?: VistaPagoComida | null;
   /** C-CANCELAR-LISTO: estado de la última solicitud de cancelación a soporte, si hubo. */
   cancelacion?: 'pendiente' | 'aprobada' | 'rechazada' | null;
   /** C-PEDIDO-PRUEBA: pedido ficticio para practicar (sin cobro ni repartidor). */
@@ -937,6 +941,14 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   </button>
                 </div>
               )}
+              {p.pagoComida ? (
+                <PagoComidaPanel
+                  pedidoId={p.id}
+                  pago={p.pagoComida}
+                  idioma={idioma}
+                  alCambiar={() => void cargar()}
+                />
+              ) : null}
               {p.estado === 'pagado' &&
                 p.ajuste?.estado !== 'pendiente' &&
                 [cocina.prepSugerida, ...[10, 20, 30].filter((m) => m !== cocina.prepSugerida)].map(
@@ -961,15 +973,17 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                 </button>
               ) : null}
               {/* C-LISTO-SIN-AJUSTE: mientras el cliente decide el plato que falta, no hay «Listo». */}
-              {p.estado === 'aceptado' && p.ajuste?.estado !== 'pendiente' && (
-                <button
-                  type="button"
-                  className="boton"
-                  onClick={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
-                >
-                  {t.listo}
-                </button>
-              )}
+              {p.estado === 'aceptado' &&
+                p.ajuste?.estado !== 'pendiente' &&
+                (!p.pagoComida || p.pagoComida.estado === 'confirmado') && (
+                  <button
+                    type="button"
+                    className="boton"
+                    onClick={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
+                  >
+                    {t.listo}
+                  </button>
+                )}
               {p.prueba && p.estado === 'listo' ? (
                 <button
                   type="button"
