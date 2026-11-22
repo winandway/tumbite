@@ -149,6 +149,7 @@ import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
 import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludSmsMasivo } from './smsMasivo';
+import { rastroRutas } from './rutas/rastro';
 import { saludDinero } from './conciliacion';
 import { excepcionesConciliacion } from './rutas/excepcionesConciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
@@ -732,6 +733,8 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+// C-RASTRO: antes de las fichas del superadmin (rutas más específicas primero).
+app.route('/datos', rastroRutas);
 // C-AVISOS-WEB: suscribirse y darse de baja de los avisos en el navegador.
 app.route('/datos/avisos-web', rutasAvisosWeb);
 // C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».

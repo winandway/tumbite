@@ -33,6 +33,8 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   agentes_ciudad: 'sin_persona',
   ajustes_viaje_zona: 'sin_persona',
   alertas_canario: 'sin_persona',
+  // C-RASTRO: contadores por día, app, país y paso; sin persona.
+  embudo_anonimo: 'sin_persona',
   anuncios_dia: 'sin_persona',
   avisos_stripe: 'sin_persona',
   banners: 'sin_persona',

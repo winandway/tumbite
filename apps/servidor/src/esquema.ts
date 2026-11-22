@@ -21,6 +21,7 @@ import {
 } from './esquemaPlazo';
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
+import { DISPARADORES_RASTRO, asegurarRastro } from './esquemaRastro';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -28,6 +29,10 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-RASTRO (22 nov 2026): la posición del repartidor en cada cambio de estado del pedido, en la misma
+  // fila que ya se escribía.
+  ['historial_estados', 'lat', 'REAL'],
+  ['historial_estados', 'lng', 'REAL'],
   // C-SMS-VENEZUELA (22 nov 2026): por qué proveedor salió cada SMS y su número de solicitud; con eso
   // se cuenta el tope diario del proveedor de Venezuela y se le pregunta el estado de un envío.
   ['sms_enviados', 'proveedor', 'TEXT'],
@@ -706,6 +711,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerCuentasCobro),
         DISPARADORES_HABILITACION,
         String(rehacerElegibilidad),
+        DISPARADORES_RASTRO,
+        String(asegurarRastro),
         String(sincronizarPoliticaRequisitos),
         PAISES_CON_PLAZO.map((p) => [p, politicaPlazoDeFabrica(p)]),
         String(sincronizarServicios),
@@ -786,6 +793,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-PLAZO-PAPELES: la vista y los disparadores que conocen el plazo, y la política de cada país
   // en la forma que la base lee.
   await rehacerElegibilidad(db);
+  // C-RASTRO: los pasos del registro los anota la base, y el viaje guarda dónde estaba el conductor.
+  await asegurarRastro(db);
   await asegurarFase3(db);
   await sincronizarPoliticaRequisitos(db);
   await preciosDeFabrica(db);

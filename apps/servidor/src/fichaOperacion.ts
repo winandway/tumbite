@@ -52,26 +52,58 @@ export type PasoLinea = {
   capa: 'principal' | 'manager';
   /** Segundos desde el paso principal anterior (null en el primero y en los del Manager). */
   desdeAnteriorS: number | null;
+  /** C-RASTRO: dónde estaba el conductor o repartidor en ese paso, si su posición era reciente. */
+  lugar: { lat: number; lng: number } | null;
+  /** Metros en línea recta desde el paso anterior que tiene lugar (null si no se puede saber). */
+  desdeAnteriorM: number | null;
 };
+/** Un paso antes de ordenar: el lugar es opcional y los «desde el anterior» los calcula `ordenarLinea`. */
+export type PasoSuelto = Omit<PasoLinea, 'desdeAnteriorS' | 'desdeAnteriorM' | 'lugar'> & {
+  lugar?: { lat: number; lng: number } | null;
+};
+
+/** Metros en línea recta entre dos puntos. */
+export function metrosEntre(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * 6_371_000 * Math.asin(Math.min(1, Math.sqrt(h))));
+}
+
+/** El lugar guardado con un paso (de dos columnas o del JSON del evento del viaje), o null. */
+export function lugarDe(lat: unknown, lng: unknown): { lat: number; lng: number } | null {
+  const a = typeof lat === 'number' ? lat : Number.NaN;
+  const b = typeof lng === 'number' ? lng : Number.NaN;
+  return Number.isFinite(a) && Number.isFinite(b) && (a !== 0 || b !== 0)
+    ? { lat: a, lng: b }
+    : null;
+}
 
 const msDe = (f: string) =>
   Date.parse(`${f.replace(' ', 'T')}${/[zZ]|[+-]\d\d:?\d\d$/.test(f) ? '' : 'Z'}`);
 
 /** Ordena los pasos por hora y calcula el tiempo desde el paso principal anterior. */
-export function ordenarLinea(pasos: Omit<PasoLinea, 'desdeAnteriorS'>[]): PasoLinea[] {
+export function ordenarLinea(pasos: PasoSuelto[]): PasoLinea[] {
   const orden = pasos
     .filter((p) => p.fecha)
     .map((p, i) => ({ p, i }))
     .sort((a, b) => a.p.fecha.localeCompare(b.p.fecha) || a.i - b.i)
     .map((x) => x.p);
   let anterior: number | null = null;
+  let lugarAnterior: { lat: number; lng: number } | null = null;
   return orden.map((p) => {
-    if (p.capa === 'manager') return { ...p, desdeAnteriorS: null };
+    const lugar = p.lugar ?? null;
+    if (p.capa === 'manager') return { ...p, lugar, desdeAnteriorS: null, desdeAnteriorM: null };
     const ms = msDe(p.fecha);
     const desde =
       anterior == null || Number.isNaN(ms) ? null : Math.max(0, Math.round((ms - anterior) / 1000));
     if (!Number.isNaN(ms)) anterior = ms;
-    return { ...p, desdeAnteriorS: desde };
+    const metros = lugar && lugarAnterior ? metrosEntre(lugarAnterior, lugar) : null;
+    if (lugar) lugarAnterior = lugar;
+    return { ...p, lugar, desdeAnteriorS: desde, desdeAnteriorM: metros };
   });
 }
 
@@ -151,7 +183,7 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
     await Promise.all([
       todas(
         db,
-        `SELECT h.estado, h.creado_en, h.actor_id, COALESCE(u.nombre, r.nombre) AS quien, u.rol,
+        `SELECT h.estado, h.creado_en, h.actor_id, h.lat, h.lng, COALESCE(u.nombre, r.nombre) AS quien, u.rol,
           r.id AS es_restaurante
          FROM historial_estados h LEFT JOIN usuarios u ON u.id = h.actor_id
          LEFT JOIN restaurantes r ON r.id = h.actor_id
@@ -241,7 +273,7 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
   const entrega = evidencia('entrega');
   const hito = (h: string) => hitos.find((x) => x.hito === h);
 
-  const pasos: Omit<PasoLinea, 'desdeAnteriorS'>[] = [
+  const pasos: PasoSuelto[] = [
     {
       tipo: 'estado',
       evento: 'creado',
@@ -259,6 +291,7 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
       rol: rolDe(e),
       detalle: null,
       capa: 'principal' as const,
+      lugar: lugarDe(e.lat, e.lng),
     })),
     ...(oferta?.respondida_en
       ? [
@@ -284,7 +317,7 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
     })),
     ...[recogida, entrega].flatMap((e) => {
       if (!e) return [];
-      const r: Omit<PasoLinea, 'desdeAnteriorS'>[] = [];
+      const r: PasoSuelto[] = [];
       if (e.conFoto || e.borradaEn) {
         const f = evidencias.find((x) => x.tipo === e.tipo)?.creada_en;
         if (f)
@@ -510,7 +543,9 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
   const [eventos, emergencias, oferta, envio, reclamos] = await Promise.all([
     todas(
       db,
-      `SELECT e.tipo, e.estado_anterior, e.estado_nuevo, e.actor_rol, e.creado_en, u.nombre AS quien
+      `SELECT e.tipo, e.estado_anterior, e.estado_nuevo, e.actor_rol, e.creado_en, u.nombre AS quien,
+              json_extract(e.datos_json, '$.motivo') AS motivo,
+              json_extract(e.datos_json, '$.lat') AS lat, json_extract(e.datos_json, '$.lng') AS lng
          FROM eventos_operacion e LEFT JOIN usuarios u ON u.id = e.actor_id
         WHERE e.operacion_id = ? ORDER BY e.id`,
       id,
@@ -585,7 +620,7 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
   );
   const quienEvento = (e: Fila) =>
     e.actor_rol === 'cliente' ? pasajeroNombre : e.actor_rol === 'sistema' ? null : texto(e.quien);
-  const pasos: Omit<PasoLinea, 'desdeAnteriorS'>[] = [
+  const pasos: PasoSuelto[] = [
     {
       tipo: 'estado',
       evento: 'creado',
@@ -603,8 +638,10 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
         fecha: String(e.creado_en),
         quien: quienEvento(e),
         rol: texto(e.actor_rol),
-        detalle: null,
+        // C-RASTRO: el motivo de la transición (por qué se canceló o se liberó) y dónde estaba el conductor.
+        detalle: texto(e.motivo),
         capa: 'principal' as const,
+        lugar: lugarDe(e.lat, e.lng),
       })),
     ...eventos
       .filter((e) => !e.estado_nuevo || e.estado_nuevo === e.estado_anterior)

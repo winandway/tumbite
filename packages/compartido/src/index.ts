@@ -134,3 +134,4 @@ export * from './videosAyuda';
 export * from './pais/paises';
 export * from './pais/telefono';
 export * from './invitacionEnlace';
+export * from './rastro';

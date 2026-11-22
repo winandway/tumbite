@@ -288,6 +288,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "estado",
     "actor_id",
+    "lat",
+    "lng",
     "creado_en"
   ],
   "bitacora_pedidos": [
@@ -2874,6 +2876,35 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usuario_id",
     "huella",
     "visto_en"
+  ],
+  "rastro_cuenta": [
+    "id",
+    "usuario_id",
+    "tipo",
+    "app",
+    "version",
+    "plataforma",
+    "pais_red",
+    "region_red",
+    "ciudad_red",
+    "red",
+    "creado_en"
+  ],
+  "embudo_cuenta": [
+    "usuario_id",
+    "paso",
+    "app",
+    "plataforma",
+    "pais",
+    "creado_en"
+  ],
+  "embudo_anonimo": [
+    "dia",
+    "app",
+    "plataforma",
+    "pais",
+    "paso",
+    "personas"
   ],
   "banners": [
     "id",

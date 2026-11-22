@@ -179,7 +179,12 @@ BEGIN
    WHERE id = NEW.operacion_id;
   INSERT INTO eventos_operacion (operacion_id, tipo, estado_anterior, estado_nuevo, actor_id, actor_rol, idempotencia, datos_json)
   VALUES (NEW.operacion_id, 'transicion', OLD.estado, NEW.estado, NEW.ultimo_actor_id, NEW.ultimo_actor,
-          NEW.ultima_clave, json_object('motivo', NEW.motivo_transicion));
+          NEW.ultima_clave,
+          json_object('motivo', NEW.motivo_transicion,
+            'lat', (SELECT r.lat FROM operaciones o JOIN repartidores r ON r.usuario_id = o.conductor_id
+                     WHERE o.id = NEW.operacion_id AND r.ubicacion_en >= datetime('now', '-5 minutes')),
+            'lng', (SELECT r.lng FROM operaciones o JOIN repartidores r ON r.usuario_id = o.conductor_id
+                     WHERE o.id = NEW.operacion_id AND r.ubicacion_en >= datetime('now', '-5 minutes'))));
   UPDATE viajes SET llego_en = datetime('now') WHERE operacion_id = NEW.operacion_id AND NEW.estado = 'conductor_llego';
   UPDATE viajes SET iniciado_en = datetime('now') WHERE operacion_id = NEW.operacion_id AND NEW.estado = 'en_curso';
   UPDATE viajes SET terminado_en = datetime('now')

@@ -1,4 +1,5 @@
 import { alRegistrarseConductor } from '../camila/bienvenida';
+import { anotarPaso, anotarRastro, origenDePeticion } from '../rastro';
 import {
   CAPACIDAD_OFERTAS_BUCLE,
   CANALES_CONSENTIMIENTO_SMS,
@@ -319,6 +320,12 @@ cuentas.post('/registro', async (c) => {
   // C-SMS-CONSENTIMIENTO: solo si marcó la casilla de SMS (aparte de los términos y sin marcar).
   if (d.smsConsentimiento) await guardarConsentimientoSms(db, id, true, d.canal ?? 'web');
   const token = await abrirSesion(db, id);
+  // C-RASTRO: de dónde vino el alta (app, versión, plataforma y red aproximada) y el paso «cuenta».
+  const origen = origenDePeticion(c.req);
+  await anotarRastro(db, id, 'alta', origen).catch((e: unknown) =>
+    console.error('registro: rastro', e),
+  );
+  await anotarPaso(db, id, 'cuenta', origen);
   // C-REFERIDOS-EQUIPOS: la huella del aparato (antifraude) y el código con el que lo invitaron. El
   // código ya se comprobó arriba; lo que falle aquí no frena el registro, pero queda en el registro de errores.
   await anotarAparato(db, id, await huellaAparato(c.req.header('x-aparato'))).catch((e: unknown) =>
@@ -405,6 +412,10 @@ cuentas.post('/entrar', async (c) => {
     );
   }
   const token = await abrirSesion(db, fila.id, acceso ? JSON.stringify(acceso) : null);
+  // C-RASTRO: cada entrada queda con su app, versión, plataforma y red aproximada.
+  await anotarRastro(db, fila.id, 'entrada', origenDePeticion(c.req)).catch((e: unknown) =>
+    console.error('entrar: rastro', e),
+  );
   await anotarAparato(db, fila.id, await huellaAparato(c.req.header('x-aparato'))).catch(
     (e: unknown) => console.error('entrar: aparato', e),
   );

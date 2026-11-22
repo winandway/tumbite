@@ -946,6 +946,9 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe un correo válido.', 'Enter a valid email.'],
   ['Ese cliente no existe.', 'That customer doesn’t exist.'],
   ['Esa cuenta no existe o ya está borrada.', 'That account doesn’t exist or was already deleted.'],
+  // C-RASTRO: el embudo del registro (panel del equipo).
+  ['La fecha inicial va antes que la final.', 'The start date must come before the end date.'],
+  ['Elige un período de un año o menos.', 'Choose a period of one year or less.'],
   [
     'Las cuentas de revisión de las tiendas no se borran.',
     'The app store review accounts can’t be deleted.',

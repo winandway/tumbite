@@ -23,6 +23,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // ─── Monitoreo, pedidos y buscador
   'GET /admin/resumen': 'monitoreo.ver',
   'GET /admin/tablero': 'monitoreo.ver',
+  // C-RASTRO: el embudo del registro (contadores, sin personas).
+  'GET /admin/embudo': 'monitoreo.ver',
   'GET /admin/buscar': 'monitoreo.buscar',
   'GET /admin/informes': 'monitoreo.exportar',
   'GET /admin/pedidos': 'pedidos.ver',
@@ -60,6 +62,7 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // ─── Clientes
   'GET /admin/clientes': 'clientes.ver',
   'GET /admin/clientes/:id': 'clientes.ver',
+  'GET /admin/clientes/:id/actividad': 'clientes.ver',
   'PATCH /admin/usuarios/:id': 'clientes.suspender',
   'POST /admin/usuarios/:id/borrar': 'clientes.suspender',
   // C-CORREGIR-CORREO: corregir el correo de la cuenta y reenviar la confirmación.
@@ -71,6 +74,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // ─── Repartidores, vehículos y papeles
   'GET /admin/repartidores': 'repartidores.ver',
   'GET /admin/repartidores/:id': 'repartidores.ver',
+  // C-RASTRO: la actividad de la cuenta (solo lectura) va con el mismo permiso de su ficha.
+  'GET /admin/repartidores/:id/actividad': 'repartidores.ver',
   'PATCH /admin/repartidores/:id': 'repartidores.editar',
   'GET /admin/vehiculos': 'repartidores.ver',
   'GET /admin/vehiculos/:id/documentos/:doc/archivo': 'repartidores.documentos',
@@ -451,6 +456,7 @@ const PROPIO_DINERO = sinCiudad(
 export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/resumen': CONSULTA,
   'GET /admin/tablero': CONSULTA,
+  'GET /admin/embudo': CONSULTA,
   'GET /admin/buscar': CONSULTA,
   'GET /admin/informes': CONSULTA,
   'GET /admin/pedidos': CONSULTA,
@@ -481,6 +487,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/conductores/:id/ciudades-destino': ficha('repartidor'),
   'GET /admin/clientes': CONSULTA,
   'GET /admin/clientes/:id': ficha('cliente'),
+  'GET /admin/clientes/:id/actividad': ficha('cliente'),
   'PATCH /admin/usuarios/:id': ficha('persona'),
   'POST /admin/usuarios/:id/borrar': ficha('persona'),
   'POST /admin/usuarios/:id/correo': ficha('persona'),
@@ -489,6 +496,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/datos-personales/:tipo/:id/:campo': CONSULTA,
   'GET /admin/repartidores': CONSULTA,
   'GET /admin/repartidores/:id': ficha('repartidor'),
+  'GET /admin/repartidores/:id/actividad': ficha('repartidor'),
   'PATCH /admin/repartidores/:id': ficha('repartidor'),
   'GET /admin/vehiculos': CONSULTA,
   'GET /admin/vehiculos/:id/documentos/:doc/archivo': ficha('vehiculo'),

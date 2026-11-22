@@ -409,10 +409,12 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // si el país del conductor declara exento algún requisito (su ciudad y la tabla de la política,
       // que tiene un puñado de filas).
       // +2 (21 nov 2026, C-ID-DEL-PAIS): borrar la cuenta borra también sus ID viejos.
-      ['f1', 510 + 2 * objetosEsquema],
+      // +2 (22 nov 2026, C-RASTRO): cada una de las dos cuentas que crea deja su paso «cuenta» (una lectura).
+      ['f1', 512 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
-      ['migraciones-prueba', 3_020],
+      // +11 (22 nov 2026, C-RASTRO): cada vehículo nuevo deja el paso «vehículo» del registro (una lectura).
+      ['migraciones-prueba', 3_031],
       ['f2', 76_000],
       ['reloj', 25_500],
     ];
