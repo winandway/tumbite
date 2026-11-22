@@ -117,6 +117,10 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'POST /admin/camila/aprendizaje/:id/rechazar': 'tickets.plantillas',
   'GET /admin/camila/ajustes': 'tickets.ver',
   'PUT /admin/camila/ajustes': 'tickets.configurar',
+  // C-REZAGADOS: recordatorios de registro (ajustes de toda la empresa) y «Enviar mensaje» de la ficha.
+  'GET /admin/rezagados': 'tickets.ver',
+  'PUT /admin/rezagados': 'tickets.configurar',
+  'POST /admin/usuarios/:id/mensaje': 'tickets.responder',
   // C-CAMILA-FALLOS: fallos reportados y preguntas de diagnóstico (de toda la empresa: alcance total).
   'GET /admin/camila/fallos': 'tickets.ver',
   'GET /admin/camila/fallos/:id': 'tickets.ver',
@@ -537,6 +541,9 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/camila/aprendizaje/:id/rechazar': CONSULTA,
   'GET /admin/camila/ajustes': CONSULTA,
   'PUT /admin/camila/ajustes': CONSULTA,
+  'GET /admin/rezagados': CONSULTA,
+  'PUT /admin/rezagados': CONSULTA,
+  'POST /admin/usuarios/:id/mensaje': ficha('persona'),
   'GET /admin/camila/fallos': CONSULTA,
   'GET /admin/camila/fallos/:id': CONSULTA,
   'GET /admin/camila/fallos/:id/captura/:reporte': CONSULTA,

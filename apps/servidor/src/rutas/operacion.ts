@@ -114,6 +114,7 @@ import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
 import { graciaDe } from '../plazoPapeles';
+import { correrRezagados } from '../rezagados';
 import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { correrPlazoPapeles } from './verificacionConductor';
@@ -3267,6 +3268,16 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     cada: 'hora',
     escriturasEsperadas: 150,
     correr: (env, db) => correrPlazoPapeles(env, db),
+  },
+  // C-REZAGADOS: Camila le recuerda su paso a quien se quedó a medio registro. Una vez por hora; con
+  // todas las zonas apagadas o en vista previa solo lee los ajustes. Escribe una fila por canal de cada
+  // recordatorio que sale (como mucho el tope diario, 200, por dos canales, más su hilo de soporte).
+  {
+    nombre: 'rezagados',
+    critica: false,
+    cada: 'hora',
+    escriturasEsperadas: 900,
+    correr: (env, db) => correrRezagados(env, db),
   },
   // C-CARRO-DINAMICA: el multiplicador de cada ciudad con tarifa dinámica encendida. Escribe como
   // mucho una fila por ciudad y solo cuando cambia (o cada 5 minutos mientras dura un recargo).

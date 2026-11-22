@@ -47,8 +47,8 @@ export const PUEDES_RESPONDER = {
 } as const;
 
 /** El cuerpo de un correo de soporte: el texto, quién firma y la invitación a responder. */
-export const cuerpoDeCorreo = (texto: string, idioma: IdiomaCamila, firma?: string) =>
-  `${texto.trim()}\n\n${firma ?? segun(FIRMA, idioma)}\n\n${segun(PUEDES_RESPONDER, idioma)}`;
+export const cuerpoDeCorreo = (texto: string, idioma: IdiomaCamila, firma?: string, pie?: string) =>
+  `${texto.trim()}\n\n${firma ?? segun(FIRMA, idioma)}\n\n${segun(PUEDES_RESPONDER, idioma)}${pie ? `\n\n${pie}` : ''}`;
 
 export async function enviarPorCanal(
   env: Env,
@@ -61,6 +61,8 @@ export async function enviarPorCanal(
     aviso?: boolean;
     /** Quién firma el correo (una persona del equipo). Sin ella firma Camila. */
     firma?: string;
+    /** C-REZAGADOS: una línea al final del correo, después de todo (el enlace de baja). */
+    pie?: string;
   } = {},
 ): Promise<Salida> {
   const idioma: IdiomaCamila = persona.idioma === 'en' ? 'en' : 'es';
@@ -83,7 +85,7 @@ export async function enviarPorCanal(
         opciones.asunto ??
         hilo?.asunto ??
         (idioma === 'en' ? 'Divoox Support' : 'Soporte de Divoox'),
-      texto: cuerpoDeCorreo(texto, idioma, opciones.firma),
+      texto: cuerpoDeCorreo(texto, idioma, opciones.firma, opciones.pie),
       ...(hilo?.cabeceras && !opciones.asunto ? { cabeceras: hilo.cabeceras } : {}),
     });
     if (r.ok) return { enviado: true };

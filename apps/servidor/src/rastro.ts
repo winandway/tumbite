@@ -6,6 +6,7 @@ import {
   type PasoRegistro,
 } from '@tumbite/compartido';
 import { sqlFuentesDeCuenta } from './esquemaRastro';
+import { sqlMensajesDeCuenta } from './rezagados';
 import { leerCabeceraApp } from './versionApp';
 
 /**
@@ -364,8 +365,22 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
          WHERE a.objeto = ? ORDER BY a.creado_en DESC LIMIT ${LIMITE}`,
       )
       .bind(usuarioId),
+    // C-REZAGADOS: los mensajes de registro que se le mandaron (Camila sola o el equipo a mano).
+    db.prepare(sqlMensajesDeCuenta(LIMITE)).bind(usuarioId),
   ];
-  const [rastro, pasos, fotos, kyc, vehiculos, habilitaciones, viajes, pedidos, chat, equipo] = (
+  const [
+    rastro,
+    pasos,
+    fotos,
+    kyc,
+    vehiculos,
+    habilitaciones,
+    viajes,
+    pedidos,
+    chat,
+    equipo,
+    mensajes,
+  ] = (
     await db.batch<Record<string, string | number | null>>(consultas)
   ).map((r) => r.results);
   // C-RASTRO-FUENTES: lo que dice cada fuente real de cada paso (fotos por las dos rutas, papeles,
@@ -464,6 +479,15 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
         `${c.mensajes}|${c.canal_ultimo ?? ''}`,
       );
   for (const a of equipo ?? []) poner(a.fecha, 'equipo', `equipo:${a.accion}`, null, a.quien);
+  // «mensaje:<canal>» con «paso|origen|estado|detalle»: el panel lo dice en su idioma.
+  for (const x of mensajes ?? [])
+    poner(
+      x.fecha,
+      'mensaje',
+      `mensaje:${x.canal}`,
+      [t(x.paso) ?? '', t(x.origen) ?? '', t(x.estado) ?? '', t(x.detalle) ?? ''].join('|'),
+      x.quien,
+    );
   linea.sort((a, b) => b.fecha.localeCompare(a.fecha));
 
   // Dónde lo dejó: cada paso leído de todas sus fuentes, en el orden en que lo hace la persona.

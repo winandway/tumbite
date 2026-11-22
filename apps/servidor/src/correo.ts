@@ -500,6 +500,14 @@ export function aHtml(
         texto.push(linea);
         continue;
       }
+      // C-REZAGADOS: el enlace de baja de los recordatorios va discreto, en letra pequeña; nunca
+      // como botón rojo (el botón del correo es el del paso que le falta a la persona).
+      if (urls.length === 1 && urls[0]!.includes('/datos/reminders/off')) {
+        html += parrafo(texto);
+        texto = [];
+        html += `<p style="margin:18px 0 0;font-size:12px;line-height:1.5;color:#666B73">${escapar(linea.replace(urls[0]!, '').trim())} <a href="${escapar(urls[0]!)}" style="color:#666B73">${en ? 'stop these reminders' : 'dejar de recibirlos'}</a></p>`;
+        continue;
+      }
       const resto = linea
         .replace(/https?:\/\/\S+/g, '')
         // La etiqueta del enlace a una guía ya va en su botón: no se repite encima.

@@ -4997,3 +4997,30 @@ CREATE TABLE IF NOT EXISTS verificacion_avisos (
   conductor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
   avisado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- C-REZAGADOS (22 nov 2026): cada mensaje que Camila (sola) o el equipo (a mano) le manda a una cuenta
+-- por su registro: una fila por canal, con su estado. Sale en la línea de tiempo de la ficha y de aquí
+-- se cuentan los topes. Sin REFERENCES a propósito (C-LECTURAS-VUELTA-RUTAS); se borra en borrarCuenta.ts.
+CREATE TABLE IF NOT EXISTS rezagados_mensajes (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  paso TEXT NOT NULL,
+  canal TEXT NOT NULL,
+  origen TEXT NOT NULL DEFAULT 'auto',
+  numero INTEGER NOT NULL DEFAULT 1,
+  estado TEXT NOT NULL DEFAULT 'enviado',
+  detalle TEXT NOT NULL DEFAULT '',
+  referencia TEXT,
+  texto TEXT NOT NULL DEFAULT '',
+  actor_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS rezagados_mensajes_usuario ON rezagados_mensajes(usuario_id, creado_en);
+CREATE INDEX IF NOT EXISTS rezagados_mensajes_dia ON rezagados_mensajes(creado_en);
+
+-- Quien pidió no recibir más recordatorios de su registro (enlace al pie del correo).
+CREATE TABLE IF NOT EXISTS rezagados_bajas (
+  usuario_id TEXT PRIMARY KEY,
+  canal TEXT NOT NULL DEFAULT 'correo',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -3289,5 +3289,24 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "verificacion_avisos": [
     "conductor_id",
     "avisado_en"
+  ],
+  "rezagados_mensajes": [
+    "id",
+    "usuario_id",
+    "paso",
+    "canal",
+    "origen",
+    "numero",
+    "estado",
+    "detalle",
+    "referencia",
+    "texto",
+    "actor_id",
+    "creado_en"
+  ],
+  "rezagados_bajas": [
+    "usuario_id",
+    "canal",
+    "creado_en"
   ]
 };
