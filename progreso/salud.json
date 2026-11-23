@@ -17,6 +17,7 @@
     "sms": "ok",
     "smsVenezuela": "ok",
     "smsGasto": "ok",
+    "whatsapp": "pendiente",
     "dinero": "ok",
     "retiros": "ok",
     "agentes": "ok",
@@ -25,6 +26,7 @@
     "tarifas": "ok",
     "viajes": "ok",
     "comidaPaises": "ok",
+    "pagoComida": "ok",
     "tiempoReal": "pendiente",
     "exclusividad": "ok",
     "reloj": "ok",
@@ -45,5 +47,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-23T02:06:47.959568+00:00"
+  "medido": "2026-11-23T03:08:01.318473+00:00"
 }
