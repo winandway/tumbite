@@ -157,6 +157,7 @@ const MOTIVOS_CONECTAR = new Set([
   'selfie_casco',
   'bloque_flex',
   'servicioId',
+  'sin_restaurantes',
 ]);
 
 /**

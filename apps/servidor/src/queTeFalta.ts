@@ -36,6 +36,7 @@ export type ClaveFalta =
   | 'sin_pago_movil'
   | 'ubicacion_vieja'
   | 'papeles_sin_enviar'
+  | 'sin_restaurantes'
   | 'desconectado';
 
 export type Falta = {
@@ -78,6 +79,8 @@ export async function queTeFalta(
           `SELECT d.conectado, d.vehiculo_activo_id AS activo, z.pais, z.moneda, d.zona_id AS zona,
              (d.ubicacion_en IS NOT NULL AND d.ubicacion_en > datetime('now', '-${MINUTOS_UBICACION_VIGENTE} minutes')) AS ubicacion,
              EXISTS (SELECT 1 FROM conductores_elegibles e WHERE e.conductor_id = d.usuario_id) AS elegible,
+             EXISTS (SELECT 1 FROM conductores_elegibles e WHERE e.conductor_id = d.usuario_id AND e.servicio_id != 'comida') AS elegible_sin_comida,
+             EXISTS (SELECT 1 FROM restaurantes r WHERE r.zona_id = d.zona_id AND r.estado = 'aprobado') AS restaurantes,
              EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = d.usuario_id AND k.selfie IS NOT NULL) AS cara,
              EXISTS (SELECT 1 FROM preferencias_servicio p WHERE p.conductor_id = d.usuario_id AND p.activa = 1) AS encendido,
              EXISTS (SELECT 1 FROM habilitaciones h WHERE h.conductor_id = d.usuario_id AND h.estado = 'aprobada') AS habilitado,
@@ -107,6 +110,8 @@ export async function queTeFalta(
         zona: string | null;
         ubicacion: number;
         elegible: number;
+        elegible_sin_comida: number;
+        restaurantes: number;
         cara: number;
         encendido: number;
         habilitado: number;
@@ -170,6 +175,14 @@ export async function queTeFalta(
   if (f && Number(f.conectado) && !Number(f.encendido))
     poner({ clave: 'sin_servicio_encendido', quien: 'conductor' });
 
+  // C-SERVICIO-SIN-OFERTA: solo podría hacer Comida y su zona no tiene restaurantes todavía.
+  const soloComidaVacia =
+    Boolean(f) &&
+    Number(f?.elegible) === 1 &&
+    !Number(f?.elegible_sin_comida) &&
+    !Number(f?.restaurantes);
+  if (soloComidaVacia) poner({ clave: 'sin_restaurantes', quien: 'divoox' });
+
   // 5. El dinero: saldo para la comisión y la cuenta donde le pagan los pasajeros a celular.
   if (f?.zona && f.moneda) {
     const cfg = await leerConfigPais(db, pais);
@@ -210,5 +223,5 @@ export async function queTeFalta(
     poner({ clave: 'desconectado', quien: 'conductor' });
 
   // «Recibe viajes» = la misma regla del reparto (C-EN-LINEA-DE-VERDAD); la ubicación vieja va aparte.
-  return { recibeViajes: Boolean(f && Number(f.elegible)), faltas };
+  return { recibeViajes: Boolean(f && Number(f.elegible)) && !soloComidaVacia, faltas };
 }

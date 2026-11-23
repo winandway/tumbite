@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-SERVICIO-SIN-OFERTA · Comida solo donde hay restaurantes, desde el servidor (23 nov 2026, Richard: un conductor quedó «conectado a Comida» en un pueblo sin restaurantes) — todos los países
+
+- **Regla de negocio (Richard):** en cada ciudad se arranca por motos, después restaurantes y al final clientes. Comida aparece SOLA en Driver cuando la zona tiene al menos un restaurante `aprobado`.
+- **Qué se hizo (servidor; vale para Driver 0.1.69, que pinta la lista de `GET /datos/conductor/panel-servicios`):** `apps/servidor/src/servicioSinOferta.ts` (`hayRestaurantesDelConductor`, `MENSAJE_SIN_RESTAURANTES`, `avisarComidaAbierta`). `panelDe` no devuelve Comida sin restaurantes en la zona (tampoco a quien ya la tenía encendida; solo si lleva un pedido en curso), así que no figura «esperando pedidos». Envíos y los demás servicios apagados en la zona ya no salían (`estadoTarjeta` → null). Conectar Comida (`POST /conductor/servicios/comida/conexion`) responde 409 `sin_restaurantes` con la verdad. El encendido general (`POST /repartidor/conectar`, el de 0.1.69) responde con `avisoComida` = «Todavía no hay restaurantes en tu zona. Te avisamos cuando abra el primero.» si lo único que puede hacer es Comida (0.1.69 lo muestra al conectarse). `queTeFalta` dice `sin_restaurantes` (de nosotros, sin botón) y `recibeViajes` = false en ese caso. Al aprobar el PRIMER restaurante de una zona (`catalogo.ts`), aviso una sola vez a los conductores de esa zona (tope 500).
+- **Cómo se comprueba:** `apps/servidor/src/rutas/servicioSinOferta.test.ts` (vista en ROJO: 2 de 4 con el código anterior), `serviciosConectados.test.ts` («Comida no se ofrece donde no hay restaurantes»).
+- **Qué NO tocar:** no volver a mostrar Comida por la preferencia guardada; la regla vive solo en `servicioSinOferta.ts`.
+
 ## C-PAPEL-DICE-LA-VERDAD · Un papel subido del vehículo no dice «en revisión» si el vehículo no se envió (23 nov 2026, conductor real) — todos los países
 
 - **Qué pasaba:** en «Mi vehículo» cada foto subida decía «Pendiente · Enviado · suele tardar 1 día» con la moto todavía «registrada»; nadie la revisa hasta tocar «Enviar mi moto a revisión» (que exige placa, registro y seguro). El conductor creyó que ya estaba.

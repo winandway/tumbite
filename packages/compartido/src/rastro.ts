@@ -124,5 +124,6 @@ export const NOMBRE_MOTIVO_HITO: Record<string, { es: string; en: string }> = {
   selfie_casco: { es: 'foto con casco pendiente', en: 'helmet photo pending' },
   bloque_flex: { es: 'estaba en un bloque de Flex', en: 'in a Flex block' },
   servicioId: { es: 'servicio no aprobado', en: 'service not approved' },
+  sin_restaurantes: { es: 'no hay restaurantes en su zona', en: 'no restaurants in their area' },
   otro: { es: 'otro motivo', en: 'other reason' },
 };

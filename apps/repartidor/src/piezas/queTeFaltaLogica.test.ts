@@ -35,6 +35,10 @@ describe('C-QUE-TE-FALTA · lo que ve el conductor', () => {
       'en',
     );
     expect(en?.titulo).toBe('We’re reviewing your car');
+    // C-SERVICIO-SIN-OFERTA: sin restaurantes en la zona, se dice la verdad y sin botón.
+    const sr = avisoDeFalta({ clave: 'sin_restaurantes', quien: 'divoox' }, 'es');
+    expect(sr?.titulo).toBe('Todavía no hay restaurantes en tu zona');
+    expect(sr?.boton).toBeNull();
   });
   it('cada cosa que hace el conductor tiene botón directo, en los dos idiomas', () => {
     for (const clave of [

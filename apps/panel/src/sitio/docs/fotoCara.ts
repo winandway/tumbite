@@ -116,6 +116,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'Cuando lo que falta lo hacemos nosotros, la app te lo dice así, sin botón: por ejemplo, «Estamos revisando tu moto». No tienes que hacer nada: te avisamos ahí mismo cuando esté listo.',
         'Si tu vehículo quedó guardado sin placa o con un dato mal escrito, no tienes que borrarlo: en la pantalla de tu vehículo toca «Completar la placa» o «Corregir los datos», arregla lo que haga falta y toca «Guardar los cambios». Mientras lo estamos revisando, o después de aprobarlo, no se puede cambiar: si un dato está mal, escríbenos desde Ayuda.',
         'Al registrar un vehículo con motor, la placa se pide desde el principio. Si falta, la app te lo dice debajo de la casilla.',
+        'Comida aparece en Divoox Driver cuando tu zona tiene al menos un restaurante abierto en Divoox. Antes no sale para conectarte, y si lo único que podrías hacer es Comida, la app te dice «Todavía no hay restaurantes en tu zona»: te avisamos cuando abra el primero.',
         'Cuando subes lo que pide la revisión, tu moto (o tu carro) pasa sola a revisión: no tienes que tocar nada más. Si un papel dice «Subida. Tu moto pasa sola a revisión cuando subas lo que falta», la app te dice exactamente qué falta (la placa, el registro o la póliza). «En revisión · suele tardar 1 día» sale cuando ya llegó a revisión. Lo mismo con tus papeles personales: completos, llegan solos.',
       ],
       capturas: [
@@ -237,6 +238,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'When what’s missing is on us, the app says so, without a button: for example, “We’re reviewing your motorbike.” You don’t need to do anything: we’ll let you know right there when it’s ready.',
         'If your vehicle was saved without a plate or with a typo, you don’t have to delete it: on your vehicle’s screen tap “Add the license plate” or “Fix the details,” fix what’s needed and tap “Save changes.” While we’re reviewing it, or once it’s approved, it can’t be changed: if something is wrong, write to us from Help.',
         'When you add a motor vehicle, the license plate is required from the start. If it’s missing, the app tells you right under the field.',
+        'Food shows up in Divoox Driver once your area has at least one restaurant open on Divoox. Before that it doesn’t appear to go online, and if Food is the only thing you could do, the app says “No restaurants in your area yet”: we’ll let you know when the first one opens.',
         'Once you upload what the review needs, your motorbike (or car) goes to review on its own: there’s nothing else to tap. If a document says “Uploaded. Your motorbike goes to review on its own once the rest is uploaded,” the app tells you exactly what’s missing (the plate, the registration or the policy). “Under review · usually takes 1 day” shows once it’s in review. Same with your personal documents: once complete, they go on their own.',
       ],
       capturas: [

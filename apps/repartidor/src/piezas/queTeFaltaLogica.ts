@@ -159,6 +159,16 @@ export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | nul
         en ? 'Send for review' : 'Enviar a revisión',
         'papeles',
       );
+    case 'sin_restaurantes':
+      // C-SERVICIO-SIN-OFERTA: lo único que podría hacer es Comida y su zona no tiene restaurantes.
+      return a(
+        en ? 'No restaurants in your area yet' : 'Todavía no hay restaurantes en tu zona',
+        en
+          ? 'We’ll let you know here when the first one opens. Meanwhile, no food orders can arrive.'
+          : 'Te avisamos aquí cuando abra el primero. Mientras tanto no te pueden llegar pedidos de Comida.',
+        null,
+        null,
+      );
     case 'servicio_no_disponible':
       return a(
         en ? 'No service open in your city yet' : 'Todavía no hay servicios abiertos en tu ciudad',

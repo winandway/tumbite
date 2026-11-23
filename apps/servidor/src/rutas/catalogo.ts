@@ -1,3 +1,4 @@
+import { avisarComidaAbierta } from '../servicioSinOferta';
 import { conPatrocinados } from '../anuncios';
 import { promocionesVigentes } from '../promociones';
 import { Hono } from 'hono';
@@ -1291,6 +1292,10 @@ catalogo.patch('/admin/restaurantes/:id', async (c) => {
     .prepare('UPDATE restaurantes SET estado=?, plan=?, abierto=? WHERE id=?')
     .bind(estado, d.plan ?? f.plan, abierto, f.id)
     .run();
+  // C-SERVICIO-SIN-OFERTA: el primer restaurante aprobado de la zona trae Comida a Driver (aparece
+  // sola) y les avisa a los conductores de esa zona, una sola vez.
+  if (estado === 'aprobado' && String(f.estado) !== 'aprobado')
+    await avisarComidaAbierta(c.env, db, String(f.zona_id));
   const n = await db
     .prepare(
       'SELECT r.*, (SELECT moneda FROM zonas WHERE id = r.zona_id) AS zona_moneda FROM restaurantes r WHERE r.id = ?',

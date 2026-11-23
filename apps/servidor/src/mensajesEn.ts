@@ -1622,6 +1622,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Escribe la placa de tu vehículo.', 'Enter your vehicle’s license plate.'],
   [
+    'Todavía no hay restaurantes en tu zona. Te avisamos cuando abra el primero.',
+    'There are no restaurants in your area yet. We’ll let you know when the first one opens.',
+  ],
+  [
     'Escribe el estado que emitió la placa (dos letras, por ejemplo, FL).',
     'Enter the state that issued the plate (two letters, for example, FL).',
   ],
