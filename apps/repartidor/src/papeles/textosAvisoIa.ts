@@ -16,15 +16,6 @@ export const TEXTOS_AVISO_IA = {
     boton: 'Aceptar y continuar',
     alternativa: 'Prefiero revisión solo por una persona',
     falta: 'Marca la casilla para continuar.',
-    // C-FOTO-CARA-A-LA-VISTA (23 nov 2026): el resumen va arriba, a la vista; el texto del dictamen
-    // sigue completo en la misma pantalla, con «Ver todo el texto». No reemplaza al texto.
-    resumen:
-      'Google (Gemini), un servicio de inteligencia artificial, recibe tus fotos de documentos y tus mensajes de ayuda para revisarlos. Nunca te rechaza una máquina: decide una persona de nuestro equipo.',
-    verMas: 'Ver todo el texto',
-    verMenos: 'Ver menos',
-    relectura:
-      'Guardamos tu respuesta, pero no pudimos actualizar la pantalla. Revisa tu señal y toca Reintentar.',
-    reintentar: 'Reintentar',
   },
   en: {
     titulo: 'How we check your documents',
@@ -36,13 +27,6 @@ export const TEXTOS_AVISO_IA = {
     boton: 'Accept and continue',
     alternativa: 'I prefer review by a person only',
     falta: 'Check the box to continue.',
-    resumen:
-      'Google (Gemini), an artificial intelligence service, receives your document photos and help messages to check them. A machine never rejects you: a person on our team decides.',
-    verMas: 'See the full text',
-    verMenos: 'Show less',
-    relectura:
-      'We saved your answer, but couldn’t refresh the screen. Check your signal and tap Retry.',
-    reintentar: 'Retry',
   },
 } as const;
 

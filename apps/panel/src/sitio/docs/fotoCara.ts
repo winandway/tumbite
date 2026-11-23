@@ -17,7 +17,6 @@ import type { Captura, Guia } from './guias';
 export const FOTO_CARA_PUBLICADA = true;
 
 export const CAPTURAS_FOTO_CARA = [
-  'aviso-ia',
   'inicio-tarjeta-cara',
   'motivo-sin-cara',
   'tu-cara-consentimiento',
@@ -46,7 +45,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'En Divoox Driver, la foto de tu cara es lo primero: con ella ya puedes conectarte y trabajar mientras subes el resto de tus papeles. Se toma en un momento, con la cámara de la app.',
       explicacion: [
         'Cuando creas tu cuenta de conductor, arriba de todo en la pantalla de inicio ves la tarjeta «Tómate la foto de tu cara para empezar», con su botón «Tomar mi foto». Es la foto que ven los pasajeros, para que sepan quién llega.',
-        'Antes de la primera foto, la app te muestra una sola vez cómo revisamos tus documentos: quién recibe tus fotos y que la decisión siempre la toma una persona de nuestro equipo. Arriba ves un resumen corto; con «Ver todo el texto» lees el texto completo. Marcas la casilla y tocas «Aceptar y continuar».',
+        'Antes de la primera foto, la app te muestra una sola vez cómo revisamos tus documentos: quién recibe tus fotos y que la decisión siempre la toma una persona de nuestro equipo. Lo lees, marcas la casilla y tocas «Aceptar y continuar».',
         'Si deslizas «Desliza para conectarte» sin la foto, la app te dice por qué no puedes conectarte justo al lado de la barra, con el botón «Tomar mi foto» para hacerlo en ese momento.',
         'En «Tu cara» lees para qué usamos la foto y tocas «Acepto y sigo». Luego tocas «Tomar foto», pones tu cara dentro del óvalo, de frente y con buena luz, y tocas el botón redondo. Ves cómo quedó: si te gusta, «Usar esta»; si no, «Repetir».',
         'Si te quedas sin señal mientras se sube, la app te lo dice junto al botón y tu foto sigue ahí: toca «Reintentar» cuando tengas señal, sin volver a tomarla. Si la subida tarda demasiado, la app la corta sola y te lo dice; nunca te quedas esperando sin saber qué pasa.',
@@ -54,12 +53,6 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'En un celular pequeño, el botón de cada paso siempre se ve abajo, fijo; el texto se desliza por detrás. «Guardar y seguir después» está debajo, por si quieres terminar más tarde.',
       ],
       capturas: [
-        foto(
-          'aviso-ia',
-          'es',
-          'La pantalla Cómo revisamos tus documentos: un resumen corto, Ver todo el texto, la política de privacidad y, abajo y a la vista, la casilla del permiso y el botón Aceptar y continuar.',
-          'Una sola vez, antes de la primera foto. La casilla y el botón siempre a la vista.',
-        ),
         foto(
           'inicio-tarjeta-cara',
           'es',
@@ -123,7 +116,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'Cuando lo que falta lo hacemos nosotros, la app te lo dice así, sin botón: por ejemplo, «Estamos revisando tu moto». No tienes que hacer nada: te avisamos ahí mismo cuando esté listo.',
         'Si tu vehículo quedó guardado sin placa o con un dato mal escrito, no tienes que borrarlo: en la pantalla de tu vehículo toca «Completar la placa» o «Corregir los datos», arregla lo que haga falta y toca «Guardar los cambios». Mientras lo estamos revisando, o después de aprobarlo, no se puede cambiar: si un dato está mal, escríbenos desde Ayuda.',
         'Al registrar un vehículo con motor, la placa se pide desde el principio. Si falta, la app te lo dice debajo de la casilla.',
-        'Un papel del vehículo que subiste dice «Subida. Falta enviar tu moto a revisión» hasta que envías el vehículo: nadie lo revisa antes. En «Mi vehículo» tienes ahí mismo «Enviar a revisión» o, si todavía falta algo para poder enviarlo (la placa, el registro o la póliza), te dice exactamente qué. «En revisión · suele tardar 1 día» sale solo cuando ya lo enviaste. Lo mismo con tus papeles personales: cuando tomaste todas las fotos, arriba del inicio sale «Envía tus papeles a revisión» con su botón.',
+        'Cuando subes lo que pide la revisión, tu moto (o tu carro) pasa sola a revisión: no tienes que tocar nada más. Si un papel dice «Subida. Tu moto pasa sola a revisión cuando subas lo que falta», la app te dice exactamente qué falta (la placa, el registro o la póliza). «En revisión · suele tardar 1 día» sale cuando ya llegó a revisión. Lo mismo con tus papeles personales: completos, llegan solos.',
       ],
       capturas: [
         foto(
@@ -173,7 +166,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'In Divoox Driver, your face photo comes first: with it you can go online and work while you upload the rest of your documents. It takes a moment, with the app’s camera.',
       explicacion: [
         'When you create your driver account, at the very top of the home screen you see the card “Take your face photo to start,” with its “Take my photo” button. It’s the photo riders see, so they know who’s arriving.',
-        'Before your first photo, the app shows you once how we check your documents: who receives your photos, and that a person on our team always makes the decision. A short summary is at the top; “See the full text” shows the complete text. Check the box and tap “Accept and continue.”',
+        'Before your first photo, the app shows you once how we check your documents: who receives your photos, and that a person on our team always makes the decision. Read it, check the box and tap “Accept and continue.”',
         'If you slide “Slide to go online” without the photo, the app tells you why you can’t go online right next to the bar, with a “Take my photo” button to do it right away.',
         'In “Your face,” read what we use the photo for and tap “I agree, continue.” Then tap “Take photo,” place your face inside the oval, facing the camera in good light, and tap the round button. You see how it came out: if you like it, “Use this one”; if not, “Retake.”',
         'If you lose signal while it uploads, the app tells you next to the button and your photo stays there: tap “Retry” when you have signal, without taking it again. If the upload takes too long, the app stops it and tells you; you’re never left waiting without knowing what’s happening.',
@@ -181,12 +174,6 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'On a small phone, each step’s button always stays visible at the bottom; the text scrolls behind it. “Save and continue later” is below it, in case you want to finish later.',
       ],
       capturas: [
-        foto(
-          'aviso-ia',
-          'en',
-          'The How we check your documents screen: a short summary, See the full text, the privacy policy and, at the bottom and always visible, the permission checkbox and the Accept and continue button.',
-          'Once, before your first photo. The checkbox and button are always visible.',
-        ),
         foto(
           'inicio-tarjeta-cara',
           'en',
@@ -250,7 +237,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'When what’s missing is on us, the app says so, without a button: for example, “We’re reviewing your motorbike.” You don’t need to do anything: we’ll let you know right there when it’s ready.',
         'If your vehicle was saved without a plate or with a typo, you don’t have to delete it: on your vehicle’s screen tap “Add the license plate” or “Fix the details,” fix what’s needed and tap “Save changes.” While we’re reviewing it, or once it’s approved, it can’t be changed: if something is wrong, write to us from Help.',
         'When you add a motor vehicle, the license plate is required from the start. If it’s missing, the app tells you right under the field.',
-        'A vehicle document you uploaded says “Uploaded. You still need to send your vehicle for review” until you send the vehicle: nobody reviews it before that. In “My vehicle” you have “Send it for review” right there or, if something is still missing to send it (the plate, the registration or the insurance policy), it tells you exactly what. “Under review · usually takes 1 day” only shows once you’ve sent it. Same with your personal documents: once you’ve taken all the photos, the top of the home screen shows “Send your documents for review” with its button.',
+        'Once you upload what the review needs, your motorbike (or car) goes to review on its own: there’s nothing else to tap. If a document says “Uploaded. Your motorbike goes to review on its own once the rest is uploaded,” the app tells you exactly what’s missing (the plate, the registration or the policy). “Under review · usually takes 1 day” shows once it’s in review. Same with your personal documents: once complete, they go on their own.',
       ],
       capturas: [
         foto(

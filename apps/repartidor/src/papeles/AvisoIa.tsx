@@ -15,11 +15,6 @@ import {
  * primera foto y del permiso de cámara, y una vez al entrar para las cuentas que no lo contestaron.
  * Casilla sin marcar, botón apagado hasta marcarla. En iPhone, además, «Prefiero revisión solo por
  * una persona» (la única diferencia entre plataformas; ver CANDADOS.md).
- *
- * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): arriba un resumen corto (quién recibe qué); el texto completo
- * del dictamen sigue en la misma pantalla con «Ver todo el texto». La casilla y el botón van en el pie
- * FIJO: a la vista sin deslizar en un celular chico (antes había que deslizar para encontrarlos). Si
- * la respuesta se guardó pero la pantalla no se pudo actualizar, se dice y se reintenta.
  */
 export function AvisoIa({
   api,
@@ -29,8 +24,7 @@ export function AvisoIa({
 }: {
   api: Api;
   idioma: Idioma;
-  /** Devuelve false (o null) si no pudo poner al día la pantalla: se dice y se reintenta. */
-  alListo: (acepto: boolean) => unknown;
+  alListo: (acepto: boolean) => void | Promise<unknown>;
   /** Solo para las pruebas: la plataforma real sale de `Platform.OS`. */
   plataforma?: 'ios' | 'android' | 'web';
 }) {
@@ -38,15 +32,7 @@ export function AvisoIa({
   const [marcada, setMarcada] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
-  const [todo, setTodo] = useState(false);
-  // La respuesta ya quedó guardada en el servidor; falta poner al día la pantalla.
-  const [guardada, setGuardada] = useState<boolean | null>(null);
   const conAlternativa = avisoConAlternativa(plataforma);
-
-  async function terminar(acepto: boolean) {
-    const r = await Promise.resolve(alListo(acepto));
-    if (r === false || r === null) setError(t.relectura);
-  }
 
   async function contestar(acepto: boolean) {
     if (ocupado) return;
@@ -57,15 +43,8 @@ export function AvisoIa({
     setOcupado(true);
     setError('');
     try {
-      if (guardada === null) {
-        await api.pedir('POST', '/datos/conductor/aviso-ia', {
-          acepto,
-          plataforma,
-          desde: 'aviso',
-        });
-        setGuardada(acepto);
-      }
-      await terminar(guardada ?? acepto);
+      await api.pedir('POST', '/datos/conductor/aviso-ia', { acepto, plataforma, desde: 'aviso' });
+      await alListo(acepto);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
@@ -75,57 +54,29 @@ export function AvisoIa({
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} testID="aviso-ia">
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingTop: 16,
-          paddingBottom: 16,
-          gap: 14,
-        }}
-      >
+      <ScrollView contentContainerStyle={{ padding: 24, gap: 18, flexGrow: 1 }}>
         <View
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
+            width: 56,
+            height: 56,
+            borderRadius: 28,
             backgroundColor: '#F2F3F5',
             alignItems: 'center',
             justifyContent: 'center',
+            marginTop: 12,
           }}
         >
-          <Icono nombre="shield-checkmark-outline" tamano={24} color={COLOR.texto} />
+          <Icono nombre="shield-checkmark-outline" tamano={28} color={COLOR.texto} />
         </View>
         <Text
           accessibilityRole="header"
-          style={{ fontFamily: FUENTE.titulo, fontSize: 24, lineHeight: 30 }}
+          style={{ fontFamily: FUENTE.titulo, fontSize: 26, lineHeight: 32 }}
         >
           {t.titulo}
         </Text>
-        <Text style={{ fontSize: 16, lineHeight: 23 }} testID="aviso-ia-resumen">
-          {t.resumen}
+        <Text style={{ fontSize: 16, lineHeight: 24 }} testID="aviso-ia-texto">
+          {t.texto}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: todo }}
-          onPress={() => setTodo((x) => !x)}
-          testID="aviso-ia-ver-mas"
-          hitSlop={8}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-        >
-          <Text style={{ fontSize: 15, fontFamily: FUENTE.textoFuerte }}>
-            {todo ? t.verMenos : t.verMas}
-          </Text>
-          <Icono nombre={todo ? 'chevron-up' : 'chevron-down'} tamano={16} />
-        </Pressable>
-        {todo ? (
-          <Text
-            style={{ fontSize: 15, lineHeight: 22, color: COLOR.textoSuave }}
-            testID="aviso-ia-texto"
-          >
-            {t.texto}
-          </Text>
-        ) : null}
         <Pressable
           accessibilityRole="link"
           // C-PAGINA-EN-APP: la política se abre dentro de la app, no en el navegador.
@@ -136,20 +87,6 @@ export function AvisoIa({
             {t.politica}
           </Text>
         </Pressable>
-      </ScrollView>
-      {/* El pie fijo: la casilla y el botón siempre a la vista. */}
-      <View
-        testID="aviso-ia-pie"
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 12,
-          paddingBottom: 14,
-          gap: 10,
-          borderTopWidth: 1,
-          borderTopColor: COLOR.borde,
-          backgroundColor: '#FFFFFF',
-        }}
-      >
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: marcada }}
@@ -165,7 +102,7 @@ export function AvisoIa({
             borderWidth: 1,
             borderColor: COLOR.bordeFuerte,
             borderRadius: 12,
-            padding: 12,
+            padding: 14,
           }}
         >
           <View
@@ -183,17 +120,9 @@ export function AvisoIa({
           >
             {marcada ? <Icono nombre="checkmark" tamano={16} color="#FFFFFF" /> : null}
           </View>
-          <Text style={{ flex: 1, fontSize: 14, lineHeight: 20 }}>{t.casilla}</Text>
+          <Text style={{ flex: 1, fontSize: 15, lineHeight: 22 }}>{t.casilla}</Text>
         </Pressable>
-        {error ? (
-          <Text
-            accessibilityRole="alert"
-            testID="aviso-ia-error"
-            style={{ color: COLOR.error, textAlign: 'center', fontWeight: '700' }}
-          >
-            {error}
-          </Text>
-        ) : null}
+        <View style={{ flexGrow: 1 }} />
         <View
           // Apagado hasta marcar la casilla (no se acepta por omisión).
           style={{ opacity: marcada ? 1 : 0.45 }}
@@ -201,8 +130,8 @@ export function AvisoIa({
           testID={marcada ? 'aviso-ia-boton-listo' : 'aviso-ia-boton-apagado'}
         >
           <Boton
-            texto={guardada !== null && error ? t.reintentar : t.boton}
-            alTocar={() => void contestar(guardada ?? true)}
+            texto={t.boton}
+            alTocar={() => void contestar(true)}
             cargando={ocupado}
             testID="aviso-ia-aceptar"
           />
@@ -213,14 +142,19 @@ export function AvisoIa({
             onPress={() => void contestar(false)}
             disabled={ocupado}
             testID="aviso-ia-solo-persona"
-            style={{ paddingVertical: 8, alignItems: 'center' }}
+            style={{ paddingVertical: 12, alignItems: 'center' }}
           >
-            <Text style={{ fontSize: 15, fontWeight: '700', color: COLOR.texto }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: COLOR.texto }}>
               {t.alternativa}
             </Text>
           </Pressable>
         ) : null}
-      </View>
+        {error ? (
+          <Text accessibilityRole="alert" style={{ color: COLOR.error, textAlign: 'center' }}>
+            {error}
+          </Text>
+        ) : null}
+      </ScrollView>
     </SafeAreaView>
   );
 }

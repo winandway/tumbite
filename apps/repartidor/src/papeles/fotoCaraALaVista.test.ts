@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { type Verificacion, accionDeMotivo, conFotosLocales, faltaCaraParaEmpezar } from './logica';
-import { TEXTOS_AVISO_IA } from './textosAvisoIa';
 
 /**
  * C-FOTO-CARA-A-LA-VISTA (23 nov 2026) — todos los países. Conductores nuevos de Venezuela se
@@ -98,20 +97,8 @@ describe('C-FOTO-CARA-A-LA-VISTA · nada importante queda fuera de pantalla', ()
     expect(pie.indexOf('{principal}')).toBeLessThan(pie.indexOf('{secundario}'));
   });
 
-  it('el aviso de IA: casilla y botón a la vista sin deslizar; el texto completo sigue en la pantalla', () => {
-    const codigo = leer('AvisoIa.tsx');
-    const scroll = dentroDeScroll(codigo);
-    for (const id of ['aviso-ia-casilla', 'aviso-ia-aceptar'])
-      expect(scroll, `${id} no se desliza`).not.toContain(`"${id}"`);
-    expect(scroll).toContain('t.texto');
-    expect(scroll).toContain('t.resumen');
-    // El texto del dictamen no cambia; el resumen es aparte y nombra a Google (Gemini) y a la persona.
-    expect(TEXTOS_AVISO_IA.es.texto).toContain('inteligencia artificial de Google (Gemini)');
-    for (const r of [TEXTOS_AVISO_IA.es.resumen, TEXTOS_AVISO_IA.en.resumen]) {
-      expect(r).toMatch(/Google \(Gemini\)/);
-      expect(r.length).toBeLessThan(TEXTOS_AVISO_IA.es.texto.length / 2);
-    }
-  });
+  // El aviso de IA NO se toca hasta el dictamen del auditor de tiendas (Gerencia, 23 nov): su
+  // rediseño quedó apartado en la rama fase-driver-aviso-ia-apartado.
 
   it('inicio: el motivo de no conectarse va pegado a la barra y la tarjeta de la cara arriba de todo', () => {
     const panel = leer('..', 'servicios', 'PanelServicios.tsx');
