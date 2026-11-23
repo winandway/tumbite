@@ -17,7 +17,8 @@ import { EL_VIGIA, abrirComida, escenarioVe, restauranteVe } from '../pruebas/co
 describe('C-COMIDA-VENEZUELA: Comida se abre en El Vigía con un paso del panel', () => {
   it('deja el país en dólares con las tarifas del mercado, efectivo y pago móvil, recargas y Comida encendida', async () => {
     const e = await escenarioVe();
-    const r = await abrirComida(e);
+    // Sin tarifas escritas: el panel propone las de fábrica (C-COMIDA-VE-QUIEN-PAGA).
+    const r = await abrirComida(e, {}, { pagoRestaurante: true });
     expect(r.estado).toBe(201);
     expect(r.datos.zona).toEqual({ id: EL_VIGIA.id, pais: 'VE', moneda: 'USD' });
     expect(r.datos.estado).toBe('disponible');
@@ -76,7 +77,7 @@ describe('C-COMIDA-VENEZUELA: Comida se abre en El Vigía con un paso del panel'
 describe('C-COMIDA-VENEZUELA: el carrito en dólares con el equivalente en bolívares', () => {
   it('las tarifas del restaurante salen en dólares, con las propinas del país y la tasa del día', async () => {
     const e = await escenarioVe();
-    await abrirComida(e);
+    await abrirComida(e, {}, { pagoRestaurante: true });
     const { rid } = await restauranteVe(e);
     const sinTasa = await e.m.llamar('GET', `/datos/config-dinero?restauranteId=${rid}`);
     expect(sinTasa.estado).toBe(200);

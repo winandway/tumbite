@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { saldoLibro } from '../internacional/libro';
 import { vigilarPagosComida, saludPagoComida } from '../internacional/pagoComida';
 import { borrarCuenta } from '../borrarCuenta';
-import type { Env } from '../env';
 import { abrirComida, escenarioVe, restauranteVe } from '../pruebas/comidaVe';
+import { CASA, CUENTA_RESTAURANTE, mundoPago } from '../pruebas/pagoComidaVe';
 
 /**
  * C-COMIDA-PAGO-RESTAURANTE y C-SALDO-RESTAURANTE (22 nov 2026) — Venezuela (países con la bandera
@@ -11,159 +11,10 @@ import { abrirComida, escenarioVe, restauranteVe } from '../pruebas/comidaVe';
  * envío al conductor; el conductor ya no adelanta nada en el local. Orden: el restaurante acepta, se
  * asegura un conductor, recién ahí el cliente ve los datos de pago del restaurante (monto en bolívares
  * congelado con la tasa y un vencimiento), escribe la referencia, el restaurante confirma «Me llegó»
- * y solo entonces se prepara y sale el conductor. Divoox cobra solo su comisión del envío, una vez,
- * del saldo prepago del conductor; el restaurante paga 0 % mientras su política esté en cero.
+ * y solo entonces se prepara y sale el conductor. C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): Divoox cobra
+ * su comisión al restaurante, de su saldo prepago (0 % mientras su política esté en cero); al
+ * conductor no le aparta nada del envío (configurable, de fábrica 0).
  */
-const CASA = { lat: 8.6235, lng: -71.649 };
-const CUENTA_RESTAURANTE = {
-  clave: 'clave-segura-1',
-  banco: 'Banco de ejemplo',
-  telefono: '04140000000',
-  documento: 'J-000000001',
-  titular: 'Restaurante de ejemplo',
-};
-
-async function mundoPago(conCuenta = true) {
-  const e = await escenarioVe();
-  expect((await abrirComida(e, {}, { pagoRestaurante: true })).estado).toBe(201);
-  await e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 250 }, e.admin.token);
-  const r = await restauranteVe(e);
-  if (conCuenta) {
-    const cu = await e.m.llamar(
-      'POST',
-      '/datos/restaurante/cuenta-cobro',
-      CUENTA_RESTAURANTE,
-      r.dueno.token,
-    );
-    expect(cu.estado).toBe(201);
-  }
-  const env = { DB: e.m.DB, ...e.m.extra } as unknown as Env;
-  const pedir = (metodoPago: 'efectivo' | 'transferencia_repartidor' = 'efectivo') =>
-    e.m.llamar(
-      'POST',
-      '/datos/pedidos',
-      {
-        restauranteId: r.rid,
-        lineas: [{ platoId: r.platoId, cantidad: 2 }],
-        propinaCentavos: 50,
-        direccion: 'Calle de ejemplo 1',
-        ...CASA,
-        metodoPago,
-      },
-      e.cliente.token,
-    );
-  async function conductor(nombre = 'Conductor de ejemplo', saldo = 1000) {
-    const d = await e.m.cuenta('repartidor', nombre);
-    await e.m.DB.prepare("INSERT OR IGNORE INTO kyc (usuario_id, selfie) VALUES (?, 'kyc/selfie')")
-      .bind(d.id)
-      .run();
-    expect(
-      (
-        await e.m.llamar(
-          'POST',
-          '/datos/repartidor/conectar',
-          { conectado: true, lat: 8.6222, lng: -71.6508 },
-          d.token,
-        )
-      ).estado,
-    ).toBe(200);
-    if (saldo > 0) {
-      const punto = await e.m.llamar(
-        'POST',
-        '/datos/admin/puntos-venta',
-        { nombre: 'Punto de ejemplo', pais: 'VE', usuarioId: e.admin.id, moneda: 'USD' },
-        e.admin.token,
-      );
-      await e.m.llamar(
-        'POST',
-        `/datos/admin/puntos-venta/${punto.datos.punto.id}/fondo`,
-        { monto: saldo * 2, comprobante: 'transferencia-equipo-001' },
-        e.admin.token,
-      );
-      const codigo = await e.m.llamar(
-        'POST',
-        '/datos/punto-venta/codigos',
-        { monto: saldo },
-        e.admin.token,
-      );
-      const canje = await e.m.llamar(
-        'POST',
-        '/datos/repartidor/recargar',
-        { codigo: codigo.datos.codigo },
-        d.token,
-      );
-      expect(canje.estado).toBe(200);
-    }
-    return d;
-  }
-  const aceptarRest = (id: string) =>
-    e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 20 }, r.dueno.token);
-  const ofertas = async (rep: { token: string }) =>
-    ((await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos.ofertas ??
-      []) as {
-      id: string;
-      adelantoLocal: number;
-      enManoCobro: { monto: number } | null;
-      pagoComida?: { estado: string; listoParaIr: boolean } | null;
-    }[];
-  const tomar = (id: string, rep: { token: string }) =>
-    e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
-  const reportar = (id: string, referencia: string, token = e.cliente.token) =>
-    e.m.llamar('POST', `/datos/pedidos/${id}/pago-comida`, { referencia }, token);
-  const responder = (id: string, llego: boolean) =>
-    e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/pago-comida`, { llego }, r.dueno.token);
-  const listo = (id: string) =>
-    e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, r.dueno.token);
-  const pago = (id: string) =>
-    e.m.DB.prepare('SELECT * FROM pagos_comida WHERE pedido_id = ?')
-      .bind(id)
-      .first<Record<string, string | number | null>>();
-  const pedido = (id: string) =>
-    e.m.DB.prepare(
-      'SELECT estado, total, propina, subtotal, ganancia, comision, pago_restaurante, cobro_estado, conciliacion_estado, repartidor_id FROM pedidos WHERE id = ?',
-    )
-      .bind(id)
-      .first<Record<string, string | number | null>>();
-  const comisionesDe = (id: string) =>
-    e.m.DB.prepare(
-      "SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM libro WHERE pedido_id = ? AND bolsillo = 'comisiones'",
-    )
-      .bind(id)
-      .first<{ n: number; s: number }>();
-  const caso = (referencia: string) =>
-    e.m.DB.prepare('SELECT estado FROM incidencias_dinero WHERE referencia = ?')
-      .bind(referencia)
-      .first<{ estado: string }>();
-  /** Pedido creado, aceptado por el restaurante y tomado por el conductor: el cliente ya puede pagar. */
-  async function hastaPorPagar(rep?: { id: string; token: string }) {
-    const c = rep ?? (await conductor());
-    const p = await pedir();
-    expect(p.estado).toBe(201);
-    const id = p.datos.pedidoId as string;
-    expect((await aceptarRest(id)).estado).toBe(200);
-    expect((await ofertas(c)).map((o) => o.id)).toContain(id);
-    expect((await tomar(id, c)).estado).toBe(200);
-    return { id, rep: c };
-  }
-  return {
-    e,
-    r,
-    env,
-    pedir,
-    conductor,
-    aceptarRest,
-    ofertas,
-    tomar,
-    reportar,
-    responder,
-    listo,
-    pago,
-    pedido,
-    comisionesDe,
-    caso,
-    hastaPorPagar,
-  };
-}
 
 describe('C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al restaurante', () => {
   it('circuito feliz: conductor asegurado antes del pago, bolívares congelados, referencia, «Me llegó», recién ahí listo y recogida; el conductor cobra solo el envío y la comisión sale una vez', async () => {
@@ -284,10 +135,12 @@ describe('C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al res
       cobro_estado: 'confirmado',
       conciliacion_estado: 'conciliado',
     });
-    const comision = Number(fin?.ganancia);
-    expect(comision).toBeGreaterThan(0);
-    expect(await w.comisionesDe(id)).toEqual({ n: 1, s: comision });
-    expect(await saldoLibro(w.e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBe(1000 - comision);
+    // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): el conductor cobra el envío entero; Divoox no le aparta
+    // comisión (de fábrica 0 sobre el envío) y su saldo prepago queda igual. Ni servicio ni cargo
+    // pequeño: Divoox no gana nada del cliente en este pedido.
+    expect(Number(fin?.ganancia)).toBe(0);
+    expect(await w.comisionesDe(id)).toEqual({ n: 0, s: 0 });
+    expect(await saldoLibro(w.e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBe(1000);
     // Nada del restaurante en el saldo prepago: está al 0 %.
     expect(await saldoLibro(w.e.m.DB, `restaurante:${w.r.rid}`, 'prepago', 'VE', 'USD')).toBe(0);
     // Divoox nunca tuvo el dinero de la comida: queda escrito como pagado directo por el cliente.
@@ -324,8 +177,10 @@ describe('C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al res
   });
 
   it('el pago vencido sin referencia se cancela, nadie pagó y lo apartado vuelve al conductor', async () => {
-    const w = await mundoPago();
+    const w = await mundoPago(true, { comisionEnvioPb: 1000 });
     const { id, rep } = await w.hastaPorPagar();
+    // Con comisión sobre el envío (configurable), algo quedó apartado del saldo del conductor.
+    expect(await saldoLibro(w.e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBeLessThan(1000);
     await w.e.m.DB.prepare(
       "UPDATE pagos_comida SET vence_en = datetime('now', '-1 minutes') WHERE pedido_id = ?",
     )
@@ -415,8 +270,10 @@ describe('C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al res
   });
 
   it('cancelar después de confirmado deja la devolución pendiente y el restaurante la marca hecha', async () => {
-    const w = await mundoPago();
+    const w = await mundoPago(true, { comisionEnvioPb: 1000 });
     const { id, rep } = await w.hastaPorPagar();
+    // Con comisión sobre el envío (configurable), algo quedó apartado del saldo del conductor.
+    expect(await saldoLibro(w.e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBeLessThan(1000);
     expect((await w.reportar(id, '123456')).estado).toBe(200);
     expect((await w.responder(id, true)).estado).toBe(200);
     const c = await w.e.m.llamar(

@@ -5,6 +5,7 @@ import { rewardsSombra } from './rewards/rutas';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { finanzasAdmin } from './finanzas/rutasAdmin';
+import { comidaQuienPaga } from './finanzas/comidaQuienPaga';
 import { controlDual } from './finanzas/controlDual';
 import { flexRecargasLocalesAdmin } from './flex/recargasLocales';
 import { saludBilleteras } from './finanzas/reloj';
@@ -889,6 +890,7 @@ app.route('/', media);
 app.route('/datos', respaldo);
 app.route('/datos/v1/flex', flex);
 app.route('/datos', finanzasAdmin);
+app.route('/datos', comidaQuienPaga);
 app.route('/datos', controlDual);
 // C-FLEX-RECARGA-LOCAL: lo del equipo bajo /datos/admin/finanzas (perfiles y bitácora del equipo).
 app.route('/datos', flexRecargasLocalesAdmin);

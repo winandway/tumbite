@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   BONO_OFERTA_ABIERTA,
+  COMISION_ENVIO_COMIDA_VE_PB,
   PAPELES_PARA_EMPEZAR,
   PAISES,
   PLAZO_DIAS_MAXIMO,
@@ -84,6 +85,12 @@ export const esquemaConfigPais = z.object({
    * Venezuela. Sin la bandera, el cobro en mano de siempre (C-COBRO-DIRECTO-LOCAL).
    */
   comidaPagoRestaurante: z.boolean().optional(),
+  /**
+   * C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): en un pedido de pago directo, la comisión de Divoox que se
+   * le aparta al conductor, en puntos base sobre el ENVÍO. De fábrica 0: el conductor cobra el envío
+   * entero y no necesita saldo. Se cambia desde la palanca «¿Quién paga qué en la comida?».
+   */
+  comidaComisionEnvioPb: z.number().int().min(0).max(5000).optional(),
   /** Los tiempos del pago directo, en minutos (ver `TIEMPOS_PAGO_COMIDA`). */
   pagoComida: z
     .object({
@@ -168,6 +175,7 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     propinasPb: null,
     plazoPapeles: politicaPlazoDeFabrica(pais),
     comidaPagoRestaurante: pais === 'VE',
+    comidaComisionEnvioPb: COMISION_ENVIO_COMIDA_VE_PB,
     pagoComida: { ...TIEMPOS_PAGO_COMIDA },
     saldoRestaurante: { ...SALDO_RESTAURANTE_DE_FABRICA },
     topes: null,

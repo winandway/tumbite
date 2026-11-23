@@ -253,6 +253,9 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // C-QUIEN-PAGA-VIAJES: la palanca de quién paga la comisión en los viajes.
   'GET /admin/finanzas/quien-paga': 'dinero.ver',
   'PUT /admin/finanzas/quien-paga': 'dinero.configurar',
+  // C-COMIDA-VE-QUIEN-PAGA: la palanca de quién paga qué en la comida con pago directo.
+  'GET /admin/finanzas/comida-quien-paga': 'dinero.ver',
+  'PUT /admin/finanzas/comida-quien-paga': 'dinero.configurar',
   'GET /admin/finanzas/conciliacion': 'dinero.ver',
   'POST /admin/finanzas/conciliacion': 'dinero.conciliar',
   'GET /admin/finanzas/empresas': 'dinero.ver',
@@ -675,6 +678,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/finanzas/cancelaciones': DINERO,
   'GET /admin/finanzas/quien-paga': DINERO,
   'PUT /admin/finanzas/quien-paga': DINERO,
+  'GET /admin/finanzas/comida-quien-paga': DINERO,
+  'PUT /admin/finanzas/comida-quien-paga': DINERO,
   'GET /admin/finanzas/conciliacion': DINERO,
   'POST /admin/finanzas/conciliacion': DINERO,
   'GET /admin/finanzas/empresas': DINERO,
