@@ -218,8 +218,8 @@
 - [Create your account · Divoox](https://divoox.com/docs/account/create-account): One account to order, one for your restaurant, and one to deliver. Each takes a minute.
 - [Map colors: day and night · Divoox](https://divoox.com/docs/account/map-colors): The Divoox map switches on its own: blue by day, dark at night. If you’d rather keep one, choose it in your account.
 - [Install Divoox from your phone’s browser](https://divoox.com/docs/account/install-from-browser): No app store needed: open Divoox in Chrome or Safari, add it to your Home Screen, and it opens full screen, like an app.
-- [Forgot my password · Divoox](https://divoox.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
-- [Confirm your email · Divoox](https://divoox.com/docs/account/confirm-email): You can browse restaurants and menus without an account. At checkout we ask for your account with a confirmed email: you get a link and the app notices on 
+- [Forgot my password · Divoox](https://divoox.com/docs/account/password): We email you a link (it works once and expires in 30 minutes) or, if your email isn’t confirmed yet, we send a code to your cell phone.
+- [Confirm your email · Divoox](https://divoox.com/docs/account/confirm-email): Your account is ready once your cell phone is confirmed with a code. You confirm your email later, whenever you like: a banner reminds you without holding 
 - [Text messages (SMS): how to opt in or out · Divoox](https://divoox.com/docs/account/text-messages): A separate, unchecked box when you create your account and in “My account.” You only get account and order texts if you check it yourself.
 - [Delete your account · Divoox](https://divoox.com/docs/account/delete): From the three dots in “My account,” without leaving the app. Your personal data is removed.
 - [How to send a screenshot to support · Divoox](https://divoox.com/docs/account/send-screenshot-to-support): In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.
