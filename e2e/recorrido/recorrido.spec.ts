@@ -702,6 +702,8 @@ for (const idioma of ['en', 'es'] as const) {
     ).toBeVisible();
     await foto(cli, 'cliente-buscar');
     await cli.goto('/app/notifications');
+    // C-TELEFONO-AL-REGISTRARSE: la primera pantalla de la cuenta pide confirmar el celular.
+    if (!STAGING) await cruzarPuertaCelular(cli, correo('cliente'));
     await expect(cli.getByTestId('avisos-vacio')).toBeVisible({ timeout: 20_000 });
     // Staging acumula un restaurante por corrida y el inicio no los muestra todos: los de corridas
     // viejas se pausan (nunca los de la corrida en curso, que corre en los dos idiomas a la vez).

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
 import { sqlLocalTexto } from './sqlLocal';
+import { cruzarPuertaCelular } from './puertaCelular';
 
 /**
  * C-RECORRIDO-INTERNACIONAL (19 oct 2026): el cobro en mano en PESOS y en BOLÍVARES, de punta a
@@ -329,6 +330,8 @@ for (const P of PAISES) {
       await rep.getByTestId('registro-continuar').click();
       await rep.getByTestId('crear-mi-cuenta').click();
       await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
+      // C-TELEFONO-AL-REGISTRARSE: la cuenta nueva confirma su celular por SMS (solo en local).
+      if (!STAGING) await cruzarPuertaCelular(rep, correo('repartidor'));
       // C-PLAZO-PAPELES (19 nov 2026): donde el país da plazo para los papeles (Venezuela), la cuenta
       // nueva se conecta desde el primer día, pero con la foto de su cara ya tomada. La foto se deja
       // en la base local, como en los demás recorridos; donde no hay plazo (Colombia) no cambia nada.
@@ -422,6 +425,13 @@ for (const P of PAISES) {
       await cli.getByTestId('registro-continuar').click();
       await cli.getByTestId('crear-mi-cuenta').click();
       await expect(cli.getByText(nombreRest).first()).toBeVisible({ timeout: 30_000 });
+      // C-TELEFONO-AL-REGISTRARSE: en las pantallas de la cuenta, primero confirma su celular.
+      if (!STAGING) {
+        await cli.goto('/app/account');
+        await cruzarPuertaCelular(cli, correo('cliente'));
+        await cli.goto('/app/');
+        await expect(cli.getByText(nombreRest).first()).toBeVisible({ timeout: 30_000 });
+      }
       await cli.getByText(nombreRest).first().click();
       await expect(cli.getByText(P.visto).first()).toBeVisible({ timeout: 20_000 });
       await fotos(cli, 'cliente-menu');
