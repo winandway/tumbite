@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test, type Page } from './fixtures';
 import { sqlLocal } from './sqlLocal';
+import { cruzarPuertaCelular } from './puertaCelular';
 import { TEXTOS } from './textos';
 
 /**
@@ -63,8 +64,10 @@ for (const idioma of ['en', 'es'] as const)
     await expect(p.getByTestId('aviso-correo')).toContainText(correo);
     await foto(p, `cliente-aviso-correo-${idioma}`);
 
-    // 2. Al ir a pagar, la puerta: no se paga sin el correo confirmado.
+    // 2. Al ir a pagar, primero el celular (C-TELEFONO-AL-REGISTRARSE: la cuenta se creó sin él, así
+    // que la puerta lo pide) y después el correo: no se paga sin el correo confirmado.
     await p.goto('/app/cart');
+    await cruzarPuertaCelular(p, correo, `+1305555${String(Date.now()).slice(-4)}`);
     await expect(p.getByTestId('confirma-tu-correo')).toBeVisible({ timeout: 20_000 });
     await expect(p.getByTestId('correo-a-confirmar')).toHaveText(correo);
     await foto(p, `cliente-confirma-correo-${idioma}`);

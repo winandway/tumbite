@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type BrowserContext, type Locator, type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
+import { cruzarPuertaCelular } from './puertaCelular';
 import { sqlLocal } from './sqlLocal';
 
 /**
@@ -565,6 +566,9 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByTestId('crear-mi-cuenta').click();
     // C-PERMISOS-EXPLICADOS: tras registrarse, la app explica los permisos antes de pedirlos.
     await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
+    // C-TELEFONO-AL-REGISTRARSE: después, la cuenta nueva confirma su celular con el código por SMS
+    // (en el sitio de pruebas el SMS a +1 no está encendido: ahí no hay puerta).
+    if (!STAGING) await cruzarPuertaCelular(rep, correo('repartidor'));
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
     // recorrido se pide siempre). La toma y recién ahí se conecta.
     await deslizar(rep, 'conectarme');

@@ -268,7 +268,7 @@ function Listo({ alSeguir }: { alSeguir: () => void }) {
       >
         {t.listo}
       </Text>
-      <Boton texto={t.seguir} alTocar={alSeguir} />
+      <Boton texto={t.seguir} alTocar={alSeguir} testID="celular-continuar" />
     </View>
   );
 }
@@ -466,6 +466,7 @@ function ConfirmaTuCelular({
           />
           <Campo
             etiqueta={t.numero}
+            testID="celular-nuevo"
             value={b.valores.telefono}
             onChangeText={(x) => b.cambiar('telefono', x.replace(/[^\d+]/g, ''))}
             keyboardType="phone-pad"
@@ -475,6 +476,7 @@ function ConfirmaTuCelular({
           />
           <Boton
             texto={t.guardar}
+            testID="celular-guardar"
             cargando={ocupado === 'cambiar'}
             alTocar={() => void cambiar()}
           />
