@@ -5086,9 +5086,6 @@ CREATE TABLE IF NOT EXISTS pagos_comida (
   corregido_en TEXT,
   corregido_restaurante_en TEXT,
   comision_restaurante INTEGER NOT NULL DEFAULT 0,
-  -- C-COMIDA-VE-QUIEN-PAGA: la regla de la comisión del restaurante que regía al pedir (congelada).
-  -- NULL = fila de antes: se cobra la vigente al «Me llegó».
-  comision_regla_json TEXT,
   devolucion_estado TEXT NOT NULL DEFAULT 'no_aplica',
   devolucion_referencia TEXT NOT NULL DEFAULT '',
   devolucion_en TEXT,
