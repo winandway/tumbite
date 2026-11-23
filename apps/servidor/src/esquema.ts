@@ -24,6 +24,7 @@ import {
 } from './esquemaPlazo';
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
+import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import {
   DISPARADORES_RASTRO,
   FUENTES_PASO,
@@ -741,6 +742,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerElegibilidad),
         DISPARADOR_APROBAR_VEHICULO,
         String(rehacerAprobarVehiculo),
+        String(repararLlegaSoloARevision),
+        SQL_CANDIDATOS_LLEGA_SOLO,
         DISPARADORES_RASTRO,
         String(asegurarRastro),
         FUENTES_PASO,
@@ -837,6 +840,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);
   await revisarColumnas(db);
+  // C-LLEGA-SOLO-A-REVISION: una sola vez, los conductores que ya tenían todo y no tocaron «Enviar».
+  await repararLlegaSoloARevision(db).catch((e: unknown) =>
+    console.error('esquema: la reparación «llega solo a revisión» falló', e),
+  );
 }
 
 /**

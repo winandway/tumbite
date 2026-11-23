@@ -31,7 +31,11 @@ import { enviarCorreo } from '../correo';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
-import { anotarDecisionHumana, revisarFotoKycConIa } from './verificacionConductor';
+import {
+  anotarDecisionHumana,
+  enviarSoloTrasSubir,
+  revisarFotoKycConIa,
+} from './verificacionConductor';
 import { asegurarCodigoRepartidor } from './superadmin';
 import {
   checkrConfigurado,
@@ -40,7 +44,7 @@ import {
   procesarAvisoCheckr,
 } from '../antecedentes';
 import { guardarDecision, motorEncendido, pedirDecision, textoMotivos } from '../verificacionAuto';
-import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
+import { accesoDe, alcanceObjetoSql, tienePermiso } from '../accesoInterno';
 import {
   type FilaBandeja,
   type FilaSinEnviar,
@@ -331,6 +335,10 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
     await revisarFotoKycConIa(c.env, db, u, pieza, { bytes, mime: tipo }, clave).catch(
       (e: unknown) => console.error('kyc: la comprobación automática de la foto falló', e),
     );
+  // C-LLEGA-SOLO-A-REVISION: con la última foto, la identidad va a revisión sola (con el motor
+  // automático encendido, espera las dos tomas y el botón, que es lo que lo dispara).
+  if (u.rol === 'repartidor')
+    await enviarSoloTrasSubir(c.env, db, u, { kycViejo: !motorEncendido(c.env) });
   // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
   return c.json({ ok: true, url: clave }, 201);
 });
@@ -348,6 +356,8 @@ kyc.post('/kyc/consentimiento', async (c) => {
     .prepare("UPDATE kyc SET consentimiento_en = datetime('now') WHERE usuario_id = ?")
     .bind(u.id)
     .run();
+  // C-LLEGA-SOLO-A-REVISION: si el consentimiento era lo único que faltaba, ahora va a revisión.
+  await enviarSoloTrasSubir(c.env, db, u, { kycViejo: !motorEncendido(c.env) });
   return c.json({ ok: true });
 });
 
@@ -484,8 +494,9 @@ kyc.get('/admin/kyc', async (c) => {
     const todas = juntarSinEnviar(listas.map((l) => l.results));
     const pagina = todas.slice(0, POR_PAGINA_BANDEJA);
     const ultima = pagina.at(-1);
+    const fotos = tienePermiso(c, 'repartidores.documentos');
     return c.json({
-      solicitudes: pagina.map(filaSinEnviar),
+      solicitudes: pagina.map(filaSinEnviar).map((f) => (fotos ? f : { ...f, miniatura: null })),
       siguiente:
         todas.length > POR_PAGINA_BANDEJA && ultima ? `${ultima.creado}|${ultima.id}` : null,
       totales,
@@ -499,7 +510,10 @@ kyc.get('/admin/kyc', async (c) => {
   const pagina = results.slice(0, POR_PAGINA_BANDEJA);
   const ultima = pagina.at(-1);
   return c.json({
-    solicitudes: pagina.map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M)),
+    // C-MINIATURA-SIEMPRE: quien no puede ver documentos ve las iniciales, no la foto.
+    solicitudes: pagina
+      .map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M))
+      .map((f) => (tienePermiso(c, 'repartidores.documentos') ? f : { ...f, miniatura: null })),
     siguiente:
       results.length > POR_PAGINA_BANDEJA && ultima
         ? `${p.fecha(ultima) ?? ''}|${ultima.id}`

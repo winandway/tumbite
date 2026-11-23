@@ -109,8 +109,9 @@ describe('C-SEGURO-EN-PLAZO: la póliza entra en el plazo de papeles', () => {
 
   it('Venezuela, plazo vencido: se exige la póliza para enviar y para aprobar', async () => {
     const c = await conductor('VE');
-    const id = await c.moto();
+    // Vencido ANTES de subir: con el plazo vigente la moto llegaría sola a revisión (C-LLEGA-SOLO-A-REVISION).
     await c.vencerPlazo();
+    const id = await c.moto();
     const envio = await c.yo('POST', `/datos/conductor/vehiculos/${id}/enviar`);
     expect(envio.estado).toBe(422);
     expect(envio.datos.error).toBe(

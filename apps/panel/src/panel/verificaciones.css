@@ -65,6 +65,12 @@
 }
 .kyc-mini-vacia {
   cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--pd-texto-suave, #666b73);
 }
 .kyc-mini:focus-visible,
 .kyc-foto-boton:focus-visible {

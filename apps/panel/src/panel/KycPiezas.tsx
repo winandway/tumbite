@@ -30,6 +30,14 @@ export const T_VERIFICACIONES = {
     sinFotos: 'No ha enviado sus fotos',
     fotosSinEnviar: (n: number) =>
       n === 1 ? 'Subió 1 foto y no la ha enviado' : `Subió ${n} fotos y no las ha enviado`,
+    // C-LLEGA-SOLO-A-REVISION: lo que le falta para que su identidad llegue sola a revisión.
+    falta: {
+      doc_frente: 'Falta el documento por delante',
+      doc_reverso: 'Falta el documento por detrás',
+      cara: 'Falta la foto de la cara',
+      consentimiento: 'Falta aceptar el consentimiento',
+      local: 'Falta la foto del local',
+    } as Record<string, string>,
     correoSinConfirmar: 'Correo sin confirmar',
     buscar: 'Nombre, ID, correo, teléfono o zona',
     zona: 'Zona',
@@ -127,6 +135,13 @@ export const T_VERIFICACIONES = {
       n === 1
         ? 'Uploaded 1 photo but hasn’t submitted it'
         : `Uploaded ${n} photos but hasn’t submitted them`,
+    falta: {
+      doc_frente: 'Missing the front of the ID',
+      doc_reverso: 'Missing the back of the ID',
+      cara: 'Missing the face photo',
+      consentimiento: 'Missing the consent',
+      local: 'Missing the storefront photo',
+    } as Record<string, string>,
     correoSinConfirmar: 'Email not confirmed',
     buscar: 'Name, ID, email, phone or area',
     zona: 'Area',

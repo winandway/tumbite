@@ -413,7 +413,9 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // +1 (22 nov 2026, C-RASTRO-FUENTES): la marca del relleno hacia atrás, al migrar (una fila).
       // +2 (23 nov 2026, C-SEGURO-EN-PLAZO): al migrar se mira una vez si el disparador de aprobar
       // vehículos ya conoce el plazo (una fila de `sqlite_master`).
-      ['f1', 515 + 2 * objetosEsquema],
+      // +2 (23 nov 2026, C-LLEGA-SOLO-A-REVISION): dos filas más en `config` (la marca de la reparación
+      // y a quién envió), que la ruta recorre.
+      ['f1', 517 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
       // +11 (22 nov 2026, C-RASTRO): cada vehículo nuevo deja el paso «vehículo» del registro (una lectura).

@@ -270,7 +270,7 @@ describe('C-PLAZO-PAPELES: el conductor de Venezuela trabaja desde que crea la c
   });
 });
 
-describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', () => {
+describe('C-VERIFICACION-ASISTENTE: una foto por paso, y cada papel completo llega solo a revisión', () => {
   it('la cara no se acepta desde archivos ni sin el consentimiento', async () => {
     const c = await conductorNuevo();
     modelo(() => lectura('cara'));
@@ -350,7 +350,7 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
     expect(d.pasos.find((p: { paso: string }) => p.paso === 'doc_frente').foto.color).toBe('verde');
   });
 
-  it('tomar las fotos NO las manda a revisión; solo «Enviar a revisión» lo hace, y exige todas', async () => {
+  it('C-LLEGA-SOLO-A-REVISION: cada papel completo llega solo a revisión; la identidad espera la cara', async () => {
     const c = await conductorNuevo();
     await c.moto();
     await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true });
@@ -368,18 +368,22 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
       c.m.DB.prepare('SELECT estado FROM kyc WHERE usuario_id = ?')
         .bind(c.rep.id)
         .first<{ estado: string }>();
+    // La identidad (documento + cara) todavía no: falta la cara. La licencia ya llegó sola.
     expect((await kyc())?.estado).toBe('sin_enviar');
-    // Falta la cara: no se envía.
     const incompleto = await c.yo('POST', '/datos/conductor/verificacion/enviar');
     expect(incompleto.estado).toBe(422);
     expect(incompleto.datos.campo).toBe('cara');
     expect((await kyc())?.estado).toBe('sin_enviar');
+    // Con la cara, la identidad llega sola, sin tocar «Enviar».
     expect((await c.foto('cara')).estado).toBe(201);
-    const antes = (await c.yo('GET', '/datos/conductor/verificacion')).datos;
-    expect(antes.puedeEnviar).toBe(true);
-    expect(antes.listos).toBe(4);
-    expect((await c.yo('POST', '/datos/conductor/verificacion/enviar')).estado).toBe(200);
     expect((await kyc())?.estado).toBe('pendiente');
+    const antes = (await c.yo('GET', '/datos/conductor/verificacion')).datos;
+    expect(antes.puedeEnviar).toBe(false);
+    expect(antes.listos).toBe(4);
+    // El botón de la app vieja sigue respondiendo bien, sin escribir nada.
+    const boton = await c.yo('POST', '/datos/conductor/verificacion/enviar');
+    expect(boton.estado).toBe(200);
+    expect(boton.datos.enviados).toBe(0);
     const lic = await c.m.DB.prepare(
       "SELECT tipo, estado, vence_en FROM conductor_documentos WHERE conductor_id = ? AND estado = 'pendiente'",
     )

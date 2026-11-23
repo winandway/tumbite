@@ -8,6 +8,7 @@ import {
   diasRestantes,
   esPasoVerificacion,
   papelDePaso,
+  pideReversoDocumento,
   quitarReversos,
   soloEnVivo,
 } from '@tumbite/compartido';
@@ -36,7 +37,7 @@ import {
 } from '../verificacionIa';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
-import { estadoDelConductor } from './servicios';
+import { estadoDelConductor, vehiculosSoloARevision } from './servicios';
 
 /**
  * C-VERIFICACION-ASISTENTE (19 nov 2026, Richard: «un asistente que valga la pena») — todos los
@@ -550,6 +551,8 @@ verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
         ]
       : []),
   ]);
+  // C-LLEGA-SOLO-A-REVISION: con esta foto, ¿algún papel quedó completo? Entonces va a revisión solo.
+  await enviarSoloTrasSubir(c.env, db, u);
   return c.json({ id, paso, ia: { color: ia.color, aviso: ia.aviso } }, 201);
 });
 
@@ -623,44 +626,67 @@ async function leerImagen(env: Env, clave: string) {
   };
 }
 
-/** «Enviar a revisión»: el ÚNICO camino por el que las fotos llegan al equipo. */
-verificacionConductor.post('/conductor/verificacion/enviar', async (c) => {
-  const u = exigir(c, 'repartidor');
-  const db = base(c);
-  const e = await estadoVerificacion(db, u.id);
-  const falta = e.pasos.find((p) => e.fotos.get(p)?.estado !== 'vigente');
-  const aprobado = (papel: PapelDelConductor) =>
-    e.papeles.find((p) => p.papel === papel)?.estado === 'aprobado';
-  if (falta && !aprobado(papelDePaso(falta)))
-    throw new ErrorDatos('Faltan fotos por tomar antes de enviar.', falta, 422);
-  const porEnviar = (papel: PapelDelConductor) =>
-    e.papeles.find((p) => p.papel === papel)?.estado === 'por_enviar';
+/**
+ * C-LLEGA-SOLO-A-REVISION (23 nov 2026, Richard: «si ya todo está en el servidor, no es necesario que
+ * vuelva a entrar y le dé enviar… estamos trabajando con una persona que no tiene contacto con
+ * nosotros»). Reemplaza «nada se manda a revisión solo» (C-VERIFICACION-ASISTENTE). En cuanto un papel
+ * tiene TODAS sus fotos vigentes, va a revisión: el mismo efecto que tocar «Enviar a revisión». Papel
+ * por papel; la identidad (documento + cara) va junta y solo con el consentimiento ya aceptado. Nada
+ * de esto aprueba nada: siempre decide una persona.
+ */
+type Estado = Awaited<ReturnType<typeof estadoVerificacion>>;
+const LISTO = new Set<EstadoPapel>(['por_enviar', 'en_revision', 'aprobado']);
+
+/** Lo que se manda (o no) de un conductor, a partir de su estado. Sin escribir nada. */
+function queSeEnvia(e: Estado) {
+  const estado = (papel: PapelDelConductor) => e.papeles.find((p) => p.papel === papel)?.estado;
+  const listo = (papel: PapelDelConductor) => {
+    const x = estado(papel);
+    return x === undefined || LISTO.has(x);
+  };
+  const porEnviar = (papel: PapelDelConductor) => estado(papel) === 'por_enviar';
+  return {
+    // La identidad va completa (documento y cara) y con el consentimiento de la cara ya aceptado.
+    identidad:
+      e.consentimiento &&
+      listo('identidad') &&
+      listo('cara') &&
+      (porEnviar('identidad') || porEnviar('cara')),
+    licencia: porEnviar('licencia') ? e.fotos.get('licencia_frente') : undefined,
+    seguro: porEnviar('seguro') && e.vehiculo ? e.fotos.get('seguro') : undefined,
+  };
+}
+
+/** Las escrituras de enviar a revisión: las mismas para el botón y para el envío solo. */
+function sentenciasDeEnvio(
+  db: D1Database,
+  conductorId: string,
+  e: Estado,
+  q: ReturnType<typeof queSeEnvia>,
+): D1PreparedStatement[] {
   const sentencias: D1PreparedStatement[] = [];
-  const identidad = porEnviar('identidad') || porEnviar('cara');
-  if (identidad)
+  if (q.identidad)
     sentencias.push(
       db
         .prepare(
           "UPDATE kyc SET estado = 'pendiente', motivo = '', doc_tipo = 'identificacion', enviado_en = datetime('now') WHERE usuario_id = ? AND estado != 'aprobado'",
         )
-        .bind(u.id),
+        .bind(conductorId),
     );
-  const licencia = e.fotos.get('licencia_frente');
-  if (porEnviar('licencia') && licencia)
+  if (q.licencia)
     sentencias.push(
       db
         .prepare(
           "UPDATE conductor_documentos SET estado = 'reemplazado' WHERE conductor_id = ? AND tipo = ? AND estado IN ('pendiente', 'rechazado')",
         )
-        .bind(u.id, e.tipoLicencia),
+        .bind(conductorId, e.tipoLicencia),
       db
         .prepare(
           'INSERT INTO conductor_documentos (id, conductor_id, tipo, clave, vence_en) VALUES (?, ?, ?, ?, ?)',
         )
-        .bind(nuevoId(), u.id, e.tipoLicencia, licencia.clave, venceLeido(licencia)),
+        .bind(nuevoId(), conductorId, e.tipoLicencia, q.licencia.clave, venceLeido(q.licencia)),
     );
-  const seguro = e.fotos.get('seguro');
-  if (porEnviar('seguro') && seguro && e.vehiculo)
+  if (q.seguro && e.vehiculo)
     // La misma póliza va en las dos casillas (el seguro y el de pasajeros), como ya se le decía.
     for (const tipo of ['seguro', 'seguro_pasajeros'])
       sentencias.push(
@@ -673,22 +699,92 @@ verificacionConductor.post('/conductor/verificacion/enviar', async (c) => {
           .prepare(
             'INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, vence_en) VALUES (?, ?, ?, ?, ?)',
           )
-          .bind(nuevoId(), e.vehiculo.id, tipo, seguro.clave, venceLeido(seguro)),
+          .bind(nuevoId(), e.vehiculo.id, tipo, q.seguro.clave, venceLeido(q.seguro)),
       );
-  if (!sentencias.length) return c.json({ ok: true, enviados: 0 });
-  await db.batch(sentencias);
-  // La cara en vivo contra la foto del documento: adelanta al revisor; nunca rechaza.
+  return sentencias;
+}
+
+/**
+ * El flujo viejo de «Mis datos» (kyc sin las fotos del asistente): con el documento (y su reverso
+ * donde se pide), la cara y el consentimiento, la identidad va a revisión. Solo la primera vez.
+ */
+async function sentenciaKycViejo(db: D1Database, conductorId: string) {
+  const [k, g] = await Promise.all([
+    db
+      .prepare(
+        `SELECT doc_frente, doc_reverso, selfie, consentimiento_en FROM kyc
+          WHERE usuario_id = ? AND estado = 'sin_enviar' AND enviado_en IS NULL`,
+      )
+      .bind(conductorId)
+      .first<{
+        doc_frente: string | null;
+        doc_reverso: string | null;
+        selfie: string | null;
+        consentimiento_en: string | null;
+      }>(),
+    graciaDe(db, conductorId),
+  ]);
+  if (!k?.doc_frente || !k.selfie || !k.consentimiento_en) return null;
+  if (pideReversoDocumento(g.politica) && !k.doc_reverso) return null;
+  return db
+    .prepare(
+      "UPDATE kyc SET estado = 'pendiente', motivo = '', doc_tipo = CASE WHEN doc_tipo = '' THEN 'identificacion' ELSE doc_tipo END, enviado_en = datetime('now') WHERE usuario_id = ? AND estado = 'sin_enviar' AND enviado_en IS NULL",
+    )
+    .bind(conductorId);
+}
+
+export type EnvioSolo = {
+  identidad: boolean;
+  licencia: boolean;
+  seguro: boolean;
+  vehiculos: number;
+};
+
+/**
+ * Manda a revisión, solo, todo lo que el conductor ya tiene completo y sin enviar (identidad,
+ * licencia, seguro y sus vehículos). Solo escribe lo que cambia; si no hay nada, no escribe. Lo usan
+ * la subida de cada foto, la del documento del vehículo y la reparación de las cuentas que ya estaban
+ * así. `kycViejo: false` deja quieto el flujo viejo (cuando el motor automático espera sus tomas).
+ */
+export async function llegaSoloARevision(
+  db: D1Database,
+  conductorId: string,
+  op: { kycViejo?: boolean } = {},
+): Promise<EnvioSolo> {
+  const e = await estadoVerificacion(db, conductorId);
+  const q = queSeEnvia(e);
+  const sentencias = sentenciasDeEnvio(db, conductorId, e, q);
+  const viejo =
+    !q.identidad && op.kycViejo !== false ? await sentenciaKycViejo(db, conductorId) : null;
+  if (viejo) sentencias.push(viejo);
+  if (sentencias.length) await db.batch(sentencias);
+  const vehiculos = await vehiculosSoloARevision(db, conductorId);
+  return {
+    identidad: Boolean(q.identidad || viejo),
+    licencia: Boolean(q.licencia),
+    seguro: Boolean(q.seguro),
+    vehiculos,
+  };
+}
+
+/** Lo que sigue a una identidad enviada: la comparación de la cara (con permiso) y el aviso al equipo. */
+async function despuesDeEnviarIdentidad(
+  env: Env,
+  db: D1Database,
+  u: { id: string; nombre: string },
+  e: Estado,
+) {
   const cara = e.fotos.get('cara');
   const frente = e.fotos.get('doc_frente');
-  if (identidad && cara && frente) {
+  if (cara && frente) {
     // C-PERMISO-IA: la comparación de la cara también es IA de un tercero; sin permiso no se hace.
     const conPermiso = (await permisoIa(db, u.id)) === true;
     const [a, b] = conPermiso
-      ? await Promise.all([leerImagen(c.env, cara.clave), leerImagen(c.env, frente.clave)])
+      ? await Promise.all([leerImagen(env, cara.clave), leerImagen(env, frente.clave)])
       : [null, null];
     const r =
       a && b
-        ? await compararCaras(c.env, db, { cara: a, documento: b })
+        ? await compararCaras(env, db, { cara: a, documento: b })
         : { resultado: 'sin_ia' as const, confianza: null, color: 'sin_ia' as const };
     await db
       .prepare(
@@ -699,13 +795,58 @@ verificacionConductor.post('/conductor/verificacion/enviar', async (c) => {
       .bind(u.id, r.resultado, r.confianza, r.color)
       .run();
   }
-  for (const para of await correosEquipo(c.env, 'verificaciones'))
-    await enviarCorreo(c.env, {
+  for (const para of await correosEquipo(env, 'verificaciones'))
+    await enviarCorreo(env, {
       de: 'avisos',
       para,
       asunto: `Papeles enviados: ${u.nombre}`,
       texto: `${u.nombre} envió sus papeles a revisión con el asistente. Revísalos en el superadmin → Verificaciones.`,
     }).catch((err: unknown) => console.error('verificación: correo al equipo', err));
+}
+
+/** El envío solo de una subida, con lo que le sigue (aviso y comparación de la cara). */
+export async function enviarSoloTrasSubir(
+  env: Env,
+  db: D1Database,
+  u: { id: string; nombre: string },
+  op: { kycViejo?: boolean } = {},
+) {
+  const r = await llegaSoloARevision(db, u.id, op);
+  if (r.identidad)
+    await despuesDeEnviarIdentidad(env, db, u, await estadoVerificacion(db, u.id)).catch(
+      (err: unknown) => console.error('verificación: después del envío solo', err),
+    );
+  return r;
+}
+
+/**
+ * «Enviar a revisión» (el botón de la app). Con C-LLEGA-SOLO-A-REVISION casi siempre ya está todo
+ * enviado: responde bien sin escribir nada. Sigue diciendo qué falta si falta algo.
+ */
+verificacionConductor.post('/conductor/verificacion/enviar', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const e = await estadoVerificacion(db, u.id);
+  const falta = e.pasos.find((p) => e.fotos.get(p)?.estado !== 'vigente');
+  const aprobado = (papel: PapelDelConductor) =>
+    e.papeles.find((p) => p.papel === papel)?.estado === 'aprobado';
+  if (falta && !aprobado(papelDePaso(falta)))
+    throw new ErrorDatos('Faltan fotos por tomar antes de enviar.', falta, 422);
+  const q = queSeEnvia(e);
+  // El botón manda la identidad aunque falte el consentimiento, como antes (la cara ya lo exige).
+  const conBoton = {
+    ...q,
+    identidad:
+      q.identidad ||
+      e.papeles.some(
+        (p) => (p.papel === 'identidad' || p.papel === 'cara') && p.estado === 'por_enviar',
+      ),
+  };
+  const sentencias = sentenciasDeEnvio(db, u.id, e, conBoton);
+  if (!sentencias.length) return c.json({ ok: true, enviados: 0 });
+  await db.batch(sentencias);
+  await vehiculosSoloARevision(db, u.id);
+  if (conBoton.identidad) await despuesDeEnviarIdentidad(c.env, db, u, e);
   return c.json({ ok: true, enviados: sentencias.length });
 });
 

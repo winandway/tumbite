@@ -885,6 +885,8 @@ servicios.put('/conductor/vehiculos/:id', async (c) => {
       )
       .run(),
   );
+  // C-LLEGA-SOLO-A-REVISION: si lo que faltaba era la placa, con esto ya va a revisión.
+  await vehiculosSoloARevision(db, u.id);
   return c.json({ ok: true });
 });
 
@@ -950,42 +952,81 @@ servicios.post('/conductor/vehiculos/:id/documentos', async (c) => {
     )
     .bind(id, v.id, q.data.tipo, clave, q.data.vence ?? null)
     .run();
+  // C-LLEGA-SOLO-A-REVISION: si con este papel el vehículo quedó completo, va a revisión solo. Lo que
+  // suba estando ya en revisión se suma a la misma revisión (el equipo ve todos sus papeles).
+  await vehiculosSoloARevision(db, u.id);
   return c.json({ id, estado: 'pendiente' }, 201);
 });
+
+/**
+ * Lo que le falta a un vehículo para ir a revisión, o null si ya puede ir. La misma regla para el
+ * botón «Enviar mi moto a revisión» y para el envío solo (C-LLEGA-SOLO-A-REVISION).
+ */
+async function faltaAlVehiculo(
+  db: Db,
+  conductorId: string,
+  v: { id: string; tipo: string; placa: string | null; placa_estado: string | null },
+): Promise<{ mensaje: string; campo?: string } | null> {
+  if (!MOTORIZADOS.has(v.tipo)) return null;
+  if (!v.placa || !v.placa_estado)
+    return { mensaje: 'Escribe la placa y el estado que la emitió.', campo: 'placa' };
+  // C-SEGURO-EN-PLAZO: dentro de su plazo (y si su país no pide el seguro para empezar) basta el
+  // registro; la póliza queda pendiente dentro del plazo. Fuera de plazo, los dos como siempre.
+  const pide = seguroEnPlazo(await graciaDe(db, conductorId))
+    ? ['registro']
+    : ['registro', 'seguro'];
+  const docs = await db
+    .prepare(
+      `SELECT COUNT(DISTINCT tipo) AS n FROM vehiculo_documentos WHERE vehiculo_id = ? AND tipo IN (${pide.map(() => '?').join(',')}) AND estado IN ('pendiente', 'aprobado')`,
+    )
+    .bind(v.id, ...pide)
+    .first<{ n: number }>();
+  if (Number(docs?.n) < pide.length)
+    return {
+      mensaje:
+        pide.length === 1
+          ? 'Sube el registro del vehículo antes de enviarlo.'
+          : 'Sube el registro y el seguro del vehículo antes de enviarlo.',
+    };
+  return null;
+}
+
+const A_REVISION =
+  "UPDATE vehiculos SET estado = 'en_revision', motivo = '', aprobado_por = NULL, actualizado_en = datetime('now') WHERE id = ?";
+
+/**
+ * C-LLEGA-SOLO-A-REVISION (23 nov 2026, Richard): la moto o el carro «registrado» que ya tiene lo que
+ * pide la revisión (placa y registro; el seguro solo fuera de plazo) pasa solo a «en revisión», con
+ * el mismo efecto que el botón. Solo los motorizados (los que llevan papeles). Devuelve cuántos pasó.
+ */
+export async function vehiculosSoloARevision(db: Db, conductorId: string): Promise<number> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, tipo, placa, placa_estado FROM vehiculos
+        WHERE conductor_id = ? AND estado = 'registrado' AND tipo IN (${[...MOTORIZADOS].map(() => '?').join(',')})`,
+    )
+    .bind(conductorId, ...MOTORIZADOS)
+    .all<{ id: string; tipo: string; placa: string | null; placa_estado: string | null }>();
+  let n = 0;
+  for (const v of results) {
+    if (await faltaAlVehiculo(db, conductorId, v)) continue;
+    const r = await conRestricciones(
+      db.prepare(`${A_REVISION} AND estado = 'registrado'`).bind(v.id).run(),
+    );
+    n += Number(r.meta?.changes ?? 0);
+  }
+  return n;
+}
 
 servicios.post('/conductor/vehiculos/:id/enviar', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
   const v = await miVehiculo(db, u.id, c.req.param('id'));
-  if (MOTORIZADOS.has(v.tipo)) {
-    if (!v.placa || !v.placa_estado)
-      throw new ErrorDatos('Escribe la placa y el estado que la emitió.', 'placa', 422);
-    // C-SEGURO-EN-PLAZO: dentro de su plazo (y si su país no pide el seguro para empezar) basta el
-    // registro; la póliza queda pendiente dentro del plazo. Fuera de plazo, los dos como siempre.
-    const pide = seguroEnPlazo(await graciaDe(db, u.id)) ? ['registro'] : ['registro', 'seguro'];
-    const docs = await db
-      .prepare(
-        `SELECT COUNT(DISTINCT tipo) AS n FROM vehiculo_documentos WHERE vehiculo_id = ? AND tipo IN (${pide.map(() => '?').join(',')}) AND estado IN ('pendiente', 'aprobado')`,
-      )
-      .bind(v.id, ...pide)
-      .first<{ n: number }>();
-    if (Number(docs?.n) < pide.length)
-      throw new ErrorDatos(
-        pide.length === 1
-          ? 'Sube el registro del vehículo antes de enviarlo.'
-          : 'Sube el registro y el seguro del vehículo antes de enviarlo.',
-        undefined,
-        422,
-      );
-  }
-  await conRestricciones(
-    db
-      .prepare(
-        "UPDATE vehiculos SET estado = 'en_revision', motivo = '', aprobado_por = NULL, actualizado_en = datetime('now') WHERE id = ?",
-      )
-      .bind(v.id)
-      .run(),
-  );
+  // C-LLEGA-SOLO-A-REVISION: si ya llegó solo, el botón responde bien sin hacer nada más.
+  if (v.estado === 'en_revision') return c.json({ estado: 'en_revision' });
+  const falta = await faltaAlVehiculo(db, u.id, v);
+  if (falta) throw new ErrorDatos(falta.mensaje, falta.campo, 422);
+  await conRestricciones(db.prepare(A_REVISION).bind(v.id).run());
   return c.json({ estado: 'en_revision' });
 });
 

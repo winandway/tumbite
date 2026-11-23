@@ -3489,7 +3489,7 @@ const es: SeccionDocs[] = [
           'En «Verifica tu identidad», elige tu documento: licencia de conducir, identificación oficial o pasaporte.',
           'Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). En Venezuela la cédula se fotografía solo por delante, porque por detrás no tiene datos; la licencia sí lleva frente y reverso. Que se lean bien los datos, sin reflejos.',
           'Toma la foto de tu cara: de frente, con buena luz, sin gorra ni lentes oscuros.',
-          'Toca «Enviar para revisión». Te avisamos por correo cuando esté aprobada, o qué foto repetir si hace falta.',
+          'En cuanto están tu documento y la foto de tu cara, nos llegan solas; no hace falta tocar nada más (si quieres, «Enviar para revisión» también funciona). Te avisamos por correo cuando esté aprobada, o qué foto repetir si hace falta.',
         ],
       },
       {
@@ -8992,7 +8992,7 @@ const en: SeccionDocs[] = [
           'Under “Verify your identity,” choose your document: driver’s license, government ID, or passport.',
           'Take the photo of the front and the back (a passport only needs the front). If your country’s ID card has no details on the back, the app only asks for the front; the driver’s license still needs both sides. Make sure the details are readable, with no glare.',
           'Take the photo of your face: straight on, in good light, no cap or sunglasses.',
-          'Tap “Send for review.” We email you when it’s approved, or tell you which photo to retake.',
+          'Once your ID and your face photo are in, they reach us on their own; you don’t need to tap anything else (“Send for review” still works if you tap it). We email you when it’s approved, or tell you which photo to retake.',
         ],
       },
       {

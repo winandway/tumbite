@@ -87,7 +87,8 @@ describe('C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante',
       expect((await c.foto(p)).estado).toBe(201);
     const listo = await c.verificacion();
     expect(listo.listos).toBe(4);
-    expect(listo.puedeEnviar).toBe(true);
+    // C-LLEGA-SOLO-A-REVISION: con la última foto ya llegó sola a revisión; el botón responde bien.
+    expect(listo.papeles.every((p) => p.estado === 'en_revision')).toBe(true);
     expect((await c.yo('POST', '/datos/conductor/verificacion/enviar')).estado).toBe(200);
     expect(await c.estadoKyc()).toBe('pendiente');
     const despues = await c.verificacion();
@@ -159,8 +160,8 @@ describe('C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante',
     expect((await c.foto('cara')).estado).toBe(201);
     const v = await c.verificacion();
     const identidad = v.papeles.find((p) => p.papel === 'identidad');
-    expect(identidad?.estado).toBe('por_enviar');
-    expect(v.puedeEnviar).toBe(true);
+    // C-LLEGA-SOLO-A-REVISION: con la cédula por delante y la cara, ya llegó sola a revisión.
+    expect(identidad?.estado).toBe('en_revision');
     expect((await c.yo('POST', '/datos/conductor/verificacion/enviar')).estado).toBe(200);
     // La foto sobrante no se borra: se ignora.
     const sigue = await c.m.DB.prepare(
