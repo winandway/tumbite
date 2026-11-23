@@ -1411,6 +1411,8 @@ export function Inicio() {
     sinSaldo?: boolean;
     /** C-COMIDA-VE-CIRCUITO: comisión de un pedido típico de comida y pedidos que alcanzan. */
     comisionTipicaComida?: number;
+    /** C-COMIDA-VE-QUIEN-PAGA: en la comida con pago directo cobra el envío entero. */
+    comidaEnvioEntero?: boolean;
     pedidosAlcanzan?: number | null;
     sinSaldoComida?: boolean;
     /** C-SALDO-CONDUCTOR: lo que Divoox le debe por regalos y las cargas de saldo. */
@@ -2068,6 +2070,11 @@ export function Inicio() {
                 </Text>
               </View>
             ) : null}
+            {prepago.comidaEnvioEntero ? (
+              <Text testID="comida-envio-entero" style={{ color: '#0D7A3A', fontSize: 12 }}>
+                {tg.prepago.comidaEnvioEntero}
+              </Text>
+            ) : null}
             {prepago.sinSaldoComida ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoPedidos}</Text>
             ) : null}
@@ -2075,7 +2082,8 @@ export function Inicio() {
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoViajes}</Text>
             ) : prepago.saldoBajo ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.saldoBajo}</Text>
-            ) : prepago.disponible <= 0 ? (
+            ) : prepago.disponible <= 0 &&
+              (prepago.comisionTipica ?? 0) + (prepago.comisionTipicaComida ?? 0) > 0 ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldo}</Text>
             ) : null}
             {(prepago.regalosPorCobrar ?? 0) > 0 ? (

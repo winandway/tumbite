@@ -33,7 +33,7 @@ describe('C-SALDO-EN-INICIO: la tarjeta del saldo en el inicio de Driver', () =>
   it('con saldo de sobra va en verde y dice para cuántas carreras alcanza', () => {
     expect(
       tarjetaSaldoInicio({ ...base, disponible: 2000, comisionTipica: 100, carrerasAlcanzan: 20 }),
-    ).toEqual({ nivel: 'ok', alcanza: { tipo: 'carreras', n: 20 } });
+    ).toEqual({ nivel: 'ok', alcanza: { tipo: 'carreras', n: 20 }, soloCarreras: true });
   });
 
   it('con poco saldo avisa (bajo)', () => {
@@ -55,7 +55,7 @@ describe('C-SALDO-EN-INICIO: la tarjeta del saldo en el inicio de Driver', () =>
         comisionTipicaComida: 70,
         pedidosAlcanzan: 2,
       }),
-    ).toEqual({ nivel: 'bajo', alcanza: { tipo: 'pedidos', n: 2 } });
+    ).toEqual({ nivel: 'bajo', alcanza: { tipo: 'pedidos', n: 2 }, soloCarreras: false });
   });
 
   it('sin saldo (o sin lo que cuesta una comisión) dice que no le llegan', () => {
@@ -82,6 +82,37 @@ describe('C-SALDO-EN-INICIO: la tarjeta del saldo en el inicio de Driver', () =>
         sinSaldoComida: false,
       })?.nivel,
     ).toBe('bajo');
+  });
+
+  it('C-COMIDA-VE-QUIEN-PAGA: con la comida sin comisión, el saldo en cero no le quita los pedidos', () => {
+    // Solo comida con pago directo y 0 % sobre el envío: nada sale del saldo, no hay problema.
+    expect(
+      tarjetaSaldoInicio({
+        ...base,
+        disponible: 0,
+        efectivoActivo: true,
+        transferenciaActiva: true,
+        comisionTipicaComida: 0,
+        comidaEnvioEntero: true,
+      }),
+    ).toEqual({ nivel: 'ok', alcanza: null, soloCarreras: false });
+    // Con carreras que sí cobran: «sin», pero el aviso habla solo de carreras.
+    expect(
+      tarjetaSaldoInicio({
+        ...base,
+        disponible: 0,
+        comisionTipica: 100,
+        sinSaldo: true,
+        efectivoActivo: true,
+        comisionTipicaComida: 0,
+        comidaEnvioEntero: true,
+      }),
+    ).toEqual({ nivel: 'sin', alcanza: null, soloCarreras: true });
+    const raiz = join(import.meta.dirname, '..', '..', '..', '..');
+    const pieza = readFileSync(join(raiz, 'apps/repartidor/src/piezas/SaldoInicio.tsx'), 'utf8');
+    expect(pieza).toContain('t.inicioSinCarreras');
+    const inicio = readFileSync(join(raiz, 'apps/repartidor/src/Inicio.tsx'), 'utf8');
+    expect(inicio).toContain('prepago.comidaEnvioEntero');
   });
 
   it('el inicio la muestra, la lee con GET y lleva a Ganancias para recargar', () => {

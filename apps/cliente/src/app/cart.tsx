@@ -1542,8 +1542,10 @@ function PantallaCarrito() {
             fila(insigniaPromocion(promo, moneda, idioma), -d.descuentoRestaurante)}
           {descPlus > 0 && fila('Divoox Plus', -descPlus)}
           {usoRegalo > 0 && fila(idioma === 'en' ? 'Gift card' : 'Tarjeta de regalo', -usoRegalo)}
-          {fila(t.envio, d.envio)}
-          {fila(t.servicio, d.servicio)}
+          {/* C-COMIDA-VE-QUIEN-PAGA: un cargo en cero no se pinta (Venezuela no tiene tarifa de
+              servicio; la recogida en el local no tiene envío). */}
+          {d.envio > 0 && fila(t.envio, d.envio)}
+          {d.servicio > 0 && fila(t.servicio, d.servicio)}
           {d.cargoPedidoPequeno > 0 && fila(t.pequeno, d.cargoPedidoPequeno)}
           {d.impuesto > 0 && fila(t.impuesto, d.impuesto)}
           {fila(recogidaElegida ? t.propinaRecoger : t.propina, d.propina)}

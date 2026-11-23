@@ -144,7 +144,11 @@ describe('C-COMIDA-VE-QUIEN-PAGA: el conductor cobra el envío entero', () => {
       undefined,
       rep.token,
     );
-    expect(saldo.datos).toMatchObject({ comisionTipicaComida: 0, sinSaldoComida: false });
+    expect(saldo.datos).toMatchObject({
+      comisionTipicaComida: 0,
+      sinSaldoComida: false,
+      comidaEnvioEntero: true,
+    });
     const { id } = await deCabo(w, rep);
     const fin = await w.e.m.DB.prepare(
       'SELECT estado, cobro_estado, conciliacion_estado FROM pedidos WHERE id = ?',
@@ -188,6 +192,7 @@ describe('C-COMIDA-VE-QUIEN-PAGA: el conductor cobra el envío entero', () => {
     expect(saldo.datos.comisionTipicaComida).toBe(
       porcentajeDe(TARIFAS_COMIDA_VENEZUELA.envioBase, 1000),
     );
+    expect(saldo.datos.comidaEnvioEntero).toBe(false);
     // El mismo pedido que el conductor sin saldo no pudo tomar le llega a quien sí tiene.
     const { id, envio } = await deCabo(w, rep, id0);
     const esperado = porcentajeDe(envio, 1000);
