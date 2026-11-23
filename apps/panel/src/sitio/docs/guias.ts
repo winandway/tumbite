@@ -1054,10 +1054,10 @@ const es: SeccionDocs[] = [
         resumen:
           'La campana del inicio muestra lo que pasa con tu cuenta ahora mismo: pedidos en curso, regalos en marcha y próximas aperturas en tu ciudad. El cupón abre directo tus regalos.',
         explicacion: [
-          'Cuando tienes un pedido en curso, la campana lleva un punto rojo con el número de pedidos. Al tocarla ves cada uno con su estado («En preparación», «En camino hacia ti»…) y al tocarlo abres el seguimiento.',
+          'Cuando algo nuevo te pasa (tu pedido cambió de estado, ganaste un sello, abrimos una zona cerca), la campana lleva un punto rojo con cuántos avisos no has visto. Al tocarla ves cada uno: los nuevos con su punto rojo y los que ya viste, sin él. Tocar un pedido abre su seguimiento.',
           'En la pestaña «Regalos» (la misma que abre el cupón) ves tus regalos en marcha: la tarjeta de sellos de cada restaurante donde ya pediste, con cuántos pedidos llevas y cuántos faltan para el plato de regalo, y los descuentos por volver cuando te tocan. La barra verde muestra tu avance.',
           'También te avisamos cuando Divoox va a abrir en una zona nueva de tu ciudad, con la fecha prevista si ya la hay.',
-          'Los avisos se calculan al momento: no hay nada que borrar ni marcar como leído. Cuando un pedido se entrega, desaparece de la campana y queda en «Pedidos».',
+          'Con solo abrirla, la campana vuelve a cero: no hay que borrar ni marcar nada. Y lo que viste en un celular tampoco te sale como nuevo en otro, ni en la web. Vuelve a contar solo cuando llega algo nuevo. Cuando un pedido se entrega, desaparece de la campana y queda en «Pedidos».',
           'Si no hay nada que avisar, la campana lo dice claro: nunca inventa avisos.',
         ],
         capturas: [
@@ -2785,7 +2785,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'El menú de la izquierda siempre está a la vista y está ordenado por grupos: «Operación» (el inicio y tus pedidos), «Mi negocio» (tu restaurante, tu empresa, el menú, los productos y tu equipo), «Dinero» (tus beneficios), «Ventas y marketing» (promociones, anuncios, regalos y reseñas) y «Ajustes». La sección en la que estás queda resaltada en rojo.',
           'Arriba hay un buscador: escribe unas letras («men», «promo», «rese») y te lleva directo a esa sección, sin recorrer el menú.',
-          'La campana te dice cuántos pedidos están esperando que los aceptes. Si no hay nada pendiente, lo dice. Al lado están el idioma y tu nombre: ahí encuentras «Configuración» y «Cerrar sesión». La salida también está al final del menú.',
+          'La campana te cuenta lo que llegó y todavía no viste, como cada pedido nuevo. Al abrirla vuelve a cero, y lo que ya viste queda abajo, más apagado. Los pedidos que esperan que los aceptes llevan su número en «Pedidos», en el menú: ese número no baja por mirarlo, baja cuando los aceptas. Al lado de la campana están el idioma y tu nombre: ahí encuentras «Configuración» y «Cerrar sesión». La salida también está al final del menú.',
           'En el celular el menú se guarda para dejarle la pantalla a tu información: toca el botón de las tres rayas, arriba a la izquierda, y se abre encima. Al elegir una sección se cierra solo.',
         ],
         capturas: [
@@ -2813,7 +2813,7 @@ const es: SeccionDocs[] = [
           'Entra a tu panel desde la computadora o desde el navegador del celular.',
           'Elige una sección en el menú de la izquierda. En el celular, toca primero el botón de las tres rayas.',
           'Si no la ves, escribe su nombre en el buscador de arriba y tócala.',
-          'Mira la campana: si tiene un número, hay pedidos esperando. Tócala para ir a ellos.',
+          'Mira «Pedidos» en el menú: si tiene un número, hay pedidos esperando que los aceptes. Tócalo para ir a ellos.',
           'Para salir, toca tu nombre y luego «Cerrar sesión», o usa «Cerrar sesión» al final del menú.',
         ],
       },
@@ -3636,7 +3636,7 @@ const es: SeccionDocs[] = [
           'La campana te muestra los avisos reales de tus últimos siete días: pedido listo, cancelaciones, cambios de dirección, propinas, foto de control. Y con «Pausar ofertas» sigues conectado sin que te lleguen ofertas.',
         explicacion: [
           'Avisos que te llegan al celular y quedan en la campana: el restaurante terminó tu pedido («Pedido listo para recoger»), el restaurante o el cliente cancelaron (quedas libre para el siguiente), el cliente cambió la dirección de entrega (con la nueva dirección), soporte autorizó tu entrega sin GPS, una propina que llegó después de entregar, ofertas que se te vencieron hoy y la foto de control pendiente.',
-          'Los avisos llegan en el idioma que tienes en la app: si la cambias a inglés, también cambian.',
+          'Los avisos llegan en el idioma que tienes en la app: si la cambias a inglés, también cambian. El punto rojo de la campana dice que hay avisos que no has visto: al abrirla se apaga, también en tus otros aparatos, y vuelve solo con un aviso nuevo.',
           'Pausa: si estás conectado y sin pedido, «Pausar ofertas» te deja conectado (nuestro equipo te ve) pero no te manda ofertas, por ejemplo para comer o cargar gasolina. Deslizar «Desliza para reanudar ofertas» te devuelve a la fila. Al volver a conectarte, la pausa se quita sola.',
           'Si te conectas fuera de nuestra zona de cobertura, la app te lo dice: quedas conectado, pero ahí no llegan ofertas.',
         ],
@@ -6575,10 +6575,10 @@ const en: SeccionDocs[] = [
         resumen:
           'The bell on the home screen shows what’s happening with your account right now: active orders, gifts in progress, and upcoming openings in your city. The coupon opens your gifts directly.',
         explicacion: [
-          'When you have an active order, the bell shows a red dot with the number of orders. Tap it to see each one with its status (“Being prepared”, “On its way to you”…) and tap an order to open tracking.',
+          'When something new happens (your order changed status, you earned a stamp, we opened a zone near you), the bell shows a red dot with how many notifications you haven’t seen. Tap it to see each one: new ones have a red dot, the ones you’ve already seen don’t. Tap an order to open tracking.',
           'Under the “Gifts” tab (the same one the coupon opens) you see your gifts in progress: the stamp card for each restaurant you’ve ordered from, with how many orders you have and how many are left for the free dish, plus come-back discounts when they’re due. The green bar shows your progress.',
           'We also let you know when Divoox is about to open in a new area of your city, with the expected date when there is one.',
-          'Notifications are computed on the spot: nothing to delete or mark as read. When an order is delivered, it leaves the bell and stays under “Orders”.',
+          'Just opening the bell clears it back to zero: nothing to delete or mark as read. What you saw on one phone won’t show up as new on another, or on the web. It only counts again when something new arrives. When an order is delivered, it leaves the bell and stays under “Orders”.',
           'If there’s nothing to report, the bell says so clearly: it never makes up notifications.',
         ],
         capturas: [
@@ -8293,7 +8293,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'The menu on the left is always visible and is sorted into groups: “Operations” (home and your orders), “My business” (your restaurant, your company, the menu, products and your team), “Money” (your earnings), “Sales and marketing” (promotions, ads, gifts and reviews) and “Settings”. The section you’re in is highlighted in red.',
           'At the top there’s a search box: type a few letters (“men”, “promo”, “rev”) and it takes you straight to that section, without going through the menu.',
-          'The bell tells you how many orders are waiting for you to accept them. If nothing is pending, it says so. Next to it are the language and your name: that’s where you find “Settings” and “Sign out”. Sign out is also at the bottom of the menu.',
+          'The bell counts what came in that you haven’t seen yet, like each new order. Opening it clears it back to zero, and what you’ve seen stays below, dimmed. Orders waiting for you to accept them show their number next to “Orders” in the menu: that number doesn’t go down by looking, it goes down when you accept them. Next to the bell are the language and your name: that’s where you find “Settings” and “Sign out”. Sign out is also at the bottom of the menu.',
           'On a phone the menu tucks away to leave the screen to your information: tap the three-line button at the top left and it opens on top. It closes by itself when you pick a section.',
         ],
         capturas: [
@@ -8321,7 +8321,7 @@ const en: SeccionDocs[] = [
           'Open your dashboard on a computer or in your phone’s browser.',
           'Pick a section in the menu on the left. On a phone, tap the three-line button first.',
           'If you don’t see it, type its name in the search box at the top and tap it.',
-          'Check the bell: if it shows a number, orders are waiting. Tap it to go to them.',
+          'Check “Orders” in the menu: if it shows a number, orders are waiting for you to accept them. Tap it to go to them.',
           'To leave, tap your name and then “Sign out”, or use “Sign out” at the bottom of the menu.',
         ],
       },
@@ -9139,7 +9139,7 @@ const en: SeccionDocs[] = [
           'The bell shows your real notifications from the last seven days: order ready, cancellations, address changes, tips, check-in photo. And with “Pause offers” you stay online without receiving offers.',
         explicacion: [
           'Notifications that reach your phone and stay in the bell: the restaurant finished your order (“Order ready for pickup”), the restaurant or the customer canceled (you’re free for the next one), the customer changed the delivery address (with the new address), support approved your delivery without GPS, a tip that came after delivery, offers that expired on you today, and a pending check-in photo.',
-          'Notifications arrive in the language you have in the app: switch to English and they switch too.',
+          'Notifications arrive in the language you have in the app: switch to English and they switch too. The red dot on the bell means there are notifications you haven’t seen: opening the bell clears it, on your other devices too, and it only comes back with a new notification.',
           'Pause: when you’re online with no order, “Pause offers” keeps you online (our team sees you) but sends no offers, for example to eat or get gas. Sliding “Slide to resume offers” puts you back in line. Going online again clears the pause.',
           'If you go online outside our coverage area, the app tells you: you’re online, but no offers arrive there.',
         ],
