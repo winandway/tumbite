@@ -7,28 +7,48 @@ import { type Referencia, equivalenteLocal } from './tasaReferencia';
  * [OBS]). Ficha: docs/investigaciones-rea/2026-11-13-comida-venezuela-tarifas.md.
  *
  * Estas cifras son el punto de partida que propone el panel al abrir Comida en una ciudad de
- * Venezuela; el equipo las cambia desde el panel (configuración del país). Todo en centavos de
- * dólar. Estados Unidos NO usa nada de este archivo.
+ * Venezuela; el equipo las cambia desde el panel (configuración del país, o la palanca «¿Quién paga
+ * qué en la comida?»). Todo en centavos de dólar. Estados Unidos NO usa nada de este archivo.
+ *
+ * C-COMIDA-VE-QUIEN-PAGA (23 nov 2026, modelo aprobado por Richard): con el pago directo al
+ * restaurante el cliente paga SOLO la comida al precio de la carta (al restaurante) y el envío (al
+ * conductor): tarifa de servicio y cargo por pedido pequeño en 0. La comisión de Divoox la paga el
+ * restaurante de su saldo prepago (ver `COMISION_RESTAURANTE_VE_*`), no el cliente ni el conductor.
+ * `comisionPb` (10 % parejo) es la comisión del cobro en mano de siempre (países sin la bandera).
  */
 export const TARIFAS_COMIDA_VENEZUELA: ConfigDinero = {
-  // Comisión al restaurante por la venta (por plan). [INF] tramo bajo de la región.
-  comisionPb: { inicial: 1500, crece: 1800, elite: 2000 },
+  // Comisión al restaurante por la venta: 10 % parejo en Venezuela (reemplaza el 15/18/20 por plan).
+  comisionPb: { inicial: 1000, crece: 1000, elite: 1000 },
   // Envío por distancia, como Yummy y PedidosYa [DOC/OBS]: 1,50 hasta 3 km, 0,30 el km extra, tope 4.
   envioBase: 150,
   envioKmIncluidos: 3,
   envioPorKm: 30,
   envioMaximo: 400,
-  // Cargo de servicio: porcentaje del pedido (Yummy ~4 % [DOC]); 5 % con piso 0,25 y techo 1,50.
-  servicioPb: 500,
-  servicioMinimo: 25,
-  servicioMaximo: 150,
-  // Pedido pequeño: por debajo de 5 dólares se suman 0,50 [INF].
-  pedidoMinimo: 500,
-  cargoPedidoPequeno: 50,
+  // El cliente no paga tarifa de servicio ni cargo por pedido pequeño (C-COMIDA-VE-QUIEN-PAGA).
+  servicioPb: 0,
+  servicioMinimo: 0,
+  servicioMaximo: 0,
+  pedidoMinimo: 0,
+  cargoPedidoPequeno: 0,
   // Lo mínimo que gana el repartidor por un pedido [INF].
   pagoMinimoRepartidor: 100,
   impuestoPb: 0,
 };
+
+/**
+ * C-COMIDA-VE-QUIEN-PAGA: la comisión de Divoox que paga el RESTAURANTE de su saldo prepago, en
+ * puntos base sobre la comida. El valor preparado es 10 %; arranca en 0 % (con saldo de regalo).
+ * Se cambia desde la palanca del panel (crea o cierra la política del restaurante): estas cifras son
+ * solo lo que el panel propone, nunca deciden un cobro.
+ */
+export const COMISION_RESTAURANTE_VE_PREPARADA_PB = 1000;
+export const COMISION_RESTAURANTE_VE_ARRANQUE_PB = 0;
+/**
+ * C-COMIDA-VE-QUIEN-PAGA: la comisión de Divoox sobre el ENVÍO que se le aparta al conductor en un
+ * pedido de pago directo (puntos base). De fábrica 0: el conductor cobra el envío entero. Vive en la
+ * configuración del país (`comidaComisionEnvioPb`).
+ */
+export const COMISION_ENVIO_COMIDA_VE_PB = 0;
 
 /** La ciudad de pruebas de Venezuela desde el 13 nov 2026: El Vigía, estado Mérida (en dólares). */
 export const CIUDAD_PRUEBAS_EL_VIGIA = {

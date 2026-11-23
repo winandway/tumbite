@@ -19,17 +19,23 @@ import {
   edadMinimaRepartidor,
   estadoEeuuDeZona,
   perfilPasajeros,
+  pideReversoDocumento,
   TAMANOS_FOTO,
   medidasWebp,
 } from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
+import { graciaDe } from '../plazoPapeles';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { enviarCorreo } from '../correo';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
-import { anotarDecisionHumana, revisarFotoKycConIa } from './verificacionConductor';
+import {
+  anotarDecisionHumana,
+  enviarSoloTrasSubir,
+  revisarFotoKycConIa,
+} from './verificacionConductor';
 import { asegurarCodigoRepartidor } from './superadmin';
 import {
   checkrConfigurado,
@@ -38,7 +44,7 @@ import {
   procesarAvisoCheckr,
 } from '../antecedentes';
 import { guardarDecision, motorEncendido, pedirDecision, textoMotivos } from '../verificacionAuto';
-import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
+import { accesoDe, alcanceObjetoSql, tienePermiso } from '../accesoInterno';
 import {
   type FilaBandeja,
   type FilaSinEnviar,
@@ -329,6 +335,10 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
     await revisarFotoKycConIa(c.env, db, u, pieza, { bytes, mime: tipo }, clave).catch(
       (e: unknown) => console.error('kyc: la comprobación automática de la foto falló', e),
     );
+  // C-LLEGA-SOLO-A-REVISION: con la última foto, la identidad va a revisión sola (con el motor
+  // automático encendido, espera las dos tomas y el botón, que es lo que lo dispara).
+  if (u.rol === 'repartidor')
+    await enviarSoloTrasSubir(c.env, db, u, { kycViejo: !motorEncendido(c.env) });
   // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
   return c.json({ ok: true, url: clave }, 201);
 });
@@ -346,6 +356,8 @@ kyc.post('/kyc/consentimiento', async (c) => {
     .prepare("UPDATE kyc SET consentimiento_en = datetime('now') WHERE usuario_id = ?")
     .bind(u.id)
     .run();
+  // C-LLEGA-SOLO-A-REVISION: si el consentimiento era lo único que faltaba, ahora va a revisión.
+  await enviarSoloTrasSubir(c.env, db, u, { kycViejo: !motorEncendido(c.env) });
   return c.json({ ok: true });
 });
 
@@ -358,7 +370,12 @@ kyc.post('/kyc/enviar', async (c) => {
   const f = await db.prepare('SELECT * FROM kyc WHERE usuario_id = ?').bind(u.id).first<FilaKyc>();
   const faltan: string[] = [];
   if (!f?.doc_frente) faltan.push('doc_frente');
-  if (docTipo !== 'pasaporte' && !f?.doc_reverso) faltan.push('doc_reverso');
+  // C-DOCUMENTO-SIN-REVERSO: el conductor de un país cuyo documento no trae nada atrás (Venezuela) no
+  // necesita el reverso. El restaurante sigue como siempre.
+  const pideReverso =
+    docTipo !== 'pasaporte' &&
+    (u.rol !== 'repartidor' || pideReversoDocumento((await graciaDe(db, u.id)).politica));
+  if (pideReverso && !f?.doc_reverso) faltan.push('doc_reverso');
   if (!f?.selfie) faltan.push('selfie');
   if (u.rol === 'restaurante' && !f?.local) faltan.push('local');
   if (faltan.length)
@@ -477,8 +494,9 @@ kyc.get('/admin/kyc', async (c) => {
     const todas = juntarSinEnviar(listas.map((l) => l.results));
     const pagina = todas.slice(0, POR_PAGINA_BANDEJA);
     const ultima = pagina.at(-1);
+    const fotos = tienePermiso(c, 'repartidores.documentos');
     return c.json({
-      solicitudes: pagina.map(filaSinEnviar),
+      solicitudes: pagina.map(filaSinEnviar).map((f) => (fotos ? f : { ...f, miniatura: null })),
       siguiente:
         todas.length > POR_PAGINA_BANDEJA && ultima ? `${ultima.creado}|${ultima.id}` : null,
       totales,
@@ -492,7 +510,10 @@ kyc.get('/admin/kyc', async (c) => {
   const pagina = results.slice(0, POR_PAGINA_BANDEJA);
   const ultima = pagina.at(-1);
   return c.json({
-    solicitudes: pagina.map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M)),
+    // C-MINIATURA-SIEMPRE: quien no puede ver documentos ve las iniciales, no la foto.
+    solicitudes: pagina
+      .map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M))
+      .map((f) => (tienePermiso(c, 'repartidores.documentos') ? f : { ...f, miniatura: null })),
     siguiente:
       results.length > POR_PAGINA_BANDEJA && ultima
         ? `${p.fecha(ultima) ?? ''}|${ultima.id}`
@@ -505,7 +526,10 @@ kyc.get('/admin/kyc/:id', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
   const id = c.req.param('id');
-  const f = await db.prepare('SELECT * FROM kyc WHERE usuario_id = ?').bind(id).first<FilaKyc>();
+  const leida = await db
+    .prepare('SELECT * FROM kyc WHERE usuario_id = ?')
+    .bind(id)
+    .first<FilaKyc>();
   const u = await db
     .prepare(
       `SELECT u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.rol, u.idioma, rs.id AS restaurante_id, rs.nombre AS restaurante, rs.direccion,
@@ -518,6 +542,12 @@ kyc.get('/admin/kyc/:id', async (c) => {
     .bind(id)
     .first<Record<string, unknown>>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  // C-DOCUMENTO-SIN-REVERSO: en el país del conductor que no pide reversos (Venezuela), el equipo no
+  // ve un «reverso» sobrante (la foto en blanco que alguien llegó a subir se queda guardada, sin más).
+  const noSePide = new Set<string>(
+    u.rol === 'repartidor' ? ((await graciaDe(db, id)).politica.sinReverso ?? []) : [],
+  );
+  const f = leida && noSePide.has('doc_reverso') ? { ...leida, doc_reverso: null } : leida;
   const { results: controles } = await db
     .prepare(
       'SELECT id, pedida_en, tomada_en, revisada_en, resultado, clave FROM selfies_control WHERE usuario_id = ? ORDER BY pedida_en DESC LIMIT 10',
@@ -556,7 +586,8 @@ kyc.get('/admin/kyc/:id', async (c) => {
       clase: string;
       confianza: number | null;
       lectura: string;
-    }>();
+    }>()
+    .then((r) => ({ results: r.results.filter((x) => !noSePide.has(x.paso)) }));
   const declarado =
     u.rol === 'repartidor'
       ? await db

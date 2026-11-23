@@ -73,6 +73,46 @@ export async function rehacerElegibilidad(db: D1Database): Promise<boolean> {
   return true;
 }
 
+/**
+ * C-SEGURO-EN-PLAZO (23 nov 2026, Richard). El disparador que no deja aprobar un vehículo sin sus
+ * papeles: dentro del plazo vigente (y si su país no pide el seguro para empezar) basta el registro.
+ * Es el mismo texto de schema.sql; las bases con el viejo lo cambian una sola vez al arrancar.
+ */
+export const DISPARADOR_APROBAR_VEHICULO = `CREATE TRIGGER IF NOT EXISTS vehiculos_aprobar_exige_documentos
+BEFORE UPDATE OF estado ON vehiculos
+WHEN NEW.estado = 'aprobado' AND OLD.estado = 'en_revision'
+  AND NEW.tipo IN ('carro', 'moto', 'scooter')
+  AND (NOT EXISTS (SELECT 1 FROM vehiculo_documentos
+                    WHERE vehiculo_id = NEW.id AND estado = 'aprobado' AND tipo = 'registro'
+                      AND (vence_en IS NULL OR vence_en > datetime('now')))
+       OR (NOT EXISTS (SELECT 1 FROM vehiculo_documentos
+                        WHERE vehiculo_id = NEW.id AND estado = 'aprobado' AND tipo = 'seguro'
+                          AND (vence_en IS NULL OR vence_en > datetime('now')))
+           AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                            WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                              AND pp.vence_en > datetime('now')
+                              AND NOT EXISTS (SELECT 1 FROM politica_requisitos x
+                                               WHERE x.pais = pp.pais AND x.requisito = 'seguro_vehiculo'
+                                                 AND x.regla = 'para_empezar'))))
+BEGIN
+  SELECT RAISE(ABORT, 'vehiculo_sin_documentos_aprobados');
+END`;
+
+/** Cambia el disparador viejo de aprobar vehículos por el que conoce el plazo. ¿Cambió algo? */
+export async function rehacerAprobarVehiculo(db: D1Database): Promise<boolean> {
+  const f = await db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?")
+    .bind('vehiculos_aprobar_exige_documentos')
+    .first<{ sql: string | null }>();
+  if (f && String(f.sql).includes('plazo_papeles')) return false;
+  await db.batch([
+    db.prepare('DROP TRIGGER IF EXISTS vehiculos_aprobar_exige_documentos'),
+    db.prepare(DISPARADOR_APROBAR_VEHICULO),
+  ]);
+  console.warn('esquema: aprobar vehículos con el seguro dentro del plazo (C-SEGURO-EN-PLAZO)');
+  return true;
+}
+
 type Regla = 'exento' | 'para_empezar';
 
 /** Las filas que la política de un país deja en `politica_requisitos`. */

@@ -1,4 +1,10 @@
-import { claseDePaso, textoPlano, type PasoVerificacion } from '@tumbite/compartido';
+import {
+  claseDePaso,
+  pideReversoDocumento,
+  textoPlano,
+  type PasoVerificacion,
+} from '@tumbite/compartido';
+import { politicaDesdeConfig } from '../plazoPapeles';
 import { zonaRealSql } from '../cuentaPais';
 import { sqlPlano } from '../buscadorSql';
 import { sqlFiltroCuentas } from './cuentaPrueba';
@@ -259,6 +265,7 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
       k.selfie_miniatura IS NOT NULL AS con_miniatura,
       u.nombre, u.correo, u.telefono, u.rol, COALESCE(u.es_prueba, 0) AS es_prueba,
       d.codigo, rs.id AS restaurante_id, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre,
+      z.pais AS pais, (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg_pais,
       vc.resultado AS cara,
       (SELECT json_group_array(json_object('paso', f.paso, 'clave', f.clave, 'estado', f.estado,
                 'color', f.ia_color, 'clase', f.ia_clase, 'lectura', f.ia_json))
@@ -317,6 +324,10 @@ export function consultasSinEnviar(f: Omit<FiltrosBandeja, 'estado'>, despues: s
   }
   const sql = `SELECT u.id, u.creado_en AS creado, u.correo_confirmado_en IS NOT NULL AS confirmado,
       (SELECT COUNT(*) FROM verificacion_fotos f WHERE f.conductor_id = u.id AND f.estado = 'vigente') AS fotos_subidas,
+      k.doc_frente IS NOT NULL AS con_doc_frente, k.doc_reverso IS NOT NULL AS con_doc_reverso,
+      k.selfie IS NOT NULL AS con_selfie, k.selfie_miniatura IS NOT NULL AS con_miniatura,
+      k.local IS NOT NULL AS con_local, k.consentimiento_en IS NOT NULL AS con_consentimiento,
+      z.pais AS pais, (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg_pais,
       u.nombre, u.correo, u.telefono, u.rol, COALESCE(u.es_prueba, 0) AS es_prueba,
       d.codigo, rs.id AS restaurante_id, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre
     ${DESDE_SIN_ENVIAR}
@@ -349,6 +360,14 @@ export type FilaSinEnviar = {
   creado: string;
   confirmado: number;
   fotos_subidas: number;
+  con_doc_frente?: number | null;
+  con_doc_reverso?: number | null;
+  con_selfie?: number | null;
+  con_miniatura?: number | null;
+  con_local?: number | null;
+  con_consentimiento?: number | null;
+  pais?: string | null;
+  cfg_pais?: string | null;
   nombre: string;
   correo: string;
   telefono: string | null;
@@ -372,6 +391,30 @@ export function juntarSinEnviar(listas: FilaSinEnviar[][]): FilaSinEnviar[] {
     );
 }
 
+/** Lo que puede faltarle a quien está en «Sin enviar» (C-LLEGA-SOLO-A-REVISION). */
+export type FaltaSinEnviar = 'doc_frente' | 'doc_reverso' | 'cara' | 'consentimiento' | 'local';
+
+/**
+ * Qué le falta de verdad para que su identidad llegue a revisión, con la misma regla del servidor:
+ * el documento por delante, el reverso donde su país lo pide, la cara y el consentimiento (el
+ * restaurante, además, la foto del local). Sin consultas: sale de la misma fila.
+ */
+export function faltaSinEnviar(r: FilaSinEnviar): FaltaSinEnviar[] {
+  const si = (x: number | null | undefined) => Number(x) === 1;
+  const conductor = r.rol === 'repartidor';
+  const pideReverso =
+    !conductor ||
+    !r.pais ||
+    pideReversoDocumento(politicaDesdeConfig(String(r.pais).toUpperCase(), r.cfg_pais ?? null));
+  const falta: FaltaSinEnviar[] = [];
+  if (!si(r.con_doc_frente)) falta.push('doc_frente');
+  if (pideReverso && !si(r.con_doc_reverso)) falta.push('doc_reverso');
+  if (!si(r.con_selfie)) falta.push('cara');
+  if (conductor && !si(r.con_consentimiento)) falta.push('consentimiento');
+  if (!conductor && !si(r.con_local)) falta.push('local');
+  return falta;
+}
+
 /** La fila de «Sin enviar», con la misma forma que las demás pestañas. */
 export function filaSinEnviar(r: FilaSinEnviar) {
   return {
@@ -393,7 +436,11 @@ export function filaSinEnviar(r: FilaSinEnviar) {
     zonaId: r.zona_id ?? '',
     zona: r.zona_nombre ?? '',
     esPrueba: Number(r.es_prueba) === 1,
-    miniatura: null,
+    // C-MINIATURA-SIEMPRE (23 nov 2026, Richard): la cara que ya subió se ve aunque no haya enviado.
+    miniatura:
+      Number(r.con_miniatura) === 1 ? 'mini' : Number(r.con_selfie) === 1 ? 'selfie' : null,
+    /** C-LLEGA-SOLO-A-REVISION: lo que le falta para que su identidad llegue sola a revisión. */
+    falta: faltaSinEnviar(r),
     comprobaciones: [],
     cara: null,
     /** Cuándo creó la cuenta. */
@@ -430,6 +477,9 @@ export type FilaBandeja = {
   zona_nombre: string | null;
   cara: string | null;
   fotos: string | null;
+  /** C-DOCUMENTO-SIN-REVERSO: el país de la zona y su configuración (de ahí, si pide el reverso). */
+  pais?: string | null;
+  cfg_pais?: string | null;
 };
 
 /** Lo que la bandeja manda de cada fila. */
@@ -444,9 +494,15 @@ export function filaDeBandeja(r: FilaBandeja, distanciaMaxima: number) {
   })();
   const porPaso = new Map(fotos.map((f) => [f.paso, f]));
   const lejos = r.distancia != null && Number(r.distancia) > distanciaMaxima;
+  // C-DOCUMENTO-SIN-REVERSO: el conductor de un país sin reverso (Venezuela) no muestra un «reverso»
+  // sobrante; la foto que alguien llegó a subir se queda guardada y se ignora.
+  const sinReverso =
+    r.rol === 'repartidor' &&
+    Boolean(r.pais) &&
+    !pideReversoDocumento(politicaDesdeConfig(String(r.pais).toUpperCase(), r.cfg_pais ?? null));
   const tiene = new Map<PiezaBandeja, boolean>([
     ['doc_frente', Number(r.con_doc_frente) === 1],
-    ['doc_reverso', Number(r.con_doc_reverso) === 1],
+    ['doc_reverso', !sinReverso && Number(r.con_doc_reverso) === 1],
     ['selfie', Number(r.con_selfie) === 1],
     ['local', Number(r.con_local) === 1],
   ]);

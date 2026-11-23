@@ -174,6 +174,10 @@ const es = {
     inicioBajo: 'Tu saldo se está acabando. Recarga para seguir recibiendo trabajo.',
     inicioSin:
       'Sin saldo no te llegan carreras ni pedidos que se cobran en mano. Recarga para volver a recibirlos.',
+    // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): cuando la comida no le cobra nada del saldo.
+    inicioSinCarreras: 'Sin saldo no te llegan carreras. Recarga para volver a recibirlas.',
+    comidaEnvioEntero:
+      'En los pedidos de comida cobras el envío entero: Divoox no te descuenta nada y no necesitas saldo para recibirlos.',
     ayuda:
       'La comisión de Divoox de las carreras y los pedidos que cobras en mano sale de este saldo. Se aparta al aceptar y se cobra al terminar; sin saldo no te llegan. Recarga con un código de un punto de venta o con el equipo de Divoox de tu ciudad.',
     disponible: 'Disponible',
@@ -416,6 +420,9 @@ const en: T = {
     inicioBajo: 'Your balance is running low. Top up to keep getting work.',
     inicioSin:
       'Without balance you won’t get trips or orders paid in person. Top up to start receiving them again.',
+    inicioSinCarreras: 'Without balance you won’t get trips. Top up to start receiving them again.',
+    comidaEnvioEntero:
+      'On food orders you keep the whole delivery fee: Divoox takes nothing and you need no balance to receive them.',
     ayuda:
       'The Divoox fee for the trips and orders you collect in person comes out of this balance. It’s set aside when you accept and charged when you finish; without balance you don’t get them. Top up with a sales point code or through the Divoox team in your city.',
     disponible: 'Available',

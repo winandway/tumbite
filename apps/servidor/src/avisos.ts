@@ -68,10 +68,11 @@ export async function reciboDePedido(
     d === 'en'
       ? `Your Divoox order #${corto} is confirmed`
       : `Tu pedido #${corto} en Divoox quedó confirmado`;
+  // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): un cargo en 0 (servicio, envío) no se escribe.
   const texto =
     d === 'en'
-      ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d, m)}\n\nSubtotal: ${fm(p.subtotal)}\nDelivery: ${fm(p.envio)}\nService: ${fm(p.servicio)}${p.impuesto ? `\nTax: ${fm(p.impuesto)}` : ''}\nTip: ${fm(p.propina)}${p.regalo ? `\nGift: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
-      : `Hola, ${p.nombre}.\n\nRecibimos tu pago y ${p.restaurante} ya está con tu pedido.\n\n${lineasTexto(p.lineas, d, m)}\n\nComida: ${fm(p.subtotal)}\nEnvío: ${fm(p.envio)}\nServicio: ${fm(p.servicio)}${p.impuesto ? `\nImpuesto: ${fm(p.impuesto)}` : ''}\nPropina: ${fm(p.propina)}${p.regalo ? `\nRegalo: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nLo llevamos a: ${p.direccion}\n\nSíguelo en vivo en la app:\n\n${sitio(env)}/app/order/${p.pedidoId}`;
+      ? `Hi ${p.nombre},\n\nWe got your payment and ${p.restaurante} is on it.\n\n${lineasTexto(p.lineas, d, m)}\n\nSubtotal: ${fm(p.subtotal)}${p.envio ? `\nDelivery: ${fm(p.envio)}` : ''}${p.servicio ? `\nService: ${fm(p.servicio)}` : ''}${p.impuesto ? `\nTax: ${fm(p.impuesto)}` : ''}\nTip: ${fm(p.propina)}${p.regalo ? `\nGift: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nDelivering to: ${p.direccion}\n\nFollow it live in the app:\n\n${sitio(env)}/app/order/${p.pedidoId}`
+      : `Hola, ${p.nombre}.\n\nRecibimos tu pago y ${p.restaurante} ya está con tu pedido.\n\n${lineasTexto(p.lineas, d, m)}\n\nComida: ${fm(p.subtotal)}${p.envio ? `\nEnvío: ${fm(p.envio)}` : ''}${p.servicio ? `\nServicio: ${fm(p.servicio)}` : ''}${p.impuesto ? `\nImpuesto: ${fm(p.impuesto)}` : ''}\nPropina: ${fm(p.propina)}${p.regalo ? `\nRegalo: −${fm(p.regalo)}` : ''}\nTotal: ${fm(p.total)}\n\nLo llevamos a: ${p.direccion}\n\nSíguelo en vivo en la app:\n\n${sitio(env)}/app/order/${p.pedidoId}`;
   return enviarCorreo(env, { de: 'pedidos', para: p.correo, asunto, texto });
 }
 

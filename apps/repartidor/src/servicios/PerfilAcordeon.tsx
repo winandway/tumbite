@@ -240,6 +240,7 @@ export function PerfilAcordeon({
   const [fotoMala, setFotoMala] = useState(false);
   // C-CAMBIAR-VEHICULO: el vehículo con el que trabaja ahora (se cambia desde «Mi vehículo»).
   const [activoId, setActivoId] = useState<string | null>(null);
+  const [seguroEnPlazo, setSeguroEnPlazo] = useState(false);
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
   const ids = servicios.map((s) => s.servicioId).join(',');
@@ -248,10 +249,11 @@ export function PerfilAcordeon({
     try {
       const lista = ids ? ids.split(',') : [];
       const [v, p, k, ...reqs] = await Promise.all([
-        api.pedir<{ vehiculos: Vehiculo[]; vehiculoActivoId?: string | null }>(
-          'GET',
-          '/datos/conductor/vehiculos',
-        ),
+        api.pedir<{
+          vehiculos: Vehiculo[];
+          vehiculoActivoId?: string | null;
+          seguroEnPlazo?: boolean;
+        }>('GET', '/datos/conductor/vehiculos'),
         api.pedir<Papeles>('GET', '/datos/conductor/papeles').catch(() => null),
         api
           .pedir<{ kyc: { estado: string; motivo: string } }>('GET', '/datos/kyc')
@@ -265,6 +267,7 @@ export function PerfilAcordeon({
       ]);
       setVehiculos(v.vehiculos.filter((x) => x.estado !== 'retirado'));
       setActivoId(v.vehiculoActivoId ?? null);
+      setSeguroEnPlazo(Boolean(v.seguroEnPlazo));
       setPapeles(p);
       setKyc(k?.kyc ?? null);
       setRequisitos(
@@ -714,6 +717,7 @@ export function PerfilAcordeon({
                                   v,
                                   Boolean(papeles?.perfil.placaNacional),
                                   idioma,
+                                  seguroEnPlazo,
                                 );
                                 return (
                                   <View

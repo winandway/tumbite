@@ -41,7 +41,9 @@ afterEach(() => vi.unstubAllGlobals());
 // Medido contra la base: cinco lecturas más que sin la pieza; nada más cambió.
 // +2 (23 nov 2026, C-CODIGO-CANALES): el gasto del día se cuenta por proveedor (SMS y WhatsApp) en la
 // misma lectura por fecha, y suma la pieza «whatsapp».
-const TOPE_CANARIO = 1163;
+// +2 (23 nov 2026, C-LLEGA-SOLO-A-REVISION): la reparación deja dos filas en `config` (su marca y a
+// quién envió), y el canario recorre esa tabla.
+const TOPE_CANARIO = 1165;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

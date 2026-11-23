@@ -14,7 +14,8 @@ describe('C-PAPEL-DICE-LA-VERDAD', () => {
       { docEstado: 'pendiente', vehiculoEstado: 'registrado', vehiculoTipo: 'moto' },
       'es',
     );
-    expect(d.texto).toBe('Subida. Falta enviar tu moto a revisión');
+    // C-LLEGA-SOLO-A-REVISION: si sigue «registrada» es porque falta algo; al subirlo pasa sola.
+    expect(d.texto).toBe('Subida. Tu moto pasa sola a revisión cuando subas lo que falta');
     expect(d.pildora).toBe('Subida');
     expect(d.texto).not.toMatch(/suele tardar/);
   });
@@ -30,7 +31,7 @@ describe('C-PAPEL-DICE-LA-VERDAD', () => {
         { docEstado: 'pendiente', vehiculoEstado: 'registrado', vehiculoTipo: 'carro' },
         'en',
       ).texto,
-    ).toBe('Uploaded. You still need to send your car for review');
+    ).toBe('Uploaded. Your car goes to review on its own once the rest is uploaded');
   });
   it('dice exactamente qué falta para poder enviarla (placa, registro, seguro)', () => {
     const v = { tipo: 'moto', placa: '', documentos: [{ tipo: 'registro', estado: 'pendiente' }] };
@@ -52,6 +53,8 @@ describe('C-PAPEL-DICE-LA-VERDAD', () => {
     expect(faltaParaEnviar({ tipo: 'bicicleta', placa: '', documentos: [] }, true, 'es')).toEqual(
       [],
     );
+    // C-SEGURO-EN-PLAZO: dentro del plazo la póliza no frena la revisión.
+    expect(faltaParaEnviar(v, true, 'es', true)).toEqual(['la placa']);
   });
   it('las dos pantallas usan la misma pieza', () => {
     for (const f of [

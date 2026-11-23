@@ -178,6 +178,13 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
       screen.getByText('Tarifas de comida que se van a cobrar (mercado de Venezuela)'),
     ).toBeTruthy();
     expect(screen.getByText('$1.50')).toBeTruthy();
+    // C-COMIDA-VE-QUIEN-PAGA: ni líneas en cero ni «0 %»; el modelo dicho en una frase.
+    expect(screen.queryByText('Cargo de servicio')).toBeNull();
+    expect(screen.queryByText(/Pedido pequeño/)).toBeNull();
+    expect(screen.queryByText(/\b0 %/)).toBeNull();
+    expect(screen.getByTestId('comida-modelo').textContent).toContain(
+      'El cliente paga solo la comida',
+    );
     await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Comida El Vigía');
     await userEvent.click(screen.getByRole('button', { name: 'Abrir Comida en esta ciudad' }));
     await waitFor(() =>

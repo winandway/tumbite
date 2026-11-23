@@ -168,7 +168,7 @@ describe('C-PAPEL-DICE-LA-VERDAD · lo subido sin enviar sale en «qué te falta
     expect(v.estado).toBe(201);
     expect(await c.falta()).toContain('vehiculo_sin_enviar');
   });
-  it('con todas las fotos de identidad tomadas y sin enviar, pide «Enviar a revisión»', async () => {
+  it('con todas las fotos de identidad tomadas, ya llegaron solas a revisión (nada «sin enviar»)', async () => {
     const c = await conductor();
     expect((await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true })).estado).toBe(200);
     for (const paso of ['cara', 'doc_frente', 'doc_reverso'])
@@ -176,7 +176,9 @@ describe('C-PAPEL-DICE-LA-VERDAD · lo subido sin enviar sale en «qué te falta
         (await subirA(c.e, `/datos/conductor/verificacion/foto/${paso}?origen=camara`, c.rep.token))
           .estado,
       ).toBe(201);
-    expect(await c.falta()).toContain('papeles_sin_enviar');
+    // C-LLEGA-SOLO-A-REVISION (rama principal): completas, llegan SOLAS a revisión; no queda nada
+    // «sin enviar» y el botón sigue respondiendo bien.
+    expect(await c.falta()).not.toContain('papeles_sin_enviar');
     expect((await c.yo('POST', '/datos/conductor/verificacion/enviar', {})).estado).toBe(200);
     expect(await c.falta()).not.toContain('papeles_sin_enviar');
   });

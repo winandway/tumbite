@@ -431,6 +431,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const [verCiudades, setVerCiudades] = useState(false);
   // C-CARRO-CATEGORIAS: cuántos años admite Comfort en el país del conductor.
   const [aniosComfort, setAniosComfort] = useState<number | null>(null);
+  const [seguroEnPlazo, setSeguroEnPlazo] = useState(false);
   const b = useBorrador({
     formulario: servicio === 'carro' ? 'driver-mi-carro' : 'driver-mi-moto',
     cuenta: usuario?.id,
@@ -456,6 +457,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
         api.pedir<{
           vehiculos: Vehiculo[];
           requisitosCategoria?: { comfort?: { antiguedadMaxima: number } };
+          seguroEnPlazo?: boolean;
         }>('GET', '/datos/conductor/vehiculos'),
         api.pedir<{ servicios: ServicioConductor[] }>('GET', '/datos/conductor/servicios'),
       ])
@@ -463,6 +465,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           setPapeles(p);
           setVehiculo(v.vehiculos.find((x) => x.tipo === servicio) ?? null);
           setAniosComfort(v.requisitosCategoria?.comfort?.antiguedadMaxima ?? null);
+          setSeguroEnPlazo(Boolean(v.seguroEnPlazo));
           setEstado(s.servicios.find((x) => x.servicioId === servicio) ?? null);
         })
         .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x))),
@@ -860,11 +863,12 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
             );
           })}
           {['registrado', 'rechazado'].includes(vehiculo.estado) &&
-          faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma).length ? (
+          faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma, seguroEnPlazo)
+            .length ? (
             <Text testID="falta-para-enviar" style={{ color: '#666B73' }}>
               {idioma === 'en'
-                ? `To send it for review, you still need: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma).join(', ')}.`
-                : `Para enviar tu vehículo a revisión falta: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma).join(', ')}.`}
+                ? `To send it for review, you still need: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma, seguroEnPlazo).join(', ')}.`
+                : `Para enviar tu vehículo a revisión falta: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma, seguroEnPlazo).join(', ')}.`}
             </Text>
           ) : ['registrado', 'rechazado'].includes(vehiculo.estado) ? (
             <Boton

@@ -3357,6 +3357,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "corregido_en",
     "corregido_restaurante_en",
     "comision_restaurante",
+    "comision_regla_json",
     "devolucion_estado",
     "devolucion_referencia",
     "devolucion_en",

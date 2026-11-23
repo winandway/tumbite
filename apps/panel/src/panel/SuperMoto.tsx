@@ -55,6 +55,9 @@ const T = {
     envio: 'Envío hasta 3 km',
     servicioCargo: 'Cargo de servicio',
     pedidoPequeno: 'Pedido pequeño (menos de 5 dólares)',
+    // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): el modelo en una frase, sin líneas en cero.
+    comidaModelo:
+      'El cliente paga solo la comida (directo al restaurante) y el envío (al conductor): sin tarifa de servicio ni cargo por pedido pequeño. La comisión de Divoox la paga el restaurante de su saldo; se fija en Dinero, «Comida: quién paga qué».',
     tarifaEscribe: 'Tarifa de esta ciudad (en la moneda de los viajes)',
     tarifaEscribeAyuda:
       'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
@@ -274,6 +277,8 @@ const T = {
     opcionesMoto: 'Más opciones de la moto',
     rechazarMoto: 'Rechazar la moto',
     sinDocumentos: 'Todavía no subió documentos.',
+    seguroEnPlazo: (vence: string) =>
+      `Póliza: pendiente, dentro del plazo de papeles${vence ? ` (vence el ${vence})` : ''}. Se puede aprobar el vehículo con el registro; al vencer el plazo, sin la póliza aprobada no se conecta.`,
   },
   en: {
     titulo: 'Moto · Launch and approve',
@@ -296,6 +301,8 @@ const T = {
     envio: 'Delivery up to 3 km',
     servicioCargo: 'Service fee',
     pedidoPequeno: 'Small order (under 5 dollars)',
+    comidaModelo:
+      'The customer pays only for the food (directly to the restaurant) and the delivery (to the driver): no service fee and no small-order fee. The restaurant pays the Divoox fee from its balance; it is set in Money, “Food: who pays what.”',
     tarifaEscribe: 'Pricing for this city (in the ride currency)',
     tarifaEscribeAyuda:
       'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
@@ -510,6 +517,8 @@ const T = {
     opcionesMoto: 'More motorbike options',
     rechazarMoto: 'Reject motorbike',
     sinDocumentos: 'No documents uploaded yet.',
+    seguroEnPlazo: (vence: string) =>
+      `Insurance policy: pending, within the documents grace period${vence ? ` (ends ${vence})` : ''}. The vehicle can be approved with the registration; once the period ends, the driver can’t go online without an approved policy.`,
   },
 };
 
@@ -752,26 +761,34 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           <h3>{t.comidaTitulo}</h3>
           <p className="pista">{t.comidaAyuda}</p>
           {venezuela || !v.id.trim() ? (
-            <ul className="lista">
-              {(
-                [
-                  [t.envio, TARIFAS_COMIDA_VENEZUELA.envioBase],
-                  [t.servicioCargo, TARIFAS_COMIDA_VENEZUELA.servicioMinimo],
-                  [t.pedidoPequeno, TARIFAS_COMIDA_VENEZUELA.cargoPedidoPequeno],
-                ] as const
-              ).map(([nombre, centavos]) => (
-                <li key={nombre}>
-                  <div className="lista-texto">
-                    <strong>{nombre}</strong>
-                    <span>
-                      {nombre === t.servicioCargo
-                        ? `${TARIFAS_COMIDA_VENEZUELA.servicioPb / 100} % (${usd(centavos)} – ${usd(TARIFAS_COMIDA_VENEZUELA.servicioMaximo)})`
-                        : usd(centavos)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="pista" data-testid="comida-modelo">
+                {t.comidaModelo}
+              </p>
+              <ul className="lista">
+                {(
+                  [
+                    [t.envio, TARIFAS_COMIDA_VENEZUELA.envioBase],
+                    [t.servicioCargo, TARIFAS_COMIDA_VENEZUELA.servicioMaximo],
+                    [t.pedidoPequeno, TARIFAS_COMIDA_VENEZUELA.cargoPedidoPequeno],
+                  ] as const
+                )
+                  // Una línea en cero no se enseña: en el modelo de hoy solo queda el envío.
+                  .filter(([, centavos]) => centavos > 0)
+                  .map(([nombre, centavos]) => (
+                    <li key={nombre}>
+                      <div className="lista-texto">
+                        <strong>{nombre}</strong>
+                        <span>
+                          {nombre === t.servicioCargo
+                            ? `${TARIFAS_COMIDA_VENEZUELA.servicioPb / 100} % (${usd(TARIFAS_COMIDA_VENEZUELA.servicioMinimo)} – ${usd(centavos)})`
+                            : usd(centavos)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </>
           ) : null}
         </div>
       ) : conTarifaDeMercado && deMercado ? (
@@ -1879,6 +1896,8 @@ type Moto = {
   /** C-PAPELES-POR-PAIS: el país de la ciudad del conductor. */
   pais?: string | null;
   documentos: { id: string; tipo: string; estado: string; venceEn: string | null }[];
+  /** C-SEGURO-EN-PLAZO: la póliza puede llegar dentro del plazo de papeles del conductor. */
+  seguroEnPlazo?: { venceEn: string | null } | null;
 };
 
 function FilaMoto({
@@ -1944,6 +1963,12 @@ function FilaMoto({
         </button>
       ) : null}
       {m.documentos.length === 0 ? <p className="pista">{t.sinDocumentos}</p> : null}
+      {m.seguroEnPlazo &&
+      !m.documentos.some((d) => d.tipo === 'seguro' && d.estado !== 'rechazado') ? (
+        <p className="pista" data-testid={`seguro-en-plazo-${m.id}`}>
+          {t.seguroEnPlazo(m.seguroEnPlazo.venceEn?.slice(0, 10) ?? '')}
+        </p>
+      ) : null}
       <ul className="lista">
         {m.documentos.map((d) => (
           <li key={d.id}>

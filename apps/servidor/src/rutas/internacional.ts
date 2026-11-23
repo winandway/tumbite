@@ -347,6 +347,11 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     comisionTipicaComida,
     pedidosAlcanzan: carrerasQueAlcanzan(disponible, comisionTipicaComida),
     sinSaldoComida: comisionTipicaComida > 0 && disponible < comisionTipicaComida,
+    // C-COMIDA-VE-QUIEN-PAGA: con pago directo y 0 % sobre el envío, la comida no le cobra nada del saldo.
+    comidaEnvioEntero:
+      cfg.comidaPagoRestaurante === true &&
+      (cfg.efectivoActivo || cfg.transferenciaRepartidorActiva) &&
+      (cfg.comidaComisionEnvioPb ?? 0) === 0,
     efectivoActivo: cfg.efectivoActivo,
     transferenciaActiva: cfg.transferenciaRepartidorActiva,
     recargasPuntoVenta: cfg.recargasPuntoVentaActivas,

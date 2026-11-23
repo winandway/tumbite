@@ -22,6 +22,17 @@ import { RevisarKyc } from './SuperKycFicha';
 import { usePreferencias } from './usePreferencias';
 import './verificaciones.css';
 
+/** Las iniciales de un nombre («María José Pérez» → «MP»), para el círculo sin foto. */
+export function inicialesDe(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/).filter(Boolean);
+  const primera = partes[0]?.charAt(0) ?? '';
+  const ultima = partes.length > 1 ? (partes.at(-1)?.charAt(0) ?? '') : '';
+  return `${primera}${ultima}`.toUpperCase() || '?';
+}
+
+const enPalabras = (tabla: Record<string, string>, clave: string) =>
+  new Map(Object.entries(tabla)).get(clave) ?? clave;
+
 /**
  * C-VERIFICACIONES-BANDEJA (22 nov 2026, Gerencia: «está mal organizada… un arreglo serio,
  * profesional») — todos los países. Verificaciones del superadmin:
@@ -58,6 +69,8 @@ type Solicitud = {
   creado?: string;
   correoConfirmado?: boolean;
   fotosSubidas?: number;
+  /** C-LLEGA-SOLO-A-REVISION: lo que le falta («Sin enviar»), con la misma lista del servidor. */
+  falta?: string[];
 };
 type Respuesta = {
   solicitudes: Solicitud[];
@@ -327,7 +340,15 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                   <img src={src} alt="" loading="lazy" />
                 </button>
               ) : (
-                <span className="kyc-mini kyc-mini-vacia" aria-label={t.sinFoto} role="img" />
+                // C-MINIATURA-SIEMPRE: sin foto (o sin permiso para verla), sus iniciales; nunca vacío.
+                <span
+                  className="kyc-mini kyc-mini-vacia"
+                  aria-label={t.sinFoto}
+                  role="img"
+                  data-testid="kyc-iniciales"
+                >
+                  {inicialesDe(s.nombre)}
+                </span>
               )}
               <div className="kyc-fila-cuerpo">
                 <p className="kyc-fila-nombre">
@@ -356,11 +377,19 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                 />
                 {sinEnviar ? (
                   <ul className="kyc-comprobaciones">
-                    <li>
-                      <Insignia tono="pendiente">
-                        {s.fotosSubidas ? t.fotosSinEnviar(s.fotosSubidas) : t.sinFotos}
-                      </Insignia>
-                    </li>
+                    {s.falta?.length ? (
+                      s.falta.map((f) => (
+                        <li key={f}>
+                          <Insignia tono="pendiente">{enPalabras(t.falta, f)}</Insignia>
+                        </li>
+                      ))
+                    ) : (
+                      <li>
+                        <Insignia tono="pendiente">
+                          {s.fotosSubidas ? t.fotosSinEnviar(s.fotosSubidas) : t.sinFotos}
+                        </Insignia>
+                      </li>
+                    )}
                     {s.correoConfirmado === false ? (
                       <li>
                         <Insignia tono="apagado">{t.correoSinConfirmar}</Insignia>

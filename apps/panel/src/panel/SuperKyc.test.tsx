@@ -289,6 +289,40 @@ describe('C-VERIFICACIONES-SIN-ENVIAR · la pestaña', () => {
     expect(dos.queryByText('Correo sin confirmar')).toBeNull();
   });
 
+  it('C-LLEGA-SOLO-A-REVISION y C-MINIATURA-SIEMPRE: dice qué le falta, la cara subida se ve y sin foto salen las iniciales', async () => {
+    servidor((url) => {
+      if (url.startsWith('/datos/admin/kyc?'))
+        return {
+          solicitudes: [
+            sinEnviar({ miniatura: 'selfie', falta: ['consentimiento'] }),
+            sinEnviar({
+              id: 'otra-cuenta',
+              nombre: 'María José Pérez',
+              miniatura: null,
+              falta: ['doc_frente', 'cara'],
+            }),
+          ],
+          siguiente: null,
+          totales: { sin_enviar: 2 },
+        };
+      if (url.includes('/preferencias/'))
+        return { valor: { estado: 'sin_enviar' }, guardada: true };
+      return {};
+    });
+    render(<SuperKyc base={BASE} idioma="es" id={null} />);
+    const filas = await screen.findAllByTestId('kyc-fila');
+    const una = within(filas[0]!);
+    expect(una.getByText('Falta aceptar el consentimiento')).toBeInTheDocument();
+    expect(filas[0]!.querySelector('img')).toHaveAttribute(
+      'src',
+      `/datos/admin/kyc/${ID}/foto/selfie`,
+    );
+    const dos = within(filas[1]!);
+    expect(dos.getByText('Falta el documento por delante')).toBeInTheDocument();
+    expect(dos.getByText('Falta la foto de la cara')).toBeInTheDocument();
+    expect(dos.getByTestId('kyc-iniciales')).toHaveTextContent('MP');
+  });
+
   it('en inglés', async () => {
     bandeja([fila()], { pendiente: 1, sin_enviar: 3 });
     render(<SuperKyc base={BASE} idioma="en" id={null} />);

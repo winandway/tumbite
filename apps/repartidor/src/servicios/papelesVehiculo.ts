@@ -37,14 +37,18 @@ export function detallePapelVehiculo(
       pildora: null,
       sinEnviar: false,
     };
+  // C-LLEGA-SOLO-A-REVISION: con lo que pide la revisión ya subido, el vehículo pasa SOLO a revisión;
+  // si sigue «registrado», es porque todavía falta algo (lo dice `faltaParaEnviar`).
   return {
     texto: en
-      ? `Uploaded. You still need to send ${nombreVehiculo(p.vehiculoTipo, idioma)} for review`
-      : `Subida. Falta enviar ${nombreVehiculo(p.vehiculoTipo, idioma)} a revisión`,
+      ? `Uploaded. ${cap(nombreVehiculo(p.vehiculoTipo, idioma))} goes to review on its own once the rest is uploaded`
+      : `Subida. ${cap(nombreVehiculo(p.vehiculoTipo, idioma))} pasa ${p.vehiculoTipo === 'moto' ? 'sola' : 'solo'} a revisión cuando subas lo que falta`,
     pildora: en ? 'Uploaded' : 'Subida',
     sinEnviar: true,
   };
 }
+
+const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 
 const CON_MOTOR = new Set(['carro', 'moto', 'scooter']);
 
@@ -62,6 +66,8 @@ export function faltaParaEnviar(
   },
   placaNacional: boolean,
   idioma: Idioma,
+  /** C-SEGURO-EN-PLAZO: dentro del plazo la póliza no frena la revisión. */
+  seguroEnPlazo = false,
 ): string[] {
   if (!CON_MOTOR.has(v.tipo)) return [];
   const en = idioma === 'en';
@@ -74,6 +80,7 @@ export function faltaParaEnviar(
   else if (!placaNacional && !v.placaEstado)
     falta.push(en ? 'the plate’s state' : 'el estado de la placa');
   if (!subido('registro')) falta.push(en ? 'the registration' : 'el registro del vehículo');
-  if (!subido('seguro')) falta.push(en ? 'the insurance policy' : 'la póliza de seguro');
+  if (!seguroEnPlazo && !subido('seguro'))
+    falta.push(en ? 'the insurance policy' : 'la póliza de seguro');
   return falta;
 }

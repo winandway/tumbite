@@ -1,5 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { RecargasRestaurantesAdmin } from './RecargasRestaurantesAdmin';
+import { ComidaQuienPaga } from './ComidaQuienPaga';
 import { QuienPagaViajes } from './QuienPagaViajes';
 import { Insignia } from './diseno/Insignia';
 import { RecargasLocalesAdmin } from './flex/RecargaLocal';
@@ -298,6 +299,7 @@ export function SuperFinanzas({
       <h1>{t.titulo}</h1>
       <Politicas t={t} idioma={idioma} />
       <QuienPagaViajes idioma={idioma} />
+      <ComidaQuienPaga idioma={idioma} />
       <Cancelaciones idioma={idioma} />
       <LimitesRecarga t={t} idioma={idioma} />
       <RecargasLocalesAdmin idioma={idioma} />

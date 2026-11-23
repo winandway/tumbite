@@ -17,11 +17,14 @@ import { rehacerCuentasCobro } from './esquemaCuentasCobro';
 import { rehacerPoliticasFinancieras } from './esquemaPoliticas';
 import {
   DISPARADORES_HABILITACION,
+  DISPARADOR_APROBAR_VEHICULO,
+  rehacerAprobarVehiculo,
   rehacerElegibilidad,
   sincronizarPoliticaRequisitos,
 } from './esquemaPlazo';
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
+import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import {
   DISPARADORES_RASTRO,
   FUENTES_PASO,
@@ -344,6 +347,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['codigos_telefono', 'respaldo_en', 'TEXT'],
   // C-TELEFONO-SIN-CANAL (23 nov 2026): el código no salió por ningún canal; la puerta se abre.
   ['codigos_telefono', 'sin_canal_en', 'TEXT'],
+  // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): la comisión del restaurante congelada al pedir.
+  ['pagos_comida', 'comision_regla_json', 'TEXT'],
   ['sms_enviados', 'entrega', 'TEXT'],
   ['sms_enviados', 'entrega_error', 'TEXT'],
   ['sms_enviados', 'entrega_en', 'TEXT'],
@@ -735,6 +740,10 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerPoliticasFinancieras),
         DISPARADORES_HABILITACION,
         String(rehacerElegibilidad),
+        DISPARADOR_APROBAR_VEHICULO,
+        String(rehacerAprobarVehiculo),
+        String(repararLlegaSoloARevision),
+        SQL_CANDIDATOS_LLEGA_SOLO,
         DISPARADORES_RASTRO,
         String(asegurarRastro),
         FUENTES_PASO,
@@ -822,6 +831,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-PLAZO-PAPELES: la vista y los disparadores que conocen el plazo, y la política de cada país
   // en la forma que la base lee.
   await rehacerElegibilidad(db);
+  // C-SEGURO-EN-PLAZO: aprobar el vehículo con la póliza pendiente dentro del plazo.
+  await rehacerAprobarVehiculo(db);
   // C-RASTRO: los pasos del registro los anota la base, y el viaje guarda dónde estaba el conductor.
   await asegurarRastro(db);
   await asegurarFase3(db);
@@ -829,6 +840,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);
   await revisarColumnas(db);
+  // C-LLEGA-SOLO-A-REVISION: una sola vez, los conductores que ya tenían todo y no tocaron «Enviar».
+  await repararLlegaSoloARevision(db).catch((e: unknown) =>
+    console.error('esquema: la reparación «llega solo a revisión» falló', e),
+  );
 }
 
 /**

@@ -26,6 +26,7 @@ type FilaPedidoDirecto = {
   estado: string;
   zona_id: string;
   subtotal: number;
+  envio: number;
   total: number;
   propina: number;
   ganancia: number;
@@ -50,7 +51,7 @@ export const esperadoEnMano = (
 async function filaDirecta(db: D1Database, pedidoId: string) {
   return db
     .prepare(
-      `SELECT id, estado, zona_id, subtotal, total, propina, ganancia, pago_restaurante, cliente_id, repartidor_id, metodo_pago, cobro_estado, monto_recibido, conciliacion_estado, entregado_en, descuento,
+      `SELECT id, estado, zona_id, subtotal, envio, total, propina, ganancia, pago_restaurante, cliente_id, repartidor_id, metodo_pago, cobro_estado, monto_recibido, conciliacion_estado, entregado_en, descuento,
          (SELECT pc.monto FROM pagos_comida pc WHERE pc.pedido_id = pedidos.id) AS comida_directa
        FROM pedidos WHERE id = ?`,
     )
@@ -93,6 +94,25 @@ export async function comisionFood(
   return pol ? pol.monto : comisionDirecta(p, cfg);
 }
 
+/**
+ * C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): la comisión que se le aparta al conductor en un pedido de
+ * comida en mano. Con pago directo al restaurante (el pedido tiene su fila en `pagos_comida`) es un
+ * porcentaje del ENVÍO, el de la configuración del país (`comidaComisionEnvioPb`, de fábrica 0): ni la
+ * política de conductor ni la ganancia del desglose ni `comisionPb`, porque en ese modelo la comisión
+ * de Divoox la paga el restaurante de su saldo. Sin pago directo, la de siempre (`comisionFood`).
+ */
+export async function comisionConductorComida(
+  db: D1Database,
+  f: Pick<FilaPedidoDirecto, 'subtotal' | 'ganancia' | 'envio' | 'comida_directa'>,
+  pais: string,
+  moneda: string,
+  cfg: ConfigPais,
+) {
+  if (f.comida_directa != null)
+    return porcentajeDe(Math.max(0, Number(f.envio)), cfg.comidaComisionEnvioPb ?? 0);
+  return comisionFood(db, f, pais, moneda, cfg);
+}
+
 /** Un pedido típico para «te alcanza para unos N pedidos»: 10 de comida (unidad mayor), 3 km. */
 const PEDIDO_TIPICO_UNIDADES = 10;
 const KM_PEDIDO_TIPICO = 3;
@@ -118,6 +138,8 @@ export async function comisionTipicaComida(
     distanciaKm: KM_PEDIDO_TIPICO,
     config: cfg.tarifas,
   });
+  // C-COMIDA-VE-QUIEN-PAGA: con pago directo al restaurante, la misma cuenta que al tomar el pedido.
+  if (cfg.comidaPagoRestaurante) return porcentajeDe(d.envio, cfg.comidaComisionEnvioPb ?? 0);
   return comisionFood(db, { subtotal, ganancia: d.gananciaPlataforma }, pais, moneda, cfg);
 }
 
@@ -186,7 +208,7 @@ export async function puedeTomarDirecto(
   if (!f || !esDirecto(f.metodo_pago)) return { ok: true, comision: 0, pais: 'US', moneda: 'USD' };
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
   const cfg = await leerConfigPais(db, pais);
-  const comision = await comisionFood(db, f, pais, moneda, cfg);
+  const comision = await comisionConductorComida(db, f, pais, moneda, cfg);
   const saldo = await saldoLibro(db, repartidorId, 'prepago', pais, moneda);
   if (saldo < comision) return { ok: false, motivo: 'saldo' };
   // C-COMIDA-VE-CIRCUITO: fuera de EE. UU. un pedido por pago móvil (transferencia al repartidor)
@@ -248,7 +270,7 @@ export async function ajustarReservaDirecta(db: D1Database, pedidoId: string) {
   const f = await filaDirecta(db, pedidoId);
   if (!f || !esDirecto(f.metodo_pago) || !f.repartidor_id) return 0;
   const { pais, moneda } = await paisDeZona(db, f.zona_id);
-  const nueva = await comisionFood(db, f, pais, moneda, await leerConfigPais(db, pais));
+  const nueva = await comisionConductorComida(db, f, pais, moneda, await leerConfigPais(db, pais));
   const vigente = await reservaVigente(db, pedidoId, f.repartidor_id);
   const sobra = vigente.monto - nueva;
   if (sobra <= 0) return 0;

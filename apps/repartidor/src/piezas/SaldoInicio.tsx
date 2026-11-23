@@ -30,7 +30,13 @@ export function SaldoInicio({
       : t.pedidos(tarjeta.alcanza.n)
     : null;
   const aviso =
-    tarjeta.nivel === 'sin' ? t.inicioSin : tarjeta.nivel === 'bajo' ? t.inicioBajo : null;
+    tarjeta.nivel === 'sin'
+      ? tarjeta.soloCarreras
+        ? t.inicioSinCarreras
+        : t.inicioSin
+      : tarjeta.nivel === 'bajo'
+        ? t.inicioBajo
+        : null;
   const monto = formatearMonto(saldo.disponible, saldo.moneda ?? 'USD', idioma);
   const accion = problema ? t.inicioRecargar : t.inicioVer;
   return (

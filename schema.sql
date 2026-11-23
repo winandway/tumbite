@@ -1376,14 +1376,26 @@ WHEN NEW.estado != OLD.estado AND NOT (
 BEGIN
   SELECT RAISE(ABORT, 'vehiculo_transicion_invalida');
 END;
--- Un vehículo motorizado no se aprueba sin su registro y su seguro aprobados.
+-- Un vehículo motorizado no se aprueba sin su registro y su seguro aprobados. C-SEGURO-EN-PLAZO:
+-- dentro del plazo de papeles vigente (y si su país no pide el seguro para empezar) basta el registro;
+-- al vencer el plazo, sin la póliza aprobada no se conecta (vista conductores_elegibles). Las bases
+-- que ya tenían el disparador viejo lo cambian al arrancar (esquemaPlazo.ts, rehacerAprobarVehiculo).
 CREATE TRIGGER IF NOT EXISTS vehiculos_aprobar_exige_documentos
 BEFORE UPDATE OF estado ON vehiculos
 WHEN NEW.estado = 'aprobado' AND OLD.estado = 'en_revision'
   AND NEW.tipo IN ('carro', 'moto', 'scooter')
-  AND (SELECT COUNT(DISTINCT tipo) FROM vehiculo_documentos
-        WHERE vehiculo_id = NEW.id AND estado = 'aprobado' AND tipo IN ('registro', 'seguro')
-          AND (vence_en IS NULL OR vence_en > datetime('now'))) < 2
+  AND (NOT EXISTS (SELECT 1 FROM vehiculo_documentos
+                    WHERE vehiculo_id = NEW.id AND estado = 'aprobado' AND tipo = 'registro'
+                      AND (vence_en IS NULL OR vence_en > datetime('now')))
+       OR (NOT EXISTS (SELECT 1 FROM vehiculo_documentos
+                        WHERE vehiculo_id = NEW.id AND estado = 'aprobado' AND tipo = 'seguro'
+                          AND (vence_en IS NULL OR vence_en > datetime('now')))
+           AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                            WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                              AND pp.vence_en > datetime('now')
+                              AND NOT EXISTS (SELECT 1 FROM politica_requisitos x
+                                               WHERE x.pais = pp.pais AND x.requisito = 'seguro_vehiculo'
+                                                 AND x.regla = 'para_empezar'))))
 BEGIN
   SELECT RAISE(ABORT, 'vehiculo_sin_documentos_aprobados');
 END;
@@ -5099,6 +5111,9 @@ CREATE TABLE IF NOT EXISTS pagos_comida (
   corregido_en TEXT,
   corregido_restaurante_en TEXT,
   comision_restaurante INTEGER NOT NULL DEFAULT 0,
+  -- C-COMIDA-VE-QUIEN-PAGA: la regla de la comisión del restaurante que regía al pedir (congelada).
+  -- NULL = fila de antes: se cobra la vigente al «Me llegó».
+  comision_regla_json TEXT,
   devolucion_estado TEXT NOT NULL DEFAULT 'no_aplica',
   devolucion_referencia TEXT NOT NULL DEFAULT '',
   devolucion_en TEXT,

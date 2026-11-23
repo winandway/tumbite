@@ -159,8 +159,9 @@ async function conductorVenezolano(e: E) {
     expect(r.estado).toBe(201);
     docs.push(r.datos.id);
   }
-  // Su identidad, con la verificación de siempre (documento por los dos lados y selfie).
-  for (const p of ['doc_frente', 'doc_reverso', 'selfie'])
+  // Su identidad, con la verificación de siempre. C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va
+  // solo por delante (el reverso es una lámina en blanco).
+  for (const p of ['doc_frente', 'selfie'])
     expect((await subirA(e, `/datos/kyc/foto/${p}`, rep.token)).estado).toBe(201);
   expect((await yo('POST', '/datos/kyc/enviar', { docTipo: 'identificacion' })).estado).toBe(200);
   return { rep, vehiculo: v.datos.id as string, docs, yo, equipo };

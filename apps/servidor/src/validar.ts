@@ -6,6 +6,8 @@ export class ErrorDatos extends Error {
     message: string,
     public readonly campo?: string,
     public readonly estado: 400 | 401 | 403 | 404 | 409 | 410 | 413 | 415 | 422 | 429 | 503 = 400,
+    /** Código estable para las apps (además del texto), cuando hace falta reconocer el caso. */
+    public readonly codigo?: string,
   ) {
     super(message);
   }

@@ -123,12 +123,13 @@ export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | nul
             'vehiculo',
           );
     case 'vehiculo_sin_enviar':
+      // C-LLEGA-SOLO-A-REVISION: con lo que pide la revisión subido, pasa sola; si no pasó, falta subir.
       return a(
-        en ? `Send ${v} for review` : `Envía ${v} a revisión`,
+        en ? `Upload ${v}’s documents` : `Sube los papeles de ${v}`,
         en
-          ? 'It’s saved. Upload its documents and send it so we can approve it.'
-          : `Ya está guardad${o}. Sube sus papeles y envía${lo} para que ${lo} aprobemos.`,
-        en ? 'Send for review' : 'Enviar a revisión',
+          ? 'Once the registration (and the policy, if requested) is uploaded, it goes to review on its own.'
+          : `Cuando subas el registro (y la póliza, si te la pedimos), pasa ${fem ? 'sola' : 'solo'} a revisión.`,
+        en ? 'Upload documents' : 'Subir los papeles',
         'vehiculo',
       );
     case 'vehiculo_en_revision':
