@@ -543,6 +543,27 @@ export const MENSAJES_EN = new Map<string, string>([
     'El pago con tarjeta todavía no está disponible en este país.',
     'Card payment isn’t available in this country yet.',
   ],
+  // C-COMIDA-VE-QUIEN-PAGA: la palanca «¿Quién paga qué en la comida?».
+  [
+    'En Estados Unidos la comida se cobra con tarjeta como siempre: esta palanca no aplica.',
+    'In the United States food is charged by card as always: this setting doesn’t apply.',
+  ],
+  [
+    'Este país no usa el pago directo de la comida al restaurante: esta palanca no aplica.',
+    'This country doesn’t use direct food payment to the restaurant: this setting doesn’t apply.',
+  ],
+  [
+    'Este país todavía no tiene las tarifas de comida escritas: abre Comida en una ciudad primero.',
+    'This country doesn’t have its food rates set yet: open Food in a city first.',
+  ],
+  [
+    'La tarifa de servicio mínima no puede ser mayor que la máxima.',
+    'The minimum service fee can’t be higher than the maximum.',
+  ],
+  [
+    'Para cobrarle comisión al restaurante escribe la referencia de la revisión legal aprobada (al menos 10 letras).',
+    'To charge the restaurant a commission, enter the reference of the approved legal review (at least 10 characters).',
+  ],
   [
     'Este país todavía no acepta pago en efectivo.',
     'This country doesn’t accept cash payment yet.',
