@@ -2,6 +2,15 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-DOCUMENTO-SIN-REVERSO · En Venezuela la cédula se fotografía solo por delante (emergencia, conductor real trabado, 23 nov 2026) — Venezuela
+
+- **Qué pasaba:** Driver 0.1.69 le pedía a un conductor de Venezuela «Paso 3 de 6 · Reverso». La cédula venezolana por detrás es una lámina en blanco con un número de serie: la comprobación automática contestaba «No se lee bien. Tómala otra vez…» y no podía pasar nunca.
+- **Causa real:** `pasosDe` (`apps/servidor/src/rutas/verificacionConductor.ts`) daba siempre `doc_reverso`, en todos los países; `/kyc/enviar` (`kyc.ts`) también lo exigía.
+- **Qué se hizo:** la política de papeles de cada país (`packages/compartido/src/plazoPapeles.ts`, `politicaPlazoDeFabrica`) tiene `sinReverso`: los reversos que ese país no pide. De fábrica Venezuela = `['doc_reverso']`; los demás, `[]`. Se puede cambiar sin publicar en la configuración del país (`config` → `pais:VE` → `plazoPapeles.sinReverso`, admite `doc_reverso` y `licencia_reverso`; si el panel guarda la política sin ese campo, vale el de fábrica). `estadoVerificacion` saca el país de la zona del conductor (`graciaDe`; sin zona = Estados Unidos = como siempre) y quita esos pasos: no se piden, no cuentan en el total, no se exigen al enviar, no entran en recordatorios ni en «subió todo». `/kyc/enviar` (flujo viejo) no exige el reverso al conductor de ese país (el restaurante, igual que antes). Una foto vieja del reverso (en blanco o en «repetir») se queda guardada y se ignora; no se le pasa a la IA. La bandeja y la ficha del equipo no muestran ese reverso, y el equipo no puede pedirlo de nuevo (409). Cinturón: si una app con la lista vieja manda igual el reverso, se guarda sin IA y se contesta en verde, sin exigirlo.
+- **La licencia venezolana SÍ tiene dos caras:** se sigue pidiendo por frente y por reverso (corrección de Richard, 23 nov). No meter `licencia_reverso` en la lista de Venezuela.
+- **Cómo se comprueba:** `apps/servidor/src/rutas/documentoSinReverso.test.ts` (vista en ROJO antes del arreglo): Venezuela con moto recibe cara, documento por delante, licencia por los dos lados y seguro (4 papeles); sin vehículo, documento por delante y cara (2); envía por el asistente y por el flujo viejo; el reverso en «repetir» queda libre; Estados Unidos y Colombia siguen pidiendo el reverso.
+- **Qué NO tocar:** la app no decide los pasos, los recibe del servidor; no volver a poner `doc_reverso` fijo en `pasosDe`. Las capturas de Docs del asistente en Venezuela todavía muestran el paso del reverso (pendiente de rehacer).
+
 ## C-CASA-POR-DEFECTO · Fotos de la entrada: casa por defecto y un selector visible de casa o edificio (Richard en su iPhone, 21 nov 2026) — todos los países
 
 - **Qué pasaba:** al llegar a «Fotos de la entrada» le salía «Es un edificio o conjunto» con los pasos de edificio, y para decir que era una casa había que encontrar un enlace pequeño «Cambiar». Sus palabras: «hay más casas que edificios… por defecto debería estar la casa».
