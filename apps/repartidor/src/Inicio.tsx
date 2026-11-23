@@ -1405,6 +1405,7 @@ export function Inicio() {
     const fallo = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
     switch (accion) {
       case 'cara':
+      case 'papeles':
         return abrirPapeles('inicio');
       case 'vehiculo_nuevo':
         setSeccionPerfil('vehiculo');

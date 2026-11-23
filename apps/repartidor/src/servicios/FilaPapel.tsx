@@ -34,7 +34,10 @@ export function FilaPapel({
   alAbrir,
   primera,
   testID,
+  textoEstado,
 }: {
+  /** C-PAPEL-DICE-LA-VERDAD: lo que dice la píldora cuando el estado del vehículo lo cambia («Subida»). */
+  textoEstado?: string;
   testID?: string;
   nombre: string;
   detalle?: string;
@@ -94,7 +97,7 @@ export function FilaPapel({
             </View>
           ) : null}
         </View>
-        <PildoraPapel estado={estado} texto={de(t.estados, estado) ?? estado} />
+        <PildoraPapel estado={estado} texto={textoEstado ?? de(t.estados, estado) ?? estado} />
       </View>
       {estado === 'rechazado' && motivo ? (
         <MotivoRechazo etiqueta={t.motivo} texto={motivo} />

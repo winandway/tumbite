@@ -16,6 +16,7 @@ export type FaltaServidor = {
 /** A dónde lleva el botón. `null` = lo hacemos nosotros (sin botón) o no hay nada que tocar. */
 export type AccionFalta =
   | 'cara'
+  | 'papeles'
   | 'telefono'
   | 'vehiculo_nuevo'
   | 'vehiculo'
@@ -147,6 +148,15 @@ export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | nul
           : `Está registrad${o}, pero no ${lo} estás usando. Actíva${lo} para recibir carreras con ${fem ? 'ella' : 'él'}.`,
         en ? `Use ${v}` : `Usar ${v}`,
         'activar_vehiculo',
+      );
+    case 'papeles_sin_enviar':
+      return a(
+        en ? 'Send your documents for review' : 'Envía tus papeles a revisión',
+        en
+          ? 'You took all the photos. Send them so our team can review them.'
+          : 'Ya tomaste todas las fotos. Envíalas para que nuestro equipo las revise.',
+        en ? 'Send for review' : 'Enviar a revisión',
+        'papeles',
       );
     case 'servicio_no_disponible':
       return a(

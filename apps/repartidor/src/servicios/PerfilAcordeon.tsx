@@ -19,6 +19,7 @@ import {
   type NombreIcono,
 } from '@tumbite/movil';
 import { BotonSubir, FilaPapel } from './FilaPapel';
+import { detallePapelVehiculo, faltaParaEnviar } from './papelesVehiculo';
 import { MisDatos } from '../MisDatos';
 import { Verificacion } from '../Verificacion';
 import { POR_SERVICIO } from '../viajes/AltaPasajeros';
@@ -44,12 +45,13 @@ type Vehiculo = {
   marca: string;
   modelo: string;
   placa: string;
+  placaEstado?: string;
   estado: string;
   motivo: string;
   documentos: Doc[];
 };
 type Papeles = {
-  perfil: { documentosVehiculo?: Partial<Record<string, string[]>> };
+  perfil: { documentosVehiculo?: Partial<Record<string, string[]>>; placaNacional?: boolean };
   documentos: Doc[];
 };
 type PapelReq = {
@@ -322,6 +324,17 @@ export function PerfilAcordeon({
     }
   }
 
+  /** C-PAPEL-DICE-LA-VERDAD: enviar el vehículo a revisión desde «Mi vehículo». */
+  async function enviarVehiculo(id: string) {
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/conductor/vehiculos/${id}/enviar`, {});
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
   async function retirar(id: string) {
     setMenuVehiculo(null);
     if (!(await confirmarConSistema(t.confirmarRetirar, t.retirarVehiculo, t.no, true))) return;
@@ -441,20 +454,21 @@ export function PerfilAcordeon({
         : (idioma === 'en' ? POR_SERVICIO.moto.en : POR_SERVICIO.moto.es).docs;
     return tipos.map((tipo) => {
       const d = v.documentos.find((x) => x.tipo === tipo);
+      // C-PAPEL-DICE-LA-VERDAD: lo que dice sale del estado del vehículo (una sola pieza).
+      const dice = detallePapelVehiculo(
+        { docEstado: d?.estado, vehiculoEstado: v.estado, vehiculoTipo: v.tipo },
+        idioma,
+      );
       return {
         tipo,
         nombre: de(nombres, tipo) ?? tipo,
         estado: estadoPapel(d?.estado ?? 'falta'),
         motivo: d?.motivo ?? '',
-        detalle: d
-          ? d.venceEn
+        textoEstado: dice.pildora ?? undefined,
+        detalle:
+          d?.venceEn && !dice.sinEnviar
             ? t.vence(fechaCorta(d.venceEn, idioma))
-            : d.estado === 'aprobado'
-              ? t.revisado
-              : d.estado === 'pendiente'
-                ? t.enviadoHoy
-                : undefined
-          : t.sinSubir,
+            : dice.texto || undefined,
       };
     });
   };
@@ -679,6 +693,7 @@ export function PerfilAcordeon({
                               nombre={d.nombre}
                               detalle={d.detalle}
                               estado={d.estado}
+                              textoEstado={d.textoEstado}
                               motivo={d.motivo}
                               idioma={idioma}
                               subiendo={subiendo === `${v.id}:${d.tipo}`}
@@ -691,6 +706,46 @@ export function PerfilAcordeon({
                               }
                             />
                           ))}
+                          {/* C-PAPEL-DICE-LA-VERDAD: lo subido no se revisa hasta enviar el vehículo. Aquí
+                              mismo se envía, o se dice exactamente qué falta para poder enviarlo. */}
+                          {v.estado === 'registrado' || v.estado === 'rechazado'
+                            ? (() => {
+                                const falta = faltaParaEnviar(
+                                  v,
+                                  Boolean(papeles?.perfil.placaNacional),
+                                  idioma,
+                                );
+                                return (
+                                  <View
+                                    testID={`enviar-vehiculo-${v.tipo}`}
+                                    style={{
+                                      padding: 12,
+                                      gap: 8,
+                                      borderTopWidth: 1,
+                                      borderTopColor: COLOR.borde,
+                                    }}
+                                  >
+                                    {falta.length ? (
+                                      <Text style={{ color: COLOR.textoSuave, fontSize: 14 }}>
+                                        {idioma === 'en'
+                                          ? `To send it for review, you still need: ${falta.join(', ')}.`
+                                          : `Para enviar tu vehículo a revisión falta: ${falta.join(', ')}.`}
+                                      </Text>
+                                    ) : (
+                                      <Boton
+                                        texto={
+                                          idioma === 'en'
+                                            ? 'Send it for review'
+                                            : 'Enviar a revisión'
+                                        }
+                                        testID={`enviar-vehiculo-boton-${v.tipo}`}
+                                        alTocar={() => void enviarVehiculo(v.id)}
+                                      />
+                                    )}
+                                  </View>
+                                );
+                              })()
+                            : null}
                           {v.estado === 'aprobado' && v.id !== activoId ? (
                             // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): elegir el vehículo con el que
                             // trabajar, como «Vehicles» de Uber Driver.

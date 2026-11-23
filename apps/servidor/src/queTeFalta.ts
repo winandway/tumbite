@@ -6,6 +6,7 @@ import { leerConfigPais } from './internacional/paises';
 import { MINUTOS_UBICACION_VIGENTE } from './operaciones';
 import { empezarPlazo, graciaDe } from './plazoPapeles';
 import { comisionTipicaMoto } from './rutas/viajesPasajero';
+import { estadoVerificacion } from './rutas/verificacionConductor';
 import { puertaTelefono } from './telefonoVuelta';
 
 /**
@@ -34,6 +35,7 @@ export type ClaveFalta =
   | 'sin_saldo'
   | 'sin_pago_movil'
   | 'ubicacion_vieja'
+  | 'papeles_sin_enviar'
   | 'desconectado';
 
 export type Falta = {
@@ -133,6 +135,7 @@ export async function queTeFalta(
       (a, b) => RANGO_VEHICULO.indexOf(a.estado) - RANGO_VEHICULO.indexOf(b.estado),
     )[0] ??
     null;
+  let enviarDespues: { vehiculoId: string; vehiculoTipo: string } | null = null;
   const enPlazo = (estado: string) =>
     g.activa && estado !== 'rechazado' && estado !== 'suspendido' && estado !== 'retirado';
   if (!elegido) poner({ clave: 'sin_vehiculo', quien: 'conductor' });
@@ -149,6 +152,8 @@ export async function queTeFalta(
       poner({ clave: 'vehiculo_rechazado', quien: 'divoox', motivo: elegido.motivo, ...de });
     else if (elegido.estado === 'registrado' && !g.activa)
       poner({ clave: 'vehiculo_sin_enviar', quien: 'conductor', ...de });
+    // C-PAPEL-DICE-LA-VERDAD: dentro del plazo trabaja con ella, pero nadie la revisa hasta enviarla.
+    else if (elegido.estado === 'registrado') enviarDespues = { ...de };
     else if (elegido.estado === 'en_revision' && !g.activa)
       poner({ clave: 'vehiculo_en_revision', quien: 'divoox', ...de });
     // Se puede activar: aprobado, o dentro del plazo (regla de `PUT /conductor/vehiculo-activo`).
@@ -188,7 +193,17 @@ export async function queTeFalta(
   )
     poner({ clave: 'sin_pago_movil', quien: 'conductor' });
 
-  // 6. Conectado, pero sin ubicación reciente (GPS apagado o sin señal): no le llegan ofertas.
+  // 6. Lo subido que todavía nadie revisa porque falta enviarlo (C-PAPEL-DICE-LA-VERDAD).
+  if (enviarDespues)
+    poner({ clave: 'vehiculo_sin_enviar', quien: 'conductor', ...(enviarDespues as object) });
+  if (g.politica.asistente) {
+    const v = await estadoVerificacion(db, id);
+    const todas = v.pasos.every((p) => v.fotos.get(p)?.estado === 'vigente');
+    if (todas && v.papeles.some((p) => p.estado === 'por_enviar'))
+      poner({ clave: 'papeles_sin_enviar', quien: 'conductor' });
+  }
+
+  // 7. Conectado, pero sin ubicación reciente (GPS apagado o sin señal): no le llegan ofertas.
   if (f && Number(f.conectado) && Number(f.elegible) && !Number(f.ubicacion))
     poner({ clave: 'ubicacion_vieja', quien: 'conductor' });
   if (f && !Number(f.conectado) && !faltas.some((x) => x.quien === 'conductor'))

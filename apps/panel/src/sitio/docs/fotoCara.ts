@@ -123,6 +123,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'Cuando lo que falta lo hacemos nosotros, la app te lo dice así, sin botón: por ejemplo, «Estamos revisando tu moto». No tienes que hacer nada: te avisamos ahí mismo cuando esté listo.',
         'Si tu vehículo quedó guardado sin placa o con un dato mal escrito, no tienes que borrarlo: en la pantalla de tu vehículo toca «Completar la placa» o «Corregir los datos», arregla lo que haga falta y toca «Guardar los cambios». Mientras lo estamos revisando, o después de aprobarlo, no se puede cambiar: si un dato está mal, escríbenos desde Ayuda.',
         'Al registrar un vehículo con motor, la placa se pide desde el principio. Si falta, la app te lo dice debajo de la casilla.',
+        'Un papel del vehículo que subiste dice «Subida. Falta enviar tu moto a revisión» hasta que envías el vehículo: nadie lo revisa antes. En «Mi vehículo» tienes ahí mismo «Enviar a revisión» o, si todavía falta algo para poder enviarlo (la placa, el registro o la póliza), te dice exactamente qué. «En revisión · suele tardar 1 día» sale solo cuando ya lo enviaste. Lo mismo con tus papeles personales: cuando tomaste todas las fotos, arriba del inicio sale «Envía tus papeles a revisión» con su botón.',
       ],
       capturas: [
         foto(
@@ -249,6 +250,7 @@ export const GUIAS_FOTO_CARA: Record<Idioma, { cara: Guia; falta: Guia }> = {
         'When what’s missing is on us, the app says so, without a button: for example, “We’re reviewing your motorbike.” You don’t need to do anything: we’ll let you know right there when it’s ready.',
         'If your vehicle was saved without a plate or with a typo, you don’t have to delete it: on your vehicle’s screen tap “Add the license plate” or “Fix the details,” fix what’s needed and tap “Save changes.” While we’re reviewing it, or once it’s approved, it can’t be changed: if something is wrong, write to us from Help.',
         'When you add a motor vehicle, the license plate is required from the start. If it’s missing, the app tells you right under the field.',
+        'A vehicle document you uploaded says “Uploaded. You still need to send your vehicle for review” until you send the vehicle: nobody reviews it before that. In “My vehicle” you have “Send it for review” right there or, if something is still missing to send it (the plate, the registration or the insurance policy), it tells you exactly what. “Under review · usually takes 1 day” only shows once you’ve sent it. Same with your personal documents: once you’ve taken all the photos, the top of the home screen shows “Send your documents for review” with its button.',
       ],
       capturas: [
         foto(

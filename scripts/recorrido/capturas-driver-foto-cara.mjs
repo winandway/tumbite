@@ -71,6 +71,7 @@ const pedir = async (metodo, ruta, cuerpo, token) => {
 };
 
 // Una cara DIBUJADA y neutra (no es una persona real) para la cámara de mentira del navegador.
+let JPEG_EJEMPLO;
 const video = join(mkdtempSync(join(tmpdir(), 'cara-')), 'cara.mjpeg');
 {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480">
@@ -83,6 +84,7 @@ const video = join(mkdtempSync(join(tmpdir(), 'cara-')), 'cara.mjpeg');
     <path d="M285 300 Q320 322 355 300" stroke="#7A4A3A" stroke-width="7" fill="none" stroke-linecap="round"/>
   </svg>`;
   const cuadro = await sharp(Buffer.from(svg)).jpeg({ quality: 85 }).toBuffer();
+  JPEG_EJEMPLO = cuadro;
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- carpeta temporal propia
   writeFileSync(video, Buffer.concat(Array.from({ length: 30 }, () => cuadro)));
 }
@@ -398,6 +400,35 @@ try {
           await aLaVista('falta-boton', 'activar la moto');
           await foto('te-falta-activar');
           await sinCortes('activar');
+          // 13 · C-PAPEL-DICE-LA-VERDAD: un papel subido con la moto sin enviar dice «Subida. Falta
+          // enviar tu moto a revisión» y qué falta para poder enviarla (no «en revisión»).
+          const sube = await fetch(
+            `${URL}/datos/conductor/vehiculos/moto-${otro.id}/documentos?tipo=registro`,
+            {
+              method: 'POST',
+              headers: { authorization: `Bearer ${otro.token}`, 'content-type': 'image/jpeg' },
+              body: JPEG_EJEMPLO,
+            },
+          );
+          if (!sube.ok) throw new Error(`documento: ${sube.status}`);
+          await p.goto('/driver/');
+          await p.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
+          const seccion = p.getByTestId('seccion-vehiculo').first();
+          await seccion.waitFor({ timeout: 30_000 });
+          if (
+            !(await p
+              .getByTestId('vehiculo-moto')
+              .first()
+              .isVisible()
+              .catch(() => false))
+          )
+            await seccion.click();
+          await p.getByTestId('vehiculo-moto').first().getByRole('button').first().click();
+          await p.getByTestId('enviar-vehiculo-moto').waitFor({ timeout: 30_000 });
+          await p.getByTestId('papel-registro').scrollIntoViewIfNeeded();
+          await espera(1000);
+          await foto('mi-vehiculo-subida-sin-enviar');
+          await sinCortes('mi vehículo');
         }
       } catch (x) {
         if (process.env.FALLO_EN)

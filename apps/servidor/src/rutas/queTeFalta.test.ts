@@ -160,3 +160,24 @@ describe('C-QUE-TE-FALTA · lo que le falta, en orden, con la regla del reparto'
     );
   });
 });
+
+describe('C-PAPEL-DICE-LA-VERDAD · lo subido sin enviar sale en «qué te falta»', () => {
+  it('la moto registrada con papeles subidos, dentro del plazo, pide enviarla a revisión', async () => {
+    const c = await conductor();
+    const v = await c.yo('POST', '/datos/conductor/vehiculos', { ...MOTO, placa: 'AB123CD' });
+    expect(v.estado).toBe(201);
+    expect(await c.falta()).toContain('vehiculo_sin_enviar');
+  });
+  it('con todas las fotos de identidad tomadas y sin enviar, pide «Enviar a revisión»', async () => {
+    const c = await conductor();
+    expect((await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true })).estado).toBe(200);
+    for (const paso of ['cara', 'doc_frente', 'doc_reverso'])
+      expect(
+        (await subirA(c.e, `/datos/conductor/verificacion/foto/${paso}?origen=camara`, c.rep.token))
+          .estado,
+      ).toBe(201);
+    expect(await c.falta()).toContain('papeles_sin_enviar');
+    expect((await c.yo('POST', '/datos/conductor/verificacion/enviar', {})).estado).toBe(200);
+    expect(await c.falta()).not.toContain('papeles_sin_enviar');
+  });
+});

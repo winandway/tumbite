@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-PAPEL-DICE-LA-VERDAD · Un papel subido del vehículo no dice «en revisión» si el vehículo no se envió (23 nov 2026, conductor real) — todos los países
+
+- **Qué pasaba:** en «Mi vehículo» cada foto subida decía «Pendiente · Enviado · suele tardar 1 día» con la moto todavía «registrada»; nadie la revisa hasta tocar «Enviar mi moto a revisión» (que exige placa, registro y seguro). El conductor creyó que ya estaba.
+- **Qué se hizo:** `apps/repartidor/src/servicios/papelesVehiculo.ts` (`detallePapelVehiculo` y `faltaParaEnviar`, misma regla que `POST /conductor/vehiculos/:id/enviar`), usada en el perfil y en «Registrar mi moto / mi carro»: «Subida. Falta enviar tu moto a revisión» (píldora «Subida»); «En revisión · suele tardar 1 día» solo con el vehículo en revisión; «Enviar a revisión» ahí mismo o «Para enviar tu vehículo a revisión falta: …». En «qué te falta» del servidor: `vehiculo_sin_enviar` también dentro del plazo (después de activarlo) y `papeles_sin_enviar` cuando están todas las fotos de identidad y falta tocar «Enviar a revisión».
+- **Cómo se comprueba:** `apps/repartidor/src/servicios/papelesVehiculo.test.ts` y `apps/servidor/src/rutas/queTeFalta.test.ts` («C-PAPEL-DICE-LA-VERDAD»); captura `mi-vehiculo-subida-sin-enviar` del guion `capturas-driver-foto-cara.mjs`.
+- **Qué NO tocar:** nunca decir «enviado» o «en revisión» por el estado del documento solo; los pasos del reverso del documento los arregla otra rama desde el servidor.
+
 ## C-FOTO-CARA-A-LA-VISTA y C-QUE-TE-FALTA · En Driver, lo que falta para empezar va ARRIBA con su botón, nada importante queda fuera de pantalla y el servidor dice qué falta con la regla del reparto (23 nov 2026, conductores reales de Venezuela y registro grabado en Tucaní) — todos los países
 
 - **Qué pasaba:** en un Android chico (360×568) la tarjeta «Tómate la foto de tu cara para empezar» quedaba cortada abajo (sin su botón); al deslizar sin la foto, el motivo (403) se pintaba debajo, fuera de pantalla; en el asistente «Acepto y sigo» y «Tomar foto» quedaban detrás del pie y lo único visible era «Guardar y seguir después»; la subida no tenía tiempo límite; el aviso de IA obligaba a deslizar para ver la casilla. Además: una moto guardada SIN placa que Driver no dejaba corregir; el panel decía «Le falta registrar su vehículo» con una moto guardada; el conductor se conectó a Comida en un pueblo sin restaurantes; «Moto con pasajero» salía como «Agregar este servicio»; textos cortados con «…»; dos diseños para la misma lista de papeles; el diálogo gris de Android para la foto; sin aviso al recargar saldo.

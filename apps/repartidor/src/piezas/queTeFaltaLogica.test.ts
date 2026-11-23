@@ -47,6 +47,7 @@ describe('C-QUE-TE-FALTA · lo que ve el conductor', () => {
       'sin_saldo',
       'sin_pago_movil',
       'ubicacion_vieja',
+      'papeles_sin_enviar',
     ])
       for (const idioma of ['es', 'en'] as const) {
         const a = avisoDeFalta({ clave, quien: 'conductor', vehiculoTipo: 'moto' }, idioma);

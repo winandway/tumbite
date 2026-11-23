@@ -13,6 +13,7 @@ import {
 } from '@tumbite/compartido';
 import { EditarVehiculo } from './EditarVehiculo';
 import { FilaPapel } from '../servicios/FilaPapel';
+import { detallePapelVehiculo, faltaParaEnviar } from '../servicios/papelesVehiculo';
 import {
   AvisoBorrador,
   Boton,
@@ -828,12 +829,23 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           </Text>
           {docsVehiculo.map((tipo) => {
             const d = docVehiculo(tipo);
+            // C-PAPEL-DICE-LA-VERDAD: la misma pieza que en el perfil.
+            const dice = detallePapelVehiculo(
+              {
+                docEstado: d?.estado,
+                vehiculoEstado: vehiculo.estado,
+                vehiculoTipo: vehiculo.tipo,
+              },
+              idioma,
+            );
             return (
               <FilaPapel
                 key={tipo}
                 testID={`papel-${tipo}`}
                 nombre={nombreDoc(tipo)}
                 estado={estadoPapel(d?.estado ?? 'sin_subir')}
+                textoEstado={dice.pildora ?? undefined}
+                detalle={dice.texto || undefined}
                 motivo={d?.motivo}
                 idioma={idioma}
                 subiendo={subiendo === tipo}
@@ -847,7 +859,14 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               />
             );
           })}
-          {['registrado', 'rechazado'].includes(vehiculo.estado) ? (
+          {['registrado', 'rechazado'].includes(vehiculo.estado) &&
+          faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma).length ? (
+            <Text testID="falta-para-enviar" style={{ color: '#666B73' }}>
+              {idioma === 'en'
+                ? `To send it for review, you still need: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma).join(', ')}.`
+                : `Para enviar tu vehículo a revisión falta: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma).join(', ')}.`}
+            </Text>
+          ) : ['registrado', 'rechazado'].includes(vehiculo.estado) ? (
             <Boton
               texto={t.enviar}
               alTocar={() =>
