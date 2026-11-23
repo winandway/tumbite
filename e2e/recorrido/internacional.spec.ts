@@ -208,6 +208,11 @@ for (const P of PAISES) {
           recargasPuntoVentaActivas: true,
           comisionPb: 1000,
           cargoFijo: 0,
+          // Esta prueba recorre el cobro en mano clásico (el conductor paga la comida en el local),
+          // que sigue vivo para los países sin pago directo. En Venezuela de fábrica el cliente le
+          // paga la comida al restaurante (C-COMIDA-PAGO-RESTAURANTE, con su propio guion): aquí se
+          // apaga para probar el mecanismo clásico también en bolívares.
+          comidaPagoRestaurante: false,
         },
       });
       expect(pais.status(), await pais.text()).toBe(200);
