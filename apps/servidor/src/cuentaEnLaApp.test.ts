@@ -44,7 +44,9 @@ describe('cuenta del cliente dentro de la app', () => {
     // Al crear la cuenta, la portada avisa que falta confirmar el correo (sin bloquear).
     expect(leer('apps', 'cliente', 'src', 'Inicio.tsx')).toMatch(/<AvisoCorreo/);
     const con = leer('packages', 'movil', 'src', 'ConSesion.tsx');
-    expect(con).toMatch(/exigeCorreo \? <PuertaCorreo/);
+    // C-TELEFONO-AL-REGISTRARSE: la puerta del correo va dentro de la del celular (primero el celular).
+    expect(con).toMatch(/exigeCorreo \? \(\s*<PuertaCorreo/);
+    expect(con).toMatch(/exigeTelefono \? \(\s*<PuertaTelefono[^>]*>\{conCorreo\}/);
     const puerta = leer('packages', 'movil', 'src', 'VerificarCorreo.tsx');
     expect(puerta).toMatch(/debeConfirmarCorreo/);
     expect(puerta).toMatch(/\/datos\/cuentas\/confirmar\/reenviar/);
