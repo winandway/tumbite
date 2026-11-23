@@ -5,6 +5,8 @@ import { AyudaInterna } from './AyudaInterna';
 import { BaseAyudaInterna } from './AyudaAqui';
 import { Armazon, type CampanaArmazon, SesionArmazon } from './armazon/Armazon';
 import { guardarVisto } from './armazon/Campana';
+import { ProveedorAvisosEnVivo } from './avisosEnVivo';
+import { EVENTO_CAMBIO } from './sonarEvento';
 import {
   type AvisoServidor,
   avisosDelRestaurante,
@@ -330,7 +332,11 @@ export function PanelApp({ ruta }: { ruta: string }) {
     else if (
       /^\/panel\/(restaurantes|dinero|repartidores|zonas|espera|ciudades|clientes|camila)$/.test(
         ruta,
-      )
+      ) ||
+      // C-VERIFICACIONES-EN-VIVO: el enlace del correo al equipo (/panel/verifications/<id>) lleva a la
+      // ficha bajo la dirección secreta, que nunca va escrita en un correo.
+      ruta === '/panel/verifications' ||
+      /^\/panel\/verifications\/[A-Za-z0-9_-]{1,64}$/.test(ruta)
     )
       ir(`${baseAdmin}${ruta.slice('/panel'.length)}`);
   }, [baseAdmin, ruta]);
@@ -378,7 +384,16 @@ export function PanelApp({ ruta }: { ruta: string }) {
     leer();
     // Una lectura chica cada 30 s y solo con la pestaña a la vista (mirar no escribe nada).
     const reloj = window.setInterval(leer, 30_000);
-    return () => window.clearInterval(reloj);
+    // C-VERIFICACIONES-EN-VIVO: si la marca de verificaciones cambió, la campana y el menú enseguida.
+    const alCambiar = () => {
+      ultimaLectura.current = 0;
+      leer();
+    };
+    window.addEventListener(EVENTO_CAMBIO, alCambiar);
+    return () => {
+      window.clearInterval(reloj);
+      window.removeEventListener(EVENTO_CAMBIO, alCambiar);
+    };
   }, [usuario, esAdmin, esRestaurante, ruta]);
   const gruposConAvisos =
     esAdmin || esRestaurante ? conPendientes(grupos, pendientesMenu, filtrosPendientes) : grupos;
@@ -564,31 +579,56 @@ export function PanelApp({ ruta }: { ruta: string }) {
       <PermisosContexto.Provider value={permisos}>
         <div className="pagina panel">
           <ConHorario activo={esAdmin}>
-            {/* C-AYUDA-AQUI: los «?» de cada parte solo existen bajo la dirección secreta. */}
-            <BaseAyudaInterna.Provider
-              value={esAdmin && baseAdmin && baseAdmin !== '/panel' ? baseAdmin : null}
+            {/* C-VERIFICACIONES-EN-VIVO: solo el equipo, bajo su dirección secreta. */}
+            <ConAvisosEnVivo
+              activo={Boolean(esAdmin && baseAdmin && baseAdmin !== '/panel')}
+              idioma={idioma}
             >
-              <Armazon
-                grupos={gruposConAvisos}
-                campana={campana}
-                buscador={
-                  esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
-                    <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
-                  ) : undefined
-                }
-                ayuda={
-                  esAdmin && baseAdmin && baseAdmin !== '/panel' ? `${baseAdmin}/help` : undefined
-                }
+              {/* C-AYUDA-AQUI: los «?» de cada parte solo existen bajo la dirección secreta. */}
+              <BaseAyudaInterna.Provider
+                value={esAdmin && baseAdmin && baseAdmin !== '/panel' ? baseAdmin : null}
               >
-                {esAdmin ? <FranjaSegundoFactor idioma={idioma} /> : null}
-                {contenido}
-              </Armazon>
-            </BaseAyudaInterna.Provider>
+                <Armazon
+                  grupos={gruposConAvisos}
+                  campana={campana}
+                  buscador={
+                    esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
+                      <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
+                    ) : undefined
+                  }
+                  ayuda={
+                    esAdmin && baseAdmin && baseAdmin !== '/panel' ? `${baseAdmin}/help` : undefined
+                  }
+                >
+                  {esAdmin ? <FranjaSegundoFactor idioma={idioma} /> : null}
+                  {contenido}
+                </Armazon>
+              </BaseAyudaInterna.Provider>
+            </ConAvisosEnVivo>
           </ConHorario>
           {esRestaurante && <AyudaBurbuja idioma={idioma} />}
         </div>
       </PermisosContexto.Provider>
     </SesionArmazon.Provider>
+  );
+}
+
+/** C-VERIFICACIONES-EN-VIVO: la vigía y el sonido, solo para el equipo (las demás cuentas, nada). */
+function ConAvisosEnVivo({
+  activo,
+  idioma,
+  children,
+}: {
+  activo: boolean;
+  idioma: 'es' | 'en';
+  children: React.ReactNode;
+}) {
+  return activo ? (
+    <ProveedorAvisosEnVivo activo idioma={idioma}>
+      {children}
+    </ProveedorAvisosEnVivo>
+  ) : (
+    <>{children}</>
   );
 }
 

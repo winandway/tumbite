@@ -3179,6 +3179,76 @@ const campanaYNumeros: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// C-VERIFICACIONES-EN-VIVO (23 nov 2026, Richard): Verificaciones se actualiza sola, suena y avisa.
+const verificacionesEnVivo: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'live-verifications',
+    titulo: 'Verificaciones en vivo: sonido y avisos',
+    resumen:
+      'Con el panel abierto no hace falta recargar: cuando alguien queda listo para revisar, la lista se actualiza sola, la fila nueva se resalta y suena un aviso. Además le llega un correo al equipo y, si lo enciendes, un aviso a tu teléfono o tu computadora.',
+    explicacion: [
+      'Mientras el panel está abierto, cada pocos segundos pregunta si cambió algo en las verificaciones. Si alguien envió sus fotos o se registró, la lista de «Pendientes» y la de «Sin enviar» se actualizan solas, sin recargar, y la fila que acaba de entrar queda resaltada en verde unos segundos. La campana y los números del menú se ponen al día al mismo tiempo.',
+      'Cuando entra una verificación lista para revisar suena un aviso corto, una sola vez. No vuelve a sonar al recargar ni por lo que ya estaba cuando abriste el panel. Si estás en otra pestaña, el título de la pestaña lo dice y, si diste el permiso, sale un aviso del navegador.',
+      'El botón «Sonido encendido» lo silencia (y otra vez lo enciende). Se guarda con tu cuenta: si lo silencias en una computadora, también queda silenciado en la otra. Es de cada persona: no silencia a tus compañeros.',
+      '«Avisarme también fuera del panel» le pide al navegador el permiso de avisos (solo cuando tocas el botón, nunca al abrir la página) y deja ese aparato recibiendo un aviso cada vez que una verificación queda lista, aunque el panel esté cerrado. Hazlo en tu teléfono para tenerlo en el bolsillo. En iPhone, primero agrega el panel a la pantalla de inicio.',
+      'Al equipo le llega además UN correo por persona cuando queda lista para revisar (no uno por foto), con su nombre, su ciudad, cuántas esperan y el enlace directo a su ficha, que pide entrar con tu cuenta del equipo. Va a la lista del equipo para verificaciones; en «Configuración» cada persona puede sumarse o salirse.',
+      'Con la pestaña a la vista y alguien trabajando, el panel pregunta cada 5 segundos; si nadie toca nada por diez minutos, cada 30; con la pestaña en segundo plano, cada minuto. Mirar no escribe nada en la base.',
+    ],
+    capturas: [
+      capCampana(
+        'verificaciones',
+        'es',
+        'La pantalla Verificaciones con los botones Sonido encendido y Avisarme también fuera del panel arriba, y una fila nueva resaltada en verde en Pendientes.',
+        'La verificación que acaba de entrar, resaltada, sin recargar la página.',
+      ),
+    ],
+    preguntas: [
+      '¿Por qué suena el panel?',
+      '¿Cómo silencio el aviso de verificaciones?',
+      '¿Cómo me llega un aviso al teléfono cuando hay una verificación?',
+    ],
+    pasos: [
+      'Deja abierto el panel en Verificaciones: la lista se actualiza sola.',
+      'Para silenciar el aviso, toca «Sonido encendido».',
+      'Para recibirlo en el teléfono, abre el panel en el teléfono y toca «Avisarme también fuera del panel».',
+    ],
+    nota: 'El sonido es propio de Divoox y dura menos de medio segundo. Solo cuentan las verificaciones de tu zona de trabajo en la lista; el sonido avisa de cualquier verificación nueva.',
+  },
+  en: {
+    id: 'live-verifications',
+    titulo: 'Live verifications: sound and alerts',
+    resumen:
+      'With the dashboard open you don’t need to refresh: when someone is ready to review, the list updates on its own, the new row is highlighted and a short sound plays. The team also gets an email and, if you turn it on, an alert on your phone or computer.',
+    explicacion: [
+      'While the dashboard is open, it checks every few seconds whether anything changed in verifications. If someone sent their photos or signed up, the “Pending” and “Not sent” lists update on their own, without refreshing, and the row that just came in is highlighted in green for a few seconds. The bell and the menu numbers update at the same time.',
+      'When a verification ready to review comes in, a short sound plays, just once. It doesn’t play again when you refresh, or for what was already there when you opened the dashboard. If you’re on another tab, the tab title says so and, if you gave permission, a browser notification shows up.',
+      'The “Sound on” button mutes it (and turns it back on). It’s saved with your account: mute it on one computer and it stays muted on the other. It’s per person: it doesn’t mute your teammates.',
+      '“Also notify me outside the dashboard” asks the browser for notification permission (only when you tap the button, never when the page opens) and sets that device to get an alert every time a verification is ready, even with the dashboard closed. Do it on your phone to have it in your pocket. On iPhone, add the dashboard to your Home Screen first.',
+      'The team also gets ONE email per person when they’re ready to review (not one per photo), with their name, their city, how many are waiting and a direct link to their file, which asks you to sign in with your team account. It goes to the team list for verifications; in “Settings” each person can opt in or out.',
+      'With the tab visible and someone working, the dashboard checks every 5 seconds; if nobody touches anything for ten minutes, every 30; with the tab in the background, every minute. Looking never writes anything to the database.',
+    ],
+    capturas: [
+      capCampana(
+        'verificaciones',
+        'en',
+        'The Verifications screen with the Sound on and Also notify me outside the dashboard buttons at the top, and a new row highlighted in green under Pending.',
+        'The verification that just came in, highlighted, without refreshing the page.',
+      ),
+    ],
+    preguntas: [
+      'Why does the dashboard play a sound?',
+      'How do I mute the verification alert?',
+      'How do I get a phone alert when there’s a verification?',
+    ],
+    pasos: [
+      'Keep the dashboard open on Verifications: the list updates on its own.',
+      'To mute the alert, tap “Sound on”.',
+      'To get it on your phone, open the dashboard on your phone and tap “Also notify me outside the dashboard”.',
+    ],
+    nota: 'The sound is Divoox’s own and lasts under half a second. The list only shows verifications in your work area; the sound alerts you to any new verification.',
+  },
+};
+
 /** Las secciones de la ayuda, en el orden del menú lateral. */
 function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
   const g = porId(idioma === 'es' ? es : en);
@@ -3211,6 +3281,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       titulo: esp ? 'Soporte' : 'Support',
       guias: [
         de(camilaBuzon),
+        de(verificacionesEnVivo),
         de(recordatoriosRegistro),
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
