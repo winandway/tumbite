@@ -1,12 +1,31 @@
 import type { Env } from './env';
 import { sha256, nuevoId } from './cripto';
-import { destinoPermitido, enviarSms, smsConfigurado, telefonoE164 } from './sms';
+import {
+  destinoPermitido,
+  enviarSms,
+  labsmobileConfigurado,
+  paisDeE164,
+  proveedorSmsPara,
+  smsConfigurado,
+  telefonoE164,
+  vaPorProveedorDelPais,
+} from './sms';
 import { smsMasivoDisponible, smsMasivoEncendido, vaPorSmsMasivo } from './smsMasivo';
 import { ErrorDatos } from './validar';
-import { paisDePrefijo } from '@tumbite/compartido';
+import {
+  COSTO_WHATSAPP_USD,
+  enviarCodigoWhatsapp,
+  presupuestoWhatsappDia,
+  ultimoErrorWhatsapp,
+  whatsappConAveria,
+  whatsappDestinoPermitido,
+  whatsappEncendido,
+} from './whatsapp';
+
+export { paisDeE164 };
 
 /**
- * El código de seis números por SMS que confirma el celular de una cuenta. Una sola pieza para los dos
+ * El código de seis números que confirma el celular de una cuenta. Una sola pieza para los dos
  * momentos en que se pide:
  *
  * - C-TELEFONO-VUELTA (D8, 1 nov 2026, como DoorDash al volver a la app): quien lleva DIAS_SIN_CONECTAR
@@ -15,13 +34,17 @@ import { paisDePrefijo } from '@tumbite/compartido';
  *   la cuenta de cliente o de conductor que nace en una app nueva confirma su celular antes de usar la
  *   app. Las cuentas que ya existían NO se bloquean: ven una franja suave («sugerido»).
  *
- * Nunca deja a nadie trancado: solo se EXIGE donde el SMS sale hoy (Twilio con el país permitido, o
- * Venezuela con su proveedor local encendido, con cupo y sin averías), con el país encendido en el panel,
- * con el presupuesto del día sin agotar y con el tope global sin alcanzar. Si algo de eso falla, la
- * puerta se abre sola.
+ * C-CODIGO-CANALES (23 nov 2026, decisión de Richard por Gerencia): el código sale por canales
+ * intercambiables, en este orden: WhatsApp (whatsapp.ts) → SMS de respaldo (el proveedor de cada país,
+ * sms.ts) → salida a soporte en la pantalla. La persona puede pedir «Enviármelo por SMS».
  *
- * Qué NO tocar: los topes (por cuenta, por número, por IP y del día), la espera creciente entre envíos y
- * el canario de gasto. Son lo que impide que un robot convierta este código en una factura.
+ * Nunca deja a nadie trancado: solo se EXIGE donde algún canal sale hoy (encendido, con presupuesto de
+ * su canal y sin averías), con el país encendido en el panel y con el tope global sin alcanzar. Si algo
+ * de eso falla, la puerta se abre sola.
+ *
+ * Qué NO tocar: los topes (por cuenta, por número, por IP y del día), la espera creciente entre envíos,
+ * el presupuesto de cada canal y el canario de gasto. Son lo que impide que un robot convierta este
+ * código en una factura.
  */
 export const DIAS_SIN_CONECTAR = 14;
 const MINUTOS_VIGENCIA = 10;
@@ -36,13 +59,16 @@ export const MAX_POR_IP_DIA = 10;
 export const TOPE_CODIGOS_DIA = 300;
 /** Segundos de espera antes del envío número n+1 de una cuenta (el primero sale enseguida). */
 export const ESPERAS_REENVIO_S = [0, 60, 120, 300, 900] as const;
-/** C-SMS-GASTO: lo que cuesta un SMS para el presupuesto (el precio de Venezuela, el más caro que usamos). */
-export const COSTO_SMS_USD = 0.045;
-/** C-SMS-GASTO: presupuesto diario de todos los SMS. Se cambia con SMS_PRESUPUESTO_DIA_USD. */
+/** C-SMS-GASTO: lo que cuesta un SMS por Twilio o LabsMobile para el presupuesto (Gerencia: 0,09 a 0,23). */
+export const COSTO_SMS_USD = 0.09;
+/** C-SMS-GASTO: el SMS por el proveedor local de Venezuela (mientras siga encendido). */
+export const COSTO_SMSMASIVO_USD = 0.045;
+/** C-SMS-GASTO: presupuesto diario de los SMS. Se cambia con SMS_PRESUPUESTO_DIA_USD. */
 export const PRESUPUESTO_SMS_DIA_USD = 15;
 /** C-TELEFONO-POR-PAIS: la llave de config con los países apagados en el panel ({"VE": false}). */
 export const CLAVE_PAISES = 'telefono_codigo_paises';
 
+export type CanalCodigo = 'whatsapp' | 'sms';
 export type MotivoTelefono = 'registro' | 'vuelta' | 'sugerido';
 export type PuertaTelefono = {
   motivo: MotivoTelefono;
@@ -61,24 +87,19 @@ export const topeCodigosDia = (env: Env) =>
 export const presupuestoSmsDia = (env: Env) =>
   enteroDe(env.SMS_PRESUPUESTO_DIA_USD, PRESUPUESTO_SMS_DIA_USD, 100_000);
 
-/** El país de un celular en formato internacional (+58… → VE, +1… → US). */
-export function paisDeE164(para: string): string | null {
-  const d = para.replace(/\D/g, '');
-  for (const largo of [1, 2, 3]) {
-    const p = paisDePrefijo(d.slice(0, largo));
-    if (p) return p;
-  }
-  return null;
-}
-
 /** ¿Sale hoy un SMS a este número? (la misma regla que el resto de los SMS). */
 export async function smsSaleHoy(env: Env, db: D1Database, para: string): Promise<boolean> {
   if (vaPorSmsMasivo(env, para)) return smsMasivoDisponible(env, db);
+  if (vaPorProveedorDelPais(env, para)) return proveedorSmsPara(env, para).nombre !== 'twilio';
   return smsConfigurado(env) && destinoPermitido(env, para);
 }
 
-/** ¿Hay algún camino de SMS encendido? (para pedirle el celular a una cuenta que no lo tiene). */
-export const algunSmsEncendido = (env: Env) => smsConfigurado(env) || smsMasivoEncendido(env);
+/** ¿Hay algún canal encendido? (para pedirle el celular a una cuenta que no lo tiene). */
+export const algunSmsEncendido = (env: Env) =>
+  smsConfigurado(env) ||
+  smsMasivoEncendido(env) ||
+  labsmobileConfigurado(env) ||
+  whatsappEncendido(env);
 
 /** C-TELEFONO-POR-PAIS: los países con la exigencia apagada en el panel. Por defecto, todos encendidos. */
 export async function paisesApagados(db: D1Database): Promise<Set<string>> {
@@ -104,14 +125,33 @@ export async function paisesApagados(db: D1Database): Promise<Set<string>> {
   }
 }
 
-/** C-SMS-GASTO: SMS que salieron (y se cobraron) en las últimas 24 horas, de todos los tipos. */
-export async function smsCobradosHoy(db: D1Database): Promise<number> {
-  const f = await db
+export type GastoDelDia = { sms: number; smsUsd: number; whatsapp: number; whatsappUsd: number };
+
+/**
+ * C-SMS-GASTO y C-CODIGO-CANALES: lo que salió (y se cobró) en las últimas 24 horas, por canal. Una
+ * sola lectura por el índice de fecha. WhatsApp cuenta 0,018; el SMS local de Venezuela 0,045; el resto
+ * de los SMS 0,09.
+ */
+export async function gastoHoy(db: D1Database): Promise<GastoDelDia> {
+  const { results } = await db
     .prepare(
-      "SELECT COUNT(*) AS n FROM sms_enviados WHERE estado = 'enviado' AND creado_en >= datetime('now', '-1 day')",
+      "SELECT COALESCE(proveedor, '') AS proveedor, COUNT(*) AS n FROM sms_enviados WHERE estado = 'enviado' AND creado_en >= datetime('now', '-1 day') GROUP BY proveedor",
     )
-    .first<{ n: number }>();
-  return Number(f?.n ?? 0);
+    .all<{ proveedor: string; n: number }>();
+  const g: GastoDelDia = { sms: 0, smsUsd: 0, whatsapp: 0, whatsappUsd: 0 };
+  for (const r of results) {
+    const n = Number(r.n);
+    if (r.proveedor.startsWith('whatsapp')) {
+      g.whatsapp += n;
+      g.whatsappUsd += n * COSTO_WHATSAPP_USD;
+    } else {
+      g.sms += n;
+      g.smsUsd += n * (r.proveedor === 'smsmasivo' ? COSTO_SMSMASIVO_USD : COSTO_SMS_USD);
+    }
+  }
+  g.smsUsd = Math.round(g.smsUsd * 1000) / 1000;
+  g.whatsappUsd = Math.round(g.whatsappUsd * 1000) / 1000;
+  return g;
 }
 
 /** Códigos que salieron en las últimas 24 horas. */
@@ -124,30 +164,62 @@ async function codigosDeHoy(db: D1Database): Promise<number> {
   return Number(f?.n ?? 0);
 }
 
+const colorDe = (usd: number, tope: number) =>
+  usd >= tope ? ('tope' as const) : usd >= tope * 0.8 ? ('atrasado' as const) : ('ok' as const);
+
 /**
- * C-SMS-GASTO: la pieza del canario. «ok» por debajo del 80 % del presupuesto del día; «atrasado» del
- * 80 % al 100 % (aviso amarillo); «tope» al llegar al presupuesto: desde ahí los códigos dejan de
- * exigirse (nadie queda trancado) y el gasto se detiene en lo que dependa de nosotros.
+ * C-SMS-GASTO y C-CODIGO-CANALES: las dos piezas del canario, con UNA lectura. «ok» por debajo del 80 %
+ * del presupuesto de su canal; «atrasado» del 80 % al 100 % (aviso amarillo); «tope» al llegar: ese
+ * canal deja de usarse para los códigos (y si no queda ninguno, no se exige). WhatsApp: «pendiente»
+ * mientras esté apagado, «error» si su último envío falló.
  */
-export async function saludGastoSms(
+export async function saludCodigo(
   env: Env,
   db: D1Database | undefined,
-): Promise<'ok' | 'atrasado' | 'tope' | 'pendiente'> {
-  if (!algunSmsEncendido(env)) return 'pendiente';
-  if (!db) return 'ok';
-  const usd = (await smsCobradosHoy(db)) * COSTO_SMS_USD;
-  const tope = presupuestoSmsDia(env);
-  if (usd >= tope) return 'tope';
-  return usd >= tope * 0.8 ? 'atrasado' : 'ok';
+): Promise<{
+  smsGasto: 'ok' | 'atrasado' | 'tope' | 'pendiente';
+  whatsapp: 'ok' | 'atrasado' | 'tope' | 'pendiente' | 'error';
+}> {
+  const g = db ? await gastoHoy(db) : null;
+  const smsEncendido = smsConfigurado(env) || smsMasivoEncendido(env) || labsmobileConfigurado(env);
+  return {
+    smsGasto: !smsEncendido ? 'pendiente' : g ? colorDe(g.smsUsd, presupuestoSmsDia(env)) : 'ok',
+    whatsapp: !whatsappEncendido(env)
+      ? 'pendiente'
+      : ultimoErrorWhatsapp
+        ? 'error'
+        : g
+          ? colorDe(g.whatsappUsd, presupuestoWhatsappDia(env))
+          : 'ok',
+  };
 }
 
-/** ¿Se le puede pedir HOY el código a este número? País encendido, SMS que sale, presupuesto y tope. */
+/** Los canales que hoy pueden llevar el código a este número, en orden (WhatsApp primero). */
+export async function canalesPara(
+  env: Env,
+  db: D1Database,
+  para: string,
+  gasto?: GastoDelDia,
+): Promise<CanalCodigo[]> {
+  const g = gasto ?? (await gastoHoy(db));
+  const canales: CanalCodigo[] = [];
+  if (
+    whatsappEncendido(env) &&
+    whatsappDestinoPermitido(env, para) &&
+    g.whatsappUsd < presupuestoWhatsappDia(env) &&
+    !(await whatsappConAveria(db))
+  )
+    canales.push('whatsapp');
+  if ((await smsSaleHoy(env, db, para)) && g.smsUsd < presupuestoSmsDia(env)) canales.push('sms');
+  return canales;
+}
+
+/** ¿Se le puede pedir HOY el código a este número? País encendido, algún canal que sale y tope. */
 export async function codigoPosiblePara(env: Env, db: D1Database, para: string): Promise<boolean> {
   const pais = paisDeE164(para);
   if (!pais || (await paisesApagados(db)).has(pais)) return false;
-  if (!(await smsSaleHoy(env, db, para))) return false;
   try {
-    if ((await smsCobradosHoy(db)) * COSTO_SMS_USD >= presupuestoSmsDia(env)) return false;
+    if (!(await canalesPara(env, db, para)).length) return false;
     if ((await codigosDeHoy(db)) >= topeCodigosDia(env)) return false;
   } catch (e) {
     // Si no se puede contar, no se exige: nadie queda trancado por una lectura fallida.
@@ -242,7 +314,14 @@ function segundosQueFaltan(enviadosHoy: number, desdeUltimo: number): number {
   return Math.max(0, Math.ceil(pide - desdeUltimo));
 }
 
-export type CodigoEnviado = { ultimos: string; proximoEnSegundos: number };
+export type CodigoEnviado = {
+  ultimos: string;
+  proximoEnSegundos: number;
+  /** Por dónde salió este código. */
+  canal: CanalCodigo;
+  /** ¿Se puede pedir por SMS si no llega por WhatsApp? */
+  smsDisponible: boolean;
+};
 
 export async function mandarCodigo(
   env: Env,
@@ -250,6 +329,8 @@ export async function mandarCodigo(
   usuarioId: string,
   idioma: 'es' | 'en',
   ip?: string | null,
+  /** «sms»: la persona pidió que se lo manden por SMS (no llegó por WhatsApp). */
+  canalPedido?: CanalCodigo,
 ): Promise<CodigoEnviado> {
   const puerta = await puertaTelefono(env, db, usuarioId);
   if (!puerta) throw new ErrorDatos('No hace falta confirmar tu teléfono ahora.', undefined, 409);
@@ -260,6 +341,17 @@ export async function mandarCodigo(
     .bind(usuarioId)
     .first<{ telefono: string }>();
   const para = telefonoE164(u?.telefono) ?? '';
+  // C-CODIGO-CANALES: WhatsApp primero y el SMS de respaldo (o solo el SMS, si lo pidió la persona).
+  const disponibles = await canalesPara(env, db, para);
+  const orden = canalPedido === 'sms' ? disponibles.filter((c) => c === 'sms') : disponibles;
+  if (!orden.length)
+    throw new ErrorDatos(
+      canalPedido === 'sms'
+        ? 'Ahora no podemos mandarte el código por SMS. Escribe a soporte.'
+        : 'Ahora no podemos mandarte el código. Inténtalo en unos minutos o escribe a soporte.',
+      'telefono',
+      503,
+    );
   // 1. Por cuenta: espera creciente entre envíos y tope del día.
   const previo = await db
     .prepare(
@@ -337,14 +429,33 @@ export async function mandarCodigo(
     )
     .bind(usuarioId, para, await sha256(`${usuarioId}:${codigo}`), enviados)
     .run();
-  const ok = await enviarSms(env, db, {
-    usuarioId,
-    pedidoId: null,
-    tipo: 'codigo_telefono',
-    telefono: para,
-    texto: textoCodigo(codigo, idioma),
-  });
-  if (!ok) {
+  let canal: CanalCodigo | null = null;
+  for (const c of orden) {
+    const salio =
+      c === 'whatsapp'
+        ? await enviarCodigoWhatsapp(env, db, { usuarioId, para, codigo, idioma })
+        : await enviarSms(env, db, {
+            usuarioId,
+            pedidoId: null,
+            tipo: 'codigo_telefono',
+            telefono: para,
+            texto: textoCodigo(codigo, idioma),
+          });
+    if (salio) {
+      canal = c;
+      break;
+    }
+  }
+  if (canal)
+    await db
+      .batch([
+        db.prepare('UPDATE envios_codigo_telefono SET canal = ? WHERE id = ?').bind(canal, envioId),
+        db
+          .prepare('UPDATE codigos_telefono SET canal = ? WHERE usuario_id = ?')
+          .bind(canal, usuarioId),
+      ])
+      .catch((e: unknown) => console.error('telefono: no se pudo anotar el canal', String(e)));
+  if (!canal) {
     // Un fallo nuestro o del proveedor no gasta la cuota de la persona: se devuelve el envío.
     await db
       .batch([
@@ -358,7 +469,7 @@ export async function mandarCodigo(
       ])
       .catch((e: unknown) => console.error('telefono: no se pudo devolver el envío', String(e)));
     throw new ErrorDatos(
-      'No pudimos mandar el SMS. Inténtalo en unos minutos o escribe a soporte.',
+      'No pudimos mandar el código. Inténtalo en unos minutos o escribe a soporte.',
       'telefono',
       503,
     );
@@ -366,6 +477,8 @@ export async function mandarCodigo(
   return {
     ultimos: para.slice(-4),
     proximoEnSegundos: enviados >= MAX_ENVIOS_DIA ? -1 : segundosQueFaltan(enviados, 0),
+    canal,
+    smsDisponible: disponibles.includes('sms'),
   };
 }
 
@@ -376,10 +489,10 @@ export async function mandarCodigo(
 export async function estadoCodigo(
   db: D1Database,
   usuarioId: string,
-): Promise<{ vigente: boolean; proximoEnSegundos: number }> {
+): Promise<{ vigente: boolean; proximoEnSegundos: number; canal: CanalCodigo | null }> {
   const f = await db
     .prepare(
-      `SELECT enviados_hoy, codigo_hash, intentos,
+      `SELECT enviados_hoy, codigo_hash, intentos, canal,
               creado_en > datetime('now', '-${MINUTOS_VIGENCIA} minutes') AS vigente,
               creado_en > datetime('now','-1 day') AS hoy,
               (julianday('now') - julianday(creado_en)) * 86400 AS hace
@@ -390,11 +503,12 @@ export async function estadoCodigo(
       enviados_hoy: number;
       codigo_hash: string;
       intentos: number;
+      canal: string | null;
       vigente: number;
       hoy: number;
       hace: number;
     }>();
-  if (!f) return { vigente: false, proximoEnSegundos: 0 };
+  if (!f) return { vigente: false, proximoEnSegundos: 0, canal: null };
   const vigente =
     Number(f.vigente) === 1 && f.codigo_hash !== '-' && Number(f.intentos) < MAX_INTENTOS;
   const lleva = f.hoy ? Number(f.enviados_hoy) : 0;
@@ -402,6 +516,7 @@ export async function estadoCodigo(
     vigente,
     proximoEnSegundos:
       lleva >= MAX_ENVIOS_DIA ? -1 : f.hoy ? segundosQueFaltan(lleva, Number(f.hace)) : 0,
+    canal: f.canal === 'whatsapp' ? 'whatsapp' : f.canal === 'sms' ? 'sms' : null,
   };
 }
 

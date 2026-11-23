@@ -151,7 +151,7 @@ import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
 import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludSmsMasivo } from './smsMasivo';
-import { saludGastoSms } from './telefonoVuelta';
+import { saludCodigo } from './telefonoVuelta';
 import { rastroRutas } from './rutas/rastro';
 import { rezagadosRutas } from './rutas/rezagados';
 import { saludDinero } from './conciliacion';
@@ -391,10 +391,13 @@ app.get('/datos/salud', async (c) => {
     return 'error' as const;
   });
   // C-SMS-GASTO: el gasto de SMS de las últimas 24 horas contra el presupuesto del día.
-  piezas.smsGasto = await saludGastoSms(c.env, c.env.DB).catch((e: unknown) => {
-    console.error('salud: gasto de sms', e);
-    return 'error' as const;
+  // C-CODIGO-CANALES: y el canal WhatsApp del código (apagado = «pendiente»). Una sola lectura.
+  const codigo = await saludCodigo(c.env, c.env.DB).catch((e: unknown) => {
+    console.error('salud: gasto de sms y whatsapp', e);
+    return { smsGasto: 'error' as const, whatsapp: 'error' as const };
   });
+  piezas.smsGasto = codigo.smsGasto;
+  piezas.whatsapp = codigo.whatsapp;
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
   // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
   const presentes = c.env.DB

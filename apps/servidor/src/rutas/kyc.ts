@@ -1,12 +1,12 @@
 import {
   CLAVE_PAISES,
-  COSTO_SMS_USD,
+  canalesPara,
+  gastoHoy,
   paisesApagados,
   presupuestoSmsDia,
-  smsCobradosHoy,
-  smsSaleHoy,
   topeCodigosDia,
 } from '../telefonoVuelta';
+import { presupuestoWhatsappDia, whatsappEncendido } from '../whatsapp';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { guardarFoto } from '../fotoLimpia';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
@@ -899,12 +899,18 @@ kyc.get('/admin/telefono-codigo', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
   const apagados = await paisesApagados(db);
+  const gasto = await gastoHoy(db);
+  // C-CODIGO-CANALES: por qué canales sale hoy el código en cada país (WhatsApp primero).
   const paises = await Promise.all(
-    PAISES_CODIGO.map(async ({ pais, prueba }) => ({
-      pais,
-      exigido: !apagados.has(pais),
-      smsSale: await smsSaleHoy(c.env, db, prueba),
-    })),
+    PAISES_CODIGO.map(async ({ pais, prueba }) => {
+      const canales = await canalesPara(c.env, db, prueba, gasto);
+      return {
+        pais,
+        exigido: !apagados.has(pais),
+        smsSale: canales.length > 0,
+        canales,
+      };
+    }),
   );
   const conteo = await db
     .prepare(
@@ -916,7 +922,8 @@ kyc.get('/admin/telefono-codigo', async (c) => {
     .first<{ codigos: number; pendientes: number; verificadas: number }>();
   const { results } = await db
     .prepare(
-      `SELECT id, nombre, rol, telefono, telefono_exigido_en AS exigido, telefono_verificado_en AS verificado
+      `SELECT id, nombre, rol, telefono, telefono_exigido_en AS exigido, telefono_verificado_en AS verificado,
+              (SELECT canal FROM codigos_telefono k WHERE k.usuario_id = usuarios.id) AS canal
          FROM usuarios
         WHERE telefono_exigido_en IS NOT NULL OR telefono_verificado_en >= datetime('now','-30 days')
         ORDER BY COALESCE(telefono_verificado_en, telefono_exigido_en) DESC LIMIT 50`,
@@ -928,8 +935,8 @@ kyc.get('/admin/telefono-codigo', async (c) => {
       telefono: string | null;
       exigido: string | null;
       verificado: string | null;
+      canal: string | null;
     }>();
-  const smsHoy = await smsCobradosHoy(db);
   return c.json({
     paises,
     codigosHoy: Number(conteo?.codigos ?? 0),
@@ -937,9 +944,13 @@ kyc.get('/admin/telefono-codigo', async (c) => {
     pendientes: Number(conteo?.pendientes ?? 0),
     verificadas7Dias: Number(conteo?.verificadas ?? 0),
     gasto: {
-      smsHoy,
-      usdHoy: Math.round(smsHoy * COSTO_SMS_USD * 100) / 100,
+      smsHoy: gasto.sms,
+      usdHoy: Math.round(gasto.smsUsd * 100) / 100,
       presupuestoUsd: presupuestoSmsDia(c.env),
+      whatsappHoy: gasto.whatsapp,
+      whatsappUsd: Math.round(gasto.whatsappUsd * 100) / 100,
+      whatsappPresupuestoUsd: presupuestoWhatsappDia(c.env),
+      whatsappEncendido: whatsappEncendido(c.env),
     },
     cuentas: results.map((r) => ({
       id: r.id,
@@ -951,6 +962,7 @@ kyc.get('/admin/telefono-codigo', async (c) => {
           .slice(-4) || null,
       exigido: r.exigido,
       verificado: r.verificado,
+      canal: r.canal,
     })),
   });
 });

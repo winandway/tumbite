@@ -336,6 +336,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'telefono_verificado_en', 'TEXT'],
   // C-TELEFONO-AL-REGISTRARSE (22 nov 2026): la cuenta nació en una app que exige confirmar el celular.
   ['usuarios', 'telefono_exigido_en', 'TEXT'],
+  // C-CODIGO-CANALES (23 nov 2026): por dónde salió el código (WhatsApp o SMS).
+  ['codigos_telefono', 'canal', 'TEXT'],
+  ['envios_codigo_telefono', 'canal', 'TEXT'],
   // C-CUPON-USOS (20 nov 2026): tope por número de usos de un cupón de Divoox.
   ['cupones_divoox', 'usos_maximos', 'INTEGER'],
   // C-SMS-CONSENTIMIENTO (9 nov 2026): la casilla de SMS (fecha, versión del texto y canal).

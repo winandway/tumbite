@@ -363,6 +363,8 @@
   "recorrido-celular-franja-es": [540, 1169],
   "recorrido-celular-listo-en": [540, 1169],
   "recorrido-celular-listo-es": [540, 1169],
+  "recorrido-celular-sms-en": [540, 1169],
+  "recorrido-celular-sms-es": [540, 1169],
   "recorrido-ciudad-juego-celular": [540, 1170],
   "recorrido-ciudad-juego-televisor": [540, 304, 1920, 1080, "ba5e89c4"],
   "recorrido-cliente-aviso-correo-en": [540, 1099, 1082, 2202, "bc68b2f2"],

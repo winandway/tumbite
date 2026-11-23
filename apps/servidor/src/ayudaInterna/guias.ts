@@ -2705,12 +2705,12 @@ const capCorreo = (
 const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'sms-code-at-sign-up',
-    titulo: 'El código por SMS al registrarse',
+    titulo: 'El código de verificación al registrarse',
     resumen:
-      'Las cuentas nuevas de clientes y conductores confirman su celular con un código de 6 números por SMS antes de usar la app. Desde Verificaciones, Configuración, ves quién lo confirmó, el gasto del día y apagas o enciendes la exigencia por país.',
+      'Las cuentas nuevas de clientes y conductores confirman su celular con un código de 6 números antes de usar la app: primero por WhatsApp (la cuenta oficial de Divoox) y, si no llega, por SMS. Desde Verificaciones, Configuración, ves quién lo confirmó y por qué canal, el gasto del día de cada canal y apagas o enciendes la exigencia por país.',
     explicacion: [
       'Al crear la cuenta en la app de Divoox o en Divoox Driver, la app muestra «Confirma tu celular» y manda el código sola. Mientras no lo confirme, la cuenta nueva no puede pedir ni conectarse (el servidor también lo frena). Al confirmarlo, el paso «teléfono» aparece en su actividad y en el embudo.',
-      'Solo se exige donde el SMS sale hoy: Venezuela con el proveedor local y Estados Unidos. Si el proveedor no tiene cupo, falla o se agota el presupuesto del día, la exigencia se quita sola y nadie queda esperando.',
+      'El código sale primero por WhatsApp. Si WhatsApp falla, el mismo código sale por SMS al momento; y si a la persona no le llega, en la pantalla tiene «Enviármelo por SMS». Solo se exige donde algún canal sale hoy. Si los canales no tienen cupo, fallan o se agota su presupuesto del día, la exigencia se quita sola y nadie queda esperando.',
       'Las cuentas que ya existían NO se bloquean: ven una franja arriba de la app para confirmarlo cuando quieran, que pueden cerrar.',
       'Topes contra robots y gastos: cada cuenta espera más entre un código y otro (1, 2, 5 y 15 minutos) y pide como mucho 5 al día; el mismo número recibe como mucho 5 al día aunque cambie de cuenta; la misma red, 10 al día; y en total 300 códigos al día. El canario de salud marca «smsGasto» en amarillo al 80 % del presupuesto diario y en tope al llegar.',
       'Si alguien escribió mal su número, lo cambia él mismo en la misma pantalla. Abrir y cerrar la app no le gasta códigos: mientras el último sirva, no se manda otro solo. Si el proveedor falla, ese envío no le cuenta.',
@@ -2719,18 +2719,18 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     capturas: [
       {
         archivo: 'celular-panel-es.webp',
-        alt: 'El bloque Código por SMS al registrarse con las casillas Exigir el código en Venezuela y en Estados Unidos, el gasto del día, los códigos enviados y la lista de las últimas cuentas con su estado.',
+        alt: 'El bloque Código de verificación al registrarse con las casillas Exigir el código en Venezuela y en Estados Unidos, por qué canal sale hoy en cada país, el gasto del día de SMS y de WhatsApp, los códigos enviados y la lista de las últimas cuentas con su canal y su estado.',
         pie: 'Interruptor por país, gasto del día, quién confirmó y «Confirmar a mano».',
       },
     ],
     preguntas: [
       '¿Cómo veo quién confirmó su celular?',
-      '¿Cómo apago el código por SMS en un país?',
+      '¿Cómo apago el código de verificación en un país?',
       '¿Qué hago si a alguien no le llega el código?',
     ],
     pasos: [
       'Abre Verificaciones y toca «Configuración».',
-      'Baja hasta «Código por SMS al registrarse».',
+      'Baja hasta «Código de verificación al registrarse».',
       'Mira la lista: «Falta confirmar» o «Confirmó el…», con los últimos cuatro números del celular.',
       'Para apagar la exigencia en un país, quita su casilla. Se guarda sola y vale al momento.',
       'A quien no le llega el SMS: compruébalo con la persona y toca «Confirmar a mano» en su fila.',
@@ -2741,10 +2741,10 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     id: 'sms-code-at-sign-up',
     titulo: 'The text code at sign-up',
     resumen:
-      'New customer and driver accounts confirm their cell phone with a 6-digit text code before using the app. In Verifications, Settings, you see who confirmed it and the day’s spend, and you turn the requirement on or off by country.',
+      'New customer and driver accounts confirm their cell phone with a 6-digit code before using the app: first on WhatsApp (Divoox’s official account) and, if it doesn’t arrive, by text. In Verifications, Settings, you see who confirmed it and on which channel, each channel’s spend for the day, and you turn the requirement on or off by country.',
     explicacion: [
       'When someone creates an account in the Divoox app or in Divoox Driver, the app shows “Confirm your cell phone” and sends the code on its own. Until it’s confirmed, the new account can’t order or go online (the server blocks it too). Once confirmed, the “phone” step shows up in their activity and in the funnel.',
-      'It’s only required where texts go out today: Venezuela through the local provider, and the United States. If the provider is out of quota, fails, or the day’s budget runs out, the requirement lifts on its own and nobody is left waiting.',
+      'The code goes out first on WhatsApp. If WhatsApp fails, the same code goes out by text right away; and if it still doesn’t arrive, the screen offers “Text it to me instead.” It’s only required where some channel works today. If the channels are out of quota, fail, or run out of their daily budget, the requirement lifts on its own and nobody is left waiting.',
       'Accounts that already existed are NOT blocked: they see a strip at the top of the app to confirm whenever they want, and they can close it.',
       'Caps against bots and spend: each account waits longer between codes (1, 2, 5 and 15 minutes) and gets at most 5 a day; the same number gets at most 5 a day even across accounts; the same network, 10 a day; and 300 codes a day in total. The health check marks “smsGasto” yellow at 80% of the daily budget and at the cap when it’s reached.',
       'If someone mistyped their number, they fix it themselves on the same screen. Opening and closing the app doesn’t use up codes: while the last one is still good, no new one is sent on its own. If the provider fails, that send doesn’t count against them.',
@@ -2753,18 +2753,18 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     capturas: [
       {
         archivo: 'celular-panel-en.webp',
-        alt: 'The Text code at sign-up block with the Require the code in Venezuela and in United States checkboxes, the day’s spend, codes sent, and the list of latest accounts with their status.',
+        alt: 'The Verification code at sign-up block with the Require the code in Venezuela and in United States checkboxes, which channel the code goes out on today in each country, the day’s text and WhatsApp spend, codes sent, and the list of latest accounts with their channel and status.',
         pie: 'Switch by country, the day’s spend, who confirmed, and “Confirm manually.”',
       },
     ],
     preguntas: [
       'How do I see who confirmed their cell phone?',
-      'How do I turn off the text code in a country?',
+      'How do I turn off the verification code in a country?',
       'What do I do if someone isn’t getting the code?',
     ],
     pasos: [
       'Open Verifications and tap “Settings.”',
-      'Scroll to “Text code at sign-up.”',
+      'Scroll to “Verification code at sign-up.”',
       'Check the list: “Not confirmed yet” or “Confirmed on…,” with the last four digits of the cell phone.',
       'To turn off the requirement in a country, uncheck it. It saves on its own and applies right away.',
       'For someone who isn’t getting the text: check with them and tap “Confirm manually” on their row.',

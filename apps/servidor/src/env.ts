@@ -157,6 +157,37 @@ export const esquemaEnv = z.object({
    */
   TELEFONO_CODIGO_TOPE_DIA: z.string().optional(),
   SMS_PRESUPUESTO_DIA_USD: z.string().optional(),
+  /**
+   * C-CODIGO-WHATSAPP (23 nov 2026, decisión de Richard por Gerencia): el código de verificación sale
+   * PRIMERO por WhatsApp y el SMS queda de respaldo. Nace APAGADO: solo con WHATSAPP_ENCENDIDO=si y las
+   * credenciales del proveedor elegido (WHATSAPP_PROVEEDOR: «meta», la API de la nube de Meta, o
+   * «twilio», WhatsApp por Twilio). WHATSAPP_PREFIJOS: a qué países (de fábrica «+1,+58»).
+   * WHATSAPP_PRESUPUESTO_DIA_USD: presupuesto diario del canal (de fábrica 10).
+   * META_WHATSAPP_TOKEN es secreto (token permanente de usuario del sistema); los identificadores no.
+   */
+  WHATSAPP_ENCENDIDO: z.string().optional(),
+  WHATSAPP_PROVEEDOR: z.string().optional(),
+  WHATSAPP_PREFIJOS: z.string().optional(),
+  WHATSAPP_PRESUPUESTO_DIA_USD: z.string().optional(),
+  META_WHATSAPP_TOKEN: z.string().optional(),
+  META_WHATSAPP_PHONE_ID: z.string().optional(),
+  META_WHATSAPP_VERSION: z.string().optional(),
+  META_WHATSAPP_PLANTILLA: z.string().optional(),
+  /** Solo localhost (el simulador del recorrido); en producción se ignora. */
+  META_WHATSAPP_API_URL: z.string().optional(),
+  TWILIO_WHATSAPP_FROM: z.string().optional(),
+  TWILIO_WHATSAPP_PLANTILLA_ES: z.string().optional(),
+  TWILIO_WHATSAPP_PLANTILLA_EN: z.string().optional(),
+  /**
+   * C-SMS-PROVEEDOR-POR-PAIS: el proveedor de SMS de cada país («VE:labsmobile,US:twilio»); sin
+   * entrada, SMS_PROVEEDOR o Twilio. LabsMobile (API REST con usuario y token) queda listo y apagado
+   * hasta tener cuenta: LABSMOBILE_USUARIO, LABSMOBILE_TOKEN (secreto), LABSMOBILE_REMITENTE.
+   */
+  SMS_PROVEEDORES_POR_PAIS: z.string().optional(),
+  LABSMOBILE_USUARIO: z.string().optional(),
+  LABSMOBILE_TOKEN: z.string().optional(),
+  LABSMOBILE_REMITENTE: z.string().optional(),
+  LABSMOBILE_API_URL: z.string().optional(),
   /** Solo para el recorrido y las pruebas: el proveedor simulado en localhost. */
   SMSMASIVO_API_URL: z.string().optional(),
   /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */

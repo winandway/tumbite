@@ -1,6 +1,7 @@
 import {
   VERSION_CONSENTIMIENTO_SMS,
   aE164,
+  paisDePrefijo,
   type CanalConsentimientoSms,
 } from '@tumbite/compartido';
 import type { Env } from './env';
@@ -88,7 +89,11 @@ export function usarTiempoTwilio(ms: number | null) {
   tiempoTwilio = ms ?? TIEMPO_TWILIO_MS;
 }
 
-async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<string, string>) {
+export async function twilio(
+  env: Env,
+  recurso: 'Messages' | 'Calls',
+  datos: Record<string, string>,
+) {
   const cuerpo = new URLSearchParams(datos).toString();
   const c = credencialTwilio(env);
   const auth = btoa(`${c?.usuario ?? ''}:${c?.clave ?? ''}`);
@@ -194,10 +199,89 @@ const TWILIO_SMS: ProveedorSms = {
   enviar: (env, para, texto) =>
     twilio(env, 'Messages', { To: para, From: remitente(env, para), Body: texto }),
 };
-const PROVEEDORES_SMS = new Map<string, ProveedorSms>([['twilio', TWILIO_SMS]]);
+/** El país de un celular en formato internacional (+58… → VE, +1… → US). */
+export function paisDeE164(para: string): string | null {
+  const d = para.replace(/\D/g, '');
+  for (const largo of [1, 2, 3]) {
+    const p = paisDePrefijo(d.slice(0, largo));
+    if (p) return p;
+  }
+  return null;
+}
+
+/** LabsMobile: la dirección fija del proveedor (solo se cambia a localhost para un simulador). */
+function baseLabsmobile(env: Env) {
+  const real = 'https://api.labsmobile.com';
+  try {
+    const o = new URL(env.LABSMOBILE_API_URL ?? real);
+    return o.hostname === 'localhost' || o.hostname === '127.0.0.1' ? o.origin : real;
+  } catch {
+    return real;
+  }
+}
+export const labsmobileConfigurado = (env: Env) =>
+  Boolean(env.LABSMOBILE_USUARIO && env.LABSMOBILE_TOKEN);
+/**
+ * C-SMS-PROVEEDOR-POR-PAIS (23 nov 2026, Gerencia): LabsMobile, API REST con usuario y token. Queda
+ * construido y probado con simulación; se enciende poniendo sus credenciales y su país en
+ * SMS_PROVEEDORES_POR_PAIS («VE:labsmobile»). Responde «code: 0» cuando lo acepta.
+ */
+const LABSMOBILE_SMS: ProveedorSms = {
+  nombre: 'labsmobile',
+  enviar: async (env, para, texto) => {
+    const res = await fetch(`${baseLabsmobile(env)}/json/send`, {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${btoa(`${env.LABSMOBILE_USUARIO ?? ''}:${env.LABSMOBILE_TOKEN ?? ''}`)}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: texto,
+        tpoa: env.LABSMOBILE_REMITENTE ?? 'Divoox',
+        recipient: [{ msisdn: para.replace(/\D/g, '') }],
+      }),
+      signal: AbortSignal.timeout(tiempoTwilio),
+    });
+    const r = (await res.json().catch(() => null)) as {
+      code?: string | number;
+      message?: string;
+      subid?: string;
+    } | null;
+    if (!res.ok || String(r?.code) !== '0')
+      throw new Error(`LabsMobile: ${r?.message ?? `respondió ${res.status}`}`);
+    return r?.subid ?? 'labsmobile';
+  },
+};
+const PROVEEDORES_SMS = new Map<string, ProveedorSms>([
+  ['twilio', TWILIO_SMS],
+  ['labsmobile', LABSMOBILE_SMS],
+]);
 export function proveedorSms(env: Env): ProveedorSms {
   return PROVEEDORES_SMS.get(env.SMS_PROVEEDOR ?? 'twilio') ?? TWILIO_SMS;
 }
+/** «VE:labsmobile,US:twilio» → el proveedor de ese país (o null si no tiene uno propio). */
+function proveedorDelPais(env: Env, pais: string | null): string | null {
+  if (!pais) return null;
+  for (const par of (env.SMS_PROVEEDORES_POR_PAIS ?? '').split(',')) {
+    const [p, nombre] = par.split(':').map((x) => x.trim());
+    if (p?.toUpperCase() === pais && nombre) return nombre.toLowerCase();
+  }
+  return null;
+}
+/**
+ * C-SMS-PROVEEDOR-POR-PAIS: el proveedor de SMS para ESTE número. Un proveedor propio del país que no
+ * está configurado no cuenta (se cae a lo de siempre).
+ */
+export function proveedorSmsPara(env: Env, para: string): ProveedorSms {
+  const nombre = proveedorDelPais(env, paisDeE164(para));
+  if (nombre === 'labsmobile' && labsmobileConfigurado(env)) return LABSMOBILE_SMS;
+  if (nombre === 'twilio') return TWILIO_SMS;
+  return proveedorSms(env);
+}
+/** ¿Este número sale por un proveedor propio de su país (no Twilio)? Entonces no mira SMS_PREFIJOS. */
+export const vaPorProveedorDelPais = (env: Env, para: string) =>
+  proveedorSmsPara(env, para).nombre !== 'twilio' &&
+  proveedorDelPais(env, paisDeE164(para)) !== null;
 
 /** Manda un SMS si Twilio está configurado y la persona tiene teléfono. Nunca frena la operación. */
 export async function enviarSms(
@@ -218,7 +302,9 @@ export async function enviarSms(
   // C-SMS-VENEZUELA: a +58 sale por el proveedor local SOLO si está encendido; si no, lo de siempre.
   const local = vaPorSmsMasivo(env, para);
   const dePanico = SMS_DE_PANICO.has(a.tipo);
-  if (!local) {
+  // C-SMS-PROVEEDOR-POR-PAIS: un proveedor propio del país (LabsMobile) no depende de Twilio.
+  const delPais = !local && vaPorProveedorDelPais(env, para);
+  if (!local && !delPais) {
     if (!smsConfigurado(env)) return false;
     // C-PANICO-ZONA: el SMS de pánico al responsable de la zona sale a cualquier país (también +58).
     if (!dePanico && !destinoPermitido(env, para)) return false;
@@ -256,7 +342,7 @@ export async function enviarSms(
   // Por dónde se intenta, en orden. El pánico a Venezuela tiene respaldo en Twilio si el local falla.
   const caminos: string[] = local
     ? [PROVEEDOR_SMSMASIVO, ...(dePanico && smsConfigurado(env) ? [proveedorSms(env).nombre] : [])]
-    : [proveedorSms(env).nombre];
+    : [proveedorSmsPara(env, para).nombre];
   for (const camino of caminos) {
     try {
       let referencia: string;
@@ -282,7 +368,15 @@ export async function enviarSms(
           throw e;
         }
       } else {
-        referencia = await proveedorSms(env).enviar(env, para, a.texto);
+        const prov = PROVEEDORES_SMS.get(camino) ?? proveedorSmsPara(env, para);
+        // Fuera de Twilio, el texto también pasa la compuerta de un solo SMS sin acentos ni montos.
+        const listo =
+          prov.nombre === 'twilio' ? null : textoParaSmsVenezuela(a.textoCorto ?? a.texto);
+        if (listo?.bloqueado) {
+          bloqueado = listo.bloqueado;
+          throw new Error(`el SMS «${a.tipo}» no sale por ${prov.nombre}: ${listo.bloqueado}`);
+        }
+        referencia = await prov.enviar(env, para, listo?.texto ?? a.texto);
       }
       await db
         .prepare(

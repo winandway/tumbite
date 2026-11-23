@@ -16,7 +16,7 @@ const T = {
     reglas: 'Reglas para conductores',
     reparto: 'Reparto de Comida',
     comprobacion: 'Comprobación automática: gasto, tope y acierto',
-    celular: 'Código por SMS al registrarse',
+    celular: 'Código de verificación al registrarse',
   },
   en: {
     volver: '← Verifications',
@@ -26,7 +26,7 @@ const T = {
     reglas: 'Rules for drivers',
     reparto: 'Food dispatch',
     comprobacion: 'Automatic check: spend, cap and accuracy',
-    celular: 'Text code at sign-up',
+    celular: 'Verification code at sign-up',
   },
 };
 

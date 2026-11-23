@@ -2496,21 +2496,21 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "account/verify-your-phone",
   "titulo": "Confirma tu celular",
-  "resumen": "Al crear tu cuenta en la app de Divoox o en Divoox Driver te mandamos un código de 6 números por SMS. Lo escribes (o tu teléfono lo pega solo) y listo: tu cuenta queda protegida.",
+  "resumen": "Al crear tu cuenta en la app de Divoox o en Divoox Driver te enviamos un código de 6 números por WhatsApp (o por SMS, si lo prefieres). Lo escribes o lo copias y listo: tu cuenta queda protegida.",
   "preguntas": [
-   "¿Por qué me piden un código por SMS al crear mi cuenta?",
+   "¿Por qué me piden un código por WhatsApp o SMS al crear mi cuenta?",
    "¿Qué hago si no me llega el código?",
    "¿Cómo cambio el número si lo escribí mal?",
    "¿Tengo que confirmar mi celular si ya tenía cuenta?"
   ],
   "pasos": [
    "Crea tu cuenta en la app de Divoox o en Divoox Driver con tu número de celular.",
-   "En «Confirma tu celular», espera el SMS de Divoox con tu código de 6 números.",
-   "Toca el código encima del teclado o escríbelo. Se confirma solo al completar los 6 números.",
-   "Si no llega, toca «Mandar otro código» cuando la app te lo permita, o cambia el número si estaba mal.",
+   "En «Confirma tu celular», abre el mensaje de Divoox en WhatsApp con tu código de 6 números.",
+   "Toca «Copiar código» y pégalo en la app, o escríbelo. Se confirma solo al completar los 6 números.",
+   "Si no llega, toca «Enviármelo por SMS» cuando la app te lo permita, o cambia el número si estaba mal.",
    "Cuando veas «Tu celular quedó confirmado», toca «Continuar» y sigue usando la app."
   ],
-  "cuerpo": "Confirmar el celular protege tu cuenta: así sabemos que el número es tuyo, podemos avisarte de tus pedidos y viajes, y nadie puede crear cuentas a tu nombre. Apenas creas tu cuenta, la app te muestra «Confirma tu celular» y te manda el código al número que escribiste. En la mayoría de los teléfonos el código aparece solo encima del teclado: lo tocas y se confirma. El código vale 10 minutos. Si no te llega, espera unos segundos y toca «Mandar otro código»: la app te dice cuánto falta para poder pedir otro. Si escribiste mal el número, toca «¿Número equivocado? Cámbialo», corrígelo y te mandamos el código al número nuevo. Si después de varios intentos sigue sin llegar, en la misma pantalla tienes cómo escribirnos. Nunca te quedas sin salida. Si ya tenías tu cuenta de antes, no tienes que hacer nada para seguir usándola. Puedes confirmar tu celular cuando quieras desde el aviso de arriba de la app. Nunca te vamos a pedir ese código por teléfono, por chat ni por correo. No se lo des a nadie."
+  "cuerpo": "Confirmar el celular protege tu cuenta: así sabemos que el número es tuyo, podemos avisarte de tus pedidos y viajes, y nadie puede crear cuentas a tu nombre. Apenas creas tu cuenta, la app te muestra «Confirma tu celular» y te envía el código por WhatsApp, desde la cuenta oficial de Divoox, al número que escribiste. En el mensaje toca «Copiar código» y pégalo en la app. Si WhatsApp no está disponible, el código te llega por SMS, y en muchos teléfonos aparece solo encima del teclado. El código vale 10 minutos. Si no te llega por WhatsApp, espera unos segundos y toca «Enviármelo por SMS»: la app te dice cuánto falta para poder pedirlo. Si escribiste mal el número, toca «¿Número equivocado? Cámbialo», corrígelo y te enviamos el código al número nuevo. Si después de varios intentos sigue sin llegar, en la misma pantalla tienes cómo escribirnos. Nunca te quedas sin salida. Si ya tenías tu cuenta de antes, no tienes que hacer nada para seguir usándola. Puedes confirmar tu celular cuando quieras desde el aviso de arriba de la app. Nunca te vamos a pedir ese código por teléfono, por chat ni por correo. No se lo des a nadie."
  },
  {
   "idioma": "es",
@@ -5026,21 +5026,21 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "en",
   "ruta": "account/verify-your-phone",
   "titulo": "Confirm your cell phone",
-  "resumen": "When you create your account in the Divoox app or in Divoox Driver, we text you a 6-digit code. Enter it (or let your phone fill it in) and you’re set: your account is protected.",
+  "resumen": "When you create your account in the Divoox app or in Divoox Driver, we send you a 6-digit code on WhatsApp (or by text, if you prefer). Enter it or copy it and you’re set: your account is protected.",
   "preguntas": [
-   "Why do I get a text code when I create my account?",
+   "Why do I get a code on WhatsApp or by text when I create my account?",
    "What do I do if the code doesn’t arrive?",
    "How do I change the number if I typed it wrong?",
    "Do I have to confirm my cell phone if I already had an account?"
   ],
   "pasos": [
    "Create your account in the Divoox app or in Divoox Driver with your cell phone number.",
-   "On “Confirm your cell phone,” wait for the Divoox text with your 6-digit code.",
-   "Tap the code above the keyboard or type it. It confirms on its own once all 6 digits are in.",
-   "If it doesn’t arrive, tap “Send another code” when the app lets you, or change the number if it was wrong.",
+   "On “Confirm your cell phone,” open the Divoox message on WhatsApp with your 6-digit code.",
+   "Tap “Copy code” and paste it in the app, or type it. It confirms on its own once all 6 digits are in.",
+   "If it doesn’t arrive, tap “Text it to me instead” when the app lets you, or change the number if it was wrong.",
    "When you see “Your cell phone is confirmed,” tap “Continue” and keep using the app."
   ],
-  "cuerpo": "Confirming your cell phone protects your account: it tells us the number is yours, lets us update you about your orders and rides, and keeps anyone from opening accounts in your name. Right after you create your account, the app shows “Confirm your cell phone” and texts the code to the number you entered. On most phones the code shows up above the keyboard: tap it and it’s confirmed. The code is good for 10 minutes. If it doesn’t arrive, wait a few seconds and tap “Send another code”: the app tells you how long until you can request another one. If you mistyped your number, tap “Wrong number? Change it,” fix it, and we’ll text the code to the new number. If it still doesn’t arrive after a few tries, the same screen shows you how to reach us. You’re never stuck. If you already had an account, you don’t need to do anything to keep using it. You can confirm your cell phone anytime from the notice at the top of the app. We will never ask you for that code by phone, chat or email. Don’t share it with anyone."
+  "cuerpo": "Confirming your cell phone protects your account: it tells us the number is yours, lets us update you about your orders and rides, and keeps anyone from opening accounts in your name. Right after you create your account, the app shows “Confirm your cell phone” and sends the code on WhatsApp, from Divoox’s official account, to the number you entered. In the message, tap “Copy code” and paste it in the app. If WhatsApp isn’t available, the code comes by text, and on many phones it shows up above the keyboard. The code is good for 10 minutes. If it doesn’t arrive on WhatsApp, wait a few seconds and tap “Text it to me instead”: the app tells you how long until you can request it. If you mistyped your number, tap “Wrong number? Change it,” fix it, and we’ll send the code to the new number. If it still doesn’t arrive after a few tries, the same screen shows you how to reach us. You’re never stuck. If you already had an account, you don’t need to do anything to keep using it. You can confirm your cell phone anytime from the notice at the top of the app. We will never ask you for that code by phone, chat or email. Don’t share it with anyone."
  },
  {
   "idioma": "en",

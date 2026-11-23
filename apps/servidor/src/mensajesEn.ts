@@ -356,6 +356,19 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your cell phone is already confirmed. To change it, contact support.',
   ],
   ['Escribe tu número de celular.', 'Enter your cell phone number.'],
+  // C-CODIGO-CANALES
+  [
+    'Ahora no podemos mandarte el código por SMS. Escribe a soporte.',
+    'We can’t text you the code right now. Please contact support.',
+  ],
+  [
+    'Ahora no podemos mandarte el código. Inténtalo en unos minutos o escribe a soporte.',
+    'We can’t send you the code right now. Try again in a few minutes or contact support.',
+  ],
+  [
+    'No pudimos mandar el código. Inténtalo en unos minutos o escribe a soporte.',
+    'We couldn’t send the code. Try again in a few minutes or contact support.',
+  ],
   ['Espera un momento para pedir otro código.', 'Wait a moment before requesting another code.'],
   ['Esa cuenta ya tiene su celular confirmado.', 'That account’s cell phone is already confirmed.'],
   ['Esa cuenta no existe.', 'That account doesn’t exist.'],

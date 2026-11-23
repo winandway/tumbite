@@ -3632,7 +3632,9 @@ CREATE TABLE IF NOT EXISTS codigos_telefono (
   codigo_hash TEXT NOT NULL,
   intentos INTEGER NOT NULL DEFAULT 0,
   enviados_hoy INTEGER NOT NULL DEFAULT 1,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-CODIGO-CANALES: por dónde salió el último código («whatsapp» o «sms»; también en COLUMNAS).
+  canal TEXT
 );
 -- C-TELEFONO-TOPES (22 nov 2026): cada código por SMS que salió, para los topes por número, por red (IP) y
 -- del día, que valen aunque la persona cambie de cuenta. Una fila por envío; los índices son los que leen los topes.
@@ -3641,7 +3643,9 @@ CREATE TABLE IF NOT EXISTS envios_codigo_telefono (
   usuario_id TEXT NOT NULL,
   telefono TEXT NOT NULL,
   ip TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-CODIGO-CANALES: por dónde salió («whatsapp» o «sms»; también en COLUMNAS).
+  canal TEXT
 );
 CREATE INDEX IF NOT EXISTS envios_codigo_telefono_numero ON envios_codigo_telefono(telefono, creado_en);
 CREATE INDEX IF NOT EXISTS envios_codigo_telefono_ip ON envios_codigo_telefono(ip, creado_en);

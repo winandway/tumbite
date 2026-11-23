@@ -11,12 +11,19 @@ import { AyudaAqui } from './AyudaAqui';
  */
 const T = {
   es: {
-    titulo: 'Código por SMS al registrarse',
+    titulo: 'Código de verificación al registrarse',
     detalle:
-      'Las cuentas nuevas de clientes y conductores confirman su celular con un código por SMS. Si en un país lo apagas, nadie queda esperando: la exigencia se quita al momento. Las cuentas que ya existían nunca se bloquean.',
+      'Las cuentas nuevas de clientes y conductores confirman su celular con un código: primero por WhatsApp y, si no llega, por SMS. Si en un país lo apagas, nadie queda esperando: la exigencia se quita al momento. Las cuentas que ya existían nunca se bloquean.',
     exigir: (p: string) => `Exigir el código en ${p}`,
     saleHoy: 'El SMS sale hoy',
-    noSale: 'Hoy el SMS no sale: no se exige a nadie',
+    noSale: 'Hoy el código no sale por ningún canal: no se exige a nadie',
+    canalesHoy: (c: string[]) =>
+      `Hoy sale por: ${c.map((x) => (x === 'whatsapp' ? 'WhatsApp' : 'SMS')).join(' y luego ')}`,
+    whatsapp: (n: number, usd: number, tope: number, encendido: boolean) =>
+      encendido
+        ? `WhatsApp en 24 horas: ${n} (unos ${usd.toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} de ${tope} dólares de presupuesto)`
+        : 'WhatsApp: apagado (falta conectar la cuenta oficial). El código sale por SMS.',
+    canal: 'Canal',
     gasto: (sms: number, usd: number, tope: number) =>
       `SMS cobrados en 24 horas: ${sms} (unos ${usd.toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} de ${tope} dólares de presupuesto)`,
     codigos: (n: number, tope: number) => `Códigos enviados en 24 horas: ${n} de ${tope}`,
@@ -38,12 +45,19 @@ const T = {
     guardado: 'Guardado.',
   },
   en: {
-    titulo: 'Text code at sign-up',
+    titulo: 'Verification code at sign-up',
     detalle:
-      'New customer and driver accounts confirm their cell phone with a text code. If you turn it off in a country, nobody is left waiting: the requirement is lifted right away. Accounts that already existed are never blocked.',
+      'New customer and driver accounts confirm their cell phone with a code: first on WhatsApp and, if it doesn’t arrive, by text. If you turn it off in a country, nobody is left waiting: the requirement is lifted right away. Accounts that already existed are never blocked.',
     exigir: (p: string) => `Require the code in ${p}`,
     saleHoy: 'Texts are going out today',
-    noSale: 'Texts can’t go out today: nobody is required to confirm',
+    noSale: 'The code can’t go out on any channel today: nobody is required to confirm',
+    canalesHoy: (c: string[]) =>
+      `Going out today by: ${c.map((x) => (x === 'whatsapp' ? 'WhatsApp' : 'text')).join(', then ')}`,
+    whatsapp: (n: number, usd: number, tope: number, encendido: boolean) =>
+      encendido
+        ? `WhatsApp in 24 hours: ${n} (about ${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} of a ${tope}-dollar budget)`
+        : 'WhatsApp: off (the official account isn’t connected yet). The code goes out by text.',
+    canal: 'Channel',
     gasto: (sms: number, usd: number, tope: number) =>
       `Texts billed in 24 hours: ${sms} (about ${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} of a ${tope}-dollar budget)`,
     codigos: (n: number, tope: number) => `Codes sent in 24 hours: ${n} of ${tope}`,
@@ -67,12 +81,20 @@ const T = {
 };
 
 type Datos = {
-  paises: { pais: string; exigido: boolean; smsSale: boolean }[];
+  paises: { pais: string; exigido: boolean; smsSale: boolean; canales?: string[] }[];
   codigosHoy: number;
   topeCodigos: number;
   pendientes: number;
   verificadas7Dias: number;
-  gasto: { smsHoy: number; usdHoy: number; presupuestoUsd: number };
+  gasto: {
+    smsHoy: number;
+    usdHoy: number;
+    presupuestoUsd: number;
+    whatsappHoy?: number;
+    whatsappUsd?: number;
+    whatsappPresupuestoUsd?: number;
+    whatsappEncendido?: boolean;
+  };
   cuentas: {
     id: string;
     nombre: string;
@@ -80,6 +102,7 @@ type Datos = {
     ultimos: string | null;
     exigido: string | null;
     verificado: string | null;
+    canal?: string | null;
   }[];
 };
 
@@ -127,10 +150,20 @@ export function VerificacionCelular({ idioma }: { idioma: Idioma }) {
             />{' '}
             {t.exigir(nombrePais(p.pais, idioma))}
           </label>
-          <p className="suave">{p.smsSale ? t.saleHoy : t.noSale}</p>
+          <p className="suave">
+            {p.canales?.length ? t.canalesHoy(p.canales) : p.smsSale ? t.saleHoy : t.noSale}
+          </p>
         </div>
       ))}
       <p>{t.gasto(datos.gasto.smsHoy, datos.gasto.usdHoy, datos.gasto.presupuestoUsd)}</p>
+      <p>
+        {t.whatsapp(
+          datos.gasto.whatsappHoy ?? 0,
+          datos.gasto.whatsappUsd ?? 0,
+          datos.gasto.whatsappPresupuestoUsd ?? 0,
+          datos.gasto.whatsappEncendido === true,
+        )}
+      </p>
       <p>{t.codigos(datos.codigosHoy, datos.topeCodigos)}</p>
       <p>
         {t.pendientes(datos.pendientes)} · {t.verificadas(datos.verificadas7Dias)}
@@ -143,6 +176,7 @@ export function VerificacionCelular({ idioma }: { idioma: Idioma }) {
               <th>{t.nombre}</th>
               <th>{t.tipo}</th>
               <th>{t.celular}</th>
+              <th>{t.canal}</th>
               <th>{t.estado}</th>
             </tr>
           </thead>
@@ -152,6 +186,7 @@ export function VerificacionCelular({ idioma }: { idioma: Idioma }) {
                 <td>{c.nombre}</td>
                 <td>{c.rol === 'repartidor' ? t.conductor : t.cliente}</td>
                 <td>{c.ultimos ? `•••• ${c.ultimos}` : '—'}</td>
+                <td>{c.canal === 'whatsapp' ? 'WhatsApp' : c.canal === 'sms' ? 'SMS' : '—'}</td>
                 <td>
                   {c.verificado ? (
                     t.confirmado(fecha(c.verificado, idioma))

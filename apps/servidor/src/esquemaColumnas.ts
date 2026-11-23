@@ -2318,14 +2318,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "codigo_hash",
     "intentos",
     "enviados_hoy",
-    "creado_en"
+    "creado_en",
+    "canal"
   ],
   "envios_codigo_telefono": [
     "id",
     "usuario_id",
     "telefono",
     "ip",
-    "creado_en"
+    "creado_en",
+    "canal"
   ],
   "invitaciones_conductor": [
     "id",

@@ -33,6 +33,10 @@ describe('C-TELEFONO-AL-REGISTRARSE · la puerta del celular en las apps', () =>
     expect(s).toMatch(/salir\(\)/);
     // Las cuentas viejas: franja que se cierra, nunca una ventana.
     expect(s).toMatch(/franja-celular/);
+    // C-CODIGO-CANALES: dice si llegó por WhatsApp y ofrece «Enviármelo por SMS».
+    expect(s).toMatch(/codigo-por-sms/);
+    expect(s).toMatch(/Enviármelo por SMS/);
+    expect(s).toMatch(/por WhatsApp al número/);
     expect(s).not.toMatch(/<Modal/);
   });
 });

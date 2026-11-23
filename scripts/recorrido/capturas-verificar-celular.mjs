@@ -1,10 +1,11 @@
-/* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion local: carpetas fijas del repositorio y llaves de idioma fijas «es» y «en»; `localStorage` corre dentro del navegador */
+/* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection, security/detect-non-literal-regexp -- nombres de variables fijos de este guion; guion local: carpetas fijas del repositorio y llaves de idioma fijas «es» y «en»; `localStorage` corre dentro del navegador */
 // C-TELEFONO-AL-REGISTRARSE (22 nov 2026) — Venezuela y Estados Unidos. Prueba EN PANTALLA, con la app
 // web real del cliente (/app) contra el servidor LOCAL del recorrido (.recorrido; antes:
 // PUERTO_RECORRIDO=8797 PUERTO_TWILIO=12127 node scripts/recorrido/preparar.mjs), de la puerta del
 // celular. No solo captura: cada paso lleva su comprobación y, si falla, el guion se para con el motivo.
-//   1. Cuenta nueva (con la puerta): «Confirma tu celular» sale sola y el SMS (simulado aquí mismo)
-//      trae el código. Se cambia el número, llega el código nuevo, se escribe y sale «confirmado».
+//   1. Cuenta nueva (con la puerta): «Confirma tu celular» sale sola y el código llega por WhatsApp
+//      (la cuenta oficial, simulada aquí mismo). Se cambia el número, llega el código nuevo por
+//      WhatsApp; «Enviármelo por SMS» lo manda por SMS (simulado), se escribe y sale «confirmado».
 //   2. Cuenta vieja: entra a la app y ve solo la franja suave, que se puede cerrar.
 //   3. El bloque del panel (interruptor por país y quién confirmó), para la ayuda interna.
 // Español con celulares de Venezuela; inglés con celulares de Estados Unidos (C-CAPTURAS-POR-IDIOMA).
@@ -28,6 +29,7 @@ const SECRETO = DATOS.relojSecreto;
 const SALIDA = join(RAIZ, 'docs', 'capturas', 'verificar-celular');
 const DOCS = join(RAIZ, 'apps', 'panel', 'public', 'docs');
 const PUERTO_SMS = 12127;
+const PUERTO_META = 12128;
 for (const d of [SALIDA, DOCS, ORIGINALES_PRIVADAS, CAPTURAS_PRIVADAS])
   mkdirSync(d, { recursive: true });
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -45,10 +47,35 @@ const simulador = createServer((req, res) => {
   });
 }).listen(PUERTO_SMS);
 
-// En este servidor local los SMS a Venezuela también salen por el simulador.
-const vars = readFileSync(join(RAIZ, '.recorrido', '.dev.vars'), 'utf8');
-if (!/^SMS_PREFIJOS=/m.test(vars))
-  appendFileSync(join(RAIZ, '.recorrido', '.dev.vars'), '\nSMS_PREFIJOS=+1,+58\n');
+// La cuenta oficial de WhatsApp simulada (la API de la nube de Meta): guarda cada código enviado.
+const whatsapps = [];
+const simuladorMeta = createServer((req, res) => {
+  let cuerpo = '';
+  req.on('data', (d) => (cuerpo += d));
+  req.on('end', () => {
+    const b = JSON.parse(cuerpo || '{}');
+    whatsapps.push({
+      para: `+${b.to ?? ''}`,
+      codigo: b.template?.components?.[0]?.parameters?.[0]?.text ?? '',
+    });
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ messages: [{ id: `wamid.sim${whatsapps.length}` }] }));
+  });
+}).listen(PUERTO_META);
+
+// En este servidor local: SMS a Venezuela por el simulador y WhatsApp encendido contra el simulador.
+const ARCHIVO_VARS = join(RAIZ, '.recorrido', '.dev.vars');
+const VARS_LOCALES = {
+  SMS_PREFIJOS: '+1,+58',
+  WHATSAPP_ENCENDIDO: 'si',
+  WHATSAPP_PREFIJOS: '+1,+58',
+  META_WHATSAPP_TOKEN: 'token-del-simulador-local',
+  META_WHATSAPP_PHONE_ID: '1000000000000001',
+  META_WHATSAPP_API_URL: `http://localhost:${PUERTO_META}`,
+};
+for (const [k, v] of Object.entries(VARS_LOCALES))
+  if (!new RegExp(`^${k}=`, 'm').test(readFileSync(ARCHIVO_VARS, 'utf8')))
+    appendFileSync(ARCHIVO_VARS, `\n${k}=${v}\n`);
 const servidor = spawn(
   'npx',
   [
@@ -101,6 +128,9 @@ const L = {
     bueno: '04145550142',
     viejo: '+584145550177',
     titulo: 'Confirma tu celular',
+    porWhatsapp: 'por WhatsApp al número que termina en 0142',
+    porSms: 'Enviármelo por SMS',
+    porSmsEnviado: 'por SMS al número que termina en 0142',
     cambiar: '¿Número equivocado? Cámbialo',
     numero: 'Número de celular',
     guardar: 'Guardar y mandar el código',
@@ -119,6 +149,9 @@ const L = {
     bueno: '2485550142',
     viejo: '+12485550177',
     titulo: 'Confirm your cell phone',
+    porWhatsapp: 'on WhatsApp to the number ending in 0142',
+    porSms: 'Text it to me instead',
+    porSmsEnviado: 'texted a 6-digit code to the number ending in 0142',
     cambiar: 'Wrong number? Change it',
     numero: 'Cell phone number',
     guardar: 'Save and send the code',
@@ -228,24 +261,20 @@ try {
       webp(nombre, idioma);
     };
 
-    // 1. Cuenta nueva con la puerta.
+    // 1. Cuenta nueva con la puerta: el código sale solo, por WhatsApp.
     const nueva = await crear(T.nombre, T.malo, true);
-    const antes = mensajes.length;
+    const antesWa = whatsapps.length;
+    const antesSms = mensajes.length;
     const ctx = await contexto(nueva);
     const p = await ctx.newPage();
     await p.goto('/app/account');
     await p.getByTestId('confirma-tu-celular').waitFor({ timeout: 60_000 });
     await p.getByText(T.titulo).first().waitFor();
-    for (let i = 0; i < 20 && mensajes.length === antes; i++) await espera(300);
+    for (let i = 0; i < 20 && whatsapps.length === antesWa; i++) await espera(300);
     comprobar(
-      mensajes.length === antes + 1,
-      'el código sale solo',
-      mensajes.at(-1)?.para ?? 'ninguno',
-    );
-    comprobar(
-      /^Divoox: /.test(mensajes.at(-1)?.texto ?? ''),
-      'el SMS empieza con «Divoox:»',
-      mensajes.at(-1)?.texto.replace(/\d{6}/, '••••••') ?? '',
+      whatsapps.length === antesWa + 1 && mensajes.length === antesSms,
+      'el código sale solo por WhatsApp (no por SMS)',
+      whatsapps.at(-1)?.para ?? 'ninguno',
     );
     // Número equivocado: se cambia ahí mismo.
     await p.getByText(T.cambiar).click();
@@ -260,16 +289,38 @@ try {
     );
     await p.getByText(T.guardar).click();
     await p.getByTestId('codigo-celular').waitFor({ timeout: 30_000 });
-    for (let i = 0; i < 20 && mensajes.length === antes + 1; i++) await espera(300);
-    const ultimo = mensajes.at(-1);
+    for (let i = 0; i < 20 && whatsapps.length === antesWa + 1; i++) await espera(300);
     comprobar(
-      ultimo?.para.endsWith('0142'),
-      'el código nuevo va al número corregido',
-      ultimo?.para ?? '',
+      whatsapps.at(-1)?.para.endsWith('0142'),
+      'el código nuevo va por WhatsApp al número corregido',
+      whatsapps.at(-1)?.para ?? '',
     );
-    await p.getByText(/0142/).first().waitFor();
+    await p.getByText(T.porWhatsapp).first().waitFor();
     await foto(p, 'codigo');
-    const codigo = /(\d{6})/.exec(ultimo.texto)?.[1];
+    // No le llegó por WhatsApp: pasa la espera (3 minutos, el código sigue vigente) y lo pide por SMS.
+    for (const t of ['codigos_telefono', 'envios_codigo_telefono'])
+      await sql(
+        `UPDATE ${t} SET creado_en = datetime(creado_en,'-3 minutes') WHERE usuario_id = '${nueva.id}'`,
+      );
+    await p.reload();
+    await p.getByTestId('codigo-por-sms').waitFor({ timeout: 60_000 });
+    await p.getByText(T.porSms, { exact: true }).waitFor({ timeout: 30_000 });
+    await p.getByTestId('codigo-por-sms').click();
+    for (let i = 0; i < 20 && mensajes.length === antesSms; i++) await espera(300);
+    const sms = mensajes.at(-1);
+    comprobar(
+      mensajes.length === antesSms + 1 && sms?.para.endsWith('0142'),
+      '«Enviármelo por SMS» manda el código por SMS',
+      sms?.para ?? 'ninguno',
+    );
+    comprobar(
+      /^Divoox: /.test(sms?.texto ?? ''),
+      'el SMS empieza con «Divoox:»',
+      sms?.texto.replace(/\d{6}/, '••••••') ?? '',
+    );
+    await p.getByText(T.porSmsEnviado).first().waitFor();
+    await foto(p, 'sms');
+    const codigo = /(\d{6})/.exec(sms.texto)?.[1];
     await p.getByTestId('codigo-celular').fill(codigo);
     await p.getByTestId('celular-confirmado').waitFor({ timeout: 30_000 });
     await p.getByText(T.listo).waitFor();
@@ -355,6 +406,7 @@ try {
 } finally {
   await navegador?.close();
   simulador.close();
+  simuladorMeta.close();
   try {
     process.kill(-servidor.pid);
   } catch {

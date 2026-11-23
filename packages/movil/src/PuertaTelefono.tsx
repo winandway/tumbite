@@ -28,6 +28,9 @@ const T = {
   es: {
     titulo: 'Confirma tu celular',
     enviamos: 'Te mandamos un código de 6 números por SMS al número que termina en',
+    enviamosWa: 'Te enviamos un código de 6 números por WhatsApp al número que termina en',
+    porSms: 'Enviármelo por SMS',
+    porSmsEn: (s: number) => `Puedes pedirlo por SMS en ${s} s`,
     enviando: 'Mandando el código…',
     escribe: 'Escribe tu número de celular. Te mandamos un código por SMS para confirmarlo.',
     codigo: 'Código de 6 números',
@@ -39,7 +42,7 @@ const T = {
     guardar: 'Guardar y mandar el código',
     cancelar: 'Cancelar',
     noLlega:
-      '¿No te llega? Revisa que tengas señal y que el número esté bien. Si sigue sin llegar, escríbenos.',
+      '¿No te llega? Revisa que tengas señal, que el número esté bien y tu WhatsApp. Si sigue sin llegar, escríbenos.',
     whatsapp: 'Escribir a soporte por WhatsApp',
     correo: 'Escribir a soporte por correo',
     salir: 'Cerrar sesión',
@@ -56,6 +59,9 @@ const T = {
   en: {
     titulo: 'Confirm your cell phone',
     enviamos: 'We texted a 6-digit code to the number ending in',
+    enviamosWa: 'We sent a 6-digit code on WhatsApp to the number ending in',
+    porSms: 'Text it to me instead',
+    porSmsEn: (s: number) => `You can get it by text in ${s}s`,
     enviando: 'Sending the code…',
     escribe: 'Enter your cell phone number. We’ll text you a code to confirm it.',
     codigo: '6-digit code',
@@ -67,7 +73,7 @@ const T = {
     guardar: 'Save and send the code',
     cancelar: 'Cancel',
     noLlega:
-      'Not getting it? Make sure you have signal and the number is right. If it still doesn’t arrive, contact us.',
+      'Not getting it? Check your signal, your number and your WhatsApp. If it still doesn’t arrive, contact us.',
     whatsapp: 'Contact support on WhatsApp',
     correo: 'Email support',
     salir: 'Sign out',
@@ -96,6 +102,9 @@ type Puerta = {
   vigente?: boolean;
   /** Segundos para poder pedir otro (-1: ya no se puede hoy). */
   proximoEnSegundos?: number;
+  /** C-CODIGO-CANALES: por dónde salió el último código, y si se puede pedir por SMS. */
+  canal?: 'whatsapp' | 'sms' | null;
+  smsDisponible?: boolean;
 };
 
 /**
@@ -167,6 +176,8 @@ export function PuertaTelefono({ children }: { children: ReactNode }) {
         paisInicial={puerta?.pais ?? null}
         vigente={puerta?.vigente === true}
         esperaInicial={puerta?.proximoEnSegundos ?? 0}
+        canalInicial={puerta?.canal ?? null}
+        smsInicial={puerta?.smsDisponible === true}
         opcional={!puerta?.obligatorio}
         alAhoraNo={() => {
           setAbiertaPorFranja(false);
@@ -278,6 +289,8 @@ function ConfirmaTuCelular({
   paisInicial,
   vigente,
   esperaInicial,
+  canalInicial,
+  smsInicial,
   opcional,
   alConfirmar,
   alAhoraNo,
@@ -286,6 +299,8 @@ function ConfirmaTuCelular({
   paisInicial: string | null;
   vigente: boolean;
   esperaInicial: number;
+  canalInicial: 'whatsapp' | 'sms' | null;
+  smsInicial: boolean;
   opcional: boolean;
   alConfirmar: () => void;
   alAhoraNo: () => void;
@@ -301,6 +316,9 @@ function ConfirmaTuCelular({
   const [ocupado, setOcupado] = useState<'' | 'enviar' | 'confirmar' | 'cambiar'>('');
   const [enviado, setEnviado] = useState(vigente);
   const [espera, setEspera] = useState(Math.max(0, esperaInicial));
+  // C-CODIGO-CANALES: WhatsApp primero; si no llega, «Enviármelo por SMS» cuando termina la espera.
+  const [canal, setCanal] = useState(canalInicial);
+  const [smsDisponible, setSmsDisponible] = useState(smsInicial);
   const [cambiando, setCambiando] = useState(!ultimosInicial);
   // NINGÚN FORMULARIO PIERDE LO ESCRITO: el número nuevo se guarda solo. El código no (es de un solo uso).
   const b = useBorrador({
@@ -318,29 +336,35 @@ function ConfirmaTuCelular({
     return () => clearTimeout(r);
   }, [espera]);
 
-  const enviar = useCallback(async () => {
-    setError('');
-    setOcupado('enviar');
-    try {
-      const r = await api.pedir<{ ultimos: string; proximoEnSegundos: number }>(
-        'POST',
-        '/datos/cuentas/telefono/codigo',
-        {},
-      );
-      setUltimos(r.ultimos);
-      setEnviado(true);
-      setCodigo('');
-      setEspera(Math.max(0, r.proximoEnSegundos));
-    } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
-      // Si el servidor pide esperar, la cuenta atrás sale de su mensaje («Espera 60 segundos…»).
-      const s = /(\d+)/.exec(x instanceof Error ? x.message : '');
-      if (x instanceof ErrorApi && x.estado === 429 && s) setEspera(Number(s[1]));
-      if (x instanceof ErrorApi && x.estado === 429) setEnviado(true);
-    } finally {
-      setOcupado('');
-    }
-  }, [api]);
+  const enviar = useCallback(
+    async (porSms = false) => {
+      setError('');
+      setOcupado('enviar');
+      try {
+        const r = await api.pedir<{
+          ultimos: string;
+          proximoEnSegundos: number;
+          canal: 'whatsapp' | 'sms';
+          smsDisponible: boolean;
+        }>('POST', '/datos/cuentas/telefono/codigo', porSms ? { canal: 'sms' } : {});
+        setUltimos(r.ultimos);
+        setCanal(r.canal);
+        setSmsDisponible(r.smsDisponible);
+        setEnviado(true);
+        setCodigo('');
+        setEspera(Math.max(0, r.proximoEnSegundos));
+      } catch (x) {
+        setError(x instanceof ErrorApi ? x.message : String(x));
+        // Si el servidor pide esperar, la cuenta atrás sale de su mensaje («Espera 60 segundos…»).
+        const s = /(\d+)/.exec(x instanceof Error ? x.message : '');
+        if (x instanceof ErrorApi && x.estado === 429 && s) setEspera(Number(s[1]));
+        if (x instanceof ErrorApi && x.estado === 429) setEnviado(true);
+      } finally {
+        setOcupado('');
+      }
+    },
+    [api],
+  );
 
   // El primer código sale solo al abrir la pantalla (si ya hay número y no hay uno vigente).
   const primero = useRef(false);
@@ -407,7 +431,9 @@ function ConfirmaTuCelular({
       {!cambiando && ultimos ? (
         <>
           <Text style={{ fontSize: 16, color: '#666B73' }}>
-            {ocupado === 'enviar' && !enviado ? t.enviando : `${t.enviamos} ${ultimos}.`}
+            {ocupado === 'enviar' && !enviado
+              ? t.enviando
+              : `${canal === 'whatsapp' ? t.enviamosWa : t.enviamos} ${ultimos}.`}
           </Text>
           <TextInput
             testID="codigo-celular"
@@ -442,14 +468,26 @@ function ConfirmaTuCelular({
             cargando={ocupado === 'confirmar'}
             alTocar={() => void confirmar()}
           />
-          <Boton
-            texto={espera > 0 ? t.otroEn(espera) : t.otro}
-            secundario
-            cargando={ocupado === 'enviar'}
-            alTocar={() => {
-              if (espera <= 0) void enviar();
-            }}
-          />
+          {canal === 'whatsapp' && smsDisponible ? (
+            <Boton
+              testID="codigo-por-sms"
+              texto={espera > 0 ? t.porSmsEn(espera) : t.porSms}
+              secundario
+              cargando={ocupado === 'enviar'}
+              alTocar={() => {
+                if (espera <= 0) void enviar(true);
+              }}
+            />
+          ) : (
+            <Boton
+              texto={espera > 0 ? t.otroEn(espera) : t.otro}
+              secundario
+              cargando={ocupado === 'enviar'}
+              alTocar={() => {
+                if (espera <= 0) void enviar();
+              }}
+            />
+          )}
           <Boton texto={t.cambiar} secundario alTocar={() => setCambiando(true)} />
         </>
       ) : (

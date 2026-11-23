@@ -10,7 +10,8 @@ import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
 const T = {
   es: {
     titulo: 'Confirma tu teléfono',
-    ayuda: 'Bienvenido de vuelta. Te mandamos un código por SMS al número que termina en',
+    ayuda:
+      'Bienvenido de vuelta. Te mandamos un código por WhatsApp o SMS al número que termina en',
     enviar: 'Enviar el código',
     reenviar: 'Enviar otro código',
     enviado: 'Código enviado. Llega en unos segundos.',
@@ -20,7 +21,7 @@ const T = {
   },
   en: {
     titulo: 'Confirm your phone',
-    ayuda: 'Welcome back. We’ll text a code to the number ending in',
+    ayuda: 'Welcome back. We’ll send a code on WhatsApp or by text to the number ending in',
     enviar: 'Send the code',
     reenviar: 'Send another code',
     enviado: 'Code sent. It arrives in a few seconds.',

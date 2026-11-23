@@ -66,6 +66,7 @@ import { unirLineaQueEspera } from '../lineas';
 import {
   algunSmsEncendido,
   anularCodigoAnterior,
+  canalesPara,
   comprobarCodigo,
   estadoCodigo,
   mandarCodigo,
@@ -813,19 +814,28 @@ cuentas.get('/telefono', async (c) => {
           pais,
           // Si ya hay un código vigente, la app no manda otro solo al abrirse.
           ...(await estadoCodigo(db, u.id)),
+          // C-CODIGO-CANALES: si se puede pedir por SMS cuando no llega por WhatsApp.
+          smsDisponible: e164 ? (await canalesPara(c.env, db, e164)).includes('sms') : false,
         }
       : null,
   });
 });
 
+const esquemaPedirCodigo = z.object({ canal: z.enum(['sms']).optional() });
+
 cuentas.post('/telefono/codigo', async (c) => {
   const u = exigir(c);
+  // C-CODIGO-CANALES: sin cuerpo, WhatsApp primero; { canal: 'sms' } cuando no le llegó por WhatsApp.
+  const { canal } = (await c.req.raw.clone().text()).trim()
+    ? await leerCuerpo(c, esquemaPedirCodigo)
+    : { canal: undefined };
   const r = await mandarCodigo(
     c.env,
     base(c),
     u.id,
     u.idioma === 'en' ? 'en' : 'es',
     c.req.header('cf-connecting-ip') ?? null,
+    canal,
   );
   return c.json({ ok: true, ...r });
 });
