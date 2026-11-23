@@ -181,8 +181,19 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    expect(PRIVACIDAD.es.actualizado).toContain('22 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 22, 2026');
+    expect(PRIVACIDAD.es.actualizado).toContain('23 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 23, 2026');
+  });
+  it('C-TELEFONO-AL-REGISTRARSE: dice que el código al crear la cuenta es obligatorio y quién lo lleva', () => {
+    expect(texto(PRIVACIDAD.en)).toContain(
+      'When you sign up, we send a 6-digit code to confirm your phone number. It is required to create a new account where it is available.',
+    );
+    expect(texto(PRIVACIDAD.es)).toContain(
+      'Al registrarte, te enviamos un código de 6 números para confirmar tu número de celular. Es obligatorio para crear una cuenta nueva donde está disponible.',
+    );
+    for (const doc of [PRIVACIDAD.es, PRIVACIDAD.en])
+      for (const proveedor of ['WhatsApp Business Platform', 'SMS Masivo Venezuela', 'LabsMobile'])
+        expect(texto(doc)).toContain(proveedor);
   });
   it('C-RASTRO: dice que se guardan la app, la versión, la red aproximada y el avance del registro', () => {
     expect(texto(PRIVACIDAD.es)).toMatch(

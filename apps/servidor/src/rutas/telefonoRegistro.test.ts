@@ -348,26 +348,22 @@ describe('C-TELEFONO-AL-REGISTRARSE · nadie queda atrapado (revisión de calida
     expect(despues.datos.puerta.proximoEnSegundos).toBeGreaterThan(0);
   });
 
-  it('si el proveedor falla, el envío no se cobra a la cuota de la persona', async () => {
+  it('si el proveedor falla, el envío no se cobra a la cuota de la persona (y la puerta se abre)', async () => {
     vi.stubGlobal('fetch', async () => new Response('{}', { status: 500 }));
     const m = mundo(TWILIO);
     const cli = await registrar(m, 'cliente', '+13055550102');
-    for (let i = 0; i < 7; i++) {
-      const r = await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
-      expect(r.estado).toBe(503);
-    }
+    const r = await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    expect(r.estado).toBe(503);
     const n = await m.DB.prepare(
       'SELECT COUNT(*) AS n FROM envios_codigo_telefono WHERE usuario_id = ?',
     )
       .bind(cli.id)
       .first<{ n: number }>();
     expect(n?.n).toBe(0);
-    // Cuando el proveedor vuelve, sale enseguida.
-    const sms = espiarSms();
-    expect((await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token)).estado).toBe(
-      200,
-    );
-    expect(sms).toHaveLength(1);
+    // C-TELEFONO-SIN-CANAL: sin canal que le lleve el código, no queda parada.
+    expect(
+      (await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token)).datos.puerta,
+    ).toBeNull();
   });
 
   it('varias peticiones a la vez no pasan los topes: sale un solo SMS', async () => {
@@ -417,6 +413,45 @@ describe('C-TELEFONO-AL-REGISTRARSE · nadie queda atrapado (revisión de calida
       "SELECT COUNT(*) AS n FROM acciones_equipo WHERE ruta LIKE '%/telefono/confirmar'",
     ).first<{ n: number }>();
     expect(Number(accion?.n)).toBeGreaterThan(0);
+  });
+});
+
+describe('C-TELEFONO-SIN-CANAL · si el código no sale por ningún canal, la puerta se abre', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('Twilio rechaza el número de una cuenta nueva +1: no queda parada en la pantalla del código', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('api.twilio.com')
+        ? new Response(JSON.stringify({ code: 21614, message: 'not a valid mobile number' }), {
+            status: 400,
+          })
+        : new Response('{}', { status: 200 }),
+    );
+    const m = mundo(TWILIO);
+    const cli = await registrar(m, 'cliente', '+13055550301');
+    expect(
+      (await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token)).datos.puerta
+        ?.obligatorio,
+    ).toBe(true);
+    const r = await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    expect(r.estado).toBe(503);
+    // La puerta se abre sola: ni la pantalla ni el servidor la frenan.
+    expect(
+      (await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token)).datos.puerta,
+    ).toBeNull();
+    const pedido = await m.llamar('POST', '/datos/pedidos', { restauranteId: 'x' }, cli.token);
+    expect(pedido.datos.campo).not.toBe('telefono');
+    // Si corrige el número, la exigencia vuelve (con el número nuevo sí puede salir).
+    vi.unstubAllGlobals();
+    espiarSms();
+    const cambio = await m.llamar(
+      'PUT',
+      '/datos/cuentas/telefono',
+      { telefono: '+13055550302' },
+      cli.token,
+    );
+    expect(cambio.estado).toBe(200);
+    expect(cambio.datos.puerta?.obligatorio).toBe(true);
   });
 });
 

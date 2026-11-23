@@ -239,6 +239,7 @@ type FilaCuenta = {
   exigido: string | null;
   verificado: string | null;
   vuelve: number;
+  sin_canal: number | null;
 };
 
 /** La puerta del celular de esta cuenta: qué toca (registro, vuelta o sugerencia) o null si nada. */
@@ -254,13 +255,19 @@ export async function puertaTelefono(
          (r.usuario_id IS NOT NULL AND r.conectado = 0 AND r.ubicacion_en IS NOT NULL
            AND r.ubicacion_en < datetime('now', '-${DIAS_SIN_CONECTAR} days')
            AND (u.telefono_verificado_en IS NULL
-                OR u.telefono_verificado_en < datetime('now', '-${DIAS_SIN_CONECTAR} days'))) AS vuelve
+                OR u.telefono_verificado_en < datetime('now', '-${DIAS_SIN_CONECTAR} days'))) AS vuelve,
+         (SELECT k.sin_canal_en > datetime('now', '-1 day') FROM codigos_telefono k
+           WHERE k.usuario_id = u.id) AS sin_canal
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
         WHERE u.id = ?`,
     )
     .bind(usuarioId)
     .first<FilaCuenta>();
   if (!f) return null;
+  // C-TELEFONO-SIN-CANAL (23 nov 2026, auditor de tiendas): si a ESTE número no le pudo salir el código por
+  // ningún canal (por ejemplo, Twilio rechaza un fijo), la puerta se abre: nadie queda parado. Si cambia
+  // el número, la marca se borra y vuelve a pedirse.
+  if (Number(f.sin_canal) === 1 && !f.verificado) return null;
   const para = telefonoE164(f.telefono);
   // C-TELEFONO-AL-REGISTRARSE: la cuenta nueva que todavía no lo confirmó.
   if (f.exigido && !f.verificado) {
@@ -464,7 +471,7 @@ export async function mandarCodigo(
         db.prepare('UPDATE envios_codigo_telefono SET canal = ? WHERE id = ?').bind(canal, envioId),
         db
           .prepare(
-            'UPDATE codigos_telefono SET canal = ?, referencia = ?, respaldo_en = NULL WHERE usuario_id = ?',
+            'UPDATE codigos_telefono SET canal = ?, referencia = ?, respaldo_en = NULL, sin_canal_en = NULL WHERE usuario_id = ?',
           )
           .bind(canal, canal === 'whatsapp' ? referencia : null, usuarioId),
       ])
@@ -477,7 +484,7 @@ export async function mandarCodigo(
         db
           .prepare(
             `UPDATE codigos_telefono SET enviados_hoy = ?, codigo_hash = '-',
-               creado_en = datetime('now', '-1 day') WHERE usuario_id = ?`,
+               creado_en = datetime('now', '-1 day'), sin_canal_en = datetime('now') WHERE usuario_id = ?`,
           )
           .bind(llevaHoy, usuarioId),
       ])
@@ -644,7 +651,9 @@ export async function comprobarCodigo(db: D1Database, usuarioId: string, codigo:
  */
 export async function anularCodigoAnterior(db: D1Database, usuarioId: string) {
   await db
-    .prepare("UPDATE codigos_telefono SET codigo_hash = '-' WHERE usuario_id = ?")
+    .prepare(
+      "UPDATE codigos_telefono SET codigo_hash = '-', sin_canal_en = NULL WHERE usuario_id = ?",
+    )
     .bind(usuarioId)
     .run();
 }

@@ -342,6 +342,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-WHATSAPP-ENTREGA (23 nov 2026): la entrega de cada mensaje de WhatsApp y el respaldo por SMS.
   ['codigos_telefono', 'referencia', 'TEXT'],
   ['codigos_telefono', 'respaldo_en', 'TEXT'],
+  // C-TELEFONO-SIN-CANAL (23 nov 2026): el código no salió por ningún canal; la puerta se abre.
+  ['codigos_telefono', 'sin_canal_en', 'TEXT'],
   ['sms_enviados', 'entrega', 'TEXT'],
   ['sms_enviados', 'entrega_error', 'TEXT'],
   ['sms_enviados', 'entrega_en', 'TEXT'],

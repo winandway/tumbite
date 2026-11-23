@@ -2324,7 +2324,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "canal",
     "referencia",
-    "respaldo_en"
+    "respaldo_en",
+    "sin_canal_en"
   ],
   "envios_codigo_telefono": [
     "id",
