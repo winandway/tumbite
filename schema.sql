@@ -5152,3 +5152,21 @@ CREATE TABLE IF NOT EXISTS cargas_saldo_restaurante (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS cargas_saldo_restaurante_rest ON cargas_saldo_restaurante(restaurante_id, creado_en);
+
+-- C-QUIEN-PAGA-VIAJES (23 nov 2026, orden de Richard): quién paga la comisión de Divoox en los viajes
+-- (Moto y Carro): «conductor» (como siempre), «cliente» (tarifa de servicio aparte, a la vista) o
+-- «mitad». Una fila por país (ciudad = '') y, si hace falta, por ciudad (id de la zona). Sin fila:
+-- «conductor». El porcentaje sale siempre de la política de comisión; aquí solo se dice quién lo carga.
+-- Cada viaje guarda el valor con que nació (en su cotización): cambiarlo no toca viajes en curso.
+CREATE TABLE IF NOT EXISTS quien_paga_viajes (
+  pais TEXT NOT NULL,
+  ciudad TEXT NOT NULL DEFAULT '',
+  valor TEXT NOT NULL CHECK (valor IN ('conductor', 'cliente', 'mitad')),
+  cambiado_por TEXT,
+  cambiado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (pais, ciudad)
+);
+-- Valor inicial (Richard, 23 nov 2026): en Venezuela la paga el cliente. Solo si no hay fila (un
+-- cambio hecho desde el panel nunca se pisa al publicar).
+INSERT OR IGNORE INTO quien_paga_viajes (pais, ciudad, valor, cambiado_por)
+  VALUES ('VE', '', 'cliente', 'C-QUIEN-PAGA-VIAJES');
