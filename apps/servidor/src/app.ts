@@ -386,6 +386,9 @@ app.get('/datos/salud', async (c) => {
   const correoMal =
     Boolean(ultimoErrorCorreo) || correo?.estado === 'error' || (Boolean(c.env.DB) && !correo);
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : correoMal ? 'error' : 'ok';
+  // C-CORREO-REBOTES-CANARIO: la tasa de rebote de 24 h (amarilla desde el 10 %, roja desde el 25 %,
+  // con un mínimo de 20 enlaces). Sale de la misma lectura de arriba.
+  if (correo) piezas.correoRebotes = correo.rebotes;
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
   piezas.avisosWeb = saludAvisosWeb(c.env);
@@ -623,6 +626,7 @@ app.get('/datos/salud', async (c) => {
             ultimoFallo: correo.ultimoFallo,
             cupoAlto: correo.cupoAlto,
             rebotes24h: correo.rebotes24h,
+            enlaces24h: correo.enlaces24h,
           }
         : null,
       correoEntrante,

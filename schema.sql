@@ -4947,6 +4947,9 @@ CREATE TABLE IF NOT EXISTS correos_rebotados (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS correos_rebotados_creado ON correos_rebotados(creado_en);
+-- C-CORREO-REBOTES-CANARIO: cuántos enlaces de confirmación salieron en 24 h (el denominador de la tasa
+-- de rebote del canario). Una escritura de índice por enlace; nada por mirar.
+CREATE INDEX IF NOT EXISTS confirmaciones_creada ON confirmaciones(creada_en);
 
 -- C-PLAZO-PAPELES (19 nov 2026, decisión de Richard; por país, por configuración): el plazo de cada
 -- conductor para subir sus papeles. Sin fila = sin plazo (los que ya existían conservan su estado).

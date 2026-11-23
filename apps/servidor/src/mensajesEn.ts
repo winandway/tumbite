@@ -1172,6 +1172,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Este enlace ya no sirve. Pide uno nuevo desde «Olvidé mi contraseña».',
     'This link has expired. Request a new one from “Forgot password.”',
   ],
+  [
+    'Ese código ya venció. Pide uno nuevo desde «Olvidé mi contraseña».',
+    'That code has expired. Request a new one from “Forgot password.”',
+  ],
   ['Este pedido no está en camino contigo.', 'This order isn’t on the way with you.'],
   [
     'Este pedido ya cambió de estado. Actualiza la pantalla.',
