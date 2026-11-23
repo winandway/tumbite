@@ -3643,7 +3643,9 @@ CREATE TABLE IF NOT EXISTS codigos_telefono (
   canal TEXT,
   -- C-WHATSAPP-ENTREGA: el mensaje de WhatsApp de este código y cuándo salió su respaldo por SMS (COLUMNAS).
   referencia TEXT,
-  respaldo_en TEXT
+  respaldo_en TEXT,
+  -- C-TELEFONO-SIN-CANAL: cuándo el código no pudo salir por ningún canal (la puerta se abre; COLUMNAS).
+  sin_canal_en TEXT
 );
 -- C-TELEFONO-TOPES (22 nov 2026): cada código por SMS que salió, para los topes por número, por red (IP) y
 -- del día, que valen aunque la persona cambie de cuenta. Una fila por envío; los índices son los que leen los topes.
