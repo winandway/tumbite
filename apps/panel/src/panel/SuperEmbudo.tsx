@@ -5,6 +5,7 @@ import {
   ErrorApi,
   NOMBRE_PASO,
   enIdioma,
+  pasoQueNoFrena,
 } from '@tumbite/compartido';
 import { AyudaAqui } from './AyudaAqui';
 import { CampoFecha } from './CampoFecha';
@@ -44,6 +45,7 @@ const T = {
     personas: 'Personas',
     seVan: 'Se quedaron aquí',
     completaron: 'Llegaron al final',
+    noFrena: 'Correo por confirmar (no frena): se confirma en segundo plano',
     vacio: 'No hay registros en ese período.',
     anonimos:
       'Los tres primeros pasos pasan antes de crear la cuenta: se cuentan sin saber quién es la persona. Con una zona elegida no se muestran, porque todavía no se sabe de qué zona son.',
@@ -69,6 +71,7 @@ const T = {
     personas: 'People',
     seVan: 'Stopped here',
     completaron: 'Reached the end',
+    noFrena: 'Email to confirm (doesn’t block): confirmed in the background',
     vacio: 'No sign-ups in that period.',
     anonimos:
       'The first three steps happen before the account exists: they are counted without knowing who the person is. They are hidden when a zone is selected, because the zone is not known yet.',
@@ -206,7 +209,9 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
                     />
                   </td>
                   <td>
-                    {f.seQuedan == null ? (
+                    {pasoQueNoFrena(f.paso) ? (
+                      <small data-testid="embudo-no-frena">{t.noFrena}</small>
+                    ) : f.seQuedan == null ? (
                       f.personas > 0 ? (
                         <Insignia tono="hecho">{t.completaron}</Insignia>
                       ) : (

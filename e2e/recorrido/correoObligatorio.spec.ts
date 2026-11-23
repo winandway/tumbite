@@ -6,14 +6,18 @@ import { cruzarPuertaCelular } from './puertaCelular';
 import { TEXTOS } from './textos';
 
 /**
- * C-CORREO-OBLIGATORIO y C-BORRAR-EN-LA-APP (4 nov 2026, Richard grabando el video para Apple):
+ * C-CORREO-NO-FRENA (23 nov 2026, decisión de Richard: el correo en segundo plano), C-CORREO-FRANJA,
+ * C-CORREO-OBLIGATORIO (donde el código del celular no tiene por dónde salir) y C-BORRAR-EN-LA-APP:
  * 0) sin cuenta se mira la portada (C-MIRAR-SIN-CUENTA, Apple 5.1.1 v);
- * 1) al crear la cuenta, la portada avisa que falta confirmar el correo; al ir a pagar, «Confirma tu
- *    correo» no deja seguir; cuando toca el enlace, la app se da cuenta sola y dice «Tu correo quedó
- *    verificado»;
- * 2) «Borrar mi cuenta» de los tres puntos se hace dentro de la app escribiendo DELETE / BORRAR, dice
- *    que quedó borrada y vuelve a la pantalla de entrar. Solo en esta computadora (la cuenta
- *    «verificar.» es la que pasa por la puerta fuera de producción).
+ * 1) al crear la cuenta, la portada muestra la franja del correo; al ir a pagar, se confirma el celular
+ *    con el código y se sigue al carrito SIN confirmar el correo. La franja trae «Mandar el enlace otra
+ *    vez» y «¿Correo equivocado? Cámbialo», y se pone verde cuando la persona toca el enlace;
+ * 2) donde el código no pudo salir por ningún canal (C-TELEFONO-SIN-CANAL), al ir a pagar «Confirma tu
+ *    correo» frena como siempre y, al tocar el enlace, dice «Tu correo quedó verificado»;
+ * 3) «Borrar mi cuenta» de los tres puntos se hace dentro de la app (DELETE / BORRAR);
+ * 4) Driver: la misma franja en el inicio, sin frenar nada.
+ * Solo en esta computadora (las cuentas «verificar.» son las que tienen correo por confirmar fuera de
+ * producción).
  */
 const RAIZ = join(__dirname, '..', '..');
 const STAGING = Boolean(process.env.RECORRIDO_URL);
@@ -35,12 +39,53 @@ async function foto(p: Page, nombre: string) {
   await p.screenshot({ path: join(dir, `${nombre}.png`) });
 }
 
-for (const idioma of ['en', 'es'] as const)
-  test(`crear la cuenta pide confirmar el correo y borrarla no sale de la app (${idioma})`, async ({
+const celular = () => `+1305555${String(Date.now()).slice(-4)}`;
+const idDe = (correo: string) =>
+  String(sqlLocal(`SELECT id FROM usuarios WHERE correo = '${correo}'`)[0]?.id ?? '');
+
+async function crearCuenta(p: Page, idioma: 'en' | 'es', correo: string) {
+  const L = TEXTOS[idioma];
+  await p.getByText(L.appCrear).click();
+  await p.getByLabel(L.nombreCompleto).fill('Ana García');
+  await p.getByLabel(L.correo).fill(correo);
+  await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
+  await p.getByRole('checkbox').first().click();
+  // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
+  await p.getByTestId('registro-continuar').click();
+  await p.getByTestId('crear-mi-cuenta').click();
+}
+
+async function borrarCuenta(p: Page, idioma: 'en' | 'es', correo: string) {
+  await p.goto('/app/account');
+  await p
+    .getByRole('button', {
+      name: idioma === 'en' ? 'More account options' : 'Más opciones de la cuenta',
+    })
+    .last()
+    .click();
+  await p.getByTestId('menu-borrar-cuenta').click();
+  await expect(p.getByTestId('confirmar-borrado')).toBeVisible();
+  await p
+    .getByLabel(idioma === 'en' ? 'Type DELETE to confirm' : 'Escribe BORRAR para confirmar')
+    .fill(idioma === 'en' ? 'DELETE' : 'BORRAR');
+  await foto(p, `cliente-borrar-cuenta-${idioma}`);
+  expect(new URL(p.url()).pathname).toBe('/app/account');
+  await p
+    .getByRole('button', { name: idioma === 'en' ? 'Delete my account' : 'Borrar mi cuenta' })
+    .click();
+  await expect(p.getByTestId('cuenta-borrada')).toBeVisible({ timeout: 20_000 });
+  await foto(p, `cliente-cuenta-borrada-${idioma}`);
+  // La dirección ya no está en ninguna cuenta: se borró de verdad.
+  expect(sqlLocal(`SELECT id FROM usuarios WHERE correo = '${correo}'`)).toEqual([]);
+  await p.getByRole('button', { name: idioma === 'en' ? 'OK' : 'Entendido' }).click();
+  await expect(p.getByText(TEXTOS[idioma].appCrear)).toBeVisible({ timeout: 20_000 });
+}
+
+for (const idioma of ['en', 'es'] as const) {
+  test(`con el celular confirmado el correo no frena: franja suave y se pide igual (${idioma})`, async ({
     browser,
   }) => {
     test.setTimeout(150_000);
-    const L = TEXTOS[idioma];
     const id = `${Date.now().toString(36)}${idioma}`;
     const correo = `verificar.${id}@recorrido.test`;
     const ctx = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
@@ -50,24 +95,71 @@ for (const idioma of ['en', 'es'] as const)
     await p.goto('/app/');
     await expect(p.getByTestId('entrar-invitado')).toBeVisible({ timeout: 20_000 });
     await foto(p, `cliente-portada-sin-cuenta-${idioma}`);
-    await p.getByText(L.appCrear).click();
-    await p.getByLabel(L.nombreCompleto).fill('Ana García');
-    await p.getByLabel(L.correo).fill(correo);
-    await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
-    await p.getByRole('checkbox').first().click();
-    // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
-    await p.getByTestId('registro-continuar').click();
-    await p.getByTestId('crear-mi-cuenta').click();
+    await crearCuenta(p, idioma, correo);
 
-    // 1. Vuelve a la portada con el aviso de confirmar el correo (no bloquea mirar).
+    // 1. Vuelve a la portada con la franja del correo (no frena nada).
     await expect(p.getByTestId('aviso-correo')).toBeVisible({ timeout: 20_000 });
     await expect(p.getByTestId('aviso-correo')).toContainText(correo);
+    await expect(p.getByTestId('aviso-correo-reenviar')).toBeVisible();
+    await expect(p.getByTestId('aviso-correo-cambiar')).toBeVisible();
     await foto(p, `cliente-aviso-correo-${idioma}`);
 
-    // 2. Al ir a pagar, primero el celular (C-TELEFONO-AL-REGISTRARSE: la cuenta se creó sin él, así
-    // que la puerta lo pide) y después el correo: no se paga sin el correo confirmado.
+    // 2. Al ir a pagar, el celular con su código, y al carrito SIN confirmar el correo.
     await p.goto('/app/cart');
-    await cruzarPuertaCelular(p, correo, `+1305555${String(Date.now()).slice(-4)}`);
+    await cruzarPuertaCelular(p, correo, celular());
+    await expect(
+      p.getByText(idioma === 'en' ? 'Find food' : 'Buscar comida', { exact: true }),
+    ).toBeVisible({ timeout: 20_000 });
+    await expect(p.getByTestId('confirma-tu-correo')).toHaveCount(0);
+    await foto(p, `cliente-carrito-sin-correo-${idioma}`);
+
+    // 3. En la portada la franja sigue: manda un enlace NUEVO y deja cambiar el correo.
+    await p.goto('/app/');
+    await expect(p.getByTestId('aviso-correo')).toBeVisible({ timeout: 20_000 });
+    await p.getByTestId('aviso-correo-reenviar').click();
+    await expect(p.getByTestId('aviso-correo')).toContainText(
+      idioma === 'en' ? 'We sent you a new link' : 'Te mandamos un enlace nuevo',
+    );
+    await p.getByTestId('aviso-correo-cambiar').click();
+    await expect(p.getByTestId('cambiar-correo')).toBeVisible();
+    await foto(p, `cliente-franja-cambiar-correo-${idioma}`);
+    await p.getByRole('button', { name: idioma === 'en' ? 'Cancel' : 'Cancelar' }).click();
+    await expect(p.getByTestId('cambiar-correo')).toHaveCount(0);
+
+    // 4. Toca el enlace del correo (aquí, la base lo marca): la franja se pone verde sola.
+    sqlLocal(
+      `UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE correo = '${correo}'`,
+    );
+    await expect(p.getByTestId('aviso-correo-verificado')).toBeVisible({ timeout: 30_000 });
+    await foto(p, `cliente-franja-correo-verificado-${idioma}`);
+
+    // 5. Borra la cuenta desde los tres puntos de «Mi cuenta», sin salir de la app.
+    await borrarCuenta(p, idioma, correo);
+    await ctx.close();
+  });
+
+  test(`sin canal para el código, el correo frena como siempre al ir a pagar (${idioma})`, async ({
+    browser,
+  }) => {
+    test.setTimeout(150_000);
+    const id = `${Date.now().toString(36)}s${idioma}`;
+    const correo = `verificar.${id}@recorrido.test`;
+    const ctx = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
+    await ctx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), idioma);
+    const p = await ctx.newPage();
+    await p.goto('/app/');
+    await expect(p.getByTestId('entrar-invitado')).toBeVisible({ timeout: 20_000 });
+    await crearCuenta(p, idioma, correo);
+    await expect(p.getByTestId('aviso-correo')).toBeVisible({ timeout: 20_000 });
+    // C-TELEFONO-SIN-CANAL: el código no pudo salir por ningún canal (por ejemplo, el proveedor rechazó
+    // el número): la puerta del celular se abre sola y queda la del correo.
+    const usuario = idDe(correo);
+    sqlLocal(
+      `INSERT INTO codigos_telefono (usuario_id, telefono, codigo_hash, intentos, enviados_hoy, creado_en, sin_canal_en)
+       VALUES ('${usuario}', '', '-', 0, 0, datetime('now'), datetime('now'))
+       ON CONFLICT(usuario_id) DO UPDATE SET sin_canal_en = datetime('now')`,
+    );
+    await p.goto('/app/cart');
     await expect(p.getByTestId('confirma-tu-correo')).toBeVisible({ timeout: 20_000 });
     await expect(p.getByTestId('correo-a-confirmar')).toHaveText(correo);
     await foto(p, `cliente-confirma-correo-${idioma}`);
@@ -77,8 +169,6 @@ for (const idioma of ['en', 'es'] as const)
       .click();
     await expect(p.getByRole('alert')).toBeVisible();
     await expect(p.getByTestId('confirma-tu-correo')).toBeVisible();
-
-    // Toca el enlace del correo (aquí, la base marca el correo confirmado): la app se da cuenta sola.
     sqlLocal(
       `UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE correo = '${correo}'`,
     );
@@ -87,30 +177,65 @@ for (const idioma of ['en', 'es'] as const)
     await p.getByRole('button', { name: idioma === 'en' ? 'Continue' : 'Continuar' }).click();
     await expect(p.getByTestId('confirma-tu-correo')).toBeHidden();
     await expect(p.getByTestId('correo-verificado')).toBeHidden();
-
-    // 3. Borra la cuenta desde los tres puntos de «Mi cuenta», sin salir de la app.
-    await p.goto('/app/account');
-    await p
-      .getByRole('button', {
-        name: idioma === 'en' ? 'More account options' : 'Más opciones de la cuenta',
-      })
-      .last()
-      .click();
-    await p.getByTestId('menu-borrar-cuenta').click();
-    await expect(p.getByTestId('confirmar-borrado')).toBeVisible();
-    await p
-      .getByLabel(idioma === 'en' ? 'Type DELETE to confirm' : 'Escribe BORRAR para confirmar')
-      .fill(idioma === 'en' ? 'DELETE' : 'BORRAR');
-    await foto(p, `cliente-borrar-cuenta-${idioma}`);
-    expect(new URL(p.url()).pathname).toBe('/app/account');
-    await p
-      .getByRole('button', { name: idioma === 'en' ? 'Delete my account' : 'Borrar mi cuenta' })
-      .click();
-    await expect(p.getByTestId('cuenta-borrada')).toBeVisible({ timeout: 20_000 });
-    await foto(p, `cliente-cuenta-borrada-${idioma}`);
-    // La dirección ya no está en ninguna cuenta: se borró de verdad.
-    expect(sqlLocal(`SELECT id FROM usuarios WHERE correo = '${correo}'`)).toEqual([]);
-    await p.getByRole('button', { name: idioma === 'en' ? 'OK' : 'Entendido' }).click();
-    await expect(p.getByText(L.appCrear)).toBeVisible({ timeout: 20_000 });
+    await borrarCuenta(p, idioma, correo);
     await ctx.close();
   });
+
+  test(`olvidé mi contraseña ofrece el código del celular, sin revelar qué cuenta lo tiene (${idioma})`, async ({
+    browser,
+  }) => {
+    const es = idioma === 'es';
+    const ctx = await browser.newContext({
+      viewport: { width: 1100, height: 900 },
+      baseURL: DATOS!.url,
+      locale: es ? 'es-US' : 'en-US',
+    });
+    await ctx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), idioma);
+    const p = await ctx.newPage();
+    await p.goto(`${es ? '/es' : ''}/forgot-password`);
+    await p.getByRole('textbox').first().fill('nombre@ejemplo.com');
+    await p.getByRole('button', { name: es ? 'Mandarme el enlace' : 'Send me the link' }).click();
+    await expect(p.getByTestId('restablecer-codigo')).toBeVisible({ timeout: 20_000 });
+    if (CAPTURAS) {
+      mkdirSync(join(RAIZ, 'docs', 'capturas', 'recorrido'), { recursive: true });
+      await p.screenshot({
+        path: join(RAIZ, 'docs', 'capturas', 'recorrido', `web-olvide-codigo-${idioma}.png`),
+      });
+    }
+    await ctx.close();
+  });
+
+  test(`Driver: la franja del correo en el inicio, sin frenar el registro (${idioma})`, async ({
+    browser,
+  }) => {
+    test.setTimeout(150_000);
+    const L = TEXTOS[idioma];
+    const id = `${Date.now().toString(36)}d${idioma}`;
+    const correo = `verificar.${id}@recorrido.test`;
+    const ctx = await browser.newContext({
+      ...devices['Pixel 7'],
+      baseURL: DATOS!.url,
+      geolocation: { latitude: 25.7617, longitude: -80.1918 },
+      permissions: ['geolocation'],
+    });
+    await ctx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), idioma);
+    const p = await ctx.newPage();
+    await p.goto('/driver/');
+    await p.getByText(L.appCrear).click();
+    await p.getByLabel(L.nombreCompleto).fill('Luis Pérez');
+    await p.getByLabel(L.correo).fill(correo);
+    await p.getByLabel(L.celular).fill(celular().slice(2));
+    await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
+    await p.getByRole('checkbox').first().click();
+    await p.getByTestId('registro-continuar').click();
+    await p.getByTestId('crear-mi-cuenta').click();
+    await p.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
+    await cruzarPuertaCelular(p, correo);
+    // Con el celular confirmado sigue su registro; el correo, en la franja.
+    await expect(p.getByTestId('aviso-correo')).toBeVisible({ timeout: 30_000 });
+    await expect(p.getByTestId('aviso-correo')).toContainText(correo);
+    await expect(p.getByTestId('aviso-correo-cambiar')).toBeVisible();
+    await foto(p, `repartidor-franja-correo-${idioma}`);
+    await ctx.close();
+  });
+}

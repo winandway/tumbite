@@ -20,6 +20,11 @@ const T = {
     mandar: 'Mandarme el enlace',
     mandado:
       'Si ese correo tiene cuenta en Divoox, ya te llegó el enlace. Revisa también la carpeta de spam. Vence en 30 minutos.',
+    // C-RECUPERAR-POR-CELULAR: si el correo todavía no está confirmado, el código va al celular.
+    codigoTitulo: '¿Te llegó un código al celular?',
+    codigoTexto:
+      'Si todavía no confirmaste tu correo, no te mandamos el enlace: te mandamos un código de 6 números por WhatsApp o SMS a tu celular confirmado. Escríbelo aquí con tu contraseña nueva. Vence en 10 minutos.',
+    codigo: 'Código de 6 números',
     nueva: 'Crea tu contraseña nueva',
     clave: 'Contraseña nueva',
     confirmar: 'Repite la contraseña',
@@ -40,6 +45,10 @@ const T = {
     mandar: 'Send me the link',
     mandado:
       'If that email has a Divoox account, the link is on its way. Check your spam folder too. It expires in 30 minutes.',
+    codigoTitulo: 'Did you get a code on your phone?',
+    codigoTexto:
+      'If you haven’t confirmed your email yet, we don’t send the link: we send a 6-digit code by WhatsApp or text to your confirmed cell phone. Enter it here with your new password. It expires in 10 minutes.',
+    codigo: '6-digit code',
     nueva: 'Create your new password',
     clave: 'New password',
     confirmar: 'Repeat the password',
@@ -65,6 +74,8 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
   });
   const [estado, setEstado] = useState<'inicio' | 'enviando' | 'listo'>('inicio');
   const [error, setError] = useState('');
+  // El correo al que se pidió: el código del celular se comprueba con él.
+  const [pedido, setPedido] = useState('');
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -72,6 +83,7 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
     setEstado('enviando');
     try {
       await api.pedir('POST', '/datos/cuentas/recuperar', { correo: b.valores.correo, idioma });
+      setPedido(b.valores.correo);
       await b.limpiar();
       setEstado('listo');
     } catch (x) {
@@ -87,6 +99,7 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
         <div className="ld-form ld-form-listo" role="status">
           <Icono nombre="listo" tamano={40} />
           <p>{t.mandado}</p>
+          <ConCodigo correo={pedido} idioma={idioma} />
           <button type="button" className="enlace" onClick={() => ir('/panel')}>
             {t.volver}
           </button>
@@ -112,6 +125,90 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
         </form>
       )}
     </main>
+  );
+}
+
+/**
+ * C-RECUPERAR-POR-CELULAR (23 nov 2026): la cuenta con el correo sin confirmar y el celular confirmado
+ * recupera su contraseña con el código que llegó al celular (el enlace no va a un correo sin confirmar).
+ * Las contraseñas nunca se guardan en borrador; el código tampoco.
+ */
+function ConCodigo({ correo, idioma }: { correo: string; idioma: Idioma }) {
+  const t = enIdioma(T, idioma);
+  const [codigo, setCodigo] = useState('');
+  const [clave, setClave] = useState('');
+  const [confirmar, setConfirmar] = useState('');
+  const [estado, setEstado] = useState<'inicio' | 'enviando' | 'listo'>('inicio');
+  const [error, setError] = useState('');
+
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (clave !== confirmar) return setError(t.noCoinciden);
+    setEstado('enviando');
+    try {
+      await api.pedir('POST', '/datos/cuentas/restablecer', {
+        correo,
+        codigo: codigo.trim(),
+        clave,
+      });
+      setEstado('listo');
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+      setEstado('inicio');
+    }
+  }
+
+  if (estado === 'listo')
+    return (
+      <div role="status" data-testid="restablecer-codigo-listo">
+        <p>{t.listo}</p>
+        <button type="button" className="boton" onClick={() => ir('/panel')}>
+          {t.entrar}
+        </button>
+      </div>
+    );
+  return (
+    <form
+      onSubmit={enviar}
+      noValidate
+      className="restablecer-codigo"
+      data-testid="restablecer-codigo"
+    >
+      <h2>{t.codigoTitulo}</h2>
+      <p>{t.codigoTexto}</p>
+      <Campo
+        etiqueta={t.codigo}
+        valor={codigo}
+        cambiar={(x) => setCodigo(x.replace(/\D/g, '').slice(0, 6))}
+        autoComplete="one-time-code"
+        modoTeclado="numeric"
+      />
+      <CampoClave
+        etiqueta={t.clave}
+        valor={clave}
+        cambiar={setClave}
+        textoVer={t.verClave}
+        textoOcultar={t.ocultarClave}
+        autoComplete="new-password"
+      />
+      <CampoClave
+        etiqueta={t.confirmar}
+        valor={confirmar}
+        cambiar={setConfirmar}
+        textoVer={t.verClave}
+        textoOcultar={t.ocultarClave}
+        autoComplete="new-password"
+      />
+      {error && (
+        <p className="error-general" role="alert">
+          {error}
+        </p>
+      )}
+      <button type="submit" className="boton ancho" disabled={estado === 'enviando'}>
+        {estado === 'enviando' ? t.enviando : t.guardar}
+      </button>
+    </form>
   );
 }
 

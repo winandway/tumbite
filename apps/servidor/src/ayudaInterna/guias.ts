@@ -1635,6 +1635,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'En la ficha de un viaje o de un pedido, la línea de tiempo dice cuánto pasó entre un paso y el siguiente y cuántos metros se movió el conductor entre ellos. Si el viaje se canceló o el conductor lo soltó, sale el motivo. En el mapa, los puntos grises numerados dicen dónde estaba el conductor en cada paso.',
       'El «Embudo de registro» (menú, grupo Personas) cuenta cuántas personas llegan a cada paso y marca en ámbar el paso donde se queda la mayoría. Se puede ver por app, por fechas, por país y por zona. Solo cuenta cuentas reales.',
       'Los tres primeros pasos del embudo pasan antes de que exista la cuenta: son contadores, sin saber quién es la persona. Las cuentas creadas antes del 22 de noviembre de 2026 no tienen guardado de dónde vino el alta.',
+      'Desde el 23 de noviembre de 2026 el correo no frena el registro: la cuenta queda hecha con el celular confirmado por código, y la app le pide confirmar el correo con una franja que no estorba. Por eso la confirmación del correo va al final de los pasos, nunca sale como «Le falta» y, si falta, la ficha dice aparte «Correo por confirmar (no frena)». Si el correo rebotó, dice «El correo rebotó (no frena)»: pídele a la persona que lo corrija en su app, o corrígelo tú desde los tres puntos del correo. En el embudo, el correo no cuenta para «Se quedaron aquí». Donde el código del celular no tiene por dónde salir, la app del cliente sigue pidiendo el correo confirmado para pedir, como antes.',
     ],
     capturas: [
       capRastro(
@@ -1684,6 +1685,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'On a ride or order file, the timeline shows how long passed between one step and the next and how far the driver moved between them. If the ride was canceled or released, the reason is shown. On the map, the numbered gray dots show where the driver was at each step.',
       'The “Sign-up funnel” (menu, People group) counts how many people reach each step and flags in amber the step where most people stop. You can view it by app, dates, country and zone. Only real accounts are counted.',
       'The first three funnel steps happen before the account exists: they are counters, with no way to know who the person is. Accounts created before November 22, 2026 have no stored sign-up origin.',
+      'Since November 23, 2026, email no longer blocks sign-up: the account is complete once the cell phone is confirmed with a code, and the app asks for the email confirmation with a banner that doesn’t get in the way. That’s why email confirmation is the last step, never shows as “Still missing,” and, if pending, the file shows “Email to confirm (doesn’t block)” on its own. If the email bounced, it says “The email bounced (doesn’t block)”: ask the person to fix it in their app, or fix it yourself from the three dots next to the email. In the funnel, email doesn’t count toward “Stopped here.” Where the phone code has no way to go out, the customer app still asks for a confirmed email to order, as before.',
     ],
     capturas: [
       capRastro(
@@ -2921,7 +2923,7 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'Al crear la cuenta en la app de Divoox o en Divoox Driver, la app muestra «Confirma tu celular» y manda el código sola. Mientras no lo confirme, la cuenta nueva no puede pedir ni conectarse (el servidor también lo frena). Al confirmarlo, el paso «teléfono» aparece en su actividad y en el embudo.',
       'El código sale primero por WhatsApp. Si WhatsApp falla, el mismo código sale por SMS al momento; y si a la persona no le llega, en la pantalla tiene «Enviármelo por SMS». Solo se exige donde algún canal sale hoy. Si los canales no tienen cupo, fallan o se agota su presupuesto del día, la exigencia se quita sola y nadie queda esperando.',
-      'Las cuentas que ya existían NO se bloquean: ven una franja arriba de la app para confirmarlo cuando quieran, que pueden cerrar.',
+      'Las cuentas que ya existían NO se bloquean: ven una franja arriba de la app para confirmarlo cuando quieran, que pueden cerrar. Excepción (23 nov 2026): el cliente de antes al que la app tenía frenado porque no confirmó su correo ve «Confirma tu celular» en lugar de «Confirma tu correo»; al confirmar el celular, el correo deja de frenarlo y se pide en segundo plano.',
       'Topes contra robots y gastos: cada cuenta espera más entre un código y otro (1, 2, 5 y 15 minutos) y pide como mucho 5 al día; el mismo número recibe como mucho 5 al día aunque cambie de cuenta; la misma red, 10 al día; y en total 300 códigos al día. El canario de salud marca «smsGasto» en amarillo al 80 % del presupuesto diario y en tope al llegar.',
       'Si alguien escribió mal su número, lo cambia él mismo en la misma pantalla. Abrir y cerrar la app no le gasta códigos: mientras el último sirva, no se manda otro solo. Si el proveedor falla, ese envío no le cuenta.',
       'Si de verdad no le llega (un número fijo, de internet o una operadora que no entrega), comprueba con la persona que el número es suyo, por ejemplo escribiéndole por WhatsApp a ese número, y en la lista toca «Confirmar a mano». Queda en el registro con tu nombre. Lo pueden hacer quienes pueden corregir correos.',
@@ -2955,7 +2957,7 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'When someone creates an account in the Divoox app or in Divoox Driver, the app shows “Confirm your cell phone” and sends the code on its own. Until it’s confirmed, the new account can’t order or go online (the server blocks it too). Once confirmed, the “phone” step shows up in their activity and in the funnel.',
       'The code goes out first on WhatsApp. If WhatsApp fails, the same code goes out by text right away; and if it still doesn’t arrive, the screen offers “Text it to me instead.” It’s only required where some channel works today. If the channels are out of quota, fail, or run out of their daily budget, the requirement lifts on its own and nobody is left waiting.',
-      'Accounts that already existed are NOT blocked: they see a strip at the top of the app to confirm whenever they want, and they can close it.',
+      'Accounts that already existed are NOT blocked: they see a strip at the top of the app to confirm whenever they want, and they can close it. Exception (November 23, 2026): an older customer the app was holding because they never confirmed their email sees “Confirm your cell phone” instead of “Confirm your email”; once the phone is confirmed, email no longer holds them and is requested in the background.',
       'Caps against bots and spend: each account waits longer between codes (1, 2, 5 and 15 minutes) and gets at most 5 a day; the same number gets at most 5 a day even across accounts; the same network, 10 a day; and 300 codes a day in total. The health check marks “smsGasto” yellow at 80% of the daily budget and at the cap when it’s reached.',
       'If someone mistyped their number, they fix it themselves on the same screen. Opening and closing the app doesn’t use up codes: while the last one is still good, no new one is sent on its own. If the provider fails, that send doesn’t count against them.',
       'If it truly never arrives (a landline, an internet number, or a carrier that doesn’t deliver), check with the person that the number is theirs, for example by messaging that number on WhatsApp, then tap “Confirm manually” in the list. It’s logged with your name. Anyone who can fix emails can do it.',
@@ -2990,7 +2992,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
     resumen:
       'Cuando alguien escribió mal su correo y no le llega la confirmación, se corrige desde su ficha, en los tres puntos junto al correo: «Corregir correo». Le sale sola la confirmación al correo nuevo y queda en el registro con tu nombre.',
     explicacion: [
-      'Al lado del correo, la ficha de cada cliente, conductor y restaurante dice cómo está: «Confirmado», «Sin confirmar» o «Rebotó: el buzón no existe o está bloqueado». «Rebotó» quiere decir que el servicio de correo (por ejemplo Gmail) contestó que esa dirección no existe: casi siempre es una letra cambiada.',
+      'Al lado del correo, la ficha de cada cliente, conductor y restaurante dice cómo está: «Confirmado», «Sin confirmar» o «El correo rebotó: el buzón no existe o está bloqueado». «Rebotó» quiere decir que el servicio de correo (por ejemplo Gmail) contestó que esa dirección no existe: casi siempre es una letra cambiada.',
       'Antes de corregir, confirma con la persona el correo bueno, letra por letra. Nunca adivines: si cambias a una dirección equivocada, el enlace le llega a otra persona.',
       '«Corregir correo» deja la cuenta sin confirmar y le manda sola, al correo nuevo, el mismo enlace de confirmación que manda la app. Mientras escribes, si el dominio parece mal escrito (gmial.com, gmail.con), el panel sugiere el bueno. No deja usar un correo que ya tiene otra cuenta ni uno bloqueado por mala conducta. No cambia su contraseña ni le cierra la sesión.',
       '«Reenviar confirmación» vuelve a mandar el enlace al correo que ya tiene la cuenta. Si el correo no sale (la dirección no existe o el servicio falló), el panel lo dice con el motivo: nunca dice «enviado» si no salió.',
@@ -3004,7 +3006,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
       capCorreo(
         'estado',
         'es',
-        'La ficha de un cliente con el correo marcado «Rebotó: el buzón no existe o está bloqueado» y el menú de tres puntos abierto con Corregir correo y Reenviar confirmación.',
+        'La ficha de un cliente con el correo marcado «El correo rebotó: el buzón no existe o está bloqueado» y el menú de tres puntos abierto con Corregir correo y Reenviar confirmación.',
         'El estado del correo y las opciones de los tres puntos.',
       ),
       capCorreo(
@@ -3041,7 +3043,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
     resumen:
       'When someone typed their email wrong and the confirmation never arrives, fix it from their page, in the three-dot menu next to the email: “Fix email.” The confirmation goes out to the new email on its own, and the change is logged with your name.',
     explicacion: [
-      'Next to the email, every customer, driver and restaurant page shows its status: “Confirmed,” “Not confirmed,” or “Bounced: the mailbox doesn’t exist or is blocked.” “Bounced” means the email provider (for example, Gmail) answered that the address doesn’t exist: almost always a mistyped letter.',
+      'Next to the email, every customer, driver and restaurant page shows its status: “Confirmed,” “Not confirmed,” or “The email bounced: the mailbox doesn’t exist or is blocked.” “Bounced” means the email provider (for example, Gmail) answered that the address doesn’t exist: almost always a mistyped letter.',
       'Before fixing it, confirm the right email with the person, letter by letter. Never guess: if you change it to the wrong address, the link goes to someone else.',
       '“Fix email” leaves the account unconfirmed and sends the new email the same confirmation link the app sends. While you type, if the domain looks mistyped (gmial.com, gmail.con), the panel suggests the right one. It won’t take an email another account already uses or one blocked for misconduct. It doesn’t change their password or sign them out.',
       '“Resend confirmation” sends the link again to the email the account already has. If the email doesn’t go out (the address doesn’t exist or the service failed), the panel says so with the reason: it never says “sent” when it wasn’t.',
@@ -3055,7 +3057,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
       capCorreo(
         'estado',
         'en',
-        'A customer page with the email marked “Bounced: the mailbox doesn’t exist or is blocked” and the three-dot menu open with Fix email and Resend confirmation.',
+        'A customer page with the email marked “The email bounced: the mailbox doesn’t exist or is blocked” and the three-dot menu open with Fix email and Resend confirmation.',
         'The email status and the three-dot options.',
       ),
       capCorreo(

@@ -5365,12 +5365,18 @@ const es: SeccionDocs[] = [
       {
         id: 'password',
         titulo: 'Olvidé mi contraseña',
-        resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
+        resumen:
+          'Te mandamos un enlace al correo (sirve una vez y vence en 30 minutos) o, si tu correo todavía no está confirmado, un código a tu celular.',
         capturas: [
           {
             src: '/docs/recorrido-web-olvide-clave-es.webp',
             alt: 'Página «Olvidé mi contraseña» de Divoox con la casilla del correo y el botón «Mandarme el enlace».',
             pie: 'Escribe tu correo y te mandamos el enlace.',
+          },
+          {
+            src: '/docs/recorrido-web-olvide-codigo-es.webp',
+            alt: 'Página «Olvidé mi contraseña» de Divoox después de pedir el enlace, con «¿Te llegó un código al celular?», la casilla «Código de 6 números» y las dos casillas de la contraseña nueva.',
+            pie: 'Si tu correo todavía no está confirmado, el código llega a tu celular y lo escribes aquí.',
           },
           {
             src: '/docs/recorrido-restaurante-clave-es.webp',
@@ -5383,6 +5389,7 @@ const es: SeccionDocs[] = [
           'En la pantalla de entrar, toca «¿Olvidaste tu contraseña?».',
           'Escribe tu correo. Si tiene cuenta en Divoox, te llega un enlace (revisa también la carpeta de spam).',
           'Toca el enlace y escribe tu contraseña nueva dos veces.',
+          'Si todavía no confirmaste tu correo, por seguridad no te mandamos el enlace: te mandamos un código de 6 números por WhatsApp o SMS a tu celular confirmado. Escríbelo en la misma página, debajo de «¿Te llegó un código al celular?», junto con tu contraseña nueva dos veces.',
           'Listo. Por seguridad, se cierran todas las sesiones abiertas y entras de nuevo con la contraseña nueva.',
         ],
       },
@@ -5390,22 +5397,32 @@ const es: SeccionDocs[] = [
         id: 'confirm-email',
         titulo: 'Confirmar tu correo',
         resumen:
-          'Puedes mirar restaurantes y menús sin cuenta. Al pagar te pedimos la cuenta con el correo confirmado: te llega un enlace y la app se da cuenta sola.',
+          'Tu cuenta queda lista con tu celular confirmado por código. El correo se confirma después, cuando quieras: una franja te lo recuerda sin frenarte.',
         capturas: [
           {
             src: '/docs/recorrido-cliente-aviso-correo-es.webp',
-            alt: 'Portada de la app de Divoox con el aviso «Confirma tu correo para poder pedir», la dirección a la que llegó el enlace y «Mandar el enlace otra vez».',
-            pie: 'Al crear tu cuenta, la portada te recuerda confirmar el correo. Mientras tanto puedes mirar.',
+            alt: 'Portada de la app de Divoox con la franja «Confirma tu correo», la dirección a la que llegó el enlace, «Puedes seguir usando la app: confírmalo cuando quieras», «Mandar el enlace otra vez» y «¿Correo equivocado? Cámbialo».',
+            pie: 'Al crear tu cuenta, la portada te recuerda confirmar el correo con una franja que no estorba.',
+          },
+          {
+            src: '/docs/recorrido-cliente-franja-cambiar-correo-es.webp',
+            alt: 'La franja «Confirma tu correo» abierta con las casillas «Correo nuevo» y «Tu contraseña, para confirmar» y el botón «Cambiar el correo y mandar el enlace».',
+            pie: '¿Escribiste mal el correo? Lo cambias ahí mismo, con tu contraseña.',
+          },
+          {
+            src: '/docs/recorrido-cliente-franja-correo-verificado-es.webp',
+            alt: 'Portada de la app de Divoox con el aviso verde «Tu correo quedó verificado».',
+            pie: 'Al tocar el enlace del correo, la franja se pone verde sola.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-franja-correo-es.webp',
+            alt: 'Inicio de Divoox Driver con la franja «Confirma tu correo» arriba de los demás pasos del registro.',
+            pie: 'En Divoox Driver es igual: sigues tu registro y confirmas el correo cuando quieras.',
           },
           {
             src: '/docs/recorrido-cliente-confirma-correo-es.webp',
             alt: 'Pantalla «Confirma tu correo» de la app de Divoox con la dirección a la que llegó el enlace y los botones «Ya lo confirmé», «Mandar el enlace otra vez» y «¿Correo equivocado? Cámbialo».',
-            pie: 'Al ir a pagar, la app te pide confirmar el correo antes de seguir.',
-          },
-          {
-            src: '/docs/recorrido-cliente-correo-verificado-es.webp',
-            alt: 'Pantalla «Tu correo quedó verificado» con una marca verde y el botón «Continuar».',
-            pie: 'Al tocar el enlace, la app se da cuenta sola y te deja entrar.',
+            pie: 'Solo si tu celular no se pudo confirmar con el código, la app te pide el correo confirmado antes de pagar.',
           },
           {
             src: '/docs/recorrido-restaurante-correo-es.webp',
@@ -5416,14 +5433,17 @@ const es: SeccionDocs[] = [
         preguntas: [
           '¿Cómo confirmo mi correo?',
           'No me llegó el correo de confirmación, ¿qué hago?',
+          '¿Puedo pedir sin confirmar el correo?',
         ],
         pasos: [
           'Mira restaurantes y menús sin cuenta. Cuando vayas a pagar, entra o crea tu cuenta.',
-          'Al crear tu cuenta, la portada te avisa «Confirma tu correo para poder pedir» y, al ir a pagar, verás «Confirma tu correo» con la dirección que escribiste. Busca en ese correo el mensaje «Confirma tu correo de Divoox» (mira también en spam).',
-          'Toca el enlace del correo en tu teléfono. En la página que se abre, toca «Abrir la app de Divoox».',
-          'La app se da cuenta sola, te dice «Tu correo quedó verificado» y, al tocar «Continuar», sigues con tu pedido. Hasta entonces no se puede pagar: así cada cuenta es de una persona real y sus recibos le llegan.',
-          '¿Escribiste mal el correo? En la misma pantalla toca «¿Correo equivocado? Cámbialo», escribe el bueno y tu contraseña, y te mandamos el enlace ahí. El enlace vence en dos días; «Mandar el enlace otra vez» te manda uno nuevo.',
-          'Si la dirección no existe o no recibe correos, la app te lo dice en rojo («No pudimos entregar el correo a esta dirección») y abre sola la casilla para cambiarla. Si el correo no pudo salir por un problema nuestro, también te lo decimos y puedes intentarlo otra vez en unos minutos: nunca verás «Te lo mandamos» si no salió.',
+          'Al crear tu cuenta, confirma tu celular con el código de 6 números que te llega por WhatsApp o SMS. Con eso tu cuenta queda lista: ya puedes pedir y pagar.',
+          'El correo se confirma en segundo plano. En la portada verás la franja «Confirma tu correo» con la dirección que escribiste; puedes seguir usando la app. Busca en ese correo el mensaje «Confirma tu correo de Divoox» (mira también en spam) y toca el enlace en tu teléfono. En la página que se abre, toca «Abrir la app de Divoox».',
+          'La app se da cuenta sola y la franja dice «Tu correo quedó verificado». Confirmarlo sirve para que tus recibos y los avisos de tu cuenta te lleguen.',
+          '¿No te llegó o se venció? Toca «Mandar el enlace otra vez» en la franja: te mandamos un enlace nuevo, aunque el anterior ya haya vencido (cada enlace dura dos días).',
+          '¿Escribiste mal el correo? Toca «¿Correo equivocado? Cámbialo», escribe el bueno y tu contraseña, y te mandamos el enlace ahí.',
+          'Si la dirección no existe o no recibe correos, la franja te lo dice en rojo («No pudimos entregar el correo a esta dirección») y abre sola la casilla para cambiarla. Si el correo no pudo salir por un problema nuestro, también te lo decimos y puedes intentarlo otra vez en unos minutos: nunca verás «Te mandamos un enlace nuevo» si no salió.',
+          'Si tu celular no se pudo confirmar porque el código no tiene por dónde llegarte, la app te pide el correo confirmado al ir a pagar, con la pantalla «Confirma tu correo». Al tocar el enlace, te dice «Tu correo quedó verificado» y sigues con tu pedido.',
         ],
       },
       {
@@ -10860,12 +10880,18 @@ const en: SeccionDocs[] = [
       {
         id: 'password',
         titulo: 'Forgot my password',
-        resumen: 'We email you a link. It works once and expires in 30 minutes.',
+        resumen:
+          'We email you a link (it works once and expires in 30 minutes) or, if your email isn’t confirmed yet, we send a code to your cell phone.',
         capturas: [
           {
             src: '/docs/recorrido-web-olvide-clave-en.webp',
             alt: 'Divoox “Forgot my password” page with the email field and the “Send me the link” button.',
             pie: 'Enter your email and we send you the link.',
+          },
+          {
+            src: '/docs/recorrido-web-olvide-codigo-en.webp',
+            alt: 'Divoox “Forgot my password” page after requesting the link, with “Did you get a code on your phone?”, the “6-digit code” box and the two new password boxes.',
+            pie: 'If your email isn’t confirmed yet, the code goes to your cell phone and you enter it here.',
           },
           {
             src: '/docs/recorrido-restaurante-clave-en.webp',
@@ -10878,6 +10904,7 @@ const en: SeccionDocs[] = [
           'On the sign-in screen, tap “Forgot your password?”',
           'Enter your email. If it has a Divoox account, you get a link (check spam too).',
           'Tap the link and type your new password twice.',
+          'If you haven’t confirmed your email yet, for your safety we don’t send the link: we send a 6-digit code by WhatsApp or text to your confirmed cell phone. Enter it on the same page, under “Did you get a code on your phone?”, along with your new password twice.',
           'Done. For safety, all open sessions are closed and you sign in again with the new password.',
         ],
       },
@@ -10885,22 +10912,32 @@ const en: SeccionDocs[] = [
         id: 'confirm-email',
         titulo: 'Confirm your email',
         resumen:
-          'You can browse restaurants and menus without an account. At checkout we ask for your account with a confirmed email: you get a link and the app notices on its own.',
+          'Your account is ready once your cell phone is confirmed with a code. You confirm your email later, whenever you like: a banner reminds you without holding you up.',
         capturas: [
           {
             src: '/docs/recorrido-cliente-aviso-correo-en.webp',
-            alt: 'Divoox app home screen with the notice “Confirm your email to order,” the address the link was sent to, and “Send the link again.”',
-            pie: 'After you create your account, the home screen reminds you to confirm your email. You can keep browsing meanwhile.',
+            alt: 'Divoox app home screen with the “Confirm your email” banner, the address the link was sent to, “You can keep using the app: confirm it whenever you like,” “Send the link again,” and “Wrong email? Change it.”',
+            pie: 'After you create your account, the home screen reminds you to confirm your email with a banner that doesn’t get in the way.',
+          },
+          {
+            src: '/docs/recorrido-cliente-franja-cambiar-correo-en.webp',
+            alt: 'The “Confirm your email” banner open with the “New email” and “Your password, to confirm” fields and the “Change email and send the link” button.',
+            pie: 'Typed the wrong email? Change it right there, with your password.',
+          },
+          {
+            src: '/docs/recorrido-cliente-franja-correo-verificado-en.webp',
+            alt: 'Divoox app home screen with the green notice “Your email is verified.”',
+            pie: 'Once you tap the link in the email, the banner turns green on its own.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-franja-correo-en.webp',
+            alt: 'Divoox Driver home screen with the “Confirm your email” banner above the rest of the sign-up steps.',
+            pie: 'Divoox Driver works the same way: keep going with your sign-up and confirm your email whenever you like.',
           },
           {
             src: '/docs/recorrido-cliente-confirma-correo-en.webp',
             alt: '“Confirm your email” screen in the Divoox app with the address the link was sent to and the buttons “I already confirmed it,” “Send the link again,” and “Wrong email? Change it.”',
-            pie: 'At checkout, the app asks you to confirm your email before you continue.',
-          },
-          {
-            src: '/docs/recorrido-cliente-correo-verificado-en.webp',
-            alt: '“Your email is verified” screen with a green check mark and the “Continue” button.',
-            pie: 'Once you tap the link, the app notices on its own and lets you in.',
+            pie: 'Only if your cell phone couldn’t be confirmed with a code does the app ask for a confirmed email before you pay.',
           },
           {
             src: '/docs/recorrido-restaurante-correo-en.webp',
@@ -10911,14 +10948,17 @@ const en: SeccionDocs[] = [
         preguntas: [
           'How do I confirm my email?',
           'I didn’t get the confirmation email. What do I do?',
+          'Can I order without confirming my email?',
         ],
         pasos: [
           'Browse restaurants and menus without an account. When you’re ready to pay, sign in or create your account.',
-          'After you create your account, the home screen shows “Confirm your email to order,” and at checkout you’ll see “Confirm your email” with the address you typed. Look in that inbox for “Confirm your Divoox email” (check spam too).',
-          'Tap the link in the email on your phone. On the page that opens, tap “Open the Divoox app.”',
-          'The app notices on its own, tells you “Your email is verified,” and when you tap “Continue,” you go on with your order. Until then you can’t pay: this way every account belongs to a real person and receipts reach them.',
-          'Typed the wrong email? On the same screen, tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there. The link expires in two days; “Send the link again” sends a new one.',
-          'If the address doesn’t exist or can’t receive mail, the app tells you in red (“We couldn’t deliver the email to this address”) and opens the box to change it. If the email couldn’t go out because of a problem on our side, we tell you that too and you can try again in a few minutes: you’ll never see “We sent it” when it didn’t go out.',
+          'When you create your account, confirm your cell phone with the 6-digit code you get by WhatsApp or text. That’s all your account needs: you can order and pay right away.',
+          'Your email is confirmed in the background. On the home screen you’ll see the “Confirm your email” banner with the address you typed; you can keep using the app. Look in that inbox for “Confirm your Divoox email” (check spam too) and tap the link on your phone. On the page that opens, tap “Open the Divoox app.”',
+          'The app notices on its own and the banner says “Your email is verified.” Confirming it makes sure your receipts and account notices reach you.',
+          'Didn’t get it, or did it expire? Tap “Send the link again” in the banner: we send you a new link, even if the previous one already expired (each link lasts two days).',
+          'Typed the wrong email? Tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there.',
+          'If the address doesn’t exist or can’t receive mail, the banner tells you in red (“We couldn’t deliver the email to this address”) and opens the box to change it. If the email couldn’t go out because of a problem on our side, we tell you that too and you can try again in a few minutes: you’ll never see “We sent you a new link” when it didn’t go out.',
+          'If your cell phone couldn’t be confirmed because the code has no way to reach you, the app asks for a confirmed email when you go to pay, on the “Confirm your email” screen. Once you tap the link, it says “Your email is verified” and you go on with your order.',
         ],
       },
       {

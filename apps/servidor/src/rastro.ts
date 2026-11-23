@@ -1,5 +1,6 @@
 import {
   PASOS_ANONIMOS,
+  pasoQueNoFrena,
   pasosDe,
   type AppRastro,
   type PasoAnonimo,
@@ -271,7 +272,8 @@ export function pasosDeCuenta(d: {
       fecha: null,
       fuente: null,
       comprobacion: null,
-      nota: paso === 'correo' && d.correoFrenado ? 'correo_frenado' : null,
+      // C-CORREO-NO-FRENA: el correo por confirmar no frena; si rebotó, se dice.
+      nota: paso === 'correo' ? (d.correoFrenado ? 'correo_frenado' : 'no_frena') : null,
     };
   });
 }
@@ -506,9 +508,15 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
     conVerificacion: (kyc ?? []).some((k) => k.enviado_en || k.estado === 'aprobado'),
     correoFrenado: Number(u.frenado) === 1 && !u.correo_confirmado_en,
   });
+  // C-CORREO-NO-FRENA: el correo por confirmar no es lo que le falta ni el último paso alcanzado.
   const hechos = pasosCuenta.filter((p) => p.estado === 'hecho').map((p) => p.paso);
-  const falta = pasosCuenta.filter((p) => p.estado === 'pendiente').map((p) => p.paso);
-  const ultimo: PasoRegistro = hechos.at(-1) ?? 'cuenta';
+  const falta = pasosCuenta
+    .filter((p) => p.estado === 'pendiente' && !pasoQueNoFrena(p.paso))
+    .map((p) => p.paso);
+  const ultimo: PasoRegistro = hechos.filter((p) => !pasoQueNoFrena(p)).at(-1) ?? 'cuenta';
+  const correoPorConfirmar = pasosCuenta.some(
+    (p) => p.paso === 'correo' && p.estado === 'pendiente',
+  );
   const alta = (rastro ?? []).find((r) => r.tipo === 'alta');
   return {
     alta: {
@@ -530,6 +538,9 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
       hechos,
       falta,
       pasos: pasosCuenta,
+      /** El correo sigue sin confirmar (no frena): el panel lo dice aparte, al final. */
+      correoPorConfirmar,
+      correoRebotado: correoPorConfirmar && Number(u.frenado) === 1,
     },
     linea,
   };
@@ -566,7 +577,8 @@ export async function embudoRegistro(
   const soloCuentas = Boolean(f.zona) || al.sql !== '';
   const rol = f.app === 'repartidor' ? 'repartidor' : 'cliente';
   const orden = pasosDe(f.app);
-  const deCuenta = orden.filter((p) => !esPasoAnonimo(p));
+  // C-CORREO-NO-FRENA: el correo (al final y en segundo plano) no decide dónde se quedó cada persona.
+  const deCuenta = orden.filter((p) => !esPasoAnonimo(p) && !pasoQueNoFrena(p));
   // Las cuentas reales creadas en el período (su paso «cuenta» cae dentro), con los filtros.
   const cohorte = `SELECT c.usuario_id FROM embudo_cuenta c JOIN usuarios u ON u.id = c.usuario_id
          LEFT JOIN repartidores r ON r.usuario_id = u.id
@@ -616,9 +628,11 @@ export async function embudoRegistro(
     if (p && Number(r.orden) >= 0) quedan.set(p, Number(r.personas ?? 0));
   }
   const visibles = orden.filter((p) => !(soloCuentas && esPasoAnonimo(p)));
+  const ultimoQueFrena = visibles.filter((p) => !pasoQueNoFrena(p)).at(-1);
   const pasos: FilaEmbudo[] = visibles.map((paso, i) => {
     const personas = cuenta.get(paso) ?? 0;
-    if (i === visibles.length - 1) return { paso, personas, seQuedan: null };
+    // El último paso que frena (y los que no frenan) no tienen «se quedaron aquí».
+    if (paso === ultimoQueFrena || pasoQueNoFrena(paso)) return { paso, personas, seQuedan: null };
     // Antes de la cuenta los pasos sí van en fila: se queda quien no llegó al siguiente.
     const seQuedan = esPasoAnonimo(paso)
       ? Math.max(0, personas - (cuenta.get(visibles.at(i + 1) ?? '') ?? 0))

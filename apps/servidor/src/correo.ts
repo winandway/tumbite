@@ -395,25 +395,61 @@ export async function saludCorreo(db: D1Database): Promise<{
   ultimoFallo: string | null;
   cupoAlto: boolean;
   rebotes24h: number;
+  enlaces24h: number;
+  /** C-CORREO-REBOTES-CANARIO: la tasa de rebote de las últimas 24 h (ok, atrasado o error). */
+  rebotes: EstadoRebotes;
 }> {
+  // Una sola lectura: cada conteo baja por su índice (correo_fallos_tipo, correos_rebotados_creado y
+  // confirmaciones_creada).
   const f = await db
     .prepare(
       `SELECT
         (SELECT COUNT(*) FROM correo_fallos WHERE tipo = 'sistema' AND creado_en > datetime('now', '-1 day')) AS fallos,
         (SELECT MAX(creado_en) FROM correo_fallos WHERE tipo = 'sistema') AS ultimo,
         (SELECT COUNT(*) FROM correo_fallos WHERE tipo = 'cupo' AND creado_en >= date('now')) AS cupo,
-        (SELECT COUNT(*) FROM correos_rebotados WHERE creado_en > datetime('now', '-1 day')) AS rebotes`,
+        (SELECT COUNT(*) FROM correos_rebotados WHERE creado_en > datetime('now', '-1 day')) AS rebotes,
+        (SELECT COUNT(*) FROM confirmaciones WHERE creada_en > datetime('now', '-1 day')) AS enlaces`,
     )
-    .first<{ fallos: number; ultimo: string | null; cupo: number; rebotes: number }>();
+    .first<{
+      fallos: number;
+      ultimo: string | null;
+      cupo: number;
+      rebotes: number;
+      enlaces: number;
+    }>();
   const fallos24h = Number(f?.fallos ?? 0);
   const cupoAlto = Number(f?.cupo ?? 0) > 0;
+  const rebotes24h = Number(f?.rebotes ?? 0);
+  const enlaces24h = Number(f?.enlaces ?? 0);
   return {
     estado: fallos24h > 0 || cupoAlto ? 'error' : 'ok',
     fallos24h,
     ultimoFallo: f?.ultimo ?? null,
     cupoAlto,
-    rebotes24h: Number(f?.rebotes ?? 0),
+    rebotes24h,
+    enlaces24h,
+    rebotes: estadoRebotes(rebotes24h, enlaces24h),
   };
+}
+
+export type EstadoRebotes = 'ok' | 'atrasado' | 'error';
+/** Con menos enlaces que esto en 24 h, la tasa no dice nada (dos cuentas no hacen una alarma). */
+export const MINIMO_ENLACES_TASA = 20;
+/** Amarillo desde el 10 % de rebotes; rojo desde el 25 % (la reputación de divoox.com en peligro). */
+export const TASA_REBOTE_AMARILLA = 0.1;
+export const TASA_REBOTE_ROJA = 0.25;
+
+/**
+ * C-CORREO-REBOTES-CANARIO (23 nov 2026): direcciones que rebotaron en 24 h contra los enlaces de
+ * confirmación que salieron. Con poco volumen, siempre «ok». Pieza pura.
+ */
+export function estadoRebotes(rebotes: number, enlaces: number): EstadoRebotes {
+  const total = Math.max(enlaces, rebotes);
+  if (total < MINIMO_ENLACES_TASA) return 'ok';
+  const tasa = rebotes / total;
+  if (tasa >= TASA_REBOTE_ROJA) return 'error';
+  if (tasa >= TASA_REBOTE_AMARILLA) return 'atrasado';
+  return 'ok';
 }
 
 function escapar(s: string): string {
