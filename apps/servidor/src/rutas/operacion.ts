@@ -175,6 +175,7 @@ import {
 import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
 import { crearTicket } from './tickets';
+import { anotarRechazoConectar, origenDePeticion } from '../rastro';
 import {
   abrirPase,
   enviarSms,
@@ -1540,7 +1541,10 @@ operacion.post('/repartidor/conectar', async (c) => {
   // C-SERVICIOS-CONECTADOS: el encendido general (app vieja) conecta todos los servicios aprobados
   // si ninguno quedó encendido; si el repartidor ya eligió los suyos, se respetan.
   // Solo después de pasar todas las puertas: si una frena, no se escribe nada.
-  const r = await conectarRepartidor(c, u, db, d);
+  // C-FOTO-CARA-A-LA-VISTA: un «no» al conectarse deja su hito (una vez por motivo y cuenta).
+  const r = await conectarRepartidor(c, u, db, d).catch(async (e: unknown) => {
+    throw d.conectado ? await anotarRechazoConectar(db, u.id, e, origenDePeticion(c.req)) : e;
+  });
   if (d.conectado) await encenderTodosSiNinguno(db, u.id);
   return c.json(r);
 });

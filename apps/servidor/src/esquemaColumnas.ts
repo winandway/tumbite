@@ -2913,6 +2913,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pais",
     "creado_en"
   ],
+  "hitos_cuenta": [
+    "usuario_id",
+    "hito",
+    "motivo",
+    "app",
+    "version",
+    "plataforma",
+    "creado_en"
+  ],
   "embudo_anonimo": [
     "dia",
     "app",

@@ -2,6 +2,7 @@ import {
   PASOS_ANONIMOS,
   pasosDe,
   type AppRastro,
+  type HitoConductor,
   type PasoAnonimo,
   type PasoRegistro,
 } from '@tumbite/compartido';
@@ -112,6 +113,73 @@ export async function anotarPaso(
   } catch (e) {
     console.error('rastro: no se pudo anotar el paso', paso, String(e));
   }
+}
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): un hito del conductor (vio la tarjeta de la cara, abrió la
+ * cámara, la subida falló, no lo dejamos conectarse…). UNA fila por cuenta, hito y motivo, la primera
+ * vez: las repeticiones no escriben nada. Nunca frena lo que la persona hace (si falla, queda en el log).
+ */
+export async function anotarHito(
+  db: D1Database,
+  usuarioId: string,
+  hito: HitoConductor,
+  motivo = '',
+  o?: Partial<Origen>,
+): Promise<void> {
+  try {
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO hitos_cuenta (usuario_id, hito, motivo, app, version, plataforma) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+      .bind(
+        usuarioId,
+        hito,
+        motivo.slice(0, 30),
+        o?.app ?? null,
+        o?.version ?? null,
+        o?.plataforma ?? null,
+      )
+      .run();
+  } catch (e) {
+    console.error('rastro: no se pudo anotar el hito', hito, motivo, String(e));
+  }
+}
+
+/** Los motivos con nombre en el panel; uno desconocido se guarda como «otro». */
+const MOTIVOS_CONECTAR = new Set([
+  'cara',
+  'kyc',
+  'papeles',
+  'terminos',
+  'telefono',
+  'selfie',
+  'selfie_casco',
+  'bloque_flex',
+  'servicioId',
+]);
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA: si conectarse falló por una puerta (cara, términos, teléfono…), queda el hito
+ * con su motivo. Sirve con las apps ya publicadas: lo anota el servidor solo. Devuelve el mismo error.
+ */
+export async function anotarRechazoConectar(
+  db: D1Database,
+  usuarioId: string,
+  e: unknown,
+  o?: Partial<Origen>,
+): Promise<unknown> {
+  const campo = (e as { campo?: unknown } | null)?.campo;
+  const estado = Number((e as { estado?: unknown } | null)?.estado ?? 0);
+  if (estado >= 400 && estado < 500)
+    await anotarHito(
+      db,
+      usuarioId,
+      'conectar_rechazado',
+      typeof campo === 'string' && MOTIVOS_CONECTAR.has(campo) ? campo : 'otro',
+      o,
+    );
+  return e;
 }
 
 /** Tope del día para los contadores de antes de crear la cuenta (por servidor en marcha). */
@@ -367,6 +435,13 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
       .bind(usuarioId),
     // C-REZAGADOS: los mensajes de registro que se le mandaron (Camila sola o el equipo a mano).
     db.prepare(sqlMensajesDeCuenta(LIMITE)).bind(usuarioId),
+    // C-FOTO-CARA-A-LA-VISTA: los hitos (la tarjeta de la cara, la cámara, las subidas, la conexión).
+    db
+      .prepare(
+        `SELECT creado_en AS fecha, hito, motivo, app, version, plataforma FROM hitos_cuenta
+          WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT ${LIMITE}`,
+      )
+      .bind(usuarioId),
   ];
   const [
     rastro,
@@ -380,6 +455,7 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
     chat,
     equipo,
     mensajes,
+    hitos,
   ] = (await db.batch<Record<string, string | number | null>>(consultas)).map((r) => r.results);
   // C-RASTRO-FUENTES: lo que dice cada fuente real de cada paso (fotos por las dos rutas, papeles,
   // vehículo, lo aprobado por el equipo, la conexión y los viajes). Una consulta corta por fuente.
@@ -486,6 +562,8 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
       [t(x.paso) ?? '', t(x.origen) ?? '', t(x.estado) ?? '', t(x.detalle) ?? ''].join('|'),
       x.quien,
     );
+  // «hito:<nombre>» con el motivo en el detalle: el panel lo dice en su idioma.
+  for (const h of hitos ?? []) poner(h.fecha, 'hito', `hito:${h.hito}`, t(h.motivo));
   linea.sort((a, b) => b.fecha.localeCompare(a.fecha));
 
   // Dónde lo dejó: cada paso leído de todas sus fuentes, en el orden en que lo hace la persona.
@@ -576,7 +654,9 @@ export async function embudoRegistro(
            AND (?5 IS NULL OR COALESCE(u.zona_id, r.zona_id) = ?5)${al.sql}`;
   const valores = [f.desde, f.hasta, rol, f.pais ?? null, f.zona ?? null, ...al.valores];
   const ordenSql = `CASE e.paso ${deCuenta.map((p, i) => `WHEN '${p}' THEN ${i}`).join(' ')} ELSE -1 END`;
-  const [anon, cuentas, ultimos, porPais] = await db.batch<Record<string, string | number | null>>([
+  const [anon, cuentas, ultimos, porPais, hitos] = await db.batch<
+    Record<string, string | number | null>
+  >([
     db
       .prepare(
         `SELECT paso, SUM(personas) AS personas FROM embudo_anonimo
@@ -605,6 +685,13 @@ export async function embudoRegistro(
          GROUP BY 1 ORDER BY 2 DESC LIMIT 30`,
       )
       .bind(f.desde, f.hasta, rol, ...al.valores),
+    // C-FOTO-CARA-A-LA-VISTA: dónde se traban las mismas cuentas (cuántas personas por hito y motivo).
+    db
+      .prepare(
+        `SELECT h.hito, h.motivo, COUNT(*) AS personas FROM hitos_cuenta h
+          WHERE h.usuario_id IN (${cohorte}) GROUP BY h.hito, h.motivo ORDER BY 3 DESC LIMIT 60`,
+      )
+      .bind(...valores),
   ]);
   const cuenta = new Map<string, number>();
   if (!soloCuentas)
@@ -630,6 +717,11 @@ export async function embudoRegistro(
     porPais: (porPais?.results ?? []).map((r) => ({
       pais: String(r.pais ?? ''),
       cuentas: Number(r.personas ?? 0),
+    })),
+    hitos: (hitos?.results ?? []).map((r) => ({
+      hito: String(r.hito),
+      motivo: String(r.motivo ?? ''),
+      personas: Number(r.personas ?? 0),
     })),
   };
 }

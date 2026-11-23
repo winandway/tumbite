@@ -2,7 +2,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { ErrorDatos } from '../validar';
+import { HITOS_DESDE_APP } from '@tumbite/compartido';
 import {
+  anotarHito,
   anotarPaso,
   contarPasoAnonimo,
   embudoRegistro,
@@ -47,6 +49,30 @@ rastroRutas.post('/rastro/paso', async (c) => {
     },
   );
   return c.json({ ok: contado });
+});
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): un hito que solo ve la app del conductor (la tarjeta de la cara
+ * a la vista, la cámara abierta, una foto tomada, una subida que no llegó). Solo los conocidos y con sus
+ * motivos; los de conectarse y los rechazos de fotos los pone el servidor. UNA fila la primera vez.
+ */
+const HITOS_APP = new Map<string, readonly string[]>(Object.entries(HITOS_DESDE_APP));
+const cuerpoHito = z.object({ hito: z.string().max(30), motivo: z.string().max(30).default('') });
+rastroRutas.use('/rastro/hito', limiteIntentos(40, 60_000));
+rastroRutas.post('/rastro/hito', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const leido = cuerpoHito.safeParse(await c.req.json().catch(() => null));
+  const motivos = leido.success ? HITOS_APP.get(leido.data.hito) : undefined;
+  if (!leido.success || !motivos || !motivos.includes(leido.data.motivo))
+    return c.json({ ok: false }, 400);
+  await anotarHito(
+    base(c),
+    u.id,
+    leido.data.hito as keyof typeof HITOS_DESDE_APP,
+    leido.data.motivo,
+    origenDePeticion(c.req),
+  );
+  return c.json({ ok: true });
 });
 
 async function actividad(db: D1Database, id: string, rol: 'repartidor' | 'cliente') {

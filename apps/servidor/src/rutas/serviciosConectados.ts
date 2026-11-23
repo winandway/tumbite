@@ -12,6 +12,7 @@ import {
   versionNum,
 } from './servicios';
 import { MENSAJE_EN_BLOQUE_FLEX, bloqueFlexDe, conectarRepartidor, miFicha } from './operacion';
+import { anotarRechazoConectar, origenDePeticion } from '../rastro';
 
 /**
  * C-SERVICIOS-CONECTADOS (Richard, 16 nov 2026, al probar Driver; diseño en DRIVER.md de Gerencia).
@@ -159,12 +160,17 @@ serviciosConectados.post('/conductor/servicios/:id/conexion', async (c) => {
   const s = estado.servicios.find((x) => x.servicioId === servicioId);
   if (!s) throw new ErrorDatos('Ese servicio no existe.', 'servicioId', 404);
   if (d.conectado) {
-    if (await bloqueFlexDe(db, u.id))
-      throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
-    if (!s.puedeActivar)
-      throw new ErrorDatos('Este servicio todavía no está aprobado para ti.', 'servicioId', 409);
-    // Primero las puertas del encendido general (si alguna falla, no se toca la preferencia).
-    const general = await conectarRepartidor(c, u, db, d);
+    // C-FOTO-CARA-A-LA-VISTA: un «no» al conectarse deja su hito (una vez por motivo y cuenta).
+    const general = await (async () => {
+      if (await bloqueFlexDe(db, u.id))
+        throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
+      if (!s.puedeActivar)
+        throw new ErrorDatos('Este servicio todavía no está aprobado para ti.', 'servicioId', 409);
+      // Primero las puertas del encendido general (si alguna falla, no se toca la preferencia).
+      return await conectarRepartidor(c, u, db, d);
+    })().catch(async (e: unknown) => {
+      throw await anotarRechazoConectar(db, u.id, e, origenDePeticion(c.req));
+    });
     await db.prepare(UPSERT_PREFERENCIA).bind(u.id, servicioId, 1).run();
     return c.json({
       ...general,

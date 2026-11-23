@@ -1,5 +1,6 @@
 import { avisarRed } from './sondeo';
 import type { DatosEntrar, DatosRegistro, RespuestaSesion, Usuario } from './esquemas';
+import type { HitoDesdeApp } from './rastro';
 
 /** Error del servidor contado en palabras claras, con el campo que falló si lo hay. */
 export class ErrorApi extends Error {
@@ -30,6 +31,8 @@ export type OpcionesApi = {
   fetch?: typeof fetch;
   /** Cuánto se espera una respuesta antes de darla por perdida (C-PEDIDO-CON-LIMITE). */
   tiempoMs?: number;
+  /** C-FOTO-CARA-A-LA-VISTA: cuánto se espera la subida de una foto (con mala señal tarda más). */
+  tiempoFotoMs?: number;
   /**
    * C-SESION-TERMINADA: el servidor respondió 401 a una petición CON sesión (venció o la cerraron
    * en otro lado). La app corta sus sondeos y lleva a entrar. Se llama en cada 401; quien la recibe
@@ -42,6 +45,12 @@ export type OpcionesApi = {
 export const TIEMPO_PEDIDO_MS = 30_000;
 /** Una lectura (GET) se corta antes y se repite una vez: una sola respuesta perdida no deja la pantalla en «…». */
 export const TIEMPO_LECTURA_MS = 15_000;
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): una foto que no termina de subir en este tiempo se corta y se
+ * dice «tardó demasiado» (antes, con mala señal, el botón se quedaba esperando para siempre).
+ */
+export const TIEMPO_FOTO_MS = 45_000;
 
 /** C-BUSCADOR-SERIO: una petición cancelada a propósito (`senal`) termina con este estado. */
 export const ESTADO_CANCELADA = -1;
@@ -251,22 +260,48 @@ export function crearApi(op: OpcionesApi) {
     const token = op.token?.();
     if (token) headers.authorization = `Bearer ${token}`;
     let res: Response;
+    // C-FOTO-CARA-A-LA-VISTA: con límite. Sin él, con mala señal, la subida esperaba para siempre.
+    const corte = typeof AbortController === 'undefined' ? null : new AbortController();
+    let tardo = false;
+    const reloj = corte
+      ? setTimeout(() => {
+          tardo = true;
+          corte.abort();
+        }, op.tiempoFotoMs ?? TIEMPO_FOTO_MS)
+      : null;
+    const en = op.idioma?.() === 'en';
     try {
       res = await hacer(`${op.base}${ruta}`, {
         method: 'POST',
         headers,
         body: foto,
         credentials: credenciales,
+        signal: corte?.signal,
       } as Parameters<typeof fetch>[1]);
     } catch {
-      throw new ErrorApi(
-        op.idioma?.() === 'en'
-          ? 'No connection. Try uploading the photo again in a moment.'
-          : 'Sin conexión. Intenta subir la foto de nuevo en un momento.',
-        0,
-      );
+      if (reloj) clearTimeout(reloj);
+      avisarRed(false);
+      throw tardo
+        ? new ErrorApi(
+            en
+              ? 'The upload took too long. Check your signal and tap Retry: your photo is still here.'
+              : 'La subida tardó demasiado. Revisa tu señal y toca Reintentar: tu foto sigue aquí.',
+            0,
+            undefined,
+            { motivo: 'tiempo' },
+          )
+        : new ErrorApi(
+            en
+              ? 'No connection. Your photo is still here; tap Retry when you have signal.'
+              : 'Sin conexión. Tu foto sigue aquí; toca Reintentar cuando tengas señal.',
+            0,
+            undefined,
+            { motivo: 'sin_conexion' },
+          );
     }
     const datos = (await res.json().catch(() => null)) as RespuestaFoto | null;
+    if (reloj) clearTimeout(reloj);
+    avisarRed(true);
     // C-FOTO-ENTREGA-IPHONE: si el servidor dijo que sí, la foto subió (algunas rutas no devuelven
     // su dirección); antes eso salía como «No se pudo subir la foto.» con la foto ya guardada.
     if (token && esSesionTerminada(res, datos)) op.alSesionTerminada?.(token);
@@ -278,6 +313,7 @@ export function crearApi(op: OpcionesApi) {
             : 'The photo couldn’t be uploaded.'),
         res.status,
         datos?.campo,
+        { motivo: res.status >= 500 ? 'servidor' : 'rechazo' },
       );
     return datos;
   }
@@ -324,6 +360,15 @@ export function crearApi(op: OpcionesApi) {
     subirArchivo,
     verFoto,
     registro: (d: DatosRegistro) => pedir<RespuestaSesion>('POST', '/datos/cuentas/registro', d),
+    /**
+     * C-FOTO-CARA-A-LA-VISTA: un hito del embudo del conductor (la tarjeta de la cara, la cámara, una
+     * subida fallida). El servidor guarda UNA fila por hito y motivo, la primera vez. Nunca rompe la
+     * pantalla: si falla, devuelve false.
+     */
+    hito: (hito: HitoDesdeApp, motivo = '') =>
+      pedir<{ ok: boolean }>('POST', '/datos/rastro/hito', { hito, motivo })
+        .then((r) => Boolean(r?.ok))
+        .catch(() => false),
     /** C-RASTRO: un paso del registro de antes de crear la cuenta (el servidor solo suma a un contador). */
     pasoRegistro: (app: 'cliente' | 'repartidor', paso: 'abrio' | 'formulario' | 'revisar') =>
       pedir<{ ok: boolean }>('POST', '/datos/rastro/paso', { app, paso }),

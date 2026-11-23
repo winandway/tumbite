@@ -10,6 +10,7 @@ import { Enlace } from '../Enlace';
 import { pedir } from './api';
 import { nombreEstado } from './BuscadorSuper';
 import { Insignia } from './diseno/Insignia';
+import { textoHito } from './SuperEmbudo';
 import { useHora } from './horario';
 import { mensajeDeLinea, palabraEstado, tonoMensaje } from './rezagadosTextos';
 
@@ -243,6 +244,8 @@ export function textoEvento(
 ): string {
   const t = enIdioma(T, idioma);
   if (tipo === 'paso' && NOMBRES.has(evento)) return nombrePaso(evento, idioma);
+  // C-FOTO-CARA-A-LA-VISTA: «No lo dejamos conectarse · falta la foto de la cara».
+  if (tipo === 'hito') return textoHito(evento.replace(/^hito:/, ''), detalle ?? '', idioma);
   // C-REZAGADOS: «Camila le envió un correo: recordatorio de sus fotos».
   if (tipo === 'mensaje') return mensajeDeLinea(evento, detalle, idioma).texto;
   const [clave, resto] = evento.split(':') as [string, string | undefined];
@@ -363,6 +366,8 @@ export function ActividadCuenta({
     }
     // El estado del mensaje va en su insignia; aquí solo el motivo si no salió.
     if (tipo === 'mensaje') return mensajeDeLinea('', d, idioma).motivo || null;
+    // El motivo del hito ya va en su texto («No lo dejamos conectarse · falta la foto de la cara»).
+    if (tipo === 'hito') return null;
     return d
       .split(' · ')
       .map((x) => comprobacion.get(x) ?? otros.get(x) ?? nombreEstado(x, idioma))
