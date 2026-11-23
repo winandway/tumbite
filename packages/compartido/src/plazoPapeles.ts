@@ -11,6 +11,8 @@
  * - `exentos`: requisitos del catálogo que ese país no exige nunca (Venezuela no pide antecedentes).
  * - `asistente`: el conductor sube sus papeles con el asistente de verificación (una horma por foto).
  * - `aprobacionAutomatica`: la IA aprueba sola lo que viene todo en verde. APAGADA de fábrica.
+ * - `sinReverso`: las fotos «por detrás» que ese país NO pide, porque su documento no trae nada útil
+ *   atrás (C-DOCUMENTO-SIN-REVERSO: la cédula de Venezuela). Sin escribir = se piden.
  *
  * Una sola pieza para el servidor, Driver y el panel. Nada de esto vive en condiciones sueltas.
  */
@@ -25,7 +27,13 @@ export type PoliticaPlazoPapeles = {
   exentos: string[];
   asistente: boolean;
   aprobacionAutomatica: boolean;
+  /** C-DOCUMENTO-SIN-REVERSO. Ausente o vacío = el país pide los dos reversos, como siempre. */
+  sinReverso?: PasoReverso[];
 };
+
+/** Las fotos «por detrás» que un país puede dejar de pedir. */
+export const PASOS_REVERSO = ['doc_reverso', 'licencia_reverso'] as const;
+export type PasoReverso = (typeof PASOS_REVERSO)[number];
 
 export const PLAZO_DIAS_MAXIMO = 90;
 
@@ -51,6 +59,10 @@ const DE_FABRICA = new Map<string, PoliticaPlazoPapeles>([
       exentos: ['antecedentes', 'antecedentes_pasajeros'],
       asistente: true,
       aprobacionAutomatica: false,
+      // C-DOCUMENTO-SIN-REVERSO (23 nov 2026, Richard): la cédula venezolana no tiene nada útil por
+      // detrás (una lámina en blanco con un número de serie): solo se fotografía por delante. La
+      // licencia venezolana SÍ tiene dos caras y se sigue pidiendo por frente y por reverso.
+      sinReverso: ['doc_reverso'],
     },
   ],
   // Perú («hay que ser más serios»): licencia y seguro (SOAT) aprobados para empezar; 30 días para el resto.
@@ -71,7 +83,12 @@ export const PAISES_CON_PLAZO: readonly string[] = [...DE_FABRICA.keys()];
 
 export function politicaPlazoDeFabrica(pais: string | null | undefined): PoliticaPlazoPapeles {
   const p = DE_FABRICA.get((pais ?? '').toUpperCase()) ?? SIN_PLAZO;
-  return { ...p, paraEmpezar: [...p.paraEmpezar], exentos: [...p.exentos] };
+  return {
+    ...p,
+    paraEmpezar: [...p.paraEmpezar],
+    exentos: [...p.exentos],
+    sinReverso: [...(p.sinReverso ?? [])],
+  };
 }
 
 /** Qué requisitos del catálogo hay detrás de cada papel «para empezar». */
@@ -124,6 +141,24 @@ export const PASOS_VERIFICACION = [
 export type PasoVerificacion = (typeof PASOS_VERIFICACION)[number];
 export const esPasoVerificacion = (s: string): s is PasoVerificacion =>
   (PASOS_VERIFICACION as readonly string[]).includes(s);
+
+/**
+ * C-DOCUMENTO-SIN-REVERSO (23 nov 2026). Los pasos que le tocan a un conductor según su país: quita
+ * los reversos que ese país no pide. Una sola pieza para el asistente, el envío a revisión, el flujo
+ * viejo de «Mis datos», los recordatorios y la ficha del equipo.
+ */
+export function quitarReversos<T extends string>(
+  pasos: readonly T[],
+  politica: Pick<PoliticaPlazoPapeles, 'sinReverso'> | null | undefined,
+): T[] {
+  const fuera = new Set<string>(politica?.sinReverso ?? []);
+  return pasos.filter((p) => !fuera.has(p));
+}
+
+/** ¿Ese país pide el reverso del documento de identidad? */
+export const pideReversoDocumento = (
+  politica: Pick<PoliticaPlazoPapeles, 'sinReverso'> | null | undefined,
+) => !(politica?.sinReverso ?? []).includes('doc_reverso');
 
 /** La horma de cada paso: tarjeta (documento de bolsillo), hoja (póliza) u óvalo (cara). */
 export type Horma = 'tarjeta' | 'hoja' | 'ovalo';

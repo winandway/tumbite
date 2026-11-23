@@ -1,4 +1,5 @@
 import {
+  PASOS_REVERSO,
   type PoliticaPlazoPapeles,
   diasRestantes,
   hitoQueToca,
@@ -54,6 +55,7 @@ const esquemaGuardado = z
         exentos: z.array(z.string()),
         asistente: z.boolean(),
         aprobacionAutomatica: z.boolean(),
+        sinReverso: z.array(z.enum(PASOS_REVERSO)),
       })
       .partial()
       .optional(),

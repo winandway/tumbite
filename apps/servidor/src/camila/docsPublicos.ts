@@ -1385,7 +1385,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Abre la app de repartidores, toca el menú de arriba a la izquierda y entra a «Mis datos y vehículo».",
    "En «Verifica tu identidad», elige tu documento: licencia de conducir, identificación oficial o pasaporte.",
-   "Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). Que se lean bien los datos, sin reflejos.",
+   "Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). En Venezuela la cédula se fotografía solo por delante, porque por detrás no tiene datos; la licencia sí lleva frente y reverso. Que se lean bien los datos, sin reflejos.",
    "Toma la foto de tu cara: de frente, con buena luz, sin gorra ni lentes oscuros.",
    "Toca «Enviar para revisión». Te avisamos por correo cuando esté aprobada, o qué foto repetir si hace falta."
   ],
@@ -3955,7 +3955,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Open the driver app, tap the menu at the top left, and go to “My details and vehicle.”",
    "Under “Verify your identity,” choose your document: driver’s license, government ID, or passport.",
-   "Take the photo of the front and the back (a passport only needs the front). Make sure the details are readable, with no glare.",
+   "Take the photo of the front and the back (a passport only needs the front). If your country’s ID card has no details on the back, the app only asks for the front; the driver’s license still needs both sides. Make sure the details are readable, with no glare.",
    "Take the photo of your face: straight on, in good light, no cap or sunglasses.",
    "Tap “Send for review.” We email you when it’s approved, or tell you which photo to retake."
   ],

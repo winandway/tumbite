@@ -4,9 +4,11 @@ import {
   PASOS_VERIFICACION,
   type PapelDelConductor,
   type PasoVerificacion,
+  type PoliticaPlazoPapeles,
   diasRestantes,
   esPasoVerificacion,
   papelDePaso,
+  quitarReversos,
   soloEnVivo,
 } from '@tumbite/compartido';
 import { correosEquipo } from '../avisosEquipo';
@@ -68,10 +70,19 @@ type FilaFoto = {
 
 const MOTOR = new Set(['moto', 'carro']);
 
-/** Las fotos que le tocan: sin moto ni carro no hay licencia ni seguro que pedir. */
-export function pasosDe(vehiculoTipo: string | null | undefined): PasoVerificacion[] {
-  if (vehiculoTipo && MOTOR.has(vehiculoTipo)) return [...PASOS_VERIFICACION];
-  return ['doc_frente', 'doc_reverso', 'cara'];
+/**
+ * Las fotos que le tocan: sin moto ni carro no hay licencia ni seguro que pedir. Y sin los reversos
+ * que su país no pide (C-DOCUMENTO-SIN-REVERSO: en Venezuela, el de la cédula).
+ */
+export function pasosDe(
+  vehiculoTipo: string | null | undefined,
+  politica?: Pick<PoliticaPlazoPapeles, 'sinReverso'> | null,
+): PasoVerificacion[] {
+  const todos: readonly PasoVerificacion[] =
+    vehiculoTipo && MOTOR.has(vehiculoTipo)
+      ? PASOS_VERIFICACION
+      : ['doc_frente', 'doc_reverso', 'cara'];
+  return quitarReversos(todos, politica);
 }
 
 const deRevision = (estado: string | null | undefined): EstadoPapel | null =>
@@ -85,7 +96,9 @@ const deRevision = (estado: string | null | undefined): EstadoPapel | null =>
 
 /** Todo lo del asistente de un conductor, en cinco lecturas. */
 export async function estadoVerificacion(db: D1Database, conductorId: string) {
-  const [veh, kycF, fotosR, licencia] = await Promise.all([
+  // El país sale de su zona (sin zona = Estados Unidos, que pide los reversos como siempre).
+  const [g, veh, kycF, fotosR, licencia] = await Promise.all([
+    graciaDe(db, conductorId),
     db
       .prepare(
         `SELECT v.id, v.tipo, v.estado FROM vehiculos v
@@ -135,7 +148,9 @@ export async function estadoVerificacion(db: D1Database, conductorId: string) {
         .bind(veh.id)
         .first<{ estado: string; motivo: string }>()
     : null;
-  const pasos = pasosDe(veh?.tipo);
+  // C-DOCUMENTO-SIN-REVERSO: un reverso que su país no pide no se cuenta aunque se haya subido o
+  // esté en «repetir»: la foto sobrante se queda guardada y se ignora.
+  const pasos = pasosDe(veh?.tipo, g.politica);
   const fotos = new Map(fotosR.results.map((f) => [f.paso, f]));
   const tipoLicencia = veh?.tipo === 'carro' ? 'licencia_conducir' : 'licencia_moto';
   const lic = licencia.results.find((l) => l.tipo === tipoLicencia) ?? null;
@@ -170,6 +185,7 @@ export async function estadoVerificacion(db: D1Database, conductorId: string) {
     return suyos.some((p) => (fotos.get(p)?.creado_en ?? '') > enviado);
   }
   return {
+    pais: g.pais,
     vehiculo: veh,
     tipoLicencia,
     pasos,
@@ -265,6 +281,7 @@ export async function revisarPendientesConIa(
 ): Promise<number> {
   if ((await permisoIa(db, u.id)) !== true) return 0;
   const g = await graciaDe(db, u.id);
+  const fuera = new Set<string>(g.politica.sinReverso ?? []);
   const { results: sinIa } = await db
     .prepare(
       `SELECT id, paso, clave FROM verificacion_fotos
@@ -275,6 +292,7 @@ export async function revisarPendientesConIa(
     .all<{ id: string; paso: PasoVerificacion; clave: string }>();
   let revisadas = 0;
   for (const f of sinIa) {
+    if (fuera.has(f.paso)) continue;
     const img = await leerImagen(env, f.clave);
     if (!img) continue;
     const ia = await comprobarFoto(env, db, {
@@ -304,7 +322,7 @@ export async function revisarPendientesConIa(
     ['doc_frente', k?.doc_frente],
     ['doc_reverso', k?.doc_reverso],
   ] as const) {
-    if (!clave) continue;
+    if (!clave || fuera.has(pieza)) continue;
     const ya = await db
       .prepare('SELECT 1 FROM verificacion_fotos WHERE conductor_id = ? AND clave = ? LIMIT 1')
       .bind(u.id, clave)
@@ -434,6 +452,31 @@ verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
       .bind(u.id, paso)
       .first<{ n: number }>(),
   ]);
+  // C-DOCUMENTO-SIN-REVERSO (cinturón): si una app con la lista vieja en memoria manda igual el
+  // reverso que su país no pide, no se le rechaza con «No se lee bien»: se guarda tal cual (sin IA,
+  // sin tocar lo que revisa el equipo) y se da por buena, sin exigirla nunca.
+  if ((g.politica.sinReverso ?? []).some((p) => p === paso)) {
+    const id = nuevoId();
+    const clave = `verificacion/${u.id}/${paso}-${id}`;
+    await guardarFoto(c.env.BUCKET, clave, bytes, tipo, {
+      cacheControl: 'private, no-store',
+      conservarOriginal: 'evidencia',
+    });
+    await db.batch([
+      db
+        .prepare(
+          "UPDATE verificacion_fotos SET estado = 'reemplazada' WHERE conductor_id = ? AND paso = ? AND estado IN ('vigente', 'repetir')",
+        )
+        .bind(u.id, paso),
+      db
+        .prepare(
+          `INSERT INTO verificacion_fotos (id, conductor_id, paso, clave, pais, ia_color, ia_clase, ia_confianza, ia_json)
+           VALUES (?, ?, ?, ?, ?, 'sin_ia', '', NULL, '')`,
+        )
+        .bind(id, u.id, paso, clave, g.pais),
+    ]);
+    return c.json({ id, paso, ia: { color: 'verde', aviso: '' } }, 201);
+  }
   if (!e.pasos.includes(paso)) throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
   // C-PAPELES-SOLO-CAMARA: con asistente, toda foto de verificación se toma en vivo; sin él, solo la
   // cara. `origen` lo declara la app (barrera razonable, no infalsificable); la IA, que avisa si es la
@@ -837,6 +880,8 @@ verificacionConductor.post('/admin/verificacion/:id/pedir-foto', async (c) => {
   );
   const db = base(c);
   const id = c.req.param('id');
+  if (!(await estadoVerificacion(db, id)).pasos.includes(d.paso))
+    throw new ErrorDatos('Esa foto no se pide en el país de esta persona.', 'paso', 409);
   const r = await db
     .prepare(
       "UPDATE verificacion_fotos SET estado = 'repetir', motivo = ? WHERE conductor_id = ? AND paso = ? AND estado = 'vigente'",
@@ -915,6 +960,8 @@ export async function revisarFotoKycConIa(
     pieza === 'selfie' ? 'cara' : pieza === 'doc_frente' || pieza === 'doc_reverso' ? pieza : null;
   if (!paso || (await permisoIa(db, u.id)) !== true) return;
   const g = await graciaDe(db, u.id);
+  const noSePide: readonly string[] = g.politica.sinReverso ?? [];
+  if (noSePide.includes(paso)) return;
   const usados = await db
     .prepare(
       "SELECT count(*) AS n FROM verificacion_fotos WHERE conductor_id = ? AND paso = ? AND ia_color != 'sin_ia'",

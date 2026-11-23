@@ -3,6 +3,7 @@ import {
   BONO_OFERTA_ABIERTA,
   COMISION_ENVIO_COMIDA_VE_PB,
   PAPELES_PARA_EMPEZAR,
+  PASOS_REVERSO,
   PAISES,
   PLAZO_DIAS_MAXIMO,
   politicaPlazoDeFabrica,
@@ -77,6 +78,8 @@ export const esquemaConfigPais = z.object({
       exentos: z.array(z.string().regex(/^[a-z0-9_]{2,40}$/)).max(12),
       asistente: z.boolean(),
       aprobacionAutomatica: z.boolean(),
+      // C-DOCUMENTO-SIN-REVERSO: los reversos que el país no pide (sin escribir = los de fábrica).
+      sinReverso: z.array(z.enum(PASOS_REVERSO)).max(PASOS_REVERSO.length).optional(),
     })
     .optional(),
   /**

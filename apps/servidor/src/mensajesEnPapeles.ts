@@ -13,6 +13,10 @@ export const MENSAJES_EN_PAPELES: [string, string][] = [
   ],
   ['Esa foto no corresponde.', 'That photo doesn’t belong here.'],
   [
+    'Esa foto no se pide en el país de esta persona.',
+    'That photo isn’t required in this person’s country.',
+  ],
+  [
     'La foto de tu cara se toma en vivo, con la cámara. No se puede elegir de tus archivos.',
     'The photo of your face is taken live, with the camera. You can’t pick it from your files.',
   ],
