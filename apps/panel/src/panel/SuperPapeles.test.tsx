@@ -252,6 +252,8 @@ describe('papeles del conductor en el superadmin', () => {
       exentos: ['antecedentes', 'antecedentes_pasajeros'],
       asistente: true,
       aprobacionAutomatica: false,
+      // C-DOCUMENTO-SIN-REVERSO: lo que no edita la pantalla viaja tal cual.
+      sinReverso: ['doc_reverso'],
     });
     expect(await screen.findByText('Guardado.')).toBeInTheDocument();
   });

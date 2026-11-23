@@ -922,7 +922,14 @@ app.onError(async (err, c) => {
         401,
       );
     }
-    return c.json({ error: enIdiomaDePeticion(err.message, idioma), campo: err.campo }, err.estado);
+    return c.json(
+      {
+        error: enIdiomaDePeticion(err.message, idioma),
+        campo: err.campo,
+        ...(err.codigo ? { codigo: err.codigo } : {}),
+      },
+      err.estado,
+    );
   }
   console.error('error no controlado', err);
   // C-ERRORES-VISIBLES: queda escrito para poder diagnosticarlo después (si la base responde).

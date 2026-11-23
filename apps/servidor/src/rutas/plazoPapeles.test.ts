@@ -290,7 +290,10 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
       paso: string;
       soloEnVivo: boolean;
     }[];
-    expect(pasos.map((p) => p.paso).sort()).toEqual([...PASOS_VERIFICACION].sort());
+    // C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante.
+    expect(pasos.map((p) => p.paso).sort()).toEqual(
+      PASOS_VERIFICACION.filter((p) => p !== 'doc_reverso').sort(),
+    );
     expect(pasos.every((p) => p.soloEnVivo)).toBe(true);
     for (const { paso } of pasos) {
       for (const origen of ['archivos', 'galeria', '']) {
@@ -351,21 +354,15 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
     const c = await conductorNuevo();
     await c.moto();
     await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true });
-    const orden = [
-      'identidad_frente',
-      'identidad_reverso',
-      'licencia_frente',
-      'licencia_reverso',
-      'seguro',
-      'cara',
-    ];
+    // C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula no se fotografía por detrás.
+    const orden = ['identidad_frente', 'licencia_frente', 'licencia_reverso', 'seguro', 'cara'];
     const m = modelo([
       ...orden.map((clase) =>
         lectura(clase, clase === 'licencia_frente' ? { vence: '2031-05-10' } : {}),
       ),
       { resultado: 'misma', confianza: 93 },
     ]);
-    const pasos = ['doc_frente', 'doc_reverso', 'licencia_frente', 'licencia_reverso', 'seguro'];
+    const pasos = ['doc_frente', 'licencia_frente', 'licencia_reverso', 'seguro'];
     for (const p of pasos) expect((await c.foto(p)).estado).toBe(201);
     const kyc = () =>
       c.m.DB.prepare('SELECT estado FROM kyc WHERE usuario_id = ?')
@@ -389,7 +386,7 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
       .bind(c.rep.id)
       .first();
     expect(lic).toEqual({ tipo: 'licencia_moto', estado: 'pendiente', vence_en: '2031-05-10' });
-    expect(m.llamadas).toBe(7);
+    expect(m.llamadas).toBe(6);
     // El revisor ve cada comprobación con su color, lo leído y la comparación de la cara.
     const ficha = (await c.equipo('GET', `/datos/admin/verificacion/${c.rep.id}`)).datos;
     expect(ficha.caras).toMatchObject({ resultado: 'misma', color: 'verde' });
@@ -403,19 +400,19 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso y nada se envía solo', ()
 
   it('el equipo pide de nuevo UNA sola foto, con motivo, y el conductor la cambia', async () => {
     const c = await conductorNuevo();
-    modelo(() => lectura('identidad_reverso'));
-    await c.foto('doc_reverso');
+    modelo(() => lectura('identidad_frente'));
+    await c.foto('doc_frente');
     const pedir = await c.equipo('POST', `/datos/admin/verificacion/${c.rep.id}/pedir-foto`, {
-      paso: 'doc_reverso',
+      paso: 'doc_frente',
       motivo: 'Se ve cortada por un lado',
     });
     expect(pedir.estado).toBe(200);
     const d = (await c.yo('GET', '/datos/conductor/verificacion')).datos;
     const identidad = d.papeles.find((p: { papel: string }) => p.papel === 'identidad');
     expect(identidad).toMatchObject({ estado: 'repetir', motivo: 'Se ve cortada por un lado' });
-    await c.foto('doc_reverso');
+    await c.foto('doc_frente');
     const despues = (await c.yo('GET', '/datos/conductor/verificacion')).datos;
-    expect(despues.pasos.find((p: { paso: string }) => p.paso === 'doc_reverso').foto.estado).toBe(
+    expect(despues.pasos.find((p: { paso: string }) => p.paso === 'doc_frente').foto.estado).toBe(
       'vigente',
     );
   });
@@ -432,7 +429,7 @@ describe('C-PERMISO-IA: sin permiso explícito ninguna foto sale hacia la IA', (
     expect(sinContestar.datos.ia).toEqual({ color: 'sin_ia', aviso: '' });
     await c.yo('POST', '/datos/conductor/verificacion/permiso-ia', { acepto: false });
     expect((await c.yo('GET', '/datos/conductor/verificacion')).datos.permisoIa).toBe(false);
-    expect((await c.foto('doc_reverso')).datos.ia.color).toBe('sin_ia');
+    expect((await c.foto('doc_frente')).datos.ia.color).toBe('sin_ia');
     expect(m.llamadas).toBe(0);
     const f = await c.m.DB.prepare(
       "SELECT ia_color, ia_json FROM verificacion_fotos WHERE paso = 'doc_frente'",
@@ -550,7 +547,7 @@ describe('C-VERIFICACION-IA: la IA adelanta, nunca bloquea, y tiene tope', () =>
       return { texto: JSON.stringify(lectura('identidad_frente')), entrada: 13_000, salida: 150 };
     });
     expect((await c.foto('doc_frente')).datos.ia.color).toBe('verde');
-    const segunda = await c.foto('doc_reverso');
+    const segunda = await c.foto('doc_frente');
     expect(segunda.estado).toBe(201);
     expect(segunda.datos.ia.color).toBe('sin_ia');
     expect(llamadas).toBe(1);
@@ -574,13 +571,8 @@ describe('C-VERIFICACION-IA: la IA adelanta, nunca bloquea, y tiene tope', () =>
   it('guarda lo que dijo la IA junto a lo que decidió la persona, y de ahí sale el acierto', async () => {
     const c = await conductorNuevo();
     await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true });
-    modelo([
-      lectura('identidad_frente'),
-      lectura('identidad_reverso'),
-      lectura('cara'),
-      { resultado: 'misma', confianza: 91 },
-    ]);
-    for (const p of ['doc_frente', 'doc_reverso', 'cara']) await c.foto(p);
+    modelo([lectura('identidad_frente'), lectura('cara'), { resultado: 'misma', confianza: 91 }]);
+    for (const p of ['doc_frente', 'cara']) await c.foto(p);
     await c.yo('POST', '/datos/conductor/verificacion/enviar');
     await c.m.DB.prepare("UPDATE usuarios SET fecha_nacimiento = '1994-05-10' WHERE id = ?")
       .bind(c.rep.id)
@@ -589,13 +581,13 @@ describe('C-VERIFICACION-IA: la IA adelanta, nunca bloquea, y tiene tope', () =>
       (await c.equipo('PATCH', `/datos/admin/kyc/${c.rep.id}`, { estado: 'aprobado' })).estado,
     ).toBe(200);
     const tablero = (await c.equipo('GET', '/datos/admin/verificacion-ia/tablero')).datos;
-    expect(tablero.acierto).toHaveLength(3);
+    expect(tablero.acierto).toHaveLength(2);
     expect(
       tablero.acierto.every(
         (a: { porcentaje: number; pais: string }) => a.porcentaje === 100 && a.pais === 'VE',
       ),
     ).toBe(true);
-    expect(tablero.hoy.llamadas).toBe(4);
+    expect(tablero.hoy.llamadas).toBe(3);
     // Sin moto ni carro solo se piden identidad y cara: con las dos aprobadas se le avisa una vez.
     const avisado = await c.m.DB.prepare('SELECT count(*) AS n FROM verificacion_avisos').first<{
       n: number;

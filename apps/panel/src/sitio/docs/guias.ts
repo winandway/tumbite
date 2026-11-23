@@ -3487,7 +3487,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Abre la app de repartidores, toca el menú de arriba a la izquierda y entra a «Mis datos y vehículo».',
           'En «Verifica tu identidad», elige tu documento: licencia de conducir, identificación oficial o pasaporte.',
-          'Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). Que se lean bien los datos, sin reflejos.',
+          'Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). En Venezuela la cédula se fotografía solo por delante, porque por detrás no tiene datos; la licencia sí lleva frente y reverso. Que se lean bien los datos, sin reflejos.',
           'Toma la foto de tu cara: de frente, con buena luz, sin gorra ni lentes oscuros.',
           'Toca «Enviar para revisión». Te avisamos por correo cuando esté aprobada, o qué foto repetir si hace falta.',
         ],
@@ -5215,6 +5215,7 @@ const es: SeccionDocs[] = [
           'Una cuenta para pedir, otra para tu restaurante y otra para repartir. Cada una en un minuto.',
         explicacion: [
           'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver.',
+          'Cada correo sirve para un solo tipo de cuenta. Si eres conductor y también quieres pedir, crea tu cuenta de cliente con otro correo; puedes usar el mismo celular. Si pones tu correo de conductor en la app de clientes (o al revés), la app te dice qué app le corresponde y tu otra cuenta sigue abierta, sin cerrarse.',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
           'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero.',
         ],
@@ -9009,7 +9010,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Open the driver app, tap the menu at the top left, and go to “My details and vehicle.”',
           'Under “Verify your identity,” choose your document: driver’s license, government ID, or passport.',
-          'Take the photo of the front and the back (a passport only needs the front). Make sure the details are readable, with no glare.',
+          'Take the photo of the front and the back (a passport only needs the front). If your country’s ID card has no details on the back, the app only asks for the front; the driver’s license still needs both sides. Make sure the details are readable, with no glare.',
           'Take the photo of your face: straight on, in good light, no cap or sunglasses.',
           'Tap “Send for review.” We email you when it’s approved, or tell you which photo to retake.',
         ],
@@ -10730,6 +10731,7 @@ const en: SeccionDocs[] = [
           'One account to order, one for your restaurant, and one to deliver. Each takes a minute.',
         explicacion: [
           'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
+          'Each email works for one type of account. If you drive and also want to order, create your customer account with a different email; you can use the same phone number. If you enter your driver email in the customer app (or the other way around), the app tells you which app it belongs to, and your other account stays signed in.',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
           'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over.',
         ],

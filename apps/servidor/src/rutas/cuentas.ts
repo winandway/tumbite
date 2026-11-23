@@ -1,8 +1,13 @@
 import { alRegistrarseConductor } from '../camila/bienvenida';
 import { anotarPaso, anotarRastro, origenDePeticion } from '../rastro';
+import { leerCabeceraApp } from '../versionApp';
 import {
   CAPACIDAD_OFERTAS_BUCLE,
   CANALES_CONSENTIMIENTO_SMS,
+  CODIGO_CUENTA_DE_OTRA_APP,
+  ROL_DE_APP,
+  esAppDeCelular,
+  mensajeCuentaDeOtraApp,
   VERSION_CONSENTIMIENTO_SMS,
   VERSION_TERMINOS,
   correoCanonico,
@@ -230,6 +235,19 @@ cuentas.get('/pais-sugerido', (c) => {
   return c.json({ pais: datosPais(ip) ? ip : null });
 });
 
+/**
+ * C-ENTRAR-APP-EQUIVOCADA (23 nov 2026). Si la petición viene de una de las tres apps de celular y la
+ * cuenta es de otro tipo de esas mismas tres, se contesta con el aviso de qué app le corresponde (409,
+ * código estable). Sin cabecera de app (panel web, superadmin, Flex, agente) o con una cuenta del
+ * equipo, no cambia nada.
+ */
+function exigirAppDeLaCuenta(cabecera: string | undefined, rol: string, campo?: string) {
+  const app = leerCabeceraApp(cabecera)?.app;
+  if (!esAppDeCelular(app) || !esAppDeCelular(rol)) return;
+  if (ROL_DE_APP.get(app) === rol) return;
+  throw new ErrorDatos(mensajeCuentaDeOtraApp(rol, app), campo, 409, CODIGO_CUENTA_DE_OTRA_APP);
+}
+
 cuentas.post('/registro', async (c) => {
   await escudo(c);
   const d = await leerCuerpo(c, esquemaRegistro);
@@ -271,9 +289,13 @@ cuentas.post('/registro', async (c) => {
       403,
     );
   const existe = await db
-    .prepare('SELECT correo FROM usuarios WHERE correo = ? OR correo_canonico = ?')
+    .prepare('SELECT correo, rol FROM usuarios WHERE correo = ? OR correo_canonico = ?')
     .bind(d.correo, correoUnico)
-    .first<{ correo: string }>();
+    .first<{ correo: string; rol: string }>();
+  // C-ENTRAR-APP-EQUIVOCADA: el correo es de una cuenta de otro tipo que el que registra esta app:
+  // mandarlo a «Entrar» lo deja en un círculo. Se le dice qué app le corresponde y qué puede hacer.
+  if (existe && existe.correo.toLowerCase() === d.correo.toLowerCase())
+    exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), existe.rol, 'correo');
   if (existe)
     throw new ErrorDatos(
       // C-CORREO-VARIANTE (4 nov 2026, Richard): «go+cliente6@…» choca con «go+cliente1@…» porque
@@ -414,6 +436,9 @@ cuentas.post('/entrar', async (c) => {
   if (!fila || !claveOk) {
     throw new ErrorDatos('El correo o la contraseña no coinciden.', undefined, 401);
   }
+  // C-ENTRAR-APP-EQUIVOCADA: con la contraseña ya comprobada, una cuenta en la app de celular que no
+  // es la suya no abre sesión ni cierra las que tiene (al conductor, entrar le borraba la de Driver).
+  exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), fila.rol);
   // C-PERMISOS-FINOS: una cuenta del equipo suspendida, retirada o vencida no entra (lo dice claro).
   const acceso = fila.rol === 'admin' ? await leerAccesoInterno(db, c.env, fila) : null;
   if (acceso && acceso.estado !== 'activo')

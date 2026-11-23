@@ -1,4 +1,10 @@
-import { claseDePaso, textoPlano, type PasoVerificacion } from '@tumbite/compartido';
+import {
+  claseDePaso,
+  pideReversoDocumento,
+  textoPlano,
+  type PasoVerificacion,
+} from '@tumbite/compartido';
+import { politicaDesdeConfig } from '../plazoPapeles';
 import { zonaRealSql } from '../cuentaPais';
 import { sqlPlano } from '../buscadorSql';
 import { sqlFiltroCuentas } from './cuentaPrueba';
@@ -259,6 +265,7 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
       k.selfie_miniatura IS NOT NULL AS con_miniatura,
       u.nombre, u.correo, u.telefono, u.rol, COALESCE(u.es_prueba, 0) AS es_prueba,
       d.codigo, rs.id AS restaurante_id, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre,
+      z.pais AS pais, (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg_pais,
       vc.resultado AS cara,
       (SELECT json_group_array(json_object('paso', f.paso, 'clave', f.clave, 'estado', f.estado,
                 'color', f.ia_color, 'clase', f.ia_clase, 'lectura', f.ia_json))
@@ -430,6 +437,9 @@ export type FilaBandeja = {
   zona_nombre: string | null;
   cara: string | null;
   fotos: string | null;
+  /** C-DOCUMENTO-SIN-REVERSO: el país de la zona y su configuración (de ahí, si pide el reverso). */
+  pais?: string | null;
+  cfg_pais?: string | null;
 };
 
 /** Lo que la bandeja manda de cada fila. */
@@ -444,9 +454,15 @@ export function filaDeBandeja(r: FilaBandeja, distanciaMaxima: number) {
   })();
   const porPaso = new Map(fotos.map((f) => [f.paso, f]));
   const lejos = r.distancia != null && Number(r.distancia) > distanciaMaxima;
+  // C-DOCUMENTO-SIN-REVERSO: el conductor de un país sin reverso (Venezuela) no muestra un «reverso»
+  // sobrante; la foto que alguien llegó a subir se queda guardada y se ignora.
+  const sinReverso =
+    r.rol === 'repartidor' &&
+    Boolean(r.pais) &&
+    !pideReversoDocumento(politicaDesdeConfig(String(r.pais).toUpperCase(), r.cfg_pais ?? null));
   const tiene = new Map<PiezaBandeja, boolean>([
     ['doc_frente', Number(r.con_doc_frente) === 1],
-    ['doc_reverso', Number(r.con_doc_reverso) === 1],
+    ['doc_reverso', !sinReverso && Number(r.con_doc_reverso) === 1],
     ['selfie', Number(r.con_selfie) === 1],
     ['local', Number(r.con_local) === 1],
   ]);

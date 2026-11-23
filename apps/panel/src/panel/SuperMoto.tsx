@@ -277,6 +277,8 @@ const T = {
     opcionesMoto: 'Más opciones de la moto',
     rechazarMoto: 'Rechazar la moto',
     sinDocumentos: 'Todavía no subió documentos.',
+    seguroEnPlazo: (vence: string) =>
+      `Póliza: pendiente, dentro del plazo de papeles${vence ? ` (vence el ${vence})` : ''}. Se puede aprobar el vehículo con el registro; al vencer el plazo, sin la póliza aprobada no se conecta.`,
   },
   en: {
     titulo: 'Moto · Launch and approve',
@@ -515,6 +517,8 @@ const T = {
     opcionesMoto: 'More motorbike options',
     rechazarMoto: 'Reject motorbike',
     sinDocumentos: 'No documents uploaded yet.',
+    seguroEnPlazo: (vence: string) =>
+      `Insurance policy: pending, within the documents grace period${vence ? ` (ends ${vence})` : ''}. The vehicle can be approved with the registration; once the period ends, the driver can’t go online without an approved policy.`,
   },
 };
 
@@ -1892,6 +1896,8 @@ type Moto = {
   /** C-PAPELES-POR-PAIS: el país de la ciudad del conductor. */
   pais?: string | null;
   documentos: { id: string; tipo: string; estado: string; venceEn: string | null }[];
+  /** C-SEGURO-EN-PLAZO: la póliza puede llegar dentro del plazo de papeles del conductor. */
+  seguroEnPlazo?: { venceEn: string | null } | null;
 };
 
 function FilaMoto({
@@ -1957,6 +1963,12 @@ function FilaMoto({
         </button>
       ) : null}
       {m.documentos.length === 0 ? <p className="pista">{t.sinDocumentos}</p> : null}
+      {m.seguroEnPlazo &&
+      !m.documentos.some((d) => d.tipo === 'seguro' && d.estado !== 'rechazado') ? (
+        <p className="pista" data-testid={`seguro-en-plazo-${m.id}`}>
+          {t.seguroEnPlazo(m.seguroEnPlazo.venceEn?.slice(0, 10) ?? '')}
+        </p>
+      ) : null}
       <ul className="lista">
         {m.documentos.map((d) => (
           <li key={d.id}>
