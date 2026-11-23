@@ -898,6 +898,24 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "ordering/ride-service-fee",
+  "titulo": "La tarifa de servicio de Divoox en tu viaje",
+  "resumen": "En algunas ciudades, al precio de tu viaje se le suma una línea aparte: la tarifa de servicio de Divoox. La ves antes de pedir, ya sumada en el total, y nunca cambia después.",
+  "preguntas": [
+   "¿Qué es la tarifa de servicio de Divoox?",
+   "¿Por qué mi viaje tiene una tarifa de servicio?",
+   "¿A quién le pago la tarifa de servicio?",
+   "¿El conductor recibe todo el precio del viaje?"
+  ],
+  "pasos": [
+   "Escribe a dónde vas: la app te muestra el precio fijo.",
+   "Mira las dos líneas debajo del total: «Viaje» y «Tarifa de servicio de Divoox».",
+   "Elige cómo pagas y pide tu viaje. Al llegar, le pagas el total al conductor."
+  ],
+  "cuerpo": "Cuando pides una moto o un carro, la app te muestra el precio fijo del viaje antes de pedirlo. En las ciudades donde aplica, debajo del total ves dos líneas: «Viaje», que es lo que recibe tu conductor, y «Tarifa de servicio de Divoox», que es lo que cobra Divoox por conectar el viaje. La tarifa ya está sumada en el total que ves arriba. No hay nada escondido: lo que ves antes de pedir es lo que pagas, y el precio queda fijo para ese viaje. Si pagas en efectivo o por pago móvil, le pagas el total al conductor y él se encarga de entregarle a Divoox su parte. No tienes que hacer nada más. En algunas ciudades la tarifa de servicio es la mitad de lo que cobra Divoox, porque la otra mitad la pone el conductor. Lo ves igual, en su propia línea, antes de pedir. Si tienes un regalo de Divoox que cubre tu viaje, el regalo también cubre la tarifa de servicio: no pagas nada en mano. La tarifa aparece también en tu viaje en curso y en el recibo de «Mis viajes»."
+ },
+ {
+  "idioma": "es",
   "ruta": "ordering/ride-same-route",
   "titulo": "Pide la misma ruta otra vez",
   "resumen": "En «Mis viajes» toca «Pedir la misma ruta»: confirmas el trayecto con el precio de ahora y tu conductor sale a buscarte, sin volver a escribir las direcciones.",
@@ -1657,6 +1675,24 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Con todas las paradas hechas, lleva a tu pasajero al destino y desliza «Desliza para terminar el viaje»."
   ],
   "cuerpo": "Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido. Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar deslizas la barra «Desliza al llegar a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, deslizas la barra «Desliza para seguir el viaje». Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje. Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo. Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas."
+ },
+ {
+  "idioma": "es",
+  "ruta": "drivers/driver-service-fee",
+  "titulo": "Cuánto cobro y cuánto es mío",
+  "resumen": "Cuando el pasajero paga la tarifa de servicio de Divoox, la cobras en mano junto con el viaje. Tu app te dice cuánto cobras, cuánto es tuyo y cuánto es de Divoox, antes de aceptar.",
+  "preguntas": [
+   "¿Cuánto cobro al pasajero y cuánto es mío?",
+   "¿Qué es la tarifa de servicio que pagó el pasajero?",
+   "¿Por qué sale dinero de mi saldo si el pasajero pagó la tarifa?",
+   "¿La tarifa de servicio es una comisión sobre mi ganancia?"
+  ],
+  "pasos": [
+   "Mira la línea debajo de «Cobras» en la oferta: cuánto cobras, cuánto es tuyo y cuánto es de Divoox.",
+   "Acepta el viaje si te conviene. Necesitas saldo para la parte de Divoox.",
+   "Al terminar, cobra el total en mano. La parte de Divoox sale sola de tu saldo."
+  ],
+  "cuerpo": "En las ciudades donde el pasajero paga la tarifa de servicio de Divoox, el precio que ves al recibir la oferta ya la incluye. Debajo de «Cobras» tienes una línea que lo dice todo: «Cobras 1,50 · 1,36 son tuyos · 0,14 son de Divoox». Lo tuyo es el precio completo del viaje. Lo de Divoox es la tarifa de servicio que pagó el pasajero: no es una comisión sobre tu ganancia. Como el pasajero te paga todo en mano (en efectivo o por pago móvil), al terminar el viaje la parte de Divoox sale de tu saldo prepago. Por eso necesitas saldo para recibir viajes, igual que siempre. En algunas ciudades la comisión se reparte mitad y mitad: el pasajero paga la mitad como tarifa de servicio y la otra mitad sale de tu ganancia. La misma línea te lo dice, con cada monto. La cuenta es la misma en la oferta, durante el viaje y al terminar. Si el precio cambia porque el pasajero agrega o quita una parada, la cuenta se pone al día sola."
  },
  {
   "idioma": "es",
@@ -3435,6 +3471,24 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "en",
+  "ruta": "ordering/ride-service-fee",
+  "titulo": "The Divoox service fee on your ride",
+  "resumen": "In some cities, a separate line is added to your ride price: the Divoox service fee. You see it before you request, already included in the total, and it never changes afterward.",
+  "preguntas": [
+   "What is the Divoox service fee?",
+   "Why does my ride have a service fee?",
+   "Who do I pay the service fee to?",
+   "Does my driver get the full ride price?"
+  ],
+  "pasos": [
+   "Enter where you are going: the app shows the upfront price.",
+   "Check the two lines under the total: “Ride fare” and “Divoox service fee.”",
+   "Choose how you pay and request your ride. When you arrive, pay the total to your driver."
+  ],
+  "cuerpo": "When you request a moto or a car, the app shows the upfront price before you request it. In the cities where it applies, under the total you see two lines: “Ride fare,” which is what your driver gets, and “Divoox service fee,” which is what Divoox charges for connecting the ride. The fee is already included in the total at the top. Nothing is hidden: what you see before you request is what you pay, and the price stays fixed for that ride. If you pay in cash, you pay the total to your driver, who passes the Divoox part along. There is nothing else for you to do. In some cities the service fee is half of what Divoox charges, because your driver covers the other half. You see it the same way, on its own line, before you request. If you have a Divoox gift that covers your ride, the gift also covers the service fee: you pay nothing in hand. The fee also shows on your ride in progress and on the receipt in “My rides.”"
+ },
+ {
+  "idioma": "en",
   "ruta": "ordering/ride-same-route",
   "titulo": "Request the same route again",
   "resumen": "In “My rides,” tap “Request the same route”: confirm the trip at today’s price and your driver heads your way, without typing the addresses again.",
@@ -4190,6 +4244,24 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "With every stop done, take your rider to the destination and slide “Slide to end the ride.”"
   ],
   "cuerpo": "A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip. With the ride in progress, the app takes you to the next stop. When you get there, slide the bar “Slide when you reach the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, slide the bar “Slide to continue the ride.” If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride. If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price. When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn."
+ },
+ {
+  "idioma": "en",
+  "ruta": "drivers/driver-service-fee",
+  "titulo": "How much I collect and how much is mine",
+  "resumen": "When the rider pays the Divoox service fee, you collect it in hand along with the ride. Your app tells you how much you collect, how much is yours and how much goes to Divoox, before you accept.",
+  "preguntas": [
+   "How much do I collect from the rider and how much is mine?",
+   "What is the service fee the rider paid?",
+   "Why does money come out of my balance if the rider paid the fee?",
+   "Is the service fee a fee on my earnings?"
+  ],
+  "pasos": [
+   "Read the line under the amount you collect on the offer: what you collect, what is yours and what goes to Divoox.",
+   "Accept the ride if it works for you. You need balance for the Divoox part.",
+   "When the ride ends, collect the total in hand. The Divoox part comes out of your balance on its own."
+  ],
+  "cuerpo": "In the cities where the rider pays the Divoox service fee, the amount you see on the offer already includes it. Under the amount you collect there is one line that says it all: “You collect 1.50 · 1.36 is yours · 0.14 goes to Divoox.” What is yours is the full ride fare. What goes to Divoox is the service fee the rider paid: it is not a fee on your earnings. Because the rider pays you everything in hand, when the ride ends the Divoox part comes out of your prepaid balance. That is why you need balance to receive rides, as always. In some cities the fee is split half and half: the rider pays half as a service fee and the other half comes out of your earnings. The same line shows you each amount. The breakdown is the same on the offer, during the ride and at the end. If the price changes because the rider adds or removes a stop, it updates on its own."
  },
  {
   "idioma": "en",

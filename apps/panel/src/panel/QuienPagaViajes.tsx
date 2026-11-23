@@ -199,7 +199,7 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
             </select>
           </div>
         </div>
-        <fieldset className="campo">
+        <fieldset className="campo" style={{ border: 0, padding: 0, margin: 0 }}>
           {opciones.map((o) => (
             <label key={o} style={{ display: 'block', margin: '6px 0' }}>
               <input

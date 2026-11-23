@@ -1729,6 +1729,78 @@ const capSaldoRest = (idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyu
   pie,
 });
 
+// C-QUIEN-PAGA-VIAJES (23 nov 2026): la palanca de quién paga la comisión de Divoox en los viajes.
+const capQuienPaga = (idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `quien-paga-viajes-super-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const quienPagaViajes: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'who-pays-ride-fee',
+    titulo: '¿Quién paga la comisión de Divoox en los viajes?',
+    resumen:
+      'La palanca que decide quién carga la comisión de Divoox en Moto y Carro: el conductor (como siempre), el cliente (tarifa de servicio aparte y a la vista) o mitad y mitad. Por país y, si hace falta, por ciudad. Venezuela está en «cliente».',
+    explicacion: [
+      'El porcentaje de Divoox no se toca aquí: sale de la política de comisión del país (hoy 10 % en Venezuela). Esta palanca solo dice quién lo paga. Con «conductor», el pasajero paga el precio del viaje y la comisión sale de la ganancia del conductor. Con «cliente», al precio se le suma una línea aparte, «Tarifa de servicio de Divoox», y el conductor se queda con el viaje completo. Con «mitad», el pasajero paga la mitad como tarifa y la otra mitad sale de la ganancia del conductor.',
+      'Como en Venezuela el pasajero paga en la mano o por pago móvil, la tarifa la cobra el conductor junto con el viaje y su saldo prepago entrega a Divoox la comisión entera al terminar. Su app se lo dice antes de aceptar: «Cobras 2,20 · 2,00 son tuyos · 0,20 son de Divoox». En el libro, la parte del pasajero queda como «tarifa de servicio del cliente» y la del conductor como «comisión»: no se mezclan.',
+      'Cada viaje guarda el valor con que se cotizó. Cambiar la palanca vale para los viajes que se piden desde ese momento; los que ya están en curso siguen como empezaron. Cada cambio queda en la auditoría de Dinero con tu nombre, el valor de antes y el de después.',
+      'Solo ven la tarifa los pasajeros con la app que la muestra en su línea (la de hoy y la web). Quien todavía tiene una app vieja sigue viajando como siempre, con el conductor pagando la comisión: nunca se cobra una tarifa que la persona no puede ver. Los envíos de paquetes no llevan tarifa. Donde no hay comisión del saldo (Estados Unidos hoy) la palanca no cambia nada.',
+      'Una ciudad puede tener su propia regla: elige la ciudad y el valor. «Como el resto del país» le quita la regla propia y vuelve a seguir la del país.',
+    ],
+    capturas: [
+      capQuienPaga(
+        'es',
+        'La pantalla Dinero del panel de operaciones en el bloque «¿Quién paga la comisión de Divoox en los viajes?»: la regla vigente (VE, todo el país, cliente), el país, la ciudad, las tres opciones, el ejemplo con un viaje de 2,00 y el botón Guardar.',
+        '«¿Quién paga la comisión de Divoox en los viajes?», en Dinero.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo cambio quién paga la comisión de los viajes?',
+      '¿Dónde se pone la tarifa de servicio de Divoox?',
+      '¿Por qué un pasajero no ve la tarifa de servicio?',
+      '¿Puedo poner otra regla en una sola ciudad?',
+    ],
+    pasos: [
+      'Abre Dinero y busca «¿Quién paga la comisión de Divoox en los viajes?».',
+      'Elige el país y, si es solo para una ciudad, la ciudad.',
+      'Marca conductor, cliente o mitad y mitad, revisa el ejemplo y toca «Guardar».',
+    ],
+  },
+  en: {
+    id: 'who-pays-ride-fee',
+    titulo: 'Who pays the Divoox fee on rides?',
+    resumen:
+      'The switch that decides who carries the Divoox fee on Moto and Car: the driver (as always), the rider (separate service fee, shown upfront) or half and half. By country and, if needed, by city. Venezuela is set to “rider.”',
+    explicacion: [
+      'The Divoox percentage is not changed here: it comes from the country fee policy (10% in Venezuela today). This switch only says who pays it. With “driver,” the rider pays the ride price and the fee comes out of the driver’s earnings. With “rider,” a separate “Divoox service fee” line is added to the price and the driver keeps the full ride fare. With “half and half,” the rider pays half as a service fee and the other half comes out of the driver’s earnings.',
+      'Because in Venezuela the rider pays in hand or by mobile payment, the driver collects the fee along with the ride and their prepaid balance hands the whole fee to Divoox when the ride ends. Their app tells them before they accept: “You collect 2.20 · 2.00 is yours · 0.20 goes to Divoox.” In the ledger, the rider’s part is recorded as the “rider service fee” and the driver’s part as the “fee”: they never mix.',
+      'Each ride keeps the value it was quoted with. Changing the switch applies to rides requested from that moment on; rides already in progress stay as they started. Every change is logged in the Money audit with your name, the value before and the value after.',
+      'Only riders with an app that shows the fee on its own line (today’s app and the web) see it. Anyone still on an older app rides as always, with the driver paying the fee: we never charge a fee the person cannot see. Package deliveries carry no fee. Where there is no balance fee (the United States today) the switch changes nothing.',
+      'A city can have its own rule: choose the city and the value. “Same as the rest of the country” removes the city rule and follows the country again.',
+    ],
+    capturas: [
+      capQuienPaga(
+        'en',
+        'The Money screen in the operations panel at the “Who pays the Divoox fee on rides?” block: the current rule (VE, whole country, rider), the country, the city, the three options, the example with a 2.00 ride and the Save button.',
+        '“Who pays the Divoox fee on rides?”, in Money.',
+      ),
+    ],
+    preguntas: [
+      'How do I change who pays the fee on rides?',
+      'Where do I set the Divoox service fee?',
+      'Why doesn’t a rider see the service fee?',
+      'Can I set a different rule for one city?',
+    ],
+    pasos: [
+      'Open Money and find “Who pays the Divoox fee on rides?”.',
+      'Choose the country and, if it is only for one city, the city.',
+      'Select driver, rider or half and half, check the example and tap “Save.”',
+    ],
+  },
+};
+
 const saldoRestaurantes: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'restaurant-balance-top-ups',
@@ -2921,6 +2993,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(regalosDivoox),
         de(saldoConductores),
         de(saldoRestaurantes),
+        de(quienPagaViajes),
         de(abrirPeru),
         de(agentesDivoox),
         de(referidosEquipos),

@@ -2,6 +2,13 @@
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
+## 🔴 Tarifa de servicio de Divoox en los viajes (C-QUIEN-PAGA-VIAJES, 23 nov 2026): quién paga la comisión, conductor, cliente o mitad · Venezuela en «cliente» · probado con pruebas automáticas, en local en pantalla y con el guion del sitio de pruebas · 🔴 NADA con dinero real
+
+- **Qué cambia en el cobro:** el pasajero paga el precio del viaje MÁS la «Tarifa de servicio de Divoox» en una línea aparte (la comisión entera en «cliente»; la mitad en «mitad»). Todo se paga en mano al conductor (efectivo o pago móvil), como siempre; su saldo prepago entrega a Divoox la comisión entera al terminar. Con tarjeta (donde exista), la autorización es por el total con la tarifa.
+- **Probado (automático):** un viaje de Moto de punta a punta por cada valor (conductor, cliente, mitad): cotización, oferta, saldo apartado, viaje en curso del pasajero y del conductor, cierre, saldo final y libro separado. App de antes sin tarifa. Cambio de la palanca con un viaje ya pedido. Comprobado en rojo.
+- **Probado en local, en pantalla (23 nov):** con las apps web del cliente y del Driver contra el servidor local, palanca en «cliente»: el pasajero ve 1,50 = viaje 1,36 + tarifa 0,14 antes de pedir y en su viaje; el conductor ve «Cobras 1,50 · 1,36 son tuyos · 0,14 son de Divoox» en la oferta y en el viaje. El guion del sitio de pruebas corrió entero en local con los viajes en «cliente» y en «mitad».
+- **Sin probar:** ningún viaje con dinero real ni en la calle. Las apps de la tienda (cliente 0.1.60 y Driver 0.1.69) no muestran la línea: sus pasajeros siguen sin tarifa hasta la próxima versión.
+
 ## 🔴 Comida en Venezuela con pago directo al restaurante (C-COMIDA-PAGO-RESTAURANTE y C-SALDO-RESTAURANTE, 22 nov 2026) · CONSTRUIDO de punta a punta (servidor, tres apps, panel y superadmin) · probado con pruebas automáticas, en local en pantalla y en el sitio de pruebas contra la base real · 🔴 NADA con dinero real · APAGADO para clientes reales
 
 **🔴 No lo anuncies ni mandes clientes ni restaurantes todavía.** Ningún bolívar ni dólar real se ha movido por este flujo. El código de las tres apps ya lo muestra, pero las apps de las tiendas todavía no llevan esa versión (no se compiló ni se subió nada: Driver está en revisión de Google).

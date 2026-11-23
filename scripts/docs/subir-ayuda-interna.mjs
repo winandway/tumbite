@@ -58,6 +58,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capCamila\(\s*'([a-z0-9-]+)',\s
 // C-SALDO-RESTAURANTE: la de «Saldo de restaurantes» (capSaldoRest).
 for (const [, idioma] of guias.matchAll(/capSaldoRest\(\s*'(es|en)'/g))
   archivos.add(`saldo-restaurantes-super-${idioma}.webp`);
+// C-QUIEN-PAGA-VIAJES: la de «¿Quién paga la comisión de Divoox en los viajes?» (capQuienPaga).
+for (const [, idioma] of guias.matchAll(/capQuienPaga\(\s*'(es|en)'/g))
+  archivos.add(`quien-paga-viajes-super-${idioma}.webp`);
 // C-REZAGADOS: las de «Recordatorios de registro» (capRez).
 for (const [, nombre, idioma] of guias.matchAll(/capRez\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`rezagados-${nombre}-${idioma}.webp`);

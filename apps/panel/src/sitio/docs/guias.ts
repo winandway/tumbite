@@ -7,6 +7,7 @@ import { GUIAS_LINEAS, LINEAS_PUBLICADA } from './lineas';
 import { GUIAS_PERU, PERU_PUBLICADA } from './peru';
 import { GUIAS_VIAJES_FIJOS, VIAJES_FIJOS_PUBLICADA } from './viajesFijos';
 import { GUIA_VERIFICAR_CELULAR, VERIFICAR_CELULAR_PUBLICADA } from './verificarCelular';
+import { GUIAS_TARIFA_SERVICIO, TARIFA_SERVICIO_PUBLICADA } from './tarifaServicio';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
@@ -11088,6 +11089,10 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const peruConductor = PERU_PUBLICADA ? [pe.cobrar, pe.recargar, pe.papeles] : [];
   // C-ESPERA-VEHICULO: la espera de cada servicio, con sus capturas reales.
   const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
+  // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, para el pasajero y para el conductor.
+  const ts = idioma === 'es' ? GUIAS_TARIFA_SERVICIO.es : GUIAS_TARIFA_SERVICIO.en;
+  const tarifaPasajero = TARIFA_SERVICIO_PUBLICADA ? [ts.pasajero] : [];
+  const tarifaConductor = TARIFA_SERVICIO_PUBLICADA ? [ts.conductor] : [];
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
@@ -11097,6 +11102,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...moto.pasajero,
           ...carro.pasajero,
           espera,
+          ...tarifaPasajero,
           ...mismaRuta,
           ...fijosPasajero,
           ...peruPasajero,
@@ -11110,6 +11116,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...s.guias,
           ...moto.conductor,
           ...carro.conductor,
+          ...tarifaConductor,
           ...fijosConductor,
           ...lineasDocs,
           ...peruConductor,
