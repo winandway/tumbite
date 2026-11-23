@@ -152,6 +152,7 @@ import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludSmsMasivo } from './smsMasivo';
 import { saludCodigo } from './telefonoVuelta';
+import { whatsappAviso } from './rutas/whatsappAviso';
 import { rastroRutas } from './rutas/rastro';
 import { rezagadosRutas } from './rutas/rezagados';
 import { saludDinero } from './conciliacion';
@@ -274,7 +275,9 @@ export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/', '/panel', '/agent']
 const limiteGeneral = limiteIntentos(120, 60_000);
 // Los avisos de Stripe llegan de sus servidores y ya vienen firmados: no se frenan por IP.
 app.use('/datos/*', (c, next) =>
-  c.req.path === '/datos/stripe/aviso' ? next() : limiteGeneral(c, next),
+  c.req.path === '/datos/stripe/aviso' || c.req.path === '/datos/whatsapp/aviso'
+    ? next()
+    : limiteGeneral(c, next),
 );
 app.use('/datos/cuentas/entrar', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentosPersistente(10, 60_000));
@@ -305,7 +308,7 @@ app.use('/datos/restaurante/cuenta-cobro', limiteIntentos(20, 60_000));
 app.use('/datos/restaurante/saldo/recargas', limiteIntentos(20, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
-  ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
+  ['/datos/publico', '/datos/version', '/datos/salud', '/datos/whatsapp/aviso'].includes(c.req.path)
     ? next()
     : versionMinimaApp(c, next),
 );
@@ -764,6 +767,8 @@ app.notFound(async (c) => {
 
 app.route('/datos/cuentas', cuentas);
 // C-RASTRO: antes de las fichas del superadmin (rutas más específicas primero).
+// C-WHATSAPP-ENTREGA: el aviso de estados de Meta (firmado; sin sesión).
+app.route('/datos', whatsappAviso);
 app.route('/datos', rastroRutas);
 app.route('/datos', rezagadosRutas);
 // C-AVISOS-WEB: suscribirse y darse de baja de los avisos en el navegador.

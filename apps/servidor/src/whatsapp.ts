@@ -139,14 +139,14 @@ function enviarPorTwilio(env: Env, para: string, codigo: string, idioma: 'es' | 
 }
 
 /**
- * Manda el código por WhatsApp. Devuelve true si el proveedor lo aceptó. Nunca lanza: un fallo queda
+ * Manda el código por WhatsApp. Devuelve la referencia del mensaje (wamid) si el proveedor lo aceptó, o null. Nunca lanza: un fallo queda
  * anotado (sms_enviados y el canario) y quien llama pasa al SMS de respaldo.
  */
 export async function enviarCodigoWhatsapp(
   env: Env,
   db: D1Database,
   a: { usuarioId: string; para: string; codigo: string; idioma: 'es' | 'en' },
-): Promise<boolean> {
+): Promise<string | null> {
   const proveedor = proveedorWhatsapp(env);
   const nombre = proveedor === 'twilio' ? 'whatsapp_twilio' : 'whatsapp_meta';
   const id = nuevoId();
@@ -162,7 +162,7 @@ export async function enviarCodigoWhatsapp(
       .bind(id, a.usuarioId, nombre, referencia)
       .run();
     ultimoErrorWhatsapp = null;
-    return true;
+    return referencia;
   } catch (e) {
     const motivo = String(e);
     ultimoErrorWhatsapp = { cuando: new Date().toISOString(), motivo };
@@ -174,19 +174,114 @@ export async function enviarCodigoWhatsapp(
       .bind(id, a.usuarioId, nombre)
       .run()
       .catch((x: unknown) => console.error('whatsapp: no se pudo anotar el fallo', String(x)));
-    return false;
+    return null;
   }
 }
 
-/** ¿El último código por WhatsApp (en la última media hora) falló? Entonces se usa el SMS directo. */
+/** Segundos que se espera el «delivered» de un código por WhatsApp antes de mandarlo por SMS. */
+export const SEGUNDOS_ENTREGA_WHATSAPP = 30;
+
+/**
+ * C-WHATSAPP-ENTREGA (23 nov 2026, Gerencia): WhatsApp se da por bueno SOLO con entregas vistas. El
+ * último código por WhatsApp de la última media hora cuenta como avería si el proveedor lo rechazó,
+ * si el aviso de Meta dijo «failed», o si pasaron más de SEGUNDOS_ENTREGA_WHATSAPP sin «delivered»
+ * (por ejemplo, sin webhook). Mientras haya avería, el código sale directo por SMS; a la media hora se
+ * vuelve a intentar UNA vez por WhatsApp.
+ */
 export async function whatsappConAveria(db: D1Database): Promise<boolean> {
   const f = await db
     .prepare(
-      "SELECT estado FROM sms_enviados WHERE proveedor IN ('whatsapp_meta','whatsapp_twilio') AND creado_en >= datetime('now', '-30 minutes') ORDER BY creado_en DESC, rowid DESC LIMIT 1",
+      `SELECT estado, entrega,
+              creado_en < datetime('now', '-${SEGUNDOS_ENTREGA_WHATSAPP} seconds') AS viejo
+         FROM sms_enviados WHERE proveedor IN ('whatsapp_meta','whatsapp_twilio')
+          AND creado_en >= datetime('now', '-30 minutes') ORDER BY creado_en DESC, rowid DESC LIMIT 1`,
     )
-    .first<{ estado: string }>()
+    .first<{ estado: string; entrega: string | null; viejo: number }>()
     .catch(() => null);
-  return f?.estado === 'error';
+  if (!f) return false;
+  if (f.estado === 'error' || f.entrega === 'failed') return true;
+  return Number(f.viejo) === 1 && f.entrega !== 'delivered' && f.entrega !== 'read';
+}
+
+/** C-WHATSAPP-ENTREGA: la firma del aviso de Meta (X-Hub-Signature-256 = sha256 HMAC del cuerpo crudo). */
+export async function firmaMetaValida(
+  secreto: string | undefined,
+  cuerpo: string,
+  cabecera: string | undefined,
+): Promise<boolean> {
+  if (!secreto || !cabecera?.startsWith('sha256=')) return false;
+  const llave = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secreto),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const firma = new Uint8Array(
+    await crypto.subtle.sign('HMAC', llave, new TextEncoder().encode(cuerpo)),
+  );
+  const esperada = [...firma].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const dada = cabecera.slice('sha256='.length).toLowerCase();
+  if (dada.length !== esperada.length) return false;
+  let diferencia = 0;
+  for (let i = 0; i < esperada.length; i++)
+    diferencia |= esperada.charCodeAt(i) ^ dada.charCodeAt(i);
+  return diferencia === 0;
+}
+
+export type EstadoEntrega = 'sent' | 'delivered' | 'read' | 'failed';
+type AvisoMeta = {
+  entry?: {
+    changes?: {
+      field?: string;
+      value?: {
+        statuses?: {
+          id?: string;
+          status?: string;
+          errors?: { code?: number; title?: string; message?: string }[];
+        }[];
+      };
+    }[];
+  }[];
+};
+
+/**
+ * C-WHATSAPP-ENTREGA: anota en sms_enviados cada estado que manda Meta (sent → delivered → read, o
+ * failed con su código de error). Un estado nunca retrocede. Devuelve las referencias que fallaron
+ * (para mandar el código por SMS enseguida).
+ */
+export async function anotarEstadosWhatsapp(db: D1Database, aviso: AvisoMeta): Promise<string[]> {
+  const fallidas: string[] = [];
+  const orden = new Map<string, number>([
+    ['sent', 1],
+    ['delivered', 2],
+    ['read', 3],
+    ['failed', 4],
+  ]);
+  for (const entrada of aviso.entry ?? [])
+    for (const cambio of entrada.changes ?? [])
+      for (const e of cambio.value?.statuses ?? []) {
+        const estado = e.status as EstadoEntrega;
+        const rango = orden.get(String(estado));
+        if (!e.id || !rango) continue;
+        const err = e.errors?.[0];
+        const motivo = err
+          ? `${err.code ?? ''} ${err.title ?? err.message ?? ''}`.trim().slice(0, 200)
+          : null;
+        await db
+          .prepare(
+            `UPDATE sms_enviados SET entrega = ?1, entrega_error = COALESCE(?2, entrega_error), entrega_en = datetime('now')
+              WHERE referencia = ?3 AND proveedor IN ('whatsapp_meta','whatsapp_twilio')
+                AND (CASE COALESCE(entrega,'') WHEN 'sent' THEN 1 WHEN 'delivered' THEN 2 WHEN 'read' THEN 3 WHEN 'failed' THEN 4 ELSE 0 END) < ?4`,
+          )
+          .bind(estado, motivo, e.id, rango)
+          .run();
+        if (estado === 'failed') {
+          fallidas.push(e.id);
+          console.error('whatsapp: Meta no entregó el código', motivo ?? '');
+        }
+      }
+  return fallidas;
 }
 
 /**

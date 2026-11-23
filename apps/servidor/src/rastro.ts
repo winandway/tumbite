@@ -380,9 +380,7 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
     chat,
     equipo,
     mensajes,
-  ] = (
-    await db.batch<Record<string, string | number | null>>(consultas)
-  ).map((r) => r.results);
+  ] = (await db.batch<Record<string, string | number | null>>(consultas)).map((r) => r.results);
   // C-RASTRO-FUENTES: lo que dice cada fuente real de cada paso (fotos por las dos rutas, papeles,
   // vehículo, lo aprobado por el equipo, la conexión y los viajes). Una consulta corta por fuente.
   const fuentes = (

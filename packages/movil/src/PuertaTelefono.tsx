@@ -30,6 +30,7 @@ const T = {
     enviamos: 'Te mandamos un código de 6 números por SMS al número que termina en',
     enviamosWa: 'Te enviamos un código de 6 números por WhatsApp al número que termina en',
     porSms: 'Enviármelo por SMS',
+    pasoASms: 'No llegó por WhatsApp: te lo mandamos por SMS.',
     porSmsEn: (s: number) => `Puedes pedirlo por SMS en ${s} s`,
     enviando: 'Mandando el código…',
     escribe: 'Escribe tu número de celular. Te mandamos un código por SMS para confirmarlo.',
@@ -61,6 +62,7 @@ const T = {
     enviamos: 'We texted a 6-digit code to the number ending in',
     enviamosWa: 'We sent a 6-digit code on WhatsApp to the number ending in',
     porSms: 'Text it to me instead',
+    pasoASms: 'It didn’t arrive on WhatsApp, so we texted it to you.',
     porSmsEn: (s: number) => `You can get it by text in ${s}s`,
     enviando: 'Sending the code…',
     escribe: 'Enter your cell phone number. We’ll text you a code to confirm it.',
@@ -319,6 +321,28 @@ function ConfirmaTuCelular({
   // C-CODIGO-CANALES: WhatsApp primero; si no llega, «Enviármelo por SMS» cuando termina la espera.
   const [canal, setCanal] = useState(canalInicial);
   const [smsDisponible, setSmsDisponible] = useState(smsInicial);
+  const [aviso, setAviso] = useState('');
+  // C-WHATSAPP-ENTREGA: mientras el código va por WhatsApp, se mira cada 5 segundos. Si no se entregó,
+  // el servidor lo manda solo por SMS y la pantalla lo dice.
+  useEffect(() => {
+    if (canal !== 'whatsapp' || !enviado) return;
+    const reloj = setInterval(() => {
+      void api
+        .pedir<{ puerta: Puerta | null }>('GET', '/datos/cuentas/telefono')
+        .then((r) => {
+          if (r.puerta?.canal === 'sms') {
+            setCanal('sms');
+            setAviso(t.pasoASms);
+            setCodigo('');
+            setEspera(Math.max(0, r.puerta.proximoEnSegundos ?? 0));
+          }
+        })
+        .catch(() => {
+          // Sin red se vuelve a mirar en la próxima vuelta.
+        });
+    }, 5000);
+    return () => clearInterval(reloj);
+  }, [api, canal, enviado, t.pasoASms]);
   const [cambiando, setCambiando] = useState(!ultimosInicial);
   // NINGÚN FORMULARIO PIERDE LO ESCRITO: el número nuevo se guarda solo. El código no (es de un solo uso).
   const b = useBorrador({
@@ -456,6 +480,15 @@ function ConfirmaTuCelular({
       ) : (
         <Text style={{ fontSize: 16, color: '#666B73' }}>{t.escribe}</Text>
       )}
+      {aviso ? (
+        <Text
+          testID="paso-a-sms"
+          style={{ fontSize: 14, color: C.secundario, fontWeight: '600' }}
+          accessibilityRole="alert"
+        >
+          {aviso}
+        </Text>
+      ) : null}
       {error ? (
         <Text style={{ fontSize: 14, color: C.acento }} accessibilityRole="alert">
           {error}

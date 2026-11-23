@@ -6518,3 +6518,11 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Canario `whatsapp`:** con Meta, comprueba el propio número (`GET /<versión>/<META_WHATSAPP_PHONE_ID>?fields=verified_name,code_verification_status`, recordado 5 minutos), porque con este token la consulta de plantillas da error de permisos; además el último envío y el presupuesto. La plantilla va en el idioma de la cuenta (`es` o `en`).
 - **Pruebas:** `apps/servidor/src/rutas/codigoCanales.test.ts` (Meta, Twilio WhatsApp y LabsMobile simulados; rojo comprobado invirtiendo el orden y quitando el respaldo).
 - **Qué NO tocar:** WhatsApp primero y el respaldo inmediato por SMS; que nada salga sin el interruptor; los presupuestos por canal.
+
+## C-WHATSAPP-ENTREGA: WhatsApp se da por bueno solo con «delivered»; si no, el código sale solo por SMS (23 nov 2026, Gerencia) — Venezuela y Estados Unidos
+
+- **Qué pasó:** Meta aceptaba los envíos («accepted») pero el código no le llegaba a Richard; sin aviso de estados no había cómo saberlo. Se apagó WhatsApp en producción (`WHATSAPP_ENCENDIDO=no`) hasta ver un «delivered» real.
+- **Aviso de estados (webhook):** `GET/POST /datos/whatsapp/aviso` (`rutas/whatsappAviso.ts`). GET responde `hub.challenge` solo con `META_WHATSAPP_VERIFY_TOKEN`; POST solo con la firma `X-Hub-Signature-256` válida (`META_APP_SECRET`). Anota en `sms_enviados.entrega` (sent → delivered → read, o failed con `entrega_error`); nunca retrocede. La cuenta de WhatsApp (2670238166742449) quedó suscrita a la app por `POST /subscribed_apps`.
+- **Respaldo automático:** `respaldoPorSms` manda el código por SMS UNA vez si Meta dijo «failed» (al momento) o si a los 30 s no hay «delivered» (lo dispara el reloj, tarea `codigos_respaldo`, y la pantalla al mirar la puerta). La primera escritura reserva el respaldo (`codigos_telefono.respaldo_en`). Mientras el último WhatsApp de la media hora no se entregó, el código siguiente va directo por SMS (`whatsappConAveria`), y el canario `whatsapp` dice «error».
+- **App:** mientras el código va por WhatsApp, la pantalla mira cada 5 s y, si pasó al SMS, dice «No llegó por WhatsApp: te lo mandamos por SMS».
+- **Pruebas:** `codigoCanales.test.ts` (firma, verificación, delivered, failed, sin aviso a los 30 s; rojo comprobado anulando el respaldo).

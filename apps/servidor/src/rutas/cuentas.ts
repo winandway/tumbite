@@ -72,6 +72,7 @@ import {
   mandarCodigo,
   paisDeE164,
   puertaTelefono,
+  respaldoPorSms,
 } from '../telefonoVuelta';
 import { telefonoE164 } from '../sms';
 
@@ -795,6 +796,10 @@ const esquemaCambiarTelefono = z.object({
 cuentas.get('/telefono', async (c) => {
   const u = exigir(c);
   const db = base(c);
+  // C-WHATSAPP-ENTREGA: si el código por WhatsApp no se entregó a tiempo, sale por SMS antes de contestar.
+  await respaldoPorSms(c.env, db, u.id).catch((e: unknown) =>
+    console.error('telefono: respaldo al mirar la puerta', String(e)),
+  );
   const p = await puertaTelefono(c.env, db, u.id);
   // El país del celular guardado (o el de la cuenta): el selector de la pantalla arranca ahí.
   const f = p

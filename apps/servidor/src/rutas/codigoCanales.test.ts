@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { olvidarErrorWhatsapp, olvidarNumeroComprobado } from '../whatsapp';
+import { respaldosPendientes } from '../telefonoVuelta';
+import { createHmac } from 'node:crypto';
 
 /**
  * C-CODIGO-CANALES y C-CODIGO-WHATSAPP (23 nov 2026, decisión de Richard por Gerencia): el código sale
@@ -351,5 +353,166 @@ describe('C-SMS-PROVEEDOR-POR-PAIS · el SMS de respaldo por el proveedor de cad
     expect(
       (await m.llamar('GET', '/datos/cuentas/telefono', undefined, ve.token)).datos.puerta,
     ).toBeNull();
+  });
+});
+
+describe('C-WHATSAPP-ENTREGA · WhatsApp se da por bueno solo con «delivered»; si no, SMS solo', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    olvidarErrorWhatsapp();
+    olvidarNumeroComprobado();
+  });
+  const SECRETO = 'secreto-de-la-app-de-prueba';
+  const VERIFICAR = 'token-de-verificacion-de-prueba';
+  const CON_AVISO = {
+    ...TWILIO,
+    ...META,
+    META_APP_SECRET: SECRETO,
+    META_WHATSAPP_VERIFY_TOKEN: VERIFICAR,
+  };
+  const aviso = (m: Mundo, estado: string, id = 'wamid.prueba', firma?: string) => {
+    const cuerpo = JSON.stringify({
+      object: 'whatsapp_business_account',
+      entry: [
+        {
+          changes: [
+            {
+              field: 'messages',
+              value: {
+                statuses: [
+                  {
+                    id,
+                    status: estado,
+                    ...(estado === 'failed'
+                      ? { errors: [{ code: 131026, title: 'Message undeliverable' }] }
+                      : {}),
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    return m.crudo('/datos/whatsapp/aviso', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-hub-signature-256':
+          firma ?? `sha256=${createHmac('sha256', SECRETO).update(cuerpo).digest('hex')}`,
+      },
+      body: cuerpo,
+    });
+  };
+  const envejecer = (m: Mundo, segundos: number) =>
+    Promise.all(
+      ['codigos_telefono', 'envios_codigo_telefono', 'sms_enviados'].map((t) =>
+        m.DB.prepare(
+          `UPDATE ${t} SET creado_en = datetime(creado_en, '-${segundos} seconds')`,
+        ).run(),
+      ),
+    );
+
+  it('Meta verifica la dirección con el token propio (y con otro token, no)', async () => {
+    const m = mundo(CON_AVISO);
+    const ok = await m.crudo(
+      `/datos/whatsapp/aviso?hub.mode=subscribe&hub.verify_token=${VERIFICAR}&hub.challenge=12345`,
+      { method: 'GET' },
+    );
+    expect(ok.status).toBe(200);
+    expect(await ok.text()).toBe('12345');
+    const malo = await m.crudo(
+      '/datos/whatsapp/aviso?hub.mode=subscribe&hub.verify_token=otro&hub.challenge=1',
+      { method: 'GET' },
+    );
+    expect(malo.status).toBe(403);
+  });
+
+  it('sin firma válida no se anota nada', async () => {
+    simular();
+    const m = mundo(CON_AVISO);
+    const cli = await registrar(m, '+13055550231');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    expect((await aviso(m, 'delivered', 'wamid.prueba', 'sha256=00')).status).toBe(401);
+    const f = await m.DB.prepare(
+      "SELECT entrega FROM sms_enviados WHERE referencia = 'wamid.prueba'",
+    ).first<{
+      entrega: string | null;
+    }>();
+    expect(f?.entrega).toBeNull();
+  });
+
+  it('«delivered»: queda anotado y no se manda SMS de respaldo', async () => {
+    const enviados = simular();
+    const m = mundo(CON_AVISO);
+    const cli = await registrar(m, '+13055550232');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    expect((await aviso(m, 'sent')).status).toBe(200);
+    expect((await aviso(m, 'delivered')).status).toBe(200);
+    // Un «sent» que llega tarde no lo hace retroceder.
+    await aviso(m, 'sent');
+    const f = await m.DB.prepare(
+      "SELECT entrega FROM sms_enviados WHERE referencia = 'wamid.prueba'",
+    ).first<{
+      entrega: string;
+    }>();
+    expect(f?.entrega).toBe('delivered');
+    await envejecer(m, 60);
+    expect(await respaldosPendientes(m.DB as never, m.DB)).toBe(0);
+    const p = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
+    expect(p.datos.puerta).toMatchObject({ canal: 'whatsapp', entrega: 'delivered' });
+    expect(enviados.map((e) => e.canal)).toEqual(['whatsapp_meta']);
+  });
+
+  it('«failed»: el código sale por SMS al momento, y el siguiente va directo por SMS', async () => {
+    const enviados = simular();
+    const m = mundo(CON_AVISO);
+    const cli = await registrar(m, '+13055550233');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    expect((await aviso(m, 'failed')).status).toBe(200);
+    expect(enviados.map((e) => e.canal)).toEqual(['whatsapp_meta', 'sms_twilio']);
+    const p = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
+    expect(p.datos.puerta.canal).toBe('sms');
+    // El código del SMS es el que vale.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          '/datos/cuentas/telefono/verificar',
+          { codigo: codigoDe(enviados[1]!.texto) },
+          cli.token,
+        )
+      ).estado,
+    ).toBe(200);
+    // Con la avería vista, la cuenta siguiente recibe el código directo por SMS.
+    const otro = await registrar(m, '+13055550234');
+    expect(
+      (await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, otro.token)).datos.canal,
+    ).toBe('sms');
+    expect((await m.llamar('GET', '/datos/salud')).datos.piezas.whatsapp).toBe('error');
+  });
+
+  it('sin «delivered» a los 30 segundos (por ejemplo, sin webhook), el reloj lo manda por SMS una sola vez', async () => {
+    const enviados = simular();
+    const m = mundo({ ...TWILIO, ...META });
+    const cli = await registrar(m, '+13055550235');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    expect(await respaldosPendientes(m.DB as never, m.DB)).toBe(0);
+    await envejecer(m, 40);
+    const env = { ...TWILIO, ...META } as never;
+    expect(await respaldosPendientes(env, m.DB)).toBe(1);
+    expect(await respaldosPendientes(env, m.DB)).toBe(0);
+    expect(enviados.map((e) => e.canal)).toEqual(['whatsapp_meta', 'sms_twilio']);
+  });
+
+  it('la pantalla, al mirar la puerta, también dispara el respaldo vencido', async () => {
+    const enviados = simular();
+    const m = mundo({ ...TWILIO, ...META });
+    const cli = await registrar(m, '+13055550236');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    await envejecer(m, 40);
+    const p = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
+    expect(p.datos.puerta.canal).toBe('sms');
+    expect(enviados.map((e) => e.canal)).toEqual(['whatsapp_meta', 'sms_twilio']);
   });
 });

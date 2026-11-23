@@ -175,6 +175,13 @@ export const esquemaEnv = z.object({
   META_WHATSAPP_PLANTILLA: z.string().optional(),
   /** Solo localhost (el simulador del recorrido); en producción se ignora. */
   META_WHATSAPP_API_URL: z.string().optional(),
+  /**
+   * C-WHATSAPP-ENTREGA: el aviso de estados de Meta (webhook) en /datos/whatsapp/aviso. El token de
+   * verificación lo elige Divoox (se carga igual en la consola de Meta); el secreto de la app firma
+   * cada aviso (X-Hub-Signature-256). Los dos son secretos.
+   */
+  META_WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+  META_APP_SECRET: z.string().optional(),
   TWILIO_WHATSAPP_FROM: z.string().optional(),
   TWILIO_WHATSAPP_PLANTILLA_ES: z.string().optional(),
   TWILIO_WHATSAPP_PLANTILLA_EN: z.string().optional(),

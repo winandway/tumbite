@@ -16,6 +16,7 @@ import {
   COSTO_WHATSAPP_USD,
   enviarCodigoWhatsapp,
   numeroWhatsappVivo,
+  SEGUNDOS_ENTREGA_WHATSAPP,
   presupuestoWhatsappDia,
   ultimoErrorWhatsapp,
   whatsappConAveria,
@@ -187,7 +188,9 @@ export async function saludCodigo(
     smsGasto: !smsEncendido ? 'pendiente' : g ? colorDe(g.smsUsd, presupuestoSmsDia(env)) : 'ok',
     whatsapp: !whatsappEncendido(env)
       ? 'pendiente'
-      : ultimoErrorWhatsapp || !(await numeroWhatsappVivo(env)).ok
+      : ultimoErrorWhatsapp ||
+          !(await numeroWhatsappVivo(env)).ok ||
+          (db ? await whatsappConAveria(db) : false)
         ? 'error'
         : g
           ? colorDe(g.whatsappUsd, presupuestoWhatsappDia(env))
@@ -332,6 +335,11 @@ export async function mandarCodigo(
   ip?: string | null,
   /** «sms»: la persona pidió que se lo manden por SMS (no llegó por WhatsApp). */
   canalPedido?: CanalCodigo,
+  /**
+   * C-WHATSAPP-ENTREGA: el respaldo automático por SMS de un código que no se entregó por WhatsApp. No
+   * espera la cuenta atrás (no lo pidió la persona), pero sí respeta los topes del día.
+   */
+  respaldo = false,
 ): Promise<CodigoEnviado> {
   const puerta = await puertaTelefono(env, db, usuarioId);
   if (!puerta) throw new ErrorDatos('No hace falta confirmar tu teléfono ahora.', undefined, 409);
@@ -369,7 +377,7 @@ export async function mandarCodigo(
       'telefono',
       429,
     );
-  const falta = previo?.hoy ? segundosQueFaltan(llevaHoy, Number(previo.hace)) : 0;
+  const falta = previo?.hoy && !respaldo ? segundosQueFaltan(llevaHoy, Number(previo.hace)) : 0;
   if (falta > 0) throw espera('Espera {s} segundos para pedir otro código.', falta);
   // 2. Por número y 3. por red: aunque cambien de cuenta, el mismo celular o la misma red se frenan.
   const topes = await db
@@ -414,7 +422,7 @@ export async function mandarCodigo(
       MAX_ENVIOS_DIA,
       MAX_POR_NUMERO_DIA,
       MAX_POR_IP_DIA,
-      `-${Math.max(1, esperaS)} seconds`,
+      `-${respaldo ? 0 : Math.max(1, esperaS)} seconds`,
     )
     .run();
   if (!reserva.meta.changes)
@@ -431,10 +439,13 @@ export async function mandarCodigo(
     .bind(usuarioId, para, await sha256(`${usuarioId}:${codigo}`), enviados)
     .run();
   let canal: CanalCodigo | null = null;
+  let referencia: string | null = null;
   for (const c of orden) {
+    if (c === 'whatsapp')
+      referencia = await enviarCodigoWhatsapp(env, db, { usuarioId, para, codigo, idioma });
     const salio =
       c === 'whatsapp'
-        ? await enviarCodigoWhatsapp(env, db, { usuarioId, para, codigo, idioma })
+        ? referencia !== null
         : await enviarSms(env, db, {
             usuarioId,
             pedidoId: null,
@@ -452,8 +463,10 @@ export async function mandarCodigo(
       .batch([
         db.prepare('UPDATE envios_codigo_telefono SET canal = ? WHERE id = ?').bind(canal, envioId),
         db
-          .prepare('UPDATE codigos_telefono SET canal = ? WHERE usuario_id = ?')
-          .bind(canal, usuarioId),
+          .prepare(
+            'UPDATE codigos_telefono SET canal = ?, referencia = ?, respaldo_en = NULL WHERE usuario_id = ?',
+          )
+          .bind(canal, canal === 'whatsapp' ? referencia : null, usuarioId),
       ])
       .catch((e: unknown) => console.error('telefono: no se pudo anotar el canal', String(e)));
   if (!canal) {
@@ -490,10 +503,17 @@ export async function mandarCodigo(
 export async function estadoCodigo(
   db: D1Database,
   usuarioId: string,
-): Promise<{ vigente: boolean; proximoEnSegundos: number; canal: CanalCodigo | null }> {
+): Promise<{
+  vigente: boolean;
+  proximoEnSegundos: number;
+  canal: CanalCodigo | null;
+  entrega: string | null;
+}> {
   const f = await db
     .prepare(
       `SELECT enviados_hoy, codigo_hash, intentos, canal,
+              (SELECT s.entrega FROM sms_enviados s WHERE s.referencia = codigos_telefono.referencia
+                 AND codigos_telefono.referencia IS NOT NULL LIMIT 1) AS entrega,
               creado_en > datetime('now', '-${MINUTOS_VIGENCIA} minutes') AS vigente,
               creado_en > datetime('now','-1 day') AS hoy,
               (julianday('now') - julianday(creado_en)) * 86400 AS hace
@@ -505,11 +525,12 @@ export async function estadoCodigo(
       codigo_hash: string;
       intentos: number;
       canal: string | null;
+      entrega: string | null;
       vigente: number;
       hoy: number;
       hace: number;
     }>();
-  if (!f) return { vigente: false, proximoEnSegundos: 0, canal: null };
+  if (!f) return { vigente: false, proximoEnSegundos: 0, canal: null, entrega: null };
   const vigente =
     Number(f.vigente) === 1 && f.codigo_hash !== '-' && Number(f.intentos) < MAX_INTENTOS;
   const lleva = f.hoy ? Number(f.enviados_hoy) : 0;
@@ -518,7 +539,74 @@ export async function estadoCodigo(
     proximoEnSegundos:
       lleva >= MAX_ENVIOS_DIA ? -1 : f.hoy ? segundosQueFaltan(lleva, Number(f.hace)) : 0,
     canal: f.canal === 'whatsapp' ? 'whatsapp' : f.canal === 'sms' ? 'sms' : null,
+    entrega: f.entrega ?? null,
   };
+}
+
+/**
+ * C-WHATSAPP-ENTREGA (23 nov 2026, Gerencia): si el código por WhatsApp de esta cuenta no se entregó
+ * (Meta dijo «failed», o pasaron SEGUNDOS_ENTREGA_WHATSAPP sin «delivered»), se manda solo por SMS,
+ * UNA vez por código. Lo llaman el aviso de Meta (failed), la pantalla (al mirar la puerta) y el reloj
+ * (cada minuto). La primera escritura reserva el respaldo: dos a la vez no mandan dos SMS.
+ * Devuelve true si salió el SMS de respaldo.
+ */
+export async function respaldoPorSms(
+  env: Env,
+  db: D1Database,
+  usuarioId: string,
+  forzar = false,
+): Promise<boolean> {
+  const reserva = await db
+    .prepare(
+      `UPDATE codigos_telefono SET respaldo_en = datetime('now')
+        WHERE usuario_id = ?1 AND canal = 'whatsapp' AND respaldo_en IS NULL AND codigo_hash != '-'
+          AND creado_en > datetime('now', '-${MINUTOS_VIGENCIA} minutes')
+          AND (?2 = 1 OR creado_en < datetime('now', '-${SEGUNDOS_ENTREGA_WHATSAPP} seconds'))
+          AND NOT EXISTS (SELECT 1 FROM sms_enviados s WHERE s.referencia = codigos_telefono.referencia
+                            AND s.entrega IN ('delivered','read'))`,
+    )
+    .bind(usuarioId, forzar ? 1 : 0)
+    .run();
+  if (!reserva.meta.changes) return false;
+  const u = await db
+    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ idioma: string }>();
+  try {
+    await mandarCodigo(env, db, usuarioId, u?.idioma === 'en' ? 'en' : 'es', null, 'sms', true);
+    return true;
+  } catch (e) {
+    console.error(
+      'telefono: el respaldo por SMS no salió',
+      e instanceof Error ? e.message : String(e),
+    );
+    return false;
+  }
+}
+
+/** C-WHATSAPP-ENTREGA: el reloj (cada minuto) manda por SMS los códigos de WhatsApp sin entregar. */
+export async function respaldosPendientes(env: Env, db: D1Database): Promise<number> {
+  const { results } = await db
+    .prepare(
+      `SELECT usuario_id FROM codigos_telefono
+        WHERE canal = 'whatsapp' AND respaldo_en IS NULL AND codigo_hash != '-'
+          AND creado_en > datetime('now', '-${MINUTOS_VIGENCIA} minutes')
+          AND creado_en < datetime('now', '-${SEGUNDOS_ENTREGA_WHATSAPP} seconds')
+        LIMIT 20`,
+    )
+    .all<{ usuario_id: string }>();
+  let n = 0;
+  for (const r of results) if (await respaldoPorSms(env, db, r.usuario_id)) n++;
+  return n;
+}
+
+/** C-WHATSAPP-ENTREGA: Meta dijo «failed»: el código de esa referencia sale por SMS ya mismo. */
+export async function respaldoDeReferencia(env: Env, db: D1Database, referencia: string) {
+  const f = await db
+    .prepare('SELECT usuario_id FROM codigos_telefono WHERE referencia = ?')
+    .bind(referencia)
+    .first<{ usuario_id: string }>();
+  if (f) await respaldoPorSms(env, db, f.usuario_id, true);
 }
 
 export async function comprobarCodigo(db: D1Database, usuarioId: string, codigo: string) {

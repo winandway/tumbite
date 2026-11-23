@@ -339,6 +339,12 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-CODIGO-CANALES (23 nov 2026): por dónde salió el código (WhatsApp o SMS).
   ['codigos_telefono', 'canal', 'TEXT'],
   ['envios_codigo_telefono', 'canal', 'TEXT'],
+  // C-WHATSAPP-ENTREGA (23 nov 2026): la entrega de cada mensaje de WhatsApp y el respaldo por SMS.
+  ['codigos_telefono', 'referencia', 'TEXT'],
+  ['codigos_telefono', 'respaldo_en', 'TEXT'],
+  ['sms_enviados', 'entrega', 'TEXT'],
+  ['sms_enviados', 'entrega_error', 'TEXT'],
+  ['sms_enviados', 'entrega_en', 'TEXT'],
   // C-CUPON-USOS (20 nov 2026): tope por número de usos de un cupón de Divoox.
   ['cupones_divoox', 'usos_maximos', 'INTEGER'],
   // C-SMS-CONSENTIMIENTO (9 nov 2026): la casilla de SMS (fecha, versión del texto y canal).

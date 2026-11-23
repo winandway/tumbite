@@ -54,6 +54,7 @@ import {
   comprobarCodigo,
   mandarCodigo,
   puertaTelefono,
+  respaldosPendientes,
   telefonoPorVerificar,
 } from '../telefonoVuelta';
 import { pagoPicoPara } from '../pagoPico';
@@ -3349,6 +3350,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   },
   // C-CARRO-DINAMICA: el multiplicador de cada ciudad con tarifa dinámica encendida. Escribe como
   // mucho una fila por ciudad y solo cuando cambia (o cada 5 minutos mientras dura un recargo).
+  // C-WHATSAPP-ENTREGA: los códigos por WhatsApp sin «delivered» a los 30 segundos salen por SMS.
+  // Lee la tabla chica de códigos; escribe solo cuando hay un respaldo que mandar.
+  { nombre: 'codigos_respaldo', critica: false, correr: (env, db) => respaldosPendientes(env, db) },
   { nombre: 'dinamica', critica: false, correr: (_env, db) => recalcularDinamica(db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
   // C-COMIDA-PAGO-RESTAURANTE: los tiempos del pago directo al restaurante (sin conductor, pago
