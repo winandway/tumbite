@@ -1625,6 +1625,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Upload the vehicle’s registration and insurance before submitting it.',
   ],
   [
+    'Sube el registro del vehículo antes de enviarlo.',
+    'Upload the vehicle’s registration before submitting it.',
+  ],
+  [
     'Termina tu entrega en curso antes de cambiar de vehículo.',
     'Finish your current delivery before switching vehicles.',
   ],

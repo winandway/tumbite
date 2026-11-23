@@ -52,7 +52,13 @@ const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
  * Moto y Carro NO se pueden encender: no están en SERVICIOS_IMPLEMENTADOS, los disparadores de
  * schema.sql lo exigen y, además, esta fase rechaza encender un servicio que lleva personas.
  */
-import { type Gracia, graciaDe, requisitosConGracia } from '../plazoPapeles';
+import {
+  type Gracia,
+  graciaDe,
+  graciasDe,
+  requisitosConGracia,
+  seguroEnPlazo,
+} from '../plazoPapeles';
 import { anotarDecisionHumana } from './verificacionConductor';
 export const servicios = new Hono<{ Bindings: Env; Variables: Variables }>();
 type Db = D1Database;
@@ -954,15 +960,20 @@ servicios.post('/conductor/vehiculos/:id/enviar', async (c) => {
   if (MOTORIZADOS.has(v.tipo)) {
     if (!v.placa || !v.placa_estado)
       throw new ErrorDatos('Escribe la placa y el estado que la emitió.', 'placa', 422);
+    // C-SEGURO-EN-PLAZO: dentro de su plazo (y si su país no pide el seguro para empezar) basta el
+    // registro; la póliza queda pendiente dentro del plazo. Fuera de plazo, los dos como siempre.
+    const pide = seguroEnPlazo(await graciaDe(db, u.id)) ? ['registro'] : ['registro', 'seguro'];
     const docs = await db
       .prepare(
-        "SELECT COUNT(DISTINCT tipo) AS n FROM vehiculo_documentos WHERE vehiculo_id = ? AND tipo IN ('registro', 'seguro') AND estado IN ('pendiente', 'aprobado')",
+        `SELECT COUNT(DISTINCT tipo) AS n FROM vehiculo_documentos WHERE vehiculo_id = ? AND tipo IN (${pide.map(() => '?').join(',')}) AND estado IN ('pendiente', 'aprobado')`,
       )
-      .bind(v.id)
+      .bind(v.id, ...pide)
       .first<{ n: number }>();
-    if (Number(docs?.n) < 2)
+    if (Number(docs?.n) < pide.length)
       throw new ErrorDatos(
-        'Sube el registro y el seguro del vehículo antes de enviarlo.',
+        pide.length === 1
+          ? 'Sube el registro del vehículo antes de enviarlo.'
+          : 'Sube el registro y el seguro del vehículo antes de enviarlo.',
         undefined,
         422,
       );
@@ -1397,8 +1408,10 @@ servicios.get('/admin/vehiculos', async (c) => {
         WHERE v.estado = ?${alc.sql} ORDER BY v.actualizado_en LIMIT 100`,
     )
     .bind(estado, ...alc.valores)
-    .all<{ id: string }>();
+    .all<{ id: string; conductor_id: string }>();
   const ids = results.map((v) => v.id);
+  // C-SEGURO-EN-PLAZO: a quién le corre la póliza dentro de su plazo (una lectura por lote).
+  const gracias = await graciasDe(db, [...new Set(results.map((v) => v.conductor_id))]);
   const docs = ids.length
     ? (
         await db
@@ -1411,10 +1424,15 @@ servicios.get('/admin/vehiculos', async (c) => {
       ).results
     : [];
   return c.json({
-    vehiculos: results.map((v) => ({
-      ...v,
-      documentos: docs.filter((d) => d.vehiculoId === v.id),
-    })),
+    vehiculos: results.map((v) => {
+      const g = gracias.get(v.conductor_id);
+      return {
+        ...v,
+        documentos: docs.filter((d) => d.vehiculoId === v.id),
+        /** La póliza que todavía puede llegar dentro del plazo: cuándo vence ese plazo. */
+        seguroEnPlazo: seguroEnPlazo(g) ? { venceEn: g?.venceEn ?? null } : null,
+      };
+    }),
   });
 });
 

@@ -142,6 +142,17 @@ export async function graciasDe(db: D1Database, ids: string[]): Promise<Map<stri
 }
 
 /** Lo que le falta de verdad a un conductor, con la política de su país y su plazo aplicados. */
+/**
+ * C-SEGURO-EN-PLAZO (23 nov 2026, Richard: «el seguro vamos a dejarlo dentro de los 30 días… no le
+ * podemos exigir a la gente dame póliza»). Dentro de su plazo vigente, y si su país no pide el seguro
+ * para empezar (Perú sí lo pide), la póliza del vehículo es un papel más del plazo: la moto se envía a
+ * revisión y se aprueba con el registro, y la póliza queda pendiente hasta que el plazo venza. Al
+ * vencer, lo de siempre: sin la póliza aprobada no se conecta (requisito `seguro_vehiculo` y la vista
+ * `conductores_elegibles`). La base dice lo mismo en `vehiculos_aprobar_exige_documentos`.
+ */
+export const seguroEnPlazo = (g: Pick<Gracia, 'activa' | 'politica'> | undefined) =>
+  Boolean(g?.activa && !g.politica.paraEmpezar.includes('seguro'));
+
 export function requisitosConGracia(faltan: readonly string[], g: Gracia | undefined): string[] {
   if (!g) return [...faltan];
   return faltan.filter((r) => !g.exentos.has(r) && (!g.activa || g.exigidos.has(r)));

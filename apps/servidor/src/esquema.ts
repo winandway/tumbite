@@ -17,6 +17,8 @@ import { rehacerCuentasCobro } from './esquemaCuentasCobro';
 import { rehacerPoliticasFinancieras } from './esquemaPoliticas';
 import {
   DISPARADORES_HABILITACION,
+  DISPARADOR_APROBAR_VEHICULO,
+  rehacerAprobarVehiculo,
   rehacerElegibilidad,
   sincronizarPoliticaRequisitos,
 } from './esquemaPlazo';
@@ -737,6 +739,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerPoliticasFinancieras),
         DISPARADORES_HABILITACION,
         String(rehacerElegibilidad),
+        DISPARADOR_APROBAR_VEHICULO,
+        String(rehacerAprobarVehiculo),
         DISPARADORES_RASTRO,
         String(asegurarRastro),
         FUENTES_PASO,
@@ -824,6 +828,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-PLAZO-PAPELES: la vista y los disparadores que conocen el plazo, y la política de cada país
   // en la forma que la base lee.
   await rehacerElegibilidad(db);
+  // C-SEGURO-EN-PLAZO: aprobar el vehículo con la póliza pendiente dentro del plazo.
+  await rehacerAprobarVehiculo(db);
   // C-RASTRO: los pasos del registro los anota la base, y el viaje guarda dónde estaba el conductor.
   await asegurarRastro(db);
   await asegurarFase3(db);
