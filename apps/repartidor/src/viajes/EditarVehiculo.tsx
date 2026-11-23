@@ -146,6 +146,7 @@ export function EditarVehiculo({
     teclado: 'default' | 'number-pad' = 'default',
   ) => (
     <View key={campo} style={{ gap: 4 }}>
+      <Text style={{ color: COLOR.textoSuave, fontSize: 12 }}>{etiqueta}</Text>
       <TextInput
         testID={`editar-${campo}`}
         value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}

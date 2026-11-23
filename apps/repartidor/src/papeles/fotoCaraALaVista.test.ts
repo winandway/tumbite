@@ -118,8 +118,9 @@ describe('C-FOTO-CARA-A-LA-VISTA · nada importante queda fuera de pantalla', ()
     const conectarme = panel.indexOf('testID="conectarme"');
     const motivo = panel.indexOf('{motivoArriba}');
     expect(conectarme).toBeGreaterThan(0);
-    expect(motivo).toBeGreaterThan(conectarme);
-    expect(motivo).toBeLessThan(panel.indexOf('servicios.map('));
+    // Pegado a la barra: justo encima de ella (después del resumen, antes de la lista de servicios).
+    expect(motivo).toBeGreaterThan(panel.indexOf('{resumen}'));
+    expect(motivo).toBeLessThan(conectarme);
     // Lo de arriba (la tarjeta de la cara y las puertas) va antes de la tarjeta del estado.
     expect(panel.indexOf('{arriba}')).toBeLessThan(panel.indexOf('<TarjetaEstado'));
     const inicio = leer('..', 'Inicio.tsx');
@@ -138,5 +139,13 @@ describe('C-FOTO-CARA-A-LA-VISTA · nada importante queda fuera de pantalla', ()
     const asistente = leer('AsistentePapeles.tsx');
     expect(asistente).toContain("'subida_fallida'");
     expect(asistente).toContain('t.reintentar');
+  });
+
+  it('pantallas hermanas: en el alta del vehículo, el error de cada botón va junto a ese botón', () => {
+    const alta = leer('..', 'viajes', 'AltaPasajeros.tsx');
+    for (const donde of ['guardar', 'enviar', 'usar', 'activar'])
+      expect(alta, donde).toContain(`errorAqui('${donde}')`);
+    // Arriba solo los errores de carga (no los de un botón del final de la pantalla).
+    expect(alta).toContain('error && !errorEn ?');
   });
 });

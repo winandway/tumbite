@@ -11,6 +11,7 @@ import { GUIAS_TARIFA_SERVICIO, TARIFA_SERVICIO_PUBLICADA } from './tarifaServic
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
+import { FOTO_CARA_PUBLICADA, GUIAS_FOTO_CARA } from './fotoCara';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -11093,6 +11094,9 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const ts = idioma === 'es' ? GUIAS_TARIFA_SERVICIO.es : GUIAS_TARIFA_SERVICIO.en;
   const tarifaPasajero = TARIFA_SERVICIO_PUBLICADA ? [ts.pasajero] : [];
   const tarifaConductor = TARIFA_SERVICIO_PUBLICADA ? [ts.conductor] : [];
+  // C-FOTO-CARA-A-LA-VISTA y C-QUE-TE-FALTA: la foto de la cara y «qué te falta para recibir carreras».
+  const fc = idioma === 'es' ? GUIAS_FOTO_CARA.es : GUIAS_FOTO_CARA.en;
+  const fotoCara = FOTO_CARA_PUBLICADA ? [fc.cara, fc.falta] : [];
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
@@ -11114,6 +11118,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
         ...s,
         guias: [
           ...s.guias,
+          ...fotoCara,
           ...moto.conductor,
           ...carro.conductor,
           ...tarifaConductor,

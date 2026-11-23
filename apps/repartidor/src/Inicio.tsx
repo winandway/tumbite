@@ -623,7 +623,12 @@ export function Inicio() {
   );
   const td = textosDriver(idioma);
   // El mapa ocupa lo que queda de pantalla: la mitad en celulares normales.
-  const alturaMapa = Math.max(240, Math.round(useWindowDimensions().height * 0.42));
+  const altoVentana = useWindowDimensions().height;
+  const alturaMapa = Math.max(240, Math.round(altoVentana * 0.42));
+  // C-FOTO-CARA-A-LA-VISTA: cuánto se deslizó el inicio, para llevar el motivo de «no te puedes
+  // conectar» a la vista si quedó tapado por la barra de abajo o por la cabecera.
+  const desplazado = useRef(0);
+  const motivoRef = useRef<View>(null);
   const t = enIdioma(T, idioma);
   const [estado, setEstado] = useState<Estado | null>(null);
   const [ofertas, setOfertas] = useState<Pedido[]>([]);
@@ -714,6 +719,26 @@ export function Inicio() {
     campo?: string;
     servicio?: string;
   } | null>(null);
+  useEffect(() => {
+    if (!motivoConexion) return;
+    const reloj = setTimeout(() => {
+      motivoRef.current?.measureInWindow((_x, y, _ancho, alto) => {
+        // Lo visible: debajo de la cabecera y encima de la barra de pestañas.
+        const arriba = 96;
+        const abajo = altoVentana - 96;
+        const sobra = y + alto - abajo;
+        const falta = arriba - y;
+        if (sobra > 0)
+          scrollLienzo.current?.scrollTo({ y: desplazado.current + sobra + 12, animated: true });
+        else if (falta > 0)
+          scrollLienzo.current?.scrollTo({
+            y: Math.max(0, desplazado.current - falta - 12),
+            animated: true,
+          });
+      });
+    }, 80);
+    return () => clearTimeout(reloj);
+  }, [motivoConexion, altoVentana]);
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
   const ts = textosServicios(idioma);
@@ -2021,6 +2046,10 @@ export function Inicio() {
         ) : (
           <ScrollView
             ref={scrollLienzo}
+            onScroll={(ev) => {
+              desplazado.current = ev.nativeEvent.contentOffset.y;
+            }}
+            scrollEventThrottle={64}
             keyboardDismissMode="interactive"
             automaticallyAdjustKeyboardInsets
             contentContainerStyle={{ paddingBottom: 16 }}
@@ -2473,6 +2502,23 @@ export function Inicio() {
         alConsentir={() => papeles.marcar({ consentimiento: true })}
       />
     );
+  if (vista === 'alta')
+    return lienzo(
+      'perfil',
+      <Alta
+        api={api}
+        idioma={idioma}
+        abrir={(paso) => {
+          if (paso === 'banco') {
+            setVista('billetera');
+            return;
+          }
+          setVista('datos');
+          setSeccionPerfil(paso === 'datos' ? 'vehiculo' : 'documentos');
+        }}
+      />,
+    );
+
   // C-QUE-TE-FALTA: completar o corregir la moto o el carro directo desde lo que le falta.
   if (vista === 'vehiculo')
     return lienzo(
@@ -2492,23 +2538,6 @@ export function Inicio() {
         <AltaPasajeros servicio={tipoVehiculo} />
       </View>,
     );
-  if (vista === 'alta')
-    return lienzo(
-      'perfil',
-      <Alta
-        api={api}
-        idioma={idioma}
-        abrir={(paso) => {
-          if (paso === 'banco') {
-            setVista('billetera');
-            return;
-          }
-          setVista('datos');
-          setSeccionPerfil(paso === 'datos' ? 'vehiculo' : 'documentos');
-        }}
-      />,
-    );
-
   // C-SERVICIOS-CONECTADOS (pantalla 05): agregar un servicio sin repetir lo ya verificado.
   if (vista === 'agregar' && servicioAgregar)
     return lienzo(
@@ -3574,7 +3603,9 @@ export function Inicio() {
   // contestó todavía, la cara se decide con «Tus papeles» (lo mismo que pide el servidor).
   const caraLocal = faltaCaraParaEmpezar(papeles.v);
   const faltasVista: FaltaServidor[] | null =
-    faltas ?? (caraLocal ? [{ clave: 'cara', quien: 'conductor' }] : null);
+    caraLocal && !faltas?.some((f) => f.clave === 'cara')
+      ? [{ clave: 'cara', quien: 'conductor' }, ...(faltas ?? [])]
+      : faltas;
   const primeraClave = faltasVista?.find((f) => f.clave !== 'desconectado')?.clave;
   const telefonoEnBloque = primeraClave === 'telefono' && Boolean(tarjetaTelefono);
   const caraArriba = primeraClave === 'cara' || (!faltas && caraLocal);
@@ -3606,6 +3637,7 @@ export function Inicio() {
   const accionMotivo = accionDeMotivo(motivoConexion?.campo);
   const motivoInicio = motivoConexion ? (
     <View
+      ref={motivoRef}
       testID="motivo-conectar"
       accessibilityRole="alert"
       style={{

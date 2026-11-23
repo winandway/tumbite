@@ -4,7 +4,7 @@ import { comisionTipicaComida } from './internacional/cobroDirecto';
 import { saldoLibro } from './internacional/libro';
 import { leerConfigPais } from './internacional/paises';
 import { MINUTOS_UBICACION_VIGENTE } from './operaciones';
-import { graciaDe } from './plazoPapeles';
+import { empezarPlazo, graciaDe } from './plazoPapeles';
 import { comisionTipicaMoto } from './rutas/viajesPasajero';
 import { puertaTelefono } from './telefonoVuelta';
 
@@ -65,6 +65,9 @@ export async function queTeFalta(
   id: string,
   env?: Env,
 ): Promise<{ recibeViajes: boolean; faltas: Falta[] }> {
+  // La cuenta nueva de un país con plazo nace con él (una sola escritura en su vida, como al leer
+  // «Tus papeles»): sin esto, la primera lectura no sabía que la cara era lo que faltaba.
+  if (env) await empezarPlazo(env, db, id, 'registro');
   const [g, filas] = await Promise.all([
     graciaDe(db, id),
     db.batch([

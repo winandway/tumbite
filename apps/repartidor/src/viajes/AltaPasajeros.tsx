@@ -532,8 +532,18 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     void cargar();
   }, [cargar]);
 
-  async function hacer(f: () => Promise<unknown>) {
+  // C-FOTO-CARA-A-LA-VISTA (pantallas hermanas): el error de un botón va JUNTO a ese botón (antes
+  // salía arriba de todo, fuera de la vista de quien tocó «Enviar a revisión» al final de la pantalla).
+  const [errorEn, setErrorEn] = useState<string | null>(null);
+  const errorAqui = (donde: string) =>
+    error && errorEn === donde ? (
+      <Text accessibilityRole="alert" testID={`error-${donde}`} style={{ color: ROJO_ERROR }}>
+        {error}
+      </Text>
+    ) : null;
+  async function hacer(f: () => Promise<unknown>, donde: string | null = null) {
     setError('');
+    setErrorEn(donde);
     try {
       await f();
       await cargar();
@@ -577,7 +587,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       });
       // Solo se borra lo escrito cuando el servidor confirmó que el vehículo quedó guardado.
       await b.limpiar();
-    });
+    }, 'guardar');
   }
 
   const delServicio = <T,>(m: Partial<Record<ServicioPasajeros, T>> | undefined) =>
@@ -626,7 +636,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     <View style={{ gap: 12, paddingVertical: 8 }} testID={`alta-${servicio}`}>
       <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
-      {error ? <Text style={{ color: ROJO_ERROR }}>{error}</Text> : null}
+      {error && !errorEn ? <Text style={{ color: ROJO_ERROR }}>{error}</Text> : null}
 
       {papeles ? (
         <View style={e.tarjeta}>
@@ -788,14 +798,17 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 texto={t.usar}
                 exito
                 alTocar={() =>
-                  void hacer(() =>
-                    api.pedir('PUT', '/datos/conductor/vehiculo-activo', {
-                      vehiculoId: vehiculo.id,
-                    }),
+                  void hacer(
+                    () =>
+                      api.pedir('PUT', '/datos/conductor/vehiculo-activo', {
+                        vehiculoId: vehiculo.id,
+                      }),
+                    'usar',
                   )
                 }
               />
             ) : null}
+            {errorAqui('usar')}
           </>
         ) : (
           <View style={{ gap: 8, marginTop: 6 }}>
@@ -860,6 +873,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 <Text style={{ flex: 1, color: C.secundario }}>{tc.cajon}</Text>
               </Pressable>
             ) : null}
+            {errorAqui('guardar')}
             <Boton texto={t.guardar} alTocar={() => void guardar()} />
           </View>
         )}
@@ -894,12 +908,14 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
             <Boton
               texto={t.enviar}
               alTocar={() =>
-                void hacer(() =>
-                  api.pedir('POST', `/datos/conductor/vehiculos/${vehiculo.id}/enviar`),
+                void hacer(
+                  () => api.pedir('POST', `/datos/conductor/vehiculos/${vehiculo.id}/enviar`),
+                  'enviar',
                 )
               }
             />
           ) : null}
+          {errorAqui('enviar')}
         </View>
       ) : null}
 
@@ -952,15 +968,18 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               texto={t.activar}
               exito
               alTocar={() =>
-                void hacer(() =>
-                  api.pedir('PUT', '/datos/conductor/preferencias', {
-                    servicioId: servicio,
-                    activa: true,
-                  }),
+                void hacer(
+                  () =>
+                    api.pedir('PUT', '/datos/conductor/preferencias', {
+                      servicioId: servicio,
+                      activa: true,
+                    }),
+                  'activar',
                 )
               }
             />
           ) : null}
+          {errorAqui('activar')}
         </View>
       ) : null}
     </View>

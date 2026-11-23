@@ -210,6 +210,8 @@ export function PanelServiciosInicio({
           />
         )}
         {resumen}
+        {/* C-FOTO-CARA-A-LA-VISTA: el motivo va justo encima de la barra que se acaba de deslizar. */}
+        {motivoArriba}
         {!conectado && hayAprobados ? (
           // C-CONECTAR-DESLIZANDO: conectarse se desliza (un toque en el bolsillo no conecta).
           <Deslizador
@@ -223,7 +225,6 @@ export function PanelServiciosInicio({
             testID="conectarme"
           />
         ) : null}
-        {motivoArriba}
         {servicios.length ? (
           <View style={{ gap: 8 }}>
             <View style={{ gap: 2, marginBottom: 4 }}>
