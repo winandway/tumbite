@@ -1,3 +1,4 @@
+import { celularDePrueba } from './celularDePrueba';
 import { expect, test } from './fixtures';
 
 /**
@@ -35,7 +36,6 @@ test('peso real de un pesable con Stripe en modo prueba (autoriza con margen, ca
   };
   const id = Date.now().toString(36);
   const clave = `Peso-${id}-Real9`;
-  let n = 0;
   const cuenta = async (q: string, rol: 'cliente' | 'restaurante') => {
     const correo = `${q}.${id}@recorrido.test`;
     const r = await request.post('/datos/cuentas/registro', {
@@ -46,7 +46,7 @@ test('peso real de un pesable con Stripe en modo prueba (autoriza con margen, ca
         rol,
         // C-TELEFONO-E164: un número de EE. UU. que exista (área 305, central 5xx); uno al azar podía
         // caer en un código de área que no existe y el registro lo rechazaba (falló el 22 nov 2026).
-        telefono: `3055${String(Date.now()).slice(-5)}${n++ % 10}`,
+        telefono: celularDePrueba(),
       },
     });
     expect(r.ok(), await r.text()).toBe(true);

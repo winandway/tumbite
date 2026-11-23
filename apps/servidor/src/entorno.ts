@@ -46,6 +46,27 @@ export function blindarStripeEnPruebas(host: string, env: Env): void {
     env.STRIPE_PUBLISHABLE_KEY = undefined;
 }
 
+/**
+ * C-GUIONES-SIN-CODIGO-REAL (23 nov 2026): marca la petición como servida por el sitio de pruebas. Se
+ * decide SOLO por el dominio: fuera de él la marca se quita siempre, así una variable sembrada a mano
+ * en producción no abre ninguna excepción de pruebas.
+ */
+export function marcarSitioDePruebas(host: string, env: Env): void {
+  env.SITIO_DE_PRUEBAS = entornoDeHost(host) === 'pruebas' ? 'si' : undefined;
+}
+
+/**
+ * C-GUIONES-SIN-CODIGO-REAL: una cuenta del recorrido automático del sitio de pruebas. Sus correos son
+ * de dominios reservados que no pueden existir («.test», «.invalid»), y sus celulares son ficticios:
+ * mandarles un código de verdad no llega a nadie, pone la salud en rojo y gasta. En producción nunca.
+ */
+export function cuentaDeGuion(
+  env: Pick<Env, 'SITIO_DE_PRUEBAS'>,
+  correo: string | null | undefined,
+) {
+  return env.SITIO_DE_PRUEBAS === 'si' && /\.(test|invalid)$/i.test(String(correo ?? '').trim());
+}
+
 /** El entorno de la petición según el dominio que la sirve (null si es un dominio desconocido). */
 export function entornoDe(url: string): Entorno | null {
   try {

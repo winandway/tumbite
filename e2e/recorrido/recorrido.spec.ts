@@ -571,7 +571,7 @@ for (const idioma of ['en', 'es'] as const) {
     // C-PERMISOS-EXPLICADOS: tras registrarse, la app explica los permisos antes de pedirlos.
     await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
     // C-TELEFONO-AL-REGISTRARSE: después, la cuenta nueva confirma su celular con el código por SMS
-    // (en el sitio de pruebas el SMS a +1 no está encendido: ahí no hay puerta).
+    // (en el sitio de pruebas no hay puerta para las cuentas del guion: C-GUIONES-SIN-CODIGO-REAL).
     if (!STAGING) await cruzarPuertaCelular(rep, correo('repartidor'));
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
     // recorrido se pide siempre). La toma y recién ahí se conecta.

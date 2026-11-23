@@ -273,6 +273,11 @@ export interface Env extends Variables {
   ESPERAR_DESPUES?: (p: Promise<unknown>) => void;
   BUCKET?: R2Bucket;
   ASSETS?: Fetcher;
+  /**
+   * C-GUIONES-SIN-CODIGO-REAL: «si» SOLO cuando la petición la sirve el sitio de pruebas. No es una
+   * variable del panel: la pone (y la quita) `marcarSitioDePruebas` en cada petición según el dominio.
+   */
+  SITIO_DE_PRUEBAS?: string;
 }
 
 export function revisarEnv(env: Record<string, unknown>) {

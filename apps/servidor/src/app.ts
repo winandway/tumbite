@@ -8,7 +8,12 @@ import { finanzasAdmin } from './finanzas/rutasAdmin';
 import { controlDual } from './finanzas/controlDual';
 import { flexRecargasLocalesAdmin } from './flex/recargasLocales';
 import { saludBilleteras } from './finanzas/reloj';
-import { blindarStripeEnPruebas, entornoDe, problemasDeEntorno } from './entorno';
+import {
+  blindarStripeEnPruebas,
+  entornoDe,
+  marcarSitioDePruebas,
+  problemasDeEntorno,
+} from './entorno';
 import { saludRetiros } from './retiros';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -198,7 +203,10 @@ app.use('*', async (c, next) => {
 });
 // C-ENTORNOS-SEPARADOS: el sitio de pruebas nunca usa una llave real de Stripe.
 app.use('*', async (c, next) => {
-  blindarStripeEnPruebas(new URL(c.req.url).host, c.env);
+  const host = new URL(c.req.url).host;
+  blindarStripeEnPruebas(host, c.env);
+  // C-GUIONES-SIN-CODIGO-REAL: las cuentas del recorrido no reciben códigos de verdad en pruebas.
+  marcarSitioDePruebas(host, c.env);
   await next();
 });
 // Stripe simulado solo en la computadora del programador (ver stripe.ts). En producción no existe.

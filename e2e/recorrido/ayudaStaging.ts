@@ -1,3 +1,4 @@
+import { celularDePrueba } from './celularDePrueba';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { VERSION_TERMINOS } from '../../packages/compartido/src/terminos';
@@ -29,7 +30,6 @@ export async function preparar(request: APIRequestContext) {
   };
   const id = Date.now().toString(36);
   const clave = `Casa-${id}-Puerta9`;
-  let n = 0;
   const cuenta = async (
     q: string,
     rol: 'cliente' | 'restaurante' | 'repartidor',
@@ -41,7 +41,7 @@ export async function preparar(request: APIRequestContext) {
       correo,
       clave,
       rol,
-      telefono: `3${String(Date.now()).slice(-8)}${n++ % 10}`,
+      telefono: celularDePrueba(),
     });
     expect(r.ok(), await r.text()).toBe(true);
     await sql(

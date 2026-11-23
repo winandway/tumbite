@@ -1,4 +1,5 @@
 import type { Env } from './env';
+import { cuentaDeGuion } from './entorno';
 import { sha256, nuevoId } from './cripto';
 import {
   destinoPermitido,
@@ -235,6 +236,7 @@ export async function codigoPosiblePara(env: Env, db: D1Database, para: string):
 
 type FilaCuenta = {
   rol: string;
+  correo: string | null;
   telefono: string | null;
   exigido: string | null;
   verificado: string | null;
@@ -251,7 +253,7 @@ export async function puertaTelefono(
   if (!algunSmsEncendido(env)) return null;
   const f = await db
     .prepare(
-      `SELECT u.rol, u.telefono, u.telefono_exigido_en AS exigido, u.telefono_verificado_en AS verificado,
+      `SELECT u.rol, u.correo, u.telefono, u.telefono_exigido_en AS exigido, u.telefono_verificado_en AS verificado,
          (r.usuario_id IS NOT NULL AND r.conectado = 0 AND r.ubicacion_en IS NOT NULL
            AND r.ubicacion_en < datetime('now', '-${DIAS_SIN_CONECTAR} days')
            AND (u.telefono_verificado_en IS NULL
@@ -264,6 +266,9 @@ export async function puertaTelefono(
     .bind(usuarioId)
     .first<FilaCuenta>();
   if (!f) return null;
+  // C-GUIONES-SIN-CODIGO-REAL: en el sitio de pruebas, a las cuentas del recorrido automático no se les
+  // pide ni se les manda el código (sus celulares son ficticios). En producción esto nunca se cumple.
+  if (cuentaDeGuion(env, f.correo)) return null;
   // C-TELEFONO-SIN-CANAL (23 nov 2026, auditor de tiendas): si a ESTE número no le pudo salir el código por
   // ningún canal (por ejemplo, Twilio rechaza un fijo), la puerta se abre: nadie queda parado. Si cambia
   // el número, la marca se borra y vuelve a pedirse.
