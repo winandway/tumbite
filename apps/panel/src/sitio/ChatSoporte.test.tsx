@@ -108,7 +108,11 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
     expect(await screen.findByText('Por pago móvil, desde Ganancias.')).toBeTruthy();
     const envio = llamadas.find((l) => l.url.endsWith('/camila/mensaje'))!;
-    expect(envio.cuerpo).toEqual({ texto: '¿Cómo recargo mi saldo?', canal: 'web' });
+    expect(envio.cuerpo).toEqual({
+      texto: '¿Cómo recargo mi saldo?',
+      canal: 'web',
+      avisoIa: 'linea-2026-11-23/web',
+    });
     const visita = envio.cabeceras.get('x-camila-visita');
     expect(esVisitaCamila(visita)).toBe(true);
     expect(localStorage.getItem(LLAVE_VISITA_CAMILA)).toBe(visita);
@@ -288,10 +292,13 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
 });
 
 /**
- * C-PERMISO-IA-CHAT (21 nov 2026, Apple 5.1.2(i)) — todos los países. Antes del primer mensaje, el
- * chat pide el permiso explícito; hasta contestar no hay casilla para escribir ni botón de adjuntar.
+ * C-CHAT-WEB-SIN-MURO (23 nov 2026, orden de Richard) — todos los países. La web NO tiene muro:
+ * la persona escribe de una vez. Debajo de la casilla, una línea discreta con la política de privacidad
+ * y «Prefiero que me atienda una persona». El mensaje viaja con la marca de la línea para que el
+ * servidor registre cuándo y con qué versión se informó. (Antes: C-PERMISO-IA-CHAT, el muro «Antes de
+ * escribirnos: tu permiso», que sigue siendo la regla en iPhone.)
  */
-describe('C-PERMISO-IA-CHAT: el chat de la web pide el permiso antes del primer mensaje', () => {
+describe('C-CHAT-WEB-SIN-MURO: el chat de la web deja escribir de una vez', () => {
   beforeEach(() => {
     localStorage.clear();
     usarEsperaDeEscritura(() => 0);
@@ -308,44 +315,66 @@ describe('C-PERMISO-IA-CHAT: el chat de la web pide el permiso antes del primer 
   };
 
   it.each([
-    ['es', 'Antes de escribirnos: tu permiso', 'No, que me atienda una persona', false],
-    ['en', 'Before you write to us: your permission', 'Yes, I give my permission', true],
+    ['es', 'Privacidad', /Google \(Gemini\)/, 'https://divoox.com/es/privacy'],
+    ['en', 'Privacy', /Google \(Gemini\)/, 'https://divoox.com/privacy'],
   ] as const)(
-    'en %s: muestra el aviso, guarda la respuesta y recién ahí deja escribir',
-    async (idioma, titulo, boton, acepto) => {
-      const llamadas = servidor((l) =>
-        l.url.endsWith('/datos/camila/permiso-ia')
-          ? json({ ok: true, permisoIa: (l.cuerpo as { acepto: boolean }).acepto })
+    'en %s: sin muro, la casilla está desde el principio y la línea discreta enlaza la privacidad',
+    async (idioma, privacidad, proveedor, enlace) => {
+      servidor((l) =>
+        l.url.endsWith('/camila/mensaje')
+          ? json({ ...SIN_CONTESTAR, permisoIa: true, respuesta: 'Hola.', mensajes: [] })
           : json(SIN_CONTESTAR),
       );
       render(<ChatSoporte idioma={idioma} />);
       await userEvent.click(screen.getByRole('button', { name: /soporte|support/i }));
-      expect(await screen.findByText(titulo)).toBeInTheDocument();
-      // El aviso nombra la inteligencia artificial y al proveedor, y dice que se puede decir que no.
-      expect(screen.getByTestId('chat-permiso-ia').textContent).toMatch(/Google \(Gemini\)/);
-      expect(screen.queryByRole('textbox')).toBeNull();
-      expect(screen.queryByTestId('chat-adjuntar')).toBeNull();
-      await userEvent.click(screen.getByRole('button', { name: boton }));
-      await waitFor(() => expect(screen.queryByTestId('chat-permiso-ia')).toBeNull());
-      const guardado = llamadas.find((l) => l.url.endsWith('/datos/camila/permiso-ia'));
-      expect(guardado?.metodo).toBe('POST');
-      expect(guardado?.cuerpo).toEqual({ acepto });
-      expect(esVisitaCamila(guardado?.cabeceras.get('x-camila-visita'))).toBe(true);
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
+      expect(await screen.findByRole('textbox')).toBeInTheDocument();
+      expect(screen.queryByTestId('chat-permiso-ia')).toBeNull();
+      expect(screen.queryByText(/Antes de escribirnos|Before you write to us/)).toBeNull();
+      const linea = screen.getByTestId('chat-linea-ia');
+      expect(linea.textContent).toMatch(proveedor);
+      // Sin botones grandes: solo enlaces pequeños.
+      expect(linea.querySelectorAll('button.boton')).toHaveLength(0);
+      expect(screen.getByRole('link', { name: privacidad }).getAttribute('href')).toBe(enlace);
+      // Nunca dice que Camila es una IA.
+      expect(linea.textContent).not.toMatch(/soy una|asistente virtual|virtual assistant/i);
     },
   );
 
-  it('si no se pudo guardar, lo dice y el aviso sigue ahí', async () => {
-    servidor((l) =>
-      l.url.endsWith('/datos/camila/permiso-ia')
-        ? json({ error: 'Sin conexión con el servidor.' }, 503)
+  it('el primer mensaje viaja con la marca de la línea (el servidor registra versión y fecha)', async () => {
+    const llamadas = servidor((l) =>
+      l.url.endsWith('/camila/mensaje')
+        ? json({ ...SIN_CONTESTAR, permisoIa: true, respuesta: 'Hola.', mensajes: [] })
         : json(SIN_CONTESTAR),
     );
     render(<ChatSoporte idioma="es" />);
-    await userEvent.click(screen.getByRole('button', { name: /soporte|support/i }));
-    await userEvent.click(await screen.findByTestId('chat-permiso-ia-si'));
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
-    expect(screen.getByTestId('chat-permiso-ia')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /soporte/i }));
+    await userEvent.type(await screen.findByRole('textbox'), '¿Cómo pago?');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/camila/mensaje'))?.cuerpo).toMatchObject({
+        texto: '¿Cómo pago?',
+        canal: 'web',
+        avisoIa: 'linea-2026-11-23/web',
+      }),
+    );
+  });
+
+  it('«Prefiero que me atienda una persona» guarda el «no» y la línea lo dice', async () => {
+    const llamadas = servidor((l) =>
+      l.url.endsWith('/datos/camila/permiso-ia')
+        ? json({ ok: true, permisoIa: (l.cuerpo as { acepto: boolean }).acepto })
+        : json(SIN_CONTESTAR),
+    );
+    render(<ChatSoporte idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: /soporte/i }));
+    await userEvent.click(await screen.findByTestId('chat-linea-ia-persona'));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/datos/camila/permiso-ia'))?.cuerpo).toEqual({
+        acepto: false,
+      }),
+    );
+    expect(await screen.findByTestId('chat-ajuste-ia-abrir')).toHaveTextContent('No permitido');
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
   it('el permiso se puede cambiar después, al pie del chat: de «No permitido» a «Permitido»', async () => {
@@ -364,11 +393,9 @@ describe('C-PERMISO-IA-CHAT: el chat de la web pide el permiso antes del primer 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     await userEvent.click(abrir);
     await userEvent.click(screen.getByRole('button', { name: 'Dar mi permiso' }));
-    await waitFor(() =>
-      expect(screen.getByTestId('chat-ajuste-ia-abrir').textContent).toBe(
-        'Ayuda con inteligencia artificial: Permitido',
-      ),
-    );
+    // En la web (línea, sin muro) con el permiso dado vuelve la línea discreta con «Prefiero…».
+    expect(await screen.findByTestId('chat-linea-ia-persona')).toBeInTheDocument();
+    expect(screen.queryByTestId('chat-ajuste-ia-abrir')).toBeNull();
     expect(llamadas.find((l) => l.url.endsWith('/datos/camila/permiso-ia'))?.cuerpo).toEqual({
       acepto: true,
     });

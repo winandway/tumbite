@@ -6068,6 +6068,24 @@ body.modo-tableta .cabecera {
 .chat-soporte-permiso .boton {
   width: 100%;
 }
+/* C-PERMISO-IA-POR-PLATAFORMA (23 nov 2026): la línea discreta debajo de la casilla, sin muro. */
+.chat-soporte-linea-ia {
+  margin: 0;
+  padding: 2px 16px 6px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #666b73;
+}
+.chat-soporte-linea-ia a,
+.chat-soporte-linea-ia .enlace {
+  color: #666b73;
+  font-size: inherit;
+  text-decoration: underline;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
 .chat-soporte-ajuste-ia {
   display: flex;
   flex-direction: column;

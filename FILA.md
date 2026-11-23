@@ -752,3 +752,8 @@
 - [ ] [para: desarrollador] El simulador de compras programado falla cada día desde el 17 nov 2026 (dos fallas: «entrega en la puerta con la foto» responde 409 porque su guion cierra la entrega a la manera vieja; hoy se cierra con /foto-entrega y «Desliza para completar»). Poner el guion del simulador al día. No es de los cambios del 21 nov. Todos los países.
 - [x] HECHO 21 nov: compilación adelantada por Gerencia. Driver 66 y clientes 59 en la prueba interna de Google; Driver 52 y clientes 65 en TestFlight (VALID). Nada a revisión: el dictamen y el envío son de Gerencia. Notas del revisor al día, sin enviar.
 - [ ] [para: revisor-calidad] Revisar una vez C-COMIDA-VE-QUIEN-PAGA en la rama fase-relevo-23nov (servidor, tarjeta del panel, carrito sin ceros, Driver y restaurante, Docs es/en y ayuda interna; CANDADOS y VERIFICAR-PAGOS). Venezuela.
+
+## Chat de soporte de la web sin muro (23 nov 2026, orden de Richard, decisión de Gerencia) — todos los países
+
+- [ ] [para: revisor-calidad] Revisar una vez la rama fase-chat-web-sin-muro (C-CHAT-WEB-SIN-MURO): chat de la web sin muro con línea, servidor con registro de versión solo para la web, política y Docs es/en; apps y papeles sin cambio.
+- [ ] [para: auditor-tiendas] Dictamen sobre papeles del conductor y chat en Android sin muro (lo construido está guardado en la rama fase-permiso-ia-por-plataforma): divulgación destacada y consentimiento de Google Play (ayuda 10144311) y versión corta del permiso de iPhone.
