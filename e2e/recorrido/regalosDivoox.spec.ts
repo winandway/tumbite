@@ -199,6 +199,11 @@ for (const idioma of ['es', 'en'] as const) {
 
       // El pasajero: el formulario de Pedir viaje ya escrito (recogida y destino), en su celular.
       const cli = await cuenta('cliente', C.pasajero);
+      // Aquí se enseña el regalo: el pasajero ya confirmó su celular, para que la franja de
+      // «Confirma tu celular» no tape la captura (su prueba y sus fotos van en verificarCelular).
+      sql(
+        `UPDATE usuarios SET telefono_verificado_en = datetime('now') WHERE id = '${cli.usuario.id}'`,
+      );
       const ctx = await browser.newContext({
         ...devices['Pixel 7'],
         baseURL: DATOS!.url,

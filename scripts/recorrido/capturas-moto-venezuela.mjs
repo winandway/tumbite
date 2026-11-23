@@ -268,6 +268,19 @@ const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 /** Todas las capturas de Moto de un país, en los idiomas que le tocan. */
 async function correr(M, idiomas) {
   const { IDS, tokens } = await (M.pais === 'VE' ? cuentasVe(M) : cuentasUs(M));
+  // Las cuentas de las fotos ya confirmaron su celular: la puerta del código por SMS tiene su propia
+  // guía y sus propias capturas (C-TELEFONO-AL-REGISTRARSE); aquí taparía lo que se enseña.
+  await sql(
+    `UPDATE usuarios SET telefono_verificado_en = datetime('now') WHERE id IN ('${IDS.cliente}', '${IDS.conductor}')`,
+  );
+  // C-AVISO-IA-UNICO: el conductor de las fotos ya contestó el aviso de IA (la misma ruta que usa la
+  // pantalla); si no, Driver abre con ese aviso y no con lo que se enseña.
+  await pedir(
+    'POST',
+    '/datos/conductor/aviso-ia',
+    { acepto: true, plataforma: 'web', desde: 'aviso' },
+    tokens.conductor,
+  );
   const ORIGEN = M.origen;
   const DESTINO = M.destino;
   restaurarCiudad = await ciudadNeutra(sql, M.zona, idiomas[0]);

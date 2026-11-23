@@ -110,7 +110,9 @@ function TarjetaConductor({ c, alOpciones }: { c: ConductorConfianza; alOpciones
           {c.nombre}
         </Text>
         {c.vehiculo ? (
-          <Text style={[LETRA.secundario, { color: col.textoSuave }]} numberOfLines={1}>
+          // Dos renglones: con una marca o un modelo largos la placa no se corta (es lo que el
+          // pasajero mira para reconocer el vehículo).
+          <Text style={[LETRA.secundario, { color: col.textoSuave }]} numberOfLines={2}>
             {textoVehiculo(c.vehiculo)}
           </Text>
         ) : null}
