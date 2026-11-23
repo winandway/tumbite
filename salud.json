@@ -17,7 +17,7 @@
     "sms": "ok",
     "smsVenezuela": "ok",
     "smsGasto": "ok",
-    "whatsapp": "pendiente",
+    "whatsapp": "ok",
     "dinero": "ok",
     "retiros": "ok",
     "agentes": "ok",
@@ -47,5 +47,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-23T03:08:01.318473+00:00"
+  "medido": "2026-11-23T04:38:56.523836+00:00"
 }
