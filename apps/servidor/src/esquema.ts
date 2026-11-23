@@ -25,6 +25,7 @@ import {
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
+import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
 import {
   DISPARADORES_RASTRO,
   FUENTES_PASO,
@@ -744,6 +745,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerAprobarVehiculo),
         String(repararLlegaSoloARevision),
         SQL_CANDIDATOS_LLEGA_SOLO,
+        String(repararVehiculoActivo),
+        SQL_CANDIDATOS_VEHICULO_ACTIVO,
         DISPARADORES_RASTRO,
         String(asegurarRastro),
         FUENTES_PASO,
@@ -843,6 +846,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-LLEGA-SOLO-A-REVISION: una sola vez, los conductores que ya tenían todo y no tocaron «Enviar».
   await repararLlegaSoloARevision(db).catch((e: unknown) =>
     console.error('esquema: la reparación «llega solo a revisión» falló', e),
+  );
+  // C-VEHICULO-ACTIVO-SOLO: una sola vez, el único vehículo aprobado queda activo.
+  await repararVehiculoActivo(db).catch((e: unknown) =>
+    console.error('esquema: la reparación «vehículo activo» falló', e),
   );
 }
 

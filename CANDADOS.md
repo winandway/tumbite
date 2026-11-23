@@ -2,6 +2,14 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-VEHICULO-ACTIVO-SOLO · El vehículo aprobado queda en uso solo y su servicio de viajes listo (Gerencia por Richard, conductor real, 23 nov 2026) — todos los países
+
+- **Qué pasaba:** el equipo aprobó la identidad, los papeles y la moto de un conductor de Venezuela, pero `repartidores.vehiculo_activo_id` seguía en NULL, no tenía `preferencias_servicio` y no salía en `conductores_elegibles`: no recibía viajes hasta tocar «Mi vehículo → Usar este vehículo» y deslizar «Moto con pasajero».
+- **Qué se hizo:** `activarVehiculoAprobadoSolo(db, conductorId, vehiculoId)` (`apps/servidor/src/rutas/servicios.ts`), llamada al aprobar en `PUT /admin/vehiculos/:id`. Mismas puertas que «Usar este vehículo»: solo un vehículo suyo y aprobado, nunca con un pedido u operación en curso (y la base lo frena, C-FLEX-OCUPACION). Solo si no tiene vehículo en uso, o el que tenía está retirado, rechazado o suspendido (en ese caso, solo desconectado). Si ya tiene otro en uso y válido, no se toca. Además enciende el servicio de pasajeros de ese vehículo (Moto o Carro) SOLO si él nunca lo eligió ni lo apagó y hoy ya lo puede activar con las reglas de siempre (`estadoDelConductor`: ciudad, habilitación, papeles, plazo). No se salta ninguna aceptación ni papel: si falta algo, no se enciende.
+- **Reparación** (`apps/servidor/src/reparacionVehiculoActivo.ts`): una vez, dentro de la migración, con la marca `reparacion:vehiculo-activo-solo:1` tomada antes (una sola fila en `config`, que al final guarda a quién tocó). Conductores reales con UN vehículo aprobado y sin uno en uso válido; no toca cuentas de prueba, revisores de las tiendas ni cuentas inactivas; tope 300. En producción, el 23 nov, una consulta de solo lectura dio 1 candidato.
+- **Cómo se comprueba:** `apps/servidor/src/rutas/vehiculoActivoSolo.test.ts` (3 casos, vistos en ROJO antes del arreglo).
+- **Qué NO tocar:** no cambiar el vehículo en uso de quien ya tiene uno válido; no encender un servicio que él apagó; no encender nada que `puedeActivar` no permita.
+
 ## C-LLEGA-SOLO-A-REVISION y C-MINIATURA-SIEMPRE · Lo que el conductor ya subió llega solo a revisión, y su cara se ve aunque no haya enviado (orden de Richard, 23 nov 2026) — todos los países
 
 - **REEMPLAZA** la regla «nada se manda a revisión solo» del asistente (C-VERIFICACION-ASISTENTE, 19 nov). Richard: «si ya todo está en el servidor, no es necesario que vuelva a entrar y le dé enviar… estamos trabajando con una persona que no tiene contacto con nosotros».
