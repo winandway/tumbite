@@ -29,7 +29,7 @@ describe('C-CELULAR-DE-GUION', () => {
 
   it('ningún guion arma un celular con cifras del reloj detrás de un «3» suelto', () => {
     const malos = readdirSync(RECORRIDO)
-      .filter((a) => /Staging.*\.ts$/.test(a))
+      .filter((a) => /\.ts$/.test(a))
       .filter((a) =>
         /`3\$\{String\(Date\.now\(\)\)/.test(readFileSync(join(RECORRIDO, a), 'utf8')),
       );
