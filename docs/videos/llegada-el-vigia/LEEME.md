@@ -191,3 +191,13 @@ App Divoox Driver de pruebas, versión 0.1.59 (la del paquete 13, compilada desd
 - Para guardar el código, la cuenta de la pasajera necesita un celular en su perfil y el aparato en la petición: se le puso un número ficticio y, al terminar, se le quitó y se le devolvió el permiso de SMS.
 - Regalo temporal BIENVENIDA4 (los tres anteriores ya estaban usados); los cuatro quedaron apagados.
 - Queda de la sexta pasada: el regalo de BIENVENIDA3 está «en revisión» (aquel viaje se hizo sin moverse) y conserva su dólar apartado hasta que el equipo lo apruebe o lo rechace. La salud del sitio de pruebas sigue en verde.
+
+## Octava pasada (corta): la moto de ejemplo ya no nombra ninguna marca ajena (22 nov 2026)
+
+Se rehicieron tres pantallas del cliente, con el mismo nombre, en el mismo simulador de iPhone y contra el sitio de pruebas. La moto del conductor dice «Motos Divoox · M150 · Negro» (C-SIN-MARCA-COMPETENCIA). Mismos datos genéricos: conductor Carlos, placa inventada, «Avenida Principal 12» y «Plaza Central», mapa acercado sin nombre de ciudad.
+
+- 08-mototaxi-en-camino-mapa: «Tu conductor va en camino», mapa con la línea hasta la recogida y el código del viaje.
+- 09-viaje-en-curso-mapa: «Vas en camino a tu destino», con el precio fijo y su equivalente en bolívares a la tasa oficial del sitio de pruebas.
+- 18a-envio-seguimiento: «Tu paquete va en camino», documentos para Ana Perez con su PIN de entrega.
+
+Lo que se cambió en el sitio de pruebas para tomarlas (nombre y placa del conductor demo, y la etiqueta de precio de prueba) se devolvió al terminar; el viaje y el envío quedaron cerrados.
