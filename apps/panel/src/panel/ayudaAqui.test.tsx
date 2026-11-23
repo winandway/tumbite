@@ -30,6 +30,8 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
   ['RecargasRestaurantesAdmin.tsx', 'restaurant-balance-top-ups'],
   ['QuienPagaViajes.tsx', 'who-pays-ride-fee'],
+  ['ComidaQuienPaga.tsx', 'food-who-pays-what'],
+  ['ComidaQuienPaga.tsx', 'first-restaurant-venezuela'],
   ['SuperEmbudo.tsx', 'activity-trail'],
   ['SuperAgentes.tsx', 'divoox-agents'],
   ['SuperMoto.tsx', 'bolivar-reference-rate'],

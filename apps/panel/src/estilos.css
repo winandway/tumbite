@@ -7701,3 +7701,33 @@ body.modo-tableta .cabecera {
   color: #666b73 !important;
   vertical-align: middle;
 }
+
+/* ───────────── C-COMIDA-VE-QUIEN-PAGA: «Comida: quién paga qué» (Dinero) ───────────── */
+.comida-qp-form {
+  max-width: 760px;
+}
+.comida-qp-bloque {
+  border: 1px solid #d0d2d6;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  min-width: 0;
+}
+.comida-qp-bloque legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.comida-qp-casillas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0 12px;
+}
+.comida-qp-ejemplo {
+  border: 1px solid #d0d2d6;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+.comida-qp-ejemplo p {
+  margin: 4px 0;
+}
