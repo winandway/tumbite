@@ -67,6 +67,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capRez\(\s*'([a-z0-9-]+)',\s*'(
 // C-CAMBIAR-CIUDAD-ADMIN: las de «Cambiar la ciudad de un conductor» (capCiudad).
 for (const [, nombre, idioma] of guias.matchAll(/capCiudad\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`ciudad-${nombre}-${idioma}.webp`);
+// C-CAMPANA-SE-VACIA: las de «La campana y los números del menú» (capCampana).
+for (const [, nombre, idioma] of guias.matchAll(/capCampana\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`campana-${nombre}-${idioma}.webp`);
 // C-CORREGIR-CORREO: las de «Corregir el correo de una cuenta» (capCorreo).
 for (const [, nombre, idioma] of guias.matchAll(/capCorreo\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`correo-${nombre}-${idioma}.webp`);

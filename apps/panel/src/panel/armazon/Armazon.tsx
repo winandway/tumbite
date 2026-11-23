@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
-  Bell,
   ChevronDown,
   CircleHelp,
   LogOut,
@@ -15,6 +14,7 @@ import { SelectorIdioma } from '../../SelectorIdioma';
 import { VersionPublicada } from '../../VersionPublicada';
 import { ir } from '../../ruta';
 import { type GrupoMenu, IconoDe, type ItemMenu } from './menus';
+import { Campana, type CampanaArmazon } from './Campana';
 import './armazon.css';
 // C-PANEL-DISENO: el sistema de diseño va después y manda en todo el panel.
 import '../diseno/diseno.css';
@@ -29,7 +29,7 @@ import '../diseno/diseno.css';
  */
 export const TONO_MENU: 'oscuro' | 'claro' = 'oscuro';
 
-export type AvisoArmazon = { clave: string; texto: string; cantidad: number; a: string };
+export type { AvisoCampana, CampanaArmazon } from './Campana';
 
 type Sesion = {
   usuario: Usuario | null;
@@ -54,8 +54,6 @@ const T = {
     buscar: 'Buscar en el panel',
     buscarCorto: 'Buscar una sección…',
     sinResultados: 'No encontramos esa sección.',
-    avisos: 'Avisos',
-    sinAvisos: 'No hay avisos nuevos.',
     salir: 'Cerrar sesión',
     cuenta: 'Mi cuenta',
     configuracion: 'Configuración',
@@ -75,8 +73,6 @@ const T = {
     buscar: 'Search the dashboard',
     buscarCorto: 'Search a section…',
     sinResultados: 'We couldn’t find that section.',
-    avisos: 'Notifications',
-    sinAvisos: 'No new notifications.',
     salir: 'Sign out',
     cuenta: 'My account',
     configuracion: 'Settings',
@@ -206,53 +202,6 @@ function Buscador({ grupos, idioma }: { grupos: GrupoMenu[]; idioma: Idioma }) {
   );
 }
 
-/** Campana: los avisos reales que le pasan (nunca un número inventado). */
-function Campana({ avisos, idioma }: { avisos: AvisoArmazon[]; idioma: Idioma }) {
-  const t = idioma === 'en' ? T.en : T.es;
-  const [abierto, setAbierto] = useState(false);
-  const caja = useCerrarFuera(abierto, () => setAbierto(false));
-  const conAlgo = avisos.filter((a) => a.cantidad > 0);
-  const total = conAlgo.reduce((s, a) => s + a.cantidad, 0);
-  return (
-    <div className="pd-campana" ref={caja}>
-      <button
-        type="button"
-        className="pd-icono-boton"
-        aria-haspopup="true"
-        aria-expanded={abierto}
-        aria-label={total > 0 ? `${t.avisos}: ${total}` : t.avisos}
-        onClick={() => setAbierto((a) => !a)}
-      >
-        <Bell size={20} aria-hidden="true" />
-        {total > 0 ? (
-          <span className="pd-campana-numero" aria-hidden="true">
-            {total > 99 ? '99+' : total}
-          </span>
-        ) : null}
-      </button>
-      {abierto ? (
-        <div className="pd-flotante pd-campana-caja">
-          <p className="pd-flotante-titulo">{t.avisos}</p>
-          {conAlgo.length === 0 ? (
-            <p className="pd-flotante-vacio">{t.sinAvisos}</p>
-          ) : (
-            <ul>
-              {conAlgo.map((a) => (
-                <li key={a.clave}>
-                  <Enlace a={a.a} onClick={() => setAbierto(false)}>
-                    <span>{a.texto}</span>
-                    <strong>{a.cantidad}</strong>
-                  </Enlace>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function Cuenta({ sesion, logistica }: { sesion: Sesion; logistica: boolean }) {
   const t = sesion.idioma === 'en' ? T.en : T.es;
   const [abierto, setAbierto] = useState(false);
@@ -313,7 +262,7 @@ function Cuenta({ sesion, logistica }: { sesion: Sesion; logistica: boolean }) {
 export function Armazon({
   grupos,
   variante = 'comida',
-  avisos,
+  campana,
   encabezado,
   volver,
   nombreMenu,
@@ -324,8 +273,11 @@ export function Armazon({
   grupos: GrupoMenu[];
   /** 'logistica' pinta el armazón con el azul de Divoox Flex (C-COLOR-LOGISTICA). */
   variante?: 'comida' | 'logistica';
-  /** Avisos reales para la campana. Sin esta lista, la campana dice que no hay avisos. */
-  avisos?: AvisoArmazon[];
+  /**
+   * C-CAMPANA-SE-VACIA: la campana (lo que llegó y si ya se vio). Sin ella, dice que no hay avisos.
+   * Las TAREAS van en los números del menú (`pendiente` de cada ítem), no aquí.
+   */
+  campana?: CampanaArmazon;
   /** Quién soy dentro de este panel (por ejemplo, la empresa y el rol), arriba del menú. */
   encabezado?: { titulo: string; detalle?: string };
   volver?: { texto: string; a: string };
@@ -494,7 +446,7 @@ export function Armazon({
                 <CircleHelp size={20} aria-hidden="true" />
               </a>
             ) : null}
-            <Campana avisos={avisos ?? []} idioma={idioma} />
+            <Campana campana={campana ?? { avisos: [] }} idioma={idioma} />
             <SelectorIdioma idioma={idioma} cambiar={sesion.cambiar} />
             <Cuenta sesion={sesion} logistica={logistica} />
             {logistica && sesion.usuario ? (

@@ -3088,6 +3088,97 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// C-CAMPANA-SE-VACIA y C-CONTADORES-DE-TAREA (23 nov 2026, Richard): la campana es de lectura y los
+// números del menú son de tarea.
+const capCampana = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `campana-${nombre}-${idioma}.webp`, alt, pie });
+const campanaYNumeros: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'bell-and-menu-numbers',
+    titulo: 'La campana y los números del menú',
+    resumen:
+      'La campana de arriba cuenta lo que llegó y todavía no viste: al abrirla vuelve a cero. Los números del menú de la izquierda cuentan lo que espera una acción: no bajan por mirarlos, bajan cuando haces la tarea.',
+    explicacion: [
+      'La campana es para LEER. Su número cuenta solo lo que tú todavía no viste: un ticket nuevo, un caso nuevo de Camila, una verificación enviada, un restaurante o una solicitud de línea por aprobar, un movimiento de dinero por aprobar, una emergencia en un viaje, un reporte de un mensaje o reseña, o un conductor que se registró sin ciudad.',
+      'Al abrir la campana, el número vuelve a cero en ese momento. Lo que ya viste queda en la lista como historial, más apagado; lo nuevo va arriba, con su punto rojo. Cada aviso dice qué pasó, hace cuánto, y si ya se resolvió (en verde). Tócalo y te lleva al lugar donde se resuelve: la ficha del ticket, la del conductor, la del restaurante, la bandeja de Camila.',
+      'Lo que viste se guarda con tu cuenta, no en el navegador: si lo leíste en la computadora, tampoco te sale nuevo en el celular ni en otra computadora. Es de cada persona: lo que tú viste no se le apaga a tu compañero. La campana vuelve a contar solo cuando llega algo nuevo.',
+      'Los números del MENÚ son de TAREA: cuántas cosas esperan que alguien actúe (tickets abiertos, casos de Camila, reportes, aprobaciones de dinero, verificaciones, restaurantes y líneas por aprobar, conductores sin ciudad, emergencias sin atender). No se quitan por mirarlos ni por abrir la campana: bajan cuando haces la tarea (respondes el ticket, apruebas, le pones la ciudad al conductor) y llegan a cero cuando no queda nada.',
+      'Tocar un ítem con número te lleva a esas tareas ya filtradas. Por ejemplo, «Repartidores» con número abre la lista en «Sin zona», y «Tickets» con número abre los tickets abiertos.',
+      'Un conductor «sin zona» es uno que todavía no nos dijo su ciudad. Ábrelo y, en sus tres puntos, toca «Cambiar ciudad». Si de verdad vive en la ciudad por defecto, elígela igual: se confirma y sale de la cuenta.',
+      'Ningún número se queda pegado: todo número del menú baja haciendo algo, y la campana baja abriéndola. Si ves uno que no baja después de atenderlo, avísale al equipo técnico: es un fallo.',
+    ],
+    capturas: [
+      capCampana(
+        'abierta',
+        'es',
+        'La campana del superadmin abierta: arriba los avisos nuevos con punto rojo (un ticket nuevo y un conductor sin ciudad) y abajo los ya vistos, más apagados.',
+        'Al abrirla, el número vuelve a cero; lo nuevo va arriba y lo visto queda como historial.',
+      ),
+      capCampana(
+        'menu',
+        'es',
+        'El menú lateral del superadmin con el número verde de «Tickets» y de «Repartidores» junto a cada sección.',
+        'Los números del menú son tareas: bajan al hacerlas, no al mirarlas.',
+      ),
+    ],
+    preguntas: [
+      '¿Por qué la campana no se borra?',
+      '¿Cómo quito el número de Repartidores?',
+      '¿Qué diferencia hay entre la campana y los números del menú?',
+    ],
+    pasos: [
+      'Toca la campana de arriba para ver lo que llegó: el número vuelve a cero.',
+      'Toca un aviso para ir al lugar donde se resuelve.',
+      'Para bajar un número del menú, toca la sección y haz la tarea (responder, aprobar, ponerle la ciudad).',
+    ],
+    nota: 'La campana y los números se actualizan solos cada medio minuto y al cambiar de sección. Solo cuentan cuentas reales (nunca las de prueba) y solo lo de tu zona de trabajo.',
+  },
+  en: {
+    id: 'bell-and-menu-numbers',
+    titulo: 'The bell and the menu numbers',
+    resumen:
+      'The bell at the top counts what came in that you haven’t seen yet: opening it clears it back to zero. The numbers in the left menu count what is waiting for action: they don’t go down by looking, they go down when you do the task.',
+    explicacion: [
+      'The bell is for READING. Its number only counts what you haven’t seen yet: a new ticket, a new Camila case, a verification submitted, a restaurant or a line request to approve, a money movement to approve, an emergency on a ride, a reported message or review, or a driver who signed up with no city.',
+      'When you open the bell, the number goes back to zero right away. What you’ve seen stays in the list as history, dimmed; new items are on top, with a red dot. Each notification says what happened, how long ago, and whether it’s already resolved (in green). Tap it to go where it gets resolved: the ticket, the driver’s or the restaurant’s file, Camila’s inbox.',
+      'What you’ve seen is saved with your account, not in the browser: if you read it on the computer, it won’t show up as new on your phone or on another computer either. It’s per person: what you saw doesn’t clear for your teammate. The bell only counts again when something new arrives.',
+      'The MENU numbers are TASKS: how many things are waiting for someone to act (open tickets, Camila cases, reports, money approvals, verifications, restaurants and lines to approve, drivers with no city, unattended emergencies). They don’t go away by looking or by opening the bell: they go down when you do the task (reply to the ticket, approve, set the driver’s city) and reach zero when nothing is left.',
+      'Tapping a menu item with a number takes you to those tasks already filtered. For example, “Drivers” with a number opens the list on “No zone”, and “Tickets” with a number opens the open tickets.',
+      'A driver with “no zone” is one who hasn’t told us their city yet. Open them and, in their three dots, tap “Change city”. If they really live in the default city, choose it anyway: it gets confirmed and drops out of the count.',
+      'No number gets stuck: every menu number goes down by doing something, and the bell goes down by opening it. If you see one that doesn’t go down after you handle it, tell the tech team: it’s a bug.',
+    ],
+    capturas: [
+      capCampana(
+        'abierta',
+        'en',
+        'The superadmin bell open: new notifications on top with a red dot (a new ticket and a driver with no city) and the ones already seen below, dimmed.',
+        'Opening it clears the number back to zero; new items go on top and what you’ve seen stays as history.',
+      ),
+      capCampana(
+        'menu',
+        'en',
+        'The superadmin side menu with the green number next to “Tickets” and “Drivers”.',
+        'Menu numbers are tasks: they go down when you do them, not when you look at them.',
+      ),
+    ],
+    preguntas: [
+      'Why doesn’t the bell clear?',
+      'How do I clear the Drivers number?',
+      'What’s the difference between the bell and the menu numbers?',
+    ],
+    pasos: [
+      'Tap the bell at the top to see what came in: the number goes back to zero.',
+      'Tap a notification to go where it gets resolved.',
+      'To lower a menu number, tap the section and do the task (reply, approve, set the city).',
+    ],
+    nota: 'The bell and the numbers refresh on their own every half minute and when you change sections. They only count real accounts (never test ones) and only what’s in your work area.',
+  },
+};
+
 /** Las secciones de la ayuda, en el orden del menú lateral. */
 function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
   const g = porId(idioma === 'es' ? es : en);
@@ -3100,7 +3191,11 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     });
   const esp = idioma === 'es';
   return [
-    { id: 'start', titulo: esp ? 'Empieza aquí' : 'Start here', guias: [de(inicio)] },
+    {
+      id: 'start',
+      titulo: esp ? 'Empieza aquí' : 'Start here',
+      guias: [de(inicio), de(campanaYNumeros)],
+    },
     {
       id: 'monitoring',
       titulo: esp ? 'Monitoreo' : 'Monitoring',

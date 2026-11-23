@@ -178,18 +178,33 @@ export type ItemMenu = {
 };
 
 /** Pone a cada ítem lo que espera en su sección (por su clave). */
+/**
+ * C-CONTADORES-DE-TAREA (23 nov 2026, Richard): con tareas esperando, tocar el ítem lleva a ESAS
+ * tareas ya filtradas (la dirección de la sección más su filtro). Sin tareas, la sección de siempre.
+ */
+export const filtrosPendientes: Readonly<Record<string, string>> = {
+  tickets: '?estado=abierto',
+  drivers: '?zona=sin_zona',
+};
+
 export function conPendientes(
   grupos: GrupoMenu[],
   menu: ({ clave: string } & PendienteItem)[],
+  filtros: Readonly<Record<string, string>> = {},
 ): GrupoMenu[] {
   if (!menu.length) return grupos;
   const por = new Map(menu.map((m) => [m.clave, m]));
+  const filtroDe = new Map(Object.entries(filtros));
   return grupos.map((g) => ({
     ...g,
     items: g.items.map((i) => {
       const m = por.get(i.clave);
       return m && m.cantidad > 0
-        ? { ...i, pendiente: { cantidad: m.cantidad, tono: m.tono, urgentes: m.urgentes } }
+        ? {
+            ...i,
+            a: `${i.a}${filtroDe.get(i.clave) ?? ''}`,
+            pendiente: { cantidad: m.cantidad, tono: m.tono, urgentes: m.urgentes },
+          }
         : i;
     }),
   }));

@@ -44,11 +44,6 @@ const es = {
   miFranquiciaAyuda: 'Tu territorio, tus restaurantes y tus repartidores.',
   configuracionAyuda: 'Tu nombre, tu contraseña y tu cuenta.',
   volverSuperadmin: 'Volver al superadmin',
-  avisos: {
-    tickets: 'Tickets abiertos',
-    restaurantes: 'Restaurantes por aprobar',
-    pedidos: 'Pedidos por aceptar',
-  },
   menuRest: {
     inicio: 'Inicio',
     restaurant: 'Mi restaurante',
@@ -154,11 +149,6 @@ const en: T = {
   miFranquiciaAyuda: 'Your territory, your restaurants and your drivers.',
   configuracionAyuda: 'Your name, your password and your account.',
   volverSuperadmin: 'Back to superadmin',
-  avisos: {
-    tickets: 'Open tickets',
-    restaurantes: 'Restaurants to approve',
-    pedidos: 'Orders to accept',
-  },
   menuRest: {
     inicio: 'Home',
     restaurant: 'My restaurant',

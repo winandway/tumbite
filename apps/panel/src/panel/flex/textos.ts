@@ -50,7 +50,6 @@ export const TEXTOS_FLEX = {
     empezarDeNuevo: 'Empezar de nuevo',
     volver: '← Mis empresas',
     volverPanel: 'Volver a mi panel',
-    avisoPendientes: 'Paquetes pendientes',
     grupos: { dia: 'Día a día', config: 'Configuración', mas: 'Más' } as Record<string, string>,
     menu: {
       home: 'Inicio',
@@ -527,7 +526,6 @@ export const TEXTOS_FLEX = {
     empezarDeNuevo: 'Start over',
     volver: '← My companies',
     volverPanel: 'Back to my dashboard',
-    avisoPendientes: 'Pending packages',
     grupos: { dia: 'Day to day', config: 'Setup', mas: 'More' } as Record<string, string>,
     menu: {
       home: 'Home',

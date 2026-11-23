@@ -476,31 +476,72 @@
 }
 .pd-campana-caja {
   right: 0;
-  width: 290px;
+  width: 340px;
+}
+/* C-CAMPANA-SE-VACIA: lo nuevo resaltado (punto rojo, texto fuerte); lo leído, apagado (historial). */
+.pd-campana-lista {
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
 }
 .pd-campana-caja li a {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 10px;
   border-radius: 8px;
   color: var(--pd-negro);
   text-decoration: none;
-  font-size: 0.92rem;
-  font-weight: 600;
+  font-size: 0.9rem;
 }
 .pd-campana-caja li a:hover {
   background: var(--pd-fondo);
 }
-.pd-campana-caja li strong {
-  min-width: 28px;
-  padding: 2px 8px;
+.pd-campana-caja li + li {
+  border-top: 1px solid var(--pd-borde);
+}
+.pd-aviso-punto {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+.pd-aviso-nuevo .pd-aviso-punto {
+  background: var(--pd-rojo);
+}
+.pd-aviso-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pd-aviso-texto {
+  font-weight: 700;
+}
+.pd-aviso-leido .pd-aviso-texto {
+  font-weight: 500;
+  color: var(--pd-gris);
+}
+.pd-aviso-detalle {
+  overflow: hidden;
+  color: var(--pd-gris);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-aviso-pie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pd-gris-suave);
+  font-size: 0.78rem;
+}
+.pd-aviso-resuelto {
+  padding: 1px 8px;
   border-radius: 999px;
-  background: var(--pd-problema-suave);
-  color: var(--pd-problema);
-  text-align: center;
-  font-size: 0.82rem;
+  background: var(--pd-exito-suave);
+  color: var(--pd-exito);
+  font-weight: 700;
 }
 /* El selector de idioma estilo Amazon, sobre cabecera clara. */
 .pd-cabecera .selector-idioma-boton {

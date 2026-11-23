@@ -123,17 +123,27 @@ describe('armazón del panel', () => {
 
   it('la campana muestra los avisos reales y, si no hay, lo dice', async () => {
     montar({
-      avisos: [{ clave: 't', texto: 'Tickets abiertos', cantidad: 4, a: '/panel/tickets' }],
+      campana: {
+        avisos: [
+          {
+            clave: 't',
+            texto: 'Ticket nuevo',
+            en: '2026-11-23 10:00:00',
+            a: '/panel/tickets/t',
+            leido: false,
+          },
+        ],
+      },
     });
-    const campana = screen.getByRole('button', { name: 'Avisos: 4' });
+    const campana = screen.getByRole('button', { name: 'Avisos: 1 sin leer' });
     await userEvent.click(campana);
-    expect(screen.getByRole('link', { name: /Tickets abiertos/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Ticket nuevo/ })).toBeInTheDocument();
   });
 
   it('sin avisos la campana no inventa números', async () => {
-    montar({ avisos: [] });
+    montar({ campana: { avisos: [] } });
     await userEvent.click(screen.getByRole('button', { name: 'Avisos' }));
-    expect(screen.getByText('No hay avisos nuevos.')).toBeInTheDocument();
+    expect(screen.getByText('No hay avisos todavía.')).toBeInTheDocument();
   });
 
   it('en celular el menú se abre y se cierra con su botón', async () => {

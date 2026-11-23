@@ -3,10 +3,17 @@ import { Flota } from './Flota';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AyudaInterna } from './AyudaInterna';
 import { BaseAyudaInterna } from './AyudaAqui';
-import { Armazon, type AvisoArmazon, SesionArmazon } from './armazon/Armazon';
+import { Armazon, type CampanaArmazon, SesionArmazon } from './armazon/Armazon';
+import { guardarVisto } from './armazon/Campana';
+import {
+  type AvisoServidor,
+  avisosDelRestaurante,
+  avisosDelSuperadmin,
+} from './armazon/avisosCampana';
 import { EncabezadoPagina, Metricas, TarjetaMetrica } from './armazon/Piezas';
 import {
   conPendientes,
+  filtrosPendientes,
   gruposAdmin,
   gruposCuenta,
   gruposRestaurante,
@@ -346,42 +353,42 @@ export function PanelApp({ ruta }: { ruta: string }) {
         ? gruposRestaurante(t, idioma, ruta, flotaDisponible)
         : gruposCuenta(t, idioma, ruta, miFranquicia);
 
-  // La campana: lo que espera por la persona (lectura; como mucho una vez por minuto).
-  const [avisosCrudos, setAvisosCrudos] = useState<{ clave: string; cantidad: number }[]>([]);
-  // C-AVISOS-MENU: lo que espera en cada sección del menú (número y tono del punto).
+  // C-CAMPANA-SE-VACIA: la campana (lo que llegó y si ya lo vio, guardado por cuenta en el servidor).
+  const [campanaCruda, setCampanaCruda] = useState<AvisoServidor[]>([]);
+  // C-AVISOS-MENU / C-CONTADORES-DE-TAREA: lo que espera una acción en cada sección del menú.
   const [pendientesMenu, setPendientesMenu] = useState<PendienteMenu[]>([]);
   const ultimaLectura = useRef(0);
   useEffect(() => {
     if (!usuario || (!esAdmin && !esRestaurante)) return;
     const leer = () => {
       if (document.visibilityState === 'hidden') return;
-      // Al cambiar de sección se vuelve a mirar (así el punto se apaga al atender), como mucho cada 10 s.
+      // Al cambiar de sección se vuelve a mirar (así el número baja al hacer la tarea), como mucho cada 10 s.
       if (Date.now() - ultimaLectura.current < 10_000) return;
       ultimaLectura.current = Date.now();
-      void pedir<{ avisos: { clave: string; cantidad: number }[]; menu?: PendienteMenu[] }>(
+      void pedir<{ campana?: { avisos: AvisoServidor[] }; menu?: PendienteMenu[] }>(
         'GET',
         '/datos/panel/avisos',
       )
         .then((r) => {
-          setAvisosCrudos(r.avisos ?? []);
+          setCampanaCruda(r.campana?.avisos ?? []);
           setPendientesMenu(r.menu ?? []);
         })
         .catch((e: unknown) => console.warn('avisos del panel: no se pudieron leer', e));
     };
     leer();
-    // Una lectura chica cada 30 s y solo con la pestaña a la vista (no escribe nada).
+    // Una lectura chica cada 30 s y solo con la pestaña a la vista (mirar no escribe nada).
     const reloj = window.setInterval(leer, 30_000);
     return () => window.clearInterval(reloj);
   }, [usuario, esAdmin, esRestaurante, ruta]);
-  const gruposConAvisos = esAdmin ? conPendientes(grupos, pendientesMenu) : grupos;
-  const avisos: AvisoArmazon[] = avisosCrudos.flatMap((a) => {
-    if (a.clave === 'tickets')
-      return [{ ...a, texto: t.avisos.tickets, a: `${raizAdmin}/tickets` }];
-    if (a.clave === 'restaurantes')
-      return [{ ...a, texto: t.avisos.restaurantes, a: `${raizAdmin}/restaurants` }];
-    if (a.clave === 'pedidos') return [{ ...a, texto: t.avisos.pedidos, a: '/panel/orders' }];
-    return [];
-  });
+  const gruposConAvisos =
+    esAdmin || esRestaurante ? conPendientes(grupos, pendientesMenu, filtrosPendientes) : grupos;
+  const campana: CampanaArmazon = {
+    avisos: esAdmin
+      ? avisosDelSuperadmin(campanaCruda, raizAdmin, idioma)
+      : avisosDelRestaurante(campanaCruda, idioma),
+    // Solo el gesto de abrirla con algo nuevo escribe (una fila): «visto hasta» para esta cuenta.
+    alAbrir: (hasta) => guardarVisto(esAdmin ? 'superadmin' : 'restaurante', hasta),
+  };
 
   const sesion = useMemo(
     () => ({
@@ -563,7 +570,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
             >
               <Armazon
                 grupos={gruposConAvisos}
-                avisos={avisos}
+                campana={campana}
                 buscador={
                   esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
                     <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
