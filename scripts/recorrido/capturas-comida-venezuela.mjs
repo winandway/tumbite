@@ -92,12 +92,37 @@ async function correrVe(idiomas) {
     await sql(
       `UPDATE sesiones SET expira_en = datetime('now', '+90 minutes') WHERE id = '${createHash('sha256').update(t).digest('hex')}'`,
     );
+  // Los términos vigentes del conductor (en una base nueva no están aceptados y no deja conectarse).
+  if (armado.versionTerminos)
+    await pedir(
+      'POST',
+      '/datos/repartidor/terminos',
+      { version: armado.versionTerminos },
+      tokens.repartidor,
+    );
+  // El guion de pruebas deja conectado al conductor sin saldo (es el que reparte allí): se desconecta
+  // para que las ofertas de las capturas le lleguen al conductor de las fotos.
+  if (tokens.sinSaldo)
+    await pedir(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: false, ...LOCAL_REST },
+      tokens.sinSaldo,
+    ).catch(() => null);
   // El aviso del permiso de la asistente ya quedó respondido: no es parte de lo que se enseña aquí.
   await pedir(
     'POST',
     '/datos/conductor/aviso-ia',
     { acepto: true, plataforma: 'web', desde: 'aviso' },
     tokens.repartidor,
+  );
+  // En una base nueva el conductor de las fotos todavía no tiene su pago móvil (el guion de pruebas
+  // se lo da al conductor sin saldo, que es el que reparte allí): sin él no le llegan los pedidos con
+  // el envío por pago móvil. Se le pone uno de ejemplo, ya vigente (solo en este servidor local).
+  await sql(
+    `INSERT INTO cuentas_cobro (id, usuario_id, pais, moneda, tipo, banco, titular, identificador, verificacion, activa, activa_desde)
+     SELECT 'capturas-${ids.repartidor}', '${ids.repartidor}', 'VE', 'USD', 'pago_movil', 'Banco de ejemplo', 'Conductor de prueba', '04140000000', 'confirmada', 1, datetime('now', '-1 minute')
+     WHERE NOT EXISTS (SELECT 1 FROM cuentas_cobro WHERE usuario_id = '${ids.repartidor}' AND pais = 'VE' AND activa = 1)`,
   );
   // En las fotos: «conductor» y un banco de ejemplo (solo en este servidor local).
   await sql(`UPDATE usuarios SET nombre = 'Conductor de prueba' WHERE id = '${ids.repartidor}'`);
