@@ -160,7 +160,7 @@ async function cotizarYPedir(metodoPago) {
   return { id: v.id, total: cot.total };
 }
 
-async function hacerViaje(v) {
+async function hacerViaje(v, comisionEsperada) {
   const antes = await saldo();
   const ofertas = ok(await yo('GET', '/datos/conductor/operaciones/ofertas'), 'ofertas').ofertas;
   exigir(
@@ -168,7 +168,8 @@ async function hacerViaje(v) {
     'la oferta no le llegó al conductor con saldo',
   );
   ok(await paso(v.id, 'aceptar'), 'aceptar');
-  const comision = Math.round(v.total / 10);
+  // C-QUIEN-PAGA-VIAJES: con tarifa de servicio, la comisión sale del precio del viaje, no del total.
+  const comision = comisionEsperada ?? Math.round(v.total / 10);
   const reservado = (await saldo()).reservado;
   exigir(reservado === comision, `al aceptar se apartan ${reservado} y debían ser ${comision}`);
   // El conductor llega a la recogida: manda su ubicación ahí (la app lo hace sola).
@@ -466,11 +467,67 @@ try {
     `viaje por pago móvil de ${v2.total} centavos: «sí me llegó» y la comisión salió del saldo`,
   );
 
+  // 8. C-QUIEN-PAGA-VIAJES: la palanca, en la ciudad de la vuelta (el resto del país no se toca), con
+  // la app de hoy (que muestra la tarifa de servicio aparte). Un viaje por valor, de punta a punta.
+  for (const valor of ['cliente', 'mitad']) {
+    ok(
+      await equipo('PUT', '/datos/admin/finanzas/quien-paga', {
+        pais: 'VE',
+        ciudad: CIUDAD.id,
+        valor,
+      }),
+      `palanca en «${valor}»`,
+    );
+    const cot = ok(
+      await pasajero('POST', '/datos/viajes/cotizar', {
+        servicio: 'moto',
+        origen: ORIGEN,
+        destino: DESTINO,
+        tarifaServicio: true,
+      }),
+      `cotizar con la palanca en «${valor}»`,
+    ).cotizacion;
+    const precio = cot.desglose.precioViaje;
+    const comision = Math.round(precio / 10);
+    const tarifa = valor === 'cliente' ? comision : Math.floor(comision / 2);
+    exigir(
+      cot.quienPaga === valor && cot.tarifaServicio === tarifa && cot.total === precio + tarifa,
+      `«${valor}»: el pasajero debía ver ${precio} + ${tarifa} y ve ${cot.total} (tarifa ${cot.tarifaServicio})`,
+    );
+    const v = ok(
+      await pasajero('POST', '/datos/viajes', { cotizacionId: cot.id, metodoPago: 'efectivo' }),
+      `pedir con la palanca en «${valor}»`,
+    ).viaje;
+    const vv = { id: v.id, total: cot.total };
+    const oferta = ok(
+      await yo('GET', '/datos/conductor/operaciones/ofertas'),
+      'ofertas',
+    ).ofertas.find((o) => o.operacionId === v.id);
+    exigir(
+      oferta &&
+        oferta.tarifaServicio === tarifa &&
+        oferta.comisionDivoox === comision &&
+        oferta.gananciaCentavos === cot.total - comision,
+      `«${valor}»: la oferta del conductor no cuadra (${JSON.stringify(oferta ?? null).slice(0, 200)})`,
+    );
+    const e = await hacerViaje(vv, comision);
+    await terminarYComprobar(vv, e.antes, comision);
+    casos.push(
+      `palanca «${valor}»: el pasajero pagó ${cot.total} (viaje ${precio} + tarifa ${tarifa}); el conductor se quedó ${cot.total - comision} y su saldo entregó ${comision} a Divoox`,
+    );
+  }
+
   const salud = ok(await pedir('GET', '/datos/salud'), 'salud');
   exigir(salud.piezas?.servicios === 'ok', `salud servicios: ${salud.piezas?.servicios}`);
   exigir(salud.piezas?.viajes === 'ok', `salud viajes: ${salud.piezas?.viajes}`);
   casos.push('la salud de servicios y viajes sigue en verde');
 } finally {
+  // C-QUIEN-PAGA-VIAJES: la ciudad de la vuelta vuelve a seguir la regla del país.
+  await equipo('PUT', '/datos/admin/finanzas/quien-paga', {
+    pais: 'VE',
+    ciudad: CIUDAD.id,
+    valor: 'del_pais',
+  }).catch(() => null);
   await cerrarColgados().catch(() => null);
   const l = await interno('limpiar');
   casos.push(l.d.ok ? 'nadie quedó conectado ni con sesión' : 'LA LIMPIEZA FALLÓ');
