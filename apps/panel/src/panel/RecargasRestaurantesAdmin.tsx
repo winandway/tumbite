@@ -10,6 +10,7 @@ import {
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { AyudaAqui } from './AyudaAqui';
 import { pedir } from './api';
 
 /**
@@ -162,7 +163,9 @@ export function RecargasRestaurantesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
 
   return (
     <section data-testid="saldo-restaurantes">
-      <h2>{t.titulo}</h2>
+      <h2>
+        {t.titulo} <AyudaAqui guia="restaurant-balance-top-ups" idioma={idioma} />
+      </h2>
       <p className="pista">{t.ayuda}</p>
       {error ? (
         <p className="error" role="alert">
