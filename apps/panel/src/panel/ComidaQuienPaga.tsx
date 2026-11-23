@@ -128,7 +128,8 @@ const T = {
     conductorPct: 'Comisión sobre el envío (%)',
     motivo: 'Motivo (queda en el registro)',
     motivoEjemplo: 'Por qué se cambia',
-    ejemploTitulo: 'Ejemplo con un pedido de 10,00 de comida y 1,50 de envío',
+    ejemploTitulo: (comida: string, envio: string) =>
+      `Ejemplo con un pedido de ${comida} de comida y ${envio} de envío`,
     paga: (total: string, comida: string, resto: string) =>
       `El cliente paga ${total}: ${comida} de comida directo al restaurante y ${resto} al conductor.`,
     rest: (recibe: string, saldo: string) =>
@@ -164,7 +165,7 @@ const T = {
       'Heads up: with direct payment, the driver collects the service fee and the small-order fee in hand along with the delivery.',
     restaurante: 'What the restaurant pays',
     restPista:
-      'The Divoox fee comes out of the restaurant balance when it confirms “It arrived.” Above 0% and with no balance it gets no orders; at 0% no balance is required.',
+      'The Divoox fee comes out of the restaurant balance when it confirms “I got it.” Above 0% and with no balance it gets no orders; at 0% no balance is required.',
     restPct: 'Restaurant fee (%)',
     vigente: (x: string) => `In effect today: ${x}`,
     reglaRara: 'a rule that is not a flat percentage (see Finance → Policies)',
@@ -179,7 +180,8 @@ const T = {
     conductorPct: 'Fee on delivery (%)',
     motivo: 'Reason (kept in the log)',
     motivoEjemplo: 'Why it changes',
-    ejemploTitulo: 'Example with a 10.00 food order and a 1.50 delivery fee',
+    ejemploTitulo: (comida: string, envio: string) =>
+      `Example with a ${comida} food order and a ${envio} delivery fee`,
     paga: (total: string, comida: string, resto: string) =>
       `The customer pays ${total}: ${comida} for the food directly to the restaurant and ${resto} to the driver.`,
     rest: (recibe: string, saldo: string) =>
@@ -471,7 +473,7 @@ export function ComidaQuienPaga({ idioma }: { idioma: 'es' | 'en' }) {
 
         {ej ? (
           <div className="comida-qp-ejemplo" data-testid="cqp-ejemplo">
-            <strong>{t.ejemploTitulo}</strong>
+            <strong>{t.ejemploTitulo(m(COMIDA_EJEMPLO), m(ENVIO_EJEMPLO))}</strong>
             <p>{t.paga(m(ej.total), m(ej.comida), m(ej.alConductor))}</p>
             <p>
               {ej.comisionRest > 0

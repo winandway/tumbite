@@ -979,14 +979,15 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "ordering/pay-on-delivery-venezuela",
   "titulo": "Pagar tu comida en Venezuela: pago móvil al restaurante y el envío al conductor",
-  "resumen": "En Venezuela le pagas la comida directo al restaurante por pago móvil, con tu número de referencia, y el envío se lo pagas al conductor cuando te entrega. Ves el monto exacto en bolívares.",
+  "resumen": "En Venezuela pagas solo la comida, al precio de la carta, directo al restaurante por pago móvil, y el envío se lo pagas al conductor cuando te entrega. Sin tarifa de servicio ni cargo por pedido pequeño. Ves el monto exacto en bolívares.",
   "preguntas": [
    "¿Cómo pago mi comida en Venezuela?",
    "¿Puedo pagar la comida en efectivo?",
    "¿A quién le hago el pago móvil de la comida?",
    "¿Dónde escribo el número de referencia?",
    "¿Qué le pago al conductor cuando llega?",
-   "¿Cuánto es en bolívares?"
+   "¿Cuánto es en bolívares?",
+   "¿Divoox me cobra una tarifa de servicio en Venezuela?"
   ],
   "pasos": [
    "Arma tu pedido, abre el carrito y elige cómo pagas el envío.",
@@ -995,7 +996,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Escribe el número de referencia y toca «Ya pagué».",
    "Cuando el restaurante confirme, tu pedido se prepara y sale. Al recibirlo, págale al conductor solo el envío."
   ],
-  "cuerpo": "En Venezuela la comida se la pagas al restaurante, no al conductor. En el carrito eliges solo cómo pagas el envío: «Envío en efectivo» o «Envío por pago móvil al conductor». No hace falta tarjeta. La comida no se paga en efectivo: va por pago móvil; en efectivo puedes pagar el envío. Cuando el restaurante acepta tu pedido y ya hay un conductor para llevarlo, en tu pedido aparece «Paga la comida al restaurante» con el monto exacto en bolívares, el banco, el teléfono, el documento y el nombre del titular. Cada dato tiene su botón «Copiar» para pegarlo en la app de tu banco. Antes de eso no pagues nada: la pantalla te avisa cuándo. El monto en bolívares queda fijo durante quince minutos, con la tasa del día a la vista. Paga desde tu banco, escribe el número de referencia que te dio y toca «Ya pagué». Si quieres, agrega el banco desde el que pagaste y una captura: ayudan si hay un reclamo. Si se acaba el tiempo sin que pagues, el pedido se cancela solo y la pantalla te lo dice: no pagues ese monto, haz el pedido otra vez. El restaurante revisa su banco y confirma. En tu pedido ves «El restaurante confirmó tu pago. Ya está preparando tu pedido». Si dice que no le llegó, puedes corregir la referencia ahí mismo y nuestro equipo lo revisa contigo. Y si un pedido se cancela después de confirmado tu pago, el restaurante te devuelve el dinero por pago móvil y en tu pedido ves la referencia de esa devolución. Cuando llega tu pedido le pagas al conductor solo el envío, en efectivo o por pago móvil a la cuenta que ves en el seguimiento. La propina en efectivo es toda suya."
+  "cuerpo": "En Venezuela la comida se la pagas al restaurante, no al conductor. En el carrito eliges solo cómo pagas el envío: «Envío en efectivo» o «Envío por pago móvil al conductor». No hace falta tarjeta. La comida no se paga en efectivo: va por pago móvil; en efectivo puedes pagar el envío. Lo que pagas es la comida al mismo precio de la carta del restaurante y el envío. No hay tarifa de servicio ni cargo por pedido pequeño: el carrito te muestra solo la comida, el envío, la propina si quieres dejarla y el total. La propina es voluntaria y es toda del conductor. Cuando el restaurante acepta tu pedido y ya hay un conductor para llevarlo, en tu pedido aparece «Paga la comida al restaurante» con el monto exacto en bolívares, el banco, el teléfono, el documento y el nombre del titular. Cada dato tiene su botón «Copiar» para pegarlo en la app de tu banco. Antes de eso no pagues nada: la pantalla te avisa cuándo. El monto en bolívares queda fijo durante quince minutos, con la tasa del día a la vista. Paga desde tu banco, escribe el número de referencia que te dio y toca «Ya pagué». Si quieres, agrega el banco desde el que pagaste y una captura: ayudan si hay un reclamo. Si se acaba el tiempo sin que pagues, el pedido se cancela solo y la pantalla te lo dice: no pagues ese monto, haz el pedido otra vez. El restaurante revisa su banco y confirma. En tu pedido ves «El restaurante confirmó tu pago. Ya está preparando tu pedido». Si dice que no le llegó, puedes corregir la referencia ahí mismo y nuestro equipo lo revisa contigo. Y si un pedido se cancela después de confirmado tu pago, el re…"
  },
  {
   "idioma": "es",
@@ -1796,13 +1797,14 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "drivers/driver-cash-mobile-payment-venezuela",
   "titulo": "Pedidos de comida en Venezuela: no pagas en el local y cobras solo el envío",
-  "resumen": "En Venezuela el cliente le paga la comida directo al restaurante. Tú no adelantas dinero: esperas el aviso, recoges y en la puerta cobras solo el envío, en efectivo o por pago móvil.",
+  "resumen": "En Venezuela el cliente le paga la comida directo al restaurante. Tú no adelantas dinero: esperas el aviso, recoges y en la puerta cobras solo el envío, en efectivo o por pago móvil. El envío es todo tuyo.",
   "preguntas": [
    "¿Tengo que pagar la comida en el restaurante?",
    "¿Cuándo salgo a recoger el pedido?",
    "¿Cuánto le cobro al cliente en la puerta?",
    "¿Cómo confirmo que me llegó el pago móvil?",
-   "¿Qué hago si el cliente no aparece?"
+   "¿Qué hago si el cliente no aparece?",
+   "¿Divoox me descuenta algo del envío de la comida?"
   ],
   "pasos": [
    "Acepta el pedido y espera mientras el cliente le paga al restaurante. Cuando veas «Ya puedes ir al restaurante», ve a recoger: no pagas nada en el local.",
@@ -1810,13 +1812,13 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "En efectivo, escribe lo que recibiste y toca «Cobré». Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó».",
    "Si el cliente no aparece, toca «El cliente no aparece» y espera; pasado el tiempo, toca «El cliente no pagó»."
   ],
-  "cuerpo": "En los pedidos de comida de Venezuela ya no pagas la comida en el mostrador. El cliente se la paga al restaurante por pago móvil cuando tú ya aceptaste el pedido. Mientras el cliente paga, tu app dice «Espera un momento». Cuando el restaurante confirma que le llegó el dinero, cambia a «Ya puedes ir al restaurante»: ahí sales a recoger. En el local no pagas nada, solo recoges el pedido. En la puerta del cliente tu app muestra «Cobra al cliente» con el monto del envío, sin la propina, y su equivalente en bolívares a la tasa del día. En efectivo, escribe lo que recibiste y toca «Cobré». Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó». Si el cliente no aparece, toca «El cliente no aparece»: le avisamos y esperas unos minutos. Un pedido que se cobra en mano nunca se deja en un lugar seguro: pasada la espera, toca «El cliente no pagó» y lleva la comida de vuelta al restaurante. La comisión de Divoox sale de tu saldo para comisiones, como siempre, y la propina en efectivo es tuya: no se cuenta en el cobro."
+  "cuerpo": "En los pedidos de comida de Venezuela ya no pagas la comida en el mostrador. El cliente se la paga al restaurante por pago móvil cuando tú ya aceptaste el pedido. Mientras el cliente paga, tu app dice «Espera un momento». Cuando el restaurante confirma que le llegó el dinero, cambia a «Ya puedes ir al restaurante»: ahí sales a recoger. En el local no pagas nada, solo recoges el pedido. En la puerta del cliente tu app muestra «Cobra al cliente» con el monto del envío, sin la propina, y su equivalente en bolívares a la tasa del día. En efectivo, escribe lo que recibiste y toca «Cobré». Por pago móvil, revisa tu banco y toca «Sí, me llegó el pago móvil» o «No me llegó». Si el cliente no aparece, toca «El cliente no aparece»: le avisamos y esperas unos minutos. Un pedido que se cobra en mano nunca se deja en un lugar seguro: pasada la espera, toca «El cliente no pagó» y lleva la comida de vuelta al restaurante. El envío que cobras es todo tuyo: en estos pedidos Divoox no te descuenta nada y no necesitas saldo para recibirlos. La propina en efectivo también es tuya: no se cuenta en el cobro."
  },
  {
   "idioma": "es",
   "ruta": "drivers/driver-commission-balance-top-up",
   "titulo": "Tu saldo para comisiones y cómo recargarlo con un código",
-  "resumen": "Las comisiones de los pedidos que cobras en mano salen de tu saldo; la app te dice para cuántos pedidos te alcanza y recargas con un código.",
+  "resumen": "Las comisiones de lo que cobras en mano salen de tu saldo; la app te dice para cuánto te alcanza y recargas con un código. En la comida que el cliente le paga al restaurante, el envío es todo tuyo.",
   "preguntas": [
    "¿De dónde sale la comisión de un pedido en efectivo?",
    "¿Cómo recargo mi saldo con un código?",
@@ -1826,7 +1828,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "En la app, toca «Ganancias» y mira tu saldo para comisiones.",
    "Para recargar, escribe el código del punto de venta en «Código de recarga» y toca «Recargar con el código»."
   ],
-  "cuerpo": "En los países donde cobras en mano, la comisión de Divoox no se descuenta de un pago con tarjeta: sale de tu saldo para comisiones. Se aparta al aceptar el pedido y se cobra al entregar; si el pedido se cancela, vuelve a tu saldo. En «Ganancias» ves tu saldo disponible, lo apartado en pedidos y una estimación de para cuántos pedidos (y viajes, si haces Moto o Carro) te alcanza. Cuando queda poco, el aviso sale en rojo. Para recargar, pagas en un punto de venta autorizado y te dan un código. Lo escribes en «Código de recarga» y tocas «Recargar con el código»: el saldo se suma al momento. Sin saldo no recibes pedidos que se cobran en mano."
+  "cuerpo": "En los países donde cobras en mano, la comisión de Divoox no se descuenta de un pago con tarjeta: sale de tu saldo para comisiones. Se aparta al aceptar el pedido y se cobra al entregar; si el pedido se cancela, vuelve a tu saldo. En «Ganancias» ves tu saldo disponible, lo apartado en pedidos y una estimación de para cuántos pedidos (y viajes, si haces Moto o Carro) te alcanza. Cuando queda poco, el aviso sale en rojo. Para recargar, pagas en un punto de venta autorizado y te dan un código. Lo escribes en «Código de recarga» y tocas «Recargar con el código»: el saldo se suma al momento. En Venezuela, en los pedidos de comida que el cliente le paga directo al restaurante, cobras el envío entero: no se te aparta nada y no necesitas saldo para recibirlos. La app te lo dice en verde en tu saldo. Sin saldo no recibes lo que sí cobra comisión, como las carreras de Moto y Carro."
  },
  {
   "idioma": "es",
@@ -3565,7 +3567,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Follow your order in tracking; if you chose “Hand it to me,” give the driver your PIN when they arrive.",
    "When your order arrives there is nothing left to pay: just receive it."
   ],
-  "cuerpo": "In the United States, food orders are paid by card in the app. You don’t pay the driver at the door: when your order arrives, you only have to receive it. Prices are in US dollars. Before you pay, your cart shows the food, the delivery fee, the service fee, the tip and the total, and “What are these fees?” explains each one. After you pay, your order tracking shows the receipt, where your driver is and, if you chose “Hand it to me,” the PIN you give the driver to receive your order. The tip you add in the app goes to your driver in full. Paying in cash or by bank transfer on delivery is offered only in countries where Divoox collects in person; it isn’t available in the United States. Your card is authorized when you order and charged when the order is delivered. If you cancel before the restaurant accepts, you aren’t charged."
+  "cuerpo": "In the United States, food orders are paid by card in the app. You don’t pay the driver at the door: when your order arrives, you only have to receive it. Prices are in US dollars. Before you pay, your cart shows the food, the delivery fee, the service fee, the tip and the total, and “What are these fees?” explains each one. After you pay, your order tracking shows the receipt, where your driver is and, if you chose “Hand it to me,” the PIN you give the driver to receive your order. The tip you add in the app goes to your driver in full. Paying in cash or by bank transfer on delivery is offered only in countries where Divoox collects in person; it isn’t available in the United States. In those countries the customer pays only for the food, at menu price, directly to the restaurant, plus the delivery fee to the driver, with no service fee. Your card is authorized when you order and charged when the order is delivered. If you cancel before the restaurant accepts, you aren’t charged."
  },
  {
   "idioma": "en",
@@ -4377,7 +4379,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If the customer isn’t there, tap “Customer isn’t here,” then message or call them while you wait.",
    "When the wait is over, tap “Customer didn’t show: close with photo” and take the photo."
   ],
-  "cuerpo": "In the United States, customers pay by card in the app. At the door your app shows the address and how the customer chose to receive the order; you don’t collect any money. If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and slide the bar “Slide: handed to the customer.” An order with a PIN can’t be left with a photo. If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes while you message or call them. After the wait, on an order with a PIN, tap “Customer didn’t show: close with photo” and take a photo of the door or the spot: the order is closed, you get paid and support is notified. Collecting cash or a bank transfer at the door applies only in countries where Divoox collects in person. It isn’t used in the United States."
+  "cuerpo": "In the United States, customers pay by card in the app. At the door your app shows the address and how the customer chose to receive the order; you don’t collect any money. If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and slide the bar “Slide: handed to the customer.” An order with a PIN can’t be left with a photo. If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes while you message or call them. After the wait, on an order with a PIN, tap “Customer didn’t show: close with photo” and take a photo of the door or the spot: the order is closed, you get paid and support is notified. Collecting cash or a bank transfer at the door applies only in countries where Divoox collects in person. There, on food orders the customer pays the restaurant directly, the driver collects only the delivery fee and keeps all of it. It isn’t used in the United States."
  },
  {
   "idioma": "en",
@@ -4393,7 +4395,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "In the app, tap “Earnings.”",
    "Switch between Today, Week and Month to see your base pay, bonuses and tips."
   ],
-  "cuerpo": "A fee balance exists only in countries where drivers collect orders in person: there, the Divoox fee comes out of a prepaid balance that the driver tops up with a code from a sales point. In the United States orders are paid by card in the app, so there is no balance to top up and no code to enter before you can receive orders. Under “Earnings” you see today’s total, the week and the month, split into base pay, bonuses and tips. Base pay never changes because of the tip: tips are added on top, and they’re all yours."
+  "cuerpo": "A fee balance exists only in countries where drivers collect orders in person: there, the Divoox fee comes out of a prepaid balance that the driver tops up with a code from a sales point. On food orders paid directly to the restaurant, the driver keeps the whole delivery fee and needs no balance. In the United States orders are paid by card in the app, so there is no balance to top up and no code to enter before you can receive orders. Under “Earnings” you see today’s total, the week and the month, split into base pay, bonuses and tips. Base pay never changes because of the tip: tips are added on top, and they’re all yours."
  },
  {
   "idioma": "en",
