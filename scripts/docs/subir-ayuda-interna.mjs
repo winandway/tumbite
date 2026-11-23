@@ -77,6 +77,12 @@ for (const [, nombre, idioma] of guias.matchAll(/capCorreo\(\s*'([a-z0-9-]+)',\s
 for (const [, nombre, idioma] of guias.matchAll(/capPeru\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`peru-${nombre}-${idioma}.webp`);
 for (const [, archivo] of guias.matchAll(/archivo: '([a-z0-9-]+\.webp)'/g)) archivos.add(archivo);
+// Las que se nombran con el idioma dentro (archivo: `algo-${idioma}.webp`): las dos, sin tener que
+// sumar una regla por cada guía nueva (el 23 nov 2026 la de «Comida: quién paga qué» se quedó sin subir).
+for (const [, antes, despues] of guias.matchAll(
+  /archivo: `([a-z0-9-]*)\$\{idioma\}([a-z0-9-]*\.webp)`/g,
+))
+  for (const idioma of ['es', 'en']) archivos.add(`${antes}${idioma}${despues}`);
 const faltan = [...archivos].filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {
   console.error(
