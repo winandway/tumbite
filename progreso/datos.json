@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-23T05:40:00Z",
+  "actualizado": "2026-11-23T13:20:00Z",
   "version": "fe71f3f",
   "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-23",
+      "titulo": "Quién paga la comisión en los viajes: conductor, cliente o mitad",
+      "texto": "En el panel de operaciones, en Dinero, hay una palanca nueva para decidir quién paga la comisión de Divoox en Moto y Carro: el conductor (como siempre), el cliente (una línea aparte, «Tarifa de servicio de Divoox», que se ve antes de pedir) o mitad y mitad, por país y por ciudad. Venezuela queda en «cliente». El conductor ve en su app cuánto cobra, cuánto es suyo y cuánto es de Divoox. Las apps de la tienda todavía no muestran la línea: sus pasajeros siguen como siempre hasta la próxima versión. Guías nuevas en Docs, en español e inglés, con capturas."
+    },
     {
       "fecha": "2026-11-23",
       "titulo": "WhatsApp confirma la entrega de cada código",
