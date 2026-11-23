@@ -1595,6 +1595,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'Escribe la placa y el estado que la emitió.',
     'Enter the license plate and the state that issued it.',
   ],
+  ['Escribe la placa de tu vehículo.', 'Enter your vehicle’s license plate.'],
+  [
+    'Escribe el estado que emitió la placa (dos letras, por ejemplo, FL).',
+    'Enter the state that issued the plate (two letters, for example, FL).',
+  ],
   [
     'Sube el registro y el seguro del vehículo antes de enviarlo.',
     'Upload the vehicle’s registration and insurance before submitting it.',

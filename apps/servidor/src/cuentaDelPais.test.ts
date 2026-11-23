@@ -171,8 +171,12 @@ describe('la ficha del equipo', () => {
     expect(f.estado).toBe(200);
     expect(f.datos.repartidor.recibeViajes).toBe(false);
     // C-FICHA-SIN-CONTRADICCION: dice el primer paso que le falta según la regla del reparto (con el
-    // plazo abierto, lo que le falta es su vehículo) y que es líder de su línea.
-    expect(f.datos.repartidor.falta).toBe('sin_vehiculo');
+    // plazo abierto, primero la foto de la cara y después su vehículo) y que es líder de su línea.
+    // C-QUE-TE-FALTA: la lista completa, en orden, la misma que ve el conductor en Driver.
+    expect(f.datos.repartidor.falta).toBe('cara');
+    expect(f.datos.repartidor.faltas.map((x: { clave: string }) => x.clave)).toContain(
+      'sin_vehiculo',
+    );
     expect(f.datos.repartidor.linea).toEqual({ nombre: 'Línea Ejemplo', rol: 'lider' });
     expect(f.datos.repartidor.telefono).toMatch(/^\+58 /);
   });

@@ -13,6 +13,7 @@ import {
 } from './servicios';
 import { MENSAJE_EN_BLOQUE_FLEX, bloqueFlexDe, conectarRepartidor, miFicha } from './operacion';
 import { anotarRechazoConectar, origenDePeticion } from '../rastro';
+import { queTeFalta } from '../queTeFalta';
 
 /**
  * C-SERVICIOS-CONECTADOS (Richard, 16 nov 2026, al probar Driver; diseño en DRIVER.md de Gerencia).
@@ -132,6 +133,16 @@ const versionDriver = (c: { req: { header: (n: string) => string | undefined } }
   const [nombre, v] = (c.req.header('x-tumbite-app') ?? '').split('@');
   return versionNum(nombre === 'driver' ? v : undefined);
 };
+
+/**
+ * C-QUE-TE-FALTA (23 nov 2026): lo que le falta al conductor para recibir carreras, en orden, calculado
+ * con la misma regla del reparto. Driver lo pide al entrar al inicio y al volver a él. Solo lee.
+ */
+serviciosConectados.get('/conductor/que-te-falta', async (c) => {
+  const u = exigir(c, 'repartidor');
+  c.header('cache-control', 'private, no-store');
+  return c.json(await queTeFalta(base(c), u.id, c.env));
+});
 
 serviciosConectados.get('/conductor/panel-servicios', async (c) => {
   const u = exigir(c, 'repartidor');

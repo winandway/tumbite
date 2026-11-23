@@ -1,4 +1,5 @@
 import { rutaSinIds } from '../errores';
+import { type ClaveFalta, type Falta, queTeFalta } from '../queTeFalta';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
@@ -475,52 +476,18 @@ superadmin.get('/admin/repartidores', async (c) => {
  * viajes (`conductores_elegibles`) y, si no recibe, dice el primer paso que le falta, en el orden en
  * que lo pide esa regla.
  */
-export type FaltaParaViajes =
-  | 'desconectado'
-  | 'sin_vehiculo'
-  | 'vehiculo_sin_aprobar'
-  | 'sin_servicio_encendido'
-  | 'sin_habilitacion'
-  | 'servicio_no_disponible';
+export type FaltaParaViajes = ClaveFalta;
+/**
+ * C-QUE-TE-FALTA (23 nov 2026): la ficha dice lo que de verdad le falta (antes decía «Le falta registrar
+ * su vehículo» con una moto guardada). Sale de la MISMA pieza que ve el conductor en Driver.
+ */
 export async function queLeFaltaParaViajes(
   db: D1Database,
   id: string,
-): Promise<{ recibeViajes: boolean; falta: FaltaParaViajes | null }> {
-  const si = await db
-    .prepare('SELECT 1 FROM conductores_elegibles WHERE conductor_id = ? LIMIT 1')
-    .bind(id)
-    .first();
-  if (si) return { recibeViajes: true, falta: null };
-  const f = await db
-    .prepare(
-      `SELECT d.conectado, v.estado AS vehiculo,
-         EXISTS (SELECT 1 FROM plazo_papeles pp WHERE pp.conductor_id = d.usuario_id AND pp.estado = 'en_plazo' AND pp.vence_en > datetime('now')) AS plazo,
-         EXISTS (SELECT 1 FROM preferencias_servicio p WHERE p.conductor_id = d.usuario_id AND p.activa = 1) AS encendido,
-         EXISTS (SELECT 1 FROM habilitaciones h WHERE h.conductor_id = d.usuario_id AND h.estado = 'aprobada') AS habilitado
-         FROM repartidores d LEFT JOIN vehiculos v ON v.id = d.vehiculo_activo_id AND v.conductor_id = d.usuario_id
-        WHERE d.usuario_id = ?`,
-    )
-    .bind(id)
-    .first<{
-      conectado: number;
-      vehiculo: string | null;
-      plazo: number;
-      encendido: number;
-      habilitado: number;
-    }>();
-  const falta: FaltaParaViajes = !f?.vehiculo
-    ? 'sin_vehiculo'
-    : f.vehiculo !== 'aprobado' &&
-        (!f.plazo || ['rechazado', 'suspendido', 'retirado'].includes(f.vehiculo))
-      ? 'vehiculo_sin_aprobar'
-      : !f.encendido
-        ? 'sin_servicio_encendido'
-        : !f.habilitado && !f.plazo
-          ? 'sin_habilitacion'
-          : !f.conectado
-            ? 'desconectado'
-            : 'servicio_no_disponible';
-  return { recibeViajes: false, falta };
+  env?: Env,
+): Promise<{ recibeViajes: boolean; falta: FaltaParaViajes | null; faltas: Falta[] }> {
+  const r = await queTeFalta(db, id, env);
+  return { recibeViajes: r.recibeViajes, falta: r.faltas[0]?.clave ?? null, faltas: r.faltas };
 }
 
 superadmin.get('/admin/repartidores/:id', async (c) => {
@@ -634,7 +601,19 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       // C-EN-LINEA-DE-VERDAD (21 nov 2026): «En línea» solo si de verdad puede recibir viajes (un
       // servicio aprobado, o su plazo de papeles abierto, con su vehículo). Conectado sin nada de eso
       // la ficha lo dice: «Conectado, todavía no recibe viajes».
-      ...(await queLeFaltaParaViajes(db, id)),
+      ...(await queLeFaltaParaViajes(db, id, c.env)),
+      // C-QUE-TE-FALTA: los vehículos de verdad (la tabla `vehiculos`), no los datos viejos de reparto.
+      vehiculos: (
+        await db
+          .prepare(
+            `SELECT v.id, v.tipo, v.marca, v.modelo, v.anio, v.color, v.placa, v.placa_estado AS placaEstado,
+                    v.estado, v.motivo, (r.vehiculo_activo_id = v.id) AS activo
+               FROM vehiculos v LEFT JOIN repartidores r ON r.usuario_id = v.conductor_id
+              WHERE v.conductor_id = ? AND v.estado != 'retirado' ORDER BY v.creado_en`,
+          )
+          .bind(id)
+          .all<Record<string, string | number | null>>()
+      ).results.map((v) => ({ ...v, activo: Number(v.activo) === 1 })),
       // C-FICHA-SIN-CONTRADICCION: la línea que lidera (o a la que pertenece), aparte del contrato.
       linea: await db
         .prepare(

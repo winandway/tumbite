@@ -644,6 +644,22 @@ function conPlacaDelPais<T extends { placaEstado: string }>(d: T, donde: { pais:
   return perfilPasajeros(donde.pais).placaNacional ? { ...d, placaEstado: donde.pais } : d;
 }
 
+/**
+ * C-QUE-TE-FALTA (23 nov 2026): un vehículo con motor se guarda CON su placa (y el estado que la emitió,
+ * donde aplica). Antes se guardaba sin placa y «Enviar a revisión» fallaba después; un conductor de
+ * Venezuela quedó con su moto sin placa y sin poder corregirla.
+ */
+function exigirPlaca(d: { tipo: string; placa: string; placaEstado: string }, pais: string) {
+  if (!MOTORIZADOS.has(d.tipo)) return;
+  if (!d.placa) throw new ErrorDatos('Escribe la placa de tu vehículo.', 'placa', 422);
+  if (!d.placaEstado && !perfilPasajeros(pais).placaNacional)
+    throw new ErrorDatos(
+      'Escribe el estado que emitió la placa (dos letras, por ejemplo, FL).',
+      'placaEstado',
+      422,
+    );
+}
+
 async function miVehiculo(db: Db, conductorId: string, id: string) {
   const v = await db
     .prepare('SELECT * FROM vehiculos WHERE id = ? AND conductor_id = ?')
@@ -819,7 +835,9 @@ servicios.put('/admin/vehiculos/:id/categoria', async (c) => {
 servicios.post('/conductor/vehiculos', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
-  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), await paisDelConductor(db, u.id));
+  const donde = await paisDelConductor(db, u.id);
+  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), donde);
+  exigirPlaca(d, donde.pais);
   const vivos = await db
     .prepare("SELECT COUNT(*) AS n FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado'")
     .bind(u.id)
@@ -860,7 +878,9 @@ servicios.put('/conductor/vehiculos/:id', async (c) => {
       undefined,
       409,
     );
-  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), await paisDelConductor(db, u.id));
+  const donde = await paisDelConductor(db, u.id);
+  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), donde);
+  exigirPlaca(d, donde.pais);
   await conRestricciones(
     db
       .prepare(
