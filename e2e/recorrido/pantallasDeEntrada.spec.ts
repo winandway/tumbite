@@ -148,7 +148,12 @@ for (const idioma of ['es', 'en'] as const) {
     // El celular es único por cuenta y el sitio de pruebas guarda las corridas anteriores:
     // cada corrida usa uno distinto (uno fijo choca con «Ese teléfono ya tiene una cuenta»).
     const celular = `30555${String(Date.now() % 100000).padStart(5, '0')}`;
-    const casillaCelular = p.getByPlaceholder(en ? 'Mobile phone' : 'Celular', { exact: true });
+    // La casilla se busca por su nombre: su texto de ayuda es el celular de ejemplo del país elegido
+    // (cambia con el «Código de país»), así que ya no dice «Celular».
+    const casillaCelular = p.getByRole('textbox', {
+      name: en ? 'Mobile phone' : 'Celular',
+      exact: true,
+    });
     await casillaCelular.fill(celular);
     await p.locator('input[type="password"]').fill('Recorrido-2026-entrada');
     // En la foto, un correo neutro (el de la corrida lleva letras al azar).
