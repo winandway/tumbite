@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-22T22:15:00Z",
+  "actualizado": "2026-11-23T02:30:00Z",
   "version": "fe71f3f",
   "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-22",
+      "titulo": "Las cuentas nuevas confirman su celular con un código por SMS",
+      "texto": "Quien crea su cuenta en la app de clientes o en Divoox Driver confirma su celular con un código de seis números por SMS antes de pedir o conectarse, en Venezuela y Estados Unidos. El teléfono pega el código solo; si el número estaba mal se cambia ahí mismo, y si no llega hay salida a soporte, que puede confirmarlo a mano. Las cuentas que ya existían no se bloquean: ven un aviso que pueden cerrar. Cada cuenta, número y conexión tiene su tope diario, hay un tope total y un presupuesto de SMS vigilado en el estado del sistema; si algo de eso se agota, a nadie se le exige el código. En el panel se ve quién confirmó y se apaga por país. Probado con un SMS real en el sitio de pruebas y publicado. La pantalla aparece en las apps con la próxima compilación de cada una."
+    },
     {
       "fecha": "2026-11-22",
       "titulo": "Los SMS a Venezuela ya salen por un proveedor local",
