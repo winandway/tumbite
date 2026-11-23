@@ -83,7 +83,7 @@ describe('C-CORREGIR-CORREO en la ficha', () => {
         <SuperCliente base="/panel/control-x" id={ID} idioma="es" />,
       ),
     );
-    expect(await screen.findByText(/Rebotó: el buzón no existe/)).toBeInTheDocument();
+    expect(await screen.findByText(/El correo rebotó: el buzón no existe/)).toBeInTheDocument();
     await u.click(screen.getByRole('button', { name: 'Corregir correo' }));
     await u.click(await screen.findByRole('menuitem', { name: 'Corregir correo' }));
     await u.type(screen.getByLabelText('Correo nuevo'), 'jhon@gmial.com');
@@ -140,7 +140,7 @@ describe('C-CORREGIR-CORREO en la ficha', () => {
     render(
       conPermisos(['clientes.ver'], <SuperCliente base="/panel/control-x" id={ID} idioma="es" />),
     );
-    expect(await screen.findByText(/Rebotó/)).toBeInTheDocument();
+    expect(await screen.findByText(/El correo rebotó/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Corregir correo' })).toBeNull();
   });
 });

@@ -139,6 +139,7 @@ import { type RespuestaCierre, type ViajeConductor, ViajeActivo } from './viajes
 import {
   abrirPagina,
   abrirPanel,
+  AvisoCorreo,
   AvisoDeshacer,
   Boton,
   CASILLA_EN_FILA,
@@ -1753,6 +1754,8 @@ export function Inicio() {
           void cargar();
         }}
       />
+      {/* C-CORREO-NO-FRENA: el correo se confirma en segundo plano, con una franja que no frena nada. */}
+      <AvisoCorreo margenLateral={0} />
       {estado?.telefonoPorVerificar ? (
         <ConfirmarTelefono
           ultimos={estado.telefonoPorVerificar}

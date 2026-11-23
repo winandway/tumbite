@@ -65,7 +65,14 @@ const T = {
 /** Cada cuántos segundos se vuelve a mirar si la persona ya tocó el enlace. */
 export const CADA_MS_COMPROBAR_CORREO = 4000;
 
-type Perfil = { correo: string; debeConfirmarCorreo?: boolean; correoRebotado?: boolean };
+type Perfil = {
+  correo: string;
+  /** La puerta que frena (desde C-CORREO-NO-FRENA, solo sin el celular confirmado). */
+  debeConfirmarCorreo?: boolean;
+  /** C-CORREO-NO-FRENA: falta confirmarlo (la franja lo pide sin frenar). */
+  correoPorConfirmar?: boolean;
+  correoRebotado?: boolean;
+};
 
 /**
  * C-CORREO-OBLIGATORIO (4 nov 2026, Richard grabando el video para Apple): la app del cliente no
@@ -73,6 +80,10 @@ type Perfil = { correo: string; debeConfirmarCorreo?: boolean; correoRebotado?: 
  * mira sola si ya lo confirmó (al volver a la app desde el correo y cada pocos segundos), y al
  * confirmarlo dice «Tu correo quedó verificado» antes de entrar. Si el correo está mal escrito, se
  * cambia aquí mismo con la contraseña. Una cuenta ya confirmada entra directo, sin ver nada.
+ *
+ * C-CORREO-NO-FRENA (23 nov 2026, decisión de Richard): el servidor solo la cierra (`debeConfirmarCorreo`)
+ * si la cuenta tampoco tiene el celular confirmado con el código; con el celular confirmado, el correo
+ * se pide en segundo plano con la franja (`AvisoCorreo`) y no frena nada.
  */
 export function PuertaCorreo({ children }: { children: ReactNode }) {
   const { api, usuario } = useSesion();
@@ -196,7 +207,7 @@ function ConfirmaTuCorreo({
   comprobar: () => Promise<boolean>;
   alCambiar: (correo: string) => void;
 }) {
-  const { api, idioma, salir, usuario } = useSesion();
+  const { api, idioma, salir } = useSesion();
   const t = enIdioma(T, idioma);
   const arriba = useSafeAreaInsets().top;
   const [aviso, setAviso] = useState('');
@@ -212,15 +223,6 @@ function ConfirmaTuCorreo({
     }
   }, [rebotado]);
   const [borrando, setBorrando] = useState(false);
-  // NINGÚN FORMULARIO PIERDE LO ESCRITO: el correo nuevo se guarda solo; la contraseña nunca.
-  const b = useBorrador({
-    formulario: 'cambiar-correo-puerta',
-    cuenta: usuario?.id,
-    inicial: { correo: '', clave: '' },
-    sensibles: ['clave'],
-    almacen: almacenTelefono,
-    alSalir: alSalirTelefono,
-  });
 
   async function reenviar() {
     setError('');
@@ -247,27 +249,6 @@ function ConfirmaTuCorreo({
     const listo = await comprobar();
     setOcupado('');
     if (!listo) setAviso(t.todavia);
-  }
-
-  async function cambiar() {
-    setError('');
-    setAviso('');
-    setOcupado('cambiar');
-    try {
-      const r = await api.pedir<{ usuario: { correo: string } }>('POST', '/datos/cuentas/correo', {
-        correo: b.valores.correo.trim().toLowerCase(),
-        clave: b.valores.clave,
-      });
-      await b.limpiar();
-      alCambiar(r.usuario.correo);
-      setCambiando(false);
-      setAviso(t.enviadoNuevo);
-    } catch (x) {
-      // Si falla, lo escrito se queda en pantalla para reintentar.
-      setError(x instanceof Error ? x.message : String(x));
-    } finally {
-      setOcupado('');
-    }
   }
 
   return (
@@ -320,36 +301,15 @@ function ConfirmaTuCorreo({
         alTocar={() => void reenviar()}
       />
       {cambiando ? (
-        <View style={{ gap: 4 }}>
-          <AvisoBorrador
-            visible={b.recuperado}
-            idioma={idioma}
-            empezar={() => void b.empezarDeNuevo()}
-          />
-          <Campo
-            etiqueta={t.correoNuevo}
-            keyboardType="email-address"
-            value={b.valores.correo}
-            onChangeText={(x) => b.cambiar('correo', x)}
-          />
-          <SugerenciaCorreo
-            correo={b.valores.correo}
-            idioma={idioma}
-            aceptar={(x) => b.cambiar('correo', x)}
-          />
-          <CampoClave
-            etiqueta={t.clave}
-            valor={b.valores.clave}
-            cambiar={(x) => b.cambiar('clave', x)}
-            alEnviar={() => void cambiar()}
-          />
-          <Boton
-            texto={t.guardar}
-            cargando={ocupado === 'cambiar'}
-            alTocar={() => void cambiar()}
-          />
-          <Boton texto={t.cancelar} secundario alTocar={() => setCambiando(false)} />
-        </View>
+        <CambiarCorreo
+          formulario="cambiar-correo-puerta"
+          alCancelar={() => setCambiando(false)}
+          alCambiar={(nuevo) => {
+            alCambiar(nuevo);
+            setCambiando(false);
+            setAviso(t.enviadoNuevo);
+          }}
+        />
       ) : (
         <Boton texto={t.cambiar} secundario alTocar={() => setCambiando(true)} />
       )}
@@ -370,40 +330,58 @@ function ConfirmaTuCorreo({
 
 const TA = {
   es: {
-    titulo: 'Confirma tu correo para poder pedir',
+    titulo: 'Confirma tu correo',
     detalle: 'Te mandamos un enlace a',
-    abrelo: 'Ábrelo en este teléfono. Mientras tanto puedes mirar.',
+    abrelo: 'Puedes seguir usando la app: confírmalo cuando quieras.',
     reenviar: 'Mandar el enlace otra vez',
-    reenviado: 'Te lo mandamos otra vez.',
+    reenviado: 'Te mandamos un enlace nuevo. Puede tardar un minuto.',
+    cambiar: '¿Correo equivocado? Cámbialo',
     rebotado:
-      'No pudimos entregar el correo a esta dirección: no existe o no recibe mensajes. Revísala y cámbiala en tu cuenta.',
-    verificado: 'Tu correo quedó verificado. Ya puedes pedir.',
+      'No pudimos entregar el correo a esta dirección: no existe o no recibe mensajes. Revisa que esté bien escrita y cámbiala aquí.',
+    enviadoNuevo: 'Listo. Te mandamos el enlace a tu correo nuevo.',
+    verificado: 'Tu correo quedó verificado.',
   },
   en: {
-    titulo: 'Confirm your email to order',
+    titulo: 'Confirm your email',
     detalle: 'We sent a link to',
-    abrelo: 'Open it on this phone. You can keep browsing meanwhile.',
+    abrelo: 'You can keep using the app: confirm it whenever you like.',
     reenviar: 'Send the link again',
-    reenviado: 'We sent it again.',
+    reenviado: 'We sent you a new link. It can take a minute.',
+    cambiar: 'Wrong email? Change it',
     rebotado:
-      'We couldn’t deliver the email to this address: it doesn’t exist or can’t receive mail. Check it and change it in your account.',
-    verificado: 'Your email is verified. You can order now.',
+      'We couldn’t deliver the email to this address: it doesn’t exist or can’t receive mail. Check the spelling and change it here.',
+    enviadoNuevo: 'Done. We sent the link to your new email.',
+    verificado: 'Your email is verified.',
   },
 };
 
+/** Cada cuánto mira la franja si el correo ya se confirmó (más calmado que la puerta: no frena nada). */
+export const CADA_MS_FRANJA_CORREO = 15000;
+
 /**
- * C-CORREO-OBLIGATORIO (4 nov 2026): en la portada, quien entró sin confirmar su correo ve este aviso
- * (no bloquea: se puede mirar). Se da cuenta sola cuando la persona toca el enlace y lo dice en verde.
- * La puerta que bloquea (PuertaCorreo) está al ir a pagar.
+ * C-CORREO-NO-FRENA (23 nov 2026, decisión de Richard): «que el correo quede en un segundo plano… que no
+ * por eso se tranque el registro… que le dé su oportunidad de verificarlo cuando le dé la gana». Franja
+ * suave en la portada del cliente y en el inicio de Driver: nunca una ventana, no tapa nada y todo se
+ * sigue usando. Trae «Mandar el enlace otra vez» (un enlace NUEVO, aunque el anterior haya vencido) y
+ * «¿Correo equivocado? Cámbialo» (con la contraseña; el borrador guarda el correo, nunca la clave). Si
+ * la dirección rebotó (C-CORREO-HONESTO), lo dice en rojo y abre el cambio. Al confirmarse, lo dice en
+ * verde. Una sola pieza para las dos apps.
  */
-export function AvisoCorreo() {
+export function AvisoCorreo({
+  margenLateral = 16,
+}: {
+  /** Driver la pone dentro de una lista que ya lleva su margen: ahí va en 0. */
+  margenLateral?: number;
+} = {}) {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TA, idioma);
   const [estado, setEstado] = useState<'nada' | 'falta' | 'verificado'>('nada');
   const [correo, setCorreo] = useState('');
-  const [reenviado, setReenviado] = useState(false);
+  const [aviso, setAviso] = useState('');
   const [rebotado, setRebotado] = useState(false);
   const [error, setError] = useState('');
+  const [cambiando, setCambiando] = useState(false);
+  const [ocupado, setOcupado] = useState(false);
   const estadoRef = useRef(estado);
   useEffect(() => {
     estadoRef.current = estado;
@@ -414,11 +392,14 @@ export function AvisoCorreo() {
     try {
       const r = await api.pedir<{ perfil: Perfil }>('GET', '/datos/cuentas/perfil');
       setCorreo(r.perfil.correo);
-      setRebotado(r.perfil.correoRebotado === true);
-      const debe = r.perfil.debeConfirmarCorreo === true;
-      setEstado((e) => (debe ? 'falta' : e === 'falta' ? 'verificado' : e));
+      const reboto = r.perfil.correoRebotado === true;
+      setRebotado(reboto);
+      if (reboto) setCambiando(true);
+      // Un servidor de antes no manda `correoPorConfirmar`: vale lo que decía la puerta.
+      const falta = r.perfil.correoPorConfirmar ?? r.perfil.debeConfirmarCorreo === true;
+      setEstado((e) => (falta ? 'falta' : e === 'falta' ? 'verificado' : e));
     } catch {
-      // Sin conexión: el aviso se queda como estaba; la puerta de pagar vuelve a mirar.
+      // Sin conexión: la franja se queda como estaba y se vuelve a mirar después.
     }
   }, [api, usuario]);
 
@@ -427,7 +408,7 @@ export function AvisoCorreo() {
     const primero = setTimeout(() => void comprobar(), 0);
     const reloj = setInterval(() => {
       if (estadoRef.current === 'falta') void comprobar();
-    }, CADA_MS_COMPROBAR_CORREO);
+    }, CADA_MS_FRANJA_CORREO);
     const sub = AppState.addEventListener('change', (a) => {
       if (a === 'active' && estadoRef.current === 'falta') void comprobar();
     });
@@ -437,6 +418,25 @@ export function AvisoCorreo() {
       sub.remove();
     };
   }, [comprobar, usuario]);
+
+  async function reenviar() {
+    // C-CORREO-HONESTO: «Te mandamos un enlace nuevo» solo si salió de verdad; si no, el motivo.
+    setError('');
+    setAviso('');
+    setOcupado(true);
+    try {
+      const r = await api.pedir<{ yaConfirmado?: boolean }>(
+        'POST',
+        '/datos/cuentas/confirmar/reenviar',
+      );
+      if (r.yaConfirmado) await comprobar();
+      else setAviso(t.reenviado);
+    } catch (x) {
+      setError(x instanceof Error ? x.message : String(x));
+    } finally {
+      setOcupado(false);
+    }
+  }
 
   if (!usuario || estado === 'nada') return null;
   if (estado === 'verificado')
@@ -448,7 +448,7 @@ export function AvisoCorreo() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
-          marginHorizontal: 16,
+          marginHorizontal: margenLateral,
           marginVertical: 8,
           padding: 12,
           borderRadius: 12,
@@ -465,7 +465,7 @@ export function AvisoCorreo() {
     <View
       testID="aviso-correo"
       style={{
-        marginHorizontal: 16,
+        marginHorizontal: margenLateral,
         marginVertical: 8,
         padding: 14,
         gap: 4,
@@ -477,32 +477,163 @@ export function AvisoCorreo() {
     >
       <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#666B73' }}>
-        {t.detalle} <Text style={{ fontWeight: '700' }}>{correo}</Text>. {t.abrelo}
+        {t.detalle}{' '}
+        <Text style={{ fontWeight: '700' }} testID="aviso-correo-direccion">
+          {correo}
+        </Text>
+        . {t.abrelo}
       </Text>
-      {rebotado || error ? (
-        <Text style={{ color: C.acento, fontWeight: '700' }} accessibilityRole="alert">
-          {rebotado ? t.rebotado : error}
+      {rebotado ? (
+        <Text
+          style={{ color: C.acento, fontWeight: '700' }}
+          accessibilityRole="alert"
+          testID="aviso-correo-rebotado"
+        >
+          {t.rebotado}
         </Text>
       ) : null}
-      <Pressable
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={() => {
-          // C-CORREO-HONESTO: «Te lo mandamos otra vez» solo si salió de verdad; si no, el motivo.
-          setError('');
-          void api
-            .pedir('POST', '/datos/cuentas/confirmar/reenviar')
-            .then(() => setReenviado(true))
-            .catch((x: unknown) => {
-              setReenviado(false);
-              setError(x instanceof Error ? x.message : String(x));
-            });
-        }}
-      >
-        <Text style={{ color: C.primario, fontWeight: '700', marginTop: 4 }}>
-          {reenviado ? t.reenviado : t.reenviar}
+      {aviso ? (
+        <Text style={{ color: C.secundario }} accessibilityRole="alert">
+          {aviso}
         </Text>
-      </Pressable>
+      ) : null}
+      {error ? (
+        <Text style={{ color: C.acento, fontWeight: '700' }} accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
+      {cambiando ? (
+        <CambiarCorreo
+          formulario="cambiar-correo-franja"
+          alCancelar={() => setCambiando(false)}
+          alCambiar={(nuevo) => {
+            setCorreo(nuevo);
+            setRebotado(false);
+            setCambiando(false);
+            setError('');
+            setAviso(t.enviadoNuevo);
+          }}
+        />
+      ) : (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 4 }}>
+          {rebotado ? null : (
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={8}
+              disabled={ocupado}
+              onPress={() => void reenviar()}
+              testID="aviso-correo-reenviar"
+            >
+              <Text style={{ color: C.primario, fontWeight: '700', marginTop: 4 }}>
+                {t.reenviar}
+              </Text>
+            </Pressable>
+          )}
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => setCambiando(true)}
+            testID="aviso-correo-cambiar"
+          >
+            <Text style={{ color: C.primario, fontWeight: '700', marginTop: 4 }}>{t.cambiar}</Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const TC = {
+  es: {
+    correoNuevo: 'Correo nuevo',
+    clave: 'Tu contraseña, para confirmar',
+    guardar: 'Cambiar el correo y mandar el enlace',
+    cancelar: 'Cancelar',
+  },
+  en: {
+    correoNuevo: 'New email',
+    clave: 'Your password, to confirm',
+    guardar: 'Change email and send the link',
+    cancelar: 'Cancel',
+  },
+};
+
+/**
+ * Cambiar el correo de la cuenta (con sesión y su contraseña) y mandar el enlace al nuevo. La usan la
+ * puerta del correo y la franja. NINGÚN FORMULARIO PIERDE LO ESCRITO: el correo nuevo se guarda solo; la
+ * contraseña nunca. Si falla, lo escrito se queda para reintentar.
+ */
+export function CambiarCorreo({
+  formulario,
+  alCambiar,
+  alCancelar,
+}: {
+  formulario: string;
+  alCambiar: (correo: string) => void;
+  alCancelar: () => void;
+}) {
+  const { api, idioma, usuario } = useSesion();
+  const t = enIdioma(TC, idioma);
+  const [error, setError] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+  const b = useBorrador({
+    formulario,
+    cuenta: usuario?.id,
+    inicial: { correo: '', clave: '' },
+    sensibles: ['clave'],
+    almacen: almacenTelefono,
+    alSalir: alSalirTelefono,
+  });
+
+  async function cambiar() {
+    setError('');
+    setOcupado(true);
+    try {
+      const r = await api.pedir<{ usuario: { correo: string } }>('POST', '/datos/cuentas/correo', {
+        correo: b.valores.correo.trim().toLowerCase(),
+        clave: b.valores.clave,
+      });
+      await b.limpiar();
+      alCambiar(r.usuario.correo);
+    } catch (x) {
+      // Si falla, lo escrito se queda en pantalla para reintentar.
+      setError(x instanceof Error ? x.message : String(x));
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  return (
+    <View style={{ gap: 4 }} testID="cambiar-correo">
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      <Campo
+        etiqueta={t.correoNuevo}
+        keyboardType="email-address"
+        value={b.valores.correo}
+        onChangeText={(x) => b.cambiar('correo', x)}
+      />
+      <SugerenciaCorreo
+        correo={b.valores.correo}
+        idioma={idioma}
+        aceptar={(x) => b.cambiar('correo', x)}
+      />
+      <CampoClave
+        etiqueta={t.clave}
+        valor={b.valores.clave}
+        cambiar={(x) => b.cambiar('clave', x)}
+        alEnviar={() => void cambiar()}
+      />
+      {error ? (
+        <Text style={{ fontSize: 14, color: C.acento }} accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
+      <Boton texto={t.guardar} cargando={ocupado} alTocar={() => void cambiar()} />
+      <Boton texto={t.cancelar} secundario alTocar={alCancelar} />
     </View>
   );
 }
