@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
 import { sqlLocalTexto } from './sqlLocal';
+import { celularDePrueba } from './celularDePrueba';
 import { cruzarPuertaCelular } from './puertaCelular';
 
 /**
@@ -252,9 +253,8 @@ for (const P of PAISES) {
 
       // ── Restaurante en la ciudad de prueba (por la API, como lo deja listo su panel) ──
       // Un teléfono por cuenta: el mismo número no abre dos cuentas (C-IDENTIDAD-UNICA).
-      let cuentas = 0;
       const cuenta = async (q: string, rol: string) => {
-        const telefono = `3${String(Date.now()).slice(-8)}${cuentas++ % 10}`;
+        const telefono = celularDePrueba();
         const r = await request.post('/datos/cuentas/registro', {
           headers: desde(),
           data: { nombre: `Prueba ${q}`, correo: correo(q), clave, rol, telefono },
@@ -328,7 +328,7 @@ for (const P of PAISES) {
       await rep.getByLabel(L.nombreCompleto).fill('Repartidor Prueba');
       await rep.getByLabel(L.correo).fill(correo('repartidor'));
       // Un teléfono por cuenta y por corrida (C-IDENTIDAD-UNICA).
-      await rep.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}7`);
+      await rep.getByLabel(L.celular).fill(celularDePrueba());
       await rep.getByLabel(L.clave, { exact: true }).fill(clave);
       await rep.getByRole('checkbox').first().click(); // acepta los términos
       // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
@@ -423,7 +423,7 @@ for (const P of PAISES) {
       await cli.getByText(L.appCrear).click();
       await cli.getByLabel(L.nombreCompleto).fill('Cliente Prueba');
       await cli.getByLabel(L.correo).fill(correo('cliente'));
-      await cli.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}8`);
+      await cli.getByLabel(L.celular).fill(celularDePrueba());
       await cli.getByLabel(L.clave, { exact: true }).fill(clave);
       await cli.getByRole('checkbox').first().click(); // acepta los términos
       // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
