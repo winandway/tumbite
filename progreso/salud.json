@@ -15,9 +15,11 @@
     "avisosWeb": "ok",
     "tasaBcv": "ok",
     "sms": "ok",
+    "smsVenezuela": "ok",
+    "smsGasto": "ok",
     "dinero": "ok",
     "retiros": "ok",
-    "agentes": "pendiente",
+    "agentes": "ok",
     "connect": "ok",
     "servicios": "ok",
     "tarifas": "ok",
@@ -43,5 +45,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-21T16:28:25.359429+00:00"
+  "medido": "2026-11-23T02:06:47.959568+00:00"
 }
