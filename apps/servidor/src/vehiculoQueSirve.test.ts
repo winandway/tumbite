@@ -8,7 +8,7 @@ import { vehiculoQueSirve } from './vehiculoQueSirve';
  * con la moto activa, «Carro con pasajero» decía «Falta 1 papel» (la inspección, que el Corolla SÍ
  * tenía aprobada) y no había cómo cambiar de vehículo.
  */
-const MOTO = { id: 'moto-1', tipo: 'moto', marca: 'Bera', modelo: 'SBR', anio: 2022 };
+const MOTO = { id: 'moto-1', tipo: 'moto', marca: 'Motos Divoox', modelo: 'M150', anio: 2022 };
 const COROLLA = { id: 'carro-1', tipo: 'carro', marca: 'Toyota', modelo: 'Corolla', anio: 2018 };
 const REQS = [
   { servicio_id: 'carro', requisito: 'identidad', nivel: 'conductor', vehiculo_tipo: null },

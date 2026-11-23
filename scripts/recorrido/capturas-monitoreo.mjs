@@ -168,7 +168,7 @@ for (const [id, codigo, zona] of [
 sql.push(`INSERT OR IGNORE INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado) VALUES
   ('mon-v-sam', 'mon-d-sam', 'moto', 'Honda', 'CB300', 'Red', 'MOT482', 'MI'),
   ('mon-v-jordan', 'mon-d-jordan', 'carro', 'Toyota', 'Corolla', 'Gray', 'DVX2041', 'MI'),
-  ('mon-v-carlos', 'mon-d-carlos', 'moto', 'Bera', 'SBR', 'Azul', 'AB1C23D', 'MER');`);
+  ('mon-v-carlos', 'mon-d-carlos', 'moto', 'Motos Divoox', 'M150', 'Azul', 'AB1C23D', 'MER');`);
 const comercio = (id, dueno, nombre, tipo, zona, dir, lat, lng) =>
   sql.push(
     `INSERT OR IGNORE INTO restaurantes (id, dueno_id, nombre, direccion, lat, lng, estado, abierto, zona_id, tipo_comercio, tiempo_prep_min) VALUES (${q(id)}, ${q(dueno)}, ${q(nombre)}, ${q(dir)}, ${lat}, ${lng}, 'aprobado', 1, ${q(zona)}, ${q(tipo)}, 15);`,

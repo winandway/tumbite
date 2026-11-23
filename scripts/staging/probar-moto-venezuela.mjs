@@ -255,8 +255,8 @@ try {
   const moto = ok(
     await yo('POST', '/datos/conductor/vehiculos', {
       tipo: 'moto',
-      marca: 'Bera',
-      modelo: 'SBR',
+      marca: 'Motos Divoox',
+      modelo: 'M150',
       anio: 2023,
       color: 'Negro',
       placa: `ZZ${Math.floor(Math.random() * 1e6)}`,

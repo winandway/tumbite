@@ -26,7 +26,13 @@ const conductor = (x: Partial<ConductorConfianza> = {}): ConductorConfianza => (
   viajes: 4,
   aceptaMenores: true,
   servicios: ['moto'],
-  vehiculo: { tipo: 'moto', marca: 'Bera', modelo: 'SBR', color: 'Rojo', placa: 'AB1C23D' },
+  vehiculo: {
+    tipo: 'moto',
+    marca: 'Motos Divoox',
+    modelo: 'M150',
+    color: 'Rojo',
+    placa: 'AB1C23D',
+  },
   desde: '2026-11-10 12:00:00',
   ...x,
 });
@@ -86,7 +92,7 @@ describe('conductores de confianza', () => {
   });
 
   it('el vehículo se dice con marca, modelo, color y placa', () => {
-    expect(textoVehiculo(conductor().vehiculo)).toBe('Bera SBR · Rojo · AB1C23D');
+    expect(textoVehiculo(conductor().vehiculo)).toBe('Motos Divoox M150 · Rojo · AB1C23D');
     expect(textoVehiculo(null)).toBe('');
   });
 });

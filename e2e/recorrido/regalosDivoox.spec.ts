@@ -181,7 +181,7 @@ for (const idioma of ['es', 'en'] as const) {
       sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${c}', 1, ${C.recogida.lat}, ${C.recogida.lng}, datetime('now'), '${z.id}')
          ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
       sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
-         VALUES ('${v}', '${c}', 'moto', 'Bera', 'SBR', '${idioma === 'es' ? 'Negro' : 'Black'}', 'R${id.slice(-6).toUpperCase()}', '', 2022, 1, 'aprobado')`);
+         VALUES ('${v}', '${c}', 'moto', 'Motos Divoox', 'M150', '${idioma === 'es' ? 'Negro' : 'Black'}', 'R${id.slice(-6).toUpperCase()}', '', 2022, 1, 'aprobado')`);
       for (const t of ['registro', 'seguro', 'seguro_pasajeros'])
         sql(
           `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES ('doc-${t}-${id}', '${v}', '${t}', 'doc', 'aprobado', datetime('now', '+1 year'))`,

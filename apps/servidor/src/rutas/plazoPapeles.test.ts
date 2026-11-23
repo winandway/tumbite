@@ -77,8 +77,8 @@ async function conductorNuevo(pais: 'VE' | 'US' = 'VE', extra: Record<string, un
   const moto = async () => {
     const v = await yo('POST', '/datos/conductor/vehiculos', {
       tipo: 'moto',
-      marca: 'Bera',
-      modelo: 'SBR',
+      marca: 'Motos Divoox',
+      modelo: 'M150',
       anio: 2023,
       color: 'Negro',
       placa: `AB${Math.floor(Math.random() * 1e6)}`,

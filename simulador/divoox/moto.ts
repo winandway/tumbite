@@ -160,8 +160,8 @@ async function conductorListo(ctx: Ctx, m: Moto) {
         ctx,
         await yo.post('/datos/conductor/vehiculos', {
           tipo: 'moto',
-          marca: 'Bera',
-          modelo: 'SBR',
+          marca: 'Motos Divoox',
+          modelo: 'M150',
           anio: 2023,
           color: 'Negro',
           placa: `ZS${ctx.e.azar.entero(100_000, 999_999)}`,

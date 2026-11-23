@@ -303,6 +303,14 @@ Visto en el emulador de Android con la Driver de pruebas 0.1.45 (commit 073d0696
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/banners.test.ts apps/panel/src/panel/SuperBanners.test.tsx` (en rojo comprobado: sin el filtro de estado sale el borrador; sin la fecha, el futuro; sin la condición del tope, deja pasar más; con el guard vacío corre un modelo caro; sin `excluir` repite; sin el filtro de ciudad, El Vigía sale en Miami; en el panel, borrar sin confirmar y sin cámara). En vivo: `https://staging.tumbite.com/datos/banners?lugar=cabecera&ciudad=VE-MER-ELVIGIA` responde 200.
 - **Qué NO tocar:** no agregar modelos a la lista blanca sin la orden escrita de Richard con el costo por imagen; no sacar el guard de delante del `fetch`; no subir el tope de 30; no escribir en la base desde `GET /datos/banners` (ni contadores de vistas: van a otra parte); no publicar sin pasar por `revisarParaPublicar`.
 
+## C-SIN-MARCA-COMPETENCIA · Nada nuestro nombra la marca de motos de la competencia (22 nov 2026, Richard vía Gerencia) — todos los países
+
+- **Qué:** la marca de motos de los dueños de la competencia y sus modelos no salen en ejemplos, datos de prueba, textos de relleno, guiones de capturas, banners, Docs ni guías. Los ejemplos usan «Motos Divoox» modelo «M150».
+- **Lo que NO se toca:** el dato real de un conductor. El formulario de vehículo no tiene lista cerrada de marcas; quien tenga una moto de esa marca la registra con su marca verdadera, y los datos reales de producción no se cambian.
+- **Candado:** `apps/panel/src/sitio/docs/sinMarcaCompetencia.test.ts` revisa todo el texto del repositorio público y las guías de Docs (visto en ROJO volviendo a poner la marca en `pruebas/motoVe.ts`). «BRF-n» es el nombre interno de un bloque de trabajo y no cuenta.
+- **Las imágenes no las ve la prueba:** se revisaron leyendo el texto de las 2902 imágenes del repositorio con el lector de la Mac. Las capturas que la mostraban se rehacen con los guiones ya corregidos.
+- **Sitio de pruebas:** el 22 nov se cambiaron 49 motos de cuentas de prueba (`@prueba.invalid` y las demo `@ejemplo.com`) por la API de la base del sitio de pruebas. Producción no se tocó.
+
 ## C-SALDO-CONDUCTOR · Saldo de conductores: vista por ciudad, carga manual y regalo de arranque (17 nov 2026) — todos los países con prepago, piloto Venezuela
 
 - **Qué es:** `apps/servidor/src/saldoConductores.ts` + `rutas/saldoConductores.ts`; pantalla Superadmin → Dinero → «Saldo de conductores» (`SuperSaldoConductores.tsx`). Dos billeteras del conductor: saldo (bolsillo `prepago` del libro, de donde sale la comisión) y ganancias (`movimientos`). Sin motor nuevo: la carga escribe en el mismo libro.

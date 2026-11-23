@@ -84,8 +84,8 @@ async function nuevoEnCaracas() {
     expect((await yo('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id })).estado).toBe(200);
     const v = await yo('POST', '/datos/conductor/vehiculos', {
       tipo: 'moto',
-      marca: 'Bera',
-      modelo: 'SBR',
+      marca: 'Motos Divoox',
+      modelo: 'M150',
       anio: 2023,
       color: 'Negro',
       placa: `AB${Math.floor(Math.random() * 1e6)}`,

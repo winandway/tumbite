@@ -139,8 +139,8 @@ async function conductorVenezolano(e: E) {
   // La moto: en Venezuela la placa es nacional (no se pide el estado que la emitió).
   const v = await yo('POST', '/datos/conductor/vehiculos', {
     tipo: 'moto',
-    marca: 'Bera',
-    modelo: 'SBR',
+    marca: 'Motos Divoox',
+    modelo: 'M150',
     anio: 2023,
     color: 'Negro',
     placa: `AB${Math.floor(Math.random() * 1e6)}`,
