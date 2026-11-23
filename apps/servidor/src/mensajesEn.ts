@@ -557,6 +557,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'This country doesn’t have its food rates set yet: open Food in a city first.',
   ],
   [
+    'Rige una política de comisión de restaurantes para todos los países: ciérrala en Finanzas → Políticas y vuelve a intentarlo.',
+    'A restaurant commission policy for all countries is in effect: close it in Finance → Policies and try again.',
+  ],
+  [
     'La tarifa de servicio mínima no puede ser mayor que la máxima.',
     'The minimum service fee can’t be higher than the maximum.',
   ],

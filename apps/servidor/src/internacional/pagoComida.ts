@@ -1,4 +1,11 @@
-import { calcularComision, equivalenteLocal, tasaGuardada } from '@tumbite/compartido';
+import {
+  type ReglaComision,
+  calcularComision,
+  equivalenteLocal,
+  esquemaRegla,
+  tasaGuardada,
+} from '@tumbite/compartido';
+import { z } from 'zod';
 import type { Env } from '../env';
 import { cancelarConReembolso, anotarEvento } from '../manager';
 import { notificar } from '../notificaciones';
@@ -80,6 +87,8 @@ type FilaPago = {
   corregido_en: string | null;
   corregido_restaurante_en: string | null;
   comision_restaurante: number;
+  /** C-COMIDA-VE-QUIEN-PAGA: la regla congelada al pedir (NULL en las filas de antes). */
+  comision_regla_json: string | null;
   devolucion_estado: string;
   devolucion_referencia: string;
   devolucion_en: string | null;
@@ -252,18 +261,52 @@ export async function comisionRestauranteDe(
   db: D1Database,
   c: { pais: string; moneda: string; comida: number },
 ): Promise<number> {
+  return comisionConRegla(await reglaComisionRestaurante(db, c), c.comida);
+}
+
+/**
+ * C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): la regla de la comisión del restaurante que rige AHORA (null
+ * = ninguna: 0 %). Se congela en el pago del pedido al pedir, para cobrar al «Me llegó» lo que regía
+ * cuando el cliente pidió, aunque la palanca cambie mientras tanto.
+ */
+export type ComisionCongelada = { regla: ReglaComision; descuentoPb: number } | null;
+
+export async function reglaComisionRestaurante(
+  db: D1Database,
+  c: { pais: string; moneda: string },
+): Promise<ComisionCongelada> {
   const pol = await politicaVigente(db, {
     servicio: 'food',
     tipoCuenta: 'restaurante',
     pais: c.pais,
     moneda: c.moneda,
   });
-  if (!pol || pol.modalidad !== 'prepago') return 0;
-  return calcularComision(pol.regla, {
-    unidades: 1,
-    valor: c.comida,
-    descuentoPb: pol.descuentoPb,
-  });
+  if (!pol || pol.modalidad !== 'prepago') return null;
+  return { regla: pol.regla, descuentoPb: pol.descuentoPb };
+}
+
+/** La comisión de una comida con una regla (congelada o vigente). Sin regla, 0. */
+export const comisionConRegla = (cg: ComisionCongelada, comida: number) =>
+  cg ? calcularComision(cg.regla, { unidades: 1, valor: comida, descuentoPb: cg.descuentoPb }) : 0;
+
+/** Lo que se guarda en `pagos_comida.comision_regla_json` (nunca NULL en un pago nuevo). */
+export const congelarComision = (cg: ComisionCongelada) => JSON.stringify({ congelada: cg });
+
+/** La regla congelada de una fila; `undefined` = fila de antes (sin el dato) o dañada. */
+function reglaCongeladaDe(json: string | null | undefined): ComisionCongelada | undefined {
+  if (json == null) return undefined;
+  try {
+    const v = JSON.parse(json) as { congelada?: unknown };
+    if (v.congelada === null) return null;
+    const r = z
+      .object({ regla: esquemaRegla, descuentoPb: z.number().int().min(0).max(10_000) })
+      .safeParse(v.congelada);
+    if (r.success) return r.data;
+  } catch {
+    // Se anota abajo y se cobra como las filas de antes: la vigente.
+  }
+  console.error('pago de la comida: comisión congelada dañada; se usa la vigente', json);
+  return undefined;
 }
 
 export const saldoRestaurante = (db: D1Database, rid: string, pais: string, moneda: string) =>
@@ -280,10 +323,11 @@ export async function exigirSaldoRestaurante(
   env: Env,
   db: D1Database,
   p: { rid: string; pais: string; moneda: string; comida: number },
-) {
-  const comision = await comisionRestauranteDe(db, p);
-  if (comision <= 0) return;
-  if ((await saldoRestaurante(db, p.rid, p.pais, p.moneda)) >= comision) return;
+): Promise<ComisionCongelada> {
+  const regla = await reglaComisionRestaurante(db, p);
+  const comision = comisionConRegla(regla, p.comida);
+  if (comision <= 0) return regla;
+  if ((await saldoRestaurante(db, p.rid, p.pais, p.moneda)) >= comision) return regla;
   const hora = new Date().toISOString().slice(0, 13);
   const marca = await db
     .prepare(
@@ -316,7 +360,13 @@ export async function exigirSaldoRestaurante(
  * queda un caso para el equipo. Nunca deja el saldo en negativo.
  */
 async function cobrarComisionRestaurante(db: D1Database, f: FilaPago, pais: string) {
-  const comision = await comisionRestauranteDe(db, { pais, moneda: f.moneda, comida: f.monto });
+  // C-COMIDA-VE-QUIEN-PAGA: la regla que regía al pedir (sobre la comida de hoy, por si cambió antes
+  // de pagar); las filas de antes, sin el dato, se cobran con la vigente.
+  const congelada = reglaCongeladaDe(f.comision_regla_json);
+  const comision =
+    congelada === undefined
+      ? await comisionRestauranteDe(db, { pais, moneda: f.moneda, comida: f.monto })
+      : comisionConRegla(congelada, f.monto);
   if (comision <= 0) return 0;
   const ref = `comision-restaurante:${f.pedido_id}`;
   const [descuento] = await db.batch([
@@ -409,16 +459,24 @@ async function devolverComisionRestaurante(db: D1Database, f: FilaPago, pais: st
 /** Al crear el pedido (todavía en pago_pendiente): nace esperando a su conductor. */
 export async function abrirPagoComida(
   db: D1Database,
-  p: { pedidoId: string; restauranteId: string; clienteId: string; moneda: string; monto: number },
+  p: {
+    pedidoId: string;
+    restauranteId: string;
+    clienteId: string;
+    moneda: string;
+    monto: number;
+    /** C-COMIDA-VE-QUIEN-PAGA: la comisión del restaurante que regía al pedir. */
+    comision: ComisionCongelada;
+  },
 ) {
   if (!Number.isSafeInteger(p.monto) || p.monto <= 0)
     throw new Error(`pago de la comida: monto inválido (${p.monto})`);
   await db
     .prepare(
-      `INSERT OR IGNORE INTO pagos_comida (pedido_id, restaurante_id, cliente_id, estado, moneda, monto)
-       VALUES (?, ?, ?, 'esperando_conductor', ?, ?)`,
+      `INSERT OR IGNORE INTO pagos_comida (pedido_id, restaurante_id, cliente_id, estado, moneda, monto, comision_regla_json)
+       VALUES (?, ?, ?, 'esperando_conductor', ?, ?, ?)`,
     )
-    .bind(p.pedidoId, p.restauranteId, p.clienteId, p.moneda, p.monto)
+    .bind(p.pedidoId, p.restauranteId, p.clienteId, p.moneda, p.monto, congelarComision(p.comision))
     .run();
 }
 
