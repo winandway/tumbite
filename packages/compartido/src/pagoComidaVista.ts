@@ -196,8 +196,10 @@ const REST_ES = {
   cuentaSoloDueno: 'Solo el dueño del restaurante puede cambiar la cuenta.',
   saldoTitulo: 'Saldo de tu restaurante',
   saldoDisponible: 'Disponible',
-  saldoGratis: 'Hoy vender con Divoox no te cuesta nada: tu comisión es 0 %.',
-  saldoComision: 'Comisión por pedido: unos {monto} por cada pedido de 10.',
+  saldoGratis:
+    'Gratis para empezar: hoy tu comisión de Divoox es 0 % y no necesitas saldo para recibir pedidos.',
+  saldoComision:
+    'Comisión de Divoox: unos {monto} por cada pedido de 10. Sale de tu saldo cuando confirmas «Me llegó».',
   saldoSin: 'Te quedaste sin saldo y no estás recibiendo pedidos. Recarga para volver a recibir.',
   recargarTitulo: 'Recargar saldo',
   recargaMonto: 'Monto que pagaste',
@@ -267,8 +269,10 @@ const REST_EN: typeof REST_ES = {
   cuentaSoloDueno: 'Only the restaurant owner can change the account.',
   saldoTitulo: 'Your restaurant balance',
   saldoDisponible: 'Available',
-  saldoGratis: 'Selling with Divoox costs you nothing today: your commission is 0%.',
-  saldoComision: 'Commission per order: about {monto} for each order of 10.',
+  saldoGratis:
+    'Free to start: your Divoox commission is 0% today and you need no balance to receive orders.',
+  saldoComision:
+    'Divoox commission: about {monto} for each order of 10. It comes out of your balance when you confirm “I got it.”',
   saldoSin: 'You ran out of balance and are not receiving orders. Top up to receive orders again.',
   recargarTitulo: 'Top up balance',
   recargaMonto: 'Amount you paid',

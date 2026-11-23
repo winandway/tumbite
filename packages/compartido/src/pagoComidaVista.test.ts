@@ -117,3 +117,22 @@ describe('C-COMIDA-PAGO-RESTAURANTE · lo que ve el cliente', () => {
     expect(pieza).toMatch(/MenuTresPuntos[\s\S]{0,200}t\.rechazar/);
   });
 });
+
+describe('C-COMIDA-VE-QUIEN-PAGA · lo que leen el restaurante y el conductor', () => {
+  it('el restaurante lee «gratis para empezar» con 0 % y de dónde sale su comisión si la hay', () => {
+    const { es, en } = TEXTOS_PAGO_COMIDA_RESTAURANTE;
+    expect(es.saldoGratis).toContain('Gratis para empezar');
+    expect(es.saldoGratis).toContain('no necesitas saldo');
+    expect(en.saldoGratis).toContain('Free to start');
+    expect(es.saldoComision).toContain('Sale de tu saldo');
+    expect(es.saldoComision).toContain('{monto}');
+    expect(en.saldoComision).toContain('{monto}');
+  });
+
+  it('el conductor cobra solo el envío y Driver no le dice que necesita saldo para la comida a 0 %', () => {
+    expect(TEXTOS_PAGO_COMIDA_CONDUCTOR.es.cobras).toContain('solo el envío');
+    const textos = leer('apps/repartidor/src/grandes/textos.ts');
+    expect(textos).toContain('no necesitas saldo para recibirlos');
+    expect(textos).toContain('you need no balance to receive them');
+  });
+});

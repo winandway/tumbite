@@ -24,19 +24,23 @@ export function explicarTarifas(c: ConfigDinero, moneda: string, idioma: Idioma)
         ? `Delivery: starts at ${m(c.envioBase)} for the first ${c.envioKmIncluidos} km and adds ${m(c.envioPorKm)} per extra km, up to ${m(c.envioMaximo)}. It helps pay your driver.`
         : `Envío: desde ${m(c.envioBase)} los primeros ${c.envioKmIncluidos} km y ${m(c.envioPorKm)} por cada km de más, hasta ${m(c.envioMaximo)}. Ayuda a pagarle a tu repartidor.`,
     },
-    {
+  ];
+  // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): un cargo que en este país no existe no se explica
+  // (en Venezuela el cliente no paga tarifa de servicio ni cargo por pedido pequeño).
+  if (c.servicioPb > 0 || c.servicioMinimo > 0)
+    lista.push({
       clave: 'servicio',
       texto: en
         ? `Service fee: ${pct(c.servicioPb)} of your subtotal (at least ${m(c.servicioMinimo)}, at most ${m(c.servicioMaximo)}). It keeps Divoox running: support, safety, and payments.`
         : `Tarifa de servicio: el ${pct(c.servicioPb)} de tu subtotal (mínimo ${m(c.servicioMinimo)}, máximo ${m(c.servicioMaximo)}). Mantiene Divoox funcionando: soporte, seguridad y pagos.`,
-    },
-    {
+    });
+  if (c.cargoPedidoPequeno > 0 && c.pedidoMinimo > 0)
+    lista.push({
       clave: 'pequeno',
       texto: en
         ? `Small order fee: ${m(c.cargoPedidoPequeno)}, only when your subtotal is under ${m(c.pedidoMinimo)}. Add a bit more and it goes away.`
         : `Cargo por pedido pequeño: ${m(c.cargoPedidoPequeno)}, solo si tu subtotal no llega a ${m(c.pedidoMinimo)}. Si sumas un poco más, desaparece.`,
-    },
-  ];
+    });
   if ((c.impuestoPb ?? 0) > 0)
     lista.push({
       clave: 'impuesto',
