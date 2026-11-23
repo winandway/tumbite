@@ -1,14 +1,20 @@
 #!/usr/bin/env node
 // Comida · Venezuela (C-COMIDA-VE-PUNTA-A-PUNTA, 13 nov 2026). Hermano de probar-moto-venezuela.mjs:
-// hace por la API, como las apps y el panel, el pedido de comida en El Vigía (estado Mérida):
-//   el equipo abre Comida en El Vigía (paso del panel) → el restaurante venezolano se registra con su
-//   ubicación, el equipo lo aprueba y él carga su menú → el repartidor recarga en dólares en el punto
-//   de venta del equipo → pedido en EFECTIVO con el PAGO DIRECTO AL RESTAURANTE (C-COMIDA-PAGO-
-//   RESTAURANTE, 22 nov 2026: acepta el restaurante, acepta el conductor con la comisión apartada,
-//   el cliente ve la cuenta del restaurante y el monto en bolívares, escribe la referencia, el
-//   restaurante dice «Me llegó», listo, recoge SIN pagar en el local, entrega, «cobré» solo el envío)
-//   con la comisión cobrada una sola vez y conciliado → un conductor SIN saldo no recibe la oferta →
-//   un pedido cancelado devuelve lo apartado → pedido con el envío por PAGO MÓVIL con «sí me llegó».
+// hace por la API, como las apps y el panel, el pedido de comida en El Vigía (estado Mérida) con el
+// PAGO DIRECTO AL RESTAURANTE (C-COMIDA-PAGO-RESTAURANTE, 22 nov 2026) y el modelo de «quién paga
+// qué» (C-COMIDA-VE-QUIEN-PAGA, 23 nov 2026: el cliente paga la comida al restaurante y el envío al
+// conductor, sin tarifa de servicio ni cargo por pedido pequeño; Divoox cobra su comisión al
+// RESTAURANTE de su saldo prepago; al conductor no le descuenta nada del envío):
+//   el equipo abre Comida en El Vigía y deja la palanca «¿Quién paga qué en la comida?» en el modelo →
+//   el restaurante venezolano se registra con su ubicación, el equipo lo aprueba y él carga su menú →
+//   un conductor SIN saldo recibe y toma la oferta → el cliente ve la cuenta del restaurante y el
+//   monto en bolívares, escribe la referencia, el restaurante dice «Me llegó», listo, recoge SIN pagar
+//   en el local, entrega, «cobré» solo el envío; con el restaurante al 0 % no sale comisión de nadie →
+//   el equipo sube la comisión del restaurante al 10 % (con la nota de la revisión legal) y le carga
+//   saldo de regalo → pedido con el envío por PAGO MÓVIL al conductor con «sí me llegó»: el 10 % de la
+//   comida sale UNA vez del saldo del restaurante y CERO del conductor → la comisión vuelve a 0 % →
+//   un pedido cancelado no le aparta ni le cobra nada al conductor. Al terminar (siempre), la comisión
+//   del restaurante queda otra vez en 0 %.
 // Cuentas FIJAS que se reutilizan (zz-cmve-…): el saldo, los pedidos y el libro no se borran nunca.
 // Cuenta sus filas con la vuelta de pruebas (x-vuelta-pruebas) y respeta su presupuesto. Nunca
 // escribe en producción.
@@ -50,7 +56,6 @@ const CIUDAD = {
 };
 const LOCAL_REST = { lat: 8.6225, lng: -71.651 };
 const CASA = { lat: 8.6229, lng: -71.6512 }; // a unos 50 m: sin saltos de GPS imposibles
-const RECARGA = 500; // centavos de dólar
 
 const casos = [];
 async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
@@ -96,7 +101,7 @@ const interno = (ruta) =>
 
 const armado = await interno('armar');
 exigir(armado.estado === 200, `armar: ${armado.estado} ${armado.d.error ?? ''}`);
-const { tokens, ids, clave, versionTerminos } = armado.d;
+const { tokens, clave, versionTerminos } = armado.d;
 const equipo = (m, r, c) => pedir(m, r, c, tokens.equipo);
 const cliente = (m, r, c) => pedir(m, r, c, tokens.cliente);
 const resto = (m, r, c) => pedir(m, r, c, tokens.restaurante);
@@ -104,10 +109,6 @@ const yo = (m, r, c) => pedir(m, r, c, tokens.repartidor);
 const pobre = (m, r, c) => pedir(m, r, c, tokens.sinSaldo);
 const saldo = async (quien = yo) =>
   ok(await quien('GET', '/datos/repartidor/saldo-prepago'), 'saldo');
-const ubicar = async (donde) => {
-  for (let i = 0; i < 2; i++)
-    ok(await yo('POST', '/datos/repartidor/ubicacion', { ...donde, precision: 8 }), 'ubicación');
-};
 
 /** Lo que haya quedado abierto de una vuelta anterior se cierra por la API (nunca a mano). */
 async function cerrarColgados() {
@@ -118,6 +119,15 @@ async function cerrarColgados() {
       motivo: 'Cierre de una vuelta de pruebas anterior',
     });
 }
+
+/** Para dejar la comisión del restaurante otra vez en 0 % al terminar, pase lo que pase. */
+let palancaTocada = false;
+const comisionRestaurante = (comisionPb, revisionLegalNota) =>
+  equipo('PUT', '/datos/admin/finanzas/comida-quien-paga', {
+    pais: 'VE',
+    motivo: `Comisión del restaurante al ${comisionPb / 100} % (guion de pruebas)`,
+    restaurante: { comisionPb, ...(revisionLegalNota ? { revisionLegalNota } : {}) },
+  });
 
 try {
   await cerrarColgados().catch(() => null);
@@ -136,6 +146,35 @@ try {
   exigir(
     ve.comidaPagoRestaurante === true,
     'Venezuela debería tener el pago directo al restaurante',
+  );
+  // C-COMIDA-VE-QUIEN-PAGA: la palanca del panel en el modelo aprobado (las tarifas viejas del
+  // sitio de pruebas traían tarifa de servicio y cargo por pedido pequeño; abrir Comida no las pisa).
+  const modelo = ok(
+    await equipo('PUT', '/datos/admin/finanzas/comida-quien-paga', {
+      pais: 'VE',
+      motivo: 'Modelo aprobado de quién paga qué en la comida (guion de pruebas)',
+      cliente: {
+        servicioPb: 0,
+        servicioMinimo: 0,
+        servicioMaximo: 0,
+        pedidoMinimo: 0,
+        cargoPedidoPequeno: 0,
+      },
+      conductor: { comisionEnvioPb: 0 },
+      restaurante: { comisionPb: 0 },
+    }),
+    'palanca «¿Quién paga qué en la comida?» en el modelo',
+  );
+  exigir(
+    modelo.cliente.servicioPb === 0 &&
+      modelo.cliente.cargoPedidoPequeno === 0 &&
+      modelo.restaurante.comisionPb === 0 &&
+      modelo.conductor.comisionEnvioPb === 0,
+    'la palanca no quedó en el modelo (cliente sin servicio, restaurante y conductor en 0)',
+  );
+  palancaTocada = true;
+  casos.push(
+    'palanca en el modelo: el cliente sin servicio ni cargo pequeño, restaurante y conductor al 0 %',
   );
   // C-TASA-CORDURA: el guion ya no escribe ninguna tasa (antes dejaba 250 por dólar en el sitio de
   // pruebas). Usa la oficial que lee el servidor; sin ella, falla y lo dice.
@@ -199,53 +238,37 @@ try {
     );
   casos.push('el restaurante de El Vigía quedó aprobado, con su menú y abierto');
 
-  // 3. Repartidores: términos, conectados en el local; el de saldo recarga en dólares.
-  for (const quien of [yo, pobre]) {
-    ok(await quien('POST', '/datos/repartidor/terminos', { version: versionTerminos }), 'términos');
-    ok(
-      await quien('POST', '/datos/repartidor/conectar', { conectado: true, ...LOCAL_REST }),
-      'conectarse',
-    );
-  }
-  const sp = await saldo(pobre);
-  exigir(sp.disponible === 0, `el repartidor sin saldo tiene ${sp.disponible}`);
-  if ((await saldo()).disponible < RECARGA) {
-    const puntos = ok(await equipo('GET', '/datos/admin/puntos-venta'), 'puntos').puntos;
-    let punto = puntos.find(
-      (p) => p.usuarioId === ids.equipo && p.pais === 'VE' && p.moneda === 'USD',
-    );
-    if (!punto)
-      punto = ok(
-        await equipo('POST', '/datos/admin/puntos-venta', {
-          nombre: 'Equipo Divoox Venezuela (pruebas)',
-          pais: 'VE',
-          moneda: 'USD',
-          usuarioId: ids.equipo,
-        }),
-        'crear el punto del equipo',
-      ).punto;
-    if (!(Number(punto.fondo ?? 0) >= RECARGA))
-      ok(
-        await equipo('POST', `/datos/admin/puntos-venta/${punto.id}/fondo`, {
-          monto: RECARGA * 5,
-          comprobante: `pruebas-${VUELTA}`.slice(0, 60),
-        }),
-        'fondo del punto',
-      );
-    const codigo = ok(
-      await equipo('POST', '/datos/punto-venta/codigos', { monto: RECARGA }),
-      'código',
-    ).codigo;
-    ok(await yo('POST', '/datos/repartidor/recargar', { codigo }), 'canjear la recarga');
-    casos.push(`recarga de ${RECARGA} centavos de dólar en el punto del equipo`);
-  }
-  const s0 = await saldo();
-  exigir(s0.moneda === 'USD', `el saldo debería estar en dólares (${s0.moneda})`);
-  exigir(
-    s0.pedidosAlcanzan === Math.floor(s0.disponible / s0.comisionTipicaComida),
-    '«te alcanza para N pedidos» no cuadra',
+  // 3. El conductor SIN saldo es el que reparte (C-COMIDA-VE-QUIEN-PAGA: no se le aparta nada).
+  //    El de saldo de las vueltas anteriores se queda desconectado para que la oferta sea del otro.
+  await yo('POST', '/datos/repartidor/conectar', { conectado: false, ...LOCAL_REST }).catch(
+    () => null,
   );
-  casos.push(`saldo ${s0.disponible}: te alcanza para unos ${s0.pedidosAlcanzan} pedidos`);
+  ok(await pobre('POST', '/datos/repartidor/terminos', { version: versionTerminos }), 'términos');
+  ok(
+    await pobre('POST', '/datos/repartidor/conectar', { conectado: true, ...LOCAL_REST }),
+    'conectarse',
+  );
+  const s0 = await saldo(pobre);
+  exigir(s0.moneda === 'USD', `el saldo debería estar en dólares (${s0.moneda})`);
+  exigir(s0.disponible === 0, `el conductor sin saldo tiene ${s0.disponible}`);
+  exigir(
+    s0.comisionTipicaComida === 0 && s0.sinSaldoComida === false,
+    `con pago directo la comisión típica del conductor debería ser 0 (${s0.comisionTipicaComida})`,
+  );
+  casos.push('el conductor sin saldo puede repartir comida: comisión típica 0');
+
+  const saldoRest = async () =>
+    ok(
+      await equipo('GET', `/datos/admin/finanzas/restaurantes/${r.id}/saldo`),
+      'saldo del restaurante',
+    ).disponible;
+  const libro = async (id) =>
+    ok(await equipo('GET', `/datos/admin/libro/pedido/${id}`), 'libro del pedido').movimientos ??
+    [];
+  const sumaDe = (movs, concepto) => {
+    const m = movs.filter((x) => x.concepto === concepto && x.bolsillo === 'comisiones');
+    return { n: m.length, s: m.reduce((a, x) => a + x.monto, 0) };
+  };
 
   const pedirComida = async (metodoPago) => {
     // C-PAUSA-SIN-SENAL: el restaurante tiene su app abierta escuchando pedidos (la app pregunta
@@ -268,17 +291,31 @@ try {
     ok(await resto('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }), 'acepta');
   const ofertasDe = async (quien) =>
     (ok(await quien('GET', '/datos/repartidor/ofertas'), 'ofertas').ofertas ?? []).map((o) => o.id);
-  /** Del «acepto» del repartidor hasta la puerta del cliente; devuelve lo apartado. */
-  async function llevar(id) {
-    const antes = await saldo();
-    exigir((await ofertasDe(yo)).includes(id), 'el conductor con saldo no recibió la oferta');
-    ok(await yo('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}), 'acepta el conductor');
-    const tras = await saldo();
-    const apartado = tras.reservado - antes.reservado;
+  const ubicar = async (donde) => {
+    for (let i = 0; i < 2; i++)
+      ok(
+        await pobre('POST', '/datos/repartidor/ubicacion', { ...donde, precision: 8 }),
+        'ubicación',
+      );
+  };
+  /** El conductor sin saldo toma el pedido sin que se le aparte nada. */
+  async function tomarSinSaldo(id) {
+    const antes = await saldo(pobre);
     exigir(
-      apartado > 0 && tras.disponible === antes.disponible - apartado,
-      'no apartó la comisión',
+      (await ofertasDe(pobre)).includes(id),
+      'el conductor sin saldo no recibió la oferta (con pago directo no se le cobra comisión)',
     );
+    ok(await pobre('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}), 'acepta el conductor');
+    const tras = await saldo(pobre);
+    exigir(
+      tras.reservado === antes.reservado && tras.disponible === antes.disponible,
+      'PELIGRO: se le apartó comisión al conductor en un pedido de pago directo',
+    );
+    return antes;
+  }
+  /** Del «acepto» del conductor hasta la puerta del cliente. */
+  async function llevar(id) {
+    const antes = await tomarSinSaldo(id);
     // C-COMIDA-PAGO-RESTAURANTE: con el conductor asegurado, el cliente paga la comida al restaurante.
     const pc = ok(
       await cliente('GET', `/datos/pedidos/${id}/pago-comida`),
@@ -305,7 +342,7 @@ try {
     ok(await resto('POST', `/datos/restaurante/pedidos/${id}/listo`, {}), 'listo');
     await ubicar(LOCAL_REST);
     ok(
-      await foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, tokens.repartidor, LOCAL_REST),
+      await foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, tokens.sinSaldo, LOCAL_REST),
       'foto de recogida',
     );
     ok(
@@ -315,80 +352,100 @@ try {
     await ubicar(CASA);
     // C-DESLIZAR-SIEMPRE: como la app, la foto de la puerta no cierra; se cierra deslizando.
     ok(
-      await foto(`/datos/repartidor/pedidos/${id}/foto-entrega`, tokens.repartidor, CASA),
+      await foto(`/datos/repartidor/pedidos/${id}/foto-entrega`, tokens.sinSaldo, CASA),
       'foto de entrega',
     );
     ok(
-      await yo('POST', `/datos/repartidor/pedidos/${id}/entregado`, { ...CASA, modo: 'puerta' }),
+      await pobre('POST', `/datos/repartidor/pedidos/${id}/entregado`, { ...CASA, modo: 'puerta' }),
       'desliza para entregar',
     );
-    return { antes, apartado, comida: pc.comida, envio: pc.envioAlConductor };
+    return { antes, comida: pc.comida, envio: pc.envioAlConductor };
   }
   const verPedido = async (id) =>
     ok(await cliente('GET', `/datos/pedidos/${id}`), 'el pedido').pedido;
+  /** Lo que paga el cliente: comida + envío + propina, nada más. */
+  const soloComidaYEnvio = (v, e) => {
+    exigir(
+      v.servicio === 0 && v.cargoPedidoPequeno === 0,
+      `el cliente pagó tarifa de servicio (${v.servicio}) o cargo pequeño (${v.cargoPedidoPequeno})`,
+    );
+    exigir(
+      v.subtotal === e.comida && v.envio === e.envio,
+      `la comida (${v.subtotal}) o el envío (${v.envio}) no cuadran con el pago directo`,
+    );
+    exigir(
+      v.total === v.subtotal + v.envio + v.propina,
+      `el total ${v.total} no es comida ${v.subtotal} + envío ${v.envio} + propina ${v.propina}`,
+    );
+  };
 
-  // 4. Pedido en EFECTIVO de punta a punta.
+  // 4. Pedido en EFECTIVO con el restaurante al 0 %: nadie paga comisión.
+  const rest0 = await saldoRest();
   const p1 = await pedirComida('efectivo');
   await aceptarRestaurante(p1.pedidoId);
   const e1 = await llevar(p1.pedidoId);
   const v1 = await verPedido(p1.pedidoId);
   exigir(v1.moneda === 'USD', 'el pedido debería estar en dólares');
   exigir(v1.referencia?.moneda === 'VES', 'el cliente no ve el equivalente en bolívares');
+  soloComidaYEnvio(v1, e1);
   const c1 = ok(
-    await yo('POST', `/datos/repartidor/pedidos/${p1.pedidoId}/cobre`, {
-      // El conductor cobra SOLO el envío: la comida ya se la pagó el cliente al restaurante.
-      montoRecibido: v1.total - v1.propina - e1.comida,
+    await pobre('POST', `/datos/repartidor/pedidos/${p1.pedidoId}/cobre`, {
+      // El conductor cobra SOLO el envío, entero: la comida ya se la pagó el cliente al restaurante.
+      montoRecibido: e1.envio,
     }),
     'cobré',
   );
   exigir(c1.cobroEstado === 'confirmado', `cobro: ${c1.cobroEstado}`);
   const f1 = await verPedido(p1.pedidoId);
   exigir(f1.conciliacionEstado === 'conciliado', `conciliación: ${f1.conciliacionEstado}`);
-  const s1 = await saldo();
+  const s1 = await saldo(pobre);
   exigir(
-    s1.disponible === e1.antes.disponible - e1.apartado && s1.reservado === e1.antes.reservado,
-    'la comisión no salió del saldo una sola vez',
+    s1.disponible === e1.antes.disponible && s1.reservado === e1.antes.reservado,
+    'PELIGRO: el saldo del conductor cambió en un pedido de pago directo',
   );
+  const l1 = await libro(p1.pedidoId);
+  exigir(
+    sumaDe(l1, 'comision_cobrada').n === 0 && sumaDe(l1, 'comision_restaurante').n === 0,
+    'con el restaurante al 0 % no debería salir comisión de nadie',
+  );
+  exigir((await saldoRest()) === rest0, 'el saldo del restaurante cambió con la comisión en 0 %');
   casos.push(
-    `pedido de ${v1.total} centavos: comida ${e1.comida} pagada directo al restaurante, envío ${e1.envio} en efectivo, comisión ${e1.apartado} cobrada una vez, conciliado`,
+    `pedido de ${v1.total} centavos: comida ${e1.comida} al restaurante, envío ${e1.envio} entero en efectivo al conductor sin saldo, cero comisión, conciliado`,
   );
 
-  // 5. Sin saldo no hay oferta; y un pedido cancelado devuelve lo apartado.
-  const p2 = await pedirComida('efectivo');
-  await aceptarRestaurante(p2.pedidoId);
-  exigir(
-    !(await ofertasDe(pobre)).includes(p2.pedidoId),
-    'PELIGRO: ofrecido a quien no tiene saldo',
-  );
-  casos.push('el repartidor sin saldo no recibió la oferta');
-  const antes2 = await saldo();
-  exigir(
-    (await ofertasDe(yo)).includes(p2.pedidoId),
-    'el repartidor con saldo no recibió la oferta',
-  );
-  ok(await yo('POST', `/datos/repartidor/ofertas/${p2.pedidoId}/aceptar`, {}), 'acepta');
+  // 5. El equipo sube la comisión del restaurante al 10 % (con la nota legal) y le carga saldo.
+  const sinNota = await comisionRestaurante(1000);
+  exigir(sinNota.estado === 422, `sin la nota legal debería ser 422 (${sinNota.estado})`);
   ok(
-    await equipo('POST', `/datos/admin/pedidos/${p2.pedidoId}/cancelar`, {
-      motivo: 'Prueba: el restaurante no puede prepararlo',
-    }),
-    'cancelar',
+    await comisionRestaurante(1000, 'Revisión legal simulada del sitio de pruebas (guion)'),
+    'comisión del restaurante al 10 %',
   );
-  const tras2 = await saldo();
-  exigir(
-    tras2.disponible === antes2.disponible && tras2.reservado === antes2.reservado,
-    'lo apartado no volvió completo al cancelar',
-  );
-  casos.push('el pedido cancelado devolvió lo apartado al saldo');
+  palancaTocada = true;
+  const g10 = ok(await equipo('GET', '/datos/admin/finanzas/comida-quien-paga?pais=VE'), 'palanca');
+  exigir(g10.restaurante.comisionPb === 1000, 'la comisión del restaurante no quedó en 10 %');
+  if ((await saldoRest()) < 200)
+    ok(
+      await equipo('POST', `/datos/admin/finanzas/restaurantes/${r.id}/saldo`, {
+        monto: 500,
+        motivo: 'Saldo de regalo de pruebas (guion)',
+        comprobante: '',
+      }),
+      'carga de saldo al restaurante',
+    );
+  const rest10 = await saldoRest();
+  exigir(rest10 >= 200, `el restaurante no tiene saldo para la comisión (${rest10})`);
+  casos.push(`comisión del restaurante al 10 % con nota legal (sin nota, 422); saldo ${rest10}`);
 
   // 6. Pedido con el envío por PAGO MÓVIL al conductor con «sí me llegó».
-  const cuentas = ok(await yo('GET', '/datos/repartidor/cuentas-cobro'), 'cuentas').cuentas ?? [];
+  const cuentas =
+    ok(await pobre('GET', '/datos/repartidor/cuentas-cobro'), 'cuentas').cuentas ?? [];
   if (!cuentas.some((cu) => cu.tipo === 'pago_movil' && cu.vigente)) {
     const cu = ok(
-      await yo('POST', '/datos/repartidor/cuentas-cobro', {
+      await pobre('POST', '/datos/repartidor/cuentas-cobro', {
         clave,
         tipo: 'pago_movil',
         banco: 'Banco de Venezuela',
-        titular: 'Repartidor de prueba',
+        titular: 'Conductor de prueba',
         identificador: '04140000000',
       }),
       'cuenta de pago móvil',
@@ -398,8 +455,9 @@ try {
   const p3 = await pedirComida('transferencia_repartidor');
   await aceptarRestaurante(p3.pedidoId);
   const e3 = await llevar(p3.pedidoId);
+  soloComidaYEnvio(await verPedido(p3.pedidoId), e3);
   const pm = ok(
-    await yo('POST', `/datos/repartidor/pedidos/${p3.pedidoId}/pago-movil`, {
+    await pobre('POST', `/datos/repartidor/pedidos/${p3.pedidoId}/pago-movil`, {
       recibido: true,
       referencia: '000000',
     }),
@@ -411,9 +469,46 @@ try {
     f3.conciliacionEstado === 'conciliado',
     `conciliación pago móvil: ${f3.conciliacionEstado}`,
   );
-  casos.push(
-    `pedido de ${f3.total} centavos con el envío por pago móvil: «sí me llegó», comisión ${e3.apartado}, conciliado`,
+  const diez = Math.round((e3.comida * 1000) / 10000);
+  const l3 = await libro(p3.pedidoId);
+  const cr = sumaDe(l3, 'comision_restaurante');
+  exigir(
+    cr.n === 1 && cr.s === diez,
+    `la comisión del restaurante no salió una vez (${cr.n} · ${cr.s} de ${diez})`,
   );
+  exigir(sumaDe(l3, 'comision_cobrada').n === 0, 'PELIGRO: se le cobró comisión al conductor');
+  exigir(
+    (await saldoRest()) === rest10 - diez,
+    'el saldo del restaurante no bajó exactamente el 10 % de la comida',
+  );
+  const s3 = await saldo(pobre);
+  exigir(
+    s3.disponible === e3.antes.disponible && s3.reservado === e3.antes.reservado,
+    'PELIGRO: el saldo del conductor cambió',
+  );
+  casos.push(
+    `pedido de ${f3.total} centavos con el envío por pago móvil: «sí me llegó», ${diez} de comisión del saldo del restaurante (una vez), cero al conductor, conciliado`,
+  );
+
+  // 7. La comisión vuelve a 0 % y un pedido cancelado no le toca nada a nadie.
+  ok(await comisionRestaurante(0), 'comisión del restaurante otra vez en 0 %');
+  const restFin = await saldoRest();
+  const p2 = await pedirComida('efectivo');
+  await aceptarRestaurante(p2.pedidoId);
+  const antes2 = await tomarSinSaldo(p2.pedidoId);
+  ok(
+    await equipo('POST', `/datos/admin/pedidos/${p2.pedidoId}/cancelar`, {
+      motivo: 'Prueba: el restaurante no puede prepararlo',
+    }),
+    'cancelar',
+  );
+  const tras2 = await saldo(pobre);
+  exigir(
+    tras2.disponible === antes2.disponible && tras2.reservado === antes2.reservado,
+    'el saldo del conductor cambió al cancelar',
+  );
+  exigir((await saldoRest()) === restFin, 'el saldo del restaurante cambió al cancelar');
+  casos.push('comisión otra vez en 0 %; el pedido cancelado no le tocó el saldo a nadie');
 
   const salud = ok(await pedir('GET', '/datos/salud'), 'salud');
   exigir(
@@ -427,6 +522,14 @@ try {
   casos.push('la salud de comida por país y del pago de la comida sigue en verde');
 } finally {
   await cerrarColgados().catch(() => null);
+  if (palancaTocada) {
+    const r0 = await comisionRestaurante(0).catch(() => null);
+    casos.push(
+      r0?.estado === 200
+        ? 'la comisión del restaurante quedó otra vez en 0 %'
+        : 'NO SE PUDO dejar la comisión del restaurante en 0 %: revísalo en el panel',
+    );
+  }
   const l = await interno('limpiar');
   casos.push(l.d.ok ? 'nadie quedó conectado ni con sesión' : 'LA LIMPIEZA FALLÓ');
 }
