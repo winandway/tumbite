@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
-import { olvidarErrorWhatsapp } from '../whatsapp';
+import { olvidarErrorWhatsapp, olvidarNumeroComprobado } from '../whatsapp';
 
 /**
  * C-CODIGO-CANALES y C-CODIGO-WHATSAPP (23 nov 2026, decisión de Richard por Gerencia): el código sale
@@ -21,10 +21,21 @@ const META = {
 };
 
 type Enviado = { canal: string; para: string; texto: string; cuerpo: unknown; url: string };
-function simular(opciones: { metaFalla?: boolean } = {}) {
+function simular(opciones: { metaFalla?: boolean; numeroCaido?: boolean } = {}) {
   const enviados: Enviado[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const u = String(url);
+    if (u.includes('graph.facebook.com') && (init?.method ?? 'GET') === 'GET') {
+      // El canario mira el propio número.
+      if (opciones.numeroCaido)
+        return new Response(JSON.stringify({ error: { code: 190, message: 'token' } }), {
+          status: 401,
+        });
+      return new Response(
+        JSON.stringify({ verified_name: 'Divoox', code_verification_status: 'VERIFIED' }),
+        { status: 200 },
+      );
+    }
     if (u.includes('graph.facebook.com')) {
       const b = JSON.parse(String(init?.body)) as {
         to: string;
@@ -104,6 +115,7 @@ describe('C-CODIGO-CANALES · WhatsApp primero, SMS de respaldo', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     olvidarErrorWhatsapp();
+    olvidarNumeroComprobado();
   });
 
   it('con WhatsApp encendido, el código sale por la plantilla de autenticación de Meta y sirve', async () => {
@@ -155,6 +167,29 @@ describe('C-CODIGO-CANALES · WhatsApp primero, SMS de respaldo', () => {
       .bind(cli.id)
       .first<{ proveedor: string; estado: string }>();
     expect(fila).toEqual({ proveedor: 'whatsapp_meta', estado: 'enviado' });
+  });
+
+  it('el canario mira el propio número en Meta: 200 = ok; si no responde, error', async () => {
+    simular();
+    const m = mundo({ ...TWILIO, ...META });
+    expect((await m.llamar('GET', '/datos/salud')).datos.piezas.whatsapp).toBe('ok');
+    olvidarNumeroComprobado();
+    vi.unstubAllGlobals();
+    simular({ numeroCaido: true });
+    expect((await m.llamar('GET', '/datos/salud')).datos.piezas.whatsapp).toBe('error');
+  });
+
+  it('la plantilla va en el idioma de la persona (es o en)', async () => {
+    const enviados = simular();
+    const m = mundo({ ...TWILIO, ...META });
+    const es = await registrar(m, '+13055550221', 'es');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, es.token);
+    const en = await registrar(m, '+13055550222', 'en');
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, en.token);
+    const idiomas = enviados.map(
+      (e) => (e.cuerpo as { template: { language: { code: string } } }).template.language.code,
+    );
+    expect(idiomas).toEqual(['es', 'en']);
   });
 
   it('si WhatsApp falla, el mismo código sale por SMS al momento (y el canario lo marca)', async () => {

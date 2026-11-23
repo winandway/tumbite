@@ -15,6 +15,7 @@ import { ErrorDatos } from './validar';
 import {
   COSTO_WHATSAPP_USD,
   enviarCodigoWhatsapp,
+  numeroWhatsappVivo,
   presupuestoWhatsappDia,
   ultimoErrorWhatsapp,
   whatsappConAveria,
@@ -186,7 +187,7 @@ export async function saludCodigo(
     smsGasto: !smsEncendido ? 'pendiente' : g ? colorDe(g.smsUsd, presupuestoSmsDia(env)) : 'ok',
     whatsapp: !whatsappEncendido(env)
       ? 'pendiente'
-      : ultimoErrorWhatsapp
+      : ultimoErrorWhatsapp || !(await numeroWhatsappVivo(env)).ok
         ? 'error'
         : g
           ? colorDe(g.whatsappUsd, presupuestoWhatsappDia(env))

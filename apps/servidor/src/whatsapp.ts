@@ -188,3 +188,50 @@ export async function whatsappConAveria(db: D1Database): Promise<boolean> {
     .catch(() => null);
   return f?.estado === 'error';
 }
+
+/**
+ * C-CODIGO-WHATSAPP: el canario comprueba el propio número en Meta
+ * (`GET /<version>/<META_WHATSAPP_PHONE_ID>?fields=verified_name,code_verification_status`), porque con
+ * este token la consulta de plantillas da error de permisos. Recuerda el resultado cinco minutos para no
+ * llamar a Meta en cada vuelta del canario. Con Twilio no hay nada que mirar: vale el último envío.
+ */
+const MEMORIA_NUMERO_MS = 5 * 60_000;
+let numeroComprobado: { cuando: number; ok: boolean; motivo: string } | null = null;
+/** Solo para pruebas. */
+export function olvidarNumeroComprobado() {
+  numeroComprobado = null;
+}
+export async function numeroWhatsappVivo(
+  env: Env,
+  ahora = Date.now(),
+): Promise<{ ok: boolean; motivo: string }> {
+  if (proveedorWhatsapp(env) !== 'meta') return { ok: true, motivo: 'twilio' };
+  if (numeroComprobado && ahora - numeroComprobado.cuando < MEMORIA_NUMERO_MS)
+    return numeroComprobado;
+  const version = /^v\d+\.\d+$/.test(env.META_WHATSAPP_VERSION ?? '')
+    ? env.META_WHATSAPP_VERSION!
+    : VERSION_META;
+  let r: { ok: boolean; motivo: string };
+  try {
+    const res = await fetch(
+      `${baseMeta(env)}/${version}/${encodeURIComponent(env.META_WHATSAPP_PHONE_ID ?? '')}?fields=verified_name,code_verification_status`,
+      {
+        headers: { authorization: `Bearer ${env.META_WHATSAPP_TOKEN}` },
+        signal: AbortSignal.timeout(5_000),
+      },
+    );
+    const d = (await res.json().catch(() => null)) as {
+      verified_name?: string;
+      error?: { message?: string; code?: number };
+    } | null;
+    r =
+      res.ok && d?.verified_name
+        ? { ok: true, motivo: d.verified_name }
+        : { ok: false, motivo: `Meta ${d?.error?.code ?? res.status} ${d?.error?.message ?? ''}` };
+  } catch (e) {
+    r = { ok: false, motivo: String(e) };
+  }
+  if (!r.ok) console.error('whatsapp: el número no responde en Meta', r.motivo);
+  numeroComprobado = { cuando: ahora, ...r };
+  return r;
+}
