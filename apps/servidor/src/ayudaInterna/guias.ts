@@ -2642,13 +2642,14 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
       'Solo se exige donde el SMS sale hoy: Venezuela con el proveedor local y Estados Unidos. Si el proveedor no tiene cupo, falla o se agota el presupuesto del día, la exigencia se quita sola y nadie queda esperando.',
       'Las cuentas que ya existían NO se bloquean: ven una franja arriba de la app para confirmarlo cuando quieran, que pueden cerrar.',
       'Topes contra robots y gastos: cada cuenta espera más entre un código y otro (1, 2, 5 y 15 minutos) y pide como mucho 5 al día; el mismo número recibe como mucho 5 al día aunque cambie de cuenta; la misma red, 10 al día; y en total 300 códigos al día. El canario de salud marca «smsGasto» en amarillo al 80 % del presupuesto diario y en tope al llegar.',
-      'Si alguien escribió mal su número, lo cambia él mismo en la misma pantalla. Si dice que no le llega, revisa en su ficha que el número esté bien y que su país tenga la exigencia encendida; si el SMS de su país no sale, apaga la exigencia de ese país y avisa al equipo.',
+      'Si alguien escribió mal su número, lo cambia él mismo en la misma pantalla. Abrir y cerrar la app no le gasta códigos: mientras el último sirva, no se manda otro solo. Si el proveedor falla, ese envío no le cuenta.',
+      'Si de verdad no le llega (un número fijo, de internet o una operadora que no entrega), comprueba con la persona que el número es suyo, por ejemplo escribiéndole por WhatsApp a ese número, y en la lista toca «Confirmar a mano». Queda en el registro con tu nombre. Lo pueden hacer quienes pueden corregir correos.',
     ],
     capturas: [
       {
         archivo: 'celular-panel-es.webp',
         alt: 'El bloque Código por SMS al registrarse con las casillas Exigir el código en Venezuela y en Estados Unidos, el gasto del día, los códigos enviados y la lista de las últimas cuentas con su estado.',
-        pie: 'Interruptor por país, gasto del día y quién confirmó.',
+        pie: 'Interruptor por país, gasto del día, quién confirmó y «Confirmar a mano».',
       },
     ],
     preguntas: [
@@ -2661,6 +2662,7 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
       'Baja hasta «Código por SMS al registrarse».',
       'Mira la lista: «Falta confirmar» o «Confirmó el…», con los últimos cuatro números del celular.',
       'Para apagar la exigencia en un país, quita su casilla. Se guarda sola y vale al momento.',
+      'A quien no le llega el SMS: compruébalo con la persona y toca «Confirmar a mano» en su fila.',
     ],
     nota: 'Nunca le pidas a nadie el código que le llegó: es solo para la persona.',
   },
@@ -2674,13 +2676,14 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
       'It’s only required where texts go out today: Venezuela through the local provider, and the United States. If the provider is out of quota, fails, or the day’s budget runs out, the requirement lifts on its own and nobody is left waiting.',
       'Accounts that already existed are NOT blocked: they see a strip at the top of the app to confirm whenever they want, and they can close it.',
       'Caps against bots and spend: each account waits longer between codes (1, 2, 5 and 15 minutes) and gets at most 5 a day; the same number gets at most 5 a day even across accounts; the same network, 10 a day; and 300 codes a day in total. The health check marks “smsGasto” yellow at 80% of the daily budget and at the cap when it’s reached.',
-      'If someone mistyped their number, they fix it themselves on the same screen. If they say it isn’t arriving, check on their page that the number is right and that their country has the requirement on; if texts to their country can’t go out, turn that country off and tell the team.',
+      'If someone mistyped their number, they fix it themselves on the same screen. Opening and closing the app doesn’t use up codes: while the last one is still good, no new one is sent on its own. If the provider fails, that send doesn’t count against them.',
+      'If it truly never arrives (a landline, an internet number, or a carrier that doesn’t deliver), check with the person that the number is theirs, for example by messaging that number on WhatsApp, then tap “Confirm manually” in the list. It’s logged with your name. Anyone who can fix emails can do it.',
     ],
     capturas: [
       {
         archivo: 'celular-panel-en.webp',
         alt: 'The Text code at sign-up block with the Require the code in Venezuela and in United States checkboxes, the day’s spend, codes sent, and the list of latest accounts with their status.',
-        pie: 'Switch by country, the day’s spend, and who confirmed.',
+        pie: 'Switch by country, the day’s spend, who confirmed, and “Confirm manually.”',
       },
     ],
     preguntas: [
@@ -2693,6 +2696,7 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
       'Scroll to “Text code at sign-up.”',
       'Check the list: “Not confirmed yet” or “Confirmed on…,” with the last four digits of the cell phone.',
       'To turn off the requirement in a country, uncheck it. It saves on its own and applies right away.',
+      'For someone who isn’t getting the text: check with them and tap “Confirm manually” on their row.',
     ],
     nota: 'Never ask anyone for the code they received: it’s only for them.',
   },

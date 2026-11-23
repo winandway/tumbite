@@ -67,6 +67,7 @@ import {
   algunSmsEncendido,
   anularCodigoAnterior,
   comprobarCodigo,
+  estadoCodigo,
   mandarCodigo,
   paisDeE164,
   puertaTelefono,
@@ -804,7 +805,16 @@ cuentas.get('/telefono', async (c) => {
   const e164 = telefonoE164(f?.telefono);
   const pais = p ? ((e164 ? paisDeE164(e164) : null) ?? (await paisDeCuenta(db, u.id))) : null;
   return c.json({
-    puerta: p ? { motivo: p.motivo, ultimos: p.ultimos, obligatorio: p.obligatorio, pais } : null,
+    puerta: p
+      ? {
+          motivo: p.motivo,
+          ultimos: p.ultimos,
+          obligatorio: p.obligatorio,
+          pais,
+          // Si ya hay un código vigente, la app no manda otro solo al abrirse.
+          ...(await estadoCodigo(db, u.id)),
+        }
+      : null,
   });
 });
 

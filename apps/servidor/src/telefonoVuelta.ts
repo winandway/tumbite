@@ -86,7 +86,11 @@ export async function paisesApagados(db: D1Database): Promise<Set<string>> {
     .prepare('SELECT valor FROM config WHERE clave = ?')
     .bind(CLAVE_PAISES)
     .first<{ valor: string }>()
-    .catch(() => null);
+    .catch((e: unknown) => {
+      // Sin poder leerlo, todos quedan encendidos; pero se ve en el registro de errores.
+      console.error('telefono: no se pudo leer los países apagados', String(e));
+      return null;
+    });
   try {
     const m = JSON.parse(f?.valor ?? '{}') as Record<string, unknown>;
     return new Set(
@@ -94,7 +98,8 @@ export async function paisesApagados(db: D1Database): Promise<Set<string>> {
         .filter(([, v]) => v === false)
         .map(([k]) => k),
     );
-  } catch {
+  } catch (e) {
+    console.error('telefono: la lista de países apagados está dañada', String(e));
     return new Set();
   }
 }
@@ -295,23 +300,43 @@ export async function mandarCodigo(
       429,
     );
   // 4. Presupuesto y tope del día (codigoPosiblePara ya los miró en la puerta).
+  // C-TELEFONO-TOPES: el cupo se RESERVA en una sola escritura que vuelve a mirar los cuatro topes; dos
+  // peticiones a la vez no pasan las dos (la base hace una escritura detrás de otra).
+  const envioId = nuevoId();
+  const esperaS = ESPERAS_REENVIO_S[Math.min(llevaHoy, ESPERAS_REENVIO_S.length - 1)] ?? 900;
+  const reserva = await db
+    .prepare(
+      `INSERT INTO envios_codigo_telefono (id, usuario_id, telefono, ip)
+       SELECT ?1, ?2, ?3, ?4
+        WHERE (SELECT COUNT(*) FROM envios_codigo_telefono WHERE usuario_id = ?2 AND creado_en >= datetime('now','-1 day')) < ?5
+          AND (SELECT COUNT(*) FROM envios_codigo_telefono WHERE telefono = ?3 AND creado_en >= datetime('now','-1 day')) < ?6
+          AND (?4 IS NULL OR (SELECT COUNT(*) FROM envios_codigo_telefono WHERE ip = ?4 AND creado_en >= datetime('now','-1 day')) < ?7)
+          AND NOT EXISTS (SELECT 1 FROM envios_codigo_telefono WHERE usuario_id = ?2 AND creado_en > datetime('now', ?8))`,
+    )
+    .bind(
+      envioId,
+      usuarioId,
+      para,
+      ip ?? null,
+      MAX_ENVIOS_DIA,
+      MAX_POR_NUMERO_DIA,
+      MAX_POR_IP_DIA,
+      `-${Math.max(1, esperaS)} seconds`,
+    )
+    .run();
+  if (!reserva.meta.changes)
+    throw new ErrorDatos('Espera un momento para pedir otro código.', 'telefono', 429);
   const codigo = codigoNuevo();
   const enviados = llevaHoy + 1;
-  await db.batch([
-    db
-      .prepare(
-        `INSERT INTO codigos_telefono (usuario_id, telefono, codigo_hash, intentos, enviados_hoy, creado_en)
-         VALUES (?1, ?2, ?3, 0, ?4, datetime('now'))
-         ON CONFLICT(usuario_id) DO UPDATE SET telefono = ?2, codigo_hash = ?3, intentos = 0,
-           enviados_hoy = ?4, creado_en = datetime('now')`,
-      )
-      .bind(usuarioId, para, await sha256(`${usuarioId}:${codigo}`), enviados),
-    db
-      .prepare(
-        'INSERT INTO envios_codigo_telefono (id, usuario_id, telefono, ip) VALUES (?, ?, ?, ?)',
-      )
-      .bind(nuevoId(), usuarioId, para, ip ?? null),
-  ]);
+  await db
+    .prepare(
+      `INSERT INTO codigos_telefono (usuario_id, telefono, codigo_hash, intentos, enviados_hoy, creado_en)
+       VALUES (?1, ?2, ?3, 0, ?4, datetime('now'))
+       ON CONFLICT(usuario_id) DO UPDATE SET telefono = ?2, codigo_hash = ?3, intentos = 0,
+         enviados_hoy = ?4, creado_en = datetime('now')`,
+    )
+    .bind(usuarioId, para, await sha256(`${usuarioId}:${codigo}`), enviados)
+    .run();
   const ok = await enviarSms(env, db, {
     usuarioId,
     pedidoId: null,
@@ -319,15 +344,64 @@ export async function mandarCodigo(
     telefono: para,
     texto: textoCodigo(codigo, idioma),
   });
-  if (!ok)
+  if (!ok) {
+    // Un fallo nuestro o del proveedor no gasta la cuota de la persona: se devuelve el envío.
+    await db
+      .batch([
+        db.prepare('DELETE FROM envios_codigo_telefono WHERE id = ?').bind(envioId),
+        db
+          .prepare(
+            `UPDATE codigos_telefono SET enviados_hoy = ?, codigo_hash = '-',
+               creado_en = datetime('now', '-1 day') WHERE usuario_id = ?`,
+          )
+          .bind(llevaHoy, usuarioId),
+      ])
+      .catch((e: unknown) => console.error('telefono: no se pudo devolver el envío', String(e)));
     throw new ErrorDatos(
       'No pudimos mandar el SMS. Inténtalo en unos minutos o escribe a soporte.',
       'telefono',
       503,
     );
+  }
   return {
     ultimos: para.slice(-4),
     proximoEnSegundos: enviados >= MAX_ENVIOS_DIA ? -1 : segundosQueFaltan(enviados, 0),
+  };
+}
+
+/**
+ * ¿Hay un código que todavía sirve, y cuánto falta para poder pedir otro? La app lo mira al abrir la
+ * pantalla: si ya hay uno vigente, NO manda otro solo (abrir y cerrar la app no gasta la cuota del día).
+ */
+export async function estadoCodigo(
+  db: D1Database,
+  usuarioId: string,
+): Promise<{ vigente: boolean; proximoEnSegundos: number }> {
+  const f = await db
+    .prepare(
+      `SELECT enviados_hoy, codigo_hash, intentos,
+              creado_en > datetime('now', '-${MINUTOS_VIGENCIA} minutes') AS vigente,
+              creado_en > datetime('now','-1 day') AS hoy,
+              (julianday('now') - julianday(creado_en)) * 86400 AS hace
+         FROM codigos_telefono WHERE usuario_id = ?`,
+    )
+    .bind(usuarioId)
+    .first<{
+      enviados_hoy: number;
+      codigo_hash: string;
+      intentos: number;
+      vigente: number;
+      hoy: number;
+      hace: number;
+    }>();
+  if (!f) return { vigente: false, proximoEnSegundos: 0 };
+  const vigente =
+    Number(f.vigente) === 1 && f.codigo_hash !== '-' && Number(f.intentos) < MAX_INTENTOS;
+  const lleva = f.hoy ? Number(f.enviados_hoy) : 0;
+  return {
+    vigente,
+    proximoEnSegundos:
+      lleva >= MAX_ENVIOS_DIA ? -1 : f.hoy ? segundosQueFaltan(lleva, Number(f.hace)) : 0,
   };
 }
 

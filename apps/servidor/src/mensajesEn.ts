@@ -354,6 +354,9 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your cell phone is already confirmed. To change it, contact support.',
   ],
   ['Escribe tu número de celular.', 'Enter your cell phone number.'],
+  ['Espera un momento para pedir otro código.', 'Wait a moment before requesting another code.'],
+  ['Esa cuenta ya tiene su celular confirmado.', 'That account’s cell phone is already confirmed.'],
+  ['Esa cuenta no existe.', 'That account doesn’t exist.'],
   [
     'Pediste demasiados códigos hoy. Inténtalo mañana o escribe a soporte.',
     'You requested too many codes today. Try again tomorrow or contact support.',

@@ -70,6 +70,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'POST /admin/usuarios/:id/confirmacion': 'clientes.corregir_correo',
   // C-CORREO-HONESTO: quitar el rebote del correo de la cuenta (con registro).
   'POST /admin/usuarios/:id/rebote/quitar': 'clientes.corregir_correo',
+  // C-TELEFONO-AL-REGISTRARSE: soporte confirma a mano el celular de quien no recibe el SMS (con registro).
+  'POST /admin/usuarios/:id/telefono/confirmar': 'clientes.corregir_correo',
   'GET /admin/datos-personales/:tipo/:id/:campo': 'clientes.datos_personales',
   // ─── Repartidores, vehículos y papeles
   'GET /admin/repartidores': 'repartidores.ver',
@@ -498,6 +500,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PATCH /admin/usuarios/:id': ficha('persona'),
   'POST /admin/usuarios/:id/borrar': ficha('persona'),
   'POST /admin/usuarios/:id/correo': ficha('persona'),
+  'POST /admin/usuarios/:id/telefono/confirmar': ficha('persona'),
   'POST /admin/usuarios/:id/confirmacion': ficha('persona'),
   'POST /admin/usuarios/:id/rebote/quitar': ficha('persona'),
   'GET /admin/datos-personales/:tipo/:id/:campo': CONSULTA,

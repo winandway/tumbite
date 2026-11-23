@@ -70,6 +70,11 @@ async function sinEspera(m: Mundo, id: string) {
   )
     .bind(id)
     .run();
+  await m.DB.prepare(
+    "UPDATE envios_codigo_telefono SET creado_en = datetime(creado_en,'-20 minutes') WHERE usuario_id = ?",
+  )
+    .bind(id)
+    .run();
 }
 
 describe('C-TELEFONO-AL-REGISTRARSE · el celular se confirma por SMS al crear la cuenta', () => {
@@ -83,7 +88,7 @@ describe('C-TELEFONO-AL-REGISTRARSE · el celular se confirma por SMS al crear l
     const m = mundo(TWILIO);
     const cli = await registrar(m, 'cliente', '+13055559876');
     const puerta = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
-    expect(puerta.datos.puerta).toEqual({
+    expect(puerta.datos.puerta).toMatchObject({
       motivo: 'registro',
       ultimos: '9876',
       obligatorio: true,
@@ -325,6 +330,93 @@ describe('C-TELEFONO-TOPES · ningún robot convierte el código en una factura'
     const sexto = await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
     expect(sexto.estado).toBe(429);
     expect(sexto.datos.error).toMatch(/too many codes today/);
+  });
+});
+
+describe('C-TELEFONO-AL-REGISTRARSE · nadie queda atrapado (revisión de calidad)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('abrir la app con un código vigente no gasta otro: la puerta lo dice', async () => {
+    espiarSms();
+    const m = mundo(TWILIO);
+    const cli = await registrar(m, 'cliente', '+13055550101');
+    const antes = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
+    expect(antes.datos.puerta.vigente).toBe(false);
+    await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+    const despues = await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token);
+    expect(despues.datos.puerta.vigente).toBe(true);
+    expect(despues.datos.puerta.proximoEnSegundos).toBeGreaterThan(0);
+  });
+
+  it('si el proveedor falla, el envío no se cobra a la cuota de la persona', async () => {
+    vi.stubGlobal('fetch', async () => new Response('{}', { status: 500 }));
+    const m = mundo(TWILIO);
+    const cli = await registrar(m, 'cliente', '+13055550102');
+    for (let i = 0; i < 7; i++) {
+      const r = await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token);
+      expect(r.estado).toBe(503);
+    }
+    const n = await m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM envios_codigo_telefono WHERE usuario_id = ?',
+    )
+      .bind(cli.id)
+      .first<{ n: number }>();
+    expect(n?.n).toBe(0);
+    // Cuando el proveedor vuelve, sale enseguida.
+    const sms = espiarSms();
+    expect((await m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token)).estado).toBe(
+      200,
+    );
+    expect(sms).toHaveLength(1);
+  });
+
+  it('varias peticiones a la vez no pasan los topes: sale un solo SMS', async () => {
+    const sms = espiarSms();
+    const m = mundo(TWILIO);
+    const cli = await registrar(m, 'cliente', '+13055550103');
+    const r = await Promise.all(
+      Array.from({ length: 6 }, () =>
+        m.llamar('POST', '/datos/cuentas/telefono/codigo', {}, cli.token),
+      ),
+    );
+    expect(r.filter((x) => x.estado === 200)).toHaveLength(1);
+    expect(sms).toHaveLength(1);
+  });
+
+  it('soporte confirma a mano a quien no le llega el SMS (y queda en el registro)', async () => {
+    espiarSms();
+    const m = mundo(TWILIO);
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const cli = await registrar(m, 'cliente', '+13055550104');
+    const r = await m.llamar(
+      'POST',
+      `/datos/admin/usuarios/${cli.id}/telefono/confirmar`,
+      {},
+      admin.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(
+      (await m.llamar('GET', '/datos/cuentas/telefono', undefined, cli.token)).datos.puerta,
+    ).toBeNull();
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/admin/usuarios/${cli.id}/telefono/confirmar`,
+          {},
+          admin.token,
+        )
+      ).estado,
+    ).toBe(409);
+    // Un cliente no puede confirmarse solo por esta vía.
+    expect(
+      (await m.llamar('POST', `/datos/admin/usuarios/${cli.id}/telefono/confirmar`, {}, cli.token))
+        .estado,
+    ).toBe(403);
+    const accion = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM acciones_equipo WHERE ruta LIKE '%/telefono/confirmar'",
+    ).first<{ n: number }>();
+    expect(Number(accion?.n)).toBeGreaterThan(0);
   });
 });
 

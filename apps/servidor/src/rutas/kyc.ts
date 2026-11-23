@@ -955,6 +955,28 @@ kyc.get('/admin/telefono-codigo', async (c) => {
   });
 });
 
+/**
+ * C-TELEFONO-AL-REGISTRARSE: la salida de soporte. A quien de verdad no le llega el SMS (fijo, VoIP o una
+ * operadora que no entrega), el equipo le confirma el celular a mano después de comprobarlo con la
+ * persona (por ejemplo, por WhatsApp a ese mismo número). Queda en el registro de acciones del equipo.
+ */
+kyc.post('/admin/usuarios/:id/telefono/confirmar', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare('SELECT telefono_verificado_en AS v FROM usuarios WHERE id = ?')
+    .bind(id)
+    .first<{ v: string | null }>();
+  if (!f) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  if (f.v) throw new ErrorDatos('Esa cuenta ya tiene su celular confirmado.', undefined, 409);
+  await db
+    .prepare("UPDATE usuarios SET telefono_verificado_en = datetime('now') WHERE id = ?")
+    .bind(id)
+    .run();
+  return c.json({ ok: true });
+});
+
 kyc.put('/admin/telefono-codigo', async (c) => {
   exigir(c, 'admin');
   const d = await leerCuerpo(c, z.object({ pais: z.enum(['VE', 'US']), exigido: z.boolean() }));

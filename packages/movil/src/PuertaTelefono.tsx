@@ -83,8 +83,8 @@ const T = {
   },
 };
 
-/** El buzón de soporte (lo atiende el equipo). */
-export const CORREO_SOPORTE = 'support@divoox.com';
+/** El buzón de soporte (lo atiende el equipo; divoox.com no recibe correo: C-CORREO-SIN-RECIBIR-DIVOOX). */
+export const CORREO_SOPORTE = 'soporte+divoox@windoce.com';
 
 type Puerta = {
   motivo: 'registro' | 'vuelta' | 'sugerido';
@@ -92,6 +92,10 @@ type Puerta = {
   obligatorio: boolean;
   /** El país del celular guardado (o de la cuenta): el selector arranca ahí. */
   pais?: string | null;
+  /** Ya hay un código que sirve: al abrir no se manda otro (no se gasta la cuota del día). */
+  vigente?: boolean;
+  /** Segundos para poder pedir otro (-1: ya no se puede hoy). */
+  proximoEnSegundos?: number;
 };
 
 /**
@@ -161,6 +165,8 @@ export function PuertaTelefono({ children }: { children: ReactNode }) {
       <ConfirmaTuCelular
         ultimosInicial={puerta?.ultimos ?? null}
         paisInicial={puerta?.pais ?? null}
+        vigente={puerta?.vigente === true}
+        esperaInicial={puerta?.proximoEnSegundos ?? 0}
         opcional={!puerta?.obligatorio}
         alAhoraNo={() => {
           setAbiertaPorFranja(false);
@@ -270,12 +276,16 @@ function Listo({ alSeguir }: { alSeguir: () => void }) {
 function ConfirmaTuCelular({
   ultimosInicial,
   paisInicial,
+  vigente,
+  esperaInicial,
   opcional,
   alConfirmar,
   alAhoraNo,
 }: {
   ultimosInicial: string | null;
   paisInicial: string | null;
+  vigente: boolean;
+  esperaInicial: number;
   opcional: boolean;
   alConfirmar: () => void;
   alAhoraNo: () => void;
@@ -289,8 +299,8 @@ function ConfirmaTuCelular({
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState<'' | 'enviar' | 'confirmar' | 'cambiar'>('');
-  const [enviado, setEnviado] = useState(false);
-  const [espera, setEspera] = useState(0);
+  const [enviado, setEnviado] = useState(vigente);
+  const [espera, setEspera] = useState(Math.max(0, esperaInicial));
   const [cambiando, setCambiando] = useState(!ultimosInicial);
   // NINGÚN FORMULARIO PIERDE LO ESCRITO: el número nuevo se guarda solo. El código no (es de un solo uso).
   const b = useBorrador({
@@ -332,13 +342,13 @@ function ConfirmaTuCelular({
     }
   }, [api]);
 
-  // El primer código sale solo al abrir la pantalla (si ya hay número).
+  // El primer código sale solo al abrir la pantalla (si ya hay número y no hay uno vigente).
   const primero = useRef(false);
   useEffect(() => {
-    if (primero.current || !ultimosInicial) return;
+    if (primero.current || !ultimosInicial || vigente) return;
     primero.current = true;
     void enviar();
-  }, [enviar, ultimosInicial]);
+  }, [enviar, ultimosInicial, vigente]);
 
   async function confirmar(valor = codigo) {
     if (valor.length !== 6 || ocupado) return;

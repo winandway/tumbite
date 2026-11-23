@@ -255,6 +255,9 @@ try {
     await sql(
       `UPDATE codigos_telefono SET creado_en = datetime('now','-20 minutes') WHERE usuario_id = '${nueva.id}'`,
     );
+    await sql(
+      `UPDATE envios_codigo_telefono SET creado_en = datetime(creado_en,'-20 minutes') WHERE usuario_id = '${nueva.id}'`,
+    );
     await p.getByText(T.guardar).click();
     await p.getByTestId('codigo-celular').waitFor({ timeout: 30_000 });
     for (let i = 0; i < 20 && mensajes.length === antes + 1; i++) await espera(300);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, nombrePais } from '@tumbite/compartido';
 import { pedir } from './api';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-TELEFONO-POR-PAIS (22 nov 2026, orden de Richard por Gerencia): el código por SMS al registrarse,
@@ -31,6 +32,9 @@ const T = {
     cliente: 'Cliente',
     conductor: 'Conductor',
     vacio: 'Todavía no hay cuentas con el código.',
+    aMano: 'Confirmar a mano',
+    aManoSeguro:
+      '¿Confirmar a mano el celular de esta cuenta? Hazlo solo si ya comprobaste con la persona que el número es suyo (por ejemplo, escribiéndole a ese número). Queda en el registro con tu nombre.',
     guardado: 'Guardado.',
   },
   en: {
@@ -55,6 +59,9 @@ const T = {
     cliente: 'Customer',
     conductor: 'Driver',
     vacio: 'No accounts with the code yet.',
+    aMano: 'Confirm manually',
+    aManoSeguro:
+      'Confirm this account’s cell phone manually? Only do it if you already checked with the person that the number is theirs (for example, by texting that number). It’s logged with your name.',
     guardado: 'Saved.',
   },
 };
@@ -106,7 +113,9 @@ export function VerificacionCelular({ idioma }: { idioma: Idioma }) {
   if (!datos) return aviso ? <p role="alert">{aviso}</p> : null;
   return (
     <fieldset className="tarjeta" data-testid="verificacion-celular">
-      <legend>{t.titulo}</legend>
+      <legend>
+        {t.titulo} <AyudaAqui guia="sms-code-at-sign-up" idioma={idioma} />
+      </legend>
       <p className="suave">{t.detalle}</p>
       {datos.paises.map((p) => (
         <div key={p.pais}>
@@ -143,7 +152,33 @@ export function VerificacionCelular({ idioma }: { idioma: Idioma }) {
                 <td>{c.nombre}</td>
                 <td>{c.rol === 'repartidor' ? t.conductor : t.cliente}</td>
                 <td>{c.ultimos ? `•••• ${c.ultimos}` : '—'}</td>
-                <td>{c.verificado ? t.confirmado(fecha(c.verificado, idioma)) : t.falta}</td>
+                <td>
+                  {c.verificado ? (
+                    t.confirmado(fecha(c.verificado, idioma))
+                  ) : (
+                    <>
+                      {t.falta}{' '}
+                      <button
+                        type="button"
+                        className="boton secundario chico"
+                        onClick={() => {
+                          if (!globalThis.confirm(t.aManoSeguro)) return;
+                          setAviso('');
+                          pedir('POST', `/datos/admin/usuarios/${c.id}/telefono/confirmar`)
+                            .then(() => {
+                              setAviso(t.guardado);
+                              return cargar();
+                            })
+                            .catch((e: unknown) =>
+                              setAviso(e instanceof Error ? e.message : String(e)),
+                            );
+                        }}
+                      >
+                        {t.aMano}
+                      </button>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
