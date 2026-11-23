@@ -250,6 +250,9 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'POST /admin/stripe/dominio': 'dinero.configurar',
   'GET /admin/finanzas/cancelaciones': 'dinero.ver',
   'POST /admin/finanzas/cancelaciones': 'dinero.configurar',
+  // C-QUIEN-PAGA-VIAJES: la palanca de quién paga la comisión en los viajes.
+  'GET /admin/finanzas/quien-paga': 'dinero.ver',
+  'PUT /admin/finanzas/quien-paga': 'dinero.configurar',
   'GET /admin/finanzas/conciliacion': 'dinero.ver',
   'POST /admin/finanzas/conciliacion': 'dinero.conciliar',
   'GET /admin/finanzas/empresas': 'dinero.ver',
@@ -670,6 +673,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/stripe/dominio': DINERO,
   'GET /admin/finanzas/cancelaciones': DINERO,
   'POST /admin/finanzas/cancelaciones': DINERO,
+  'GET /admin/finanzas/quien-paga': DINERO,
+  'PUT /admin/finanzas/quien-paga': DINERO,
   'GET /admin/finanzas/conciliacion': DINERO,
   'POST /admin/finanzas/conciliacion': DINERO,
   'GET /admin/finanzas/empresas': DINERO,

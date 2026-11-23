@@ -3397,5 +3397,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "comprobante",
     "autor_id",
     "creado_en"
+  ],
+  "quien_paga_viajes": [
+    "pais",
+    "ciudad",
+    "valor",
+    "cambiado_por",
+    "cambiado_en"
   ]
 };

@@ -56,6 +56,8 @@ export type ViajePasajero = {
   recogidaGuardada?: boolean;
   destino: { direccion: string; lat: number; lng: number };
   total: number | null;
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox (ya sumada en `total`). */
+  tarifaServicio?: number;
   moneda: string | null;
   /** C-CUPON-DIVOOX: lo que paga Divoox con el regalo (el pasajero paga en mano el resto). */
   regalo?: RegaloDelViaje | null;
@@ -773,6 +775,12 @@ export function ViajeEnCurso({
             moneda={viaje.moneda ?? 'USD'}
             idioma={idioma}
           />
+          {(viaje.tarifaServicio ?? 0) > 0 ? (
+            // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, a la vista (ya va en el total).
+            <Text testID="viaje-tarifa-servicio" style={{ color: '#666B73', fontSize: 13 }}>
+              {t.tarifaServicio}: {monto(viaje.tarifaServicio ?? 0)}
+            </Text>
+          ) : null}
           {viaje.enMano ? (
             <MontoEnMano
               testID="viaje-precio-bs"

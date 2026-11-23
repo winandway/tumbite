@@ -61,6 +61,8 @@ import { zonaPara } from './zonas';
 import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../rutaPorCalles';
 import { multiplicadorVigente } from '../viajesDinamica';
 import { paradasDe } from './paradasViaje';
+import { SQL_TARIFA_SERVICIO, quienPagaViaje, tarifaServicioViaje } from '../finanzas/quienPaga';
+import type { DesgloseViaje } from '@tumbite/compartido';
 import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
 import { conductorDeConfianzaParaPedir } from './viajesFijos';
 import { aparatoDe } from './regalosDivoox';
@@ -565,15 +567,49 @@ export async function cotizarParaCliente(
   // C-CARRO-DINAMICA: el multiplicador de la ciudad en este momento (10 000 = precio normal), nunca
   // por encima del tope de la tarifa ni del tope del país. Queda fijo para este viaje.
   const multiplicadorPb = await multiplicadorVigente(db, d.servicio, zona, tarifa.topeDinamicoPb);
-  const desglose = cotizarViaje(tarifa, ruta, multiplicadorPb);
+  // C-QUIEN-PAGA-VIAJES: quién paga la comisión en esta ciudad. Solo se le suma la tarifa de
+  // servicio al pasajero si su app la muestra en una línea aparte; si no, como siempre (conductor).
+  // Solo viajes de personas (Moto y Carro): los envíos siguen como siempre.
+  const quienPaga =
+    d.tarifaServicio && d.servicio !== 'envios'
+      ? await quienPagaViaje(db, zona.pais, zona.id)
+      : 'conductor';
+  const conTarifa = async (dg: DesgloseViaje): Promise<DesgloseViaje> => {
+    const t = await tarifaServicioViaje(db, {
+      servicioId: d.servicio,
+      pais: zona.pais,
+      ciudad: zona.id,
+      moneda: fila.moneda,
+      precio: dg.total,
+      quienPaga,
+    });
+    return {
+      ...dg,
+      precioViaje: dg.total,
+      tarifaServicio: t.tarifaServicio,
+      quienPaga,
+      total: dg.total + t.tarifaServicio,
+    };
+  };
+  const desglose = await conTarifa(cotizarViaje(tarifa, ruta, multiplicadorPb));
   // C-CARRO-CATEGORIAS: el precio de cada categoría que ofrece la ciudad para este mismo trayecto,
-  // calculado aquí mismo (sin guardar nada): la app las muestra para elegir.
+  // calculado aquí mismo (sin guardar nada): la app las muestra para elegir (con su tarifa).
   const opciones =
     d.servicio === 'carro'
-      ? categoriasOfrecidas(normal).flatMap((categoria) => {
-          const t = tarifaDeCategoria(normal, categoria);
-          return t ? [{ categoria, total: cotizarViaje(t, ruta, multiplicadorPb).total }] : [];
-        })
+      ? (
+          await Promise.all(
+            categoriasOfrecidas(normal).map(async (categoria) => {
+              const t = tarifaDeCategoria(normal, categoria);
+              if (!t) return null;
+              const dg = await conTarifa(cotizarViaje(t, ruta, multiplicadorPb));
+              return {
+                categoria,
+                total: dg.total,
+                ...(dg.tarifaServicio ? { tarifaServicio: dg.tarifaServicio } : {}),
+              };
+            }),
+          )
+        ).filter((o) => o != null)
       : [];
   // C-RUTA-POR-CALLES: si el pasajero ya veía un precio para este mismo trayecto y cambió, se dice.
   const anterior = await cotizacionAnteriorMismoTrayecto(
@@ -652,6 +688,9 @@ export async function cotizarParaCliente(
     fuenteDistancia: ruta.fuente,
     desglose,
     total: desglose.total,
+    // C-QUIEN-PAGA-VIAJES: la tarifa de servicio va aparte (ya sumada en el total) y a la vista.
+    tarifaServicio: desglose.tarifaServicio ?? 0,
+    quienPaga,
     venceEn,
     dePrueba: fila.de_prueba === 1,
     metodosPago: [...perfilPasajeros(zona.pais).metodosPago],
@@ -1006,6 +1045,8 @@ type FilaViajeCliente = FilaRegaloPasajero & {
   pais: string | null;
   categoria: string | null;
   multiplicador_pb: number | null;
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox (ya sumada en `total`). */
+  tarifa_servicio: number | null;
   vehiculo_tipo: string | null;
   plazas: number | null;
   conductor_foto: number | null;
@@ -1023,6 +1064,7 @@ async function viajeDelCliente(
               v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
               q.total, q.moneda, q.tarifa_json, q.multiplicador_pb,
+              ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
               h.marca, h.modelo, h.color, h.placa, h.tipo AS vehiculo_tipo, h.plazas, v.categoria,
               -- C-CARRO-VIAJE-PASAJERO: la foto es la selfie verificada (como Uber), solo si está aprobada.
@@ -1114,6 +1156,8 @@ function viajePublico(f: FilaViajeCliente) {
     origen: { direccion: sinCodigo(f.origen_direccion), lat: f.origen_lat, lng: f.origen_lng },
     destino: { direccion: sinCodigo(f.destino_direccion), lat: f.destino_lat, lng: f.destino_lng },
     total: f.total,
+    // C-QUIEN-PAGA-VIAJES: la «Tarifa de servicio de Divoox», en su línea aparte (ya va en el total).
+    tarifaServicio: Number(f.tarifa_servicio ?? 0),
     moneda: f.moneda,
     // C-CUPON-DIVOOX: lo que paga Divoox y lo que el pasajero paga en mano.
     // C-PRECIO-CON-REGALO: con su nombre, y también el de un viaje cancelado (volvió a su cuenta).

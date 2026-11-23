@@ -72,6 +72,7 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   platos: 'sin_persona',
   politica_requisitos: 'sin_persona',
   politicas_cancelacion: 'sin_persona',
+  quien_paga_viajes: 'sin_persona',
   politicas_financieras: 'sin_persona',
   programas_referido: 'sin_persona',
   promociones_restaurante: 'sin_persona',

@@ -26,6 +26,7 @@ import {
 import {
   cobrarReservaViaje,
   devolverReservaViaje,
+  reservaDeViaje,
   reservarComisionViaje,
 } from '../finanzas/conductor';
 import { cargoEspera, esPagoACelular, esquemaTarifaViaje, sinPlusCode } from '@tumbite/compartido';
@@ -51,6 +52,7 @@ import {
 const str = (x: unknown): string | null => (x == null ? null : String(x));
 import { revisarReferidos } from '../programaReferidos';
 import { aparatoDe } from './regalosDivoox';
+import { SQL_TARIFA_SERVICIO } from '../finanzas/quienPaga';
 import {
   cerrarRegaloDeViaje,
   liberarRegalo,
@@ -172,6 +174,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
               v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng, q.total, v.ref_tasa, v.ref_fecha,
+              ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
@@ -211,6 +214,11 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         vehiculoId: String(f.vehiculo_id),
         servicioId: String(f.servicio_id),
         gananciaCentavos: Number(f.ganancia_centavos),
+        // C-QUIEN-PAGA-VIAJES: «Cobra X · Y son tuyos · Z son de Divoox». La tarifa de servicio
+        // que pagó el pasajero (ya va en lo que cobra) y la comisión entera de Divoox (sale del saldo).
+        tarifaServicio: Number(f.tarifa_servicio ?? 0),
+        comisionDivoox:
+          f.total == null ? 0 : Math.max(0, Number(f.total) - Number(f.ganancia_centavos)),
         moneda: f.moneda == null ? null : String(f.moneda),
         expiraEn: String(f.expira_en),
         // C-OFERTA-TIEMPO-REAL: lo que le queda, contado por el servidor (no por el reloj del teléfono).
@@ -275,6 +283,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               json_extract(q.tarifa_json, '$.esperaParadaGratisS') AS espera_parada_gratis_s,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
               q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
+              ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
@@ -308,6 +317,10 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
       destino_direccion: paraMostrar(f.destino_direccion),
       regalo_divoox: regaloDivoox,
       cobrar_en_mano: cobrarEnMano,
+      // C-QUIEN-PAGA-VIAJES: la tarifa de servicio que pagó el pasajero (va en lo que cobra) y la
+      // comisión entera de Divoox apartada de su saldo (la tarifa más su parte, si la hay).
+      tarifa_servicio: Number(f.tarifa_servicio ?? 0),
+      comision_divoox: (await reservaDeViaje(base(c), String(f.id), u.id)).monto,
       // C-BS-REFERENCIA: lo que cobra en mano, con su equivalente en bolívares (informativo).
       referencia: cobrarEnMano == null ? null : referenciaConTasa(cobrarEnMano, tasa),
       // C-BS-EN-MANO: lo mismo con «sinTasa» (la pantalla lo dice) y el total en las dos monedas.
@@ -350,7 +363,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)
     .prepare(
-      `SELECT o.servicio_id, o.zona_id, z.pais, q.total, q.moneda FROM operaciones o
+      `SELECT o.servicio_id, o.zona_id, z.pais, q.total, q.moneda,
+              ${SQL_TARIFA_SERVICIO} AS tarifa_servicio FROM operaciones o
          JOIN zonas z ON z.id = o.zona_id
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE o.id = ?`,
@@ -362,6 +376,7 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
       pais: string;
       total: number | null;
       moneda: string | null;
+      tarifa_servicio: number;
     }>();
   if (info?.total != null && info.moneda) {
     const reserva = await reservarComisionViaje(base(c), {
@@ -371,7 +386,9 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
       moneda: info.moneda,
       operacionId: id,
       conductorId: u.id,
-      valor: info.total,
+      // C-QUIEN-PAGA-VIAJES: la comisión entera, sobre el precio del viaje (sin la tarifa de
+      // servicio que el pasajero le paga en mano y que el saldo entrega a Divoox).
+      valor: info.total - Number(info.tarifa_servicio ?? 0),
     });
     if (!reserva.ok)
       throw new ErrorDatos(

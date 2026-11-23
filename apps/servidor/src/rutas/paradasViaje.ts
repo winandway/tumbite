@@ -13,10 +13,12 @@ import {
   llego,
   perfilPasajeros,
   referenciaConTasa,
+  esQuienPaga,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { reajustarReservaViaje, servicioFinancieroViaje } from '../finanzas/conductor';
+import { SQL_QUIEN_PAGA, SQL_TARIFA_SERVICIO, tarifaServicioViaje } from '../finanzas/quienPaga';
 import { notificar } from '../notificaciones';
 import { rutaParaCotizar } from '../rutaPorCalles';
 import { type Variables, base, exigir } from '../sesion';
@@ -128,6 +130,9 @@ type ViajeParaCambiar = {
   ref_tasa: number | null;
   ref_fecha: string | null;
   autorizado: number | null;
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio del pasajero y quién paga, guardados al nacer. */
+  tarifa_servicio: number;
+  quien_paga: string;
 };
 
 async function viajeParaCambiar(db: D1Database, id: string) {
@@ -136,6 +141,7 @@ async function viajeParaCambiar(db: D1Database, id: string) {
       `SELECT o.id, o.cliente_id, o.conductor_id, o.servicio_id, o.zona_id, z.pais, v.estado, v.metodo_pago,
               v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
               q.id AS cot_id, q.total, q.moneda, q.tarifa_json, q.multiplicador_pb, v.ref_tasa, v.ref_fecha,
+              ${SQL_TARIFA_SERVICIO} AS tarifa_servicio, ${SQL_QUIEN_PAGA} AS quien_paga,
               (SELECT k.autorizado FROM cobros_viaje k WHERE k.operacion_id = o.id) AS autorizado
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -211,7 +217,33 @@ export async function cambiarParadas(
   const ruta = await rutaParaCotizar(env, db, v.cliente_id, tarifa, origen, destino, todas);
   if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[v.servicio_id as ServicioViaje] * 1000)
     throw new ErrorDatos('Con esas paradas el viaje queda demasiado largo.', 'paradas', 422);
-  const desglose = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
+  const sinTarifa = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
+  // C-QUIEN-PAGA-VIAJES: con el precio nuevo, la tarifa de servicio se recalcula con quién paga en
+  // ESTE viaje (el valor con que nació, aunque el panel haya cambiado después).
+  const quienPaga = esQuienPaga(v.quien_paga) ? v.quien_paga : 'conductor';
+  const tarifaNueva =
+    quienPaga === 'conductor'
+      ? 0
+      : (
+          await tarifaServicioViaje(db, {
+            servicioId: v.servicio_id,
+            pais: v.pais,
+            ciudad: v.zona_id,
+            moneda: v.moneda,
+            precio: sinTarifa.total,
+            quienPaga,
+          })
+        ).tarifaServicio;
+  const desglose: DesgloseViaje =
+    quienPaga === 'conductor'
+      ? sinTarifa
+      : {
+          ...sinTarifa,
+          precioViaje: sinTarifa.total,
+          tarifaServicio: tarifaNueva,
+          quienPaga,
+          total: sinTarifa.total + tarifaNueva,
+        };
   const totalActual = Number(v.total);
   const sube = desglose.total > totalActual;
   const conTarjeta = v.metodo_pago === 'tarjeta';
@@ -338,7 +370,8 @@ export async function cambiarParadas(
       moneda: v.moneda,
       operacionId: v.id,
       conductorId: v.conductor_id,
-      valor: totalFinal,
+      // C-QUIEN-PAGA-VIAJES: la comisión, sobre el precio del viaje (sin la tarifa de servicio).
+      valor: totalFinal - (mantenerPrecio ? Number(v.tarifa_servicio ?? 0) : tarifaNueva),
       cambioId,
     }).catch((e: unknown) => {
       console.error('paradas: reajuste de la comisión apartada', v.id, e);

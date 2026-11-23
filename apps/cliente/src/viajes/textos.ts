@@ -93,6 +93,13 @@ export const TEXTOS_MOTO = {
     pinDestino: 'Destino',
     verPrecio: 'Ver precio',
     precioFijo: 'Precio fijo',
+    // C-QUIEN-PAGA-VIAJES
+    precioDelViaje: 'Viaje',
+    tarifaServicio: 'Tarifa de servicio de Divoox',
+    tarifaServicioAyuda:
+      'Ya está sumada en el total. El conductor recibe el precio del viaje completo; la tarifa es para Divoox.',
+    tarifaServicioMitad:
+      'Ya está sumada en el total. Es la mitad de la comisión de Divoox; la otra mitad la pone el conductor.',
     precioActualizado: 'El precio se actualizó. Antes:',
     precioPrueba: 'Precio de prueba (sitio de pruebas)',
     efectivo: 'Pagas en efectivo al conductor al llegar',
@@ -311,6 +318,13 @@ export const TEXTOS_MOTO = {
     pinDestino: 'Destination',
     verPrecio: 'See price',
     precioFijo: 'Upfront price',
+    // C-QUIEN-PAGA-VIAJES
+    precioDelViaje: 'Ride fare',
+    tarifaServicio: 'Divoox service fee',
+    tarifaServicioAyuda:
+      'Already included in the total. Your driver gets the full ride price; the fee goes to Divoox.',
+    tarifaServicioMitad:
+      'Already included in the total. It is half of the Divoox fee; your driver covers the other half.',
     precioActualizado: 'The price was updated. Before:',
     precioPrueba: 'Test price (test site)',
     efectivo: 'Pay your driver in cash when you arrive',
@@ -478,6 +492,7 @@ export const TEXTOS_MIS_VIAJES = {
       dinamico: 'Alta demanda',
       cargoFijo: 'Cargo de servicio',
       redondeo: 'Redondeo',
+      tarifaServicio: 'Tarifa de servicio de Divoox',
     } as Record<string, string>,
     total: 'Total',
     propina: 'Propina',
@@ -572,8 +587,10 @@ export const TEXTOS_MIS_VIAJES = {
       tiempo: 'Time',
       ajusteMinimo: 'Minimum fare adjustment',
       dinamico: 'High demand',
-      cargoFijo: 'Service fee',
+      // Como Uber: el cargo fijo de la ciudad es «Booking fee» (no se confunde con la de Divoox).
+      cargoFijo: 'Booking fee',
       redondeo: 'Rounding',
+      tarifaServicio: 'Divoox service fee',
     } as Record<string, string>,
     total: 'Total',
     propina: 'Tip',

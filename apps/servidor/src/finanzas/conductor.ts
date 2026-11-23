@@ -392,6 +392,18 @@ export async function cobrarReservaViaje(
   const v = await reservaDeViaje(db, operacionId, conductorId);
   if (v.monto <= 0) return 0;
   const r = refReserva(operacionId, conductorId);
+  // C-QUIEN-PAGA-VIAJES: lo apartado es la comisión entera de Divoox. Si el pasajero pagó una tarifa
+  // de servicio (la cobró el conductor en mano), esa parte se anota como TARIFA DE SERVICIO DEL
+  // CLIENTE, no como comisión sobre la ganancia del conductor: el libro distingue las dos.
+  const q = await db
+    .prepare(
+      `SELECT COALESCE(CAST(json_extract(q.desglose_json, '$.tarifaServicio') AS INTEGER), 0) AS t
+         FROM viajes w JOIN cotizaciones_viaje q ON q.id = w.cotizacion_id WHERE w.operacion_id = ?`,
+    )
+    .bind(operacionId)
+    .first<{ t: number }>();
+  const tarifa = Math.min(v.monto, Math.max(0, Number(q?.t ?? 0)));
+  const comision = v.monto - tarifa;
   await db.batch([
     sentenciaLibro(db, {
       cuentaId: conductorId,
@@ -399,18 +411,38 @@ export async function cobrarReservaViaje(
       pais: v.pais,
       moneda: v.moneda,
       monto: -v.monto,
-      concepto: 'comision_viaje',
+      concepto: comision === 0 ? CONCEPTO_TARIFA_SERVICIO : 'comision_viaje',
       referencia: `${r}:cobrada:reservado`,
     }),
-    sentenciaLibro(db, {
-      cuentaId: CUENTA_TUMBITE,
-      bolsillo: 'comisiones',
-      pais: v.pais,
-      moneda: v.moneda,
-      monto: v.monto,
-      concepto: 'comision_viaje',
-      referencia: `${r}:cobrada:divoox`,
-    }),
+    ...(comision > 0
+      ? [
+          sentenciaLibro(db, {
+            cuentaId: CUENTA_TUMBITE,
+            bolsillo: 'comisiones',
+            pais: v.pais,
+            moneda: v.moneda,
+            monto: comision,
+            concepto: 'comision_viaje',
+            referencia: `${r}:cobrada:divoox`,
+          }),
+        ]
+      : []),
+    ...(tarifa > 0
+      ? [
+          sentenciaLibro(db, {
+            cuentaId: CUENTA_TUMBITE,
+            bolsillo: 'comisiones',
+            pais: v.pais,
+            moneda: v.moneda,
+            monto: tarifa,
+            concepto: CONCEPTO_TARIFA_SERVICIO,
+            referencia: `${r}:cobrada:tarifa`,
+          }),
+        ]
+      : []),
   ]);
   return v.monto;
 }
+
+/** C-QUIEN-PAGA-VIAJES: la tarifa de servicio que pagó el pasajero, en el libro. */
+export const CONCEPTO_TARIFA_SERVICIO = 'tarifa_servicio_viaje';

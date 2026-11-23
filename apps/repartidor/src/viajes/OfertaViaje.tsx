@@ -13,11 +13,15 @@ import { Mapa } from '../piezas/Mapa';
 import { textoOfertaConfianza } from './agendaFijos';
 import { useAlarmaOferta } from '../sonidoOferta';
 import { venceOferta } from './ofertaTiempo';
+import { CuentaTarifa } from './CuentaTarifa';
 
 /** Lo que manda GET /datos/conductor/operaciones/ofertas (C-OFERTA-COMPLETA). */
 export type OfertaViaje = {
   operacionId: string;
   gananciaCentavos: number;
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio del pasajero y la comisión entera de Divoox. */
+  tarifaServicio?: number;
+  comisionDivoox?: number;
   moneda: string | null;
   expiraEn: string;
   /** C-OFERTA-TIEMPO-REAL: los segundos que le quedan, contados por el servidor. */
@@ -185,6 +189,15 @@ export function OfertaViajeModal({
                   etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.cobraEnMano}
                   color={C.exito}
                   tamano="grande"
+                />
+                <CuentaTarifa
+                  testID="oferta-cuenta-tarifa"
+                  total={oferta.gananciaCentavos + (oferta.comisionDivoox ?? 0)}
+                  deDivoox={oferta.comisionDivoox ?? 0}
+                  tarifaServicio={oferta.tarifaServicio ?? 0}
+                  conRegalo={(oferta.regaloDivoox ?? 0) > 0}
+                  moneda={oferta.moneda ?? 'USD'}
+                  idioma={idioma}
                 />
               </View>
             ) : (

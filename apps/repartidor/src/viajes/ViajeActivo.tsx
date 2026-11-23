@@ -1,3 +1,4 @@
+import { CuentaTarifa } from './CuentaTarifa';
 import { comoLlegar } from '../comoLlegar';
 import { type CierreViaje, cierreConRespuesta, empezarCierre } from './cierreViaje';
 import { useCallback, useEffect, useState } from 'react';
@@ -85,6 +86,9 @@ export type ViajeConductor = {
   /** C-CUPON-DIVOOX: lo que cobra en mano y lo que le paga Divoox por el regalo del pasajero. */
   cobrar_en_mano?: number | null;
   regalo_divoox?: number;
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio del pasajero y la comisión entera apartada. */
+  tarifa_servicio?: number;
+  comision_divoox?: number;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
   referencia?: Referencia | null;
   /** C-BS-EN-MANO: lo que cobra en mano en dólares y en bolívares con la tasa fijada del viaje. */
@@ -396,6 +400,17 @@ export function ViajeActivo({
               </Text>
             )}
             {lineaRegalo}
+            {viaje.total != null ? (
+              <CuentaTarifa
+                testID="viaje-cierre-cuenta-tarifa"
+                total={viaje.total}
+                deDivoox={viaje.comision_divoox ?? 0}
+                tarifaServicio={viaje.tarifa_servicio ?? 0}
+                conRegalo={(viaje.regalo_divoox ?? 0) > 0}
+                moneda={viaje.moneda ?? 'USD'}
+                idioma={idiomaCorto}
+              />
+            ) : null}
           </View>
         ) : null}
         {cierre.final === 'terminado' ? (
@@ -531,6 +546,17 @@ export function ViajeActivo({
           </View>
         ) : null}
         {lineaRegalo}
+        {viaje.total != null ? (
+          <CuentaTarifa
+            testID="viaje-cuenta-tarifa"
+            total={viaje.total}
+            deDivoox={viaje.comision_divoox ?? 0}
+            tarifaServicio={viaje.tarifa_servicio ?? 0}
+            conRegalo={(viaje.regalo_divoox ?? 0) > 0}
+            moneda={viaje.moneda ?? 'USD'}
+            idioma={idiomaCorto}
+          />
+        ) : null}
       </View>
       {/* C-MAPA-VIAJE-DRIVER: el mapa con la recogida, el destino y el conductor, debajo del precio
           (el precio sigue siendo lo primero). La cámara se mueve solo cuando cambia un punto. */}

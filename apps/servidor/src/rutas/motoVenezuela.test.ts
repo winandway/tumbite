@@ -662,3 +662,183 @@ describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)',
     expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
   });
 });
+
+// ---------------------------------------------------------------- C-QUIEN-PAGA-VIAJES
+
+/** Cotiza y pide una moto con una app que SÍ muestra la tarifa de servicio aparte (la de hoy). */
+async function pedirConTarifa(e: E, conTarifa = true) {
+  const cot = await e.m.llamar(
+    'POST',
+    '/datos/viajes/cotizar',
+    {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: { lat: 10.4806, lng: -66.8406, direccion: 'Destino' },
+      ...(conTarifa ? { tarifaServicio: true } : {}),
+    },
+    e.cliente.token,
+  );
+  expect(cot.estado).toBe(201);
+  const q = cot.datos.cotizacion;
+  const v = await e.m.llamar(
+    'POST',
+    '/datos/viajes',
+    { cotizacionId: q.id, metodoPago: 'efectivo' },
+    e.cliente.token,
+  );
+  expect(v.estado).toBe(201);
+  return { id: v.datos.viaje.id as string, q };
+}
+
+const palanca = (e: E, valor: string, ciudad?: string) =>
+  e.m.llamar(
+    'PUT',
+    '/datos/admin/finanzas/quien-paga',
+    { pais: 'VE', valor, ciudad },
+    e.admin.token,
+  );
+
+const libroDe = async (e: E, concepto: string) =>
+  Number(
+    (
+      await e.m.DB.prepare(
+        "SELECT COALESCE(SUM(monto), 0) AS s FROM libro WHERE bolsillo = 'comisiones' AND concepto = ?",
+      )
+        .bind(concepto)
+        .first<{ s: number }>()
+    )?.s ?? 0,
+  );
+
+describe('C-QUIEN-PAGA-VIAJES: quién paga la comisión de Divoox en los viajes, de punta a punta', () => {
+  for (const valor of ['conductor', 'cliente', 'mitad'] as const)
+    it(`${valor}: lo que ve el pasajero, lo que ve el conductor, su saldo y el libro cuadran`, async () => {
+      const e = await escenario();
+      await abrirCaracas(e);
+      expect((await palanca(e, valor)).estado).toBe(200);
+      const c = await conductorListo(e, 300);
+      const { id, q } = await pedirConTarifa(e);
+      const precio = q.desglose.precioViaje as number;
+      const comision = Math.round(precio / 10);
+      const tarifa =
+        valor === 'cliente' ? comision : valor === 'mitad' ? Math.floor(comision / 2) : 0;
+      // El pasajero ve la tarifa aparte, ANTES de pedir, y el total con ella.
+      expect(q.quienPaga).toBe(valor);
+      expect(q.tarifaServicio).toBe(tarifa);
+      expect(q.total).toBe(precio + tarifa);
+      expect(q.desglose.total).toBe(precio + tarifa);
+      expect(q.enMano.monto).toBe(precio + tarifa);
+      // El conductor: cobra el total, lo suyo es el total menos la comisión entera.
+      const oferta = (await c.yo('GET', '/datos/conductor/operaciones/ofertas')).datos.ofertas.find(
+        (o: { operacionId: string }) => o.operacionId === id,
+      );
+      expect(oferta.enMano.monto).toBe(precio + tarifa);
+      expect(oferta.gananciaCentavos).toBe(precio + tarifa - comision);
+      expect(oferta.tarifaServicio).toBe(tarifa);
+      expect(oferta.comisionDivoox).toBe(comision);
+      expect((await c.paso(id, 'aceptar')).estado).toBe(200);
+      expect((await saldo(c)).reservado).toBe(comision);
+      const actual = (await c.yo('GET', '/datos/conductor/operaciones/actual')).datos.operacion;
+      expect(actual.cobrar_en_mano).toBe(precio + tarifa);
+      expect(actual.tarifa_servicio).toBe(tarifa);
+      expect(actual.comision_divoox).toBe(comision);
+      // El pasajero ve la misma tarifa en su viaje.
+      const delPasajero = (
+        await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, e.cliente.token)
+      ).datos.viaje;
+      expect(delPasajero.tarifaServicio).toBe(tarifa);
+      expect(delPasajero.total).toBe(precio + tarifa);
+      expect((await c.paso(id, 'llegue')).estado).toBe(200);
+      expect((await c.paso(id, 'iniciar', { pin: delPasajero.pin })).estado).toBe(200);
+      const fin = await c.paso(id, 'terminar');
+      expect(fin.estado).toBe(200);
+      // El saldo entrega a Divoox la comisión entera, una vez.
+      const s = await saldo(c);
+      expect(s.disponible).toBe(300 - comision);
+      expect(s.reservado).toBe(0);
+      // El libro distingue la tarifa del cliente de la comisión sobre la ganancia del conductor.
+      expect(await libroDe(e, 'tarifa_servicio_viaje')).toBe(tarifa);
+      expect(await libroDe(e, 'comision_viaje')).toBe(comision - tarifa);
+      // El recibo del pasajero trae la línea.
+      const recibo = await e.m.llamar(
+        'GET',
+        `/datos/viajes/${id}/recibo`,
+        undefined,
+        e.cliente.token,
+      );
+      if (recibo.estado === 200)
+        expect(recibo.datos.recibo?.desglose?.tarifaServicio ?? tarifa).toBe(tarifa);
+    });
+
+  it('una app de antes (que no muestra la línea) sigue como siempre: el pasajero no paga tarifa', async () => {
+    const e = await escenario();
+    await abrirCaracas(e);
+    expect((await palanca(e, 'cliente')).estado).toBe(200);
+    const { q } = await pedirConTarifa(e, false);
+    expect(q.tarifaServicio).toBe(0);
+    expect(q.quienPaga).toBe('conductor');
+    expect(q.total).toBe(q.desglose.precioViaje);
+  });
+
+  it('cambiar la palanca no toca un viaje ya pedido; la ciudad manda sobre el país', async () => {
+    const e = await escenario();
+    await abrirCaracas(e);
+    expect((await palanca(e, 'cliente')).estado).toBe(200);
+    const c = await conductorListo(e, 300);
+    const { id, q } = await pedirConTarifa(e);
+    expect(q.tarifaServicio).toBeGreaterThan(0);
+    expect((await palanca(e, 'conductor')).estado).toBe(200);
+    const oferta = (await c.yo('GET', '/datos/conductor/operaciones/ofertas')).datos.ofertas.find(
+      (o: { operacionId: string }) => o.operacionId === id,
+    );
+    expect(oferta.tarifaServicio).toBe(q.tarifaServicio);
+    expect(oferta.enMano.monto).toBe(q.total);
+    // La ciudad con su propia regla.
+    expect((await palanca(e, 'mitad', CCS.id)).estado).toBe(200);
+    const otra = await e.m.llamar(
+      'POST',
+      '/datos/viajes/cotizar',
+      {
+        servicio: 'moto',
+        origen: ORIGEN,
+        destino: { lat: 10.4886, lng: -66.9036, direccion: 'Destino corto' },
+        tarifaServicio: true,
+      },
+      e.cliente.token,
+    );
+    expect(otra.datos.cotizacion.quienPaga).toBe('mitad');
+    // «del país» quita la regla de la ciudad; el país no se puede dejar sin valor.
+    expect((await palanca(e, 'del_pais', CCS.id)).estado).toBe(200);
+    expect((await palanca(e, 'del_pais')).estado).toBe(422);
+    const lista = await e.m.llamar(
+      'GET',
+      '/datos/admin/finanzas/quien-paga',
+      undefined,
+      e.admin.token,
+    );
+    expect(lista.datos.reglas).toEqual([
+      expect.objectContaining({ pais: 'VE', ciudad: null, valor: 'conductor' }),
+    ]);
+    const aud = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM finanzas_auditoria WHERE accion = 'quien_paga.cambiar'",
+    ).first<{ n: number }>();
+    expect(aud?.n).toBe(4);
+  });
+
+  it('Venezuela arranca en «cliente» y solo el equipo cambia la palanca', async () => {
+    const e = await escenario();
+    const lista = await e.m.llamar(
+      'GET',
+      '/datos/admin/finanzas/quien-paga',
+      undefined,
+      e.admin.token,
+    );
+    expect(lista.datos.reglas).toEqual([expect.objectContaining({ pais: 'VE', valor: 'cliente' })]);
+    const r = await e.m.llamar(
+      'PUT',
+      '/datos/admin/finanzas/quien-paga',
+      { pais: 'VE', valor: 'conductor' },
+      e.cliente.token,
+    );
+    expect(r.estado).toBe(403);
+  });
+});

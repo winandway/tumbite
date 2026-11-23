@@ -14,6 +14,10 @@ import { MENSAJES_EN_PAGO_COMIDA } from './mensajesEnPagoComida';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-QUIEN-PAGA-VIAJES
+  ['Esa ciudad no es de ese país.', 'That city is not in that country.'],
+  ['Elige quién paga en todo el país.', 'Choose who pays across the whole country.'],
+  ['Elige el país.', 'Choose the country.'],
   // C-PERFIL-CONDUCTOR (20 nov 2026): «Así te ven los pasajeros».
   ['No encontramos tu cuenta.', 'We couldn’t find your account.'],
   ['Escribe algo más corto: hasta 120 letras.', 'Keep it shorter: up to 120 characters.'],

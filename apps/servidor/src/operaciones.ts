@@ -15,6 +15,7 @@ import {
 } from '@tumbite/compartido';
 import { destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
+import { SQL_TARIFA_SERVICIO } from './finanzas/quienPaga';
 import { soltarCobroViaje } from './viajesCobro';
 import { parejasBloqueadas } from './rutas/moderacion';
 import { notificar } from './notificaciones';
@@ -418,6 +419,8 @@ type OpConfianza = {
   origen_lat: number;
   origen_lng: number;
   total: number | null;
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio del pasajero (ya sumada en `total`). */
+  tarifa_servicio: number;
   moneda: string | null;
   pais: string | null;
   metodo_pago: string | null;
@@ -491,7 +494,8 @@ export async function turnoDeConfianza(
             pais: op.pais,
             ciudad: op.zona_id,
             moneda: op.moneda,
-            valor: op.total,
+            // C-QUIEN-PAGA-VIAJES: la comisión, sobre el precio del viaje (sin la tarifa de servicio).
+            valor: op.total - Number(op.tarifa_servicio ?? 0),
           }).catch(() => null)
         )?.monto ?? 0)
       : 0;
@@ -680,7 +684,7 @@ export async function repartirOperaciones(
   const { results: buscando } = await db
     .prepare(
       `SELECT o.id, o.servicio_id, o.zona_id, o.cliente_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
-              v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano,
+              ${SQL_TARIFA_SERVICIO} AS tarifa_servicio, v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano,
               v.conductor_preferido_id, v.programado_para, v.menor_nombre
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
@@ -700,6 +704,7 @@ export async function repartirOperaciones(
       destino_lat: number | null;
       destino_lng: number | null;
       total: number | null;
+      tarifa_servicio: number;
       moneda: string | null;
       pais: string | null;
       metodo_pago: string | null;
@@ -753,7 +758,9 @@ export async function repartirOperaciones(
               pais: op.pais,
               ciudad: op.zona_id,
               moneda: op.moneda,
-              valor: op.total,
+              // C-QUIEN-PAGA-VIAJES: la comisión, sobre el precio del viaje (sin la tarifa de
+              // servicio). Lo que gana = lo que paga el pasajero menos la comisión entera.
+              valor: op.total - Number(op.tarifa_servicio ?? 0),
             }).catch((e: unknown) => {
               console.error('operaciones: comisión de la oferta', e);
               return null;

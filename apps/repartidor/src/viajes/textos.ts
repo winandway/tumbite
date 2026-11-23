@@ -309,3 +309,31 @@ export const TEXTOS_VIAJE = {
     },
   },
 };
+
+/**
+ * C-QUIEN-PAGA-VIAJES (23 nov 2026): cuando el pasajero paga la tarifa de servicio de Divoox (toda o
+ * la mitad), el conductor la cobra en mano junto con el viaje y la entrega a Divoox desde su saldo.
+ * Se le dice sin dejar duda: cuánto cobra, cuánto es suyo y cuánto es de Divoox.
+ */
+export const TEXTOS_TARIFA_SERVICIO = {
+  es: {
+    cobras: 'Cobras',
+    elViajeVale: 'El viaje vale',
+    tuyos: 'son tuyos',
+    deDivoox: 'son de Divoox',
+    cliente: (tarifa: string) =>
+      `Incluye ${tarifa} de tarifa de servicio que pagó el pasajero. Al terminar, esa parte sale de tu saldo para Divoox: no es una comisión sobre tu ganancia.`,
+    mitad: (tarifa: string, comision: string) =>
+      `Incluye ${tarifa} de tarifa de servicio que pagó el pasajero y ${comision} de comisión de Divoox. Al terminar, las dos salen de tu saldo.`,
+  },
+  en: {
+    cobras: 'You collect',
+    elViajeVale: 'The ride is',
+    tuyos: 'is yours',
+    deDivoox: 'goes to Divoox',
+    cliente: (tarifa: string) =>
+      `Includes a ${tarifa} service fee paid by the rider. When the ride ends, that part comes out of your balance for Divoox: it is not a fee on your earnings.`,
+    mitad: (tarifa: string, comision: string) =>
+      `Includes a ${tarifa} service fee paid by the rider and a ${comision} Divoox fee. When the ride ends, both come out of your balance.`,
+  },
+};

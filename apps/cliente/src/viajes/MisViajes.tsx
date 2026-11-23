@@ -95,6 +95,8 @@ const ORDEN_PIEZAS = [
   'dinamico',
   'cargoFijo',
   'redondeo',
+  // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, en su propia línea del recibo.
+  'tarifaServicio',
 ];
 
 function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {

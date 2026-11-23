@@ -7,6 +7,7 @@ import {
   desgloseServicioLogistico,
   esquemaCancelacion,
   esquemaRegla,
+  QUIEN_PAGA,
 } from '@tumbite/compartido';
 import { verificarClave } from '../cripto';
 import type { Env } from '../env';
@@ -225,6 +226,94 @@ finanzasAdmin.post('/admin/finanzas/cancelaciones', async (c) => {
     }),
   ]);
   return c.json({ id }, 201);
+});
+
+/**
+ * C-QUIEN-PAGA-VIAJES (23 nov 2026): la palanca de quién paga la comisión de Divoox en los viajes
+ * (Moto y Carro), por país y, si hace falta, por ciudad. Cambiarla vale para los viajes que se
+ * cotizan desde ahora: cada viaje guarda el valor con que nació. Queda en la auditoría financiera.
+ */
+finanzasAdmin.get('/admin/finanzas/quien-paga', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const [filas, zonas] = await Promise.all([
+    db
+      .prepare(
+        'SELECT pais, ciudad, valor, cambiado_por, cambiado_en FROM quien_paga_viajes ORDER BY pais, ciudad LIMIT 500',
+      )
+      .all<{
+        pais: string;
+        ciudad: string;
+        valor: string;
+        cambiado_por: string | null;
+        cambiado_en: string;
+      }>(),
+    db
+      .prepare('SELECT id, nombre, pais FROM zonas ORDER BY pais, nombre LIMIT 500')
+      .all<{ id: string; nombre: string; pais: string }>(),
+  ]);
+  return c.json({
+    reglas: filas.results.map((f) => ({
+      pais: f.pais,
+      ciudad: f.ciudad || null,
+      valor: f.valor,
+      cambiadoEn: f.cambiado_en,
+    })),
+    ciudades: zonas.results.map((z) => ({ id: z.id, nombre: z.nombre, pais: z.pais })),
+  });
+});
+
+finanzasAdmin.put('/admin/finanzas/quien-paga', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      pais: z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^[A-Z]{2}$/, { error: 'Elige el país.' }),
+      /** Vacío o ausente: todo el país. */
+      ciudad: z.string().trim().max(60).optional(),
+      /** «del_pais»: la ciudad deja su regla propia y sigue la del país. */
+      valor: z.enum([...QUIEN_PAGA, 'del_pais']),
+    }),
+  );
+  const db = base(c);
+  const ciudad = d.ciudad ?? '';
+  if (ciudad) {
+    const z0 = await db
+      .prepare('SELECT 1 FROM zonas WHERE id = ? AND pais = ?')
+      .bind(ciudad, d.pais)
+      .first();
+    if (!z0) throw new ErrorDatos('Esa ciudad no es de ese país.', 'ciudad', 422);
+  } else if (d.valor === 'del_pais')
+    throw new ErrorDatos('Elige quién paga en todo el país.', 'valor', 422);
+  const antes = await db
+    .prepare('SELECT valor FROM quien_paga_viajes WHERE pais = ? AND ciudad = ?')
+    .bind(d.pais, ciudad)
+    .first<{ valor: string }>();
+  await db.batch([
+    d.valor === 'del_pais'
+      ? db
+          .prepare('DELETE FROM quien_paga_viajes WHERE pais = ? AND ciudad = ?')
+          .bind(d.pais, ciudad)
+      : db
+          .prepare(
+            `INSERT INTO quien_paga_viajes (pais, ciudad, valor, cambiado_por, cambiado_en)
+             VALUES (?, ?, ?, ?, datetime('now'))
+             ON CONFLICT (pais, ciudad) DO UPDATE SET valor = excluded.valor,
+               cambiado_por = excluded.cambiado_por, cambiado_en = excluded.cambiado_en`,
+          )
+          .bind(d.pais, ciudad, d.valor, u.id),
+    sentenciaAuditoriaFin(db, {
+      actorId: u.id,
+      accion: 'quien_paga.cambiar',
+      objeto: ciudad ? `${d.pais}:${ciudad}` : d.pais,
+      detalle: { antes: antes?.valor ?? (ciudad ? 'del_pais' : 'conductor'), despues: d.valor },
+    }),
+  ]);
+  return c.json({ ok: true });
 });
 
 finanzasAdmin.post('/admin/finanzas/politicas/:pid/cerrar', async (c) => {

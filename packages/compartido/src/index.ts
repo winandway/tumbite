@@ -44,6 +44,7 @@ export * from './flex';
 export * from './flexOptimizar';
 export * from './finanzas';
 export * from './viajes';
+export * from './quienPaga';
 export * from './flexPaises';
 export * from './perfilChile';
 export * from './perfilPeru';

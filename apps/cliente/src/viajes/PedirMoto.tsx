@@ -254,6 +254,8 @@ export function PedirMoto({
               direccion: v.destino.trim(),
               referencia: [v.destinoApto, v.destinoRef].filter((x) => x.trim()).join(' · '),
             },
+            // C-QUIEN-PAGA-VIAJES: esta app muestra la tarifa de servicio de Divoox en su línea.
+            tarifaServicio: true,
           },
         );
         setCotizacion(r.cotizacion);
@@ -853,6 +855,31 @@ export function PedirMoto({
                 </Text>
               </View>
             </View>
+            {/* C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, aparte y a la vista, ANTES de
+                pedir: el viaje, la tarifa y (arriba) el total. Nunca escondida dentro del precio. */}
+            {(cotizacion.tarifaServicio ?? 0) > 0 ? (
+              <View testID="moto-tarifa-servicio" style={{ gap: 2, marginTop: 4 }}>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ flex: 1, color: '#666B73' }}>{t.precioDelViaje}</Text>
+                  <Text style={{ color: '#666B73' }}>
+                    {formatearMonto(
+                      cotizacion.total - (cotizacion.tarifaServicio ?? 0),
+                      cotizacion.moneda,
+                      idioma,
+                    )}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row' }}>
+                  <Text style={{ flex: 1, color: '#666B73' }}>{t.tarifaServicio}</Text>
+                  <Text style={{ color: '#666B73' }}>
+                    {formatearMonto(cotizacion.tarifaServicio ?? 0, cotizacion.moneda, idioma)}
+                  </Text>
+                </View>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>
+                  {cotizacion.quienPaga === 'mitad' ? t.tarifaServicioMitad : t.tarifaServicioAyuda}
+                </Text>
+              </View>
+            ) : null}
             {cotizacion.regalo && !tarjeta ? (
               <LineaRegalo
                 regalo={cotizacion.regalo}

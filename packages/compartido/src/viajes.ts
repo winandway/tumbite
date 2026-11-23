@@ -155,6 +155,14 @@ export type DesgloseViaje = {
   /** Lo que mueve el redondeo de la ciudad (puede ser negativo); así el desglose suma el total. */
   redondeo: number;
   total: number;
+  /**
+   * C-QUIEN-PAGA-VIAJES: el precio del viaje sin la tarifa de servicio (sobre él se calcula la
+   * comisión), la «Tarifa de servicio de Divoox» que paga el pasajero en una línea aparte (ya sumada
+   * en `total`) y quién paga la comisión en este viaje. Sin estos campos: viaje de antes (conductor).
+   */
+  precioViaje?: number;
+  tarifaServicio?: number;
+  quienPaga?: import('./quienPaga').QuienPaga;
 };
 
 /** Redondeo de la mitad hacia arriba al paso de la tarifa. */
@@ -233,6 +241,12 @@ export const esquemaCotizarViaje = z.object({
   /** C-VIAJE-PARADAS: paradas intermedias, en orden, entre la recogida y el destino. */
   paradas: z.array(punto).max(PARADAS_MAXIMAS_ABSOLUTO).default([]),
   destino: punto,
+  /**
+   * C-QUIEN-PAGA-VIAJES: la app (o la web) sabe mostrar la «Tarifa de servicio de Divoox» en una
+   * línea aparte. Sin esto (apps de antes), el viaje sigue como siempre (la paga el conductor): nunca
+   * se le cobra al pasajero una tarifa que su app no le muestra.
+   */
+  tarifaServicio: z.boolean().optional(),
 });
 
 /** C-CARRO-XL: plazas mínimas del vehículo para un viaje XL. */
@@ -430,7 +444,10 @@ export type CotizacionViaje = {
   /** C-VIAJE-PARADAS: cuántas paradas admite un viaje en esa ciudad (perfil del país). */
   paradasMaximas?: number;
   /** C-CARRO-CATEGORIAS: el precio de cada categoría que la ciudad ofrece para este trayecto. */
-  opciones?: { categoria: CategoriaViaje; total: number }[];
+  opciones?: { categoria: CategoriaViaje; total: number; tarifaServicio?: number }[];
+  /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox de este viaje (ya sumada en `total`). */
+  tarifaServicio?: number;
+  quienPaga?: import('./quienPaga').QuienPaga;
   zona: { id: string; nombre: string };
   moneda: string;
   distanciaM: number;
