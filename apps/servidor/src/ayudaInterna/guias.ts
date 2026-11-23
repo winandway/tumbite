@@ -1801,6 +1801,144 @@ const quienPagaViajes: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): la tarjeta «Comida: quién paga qué» y el alta del primer
+// restaurante de Venezuela.
+const capComidaQuienPaga = (idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `comida-quien-paga-super-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const comidaQuienPaga: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'food-who-pays-what',
+    titulo: 'Comida: quién paga qué',
+    resumen:
+      'La tarjeta de Dinero que decide, en los países donde el cliente le paga la comida directo al restaurante (Venezuela), qué paga el cliente, qué comisión paga el restaurante de su saldo y qué se le descuenta al conductor del envío.',
+    explicacion: [
+      'En Venezuela el cliente le paga la comida al restaurante por pago móvil, al precio de la carta, y el envío al conductor. Divoox nunca tiene ese dinero en la mano. Por eso la comisión de Divoox no se le cobra al cliente: la paga el restaurante de su saldo prepago, una sola vez por pedido, cuando confirma «Me llegó». La tarjeta tiene tres bloques, uno por cada persona, y un ejemplo vivo con un pedido de 10,00 de comida y 1,50 de envío que dice cuánto paga el cliente, cuánto recibe y paga el restaurante, cuánto recibe el conductor y cuánto gana Divoox.',
+      '«Lo que paga el cliente»: la tarifa de servicio (porcentaje, mínimo y máximo) y el cargo por pedido pequeño (pedido mínimo y cargo). En el modelo de hoy todo va en 0 y el cliente no ve esas líneas. Si algún día se suben, ojo: con el pago directo los cobra el conductor en la mano junto con el envío; la tarjeta lo avisa.',
+      '«Lo que paga el restaurante»: la comisión de Divoox en porcentaje sobre la comida. Muestra la que rige hoy. El botón «Usar el valor preparado (10 %)» la escribe por ti. Para cualquier valor mayor que 0 pide la referencia de la revisión legal aprobada: sin ella no se guarda. Con comisión, un restaurante sin saldo suficiente no recibe pedidos; con 0 % no se le pide saldo. Si la que rige es una política de todos los países, la tarjeta lo dice: para volver a 0 % hay que cerrarla primero en Políticas.',
+      '«Lo que se le descuenta al conductor»: el porcentaje del envío que Divoox le aparta de su saldo. Hoy 0: el conductor cobra el envío entero y no necesita saldo para la comida. Su app se lo dice en verde.',
+      'Cada cambio vale para los pedidos que se hacen desde ese momento: un pedido ya hecho conserva la comisión con la que nació. El motivo es obligatorio y todo queda en la auditoría de Dinero con tu nombre, el valor de antes y el de después. Lo escrito se guarda solo mientras escribes y se borra al guardar. Estados Unidos no usa esta tarjeta.',
+    ],
+    capturas: [
+      capComidaQuienPaga(
+        'es',
+        'La pantalla Dinero del panel de operaciones en la tarjeta «Comida: quién paga qué»: el país, los bloques de lo que paga el cliente, el restaurante y el conductor, el ejemplo con un pedido de 10,00 y el motivo.',
+        '«Comida: quién paga qué», en Dinero.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo cambio la comisión que paga el restaurante?',
+      '¿Por qué el cliente no paga tarifa de servicio en Venezuela?',
+      '¿Cuánto se le descuenta al conductor en la comida?',
+      '¿Qué pasa con los pedidos que ya estaban hechos si cambio la comisión?',
+    ],
+    pasos: [
+      'Abre Dinero y busca «Comida: quién paga qué».',
+      'Elige el país y cambia solo el bloque que quieres (cliente, restaurante o conductor). Para una comisión de restaurante mayor que 0, escribe la referencia de la revisión legal.',
+      'Revisa el ejemplo, escribe el motivo y toca «Guardar».',
+    ],
+  },
+  en: {
+    id: 'food-who-pays-what',
+    titulo: 'Food: who pays what',
+    resumen:
+      'The Money card that decides, in countries where the customer pays the restaurant directly for the food (Venezuela), what the customer pays, what fee the restaurant pays from its balance and what is taken from the driver’s delivery fee.',
+    explicacion: [
+      'In Venezuela the customer pays the restaurant for the food by mobile payment, at menu price, and pays the driver for the delivery. Divoox never holds that money. That is why the Divoox fee is not charged to the customer: the restaurant pays it from its prepaid balance, once per order, when it confirms “I got it.” The card has three blocks, one per person, and a live example with a 10.00 food order and a 1.50 delivery fee that shows what the customer pays, what the restaurant receives and pays, what the driver receives and what Divoox earns.',
+      '“What the customer pays”: the service fee (percentage, minimum and maximum) and the small-order fee (minimum order and fee). In today’s model everything is 0 and the customer does not see those lines. If they are ever raised, note that with direct payment the driver collects them in hand along with the delivery fee; the card warns you.',
+      '“What the restaurant pays”: the Divoox fee as a percentage of the food. It shows the one in effect today. The “Use the prepared value (10%)” button fills it in for you. Any value above 0 requires the approved legal review reference: without it, nothing is saved. With a fee, a restaurant without enough balance gets no orders; at 0% no balance is required. If the one in effect is an all-countries policy, the card says so: to go back to 0% you must close it first in Policies.',
+      '“What is taken from the driver”: the percentage of the delivery fee Divoox sets aside from their balance. Today it is 0: the driver keeps the whole delivery fee and needs no balance for food. Their app says so in green.',
+      'Every change applies to orders placed from that moment on: an order already placed keeps the fee it was created with. The reason is required and everything is logged in the Money audit with your name, the value before and the value after. What you type is saved as you go and cleared when you save. The United States does not use this card.',
+    ],
+    capturas: [
+      capComidaQuienPaga(
+        'en',
+        'The Money screen in the operations panel at the “Food: who pays what” card: the country, the blocks for what the customer, the restaurant and the driver pay, the example with a 10.00 order and the reason.',
+        '“Food: who pays what,” in Money.',
+      ),
+    ],
+    preguntas: [
+      'How do I change the fee a restaurant pays?',
+      'Why doesn’t the customer pay a service fee in Venezuela?',
+      'How much is taken from the driver on food orders?',
+      'What happens to orders already placed if I change the fee?',
+    ],
+    pasos: [
+      'Open Money and find “Food: who pays what.”',
+      'Choose the country and change only the block you want (customer, restaurant or driver). For a restaurant fee above 0, enter the legal review reference.',
+      'Check the example, write the reason and tap “Save.”',
+    ],
+  },
+};
+
+const primerRestauranteVe: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'first-restaurant-venezuela',
+    titulo: 'Alta del primer restaurante en Venezuela',
+    resumen:
+      'La lista corta para dejar listo un restaurante de Venezuela: sus datos de pago móvil, su saldo de regalo, qué ve en su app cuando entra un pedido y qué hace falta para encender Comida en producción en una sola ciudad.',
+    explicacion: [
+      'Datos de pago móvil que tiene que cargar el restaurante en su app, en «Cuenta para recibir tus ventas»: el banco, el teléfono del pago móvil, el documento del titular (cédula o RIF) y el nombre del titular. Sin esa cuenta no recibe pedidos. La cuenta nueva empieza a usarse a las 24 horas, por seguridad, y cambiarla pide su contraseña. El cliente le paga ahí el precio de su carta, completo.',
+      'Saldo de regalo: en Dinero, «Saldo de restaurantes», «Cargar saldo a mano», con el identificador del restaurante, el monto y el motivo («saldo de regalo de arranque»). Lleva la doble firma: otra persona del equipo la aprueba. Hoy su comisión es 0 % y no necesita saldo para recibir pedidos; el regalo queda para cuando haya comisión. La comisión se cambia en «Comida: quién paga qué».',
+      'Lo que ve en su app con un pedido: lo acepta como siempre; mientras se asegura el conductor y el cliente paga, la fila dice «Esperando el pago del cliente: no prepares todavía». Cuando el cliente manda su referencia, la fila se pone amarilla con «Pago por confirmar». Abre el pedido, busca el pago en su banco por el monto y la referencia, y toca «Me llegó» o «No me llegó». Con «Me llegó» prepara y toca «Marcar como listo»; el conductor recoge sin pagar nada en el mostrador. Con «No me llegó» se abre un caso para el equipo.',
+      'Encender en producción para una ciudad y un restaurante, cuando Richard lo ordene: hoy el paso «Abrir Comida en esta ciudad» del panel responde que en producción necesita su orden, y no se abre. Hace falta que el equipo técnico deje pasar esa compuerta solo para la ciudad elegida (probado antes en el sitio de pruebas). Después, en el panel: abrir Comida en esa ciudad (crea la ciudad, escribe las tarifas de Venezuela en dólares, enciende el efectivo y el pago móvil del envío y Comida en esa ciudad), aprobar solo ese restaurante con su menú y su pago móvil, y revisar «Comida: quién paga qué» (cliente sin cargos, restaurante 0 %, conductor 0 %). La marca tiene que estar en registro en el país y nada se prueba con dinero real antes de la orden.',
+    ],
+    capturas: [
+      capSaldoRest(
+        'es',
+        'El final de la pantalla Dinero del panel de operaciones: el bloque «Saldo de restaurantes» con «Recargas por revisar» y el formulario «Cargar saldo a mano» con restaurante, monto, motivo y comprobante.',
+        '«Cargar saldo a mano»: así recibe su saldo de regalo.',
+      ),
+    ],
+    preguntas: [
+      '¿Qué datos de pago móvil pide un restaurante de Venezuela?',
+      '¿Cómo le doy saldo de regalo a un restaurante?',
+      '¿Qué ve el restaurante cuando le llega un pedido?',
+      '¿Cómo se enciende Comida en producción en una ciudad?',
+    ],
+    pasos: [
+      'Pide al restaurante que cargue su pago móvil en «Cuenta para recibir tus ventas» (banco, teléfono, documento y titular).',
+      'Cárgale el saldo de regalo en «Saldo de restaurantes» y pide la segunda firma.',
+      'Hazle una prueba con «Enviar un pedido de prueba» desde su app para que vea el flujo.',
+      'Para producción, espera la orden de Richard: el equipo técnico abre la compuerta solo para esa ciudad y después se abre Comida y se aprueba el restaurante.',
+    ],
+  },
+  en: {
+    id: 'first-restaurant-venezuela',
+    titulo: 'First restaurant sign-up in Venezuela',
+    resumen:
+      'The short checklist to get a restaurant in Venezuela ready: its mobile payment details, its starter balance, what it sees in its app when an order comes in, and what it takes to turn on Food in production in a single city.',
+    explicacion: [
+      'Mobile payment details the restaurant enters in its app, under “Account to receive your sales”: the bank, the mobile payment phone, the holder’s ID number (cédula or RIF) and the holder’s name. Without that account it gets no orders. A new account starts being used after 24 hours, for security, and changing it asks for the password. The customer pays the full menu price there.',
+      'Starter balance: in Money, “Restaurant balance,” “Add balance manually,” with the restaurant identifier, the amount and the reason (“starter gift balance”). It needs the second signature: another team member approves it. Today its fee is 0% and it needs no balance to receive orders; the gift is there for when a fee applies. The fee is changed in “Food: who pays what.”',
+      'What it sees in its app with an order: it accepts it as usual; while the driver is secured and the customer pays, the row says “Waiting for the customer’s payment: do not prepare yet.” When the customer sends their reference, the row turns yellow with “Payment to confirm.” It opens the order, looks for the payment in its bank by amount and reference, and taps “I got it” or “I did not get it.” With “I got it” it prepares and taps “Mark as ready”; the driver picks up without paying anything at the counter. With “I did not get it” a case opens for the team.',
+      'Turning it on in production for one city and one restaurant, when Richard orders it: today the panel step “Open Food in this city” answers that production needs his order, and nothing opens. The technical team has to let that gate through for the chosen city only (tested first on the test site). Then, in the panel: open Food in that city (it creates the city, writes the Venezuela fees in dollars, turns on cash and mobile payment for delivery and Food in that city), approve only that restaurant with its menu and mobile payment, and check “Food: who pays what” (customer with no fees, restaurant 0%, driver 0%). The brand must be in registration in the country and nothing is tested with real money before the order.',
+    ],
+    capturas: [
+      capSaldoRest(
+        'en',
+        'The end of the Money screen in the operations panel: the “Restaurant balance” block with “Top-ups to review” and the “Add balance manually” form with restaurant, amount, reason and receipt.',
+        '“Add balance manually”: how it gets its starter balance.',
+      ),
+    ],
+    preguntas: [
+      'What mobile payment details does a restaurant in Venezuela need?',
+      'How do I give a restaurant a starter balance?',
+      'What does the restaurant see when an order comes in?',
+      'How is Food turned on in production in one city?',
+    ],
+    pasos: [
+      'Ask the restaurant to enter its mobile payment under “Account to receive your sales” (bank, phone, ID number and holder).',
+      'Add its starter balance under “Restaurant balance” and ask for the second signature.',
+      'Have it try “Send a test order” from its app so it sees the flow.',
+      'For production, wait for Richard’s order: the technical team opens the gate for that city only, then Food is opened and the restaurant approved.',
+    ],
+  },
+};
+
 const saldoRestaurantes: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'restaurant-balance-top-ups',
@@ -1808,10 +1946,10 @@ const saldoRestaurantes: Record<IdiomaAyuda, Guia> = {
     resumen:
       'Cómo revisar y acreditar la recarga que declara un restaurante, cargarle saldo a mano y dónde se pone la comisión que paga el restaurante. Hoy en Venezuela esa comisión es 0 %.',
     explicacion: [
-      'En Venezuela el cliente le paga la comida directo al restaurante por pago móvil; Divoox no recibe ese dinero. El restaurante tiene un saldo prepago, igual que los conductores: si algún día paga comisión, saldrá de ahí. Hoy no hay política para restaurantes, así que su comisión es 0 % y no necesita saldo para recibir pedidos.',
+      'En Venezuela el cliente le paga la comida directo al restaurante por pago móvil; Divoox no recibe ese dinero. El restaurante tiene un saldo prepago, igual que los conductores: si algún día paga comisión, saldrá de ahí. Hoy su comisión es 0 % (gratis para empezar) y no necesita saldo para recibir pedidos.',
       'El bloque «Saldo de restaurantes» está al final de Dinero. En «Recargas por revisar» aparece cada recarga que un restaurante declaró desde su app, con el monto, la referencia y su comprobante. Antes de tocar «Acreditar», busca ese pago en el banco de Divoox por el monto y la referencia: la foto no es prueba. Acreditar pide la doble firma, como todo movimiento de dinero. «Rechazar» está dentro de los tres puntos y pide el motivo, que el restaurante ve en su app.',
       'Las recargas de restaurantes están apagadas de fábrica en cada país. Encenderlas es un cambio del perfil del país que hace el equipo técnico con la orden de Gerencia. Mientras estén apagadas, el restaurante ve en su app que todavía no están disponibles y aquí no llega ninguna recarga.',
-      '«Cargar saldo a mano» suma saldo a un restaurante sin recarga declarada: pide el identificador del restaurante, el monto en dólares y el motivo, que queda en el registro con tu nombre. La comisión del restaurante se crea en Políticas eligiendo «Restaurante» en quién paga; mientras no exista, es 0 %.',
+      '«Cargar saldo a mano» suma saldo a un restaurante sin recarga declarada: pide el identificador del restaurante, el monto en dólares y el motivo, que queda en el registro con tu nombre. La comisión del restaurante se cambia en «Comida: quién paga qué», en esta misma pantalla; mientras no haya, es 0 %.',
     ],
     capturas: [
       capSaldoRest(
@@ -1838,10 +1976,10 @@ const saldoRestaurantes: Record<IdiomaAyuda, Guia> = {
     resumen:
       'How to review and credit a top-up reported by a restaurant, add balance manually, and where the restaurant fee is set. Today in Venezuela that fee is 0%.',
     explicacion: [
-      'In Venezuela the customer pays the restaurant directly for the food by mobile payment; Divoox does not receive that money. The restaurant has a prepaid balance, just like drivers: if it ever pays a fee, it comes out of there. Today there is no policy for restaurants, so their fee is 0% and they need no balance to receive orders.',
+      'In Venezuela the customer pays the restaurant directly for the food by mobile payment; Divoox does not receive that money. The restaurant has a prepaid balance, just like drivers: if it ever pays a fee, it comes out of there. Today their fee is 0% (free to start) and they need no balance to receive orders.',
       'The “Restaurant balance” block is at the end of Money. “Top-ups to review” lists every top-up a restaurant reported from its app, with the amount, the reference and its receipt. Before you tap “Credit,” find that payment in the Divoox bank by amount and reference: the photo is not proof. Crediting needs the second signature, like every money movement. “Reject” is inside the three dots and asks for the reason, which the restaurant sees in its app.',
       'Restaurant top-ups are off by default in every country. Turning them on is a change to the country profile made by the technical team on an order from management. While they are off, the restaurant sees in its app that they are not available yet and no top-up reaches this list.',
-      '“Add balance manually” adds balance to a restaurant without a reported top-up: it asks for the restaurant identifier, the amount in dollars and the reason, which stays in the log under your name. The restaurant fee is created in Policies by choosing “Restaurant” as who pays; until one exists, it is 0%.',
+      '“Add balance manually” adds balance to a restaurant without a reported top-up: it asks for the restaurant identifier, the amount in dollars and the reason, which stays in the log under your name. The restaurant fee is changed in “Food: who pays what,” on this same screen; until there is one, it is 0%.',
     ],
     capturas: [
       capSaldoRest(
@@ -2994,6 +3132,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(saldoConductores),
         de(saldoRestaurantes),
         de(quienPagaViajes),
+        de(comidaQuienPaga),
+        de(primerRestauranteVe),
         de(abrirPeru),
         de(agentesDivoox),
         de(referidosEquipos),
