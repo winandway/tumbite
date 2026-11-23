@@ -23,9 +23,13 @@ import * as Location from 'expo-location';
 import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
 import { AsistentePapeles } from './papeles/AsistentePapeles';
+import { QueTeFalta } from './piezas/QueTeFalta';
+import { type AccionFalta, type FaltaServidor } from './piezas/queTeFaltaLogica';
+import { AltaPasajeros } from './viajes/AltaPasajeros';
+import { accionDeMotivo, faltaCaraParaEmpezar } from './papeles/logica';
 import { AvisoIa } from './papeles/AvisoIa';
 import { hayQueMostrarAvisoIa } from './papeles/textosAvisoIa';
-import { TusPapeles, usePapeles } from './papeles/TusPapeles';
+import { PapelesSinCargar, TusPapeles, usePapeles } from './papeles/TusPapeles';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -669,6 +673,7 @@ export function Inicio() {
     | 'asiTeVen'
     | 'ayuda'
     | 'papeles'
+    | 'vehiculo'
   >('inicio');
   // C-ASISTENTE-DRIVER: los papeles del conductor (asistente de verificación y «Tus papeles»).
   const papeles = usePapeles(api);
@@ -677,8 +682,38 @@ export function Inicio() {
   const [vueltaPapeles, setVueltaPapeles] = useState<'inicio' | 'datos'>('inicio');
   const abrirPapeles = (desde: 'inicio' | 'datos') => {
     setVueltaPapeles(desde);
+    // Sin «Tus papeles» leídos todavía, se leen primero (antes el botón no abría nada).
+    if (!papeles.v) void recargarPapeles();
     setVista('papeles');
   };
+  // C-QUE-TE-FALTA: lo que le falta para recibir carreras, calculado por el servidor con la regla
+  // del reparto. Se lee al entrar al inicio, al volver a él y después de conectarse o de un «no».
+  const [faltas, setFaltas] = useState<FaltaServidor[] | null>(null);
+  const cargarFaltas = useCallback(async () => {
+    try {
+      const r = await api.pedir<{ faltas: FaltaServidor[] }>(
+        'GET',
+        '/datos/conductor/que-te-falta',
+      );
+      setFaltas(r.faltas);
+    } catch (x) {
+      // Sin señal se queda lo último que se vio; la próxima vuelta al inicio lo vuelve a pedir.
+      console.warn('que te falta', x);
+    }
+  }, [api]);
+  useEffect(() => {
+    if (vista !== 'inicio') return;
+    const primero = setTimeout(() => void cargarFaltas(), 0);
+    return () => clearTimeout(primero);
+  }, [vista, cargarFaltas]);
+  // C-QUE-TE-FALTA: el vehículo que se completa o corrige desde el bloque de arriba.
+  const [tipoVehiculo, setTipoVehiculo] = useState<'moto' | 'carro'>('moto');
+  // C-FOTO-CARA-A-LA-VISTA: por qué el servidor no lo dejó conectarse; va pegado a la barra.
+  const [motivoConexion, setMotivoConexion] = useState<{
+    texto: string;
+    campo?: string;
+    servicio?: string;
+  } | null>(null);
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
   const ts = textosServicios(idioma);
@@ -1250,15 +1285,20 @@ export function Inicio() {
     if (cambiando) return;
     setError('');
     setAviso('');
+    setMotivoConexion(null);
     setCambiando(true);
+    const conectando = !estado?.conectado;
+    // C-FOTO-CARA-A-LA-VISTA: el motivo de no poder conectarse va pegado a la barra, a la vista.
+    const motivo = (texto: string, campo?: string) =>
+      conectando ? setMotivoConexion({ texto, campo }) : setError(texto);
     try {
       if (estado?.conectado) {
         await api.pedir('POST', '/datos/repartidor/conectar', { conectado: false });
         return await cargar();
       }
-      if (!(await permisoUbicacion())) return setError(t.sinUbicacion);
+      if (!(await permisoUbicacion())) return motivo(t.sinUbicacion, 'ubicacion');
       const p = await ubicacionAlConectar();
-      if (!p) return setError(t.ubicacionTarda);
+      if (!p) return motivo(t.ubicacionTarda, 'ubicacion');
       const r = await api.pedir<{ conectado: boolean; cobertura?: string; avisoComida?: string }>(
         'POST',
         '/datos/repartidor/conectar',
@@ -1269,9 +1309,12 @@ export function Inicio() {
       else if (r.avisoComida) setAviso(r.avisoComida);
       await cargar();
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);
+      if (x instanceof ErrorApi) motivo(x.message, x.campo);
+      else motivo(t.ubicacionTarda);
     } finally {
       setCambiando(false);
+      void cargarFaltas();
+      void recargarPapeles();
     }
   }
 
@@ -1281,15 +1324,16 @@ export function Inicio() {
     if (cambiandoServicio || cambiando) return false;
     setError('');
     setAviso('');
+    setMotivoConexion(null);
     setCambiandoServicio(id);
     try {
       if (!(await permisoUbicacion())) {
-        setError(t.sinUbicacion);
+        setMotivoConexion({ texto: t.sinUbicacion, campo: 'ubicacion', servicio: id });
         return false;
       }
       const p = await ubicacionAlConectar();
       if (!p) {
-        setError(t.ubicacionTarda);
+        setMotivoConexion({ texto: t.ubicacionTarda, campo: 'ubicacion', servicio: id });
         return false;
       }
       const r = await api.pedir<{ cobertura?: string; avisoComida?: string }>(
@@ -1300,11 +1344,16 @@ export function Inicio() {
       if (r.cobertura && r.cobertura !== 'dentro') setAviso(tg.pausa.fueraZona);
       return true;
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);
+      setMotivoConexion({
+        texto: x instanceof ErrorApi ? x.message : t.ubicacionTarda,
+        campo: x instanceof ErrorApi ? x.campo : undefined,
+        servicio: id,
+      });
       return false;
     } finally {
       setCambiandoServicio(null);
       await cargar();
+      void cargarFaltas();
     }
   }
 
@@ -1319,6 +1368,62 @@ export function Inicio() {
       return false;
     } finally {
       await cargar();
+    }
+  }
+
+  /**
+   * C-QUE-TE-FALTA: el botón de lo que le falta lleva DIRECTO a hacerlo. Devuelve el error, si lo
+   * hubo, para decirlo junto al botón.
+   */
+  async function accionFalta(accion: AccionFalta, f: FaltaServidor): Promise<string | void> {
+    const fallo = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
+    switch (accion) {
+      case 'cara':
+        return abrirPapeles('inicio');
+      case 'vehiculo_nuevo':
+        setSeccionPerfil('vehiculo');
+        return setVista('datos');
+      case 'vehiculo':
+        if (f.vehiculoTipo === 'moto' || f.vehiculoTipo === 'carro') {
+          setTipoVehiculo(f.vehiculoTipo);
+          return setVista('vehiculo');
+        }
+        setSeccionPerfil('vehiculo');
+        return setVista('datos');
+      case 'activar_vehiculo':
+        try {
+          await api.pedir('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: f.vehiculoId });
+          await Promise.all([cargarFaltas(), recargarPanel()]);
+          return;
+        } catch (x) {
+          return fallo(x);
+        }
+      case 'encender': {
+        const s = servicios.panel?.servicios.find((x) => x.estado === 'desconectado');
+        if (!s)
+          return idioma === 'en'
+            ? 'No approved service yet.'
+            : 'Todavía no tienes un servicio aprobado.';
+        await conectarServicio(s.servicioId);
+        return;
+      }
+      case 'recargar':
+      case 'pago_movil':
+        return setVista('billetera');
+      case 'ubicacion': {
+        if (!(await permisoUbicacion())) return t.sinUbicacion;
+        const p = await ubicacionAlConectar();
+        if (!p) return t.ubicacionTarda;
+        try {
+          await api.pedir('POST', '/datos/repartidor/ubicacion', { lat: p.lat, lng: p.lng });
+          await cargarFaltas();
+          return;
+        } catch (x) {
+          return fallo(x);
+        }
+      }
+      default:
+        return;
     }
   }
 
@@ -1661,13 +1766,26 @@ export function Inicio() {
         </>
       )
     ) : null;
-  const mensajes = (
+  // C-FOTO-CARA-A-LA-VISTA: las «puertas» para conectarse (foto con casco, términos, celular y foto
+  // de control). En el inicio van ARRIBA, junto a lo que le falta; en las demás pantallas, como siempre.
+  const lineaError =
+    error || errorCarga ? (
+      <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
+        {error || errorCarga}
+      </Text>
+    ) : null;
+  const tarjetaTelefono = estado?.telefonoPorVerificar ? (
+    <ConfirmarTelefono
+      ultimos={estado.telefonoPorVerificar}
+      alListo={(texto) => {
+        setAviso(texto);
+        void cargar();
+        void cargarFaltas();
+      }}
+    />
+  ) : null;
+  const puertas = (sinTelefono = false) => (
     <>
-      {error || errorCarga ? (
-        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
-          {error || errorCarga}
-        </Text>
-      ) : null}
       {pideCasco ? (
         <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.secundario }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieCasco}</Text>
@@ -1732,36 +1850,7 @@ export function Inicio() {
           />
         </View>
       ) : null}
-      {estado?.ganarPorTiempo ? (
-        <ModoPago
-          datos={estado.ganarPorTiempo}
-          conectado={Boolean(estado.conectado)}
-          alCambiar={() => void cargar()}
-        />
-      ) : null}
-      {/* C-FLOTA-PROPIA: el restaurante que lo invitó a su equipo, y para quién reparte. */}
-      <InvitacionesFlota
-        alAceptar={(texto) => {
-          setAviso(texto);
-          void cargar();
-        }}
-      />
-      {/* C-FLEX-INVITAR-CONDUCTOR: la empresa que lo invitó, para aceptar ahí mismo. */}
-      <InvitacionesEmpresa
-        alAceptar={(texto) => {
-          setAviso(texto);
-          void cargar();
-        }}
-      />
-      {estado?.telefonoPorVerificar ? (
-        <ConfirmarTelefono
-          ultimos={estado.telefonoPorVerificar}
-          alListo={(texto) => {
-            setAviso(texto);
-            void cargar();
-          }}
-        />
-      ) : null}
+      {sinTelefono ? null : tarjetaTelefono}
       {estado?.selfieControlPendiente ? (
         <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.secundario }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieControl}</Text>
@@ -1791,6 +1880,31 @@ export function Inicio() {
           />
         </View>
       ) : null}
+    </>
+  );
+  const mensajesResto = (
+    <>
+      {estado?.ganarPorTiempo ? (
+        <ModoPago
+          datos={estado.ganarPorTiempo}
+          conectado={Boolean(estado.conectado)}
+          alCambiar={() => void cargar()}
+        />
+      ) : null}
+      {/* C-FLOTA-PROPIA: el restaurante que lo invitó a su equipo, y para quién reparte. */}
+      <InvitacionesFlota
+        alAceptar={(texto) => {
+          setAviso(texto);
+          void cargar();
+        }}
+      />
+      {/* C-FLEX-INVITAR-CONDUCTOR: la empresa que lo invitó, para aceptar ahí mismo. */}
+      <InvitacionesEmpresa
+        alAceptar={(texto) => {
+          setAviso(texto);
+          void cargar();
+        }}
+      />
       {pendientes.length ? (
         <View style={[e.tarjeta, { borderColor: '#8A5300' }]}>
           <Text style={{ color: '#8A5300', fontWeight: '800' }}>
@@ -1807,6 +1921,13 @@ export function Inicio() {
           {aviso}
         </Text>
       ) : null}
+    </>
+  );
+  const mensajes = (
+    <>
+      {lineaError}
+      {puertas()}
+      {mensajesResto}
     </>
   );
 
@@ -1957,7 +2078,19 @@ export function Inicio() {
     vista !== 'ayuda' &&
     vista !== 'papeles'
   )
-    return <AvisoIa api={api} idioma={idioma} alListo={() => papeles.recargar()} />;
+    return (
+      <AvisoIa
+        api={api}
+        idioma={idioma}
+        alListo={async (acepto) => {
+          // C-FOTO-CARA-A-LA-VISTA: la respuesta ya quedó guardada; el aviso no vuelve a salir aunque
+          // la relectura falle (si falla, el inicio lo dice con «Reintentar»).
+          papeles.marcar({ avisoIaPendiente: false, permisoIa: acepto });
+          await papeles.recargar();
+          return true;
+        }}
+      />
+    );
 
   // ───────── Ganancias: Hoy / Semana / Mes con los movimientos reales, y la billetera ─────────
   if (vista === 'billetera' && billetera) {
@@ -2332,10 +2465,32 @@ export function Inicio() {
         recargar={papeles.recargar}
         alSalir={() => {
           void papeles.recargar();
+          void cargarFaltas();
           setVista(vueltaPapeles);
         }}
         alAyuda={() => setVista('ayuda')}
+        alSubida={papeles.fotoSubida}
+        alConsentir={() => papeles.marcar({ consentimiento: true })}
       />
+    );
+  // C-QUE-TE-FALTA: completar o corregir la moto o el carro directo desde lo que le falta.
+  if (vista === 'vehiculo')
+    return lienzo(
+      'perfil',
+      <View style={{ padding: 16, gap: 8 }}>
+        <Pressable
+          onPress={() => setVista('inicio')}
+          accessibilityRole="button"
+          testID="vehiculo-volver"
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 }}
+        >
+          <Text style={{ fontSize: 18 }}>‹</Text>
+          <Text style={{ fontWeight: '700', fontSize: 16 }}>
+            {idioma === 'en' ? 'Home' : 'Inicio'}
+          </Text>
+        </Pressable>
+        <AltaPasajeros servicio={tipoVehiculo} />
+      </View>,
     );
   if (vista === 'alta')
     return lienzo(
@@ -3414,11 +3569,82 @@ export function Inicio() {
   // el inicio, como el «destino» de Uber Driver y DoorDash (robot, 18 nov: salía también en Perfil y
   // en Ganancias, porque iba dentro de `mensajes`). Con un pedido en curso no se muestra
   // (C-DESLIZAR-ENTREGA): como Uber, se elige entre pedidos.
+  // C-QUE-TE-FALTA y C-FOTO-CARA-A-LA-VISTA: arriba de todo, UN bloque con lo primero que le falta
+  // (la foto de la cara es una de esas cosas) y debajo las puertas para conectarse. Si el servidor no
+  // contestó todavía, la cara se decide con «Tus papeles» (lo mismo que pide el servidor).
+  const caraLocal = faltaCaraParaEmpezar(papeles.v);
+  const faltasVista: FaltaServidor[] | null =
+    faltas ?? (caraLocal ? [{ clave: 'cara', quien: 'conductor' }] : null);
+  const primeraClave = faltasVista?.find((f) => f.clave !== 'desconectado')?.clave;
+  const telefonoEnBloque = primeraClave === 'telefono' && Boolean(tarjetaTelefono);
+  const caraArriba = primeraClave === 'cara' || (!faltas && caraLocal);
+  const arribaInicio = !estado?.activo ? (
+    <View style={{ gap: 10 }}>
+      <QueTeFalta
+        api={api}
+        idioma={idioma}
+        faltas={faltasVista}
+        alAccion={accionFalta}
+        cuerpos={{
+          telefono: tarjetaTelefono,
+          sin_pago_movil: prepago?.cuentasACelular?.length ? (
+            <CuentaCobro tipos={prepago.cuentasACelular} idioma={idioma} />
+          ) : undefined,
+        }}
+      />
+      {puertas(telefonoEnBloque)}
+      {papeles.error && !papeles.v ? (
+        <PapelesSinCargar
+          idioma={idioma}
+          cargando={papeles.cargando}
+          alReintentar={() => void recargarPapeles()}
+        />
+      ) : null}
+    </View>
+  ) : null;
+  // C-FOTO-CARA-A-LA-VISTA: el motivo de no poder conectarse, pegado a la barra, con su botón.
+  const accionMotivo = accionDeMotivo(motivoConexion?.campo);
+  const motivoInicio = motivoConexion ? (
+    <View
+      testID="motivo-conectar"
+      accessibilityRole="alert"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#E3E6EB',
+        padding: 12,
+        gap: 10,
+      }}
+    >
+      <Text style={[e.error, { marginBottom: 0 }]}>{motivoConexion.texto}</Text>
+      {accionMotivo === 'cara' ? (
+        <Boton
+          texto={idioma === 'en' ? 'Take my photo' : 'Tomar mi foto'}
+          icono="camera-outline"
+          alTocar={() => abrirPapeles('inicio')}
+          testID="motivo-tomar-foto"
+        />
+      ) : accionMotivo === 'datos' ? (
+        <Boton
+          texto={idioma === 'en' ? 'Go to My info and vehicle' : 'Ir a Mis datos y vehículo'}
+          alTocar={() => {
+            setSeccionPerfil('vehiculo');
+            setVista('datos');
+          }}
+          secundario
+          testID="motivo-mis-datos"
+        />
+      ) : null}
+    </View>
+  ) : null;
   const mensajesInicio = (
     <>
-      {/* C-ASISTENTE-DRIVER: «Tus papeles», con los días que le quedan. Va primero: sin la foto de
-          la cara no puede empezar. Con un pedido en curso no estorba. */}
-      {!estado?.activo ? (
+      {estado?.activo ? lineaError : null}
+      {estado?.activo ? puertas() : lineaError}
+      {/* C-ASISTENTE-DRIVER: «Tus papeles», con los días que le quedan. Con la cara pendiente va
+          arriba (en el bloque de lo que le falta); con un pedido en curso no estorba. */}
+      {!estado?.activo && !caraArriba ? (
         <TusPapeles
           api={api}
           v={papeles.v}
@@ -3430,7 +3656,7 @@ export function Inicio() {
       {!estado?.activo ? (
         <SaldoInicio saldo={prepago} idioma={idioma} alRecargar={() => setVista('billetera')} />
       ) : null}
-      {mensajes}
+      {mensajesResto}
       {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
     </>
   );
@@ -3465,9 +3691,14 @@ export function Inicio() {
       alAbrirFlex={() => setVista('miRuta')}
       alDesconectado={(id, nombre, texto) => setDesconectado({ id, nombre, texto })}
       debajo={mensajesInicio}
+      arriba={arribaInicio}
+      motivo={motivoInicio}
+      motivoServicio={motivoConexion?.servicio}
     />
   ) : (
     <>
+      {arribaInicio}
+      {motivoInicio}
       <ResumenDia
         idioma={idioma}
         partes={hoyConEnMano.partes}

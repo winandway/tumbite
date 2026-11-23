@@ -12,6 +12,7 @@ import {
   type Idioma,
   type ServicioPasajeros,
 } from '@tumbite/compartido';
+import { EditarVehiculo } from './EditarVehiculo';
 import {
   AvisoBorrador,
   Boton,
@@ -43,6 +44,7 @@ type Vehiculo = {
   anio: number | null;
   color: string;
   placa: string;
+  placaEstado?: string;
   plazas: number | null;
   estado: string;
   motivo: string;
@@ -483,6 +485,8 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [estado, setEstado] = useState<ServicioConductor | null>(null);
   const [error, setError] = useState('');
+  // C-QUE-TE-FALTA: el error de una casilla (la placa) va debajo de ella, no arriba de todo.
+  const [errorCampo, setErrorCampo] = useState<{ campo: string; texto: string } | null>(null);
   const [subiendo, setSubiendo] = useState('');
   const [verCiudades, setVerCiudades] = useState(false);
   // C-CARRO-CATEGORIAS: cuántos años admite Comfort en el país del conductor.
@@ -534,7 +538,9 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       await f();
       await cargar();
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      if (x instanceof ErrorApi && (x.campo === 'placa' || x.campo === 'placaEstado'))
+        setErrorCampo({ campo: x.campo, texto: x.message });
+      else setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
 
@@ -556,6 +562,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
 
   async function guardar() {
     const v = b.valores;
+    setErrorCampo(null);
     await hacer(async () => {
       await api.pedir('POST', '/datos/conductor/vehiculos', {
         tipo: servicio,
@@ -593,15 +600,26 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     etiqueta: string,
     teclado: 'default' | 'number-pad' = 'default',
   ) => (
-    <TextInput
-      value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
-      onChangeText={(x) => b.cambiar(campo, x)}
-      placeholder={etiqueta}
-      accessibilityLabel={etiqueta}
-      keyboardType={teclado}
-      autoCapitalize={campo === 'placa' || campo === 'placaEstado' ? 'characters' : 'words'}
-      style={e.input}
-    />
+    <View style={{ gap: 4 }}>
+      <TextInput
+        testID={`alta-${campo}`}
+        value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
+        onChangeText={(x) => {
+          b.cambiar(campo, x);
+          if (errorCampo?.campo === campo) setErrorCampo(null);
+        }}
+        placeholder={etiqueta}
+        accessibilityLabel={etiqueta}
+        keyboardType={teclado}
+        autoCapitalize={campo === 'placa' || campo === 'placaEstado' ? 'characters' : 'words'}
+        style={[e.input, errorCampo?.campo === campo ? { borderColor: ROJO_ERROR } : null]}
+      />
+      {errorCampo?.campo === campo ? (
+        <Text accessibilityRole="alert" style={{ color: ROJO_ERROR, fontSize: 13 }}>
+          {errorCampo.texto}
+        </Text>
+      ) : null}
+    </View>
   );
 
   return (
@@ -677,6 +695,16 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 {tc.rechazo}: {vehiculo.motivo}
               </Text>
             ) : null}
+            {/* C-QUE-TE-FALTA: completar o corregir el vehículo ya guardado, sin borrarlo. */}
+            <EditarVehiculo
+              key={vehiculo.id}
+              api={api}
+              idioma={idioma}
+              cuenta={usuario?.id}
+              vehiculo={vehiculo}
+              placaNacional={Boolean(papeles?.perfil.placaNacional)}
+              alGuardar={() => cargar()}
+            />
             {servicio === 'carro' && (vehiculo.plazas ?? 0) >= PLAZAS_XL ? (
               <Text style={{ color: VERDE, fontSize: 12, fontWeight: '700' }}>{t.xl}</Text>
             ) : null}
