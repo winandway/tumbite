@@ -117,6 +117,8 @@
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Divoox](https://divoox.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
+- [How customers pay for the orders you receive · Divoox](https://divoox.com/docs/restaurants/restaurant-direct-payment-venezuela): In the United States every order reaches your restaurant already paid by card in the app, so there is no payment for you to confirm.
+- [Is there a balance to top up for my restaurant? · Divoox](https://divoox.com/docs/restaurants/restaurant-balance-venezuela): Not in the United States. Orders are paid by card in the app and your restaurant doesn’t keep a prepaid balance.
 - [Report a review that doesn’t belong · Divoox](https://divoox.com/docs/restaurants/report-a-review): If a review of your restaurant is offensive, fake or advertising, report it from your dashboard or the app. Our team reviews it and hides it if it breaks t
 - [For drivers · Divoox](https://divoox.com/docs/drivers): ⌘K← Docs For driversInvite drivers and build your team: earn balance for each oneWith your code or link you invite other drivers. When your invitee complet
 - [Invite drivers and build your team: earn balance for each one · Divoox](https://divoox.com/docs/drivers/invite-drivers-and-teams): With your code or link you invite other drivers. When your invitee completes their first trips, you earn balance. If you lead a group, your team stays link
