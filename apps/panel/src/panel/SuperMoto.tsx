@@ -55,6 +55,9 @@ const T = {
     envio: 'Envío hasta 3 km',
     servicioCargo: 'Cargo de servicio',
     pedidoPequeno: 'Pedido pequeño (menos de 5 dólares)',
+    // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): el modelo en una frase, sin líneas en cero.
+    comidaModelo:
+      'El cliente paga solo la comida (directo al restaurante) y el envío (al conductor): sin tarifa de servicio ni cargo por pedido pequeño. La comisión de Divoox la paga el restaurante de su saldo; se fija en Dinero, «Comida: quién paga qué».',
     tarifaEscribe: 'Tarifa de esta ciudad (en la moneda de los viajes)',
     tarifaEscribeAyuda:
       'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
@@ -296,6 +299,8 @@ const T = {
     envio: 'Delivery up to 3 km',
     servicioCargo: 'Service fee',
     pedidoPequeno: 'Small order (under 5 dollars)',
+    comidaModelo:
+      'The customer pays only for the food (directly to the restaurant) and the delivery (to the driver): no service fee and no small-order fee. The restaurant pays the Divoox fee from its balance; it is set in Money, “Food: who pays what.”',
     tarifaEscribe: 'Pricing for this city (in the ride currency)',
     tarifaEscribeAyuda:
       'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
@@ -752,26 +757,34 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           <h3>{t.comidaTitulo}</h3>
           <p className="pista">{t.comidaAyuda}</p>
           {venezuela || !v.id.trim() ? (
-            <ul className="lista">
-              {(
-                [
-                  [t.envio, TARIFAS_COMIDA_VENEZUELA.envioBase],
-                  [t.servicioCargo, TARIFAS_COMIDA_VENEZUELA.servicioMinimo],
-                  [t.pedidoPequeno, TARIFAS_COMIDA_VENEZUELA.cargoPedidoPequeno],
-                ] as const
-              ).map(([nombre, centavos]) => (
-                <li key={nombre}>
-                  <div className="lista-texto">
-                    <strong>{nombre}</strong>
-                    <span>
-                      {nombre === t.servicioCargo
-                        ? `${TARIFAS_COMIDA_VENEZUELA.servicioPb / 100} % (${usd(centavos)} – ${usd(TARIFAS_COMIDA_VENEZUELA.servicioMaximo)})`
-                        : usd(centavos)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="pista" data-testid="comida-modelo">
+                {t.comidaModelo}
+              </p>
+              <ul className="lista">
+                {(
+                  [
+                    [t.envio, TARIFAS_COMIDA_VENEZUELA.envioBase],
+                    [t.servicioCargo, TARIFAS_COMIDA_VENEZUELA.servicioMaximo],
+                    [t.pedidoPequeno, TARIFAS_COMIDA_VENEZUELA.cargoPedidoPequeno],
+                  ] as const
+                )
+                  // Una línea en cero no se enseña: en el modelo de hoy solo queda el envío.
+                  .filter(([, centavos]) => centavos > 0)
+                  .map(([nombre, centavos]) => (
+                    <li key={nombre}>
+                      <div className="lista-texto">
+                        <strong>{nombre}</strong>
+                        <span>
+                          {nombre === t.servicioCargo
+                            ? `${TARIFAS_COMIDA_VENEZUELA.servicioPb / 100} % (${usd(TARIFAS_COMIDA_VENEZUELA.servicioMinimo)} – ${usd(centavos)})`
+                            : usd(centavos)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </>
           ) : null}
         </div>
       ) : conTarifaDeMercado && deMercado ? (
