@@ -344,6 +344,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['codigos_telefono', 'respaldo_en', 'TEXT'],
   // C-TELEFONO-SIN-CANAL (23 nov 2026): el código no salió por ningún canal; la puerta se abre.
   ['codigos_telefono', 'sin_canal_en', 'TEXT'],
+  // C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): la comisión del restaurante congelada al pedir.
+  ['pagos_comida', 'comision_regla_json', 'TEXT'],
   ['sms_enviados', 'entrega', 'TEXT'],
   ['sms_enviados', 'entrega_error', 'TEXT'],
   ['sms_enviados', 'entrega_en', 'TEXT'],

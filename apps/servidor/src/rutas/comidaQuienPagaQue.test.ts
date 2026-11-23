@@ -7,6 +7,8 @@ import {
   porcentajeDe,
 } from '@tumbite/compartido';
 import { saldoLibro } from '../internacional/libro';
+import { reciboDePedido } from '../avisos';
+import { usarTransporteCorreo } from '../correo';
 import { abrirComida, escenarioVe } from '../pruebas/comidaVe';
 import { mundoPago } from '../pruebas/pagoComidaVe';
 
@@ -386,5 +388,175 @@ describe('C-COMIDA-VE-QUIEN-PAGA: la palanca del panel', () => {
         ).estado,
       ).toBe(403);
     }
+  });
+});
+
+describe('C-COMIDA-VE-QUIEN-PAGA: la comisión del restaurante se congela al pedir', () => {
+  /** Pedido creado, aceptado, tomado y pagado por el cliente: falta solo el «Me llegó». */
+  async function hastaReportado(w: Mundo, rep: { id: string; token: string }) {
+    const p = await w.pedir();
+    expect(p.estado).toBe(201);
+    const id = p.datos.pedidoId as string;
+    expect((await w.aceptarRest(id)).estado).toBe(200);
+    expect((await w.ofertas(rep)).map((o) => o.id)).toContain(id);
+    expect((await w.tomar(id, rep)).estado).toBe(200);
+    const ref = `${Math.floor(100000 + Math.random() * 899999)}`;
+    expect((await w.reportar(id, ref)).estado).toBe(200);
+    return id;
+  }
+
+  it('pedido creado al 0 %, la palanca sube al 10 % antes del «Me llegó»: no cobra nada', async () => {
+    const w = await mundoPago();
+    expect((await cargarRest(w, 500)).estado).toBe(200);
+    const rep = await w.conductor('Conductor de ejemplo', 0);
+    const id = await hastaReportado(w, rep);
+    expect(
+      (await palanca(w, { restaurante: { comisionPb: 1000, revisionLegalNota: NOTA_LEGAL } }))
+        .estado,
+    ).toBe(200);
+    expect((await w.responder(id, true)).estado).toBe(200);
+    expect(await libroDe(w, id, 'comision_restaurante')).toEqual({ n: 0, s: 0 });
+    expect(await saldoRest(w)).toBe(500);
+  });
+
+  it('pedido creado al 10 %, la palanca baja a 0 antes del «Me llegó»: cobra el 10 % con que nació', async () => {
+    const w = await mundoPago();
+    expect((await cargarRest(w, 500)).estado).toBe(200);
+    expect(
+      (await palanca(w, { restaurante: { comisionPb: 1000, revisionLegalNota: NOTA_LEGAL } }))
+        .estado,
+    ).toBe(200);
+    const rep = await w.conductor('Conductor de ejemplo', 0);
+    const id = await hastaReportado(w, rep);
+    expect((await palanca(w, { restaurante: { comisionPb: 0 } })).estado).toBe(200);
+    expect((await w.responder(id, true)).estado).toBe(200);
+    expect(await libroDe(w, id, 'comision_restaurante')).toEqual({ n: 1, s: 90 });
+    expect(await saldoRest(w)).toBe(410);
+  });
+
+  it('si la comida cambia antes de pagar, la comisión sigue el porcentaje con que nació, no el vigente', async () => {
+    const w = await mundoPago();
+    expect((await cargarRest(w, 500)).estado).toBe(200);
+    expect(
+      (await palanca(w, { restaurante: { comisionPb: 1000, revisionLegalNota: NOTA_LEGAL } }))
+        .estado,
+    ).toBe(200);
+    const rep = await w.conductor('Conductor de ejemplo', 0);
+    const p = await w.pedir();
+    const id = p.datos.pedidoId as string;
+    // La comida baja a 4,50 antes de que el cliente pague (como al quitar un plato agotado).
+    await w.e.m.DB.prepare('UPDATE pagos_comida SET monto = 450 WHERE pedido_id = ?')
+      .bind(id)
+      .run();
+    expect(
+      (await palanca(w, { restaurante: { comisionPb: 2000, revisionLegalNota: NOTA_LEGAL } }))
+        .estado,
+    ).toBe(200);
+    expect((await w.aceptarRest(id)).estado).toBe(200);
+    expect((await w.ofertas(rep)).map((o) => o.id)).toContain(id);
+    expect((await w.tomar(id, rep)).estado).toBe(200);
+    expect((await w.reportar(id, '445566')).estado).toBe(200);
+    expect((await w.responder(id, true)).estado).toBe(200);
+    // 10 % de 4,50 (el porcentaje con que nació), no 20 %.
+    expect(await libroDe(w, id, 'comision_restaurante')).toEqual({ n: 1, s: 45 });
+  });
+
+  it('una fila vieja sin la comisión congelada se cobra como antes (la vigente al «Me llegó»)', async () => {
+    const w = await mundoPago();
+    expect((await cargarRest(w, 500)).estado).toBe(200);
+    const rep = await w.conductor('Conductor de ejemplo', 0);
+    const id = await hastaReportado(w, rep);
+    await w.e.m.DB.prepare('UPDATE pagos_comida SET comision_regla_json = NULL WHERE pedido_id = ?')
+      .bind(id)
+      .run();
+    expect(
+      (await palanca(w, { restaurante: { comisionPb: 1000, revisionLegalNota: NOTA_LEGAL } }))
+        .estado,
+    ).toBe(200);
+    expect((await w.responder(id, true)).estado).toBe(200);
+    expect(await libroDe(w, id, 'comision_restaurante')).toEqual({ n: 1, s: 90 });
+  });
+});
+
+describe('C-COMIDA-VE-QUIEN-PAGA: una política de todos los países no se esconde', () => {
+  it('con una política global food/restaurante, la palanca no dice 0 %: el GET la muestra y el PUT a 0 responde 409 sin tocar nada', async () => {
+    const w = await mundoPago();
+    const global = await w.e.m.llamar(
+      'POST',
+      '/datos/admin/finanzas/politicas',
+      {
+        nombre: 'Comida · restaurantes · todos los países',
+        servicio: 'food',
+        tipoCuenta: 'restaurante',
+        pais: '*',
+        modalidad: 'prepago',
+        moneda: 'USD',
+        regla: { tipo: 'porcentaje', pb: 500 },
+        motivo: 'Política global de prueba',
+        revisionLegalAprobada: true,
+        revisionLegalNota: 'Revisión legal de prueba aprobada',
+      },
+      w.e.admin.token,
+    );
+    expect(global.estado).toBe(201);
+    const g = await leer(w);
+    expect(g.datos.restaurante).toMatchObject({ comisionPb: 500, global: true });
+    const antes = await w.e.m.DB.prepare('SELECT COUNT(*) AS n FROM finanzas_auditoria').first<{
+      n: number;
+    }>();
+    const r = await palanca(w, {
+      restaurante: { comisionPb: 0 },
+      conductor: { comisionEnvioPb: 700 },
+    });
+    expect(r.estado).toBe(409);
+    expect(JSON.stringify(r.datos)).toMatch(/todos los países|all countries/i);
+    // Nada a medias: ni el conductor ni la auditoría cambiaron.
+    expect((await leer(w)).datos.conductor.comisionEnvioPb).toBe(0);
+    const despues = await w.e.m.DB.prepare('SELECT COUNT(*) AS n FROM finanzas_auditoria').first<{
+      n: number;
+    }>();
+    expect(despues?.n).toBe(antes?.n);
+    // Un 10 % del país sí rige (el país manda sobre la global).
+    expect(
+      (await palanca(w, { restaurante: { comisionPb: 1000, revisionLegalNota: NOTA_LEGAL } }))
+        .estado,
+    ).toBe(200);
+    expect((await leer(w)).datos.restaurante).toMatchObject({ comisionPb: 1000, global: false });
+  });
+});
+
+describe('C-COMIDA-VE-QUIEN-PAGA: el correo de recibo no escribe cargos en cero', () => {
+  it('sin servicio ni envío, esas líneas no salen; con montos, salen como siempre', async () => {
+    const enviados: { text: string }[] = [];
+    usarTransporteCorreo(async (_url, init) => {
+      enviados.push(JSON.parse(String(init.body)) as { text: string });
+      return new Response(JSON.stringify({ success: true, message_id: 'm', rebotados: [] }), {
+        status: 200,
+      });
+    });
+    const env = { YAD_TOKEN: 'token-de-prueba-'.padEnd(40, 'x') } as never;
+    const base = {
+      correo: 'cliente@ejemplo.com',
+      nombre: 'Ana',
+      pedidoId: 'abcdef123456',
+      restaurante: 'Arepera',
+      lineas: [{ nombreEs: 'Arepa', nombreEn: 'Arepa', precioCentavos: 450, cantidad: 2 }],
+      subtotal: 900,
+      propina: 50,
+      regalo: 0,
+      direccion: 'Calle 1',
+    };
+    for (const idioma of ['es', 'en'] as const) {
+      await reciboDePedido(env, { ...base, idioma, envio: 150, servicio: 0, total: 1100 });
+      const t1 = enviados.at(-1)?.text ?? '';
+      expect(t1).not.toMatch(/Servicio|Service/);
+      expect(t1).toMatch(/Envío|Delivery/);
+      await reciboDePedido(env, { ...base, idioma, envio: 0, servicio: 0, total: 950 });
+      expect(enviados.at(-1)?.text ?? '').not.toMatch(/Envío|Delivery|Servicio|Service/);
+      await reciboDePedido(env, { ...base, idioma, envio: 150, servicio: 45, total: 1145 });
+      const t3 = enviados.at(-1)?.text ?? '';
+      expect(t3).toMatch(/Servicio: \$0[.,]45|Service: \$0\.45/);
+    }
+    usarTransporteCorreo(null);
   });
 });

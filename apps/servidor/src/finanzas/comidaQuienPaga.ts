@@ -6,6 +6,8 @@ import {
   COMISION_RESTAURANTE_VE_PREPARADA_PB,
   PAISES,
   TARIFAS_COMIDA_VENEZUELA,
+  elegirPolitica,
+  type PoliticaFinanciera,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -18,7 +20,13 @@ import {
   guardarConfigPais,
   leerConfigPais,
 } from '../internacional/paises';
-import { ahoraSql, politicaVigente, sentenciaAuditoriaFin } from './politicas';
+import {
+  type FilaPolitica,
+  ahoraSql,
+  filaAPolitica,
+  politicaVigente,
+  sentenciaAuditoriaFin,
+} from './politicas';
 
 /**
  * C-COMIDA-VE-QUIEN-PAGA (23 nov 2026, modelo aprobado por Richard) — Venezuela y todo país con la
@@ -112,7 +120,31 @@ async function restauranteDe(db: D1Database, pais: string, moneda: string) {
     preparadaPb: COMISION_RESTAURANTE_VE_PREPARADA_PB,
     revisionLegalAprobada: rige ? rige.revisionLegalAprobada : false,
     politicaId: rige ? rige.id : null,
+    /** La que rige es una política de todos los países (se cierra en Finanzas → Políticas). */
+    global: rige ? rige.pais === '*' : false,
   };
+}
+
+/**
+ * La política de TODOS los países (`pais = '*'`) que regiría en este país si no tuviera una propia.
+ * Con ella, poner el país en 0 % no basta: seguiría cobrando la global.
+ */
+async function globalQueRige(db: D1Database, pais: string, moneda: string) {
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM politicas_financieras
+        WHERE servicio = 'food' AND tipo_cuenta = 'restaurante' AND pais = '*' AND activa = 1 LIMIT 50`,
+    )
+    .all<FilaPolitica>();
+  const lista = results.map(filaAPolitica).filter((p): p is PoliticaFinanciera => p !== null);
+  const g = elegirPolitica(lista, {
+    servicio: 'food',
+    tipoCuenta: 'restaurante',
+    pais,
+    moneda,
+    en: ahoraSql(),
+  });
+  return g && g.modalidad === 'prepago' ? g : null;
 }
 
 async function vista(db: D1Database, pais: string, cfg: ConfigPais) {
@@ -208,6 +240,14 @@ comidaQuienPaga.put(RUTA, async (c) => {
       'Para cobrarle comisión al restaurante escribe la referencia de la revisión legal aprobada (al menos 10 letras).',
       'restaurante.revisionLegalNota',
       422,
+    );
+
+  // Con 0 % y una política de todos los países que sigue rigiendo, la palanca mentiría: 409 claro.
+  if (d.restaurante?.comisionPb === 0 && (await globalQueRige(db, d.pais, cfg.moneda)))
+    throw new ErrorDatos(
+      'Rige una política de comisión de restaurantes para todos los países: ciérrala en Finanzas → Políticas y vuelve a intentarlo.',
+      'restaurante.comisionPb',
+      409,
     );
 
   const antes = await vista(db, d.pais, cfg);

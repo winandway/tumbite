@@ -14,7 +14,7 @@ import {
  * de `packages/compartido/src/finanzas.ts`; aquí solo se leen de la base y se audita cada cambio.
  */
 
-type FilaPolitica = {
+export type FilaPolitica = {
   id: string;
   nombre: string;
   servicio: string;

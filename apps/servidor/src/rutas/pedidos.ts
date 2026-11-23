@@ -1102,13 +1102,14 @@ pedidos.post('/pedidos', async (c) => {
   // C-PILOTO-LIMITES: un participante del piloto no pasa del tope por pedido ni por día.
   await exigirTopePiloto(db, u.id, desglose.totalCliente);
   // C-SALDO-RESTAURANTE: con una comisión del restaurante encendida, sin saldo no recibe pedidos.
-  if (pagoRestaurante)
-    await exigirSaldoRestaurante(c.env, db, {
-      rid: String(rest.id),
-      pais,
-      moneda,
-      comida: desglose.pagoRestaurante,
-    });
+  const comisionRestaurante = pagoRestaurante
+    ? await exigirSaldoRestaurante(c.env, db, {
+        rid: String(rest.id),
+        pais,
+        moneda,
+        comida: desglose.pagoRestaurante,
+      })
+    : null;
   // C-PENDIENTE-ABANDONADO: con los mismos datos, ya validados (cupón, topes), y el mismo total, se
   // devuelve el cobro que la otra petición acaba de crear en vez de crear y anular otro.
   if (vigente && vigente.total === desglose.totalCliente) {
@@ -1320,6 +1321,8 @@ pedidos.post('/pedidos', async (c) => {
         clienteId: u.id,
         moneda,
         monto: desglose.pagoRestaurante,
+        // C-COMIDA-VE-QUIEN-PAGA: se cobra al «Me llegó» lo que regía ahora, al pedir.
+        comision: comisionRestaurante,
       });
     let abierto: { pais: string; moneda: string };
     try {
