@@ -60,6 +60,7 @@ import { piloto } from './rutas/piloto';
 import { cuentaPrueba } from './rutas/cuentaPrueba';
 import { informes } from './rutas/informes';
 import { tableroPanel } from './rutas/tableroPanel';
+import { rutasCampana } from './campana';
 import { turnos } from './rutas/turnos';
 import { grupos } from './rutas/grupos';
 import { pedidoCompartido } from './rutas/pedidoCompartido';
@@ -853,6 +854,8 @@ app.route('/datos', cuentaPrueba);
 app.route('/datos', informes);
 // C-PANEL-ARMAZON: lecturas de los tableros del panel web (nunca escriben).
 app.route('/datos', tableroPanel);
+// C-CAMPANA-SE-VACIA: el gesto de abrir cualquier campana («visto hasta», por cuenta).
+app.route('/datos', rutasCampana);
 app.route('/datos', turnos);
 app.route('/datos', grupos);
 app.route('/datos', pedidoCompartido);

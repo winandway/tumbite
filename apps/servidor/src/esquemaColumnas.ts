@@ -994,6 +994,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "valor_json",
     "actualizado_en"
   ],
+  "campana_vista": [
+    "usuario_id",
+    "campana",
+    "visto_hasta"
+  ],
   "avisos_equipo": [
     "usuario_id",
     "tipo",

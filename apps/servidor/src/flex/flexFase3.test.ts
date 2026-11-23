@@ -340,6 +340,36 @@ describe('Flex · avisos al celular (C-FLEX-AVISOS)', () => {
       .bind(rutaId)
       .first<{ id: string }>())!.id;
     expect(inc.estado).toBe(200);
+    // C-CAMPANA-SE-VACIA: la incidencia llega a la campana de la empresa; abrirla la deja en cero.
+    const campana = async () =>
+      (await llamar(m, 'GET', `${B}/empresas/${e.id}/campana`, undefined, e.dueno.token)).datos as {
+        avisos: { id: string; en: string; leido: boolean }[];
+        sinLeer: number;
+      };
+    const c0 = await campana();
+    expect(c0.sinLeer).toBe(1);
+    expect(c0.avisos[0]?.id).toBe(incId);
+    const visto = await llamar(
+      m,
+      'POST',
+      '/datos/campana/visto',
+      { campana: `flex:${e.id}`, hasta: c0.avisos[0]?.en },
+      e.dueno.token,
+    );
+    expect(visto.estado).toBe(200);
+    expect((await campana()).sinLeer).toBe(0);
+    // Quien no es de la empresa no guarda marcas de su campana.
+    expect(
+      (
+        await llamar(
+          m,
+          'POST',
+          '/datos/campana/visto',
+          { campana: `flex:${e.id}`, hasta: c0.avisos[0]?.en },
+          cond.token,
+        )
+      ).estado,
+    ).toBe(403);
     await llamar(
       m,
       'POST',

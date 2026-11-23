@@ -57,7 +57,7 @@ describe('C-PANEL-ARMAZON · tablero y avisos del panel', () => {
     expect((await m.llamar('GET', '/datos/admin/tablero')).estado).toBe(401);
   });
 
-  it('la campana trae lo de cada rol: tickets para el equipo, pedidos por aceptar para el restaurante', async () => {
+  it('la campana trae lo que llegó para cada rol y el menú lo que espera una acción', async () => {
     const { m, admin, dueno, cliente, meter } = await armar();
     await meter('p1', 'pagado', '-5 minutes');
     await meter('p2', 'entregado', '-1 hours');
@@ -65,14 +65,23 @@ describe('C-PANEL-ARMAZON · tablero y avisos del panel', () => {
       "INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto) VALUES ('t1', 'c1', 'soporte', 'Ana', 'ana@ejemplo.com', 'Ayuda')",
     ).run();
     const delAdmin = (await m.llamar('GET', '/datos/panel/avisos', undefined, admin.token)).datos;
-    expect(delAdmin.avisos).toEqual([
-      { clave: 'tickets', cantidad: 1 },
-      { clave: 'restaurantes', cantidad: 1 },
+    // C-CAMPANA-SE-VACIA: lo que llegó (un ticket y un restaurante nuevo), sin leer todavía.
+    expect(delAdmin.campana.sinLeer).toBe(2);
+    expect(delAdmin.campana.avisos.map((a: { tipo: string }) => a.tipo).sort()).toEqual([
+      'restaurante',
+      'ticket',
     ]);
+    expect(delAdmin.menu).toEqual(
+      expect.arrayContaining([
+        { clave: 'tickets', cantidad: 1, tono: 'trabajo' },
+        { clave: 'restaurants', cantidad: 1, tono: 'trabajo' },
+      ]),
+    );
     const delRest = (await m.llamar('GET', '/datos/panel/avisos', undefined, dueno.token)).datos;
-    expect(delRest.avisos).toEqual([{ clave: 'pedidos', cantidad: 1 }]);
+    expect(delRest.campana.sinLeer).toBe(2);
+    expect(delRest.menu).toEqual([{ clave: 'orders', cantidad: 1, tono: 'trabajo' }]);
     const delCliente = await m.llamar('GET', '/datos/panel/avisos', undefined, cliente.token);
-    expect(delCliente.datos.avisos).toEqual([]);
+    expect(delCliente.datos.campana).toEqual({ avisos: [], sinLeer: 0 });
     expect((await m.llamar('GET', '/datos/panel/avisos')).estado).toBe(401);
   });
 
