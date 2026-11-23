@@ -890,8 +890,14 @@ CREATE TABLE IF NOT EXISTS sms_enviados (
   -- C-SMS-VENEZUELA: por qué proveedor salió y su número de solicitud (también en COLUMNAS).
   proveedor TEXT,
   referencia TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-WHATSAPP-ENTREGA: lo que dijo Meta de la entrega (sent, delivered, read, failed), su error y cuándo (COLUMNAS).
+  entrega TEXT,
+  entrega_error TEXT,
+  entrega_en TEXT
 );
+-- C-WHATSAPP-ENTREGA: el aviso de Meta busca el mensaje por su referencia.
+CREATE INDEX IF NOT EXISTS sms_enviados_referencia ON sms_enviados(referencia);
 -- C-SMS-GASTO (22 nov 2026): el gasto del día, el tope de Venezuela y el de pánico cuentan las últimas 24 h;
 -- sin este índice cada cuenta recorría la tabla entera.
 CREATE INDEX IF NOT EXISTS sms_enviados_dia ON sms_enviados(creado_en);
@@ -3634,7 +3640,10 @@ CREATE TABLE IF NOT EXISTS codigos_telefono (
   enviados_hoy INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   -- C-CODIGO-CANALES: por dónde salió el último código («whatsapp» o «sms»; también en COLUMNAS).
-  canal TEXT
+  canal TEXT,
+  -- C-WHATSAPP-ENTREGA: el mensaje de WhatsApp de este código y cuándo salió su respaldo por SMS (COLUMNAS).
+  referencia TEXT,
+  respaldo_en TEXT
 );
 -- C-TELEFONO-TOPES (22 nov 2026): cada código por SMS que salió, para los topes por número, por red (IP) y
 -- del día, que valen aunque la persona cambie de cuenta. Una fila por envío; los índices son los que leen los topes.
