@@ -67,7 +67,11 @@ describe('la franja «PRUEBAS» solo sale en la app de pruebas', () => {
     const suben = readdirSync(carpeta)
       .filter((a) => /\.(mjs|sh)$/.test(a))
       .filter((a) => readFileSync(join(carpeta, a), 'utf8').includes('/bundles'));
-    expect(suben.sort()).toEqual(['publicar-google-play.mjs', 'subir-google-play.mjs']);
+    expect(suben.sort()).toEqual([
+      'borrador-produccion-google-play.mjs',
+      'publicar-google-play.mjs',
+      'subir-google-play.mjs',
+    ]);
     for (const a of suben) {
       const s = readFileSync(join(carpeta, a), 'utf8');
       const puerta = s.indexOf('exigirSinFranja(paquete, aab)');
