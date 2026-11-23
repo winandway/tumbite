@@ -9,7 +9,7 @@ import {
   papelDePaso,
   soloEnVivo,
 } from '@tumbite/compartido';
-import { correosEquipo } from '../avisosEquipo';
+import { avisarVerificacionLista } from '../avisoVerificacion';
 import { enviarCorreo } from '../correo';
 import { nuevoId } from '../cripto';
 import type { Env } from '../env';
@@ -656,13 +656,10 @@ verificacionConductor.post('/conductor/verificacion/enviar', async (c) => {
       .bind(u.id, r.resultado, r.confianza, r.color)
       .run();
   }
-  for (const para of await correosEquipo(c.env, 'verificaciones'))
-    await enviarCorreo(c.env, {
-      de: 'avisos',
-      para,
-      asunto: `Papeles enviados: ${u.nombre}`,
-      texto: `${u.nombre} envió sus papeles a revisión con el asistente. Revísalos en el superadmin → Verificaciones.`,
-    }).catch((err: unknown) => console.error('verificación: correo al equipo', err));
+  // C-VERIFICACIONES-EN-VIVO: UN correo por persona cuando queda lista (no uno por foto).
+  await avisarVerificacionLista(c.env, u.id).catch((err: unknown) =>
+    console.error('verificación: aviso al equipo', err),
+  );
   return c.json({ ok: true, enviados: sentencias.length });
 });
 

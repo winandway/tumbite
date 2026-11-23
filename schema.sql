@@ -1684,6 +1684,19 @@ CREATE TABLE IF NOT EXISTS campana_vista (
   PRIMARY KEY (usuario_id, campana)
 ) WITHOUT ROWID;
 
+-- C-VERIFICACIONES-EN-VIVO (23 nov 2026, Richard): el correo al equipo cuando una persona queda lista
+-- para revisar. UNA fila por persona: el envío que ya se avisó (`enviado_en` de su verificación, así no
+-- se manda otro por la misma) y cómo salió (a cuántos, si salió y por qué no). Antes un correo que no
+-- salía no dejaba rastro. Sin clave foránea a propósito (C-CAMPANA-SE-VACIA); la borra borrarCuenta.
+CREATE TABLE IF NOT EXISTS avisos_verificacion (
+  usuario_id TEXT PRIMARY KEY,
+  enviado_en TEXT NOT NULL,
+  destinos INTEGER NOT NULL DEFAULT 0,
+  ok INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT NOT NULL DEFAULT '',
+  avisado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+
 -- C-AVISOS-EQUIPO (29 oct 2026): qué avisos por correo quiere cada cuenta del equipo, por tipo.
 CREATE TABLE IF NOT EXISTS avisos_equipo (
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),

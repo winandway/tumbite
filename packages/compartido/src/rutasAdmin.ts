@@ -98,6 +98,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PUT /admin/papeles-conductor/:id': 'repartidores.gestionar',
   // ─── Verificaciones
   'GET /admin/kyc': 'kyc.ver',
+  // C-VERIFICACIONES-EN-VIVO: la marca barata que el panel pide cada pocos segundos.
+  'GET /admin/kyc/marca': 'kyc.ver',
   'GET /admin/kyc/:id': 'kyc.ver',
   'GET /admin/kyc/:id/control/:cid': 'kyc.ver',
   'GET /admin/kyc/:id/foto/:pieza': 'repartidores.documentos',
@@ -540,6 +542,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/papeles-conductor/:id/archivo': ficha('papel'),
   'PUT /admin/papeles-conductor/:id': ficha('papel'),
   'GET /admin/kyc': CONSULTA,
+  // Solo cuentas y fechas, sin datos de personas (como el tablero de la verificación automática).
+  'GET /admin/kyc/marca': CONFIG,
   'GET /admin/kyc/:id': ficha('persona'),
   'GET /admin/kyc/:id/control/:cid': ficha('persona'),
   'GET /admin/kyc/:id/foto/:pieza': ficha('persona'),

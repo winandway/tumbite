@@ -244,6 +244,8 @@ export const PANTALLAS_PREFERENCIAS = [
   'embudo',
   // C-VERIFICACIONES-BANDEJA: la pestaña, la zona y «Cuentas» de Verificaciones.
   'verificaciones',
+  // C-VERIFICACIONES-EN-VIVO: los avisos de quien trabaja en el panel (sonido y aviso al aparato).
+  'avisos',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [
@@ -260,6 +262,9 @@ export const CLAVES_PREFERENCIAS = [
   'menores',
   // C-CUENTA-PRUEBA: «reales» (por defecto), «prueba» o «todas».
   'cuentas',
+  // C-VERIFICACIONES-EN-VIVO: «si»/«no»: el sonido del panel y el aviso al teléfono o la computadora («aparato»).
+  'sonido',
+  'aparato',
 ] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;

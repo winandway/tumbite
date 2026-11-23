@@ -999,6 +999,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "campana",
     "visto_hasta"
   ],
+  "avisos_verificacion": [
+    "usuario_id",
+    "enviado_en",
+    "destinos",
+    "ok",
+    "motivo",
+    "avisado_en"
+  ],
   "avisos_equipo": [
     "usuario_id",
     "tipo",

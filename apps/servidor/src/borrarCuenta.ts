@@ -169,6 +169,8 @@ export async function borrarCuenta(
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
     // C-CAMPANA-SE-VACIA: hasta cuándo vio cada campana.
     db.prepare('DELETE FROM campana_vista WHERE usuario_id = ?').bind(u.id),
+    // C-VERIFICACIONES-EN-VIVO: el aviso al equipo de su verificación.
+    db.prepare('DELETE FROM avisos_verificacion WHERE usuario_id = ?').bind(u.id),
     // C-RASTRO: de dónde entró (app, plataforma, red aproximada) y sus pasos del registro se van con la cuenta.
     db.prepare('DELETE FROM rastro_cuenta WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM embudo_cuenta WHERE usuario_id = ?').bind(u.id),

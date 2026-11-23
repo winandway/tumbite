@@ -187,28 +187,31 @@ export async function avisosSuperadmin(
       conductor.valores,
     ],
     [
-      `SELECT 'restaurante' AS tipo, r.id, r.nombre AS titulo, r.creado_en AS en,
-        r.estado <> 'pendiente' AS resuelto FROM restaurantes r
-       WHERE r.creado_en >= ${desde} AND ${REAL('r.dueno_id')}${restaurante.sql}
+      // Por su índice de estado: los que esperan aprobación (al aprobarlos salen de la lista).
+      `SELECT 'restaurante' AS tipo, r.id, r.nombre AS titulo, r.creado_en AS en, 0 AS resuelto
+       FROM restaurantes r
+       WHERE r.estado = 'pendiente' AND ${REAL('r.dueno_id')}${restaurante.sql}
        ORDER BY r.creado_en DESC LIMIT ${POR_TIPO}`,
       restaurante.valores,
     ],
     [
       `SELECT 'linea' AS tipo, s.id, s.nombre AS titulo, s.creado_en AS en,
         s.estado <> 'pendiente' AS resuelto FROM solicitudes_linea s
-       WHERE s.creado_en >= ${desde} ORDER BY s.creado_en DESC LIMIT ${POR_TIPO}`,
+       WHERE s.estado IN ('pendiente', 'aprobada', 'rechazada') AND s.creado_en >= ${desde}
+       ORDER BY s.creado_en DESC LIMIT ${POR_TIPO}`,
       [],
     ],
     [
       `SELECT 'aprobacion' AS tipo, a.id, a.tipo AS titulo, a.creado_en AS en,
         a.estado <> 'pendiente' AS resuelto FROM aprobaciones_dinero a
-       WHERE a.creado_en >= ${desde} ORDER BY a.creado_en DESC LIMIT ${POR_TIPO}`,
+       WHERE a.estado IN ('pendiente', 'ejecutando', 'aprobada', 'rechazada', 'fallida')
+         AND a.creado_en >= ${desde} ORDER BY a.creado_en DESC LIMIT ${POR_TIPO}`,
       [],
     ],
     [
       `SELECT 'emergencia' AS tipo, e.operacion_id AS id, '' AS titulo, e.creado_en AS en,
-        e.atendida_en IS NOT NULL AS resuelto FROM emergencias_viaje e
-       WHERE e.creado_en >= ${desde} AND ${REAL('e.actor_id')}${viaje.sql}
+        0 AS resuelto FROM emergencias_viaje e
+       WHERE e.atendida_en IS NULL AND e.creado_en >= ${desde} AND ${REAL('e.actor_id')}${viaje.sql}
        ORDER BY e.creado_en DESC LIMIT ${POR_TIPO}`,
       viaje.valores,
     ],
@@ -219,11 +222,12 @@ export async function avisosSuperadmin(
        ORDER BY rc.creado_en DESC LIMIT ${POR_TIPO}`,
       [],
     ],
-    // Conductores reales sin ciudad: solo mientras falte (al ponérsela, sale de la campana y del menú).
+    // Conductores reales sin ciudad que se registraron en estos días (por el índice rol y fecha): solo
+    // mientras falte (al ponérsela, sale de la campana y del menú). Los más viejos siguen en el menú.
     [
       `SELECT 'sin_zona' AS tipo, u.id, u.nombre AS titulo, u.creado_en AS en, 0 AS resuelto
        FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id
-       WHERE u.rol = 'repartidor' AND u.activo = 1 AND u.es_prueba = 0
+       WHERE u.rol = 'repartidor' AND u.creado_en >= ${desde} AND u.activo = 1 AND u.es_prueba = 0
          AND ${zonaRealSql('d', 'u')} IS NULL${conductorD.sql}
        ORDER BY u.creado_en DESC LIMIT ${POR_TIPO}`,
       conductorD.valores,
