@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { type Api, type Idioma, formatearMonto } from '@tumbite/compartido';
+import { type Api, type Idioma, formatearMonto, marcarCampanaVista } from '@tumbite/compartido';
 import { C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -14,10 +14,16 @@ export type AvisoRep = {
   /** C-MONEDA-RECORRIDO: la moneda del pedido de esa propina. */
   moneda?: string;
   en: string;
+  /** C-CAMPANA-SE-VACIA: si ya lo vio (los servidores viejos no lo traen). */
+  leido?: boolean;
 };
-export type RespuestaAvisosRep = { avisos: AvisoRep[]; pendientes: number };
+export type RespuestaAvisosRep = { avisos: AvisoRep[]; pendientes: number; sinLeer?: number };
 
-/** La campana del repartidor: avisos reales de los últimos siete días, calculados al momento. */
+/**
+ * La campana del repartidor: avisos reales de los últimos siete días, calculados al momento.
+ * C-CAMPANA-SE-VACIA (23 nov 2026): abrirla deja el punto en cero y lo guarda en el servidor por
+ * cuenta (una escritura como mucho). Lo nuevo lleva su punto rojo; lo leído queda apagado.
+ */
 export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
   const t = textosGrandes(idioma).avisos;
   const [d, setD] = useState<RespuestaAvisosRep | null>(null);
@@ -26,7 +32,10 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
     void api
       .pedir<RespuestaAvisosRep>('GET', '/datos/repartidor/avisos')
       .then((r) => {
-        if (vivo) setD(r);
+        if (!vivo) return;
+        setD(r);
+        // El gesto de abrir la campana: «visto hasta» el aviso más nuevo (nada si no había nada nuevo).
+        void marcarCampanaVista(api, 'repartidor', r.avisos);
       })
       .catch((x: unknown) => console.warn('avisos', x));
     return () => {
@@ -40,7 +49,11 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
       {d && d.avisos.length === 0 ? <Text style={{ color: '#666B73' }}>{t.sin}</Text> : null}
       {(d?.avisos ?? []).map((a, i) => (
         <View key={`${a.tipo}-${a.pedidoId ?? i}-${a.en}`} style={e.tarjeta}>
-          <Text style={{ fontWeight: '800', color: C.secundario }}>
+          <Text
+            style={{ fontWeight: a.leido === false ? '800' : '600', color: C.secundario }}
+            testID={a.leido === false ? 'aviso-nuevo' : undefined}
+          >
+            {a.leido === false ? <Text style={{ color: C.primario }}>● </Text> : null}
             {titulos.get(a.tipo) ?? a.tipo}
             {a.codigo ? ` · #${a.codigo}` : ''}
           </Text>

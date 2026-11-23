@@ -670,6 +670,22 @@ export function Inicio() {
     | 'ayuda'
     | 'papeles'
   >('inicio');
+  // C-CAMPANA-SE-VACIA (23 nov 2026): el punto de la campana es lo que todavía no vio (lo cuenta el
+  // servidor por cuenta); abrir «Avisos» lo deja en cero. Se lee al volver al inicio, nada más.
+  const [campanaSinLeer, setCampanaSinLeer] = useState(0);
+  useEffect(() => {
+    if (vista !== 'inicio' || !usuario) return;
+    let vivo = true;
+    void api
+      .pedir<{ sinLeer?: number }>('GET', '/datos/repartidor/avisos')
+      .then((r) => {
+        if (vivo) setCampanaSinLeer(Number(r.sinLeer ?? 0));
+      })
+      .catch((x: unknown) => console.warn('campana: no se pudo leer', x));
+    return () => {
+      vivo = false;
+    };
+  }, [api, vista, usuario]);
   // C-ASISTENTE-DRIVER: los papeles del conductor (asistente de verificación y «Tus papeles»).
   const papeles = usePapeles(api);
   const recargarPapeles = papeles.recargar;
@@ -1862,8 +1878,11 @@ export function Inicio() {
         idioma={idioma}
         cambiarIdioma={cambiarIdioma}
         alMenu={() => setMenuAbierto((x) => !x)}
-        alCampana={() => setVista('avisos')}
-        punto={Boolean(estado?.selfieControlPendiente || pendientes.length)}
+        alCampana={() => {
+          setCampanaSinLeer(0);
+          setVista('avisos');
+        }}
+        punto={campanaSinLeer > 0}
       />
       {menuAbierto ? (
         <View style={[e.tarjeta, { marginHorizontal: 16, marginTop: 8 }]}>
