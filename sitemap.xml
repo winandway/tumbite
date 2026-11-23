@@ -125,8 +125,6 @@
   <url><loc>https://divoox.com/docs/restaurants/verify</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/gifts</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/earnings</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
-  <url><loc>https://divoox.com/docs/restaurants/restaurant-direct-payment-venezuela</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
-  <url><loc>https://divoox.com/docs/restaurants/restaurant-balance-venezuela</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/report-a-review</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/invite-drivers-and-teams</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
@@ -230,6 +228,7 @@
   <url><loc>https://divoox.com/docs/account/delete</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/send-screenshot-to-support</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/support</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/account/verify-your-phone</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/notifications-language</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/search-docs-and-zoom</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/country/united-states</loc><lastmod>2026-11-23</lastmod><priority>0.6</priority></url>
@@ -405,8 +404,6 @@
   <url><loc>https://divoox.com/es/docs/restaurants/verify</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/gifts</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/earnings</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
-  <url><loc>https://divoox.com/es/docs/restaurants/restaurant-direct-payment-venezuela</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
-  <url><loc>https://divoox.com/es/docs/restaurants/restaurant-balance-venezuela</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/report-a-review</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/invite-drivers-and-teams</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
@@ -510,6 +507,7 @@
   <url><loc>https://divoox.com/es/docs/account/delete</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/send-screenshot-to-support</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/support</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/account/verify-your-phone</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/notifications-language</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/search-docs-and-zoom</loc><lastmod>2026-11-23</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/country/united-states</loc><lastmod>2026-11-23</lastmod><priority>0.6</priority></url>

@@ -892,6 +892,9 @@ CREATE TABLE IF NOT EXISTS sms_enviados (
   referencia TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-SMS-GASTO (22 nov 2026): el gasto del día, el tope de Venezuela y el de pánico cuentan las últimas 24 h;
+-- sin este índice cada cuenta recorría la tabla entera.
+CREATE INDEX IF NOT EXISTS sms_enviados_dia ON sms_enviados(creado_en);
 
 -- Llamadas con número oculto entre repartidor y cliente (Twilio puentea con el número de Tumbite).
 CREATE TABLE IF NOT EXISTS llamadas (
@@ -2477,7 +2480,7 @@ CREATE TABLE IF NOT EXISTS politicas_financieras (
   id TEXT PRIMARY KEY,
   nombre TEXT NOT NULL DEFAULT '',
   servicio TEXT NOT NULL CHECK (servicio IN ('flex', 'express', 'food', 'ride', 'car', 'grocery')),
-  tipo_cuenta TEXT NOT NULL CHECK (tipo_cuenta IN ('empresa', 'conductor', 'restaurante')),
+  tipo_cuenta TEXT NOT NULL CHECK (tipo_cuenta IN ('empresa', 'conductor')),
   pais TEXT NOT NULL,
   ciudad TEXT,
   empresa_id TEXT REFERENCES empresas(id),
@@ -3631,6 +3634,18 @@ CREATE TABLE IF NOT EXISTS codigos_telefono (
   enviados_hoy INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-TELEFONO-TOPES (22 nov 2026): cada código por SMS que salió, para los topes por número, por red (IP) y
+-- del día, que valen aunque la persona cambie de cuenta. Una fila por envío; los índices son los que leen los topes.
+CREATE TABLE IF NOT EXISTS envios_codigo_telefono (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  ip TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS envios_codigo_telefono_numero ON envios_codigo_telefono(telefono, creado_en);
+CREATE INDEX IF NOT EXISTS envios_codigo_telefono_ip ON envios_codigo_telefono(ip, creado_en);
+CREATE INDEX IF NOT EXISTS envios_codigo_telefono_dia ON envios_codigo_telefono(creado_en);
 
 -- C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invita a su conductor con
 -- nombre y celular o correo; queda vinculado solo cuando él acepta en Divoox Driver. Solo el hash del enlace.
@@ -3842,7 +3857,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor', 'saldo_restaurante', 'recarga_restaurante')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,
@@ -5024,101 +5039,3 @@ CREATE TABLE IF NOT EXISTS rezagados_bajas (
   canal TEXT NOT NULL DEFAULT 'correo',
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
-
--- C-COMIDA-PAGO-RESTAURANTE (22 nov 2026) — Venezuela y todo país con `comidaPagoRestaurante`. El
--- cliente le paga la comida DIRECTO al restaurante (pago móvil) y el envío al conductor. Un pedido es
--- de pago directo si tiene fila aquí. Estados: esperando_conductor → por_pagar → reportado →
--- confirmado | no_llego; finales vencido y cancelado (sin CHECK a propósito: la lista se valida en
--- internacional/pagoComida.ts y crecer no obliga a rehacer la tabla). Divoox nunca tiene ese dinero:
--- aquí solo queda lo que cada uno dijo (referencia del cliente, confirmación del restaurante).
--- Sin REFERENCES a propósito (C-LECTURAS-VUELTA-RUTAS).
-CREATE TABLE IF NOT EXISTS pagos_comida (
-  pedido_id TEXT PRIMARY KEY,
-  restaurante_id TEXT NOT NULL,
-  cliente_id TEXT NOT NULL,
-  estado TEXT NOT NULL DEFAULT 'esperando_conductor',
-  moneda TEXT NOT NULL,
-  monto INTEGER NOT NULL,
-  moneda_ref TEXT,
-  monto_ref INTEGER,
-  tasa REAL,
-  tasa_fecha TEXT,
-  vence_en TEXT,
-  cuenta_json TEXT,
-  referencia TEXT NOT NULL DEFAULT '',
-  banco_emisor TEXT NOT NULL DEFAULT '',
-  comprobante_clave TEXT,
-  reportado_en TEXT,
-  confirmado_en TEXT,
-  confirmado_por TEXT,
-  no_llego_en TEXT,
-  recordatorios INTEGER NOT NULL DEFAULT 0,
-  corregido_en TEXT,
-  corregido_restaurante_en TEXT,
-  comision_restaurante INTEGER NOT NULL DEFAULT 0,
-  devolucion_estado TEXT NOT NULL DEFAULT 'no_aplica',
-  devolucion_referencia TEXT NOT NULL DEFAULT '',
-  devolucion_en TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS pagos_comida_estado ON pagos_comida(estado, vence_en);
-CREATE INDEX IF NOT EXISTS pagos_comida_restaurante ON pagos_comida(restaurante_id, referencia);
-
--- La cuenta donde el restaurante recibe el pago de la comida (pago móvil: banco, teléfono, documento y
--- titular). La primera rige al instante; un cambio entra en vigor a las 24 horas (protección contra el
--- robo de la cuenta) y mientras tanto sigue la anterior. 'declarada' = la escribió el restaurante;
--- 'confirmada' = la revisó el equipo (nunca «verificada por el banco»).
-CREATE TABLE IF NOT EXISTS cuentas_cobro_restaurante (
-  id TEXT PRIMARY KEY,
-  restaurante_id TEXT NOT NULL,
-  pais TEXT NOT NULL,
-  moneda TEXT NOT NULL,
-  tipo TEXT NOT NULL DEFAULT 'pago_movil',
-  banco TEXT NOT NULL DEFAULT '',
-  telefono TEXT NOT NULL DEFAULT '',
-  documento TEXT NOT NULL DEFAULT '',
-  titular TEXT NOT NULL DEFAULT '',
-  verificacion TEXT NOT NULL DEFAULT 'declarada',
-  activa INTEGER NOT NULL DEFAULT 1,
-  activa_desde TEXT NOT NULL DEFAULT (datetime('now')),
-  creado_por TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS cuentas_cobro_restaurante_vigente ON cuentas_cobro_restaurante(restaurante_id, pais, activa);
-
--- C-SALDO-RESTAURANTE (22 nov 2026): el saldo prepago del restaurante vive en el LIBRO (cuenta
--- `restaurante:<id>`, bolsillo `prepago`). Estas tablas solo explican sus entradas: la recarga que el
--- restaurante declara (referencia + comprobante; el equipo la acredita UNA vez con la doble firma) y
--- la carga manual del equipo.
-CREATE TABLE IF NOT EXISTS recargas_restaurante (
-  id TEXT PRIMARY KEY,
-  restaurante_id TEXT NOT NULL,
-  pais TEXT NOT NULL,
-  moneda TEXT NOT NULL,
-  monto INTEGER NOT NULL,
-  metodo TEXT NOT NULL DEFAULT 'pago_movil',
-  referencia TEXT NOT NULL,
-  banco TEXT NOT NULL DEFAULT '',
-  comprobante_clave TEXT NOT NULL DEFAULT '',
-  estado TEXT NOT NULL DEFAULT 'pendiente',
-  motivo TEXT NOT NULL DEFAULT '',
-  creado_por TEXT,
-  revisado_por TEXT,
-  revisado_en TEXT,
-  revision_token TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE UNIQUE INDEX IF NOT EXISTS recargas_restaurante_referencia ON recargas_restaurante(restaurante_id, referencia);
-CREATE INDEX IF NOT EXISTS recargas_restaurante_estado ON recargas_restaurante(estado, creado_en);
-CREATE TABLE IF NOT EXISTS cargas_saldo_restaurante (
-  id TEXT PRIMARY KEY,
-  restaurante_id TEXT NOT NULL,
-  pais TEXT NOT NULL,
-  moneda TEXT NOT NULL,
-  monto INTEGER NOT NULL,
-  motivo TEXT NOT NULL DEFAULT '',
-  comprobante TEXT NOT NULL DEFAULT '',
-  autor_id TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS cargas_saldo_restaurante_rest ON cargas_saldo_restaurante(restaurante_id, creado_en);

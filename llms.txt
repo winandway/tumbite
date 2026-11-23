@@ -117,8 +117,6 @@
 - [Verify your restaurant · Divoox](https://divoox.com/docs/restaurants/verify): Four photos from your phone: your ID, your face, and your storefront. That’s how your customers know you’re real.
 - [Gifts and marketing · Divoox](https://divoox.com/docs/restaurants/gifts): Set aside a share of your sales to reward loyal customers.
 - [Daily summary and your wallet · Divoox](https://divoox.com/docs/restaurants/earnings): Orders, sales, commission, and your payout. Cash out to your bank.
-- [How customers pay for the orders you receive · Divoox](https://divoox.com/docs/restaurants/restaurant-direct-payment-venezuela): In the United States every order reaches your restaurant already paid by card in the app, so there is no payment for you to confirm.
-- [Is there a balance to top up for my restaurant? · Divoox](https://divoox.com/docs/restaurants/restaurant-balance-venezuela): Not in the United States. Orders are paid by card in the app and your restaurant doesn’t keep a prepaid balance.
 - [Report a review that doesn’t belong · Divoox](https://divoox.com/docs/restaurants/report-a-review): If a review of your restaurant is offensive, fake or advertising, report it from your dashboard or the app. Our team reviews it and hides it if it breaks t
 - [For drivers · Divoox](https://divoox.com/docs/drivers): ⌘K← Docs For driversInvite drivers and build your team: earn balance for each oneWith your code or link you invite other drivers. When your invitee complet
 - [Invite drivers and build your team: earn balance for each one · Divoox](https://divoox.com/docs/drivers/invite-drivers-and-teams): With your code or link you invite other drivers. When your invitee completes their first trips, you earn balance. If you lead a group, your team stays link
@@ -222,6 +220,7 @@
 - [Delete your account · Divoox](https://divoox.com/docs/account/delete): From the three dots in “My account,” without leaving the app. Your personal data is removed.
 - [How to send a screenshot to support · Divoox](https://divoox.com/docs/account/send-screenshot-to-support): In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.
 - [Help from a real person, with your own link · Divoox](https://divoox.com/docs/account/support): Report a problem from the app or write to us: every case gets its own private conversation, and we email you every time we reply.
+- [Confirm your cell phone · Divoox](https://divoox.com/docs/account/verify-your-phone): When you create your account in the Divoox app or in Divoox Driver, we text you a 6-digit code. Enter it (or let your phone fill it in) and you’re set: you
 - [Your notifications arrive in your language · Divoox](https://divoox.com/docs/account/notifications-language): Phone notifications, browser notifications, emails and text messages arrive in the language you pick in the app. If you never changed it, in your phone’s l
 - [Search Docs and enlarge a screenshot to read it clearly · Divoox](https://divoox.com/docs/account/search-docs-and-zoom): Start typing and Docs suggests guides from the first letter, even if you type in Spanish or make a typo. Tap any screenshot to see it full screen and zoom 
 
