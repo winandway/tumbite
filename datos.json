@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-23T08:00:00Z",
+  "actualizado": "2026-11-23T05:40:00Z",
   "version": "fe71f3f",
   "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-23",
+      "titulo": "WhatsApp confirma la entrega de cada código",
+      "texto": "El código de verificación por WhatsApp ahora sabe si llegó: Meta nos avisa cuando cada mensaje se entrega, y si no se entrega en 30 segundos el código sale solo por SMS. Se probó con números reales de Estados Unidos y Venezuela y los dos llegaron. Además quedaron compiladas las versiones nuevas de Android de Divoox Driver y de la app de clientes con la pantalla del código, listas para la revisión antes de subirlas a Google Play."
+    },
     {
       "fecha": "2026-11-23",
       "titulo": "El código de verificación ya llega por WhatsApp",
