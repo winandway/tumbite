@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-23T02:30:00Z",
+  "actualizado": "2026-11-23T05:30:00Z",
   "version": "fe71f3f",
   "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-23",
+      "titulo": "El código de verificación saldrá primero por WhatsApp",
+      "texto": "Por decisión de Richard, el código para confirmar el celular saldrá primero por WhatsApp, desde la cuenta oficial de Divoox, y el SMS queda de respaldo: si WhatsApp falla, sale por SMS al momento, y la persona puede tocar «Enviármelo por SMS». Cada canal tiene su presupuesto diario vigilado en el estado del sistema, y el SMS de cada país puede ir por su propio proveedor. Ya está construido, probado y publicado apagado: se enciende cuando Meta apruebe la plantilla del código y tengamos el token permanente. Mientras tanto todo sigue por SMS."
+    },
     {
       "fecha": "2026-11-22",
       "titulo": "Las cuentas nuevas confirman su celular con un código por SMS",
