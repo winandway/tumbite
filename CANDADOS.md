@@ -2,6 +2,14 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-ENTRAR-APP-EQUIVOCADA · Una cuenta en la app que no es la suya no abre ni cierra sesiones (conductor real, 23 nov 2026) — todos los países
+
+- **Qué pasaba:** un conductor puso su correo y contraseña en la app de clientes (0.1.60). `POST /datos/cuentas/entrar` le abría sesión y, como al repartidor entrar le borra las demás (C-REPARTIDOR-UN-TELEFONO), cada intento le cerraba Divoox Driver. La app de clientes lo rechazaba sola («Esta cuenta no es de esta app…») y, si quería registrarse con ese correo, el servidor le decía «Ya existe una cuenta con ese correo. Entra con tu contraseña.»: un círculo cerrado.
+- **Qué se hizo:** la tabla de qué rol acepta cada app de celular vive en `packages/compartido/src/appDeCuenta.ts` (`ROL_DE_APP`, con su prueba contra el `SesionProvider roles=` de cada `_layout`). `exigirAppDeLaCuenta` (`apps/servidor/src/rutas/cuentas.ts`) lee la app de la cabecera `x-tumbite-app` (la que mandan las tres apps desde octubre). En `/entrar`, DESPUÉS de comprobar la contraseña (a quien no la sabe se le contesta lo de siempre), si la cuenta es de otra de las tres apps, contesta 409 con el aviso y `codigo: 'cuenta_de_otra_app'`, sin abrir sesión ni borrar ninguna. En `/registro`, con el correo exacto de una cuenta de otro tipo, el mismo aviso en la casilla del correo. El texto dice qué app le corresponde y qué puede hacer («Para pedir, crea una cuenta de cliente con otro correo; puedes usar el mismo celular…»); el inglés sale de `MENSAJES_EN_OTRA_APP`. `ErrorDatos` acepta un `codigo` y la respuesta lo incluye.
+- **Sin cabecera de app** (panel web, superadmin, Flex, agente) o con una cuenta del equipo, todo igual que antes. Los límites de intentos y el escudo no cambian. Las apps publicadas muestran el texto del servidor tal cual (`Acceso.tsx`, `alFallar`).
+- **Cómo se comprueba:** `apps/servidor/src/rutas/entrarAppEquivocada.test.ts` (vista en ROJO antes del arreglo).
+- **Qué NO tocar:** no decir el tipo de cuenta antes de comprobar la contraseña; no borrar sesiones antes de saber que la app es la suya.
+
 ## C-SEGURO-EN-PLAZO · La póliza del vehículo entra en el plazo de papeles (decisión de Richard, conductor real trabado, 23 nov 2026) — Venezuela (países con plazo que no piden el seguro para empezar); EE. UU. sin cambios
 
 - **Qué pasaba:** un conductor de Venezuela con la moto registrada (placa, fotos y registro) y sin póliza tocaba «Enviar mi moto a revisión» y recibía 422 «Sube el registro y el seguro del vehículo antes de enviarlo.». Y aunque llegara a la cola, el disparador `vehiculos_aprobar_exige_documentos` no dejaba aprobarla sin el seguro aprobado. Richard: «el seguro vamos a dejarlo dentro de los 30 días… no le podemos exigir a la gente dame póliza».
