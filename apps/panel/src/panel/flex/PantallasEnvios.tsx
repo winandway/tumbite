@@ -1508,7 +1508,7 @@ export function Etiqueta({
       )}
       {!compacta && (
         <footer className="flex-etiqueta-pie">
-          <img src="/marca/divoox-logo-oscuro.svg" alt="Divoox" width={130} height={32} />
+          {/* C-ETIQUETA-UN-LOGO: el logo va una sola vez, arriba; aquí solo el lema. */}
           <span>{t.lema}</span>
         </footer>
       )}

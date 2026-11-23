@@ -4847,8 +4847,7 @@ div.pswp .pswp__button--arrow .pswp__icn {
   gap: 8px;
   padding: 16px 16px 6px;
 }
-.flex-etiqueta-logo,
-.flex-etiqueta-pie img {
+.flex-etiqueta-logo {
   height: auto;
   max-width: 45%;
   object-fit: contain;
@@ -4960,8 +4959,9 @@ div.pswp .pswp__button--arrow .pswp__icn {
   margin-top: auto;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 16px;
+  justify-content: center;
+  text-align: center;
+  padding: 12px 16px;
   background: #101010;
   color: #fff;
 }

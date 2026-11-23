@@ -416,7 +416,8 @@ describe('Divoox Flex · panel de empresas', () => {
     expect(en.getByText('2.5 kg')).toBeInTheDocument();
     expect(en.getByText('30 x 20 x 15 cm')).toBeInTheDocument();
     expect(en.getByText('Conectando personas y oportunidades')).toBeInTheDocument();
-    expect(en.getAllByRole('img', { name: 'Divoox' })).toHaveLength(2); // logo claro y franja negra
+    // C-ETIQUETA-UN-LOGO: el logo va una sola vez, arriba; la franja negra lleva solo el lema.
+    expect(en.getAllByRole('img', { name: 'Divoox' })).toHaveLength(1);
     expect(document.body.textContent).not.toContain('3051112222');
   });
 
@@ -598,5 +599,12 @@ describe('Divoox Flex · panel de empresas', () => {
     expect(await screen.findByText('Paquete 1 de 1')).toBeInTheDocument();
     await waitFor(() => expect(impresion).toHaveBeenCalledTimes(1));
     expect(screen.getByText(/Guardar como PDF/)).toBeInTheDocument();
+    // C-ETIQUETA-UN-LOGO (23 nov 2026, Richard): el logo va UNA sola vez, arriba; la franja de abajo
+    // lleva solo el lema.
+    const etiqueta = document.querySelector('.flex-etiqueta')!;
+    expect(etiqueta.querySelectorAll('img[alt="Divoox"]')).toHaveLength(1);
+    expect(etiqueta.querySelector('.flex-etiqueta-cabeza img[alt="Divoox"]')).not.toBeNull();
+    expect(etiqueta.querySelector('.flex-etiqueta-pie img')).toBeNull();
+    expect(etiqueta.querySelector('.flex-etiqueta-pie')?.textContent?.trim()).not.toBe('');
   });
 });
