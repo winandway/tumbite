@@ -140,6 +140,7 @@ describe('C-CAMILA-REPORTE-CONVERSADO: la captura queda en el borrador del chat 
     expect(JSON.parse(String(m.cuerpo))).toEqual({
       texto: 'no veo la tasa de cambio',
       canal: 'web',
+      avisoIa: 'linea-2026-11-23/web',
       adjunto: 'adj-nuevo-0001',
     });
     // El borrador queda limpio y el mensaje del hilo muestra su miniatura.
@@ -160,6 +161,7 @@ describe('C-CAMILA-REPORTE-CONVERSADO: la captura queda en el borrador del chat 
     expect(JSON.parse(String(m.cuerpo))).toEqual({
       texto: '',
       canal: 'web',
+      avisoIa: 'linea-2026-11-23/web',
       adjunto: 'adj-nuevo-0001',
     });
     expect(screen.queryByText('[Captura enviada]')).toBeNull();

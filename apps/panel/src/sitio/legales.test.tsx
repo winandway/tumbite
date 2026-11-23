@@ -249,18 +249,23 @@ describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fot
     );
     // C-PERMISO-IA-CHAT (Apple 5.1.2(i)): el chat pide permiso explícito antes del primer mensaje;
     // sin permiso nada va a la IA, y se puede retirar.
+    // C-CHAT-WEB-SIN-MURO (23 nov 2026): la web informa con una línea; las apps piden permiso.
     expect(es).toContain(
-      'antes de tu primer mensaje en el chat de la app o de la web te pedimos tu permiso explícito',
+      'En el chat de nuestra web, una línea debajo de la casilla te lo dice antes de enviar',
     );
+    expect(es).toContain('En las apps te pedimos tu permiso explícito antes');
+    expect(es).toContain('Prefiero que me atienda una persona');
     expect(es).toContain('nada de lo que escribas en ese chat se envía a ese servicio');
     expect(es).toContain('Puedes dar o retirar ese permiso cuando quieras');
-    expect(es).toContain('solo si diste tu permiso en el chat');
+    expect(es).toContain('salvo que hayas elegido que te atienda una persona');
     expect(en).toContain(
-      'before your first message in the app or web chat, we ask for your explicit permission',
+      'In the chat on our website, a line below the chat box tells you this before you send',
     );
+    expect(en).toContain('In the apps, we ask for your explicit permission first');
+    expect(en).toContain('I’d rather talk to a person');
     expect(en).toContain('nothing you write in that chat is sent to that service');
     expect(en).toContain('You can give or withdraw that permission at any time');
-    expect(en).toContain('only if you gave your permission in the chat');
+    expect(en).toContain('unless you chose to be helped by a person');
     expect(es).not.toMatch(/solo la ve nuestro equipo/);
     expect(en).not.toMatch(/only our team sees it/);
     // «Papeles del conductor» remite a la IA (séptima vuelta del auditor).

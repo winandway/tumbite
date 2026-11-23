@@ -55,6 +55,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // chat de ayuda se procese con la IA de un proveedor. NULL = no ha contestado; 1 = sí; 0 = no.
   ['camila_personas', 'permiso_ia', 'INTEGER'],
   ['camila_personas', 'permiso_ia_en', 'TEXT'],
+  // C-CHAT-WEB-SIN-MURO (23 nov 2026): con qué texto se informó o se dio el permiso del chat
+  // («linea-2026-11-23/web», «explicito-2026-11-21»). Prueba de qué se le dijo a la persona.
+  ['camila_personas', 'permiso_ia_version', 'TEXT'],
   // C-FOTO-RECOGIDA (21 nov 2026): la dirección guardada de donde sale el viaje (si el punto de
   // recogida cae en una dirección guardada del pasajero). Queda con la cotización y pasa al viaje.
   ['cotizaciones_viaje', 'origen_direccion_id', 'TEXT'],

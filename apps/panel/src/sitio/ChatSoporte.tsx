@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  enlacePrivacidad,
   faltaPermisoIaChat,
+  marcaLineaIa,
+  modoPermisoIa,
+  textosLineaIa,
   textosPermisoIaChat,
   ErrorApi,
   type HiloCamila,
@@ -64,6 +68,12 @@ function almacenLocal() {
 
 const ESPERA_RECARGA_MS = 8_000;
 
+/**
+ * C-CHAT-WEB-SIN-MURO (23 nov 2026, orden de Richard): este chat corre en el navegador, así que
+ * va por la línea informativa (sin muro). La decisión vive en la pieza única `modoPermisoIa`.
+ */
+const MODO_PERMISO_IA = modoPermisoIa('web');
+
 export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?: boolean }) {
   const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
   const [abierto, setAbierto] = useState(false);
@@ -97,9 +107,9 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
   const cabeceras = { 'x-camila-visita': visita };
   // C-PERMISO-IA-CHAT: el permiso se pide antes del primer mensaje. Con el hilo leído, lo dice el
   // servidor; un visitante nuevo (sin hilo que leer) todavía no ha contestado nada.
-  const pidePermiso = hilo
-    ? faltaPermisoIaChat(hilo)
-    : abierto && !cargando && !(conSesion || yaConverso());
+  const pidePermiso =
+    MODO_PERMISO_IA === 'explicito' &&
+    (hilo ? faltaPermisoIaChat(hilo) : abierto && !cargando && !(conSesion || yaConverso()));
 
   const cargar = useCallback(
     async (callado = false) => {
@@ -188,7 +198,13 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       const r = await pedir<RespuestaCamila>(
         'POST',
         '/datos/camila/mensaje',
-        { texto, canal: 'web', ...(conAdjunto ? { adjunto: conAdjunto.id } : {}) },
+        {
+          texto,
+          canal: 'web',
+          ...(conAdjunto ? { adjunto: conAdjunto.id } : {}),
+          // C-CHAT-WEB-SIN-MURO: la marca de la línea que la persona tiene a la vista.
+          ...(MODO_PERMISO_IA === 'linea' ? { avisoIa: marcaLineaIa('web') } : {}),
+        },
         { cabeceras },
       );
       guardarConverso();
@@ -467,6 +483,21 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
                   {respondiendo ? t.unMomento : enviando ? t.enviando : t.enviar}
                 </button>
               </form>
+              {MODO_PERMISO_IA === 'linea' ? (
+                <LineaIa
+                  idioma={idioma}
+                  cabeceras={cabeceras}
+                  permiso={hilo?.permisoIa ?? null}
+                  alCambiar={(permisoIa) => {
+                    guardarConverso();
+                    setHilo((h) =>
+                      h
+                        ? { ...h, permisoIa }
+                        : { verificada: false, equipoAtendiendo: false, mensajes: [], permisoIa },
+                    );
+                  }}
+                />
+              ) : null}
             </>
           )}
           {hilo?.verificada || conCuenta ? (
@@ -500,7 +531,8 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
           <p className="chat-soporte-pie">
             {t.prefieresCorreo} <a href={enIdiomaDireccion('/contact', idioma)}>{t.formulario}</a>
           </p>
-          {hilo?.permisoIa != null ? (
+          {hilo?.permisoIa != null &&
+          (MODO_PERMISO_IA === 'explicito' || hilo.permisoIa === false) ? (
             // C-PERMISO-IA-CHAT: el permiso se puede dar o retirar cuando se quiera, aquí mismo.
             <AjusteIaChat
               idioma={idioma}
@@ -819,6 +851,73 @@ function PermisoIaChat({
         </p>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * C-CHAT-WEB-SIN-MURO (23 nov 2026): la línea discreta debajo de la casilla (web, sin muro).
+ * Dice cómo se procesa el mensaje y enlaza la política; «Prefiero que me atienda una persona» guarda
+ * el «no» (el servidor deja de mandar nada al proveedor). Sin botones grandes y sin bloquear nada.
+ */
+function LineaIa({
+  idioma,
+  cabeceras,
+  permiso,
+  alCambiar,
+}: {
+  idioma: Idioma;
+  cabeceras: Record<string, string>;
+  permiso: boolean | null;
+  alCambiar: (permisoIa: boolean) => void;
+}) {
+  const t = textosLineaIa(idioma);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState('');
+  async function prefieroPersona() {
+    if (ocupado) return;
+    setOcupado(true);
+    setError('');
+    try {
+      const r = await pedir<{ permisoIa: boolean }>(
+        'POST',
+        '/datos/camila/permiso-ia',
+        { acepto: false },
+        { cabeceras },
+      );
+      alCambiar(r.permisoIa);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.error);
+    } finally {
+      setOcupado(false);
+    }
+  }
+  return (
+    <p className="chat-soporte-linea-ia" data-testid="chat-linea-ia">
+      {permiso === false ? t.conPersona : t.linea}{' '}
+      <a href={enlacePrivacidad(idioma)} target="_blank" rel="noopener noreferrer">
+        {t.privacidad}
+      </a>
+      {permiso === false ? null : (
+        <>
+          {' · '}
+          <button
+            type="button"
+            className="enlace"
+            disabled={ocupado}
+            onClick={() => void prefieroPersona()}
+            data-testid="chat-linea-ia-persona"
+          >
+            {t.prefieroPersona}
+          </button>
+        </>
+      )}
+      {error ? (
+        <span className="chat-soporte-error" role="alert">
+          {' '}
+          {error}
+        </span>
+      ) : null}
+    </p>
   );
 }
 

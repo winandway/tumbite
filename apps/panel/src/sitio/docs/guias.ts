@@ -3751,7 +3751,7 @@ const es: SeccionDocs[] = [
           'Escríbenos por el chat de divoox.com, por el chat de Divoox Driver o por correo. Es la misma conversación por cualquier camino, te responde Camila Campos, del equipo de soporte, y una persona del equipo cuando lo pidas.',
         explicacion: [
           'Camila Campos, del equipo de soporte de Divoox, te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse.',
-          'La primera vez que abres el chat, antes de escribir, te pide tu permiso: lee el aviso y elige. Si dices que no, tu mensaje llega al equipo y te responde una persona, aquí mismo. Puedes cambiar tu respuesta cuando quieras: en Divoox Driver, en Perfil, «Ayuda con inteligencia artificial»; en la web, al pie del chat.',
+          'En el chat de la web escribes de una vez. Debajo de la casilla, una línea te dice cómo procesamos tus mensajes y tiene el enlace a la privacidad y «Prefiero que me atienda una persona»: si lo tocas, tu mensaje llega al equipo y te responde una persona, aquí mismo. En Divoox Driver vale el permiso que diste en el aviso «Cómo revisamos tus documentos»; lo cambias cuando quieras en Perfil.',
           'Si le preguntas si es una persona, siempre te dice la verdad. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación.',
           'Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números.',
           'Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña.',
@@ -3762,7 +3762,7 @@ const es: SeccionDocs[] = [
           'Para reportarlo, Camila reúne cuatro cosas: qué pasó, en qué parte te pasó, tu nombre y un correo o teléfono para avisarte. Si le das varias en un mismo mensaje, las anota todas y no te las vuelve a preguntar. Si entraste con tu cuenta, tu nombre y tu contacto ya los tiene. Si prefieres no dar tu nombre o un contacto, díselo: el reporte se hace igual.',
           'Al terminar, Camila te dice lo que entendió, te da tu número de caso (empieza por F-) y te dice cómo te va a avisar. Cuando el equipo lo arregle, el aviso te llega a ese contacto y queda escrito en tu chat.',
           'Camila te recuerda: si vuelves desde el mismo aparato o con tu cuenta, no te pide otra vez tu nombre ni tu contacto, y si le preguntas «¿cómo va mi caso?» te dice en qué va.',
-          'Tus capturas son privadas: las ve el equipo de Divoox y, si diste tu permiso en el chat, también las lee nuestra asistente (Google Gemini) para entender el problema. Se borran solas a los 90 días y también al borrar tu cuenta.',
+          'Tus capturas son privadas: las ve el equipo de Divoox y también las lee nuestra asistente (Google Gemini) para entender el problema, salvo que hayas elegido que te atienda una persona (en la app, solo si diste tu permiso). Se borran solas a los 90 días y también al borrar tu cuenta.',
         ],
         capturas: [
           {
@@ -3782,8 +3782,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/camila-permiso-web-es.webp',
-            alt: 'El chat de soporte de la web con el aviso «Antes de escribirnos: tu permiso» y los botones «Sí, doy mi permiso» y «No, que me atienda una persona».',
-            pie: 'La primera vez, antes de escribir, el chat te pide tu permiso.',
+            alt: 'El chat de soporte de la web listo para escribir, con la línea de privacidad y «Prefiero que me atienda una persona» debajo de la casilla.',
+            pie: 'En la web escribes de una vez; la línea de debajo explica cómo procesamos tus mensajes.',
           },
           {
             src: '/docs/camila-permiso-driver-es.webp',
@@ -5488,7 +5488,7 @@ const es: SeccionDocs[] = [
         resumen:
           'En «Mis casos de ayuda» puedes adjuntar hasta tres capturas de pantalla por mensaje, para que el equipo vea exactamente lo que ves tú.',
         explicacion: [
-          'Una captura vale más que muchas palabras: muestra el error, el pedido o la pantalla tal como la ves. Divoox la guarda en privado: la ve el equipo de soporte, con un enlace que vence, y, si diste tu permiso en el chat, también la lee nuestra asistente (Google Gemini).',
+          'Una captura vale más que muchas palabras: muestra el error, el pedido o la pantalla tal como la ves. Divoox la guarda en privado: la ve el equipo de soporte, con un enlace que vence, y también la lee nuestra asistente (Google Gemini), salvo que hayas elegido que te atienda una persona (en la app, solo si diste tu permiso).',
           'Primero toma la captura en tu celular: en iPhone, botón lateral y subir volumen a la vez; en Android, encendido y bajar volumen a la vez. Queda en tu galería.',
           'Abre tu caso en «Mis casos de ayuda» (clientes: en tu cuenta; repartidores: en Soporte; restaurantes: en Configuración) y toca «Adjuntar captura». Elige hasta tres imágenes de tu galería.',
           'Antes de enviar ves la miniatura de cada una; si te equivocaste, toca «Quitar». Puedes escribir un mensaje o mandar solo las capturas.',
@@ -5517,7 +5517,7 @@ const es: SeccionDocs[] = [
           'Toca «Adjuntar captura» y elige hasta tres imágenes.',
           'Revisa las miniaturas y toca «Enviar».',
         ],
-        nota: 'Tus capturas no se publican: las ve el equipo de soporte de Divoox y, si diste tu permiso en el chat, nuestra asistente (Google Gemini).',
+        nota: 'Tus capturas no se publican: las ve el equipo de soporte de Divoox y nuestra asistente (Google Gemini), salvo que hayas elegido que te atienda una persona (en la app, solo si diste tu permiso).',
       },
       {
         id: 'support',
@@ -9255,7 +9255,7 @@ const en: SeccionDocs[] = [
           'Write to us through the chat on divoox.com, the chat in Divoox Driver or by email. It is the same conversation on every channel, Camila Campos from the support team replies, and a person on the team does whenever you ask.',
         explicacion: [
           'Camila Campos, from the Divoox support team, helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated.',
-          'The first time you open the chat, before you write, it asks for your permission: read the notice and choose. If you say no, your message goes to the team and a person replies, right here. You can change your answer anytime: in Divoox Driver, under Profile, “Help with artificial intelligence”; on the web, at the bottom of the chat.',
+          'In the chat on the website you write right away. Below the box, a line tells you how we process your messages, with the privacy link and “I’d rather talk to a person”: if you tap it, your message goes to the team and a person replies, right here. In Divoox Driver, the permission you gave on the “How we check your documents” notice applies; change it anytime under Profile.',
           'If you ask whether she is a person, she always tells you the truth. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation.',
           'There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code.',
           'To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password.',
@@ -9266,7 +9266,7 @@ const en: SeccionDocs[] = [
           'To report it, Camila gathers four things: what happened, where it happened, your name, and an email or phone number to notify you. If you give her several in one message, she notes them all and does not ask again. If you signed in with your account, she already has your name and your contact. If you would rather not give your name or a contact, tell her: the report is filed anyway.',
           'When she is done, Camila tells you what she understood, gives you your case number (it starts with F-) and tells you how she will notify you. When the team fixes it, the notice goes to that contact and stays written in your chat.',
           'Camila remembers you: if you come back from the same device or with your account, she does not ask for your name or contact again, and if you ask “how is my case going?” she tells you where it stands.',
-          'Your screenshots are private: the Divoox team sees them and, if you gave your permission in the chat, our assistant (Google Gemini) reads them too, to understand the problem. They’re deleted automatically after 90 days and when you delete your account.',
+          'Your screenshots are private: the Divoox team sees them and our assistant (Google Gemini) reads them too, to understand the problem, unless you chose to be helped by a person (in the app, only if you gave your permission). They’re deleted automatically after 90 days and when you delete your account.',
         ],
         capturas: [
           {
@@ -9286,8 +9286,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/camila-permiso-web-en.webp',
-            alt: 'The web support chat with the “Before you write to us: your permission” notice and the “Yes, I give my permission” and “No, have a person help me” buttons.',
-            pie: 'The first time, before you write, the chat asks for your permission.',
+            alt: 'The web support chat ready to write, with the privacy line and “I’d rather talk to a person” below the box.',
+            pie: 'On the website you write right away; the line below explains how we process your messages.',
           },
           {
             src: '/docs/camila-permiso-driver-en.webp',
@@ -10984,7 +10984,7 @@ const en: SeccionDocs[] = [
         resumen:
           'In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.',
         explicacion: [
-          'A screenshot is worth many words: it shows the error, the order or the screen just as you see it. Divoox keeps it private: the support team sees it, through a link that expires, and, if you gave your permission in the chat, our assistant (Google Gemini) reads it too.',
+          'A screenshot is worth many words: it shows the error, the order or the screen just as you see it. Divoox keeps it private: the support team sees it, through a link that expires, and our assistant (Google Gemini) reads it too, unless you chose to be helped by a person (in the app, only if you gave your permission).',
           'First take the screenshot on your phone: on iPhone, press the side button and volume up together; on Android, power and volume down together. It goes to your gallery.',
           'Open your case in “My help cases” (customers: in your account; drivers: in Support; restaurants: in Settings) and tap “Attach screenshot.” Pick up to three images from your gallery.',
           'Before sending you see a thumbnail of each one; if you picked the wrong one, tap “Remove.” You can write a message or send just the screenshots.',
@@ -11013,7 +11013,7 @@ const en: SeccionDocs[] = [
           'Tap “Attach screenshot” and pick up to three images.',
           'Check the thumbnails and tap “Send.”',
         ],
-        nota: 'Your screenshots are never published: the Divoox support team sees them and, if you gave your permission in the chat, our assistant (Google Gemini).',
+        nota: 'Your screenshots are never published: the Divoox support team sees them and so does our assistant (Google Gemini), unless you chose to be helped by a person (in the app, only if you gave your permission).',
       },
       {
         id: 'support',
