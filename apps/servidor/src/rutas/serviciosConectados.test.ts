@@ -18,6 +18,13 @@ async function conComidaYEnvios() {
   ])
     await m.llamar('PUT', ruta, { estado: 'disponible' }, admin.token);
   const cond = await conductorDeMoto(m, { lat: 25.7617, lng: -80.1918 }, 'US-FL-MIAMI', 'envios');
+  // Tramo 1: Comida se ofrece solo donde hay un restaurante aprobado en la zona.
+  const dueno = await m.cuenta('restaurante', 'Dueño de ejemplo');
+  await m.DB.prepare(
+    "INSERT INTO restaurantes (id, dueno_id, nombre, estado, zona_id) VALUES ('rest-zona', ?, 'Restaurante de ejemplo', 'aprobado', 'US-FL-MIAMI')",
+  )
+    .bind(dueno.id)
+    .run();
   for (const [veh, req] of [
     ['', 'licencia_moto'],
     [cond.vehiculo, 'seguro_vehiculo'],
@@ -252,6 +259,18 @@ describe('C-SERVICIOS-CONECTADOS · la regla de cada tarjeta', () => {
     expect(
       estadoTarjeta({ ...base, s: s({ habilitacion: 'sin_solicitar', puedeActivar: false }) }),
     ).toBe('agregar');
+    // Tramo 1 (registro real, 23 nov): dentro del plazo, el servicio que ya se puede activar sin
+    // pedirlo (Moto con pasajero para el mototaxista) viene listo para deslizar, no «Agregar».
+    expect(
+      estadoTarjeta({
+        ...base,
+        conectadoGeneral: false,
+        s: s({ habilitacion: 'sin_solicitar', puedeActivar: true }),
+      }),
+    ).toBe('desconectado');
+    expect(
+      estadoTarjeta({ ...base, s: s({ habilitacion: 'rechazada', puedeActivar: true }) }),
+    ).toBe('agregar');
   });
   it('en pausa al llevar otro, haciendo el que lleva, bloqueado en Flex', () => {
     expect(estadoTarjeta({ ...base, lleva: 'comida', s: s({}) })).toBe('en_pausa');
@@ -311,5 +330,27 @@ describe('C-SERVICIOS-CONECTADOS · puertas y solicitudes', () => {
       .bind(cond.id)
       .first<{ estado: string; motivo: string }>();
     expect(h).toEqual({ estado: 'pendiente', motivo: 'Falta el casco' });
+  });
+});
+
+describe('Tramo 1 · Comida no se ofrece donde no hay restaurantes', () => {
+  it('sin un restaurante aprobado en su zona, la tarjeta de Comida no sale; con uno, sí', async () => {
+    const m = mundo({}, { host: 'staging.tumbite.com' });
+    const cond = await conductorDeMoto(m, { lat: 25.7617, lng: -80.1918 }, 'US-FL-MIAMI', 'envios');
+    const ids = async () =>
+      (
+        (await m.llamar('GET', '/datos/conductor/panel-servicios', undefined, cond.token))
+          .datos as {
+          servicios: { servicioId: string }[];
+        }
+      ).servicios.map((x) => x.servicioId);
+    expect(await ids()).not.toContain('comida');
+    const dueno = await m.cuenta('restaurante', 'Dueño de ejemplo');
+    await m.DB.prepare(
+      "INSERT INTO restaurantes (id, dueno_id, nombre, estado, zona_id) VALUES ('rest-zona', ?, 'Restaurante de ejemplo', 'aprobado', 'US-FL-MIAMI')",
+    )
+      .bind(dueno.id)
+      .run();
+    expect(await ids()).toContain('comida');
   });
 });

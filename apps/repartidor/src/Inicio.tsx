@@ -707,10 +707,11 @@ export function Inicio() {
     }
   }, [api]);
   useEffect(() => {
-    if (vista !== 'inicio') return;
+    if (vista !== 'inicio' && vista !== 'datos') return;
     const primero = setTimeout(() => void cargarFaltas(), 0);
     return () => clearTimeout(primero);
   }, [vista, cargarFaltas]);
+  const [masPerfil, setMasPerfil] = useState(false);
   // C-QUE-TE-FALTA: el vehículo que se completa o corrige desde el bloque de arriba.
   const [tipoVehiculo, setTipoVehiculo] = useState<'moto' | 'carro'>('moto');
   // C-FOTO-CARA-A-LA-VISTA: por qué el servidor no lo dejó conectarse; va pegado a la barra.
@@ -2607,6 +2608,10 @@ export function Inicio() {
   }
 
   // ───────── Perfil: datos, vehículo, documentos, idioma, soporte, salir ─────────
+  // Tramo 1: ¿le falta algo del registro? (lo que hace él, no lo que hacemos nosotros).
+  const registroIncompleto = Boolean(
+    faltas?.some((f) => f.quien === 'conductor' && f.clave !== 'desconectado'),
+  );
   if (vista === 'datos') {
     const fila = (nombre: string, alTocar: () => void, abierto = false, detalle?: string) => (
       <Pressable
@@ -2632,6 +2637,10 @@ export function Inicio() {
     return lienzo(
       'perfil',
       <View style={{ padding: 16, gap: 12 }}>
+        {/* Tramo 1: mientras falte algo del registro, arriba SOLO lo que falta, con su botón. */}
+        {registroIncompleto ? (
+          <QueTeFalta api={api} idioma={idioma} faltas={faltas} alAccion={accionFalta} />
+        ) : null}
         {mensajes}
         {/* C-ASISTENTE-DRIVER: «Tus papeles» también en el perfil (donde el país usa el asistente). */}
         <TusPapeles api={api} v={papeles.v} idioma={idioma} alAbrir={() => abrirPapeles('datos')} />
@@ -2648,46 +2657,54 @@ export function Inicio() {
           }
         />
         <View style={[e.tarjeta, { paddingVertical: 2 }]}>
-          {/* C-PERFIL-CONDUCTOR: su perfil tal como lo ven los pasajeros. */}
-          {fila(
-            idioma === 'en' ? 'How riders see you' : 'Así te ven los pasajeros',
-            () => setVista('asiTeVen'),
-            false,
-            idioma === 'en'
-              ? 'Your profile, languages and something about you'
-              : 'Tu perfil, los idiomas que hablas y un dato tuyo',
-          )}
-          {fila(
-            td.misViajes,
-            () => setSeccionPerfil((x) => (x === 'viajes' ? null : 'viajes')),
-            seccionPerfil === 'viajes',
-            td.misViajesDetalle,
-          )}
-          {seccionPerfil === 'viajes' ? <MisViajesConductor /> : null}
-          {fila(
-            idioma === 'en' ? 'Regular riders' : 'Clientes fijos',
-            () => setVista('clientesFijos'),
-            false,
-            idioma === 'en'
-              ? 'Riders who picked you and your next regular rides'
-              : 'Quién te eligió de confianza y tus próximos viajes fijos',
-          )}
-          {fila(
-            idioma === 'en' ? 'My team and invitations' : 'Mi equipo e invitaciones',
-            () => setVista('miEquipo'),
-            false,
-            idioma === 'en'
-              ? 'Invite drivers with your code and earn balance'
-              : 'Invita conductores con tu código y gana saldo',
-          )}
-          {fila(
-            idioma === 'en' ? 'My line' : 'Mi línea',
-            () => setVista('miLinea'),
-            false,
-            idioma === 'en'
-              ? 'Your taxi or mototaxi line, its requests and your team'
-              : 'Tu línea de taxi o mototaxi, sus solicitudes y tu equipo',
-          )}
+          {/* Tramo 1: con el registro sin terminar, lo de después va plegado en «Más opciones». */}
+          {registroIncompleto && !masPerfil
+            ? fila(idioma === 'en' ? 'More options' : 'Más opciones', () => setMasPerfil(true))
+            : null}
+          {!registroIncompleto || masPerfil ? (
+            <>
+              {/* C-PERFIL-CONDUCTOR: su perfil tal como lo ven los pasajeros. */}
+              {fila(
+                idioma === 'en' ? 'How riders see you' : 'Así te ven los pasajeros',
+                () => setVista('asiTeVen'),
+                false,
+                idioma === 'en'
+                  ? 'Your profile, languages and something about you'
+                  : 'Tu perfil, los idiomas que hablas y un dato tuyo',
+              )}
+              {fila(
+                td.misViajes,
+                () => setSeccionPerfil((x) => (x === 'viajes' ? null : 'viajes')),
+                seccionPerfil === 'viajes',
+                td.misViajesDetalle,
+              )}
+              {seccionPerfil === 'viajes' ? <MisViajesConductor /> : null}
+              {fila(
+                idioma === 'en' ? 'Regular riders' : 'Clientes fijos',
+                () => setVista('clientesFijos'),
+                false,
+                idioma === 'en'
+                  ? 'Riders who picked you and your next regular rides'
+                  : 'Quién te eligió de confianza y tus próximos viajes fijos',
+              )}
+              {fila(
+                idioma === 'en' ? 'My team and invitations' : 'Mi equipo e invitaciones',
+                () => setVista('miEquipo'),
+                false,
+                idioma === 'en'
+                  ? 'Invite drivers with your code and earn balance'
+                  : 'Invita conductores con tu código y gana saldo',
+              )}
+              {fila(
+                idioma === 'en' ? 'My line' : 'Mi línea',
+                () => setVista('miLinea'),
+                false,
+                idioma === 'en'
+                  ? 'Your taxi or mototaxi line, its requests and your team'
+                  : 'Tu línea de taxi o mototaxi, sus solicitudes y tu equipo',
+              )}
+            </>
+          ) : null}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(

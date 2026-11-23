@@ -1618,7 +1618,7 @@ pedidos.post('/stripe/aviso', async (c) => {
     if (evento.type === 'payment_intent.succeeded') {
       // Fase 2: recarga del saldo prepago de un repartidor (nunca es un pedido).
       if ((obj.metadata as Record<string, string> | undefined)?.recarga_id)
-        await acreditarRecargaStripe(db, obj);
+        await acreditarRecargaStripe(db, obj, c.env);
       // C-AUTORIZACION-VENCIDA (menor 3): el cobro de reemplazo de una autorización vencida se
       // reconoce por su metadata, aunque el pedido siga apuntando al pago viejo («processing»).
       const recobro = await recobroDesdeAviso(c.env, db, obj);

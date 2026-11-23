@@ -169,7 +169,7 @@ function BotonChico({
 function Nombre({ texto }: { texto: string }) {
   return (
     <Text
-      numberOfLines={1}
+      numberOfLines={2}
       style={{ fontFamily: FUENTE.tituloMedio, fontSize: 15, lineHeight: 20, color: COLOR.texto }}
     >
       {texto}
@@ -182,7 +182,7 @@ function Detalle({ texto, color, antes }: { texto: string; color: string; antes?
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       {antes}
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={{
           flexShrink: 1,
           fontFamily: FUENTE.textoFuerte,
@@ -393,7 +393,7 @@ export function PildoraPapel({
     >
       <Icono nombre={p.icono} tamano={13} color={p.texto} />
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={{ fontFamily: FUENTE.textoNegrita, fontSize: 11.5, lineHeight: 15, color: p.texto }}
       >
         {texto}

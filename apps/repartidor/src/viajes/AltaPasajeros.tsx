@@ -9,10 +9,10 @@ import {
   nombrePapelPais,
   nombreRequisitoPais,
   useBorrador,
-  type Idioma,
   type ServicioPasajeros,
 } from '@tumbite/compartido';
 import { EditarVehiculo } from './EditarVehiculo';
+import { FilaPapel } from '../servicios/FilaPapel';
 import {
   AvisoBorrador,
   Boton,
@@ -20,7 +20,8 @@ import {
   alSalirTelefono,
   almacenTelefono,
   e,
-  fotoConCamara,
+  fotoConOrigen,
+  estadoPapel,
   useSesion,
   Text,
 } from '@tumbite/movil';
@@ -415,68 +416,6 @@ const colorEstado = (estado: string) =>
       ? ROJO_ERROR
       : '#666B73';
 
-function Fila({
-  nombre,
-  estado,
-  motivo,
-  idioma,
-  subiendo,
-  alSubir,
-}: {
-  nombre: string;
-  estado: string;
-  motivo?: string;
-  idioma: Idioma;
-  subiendo: boolean;
-  alSubir: () => void;
-}) {
-  const t = enIdioma(COMUN, idioma);
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        paddingVertical: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#E6E7EA',
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: '700', color: C.secundario }}>{nombre}</Text>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colorEstado(estado) }}>
-          {de(t.estados, estado) ?? estado}
-        </Text>
-        {estado === 'rechazado' && motivo ? (
-          <Text style={{ fontSize: 12, color: ROJO_ERROR }}>
-            {t.rechazo}: {motivo}
-          </Text>
-        ) : null}
-      </View>
-      {estado !== 'aprobado' ? (
-        <Pressable
-          onPress={alSubir}
-          disabled={subiendo}
-          accessibilityRole="button"
-          accessibilityLabel={`${t.subir}: ${nombre}`}
-          style={{
-            borderWidth: 1,
-            borderColor: '#2a2a2a',
-            borderRadius: 999,
-            paddingHorizontal: 14,
-            paddingVertical: 6,
-            opacity: subiendo ? 0.5 : 1,
-          }}
-        >
-          <Text style={{ fontWeight: '700', color: C.secundario }}>
-            {estado === 'sin_subir' ? t.subir : t.subirOtra}
-          </Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const { api, idioma, usuario } = useSesion();
   const tc = enIdioma(COMUN, idioma);
@@ -554,10 +493,12 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     }
   }
 
-  async function subir(ruta: string, clave: string) {
+  async function subir(ruta: string, clave: string, origen: 'camara' | 'archivos') {
     setError('');
+    setErrorEn(null);
     try {
-      const foto = await fotoConCamara(idioma, CAMARA, deArchivos);
+      // Tramo 1: la misma fila y los mismos dos botones que en el perfil (sin el diálogo gris).
+      const foto = await fotoConOrigen(idioma, CAMARA, deArchivos, origen);
       if (!foto) return;
       setSubiendo(clave);
       const blob = await (await fetch(foto.uri)).blob();
@@ -888,17 +829,19 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           {docsVehiculo.map((tipo) => {
             const d = docVehiculo(tipo);
             return (
-              <Fila
+              <FilaPapel
                 key={tipo}
+                testID={`papel-${tipo}`}
                 nombre={nombreDoc(tipo)}
-                estado={d?.estado ?? 'sin_subir'}
+                estado={estadoPapel(d?.estado ?? 'sin_subir')}
                 motivo={d?.motivo}
                 idioma={idioma}
                 subiendo={subiendo === tipo}
-                alSubir={() =>
+                alSubir={(origen) =>
                   void subir(
                     `/datos/conductor/vehiculos/${vehiculo.id}/documentos?tipo=${tipo}`,
                     tipo,
+                    origen,
                   )
                 }
               />
@@ -925,14 +868,17 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           {docsMios.map((tipo) => {
             const d = docMio(tipo);
             return (
-              <Fila
+              <FilaPapel
                 key={tipo}
+                testID={`papel-${tipo}`}
                 nombre={nombreDoc(tipo)}
-                estado={d?.estado ?? 'sin_subir'}
+                estado={estadoPapel(d?.estado ?? 'sin_subir')}
                 motivo={d?.motivo}
                 idioma={idioma}
                 subiendo={subiendo === tipo}
-                alSubir={() => void subir(`/datos/conductor/papeles?tipo=${tipo}`, tipo)}
+                alSubir={(origen) =>
+                  void subir(`/datos/conductor/papeles?tipo=${tipo}`, tipo, origen)
+                }
               />
             );
           })}

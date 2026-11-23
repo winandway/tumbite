@@ -353,12 +353,12 @@ export function PanelServiciosInicio({
                 <Icono nombre="cube-outline" tamano={24} color={COLOR.logistica} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={LETRA.tarjeta} numberOfLines={1}>
+                <Text style={LETRA.tarjeta} numberOfLines={2}>
                   {textoBloqueFlex ?? rutaFlex.nombre}
                 </Text>
                 <Text
                   style={{ fontSize: 13, lineHeight: 18, color: COLOR.textoSuave }}
-                  numberOfLines={1}
+                  numberOfLines={2}
                 >
                   {textoBloqueFlex ? `${rutaFlex.nombre} · ` : ''}
                   {idioma === 'en'

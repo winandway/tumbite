@@ -358,7 +358,9 @@ export function Deslizador(
         />
       ) : null}
       <Text
-        numberOfLines={1}
+        // Tramo 1 (registro real en un Android angosto: «Desliza → para co…»): en dos renglones si no
+        // cabe, nunca cortado.
+        numberOfLines={2}
         adjustsFontSizeToFit
         style={{
           position: 'absolute',

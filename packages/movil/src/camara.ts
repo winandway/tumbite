@@ -1,4 +1,5 @@
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import { alertaDivoox } from './HojaFoto';
 import type { Idioma } from '@tumbite/compartido';
 import {
   type CamaraApp,
@@ -21,7 +22,8 @@ export const preguntarOrigenFoto = (idioma: Idioma): Promise<OrigenFoto> =>
   preguntarOrigen(
     idioma,
     Platform.OS,
-    (titulo, mensaje, botones, opciones) => Alert.alert(titulo, mensaje, botones, opciones),
+    // Tramo 1: la hoja propia de Divoox (no la ventana gris del sistema).
+    alertaDivoox,
     // En la computadora (apps web): la ventanita propia con las dos opciones y la cámara web.
     camaraDeComputadora,
   );

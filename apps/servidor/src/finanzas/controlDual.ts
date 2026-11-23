@@ -191,13 +191,23 @@ export async function ejecutarDual(
       };
     case 'saldo_conductor': {
       const { cargarSaldoConductor } = await import('../saldoConductores');
-      return cargarSaldoConductor(db, {
+      const hecho = await cargarSaldoConductor(db, {
         conductorId: texto(d, 'conductorId'),
         monto: numero(d, 'monto'),
         motivo: texto(d, 'motivo'),
         comprobante: texto(d, 'comprobante'),
         autorId: aprobadorId ?? actorId,
       });
+      // Tramo 1 (orden de Richard): la carga manual del equipo también le llega como aviso.
+      const { avisarSaldoRecargado } = await import('../avisoSaldo');
+      await avisarSaldoRecargado(
+        env,
+        db,
+        texto(d, 'conductorId'),
+        numero(d, 'monto'),
+        String((hecho as { moneda?: unknown }).moneda ?? ''),
+      );
+      return hecho;
     }
     case 'saldo_restaurante': {
       const { cargarSaldoRestaurante } = await import('../internacional/saldoRestaurante');

@@ -1,3 +1,5 @@
+import type { Env } from './env';
+import { avisarSaldoRecargado } from './avisoSaldo';
 import { nuevoId } from './cripto';
 import { ErrorDatos } from './validar';
 import { paisDeZona } from './internacional/paises';
@@ -154,7 +156,12 @@ const SQL_DADO =
  * presupuesto, recibe el saldo UNA vez en la vida (índice único). La misma sentencia comprueba el
  * presupuesto; el último puede recibir menos (lo que queda). Devuelve el monto dado o 0.
  */
-export async function darRegaloConductorNuevo(db: D1Database, conductorId: string) {
+export async function darRegaloConductorNuevo(
+  db: D1Database,
+  conductorId: string,
+  /** Tramo 1: con el entorno, le llega el aviso del saldo regalado. */
+  env?: Env,
+) {
   let cuenta: Awaited<ReturnType<typeof cuentaDeConductor>>;
   try {
     cuenta = await cuentaDeConductor(db, conductorId);
@@ -207,7 +214,9 @@ export async function darRegaloConductorNuevo(db: D1Database, conductorId: strin
       )
       .bind(cuenta.zonaId),
   ]);
-  return ins?.meta.changes ? monto : 0;
+  if (!ins?.meta.changes) return 0;
+  await avisarSaldoRecargado(env, db, conductorId, monto, cuenta.moneda);
+  return monto;
 }
 
 export async function leerRegalosConductorNuevo(db: D1Database) {

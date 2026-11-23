@@ -148,4 +148,44 @@ describe('C-FOTO-CARA-A-LA-VISTA · nada importante queda fuera de pantalla', ()
     // Arriba solo los errores de carga (no los de un botón del final de la pantalla).
     expect(alta).toContain('error && !errorEn ?');
   });
+
+  it('tramo 1: ningún texto del registro y del inicio se corta en un renglón (pantalla angosta)', () => {
+    for (const r of [
+      ['..', '..', '..', '..', 'packages', 'movil', 'src', 'TarjetaServicio.tsx'],
+      ['..', '..', '..', '..', 'packages', 'movil', 'src', 'Deslizador.tsx'],
+      ['..', 'servicios', 'PerfilAcordeon.tsx'],
+      ['..', 'servicios', 'PanelServicios.tsx'],
+      ['..', 'servicios', 'AgregarServicio.tsx'],
+      ['TusPapeles.tsx'],
+      ['AsistentePapeles.tsx'],
+      ['..', 'viajes', 'AltaPasajeros.tsx'],
+    ])
+      expect(leer(...r), r.join('/')).not.toContain('numberOfLines={1}');
+  });
+
+  it('tramo 1: «Tomar foto / Subir desde archivos» es la hoja propia de Divoox, montada en las tres apps', () => {
+    const raiz = ['..', '..', '..', '..'];
+    const camara = leer(...raiz, 'packages', 'movil', 'src', 'camara.ts');
+    expect(camara).not.toContain('Alert.alert');
+    expect(camara).toContain('alertaDivoox');
+    for (const app of ['cliente', 'repartidor', 'restaurante'])
+      expect(leer(...raiz, 'apps', app, 'src', 'app', '_layout.tsx'), app).toContain(
+        '<HojaFoto />',
+      );
+    expect(leer(...raiz, 'packages', 'movil', 'src', 'camaraLogica.ts')).toContain('t.consejo');
+  });
+  it('tramo 1: un solo diseño para la fila de un papel (perfil y alta de Moto y Carro)', () => {
+    expect(leer('..', 'viajes', 'AltaPasajeros.tsx')).toContain('<FilaPapel');
+    expect(leer('..', 'viajes', 'AltaPasajeros.tsx')).not.toMatch(/<Fila\s/);
+    expect(leer('..', 'servicios', 'PerfilAcordeon.tsx')).toContain("from './FilaPapel'");
+  });
+
+  it('tramo 1: el perfil con el registro sin terminar muestra arriba solo lo que falta; «Datos para Comida y Envíos» solo a quien reparte', () => {
+    const inicio = leer('..', 'Inicio.tsx');
+    expect(inicio).toContain('registroIncompleto ? (');
+    expect(inicio).toContain("'Más opciones'");
+    expect(leer('..', 'servicios', 'PerfilAcordeon.tsx')).toContain('{haceReparto ? (');
+    // UN resumen grande de cuántos pasos faltan, con el primero como botón.
+    expect(leer('..', 'piezas', 'QueTeFalta.tsx')).toContain('pasos para empezar');
+  });
 });

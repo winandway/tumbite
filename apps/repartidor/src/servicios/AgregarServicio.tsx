@@ -416,7 +416,7 @@ function Cabecera({
       >
         <Icono nombre="chevron-back" tamano={22} />
       </Pressable>
-      <Text style={[LETRA.titulo, { flex: 1 }]} accessibilityRole="header" numberOfLines={1}>
+      <Text style={[LETRA.titulo, { flex: 1 }]} accessibilityRole="header" numberOfLines={2}>
         {titulo}
       </Text>
     </View>

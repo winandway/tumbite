@@ -10,6 +10,8 @@ import type { Idioma } from '@tumbite/compartido';
 const T = {
   es: {
     titulo: 'Agregar una foto',
+    consejo:
+      'Para un documento: ponlo sobre una mesa, con buena luz y sin reflejos, y que se vean las cuatro esquinas.',
     camara: 'Tomar foto',
     archivos: 'Subir desde archivos',
     cancelar: 'Cancelar',
@@ -19,6 +21,8 @@ const T = {
   },
   en: {
     titulo: 'Add a photo',
+    consejo:
+      'For a document: lay it on a table, in good light and without glare, with all four corners visible.',
     camara: 'Take photo',
     archivos: 'Upload from files',
     cancelar: 'Cancel',
@@ -79,7 +83,7 @@ export function preguntarOrigen(
   return new Promise((ok) =>
     alerta(
       t.titulo,
-      undefined,
+      t.consejo,
       [
         { text: t.camara, onPress: () => ok('camara') },
         { text: t.archivos, onPress: () => ok('archivos') },

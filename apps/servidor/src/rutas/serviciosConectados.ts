@@ -79,7 +79,10 @@ export function estadoTarjeta(e: {
   const { s } = e;
   if (s.estadoServicio !== 'disponible') return null; // no funciona aquí: no se dibuja
   if (s.motivo === 'actualizar_app') return 'en_revision';
-  if (s.habilitacion === 'sin_solicitar' || s.habilitacion === 'rechazada') return 'agregar';
+  // Tramo 1 (registro real de un mototaxista, 23 nov 2026): sin pedirlo pero ya activable (dentro del
+  // plazo de papeles, la misma regla de `conductores_elegibles`) viene listo para deslizar.
+  if (s.habilitacion === 'rechazada' || (s.habilitacion === 'sin_solicitar' && !s.puedeActivar))
+    return 'agregar';
   if (!s.puedeActivar) return 'en_revision';
   if (e.enBloqueFlex) return 'bloqueado_flex';
   if (e.lleva === s.servicioId) return 'haciendo';
@@ -98,9 +101,28 @@ async function panelDe(db: Db, conductorId: string, ingles: boolean, version: nu
     queLleva(db, conductorId),
   ]);
   const conectadoGeneral = Number(ficha?.conectado) === 1;
+  // Tramo 1: Comida solo se ofrece donde hay algún restaurante aprobado en su zona (un conductor real se
+  // conectó a Comida en un pueblo sin restaurantes y quedó esperando pedidos que no existen).
+  const conRestaurantes = Boolean(
+    await db
+      .prepare(
+        `SELECT 1 FROM restaurantes r JOIN repartidores d ON d.usuario_id = ?
+          WHERE r.zona_id = d.zona_id AND r.estado = 'aprobado' LIMIT 1`,
+      )
+      .bind(conductorId)
+      .first(),
+  );
   const vehiculo = estado.vehiculoActivo?.estado === 'aprobado' ? estado.vehiculoActivo.tipo : null;
   const servicios = estado.servicios
     .filter((s) => (SERVICIOS_AL_MOMENTO as readonly string[]).includes(s.servicioId))
+    // Comida sin restaurantes en la zona no se dibuja (salvo si ya lleva o tiene conectada Comida).
+    .filter(
+      (s) =>
+        s.servicioId !== 'comida' ||
+        conRestaurantes ||
+        lleva?.servicioId === 'comida' ||
+        (conectadoGeneral && s.preferencia),
+    )
     .map((s) => ({
       servicioId: s.servicioId,
       nombre: s.nombre,

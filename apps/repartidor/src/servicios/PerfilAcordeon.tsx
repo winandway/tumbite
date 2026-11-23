@@ -10,17 +10,15 @@ import {
   LETRA,
   MOVIMIENTO,
   MOTOR_NATIVO,
-  MotivoRechazo,
-  PildoraPapel,
   RADIO,
   Text,
   confirmarConSistema,
   estadoPapel,
   fotoConOrigen,
   useSesion,
-  type EstadoPapel,
   type NombreIcono,
 } from '@tumbite/movil';
+import { BotonSubir, FilaPapel } from './FilaPapel';
 import { MisDatos } from '../MisDatos';
 import { Verificacion } from '../Verificacion';
 import { POR_SERVICIO } from '../viajes/AltaPasajeros';
@@ -174,7 +172,7 @@ function Seccion({
       </View>
       <Text style={[LETRA.subtitulo, { flexShrink: 0 }]}>{titulo}</Text>
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={{
           flex: 1,
           textAlign: 'right',
@@ -191,161 +189,6 @@ function Seccion({
 }
 
 /** Una fila de papel: nombre, detalle, píldora y, si hace falta, el motivo y las dos subidas. */
-function FilaPapel({
-  nombre,
-  detalle,
-  estado,
-  motivo,
-  chips,
-  idioma,
-  subiendo,
-  alSubir,
-  alAbrir,
-  primera,
-  testID,
-}: {
-  testID?: string;
-  nombre: string;
-  detalle?: string;
-  estado: EstadoPapel;
-  motivo?: string;
-  chips?: string[];
-  idioma: Idioma;
-  subiendo?: boolean;
-  /** Sube el papel con la cámara o desde los archivos. */
-  alSubir?: (origen: 'camara' | 'archivos') => void;
-  /** Abre la pantalla completa de ese papel (identidad, antecedentes). */
-  alAbrir?: () => void;
-  primera?: boolean;
-}) {
-  const t = textosServicios(idioma);
-  const necesita = estado === 'rechazado' || estado === 'falta';
-  return (
-    <View
-      testID={testID}
-      style={{
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderTopWidth: primera ? 0 : 1,
-        borderTopColor: COLOR.borde,
-        gap: 10,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 22 }}>
-            {nombre}
-          </Text>
-          {detalle ? <Text style={LETRA.secundario}>{detalle}</Text> : null}
-          {chips?.length ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-              {chips.map((c) => (
-                <View
-                  key={c}
-                  style={{
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: RADIO.s,
-                    backgroundColor: COLOR.superficie,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: FUENTE.textoFuerte,
-                      fontSize: 12,
-                      color: COLOR.textoSuave,
-                    }}
-                  >
-                    {c}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-        </View>
-        <PildoraPapel estado={estado} texto={de(t.estados, estado) ?? estado} />
-      </View>
-      {estado === 'rechazado' && motivo ? (
-        <MotivoRechazo etiqueta={t.motivo} texto={motivo} />
-      ) : null}
-      {necesita && alSubir ? (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <BotonSubir
-              texto={subiendo ? t.subiendo : t.tomarFoto}
-              icono="camera-outline"
-              fuerte
-              cargando={subiendo}
-              alTocar={() => alSubir('camara')}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <BotonSubir
-              texto={t.subirArchivo}
-              cargando={subiendo}
-              alTocar={() => alSubir('archivos')}
-            />
-          </View>
-        </View>
-      ) : necesita && alAbrir ? (
-        <BotonSubir texto={nombre} icono="arrow-forward" fuerte alTocar={alAbrir} />
-      ) : null}
-    </View>
-  );
-}
-
-function BotonSubir({
-  texto,
-  icono,
-  fuerte,
-  cargando,
-  alTocar,
-}: {
-  texto: string;
-  icono?: NombreIcono;
-  fuerte?: boolean;
-  cargando?: boolean;
-  alTocar: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={alTocar}
-      disabled={cargando}
-      accessibilityRole="button"
-      accessibilityLabel={texto}
-      style={({ pressed }) => ({
-        height: 48,
-        borderRadius: RADIO.m,
-        backgroundColor: fuerte
-          ? pressed
-            ? '#2A2A2A'
-            : COLOR.negro
-          : pressed
-            ? '#E3E3E3'
-            : COLOR.superficie,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        opacity: cargando ? 0.6 : 1,
-      })}
-    >
-      {icono ? (
-        <Icono nombre={icono} tamano={18} color={fuerte ? COLOR.blanco : COLOR.texto} />
-      ) : null}
-      <Text
-        numberOfLines={1}
-        style={{
-          fontFamily: FUENTE.tituloMedio,
-          fontSize: 15,
-          color: fuerte ? COLOR.blanco : COLOR.texto,
-        }}
-      >
-        {texto}
-      </Text>
-    </Pressable>
-  );
-}
 
 const fechaCorta = (f: string, idioma: Idioma) =>
   new Date(
@@ -583,6 +426,9 @@ export function PerfilAcordeon({
 
   // ───── Los vehículos con sus papeles (pantalla 06) ─────
   const ofrece = (tipo: 'moto' | 'carro') => servicios.some((s) => s.servicioId === tipo);
+  const haceReparto = servicios.some(
+    (s) => (s.servicioId === 'comida' || s.servicioId === 'envios') && s.estado !== 'agregar',
+  );
   const papelesDe = (v: Vehiculo) => {
     const pedidos =
       papeles?.perfil.documentosVehiculo?.[v.tipo] ??
@@ -940,30 +786,33 @@ export function PerfilAcordeon({
                   alTocar={() => setAbierto('carro')}
                 />
               ) : null}
-              {/* Los datos de reparto de Comida y Envíos (ID, vehículo, licencia y seguro). */}
-              <Pressable
-                onPress={() => setAbierto('reparto')}
-                accessibilityRole="button"
-                style={({ pressed }) => ({
-                  borderWidth: 1,
-                  borderColor: COLOR.borde,
-                  borderRadius: RADIO.l,
-                  padding: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  backgroundColor: pressed ? COLOR.superficie : COLOR.fondo,
-                })}
-              >
-                <Icono nombre="bag-handle-outline" tamano={22} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16 }}>
-                    {t.datosReparto}
-                  </Text>
-                  <Text style={LETRA.secundario}>{t.datosRepartoDetalle}</Text>
-                </View>
-                <Icono nombre="chevron-forward" tamano={20} color={COLOR.textoSuave} />
-              </Pressable>
+              {/* Los datos de reparto de Comida y Envíos (ID, vehículo, licencia y seguro). Tramo 1:
+                  solo a quien hace Comida o Envíos (al de Moto con pasajero le parecía otro registro). */}
+              {haceReparto ? (
+                <Pressable
+                  onPress={() => setAbierto('reparto')}
+                  accessibilityRole="button"
+                  style={({ pressed }) => ({
+                    borderWidth: 1,
+                    borderColor: COLOR.borde,
+                    borderRadius: RADIO.l,
+                    padding: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    backgroundColor: pressed ? COLOR.superficie : COLOR.fondo,
+                  })}
+                >
+                  <Icono nombre="bag-handle-outline" tamano={22} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16 }}>
+                      {t.datosReparto}
+                    </Text>
+                    <Text style={LETRA.secundario}>{t.datosRepartoDetalle}</Text>
+                  </View>
+                  <Icono nombre="chevron-forward" tamano={20} color={COLOR.textoSuave} />
+                </Pressable>
+              ) : null}
             </View>
           </Contenido>
         ) : null}

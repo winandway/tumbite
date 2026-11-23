@@ -30,6 +30,7 @@ export * from './fotoLiviana';
 export * from './CasillaSms';
 export * from './Disponibilidad';
 export * from './camara';
+export * from './HojaFoto';
 export * from './mapaDivoox';
 export * from './SobreLosBotones';
 export * from './FotosPuerta';

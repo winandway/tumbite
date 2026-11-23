@@ -1649,7 +1649,7 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     .first();
   // C-SALDO-CONDUCTOR: al aprobarlo, el regalo de arranque de su ciudad (una vez en la vida).
   if (d.estado === 'aprobada')
-    await darRegaloConductorNuevo(db, conductor).catch((e: unknown) =>
+    await darRegaloConductorNuevo(db, conductor, c.env).catch((e: unknown) =>
       console.error('saldo: regalo de arranque', e),
     );
   // C-CAMILA-LIDER: el líder de su equipo recibe el contador (una sola vez).

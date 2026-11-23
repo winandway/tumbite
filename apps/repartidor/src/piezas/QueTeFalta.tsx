@@ -36,25 +36,30 @@ export function QueTeFalta({
   if (!p) return null;
   const { aviso, falta, despues } = p;
   const en = idioma === 'en';
-  const masTarde =
-    despues > 0
-      ? en
-        ? despues === 1
-          ? 'After this, 1 more thing.'
-          : `After this, ${despues} more things.`
-        : despues === 1
-          ? 'Después de esto, te falta 1 cosa más.'
-          : `Después de esto, te faltan ${despues} cosas más.`
-      : '';
-  const nota = masTarde ? (
-    <Text style={{ color: COLOR.textoSuave, fontSize: 12, marginTop: 6 }} testID="falta-despues">
-      {masTarde}
+  // Tramo 1 (encargo de Gerencia, 23 nov): UN resumen grande de cuántos pasos le faltan, y debajo el
+  // primero, con su botón.
+  const total = despues + 1;
+  const titulo = (
+    <Text
+      testID="falta-resumen"
+      accessibilityRole="header"
+      style={{ fontFamily: FUENTE.titulo, fontSize: 20, lineHeight: 26 }}
+    >
+      {en
+        ? total === 1
+          ? '1 step left to get started'
+          : `${total} steps left to get started`
+        : total === 1
+          ? 'Te falta 1 paso para empezar'
+          : `Te faltan ${total} pasos para empezar`}
     </Text>
-  ) : null;
+  );
+  const nota = null;
 
   if (aviso.accion === 'cara')
     return (
-      <View testID="que-te-falta">
+      <View testID="que-te-falta" style={{ gap: 8 }}>
+        {titulo}
         <TarjetaCara api={api} idioma={idioma} alTomar={() => void alAccion('cara', falta)} />
         {nota}
       </View>
@@ -62,7 +67,8 @@ export function QueTeFalta({
   const cuerpo = cuerpos ? new Map(Object.entries(cuerpos)).get(aviso.clave) : undefined;
   if (aviso.clave === 'telefono' && cuerpo)
     return (
-      <View testID="que-te-falta">
+      <View testID="que-te-falta" style={{ gap: 8 }}>
+        {titulo}
         {cuerpo}
         {nota}
       </View>
@@ -81,64 +87,67 @@ export function QueTeFalta({
   }
 
   return (
-    <View
-      testID="que-te-falta"
-      accessibilityRole="summary"
-      style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: COLOR.borde,
-        padding: 14,
-        gap: 10,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: COLOR.superficie,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icono
-            nombre={aviso.nuestro ? 'time-outline' : 'alert-circle-outline'}
-            tamano={24}
-            color={COLOR.texto}
-          />
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text
-            accessibilityRole="header"
-            testID={`falta-${aviso.clave}`}
-            style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 21 }}
+    <View testID="que-te-falta" style={{ gap: 8 }}>
+      {titulo}
+      <View
+        testID="que-te-falta-tarjeta"
+        accessibilityRole="summary"
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: COLOR.borde,
+          padding: 14,
+          gap: 10,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: COLOR.superficie,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            {aviso.titulo}
-          </Text>
-          <Text style={{ color: COLOR.textoSuave, fontSize: 13, lineHeight: 18 }}>
-            {aviso.detalle}
-          </Text>
+            <Icono
+              nombre={aviso.nuestro ? 'time-outline' : 'alert-circle-outline'}
+              tamano={24}
+              color={COLOR.texto}
+            />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text
+              accessibilityRole="header"
+              testID={`falta-${aviso.clave}`}
+              style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 21 }}
+            >
+              {aviso.titulo}
+            </Text>
+            <Text style={{ color: COLOR.textoSuave, fontSize: 13, lineHeight: 18 }}>
+              {aviso.detalle}
+            </Text>
+          </View>
         </View>
+        {error ? (
+          <Text accessibilityRole="alert" style={{ color: COLOR.error, fontWeight: '700' }}>
+            {error}
+          </Text>
+        ) : null}
+        {cuerpo ? (
+          cuerpo
+        ) : aviso.boton && aviso.accion ? (
+          <Boton
+            texto={aviso.boton}
+            alTocar={() => void tocar()}
+            cargando={ocupado}
+            testID="falta-boton"
+          />
+        ) : null}
+        {nota}
       </View>
-      {error ? (
-        <Text accessibilityRole="alert" style={{ color: COLOR.error, fontWeight: '700' }}>
-          {error}
-        </Text>
-      ) : null}
-      {cuerpo ? (
-        cuerpo
-      ) : aviso.boton && aviso.accion ? (
-        <Boton
-          texto={aviso.boton}
-          alTocar={() => void tocar()}
-          cargando={ocupado}
-          testID="falta-boton"
-        />
-      ) : null}
-      {nota}
     </View>
   );
 }

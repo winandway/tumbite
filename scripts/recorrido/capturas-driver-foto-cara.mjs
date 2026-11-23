@@ -219,6 +219,22 @@ try {
       };
 
       try {
+        // Tramo 1: ningún texto cortado con «…» (el registro real en un Android angosto los tenía).
+        const sinCortes = async (donde) => {
+          const cortados = await p.evaluate(() =>
+            [...globalThis.document.querySelectorAll('div, span')]
+              .filter((x) => {
+                const e = globalThis.getComputedStyle(x);
+                const corta =
+                  (e.textOverflow === 'ellipsis' && x.scrollWidth > x.clientWidth + 1) ||
+                  (e.webkitLineClamp !== 'none' && x.scrollHeight > x.clientHeight + 1);
+                return corta && x.textContent && x.offsetParent !== null;
+              })
+              .map((x) => x.textContent.slice(0, 40)),
+          );
+          for (const t of cortados)
+            fuera.push(`${donde} · texto cortado «${t}» · ${tam} ${idioma}`);
+        };
         // 1 · El aviso de IA (antes de cualquier foto): casilla y botón a la vista.
         await p.goto('/driver/');
         await p.getByTestId('aviso-ia').waitFor({ timeout: 90_000 });
@@ -234,6 +250,7 @@ try {
         await espera(2500);
         await aLaVista('tarjeta-cara-tomar', 'inicio');
         await foto('inicio-tarjeta-cara');
+        await sinCortes('inicio');
 
         // 3 · Desliza para conectarse sin la foto: el motivo pegado a la barra, con «Tomar mi foto».
         await deslizar(p, 'conectarme');
@@ -249,6 +266,7 @@ try {
         await espera(1200);
         await aLaVista('papeles-acepto', 'Tu cara');
         await foto('tu-cara-consentimiento');
+        await sinCortes('Tu cara');
         await p.getByTestId('papeles-acepto').click();
 
         // 5 · Lista para tomar la foto.
@@ -319,6 +337,7 @@ try {
         if (await p.getByTestId('falta-boton').count())
           await aLaVista('falta-boton', 'qué te falta');
         await foto('te-falta-siguiente');
+        await sinCortes('qué te falta');
 
         // 12 · Otro conductor (con su cara ya tomada) con la moto guardada SIN placa, como la de un
         // conductor real: primero sin vehículo; después la moto vieja, que se corrige sin borrarla.
@@ -367,6 +386,7 @@ try {
           await espera(1200);
           await p.getByTestId('editar-vehiculo').scrollIntoViewIfNeeded();
           await foto('corregir-placa');
+          await sinCortes('corregir placa');
           await p.getByTestId('editar-placa').fill(`AC${Date.now() % 1e5}`);
           await p.getByTestId('editar-guardar').click();
           await p.getByTestId('vehiculo-corregir').waitFor({ timeout: 30_000 });
@@ -377,6 +397,7 @@ try {
           await espera(1500);
           await aLaVista('falta-boton', 'activar la moto');
           await foto('te-falta-activar');
+          await sinCortes('activar');
         }
       } catch (x) {
         if (process.env.FALLO_EN)

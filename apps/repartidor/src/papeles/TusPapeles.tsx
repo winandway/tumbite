@@ -245,7 +245,15 @@ export function TusPapeles({
           // La cara primero, como en el asistente: es la que deja empezar.
           .sort((a, b) => Number(b.papel === 'cara') - Number(a.papel === 'cara'))
           .map((p) => {
-            const e = estadoDePapel(p.estado, idioma);
+            // Tramo 1 (registro real, 23 nov): la cara tomada ya le deja trabajar; no se dice «Lista
+            // para enviar» como si faltara algo de su lado.
+            const e =
+              p.papel === 'cara' && p.estado === 'por_enviar' && v.plazo.estado === 'en_plazo'
+                ? {
+                    texto: idioma === 'en' ? 'Ready: you can work' : 'Lista: ya puedes trabajar',
+                    tono: 'exito' as const,
+                  }
+                : estadoDePapel(p.estado, idioma);
             return (
               <View
                 key={p.papel}

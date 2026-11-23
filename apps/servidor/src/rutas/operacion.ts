@@ -1589,7 +1589,7 @@ export async function conectarRepartidor(
   // está encendido y le queda presupuesto) se le da aquí, la primera vez que pasa esta puerta. Una
   // vez en la vida (índice único); sin saldo prepago no recibiría ningún viaje.
   if (gracia?.activa)
-    await darRegaloConductorNuevo(db, u.id).catch((e: unknown) =>
+    await darRegaloConductorNuevo(db, u.id, c.env).catch((e: unknown) =>
       console.error('saldo: regalo de arranque en plazo', e),
     );
   const identidadEnPlazo = Boolean(gracia?.activa) && !gracia?.exigidos.has('identidad');
