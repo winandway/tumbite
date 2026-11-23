@@ -14,7 +14,7 @@
 // Uso: URL_RECORRIDO=http://localhost:8797 SOLO_IDIOMA=en node scripts/flex/capturas-cobro.mjs
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { chromium } from '@playwright/test';
 import { mapaSinRotulos } from '../recorrido/neutro.mjs';
 
@@ -70,9 +70,38 @@ async function cuenta(nombre, rol) {
   await sql(
     `UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE id = '${r.usuario.id}'`,
   );
+  // El conductor ya contestó el aviso de la revisión con IA (C-AVISO-IA-UNICO): si no, la app abre
+  // en ese aviso y no deja ver la ruta.
+  if (rol === 'repartidor')
+    await api(
+      'POST',
+      '/datos/conductor/aviso-ia',
+      { acepto: true, plataforma: 'web', desde: 'aviso' },
+      r.token,
+    );
   return { token: r.token, id: r.usuario.id, correo };
 }
-const aWebp = (png, webp) => execFileSync('cwebp', ['-quiet', '-q', '82', png, '-o', webp]);
+// SOLO=panel-etiqueta-cobro (pedazos separados por comas) toma y convierte solo esas capturas; el
+// resto del recorrido corre igual (arma los datos) sin tocar sus imágenes. Sin SOLO, todas.
+/**
+ * El alto de la ventana para la foto de la etiqueta: la etiqueta ENTERA, con su franja de abajo, y un
+ * margen (mínimo 1180, el alto de siempre). Con una lista larga de paquetes no queda cortada.
+ */
+async function altoEtiqueta(pagina) {
+  const pie = pagina.locator('.flex-etiqueta-pie').first();
+  await pie.waitFor();
+  const abajo = await pie.evaluate((n) => n.getBoundingClientRect().bottom + globalThis.scrollY);
+  return Math.max(1180, Math.ceil(abajo) + 32);
+}
+const SOLO_FOTOS = (process.env.SOLO ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const toca = (ruta) =>
+  SOLO_FOTOS.length === 0 || SOLO_FOTOS.some((s) => basename(ruta).includes(s));
+const tomar = (pagina, opciones) => (toca(opciones.path) ? pagina.screenshot(opciones) : null);
+const aWebp = (png, webp) =>
+  toca(png) && execFileSync('cwebp', ['-quiet', '-q', '82', png, '-o', webp]);
 
 // C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos; direcciones y nombres de ejemplo.
 const navegador = mapaSinRotulos(await chromium.launch());
@@ -80,7 +109,7 @@ async function foto(pagina, nombre, testId) {
   await pagina.waitForTimeout(1200);
   if (testId) await pagina.getByTestId(testId).first().scrollIntoViewIfNeeded();
   await pagina.waitForTimeout(400);
-  await pagina.screenshot({
+  await tomar(pagina, {
     path: join(salida, `fase6-${nombre.replace(/-(es|en)$/, '-v2-$1')}.png`),
     fullPage: false,
   });
@@ -314,7 +343,7 @@ async function correrVe(idiomas) {
     await foto(p, `panel-retiro-${idioma}`, 'retiro-en-punto');
     await p.goto(`${URL}${pre}/panel/business/${empresa.id}/labels`);
     await p.getByText('PED-2001').click();
-    await p.setViewportSize({ width: 1280, height: 1180 });
+    await p.setViewportSize({ width: 1280, height: await altoEtiqueta(p) });
     await foto(p, `panel-etiqueta-cobro-${idioma}`);
     await ctx.close();
   }
@@ -491,6 +520,8 @@ for (const l of idiomas) {
     // La página /flex en inglés enseña la parada sin nada que cobrar (allá no hay cobro contra entrega).
     if (l === 'en' && n === 'driver-cobrar') aWebp(png, join(web, 'driver-entrega-en.webp'));
     if (n !== 'panel-etiqueta-cobro') aWebp(png, join(docs, `flex-${n}-v2-${l}.webp`));
+    // La etiqueta con el cobro de la guía de Docs (sin «-v2» en el nombre, el que usa la guía).
+    else aWebp(png, join(docs, `flex-${n}-${l}.webp`));
   }
 }
 console.log(JSON.stringify({ ok: true, idiomas }));

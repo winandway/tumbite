@@ -9,11 +9,12 @@
 // la pasada en inglés toma además las pantallas del tutorial «Empieza con Divoox Flex», el recorrido
 // del panel, la billetera, Operación, Vehículos, Integraciones y la cadena de custodia.
 // Salida: docs/capturas/flex/fase5-<pantalla>-<es|en>.png y docs/capturas/flex-tutorial/*-en.png
-// (+ WebP en public/flex y public/docs). SOLO_IDIOMA=en (o es) corre una sola pasada.
+// (+ WebP en public/flex y public/docs). SOLO_IDIOMA=en (o es) corre una sola pasada; SOLO=<pedazos>
+// (separados por comas, p. ej. SOLO=panel-etiquetas) toma solo las capturas cuyo nombre los lleve.
 // Uso: URL_RECORRIDO=http://localhost:8797 SOLO_IDIOMA=en node scripts/flex/capturas.mjs
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const raiz = join(import.meta.dirname, '..', '..');
@@ -266,9 +267,41 @@ async function cuenta(nombre, rol, telefono = '') {
   await sql(
     `UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE id = '${r.usuario.id}'`,
   );
+  // El conductor ya contestó el aviso de la revisión con IA (C-AVISO-IA-UNICO): si no, la app abre
+  // en ese aviso y no deja ver la ruta.
+  if (rol === 'repartidor')
+    await api(
+      'POST',
+      '/datos/conductor/aviso-ia',
+      { acepto: true, plataforma: 'web', desde: 'aviso' },
+      r.token,
+    );
   return { token: r.token, id: r.usuario.id, correo };
 }
+/**
+ * SOLO=panel-etiquetas,07-etiquetas toma (y convierte a WebP) solo las capturas cuyo nombre lleve
+ * alguno de esos pedazos; el resto del recorrido corre igual (arma los datos), sin tocar sus imágenes.
+ * Sin SOLO, todas, como siempre.
+ */
+/**
+ * El alto de la ventana para la foto de la etiqueta: la etiqueta ENTERA, con su franja de abajo, y un
+ * margen (mínimo 1180, el alto de siempre). Con una lista larga de paquetes no queda cortada.
+ */
+async function altoEtiqueta(pagina) {
+  const pie = pagina.locator('.flex-etiqueta-pie').first();
+  await pie.waitFor();
+  const abajo = await pie.evaluate((n) => n.getBoundingClientRect().bottom + globalThis.scrollY);
+  return Math.max(1180, Math.ceil(abajo) + 32);
+}
+const SOLO_FOTOS = (process.env.SOLO ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const toca = (ruta) =>
+  SOLO_FOTOS.length === 0 || SOLO_FOTOS.some((s) => basename(ruta).includes(s));
+const tomar = (pagina, opciones) => (toca(opciones.path) ? pagina.screenshot(opciones) : null);
 const aWebp = (png, webp, ancho) =>
+  toca(png) &&
   execFileSync('cwebp', [
     '-quiet',
     '-q',
@@ -353,7 +386,7 @@ async function correr(L, idiomas) {
   async function foto(pagina, nombre, opciones = {}) {
     await pagina.waitForTimeout(1200);
     await direccionPublica(pagina);
-    await pagina.screenshot({
+    await tomar(pagina, {
       path: join(salida, `fase5-${nombre}.png`),
       fullPage: false,
       ...opciones,
@@ -413,7 +446,7 @@ async function correr(L, idiomas) {
     await foto(p, `panel-claves-${idioma}`);
     await p.goto(`${R}/labels`);
     await p.getByText('ORD-1003').first().click();
-    await p.setViewportSize({ width: 1280, height: 1180 });
+    await p.setViewportSize({ width: 1280, height: await altoEtiqueta(p) });
     await foto(p, `panel-etiquetas-${idioma}`);
     await p.setViewportSize({ width: 1280, height: 860 });
     // ── Lo que ve el destinatario (celular) ──
@@ -518,7 +551,7 @@ async function capturasExtra({
     .evaluate((n) => n.scrollIntoView({ block: 'start' }));
   await p.evaluate(() => globalThis.scrollBy(0, -120));
   await p.waitForTimeout(600);
-  await p.screenshot({ path: join(salida, `fase5-panel-custodia-${idioma}.png`) });
+  await tomar(p, { path: join(salida, `fase5-panel-custodia-${idioma}.png`) });
   console.log('captura panel-custodia');
 
   // La billetera con saldo (ajuste del equipo en este servidor local) y las pantallas de operación.
@@ -548,7 +581,7 @@ async function capturasExtra({
   const g = await grande.newPage();
   const fotoG = async (nombre, opciones = {}) => {
     await g.waitForTimeout(1500);
-    await g.screenshot({ path: join(salida, `fase5-${nombre}-${idioma}.png`), ...opciones });
+    await tomar(g, { path: join(salida, `fase5-${nombre}-${idioma}.png`), ...opciones });
     console.log('captura', nombre);
   };
   for (const [ruta, nombre] of [
@@ -596,7 +629,7 @@ async function capturasExtra({
     .click()
     .catch((x) => console.error('menú del celular:', String(x).slice(0, 160)));
   await c.waitForTimeout(1200);
-  await c.screenshot({ path: join(salida, `fase5-tour-menu-celular-${idioma}.png`) });
+  await tomar(c, { path: join(salida, `fase5-tour-menu-celular-${idioma}.png`) });
   console.log('captura tour-menu-celular');
 
   // El tutorial «Empieza con Divoox Flex», paso a paso.
@@ -617,7 +650,7 @@ async function capturasExtra({
   const fotoT = async (nombre, entera = false) => {
     await q.waitForTimeout(1500);
     await direccionPublica(q);
-    await q.screenshot({ path: join(tutorial, `${nombre}-${idioma}.png`), fullPage: entera });
+    await tomar(q, { path: join(tutorial, `${nombre}-${idioma}.png`), fullPage: entera });
     console.log('captura tutorial', nombre);
   };
   const ir = (r) => q.goto(`${URL}${pre}${r}`, { waitUntil: 'networkidle' }).catch(() => null);
@@ -665,7 +698,7 @@ async function capturasExtra({
   const u = await pub.newPage();
   const fotoU = async (nombre) => {
     await u.waitForTimeout(1500);
-    await u.screenshot({ path: join(tutorial, `${nombre}-${idioma}.png`) });
+    await tomar(u, { path: join(tutorial, `${nombre}-${idioma}.png`) });
     console.log('captura tutorial', nombre);
   };
   const token = enlaceInvitacion.trim().split('/').at(-1);
