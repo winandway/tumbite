@@ -26,6 +26,19 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **App:** la hoja de la oferta lo pone grande y arriba (ver el mismo candado en la app, `OfertaViaje.tsx`).
 - **Cómo se comprueba:** `viajesFijos.test.ts` → «el aviso y la oferta dicen «Cliente fijo: nombre» (solo a él)», en ROJO antes del cambio.
 - **Qué NO tocar:** no dar el nombre en las ofertas que no son exclusivas; no volver al título genérico.
+## C-OFERTA-EN-CUALQUIER-PANTALLA y C-AVISOS-PRIMER-PLANO · La oferta se ve y suena en cualquier pantalla, y ningún aviso se descarta con la app abierta (primera carrera real, 24 nov 2026) — todos los países · necesita app nueva (Driver y clientes)
+
+- **Qué pasaba:** un pasajero pidió a su conductor de confianza (cliente fijo). El minuto exclusivo pasó sin que la oferta saliera en pantalla ni sonara; sonó «al rato», cuando la oferta pasó a todos. En producción (solo lectura) dos de los tres viajes de la prueba tienen la oferta con `intentos = 2`: la exclusiva de 60 s venció sin respuesta y la normal sí se vio y se respondió. En el tercero el conductor estaba en el Inicio y la rechazó a los 18 s.
+- **Causa real (en el código de Driver; el servidor manda el mismo aviso para la exclusiva y la normal):**
+  1. Las hojas de oferta (viaje, envío y comida), con la alarma dentro, solo se pintaban en el Inicio y sobre «Viaje terminado». En Clientes fijos, Avisos, Ganancias, Perfil o Ayuda la oferta llegaba por el sondeo, pero no se veía ni sonaba.
+  2. Driver y clientes no tenían manejador de avisos con la app abierta. Con expo-notifications 57, sin manejador, un aviso que llega con la app abierta se DESCARTA (sin bandeja y sin sonido; `ExpoHandlingDelegate.handleNotification`).
+- **Sin verificar:** con la app en segundo plano el sistema muestra el aviso con el tono del canal de ofertas, igual que la oferta normal. Que «se vio pero no sonó» con la app de fondo no lo explica el código. Hipótesis: estaban en videollamada de WhatsApp compartiendo pantalla, y Android baja o calla los avisos durante una llamada. Lo decide la prueba del ensayo general (oferta de cliente fijo con Driver en segundo plano y la pantalla apagada, sin llamada activa).
+- **Qué se hizo:**
+  - `hojasDeOferta` se arma ANTES del lienzo, y `hojasVisibles` (nada con un viaje en curso; sí sobre «Viaje terminado») se pinta en el lienzo común (todas las pantallas con cabecera), en el asistente de papeles y en «Mi ruta». Un solo sitio por pantalla: dos hojas serían dos alarmas.
+  - Pieza única `useAvisosPrimerPlano` (`packages/movil/src/avisosPrimerPlano.ts`), con la regla pura en `avisosPrimerPlanoRegla.ts`. Una oferta con hoja (`oferta_operacion`, `oferta_pedido`) va a la bandeja sin el sonido del sistema (suena la alarma de la hoja) y llama a `cargar()` al instante. Cualquier otro aviso sale arriba, suena y queda en la bandeja. La ruta de Flex (`oferta`), que no tiene hoja con alarma, suena como siempre. La usan Driver (`Inicio.tsx`) y clientes (`AbrirAvisos.tsx`). La app del restaurante no se tocó: tiene su propia alarma de pedidos.
+- **Cómo se comprueba:** `apps/repartidor/src/viajes/ofertaEnCualquierPantalla.test.ts` (6 casos) y `packages/movil/src/avisosPrimerPlano.test.ts` (5 casos), los dos vistos en ROJO antes del arreglo. `cierreViaje.test.ts`, puesta al día.
+- **Pendiente fuera de este trabajo:** la pantalla del aviso de IA (`AvisoIa`) no lleva las hojas porque pertenece a otra rama. Si el conductor está conectado y en esa pantalla, la oferta no sale hasta que la conteste.
+- **Qué NO tocar:** no volver a pintar `{hojasDeOferta}` suelto en una rama de pantalla; no quitar el manejador (vuelve el silencio con la app abierta); no dejar que el sistema suene también en una oferta con hoja (sonido doble).
 
 ## C-VEHICULO-ACTIVO-SOLO · El vehículo aprobado queda en uso solo y su servicio de viajes listo (Gerencia por Richard, conductor real, 23 nov 2026) — todos los países
 

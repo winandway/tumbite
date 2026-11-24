@@ -86,9 +86,11 @@ describe('C-CIERRE-VIAJE-QUEDA: el inicio y la pantalla del viaje la usan', () =
     expect(i).toMatch(/<ViajeActivo\s+key=\{viajeMostrado\.id\}/);
     expect(i).toMatch(/cierre=\{/);
     expect(i).toMatch(/scrollLienzo\.current\?\.scrollTo\(\{ y: 0, animated: false \}\)/);
-    // Sobre el cierre, la hoja de la oferta (con su sonido).
-    const ramaViaje = i.slice(i.indexOf("if (viajeMostrado && vista === 'inicio')"));
-    expect(ramaViaje.slice(0, 4000)).toMatch(/ofertasSobreCierre \? hojasDeOferta : null/);
+    // Sobre el cierre, la hoja de la oferta (con su sonido). Desde C-OFERTA-EN-CUALQUIER-PANTALLA la
+    // pinta el lienzo común; con un viaje en curso (no cierre) no sale.
+    expect(i).toMatch(
+      /const hojasVisibles = viajeMostrado && !ofertasSobreCierre \? null : hojasDeOferta;/,
+    );
   });
 
   // Segunda devolución del revisor (19 nov 2026): al tocar Aceptar NO se suelta el cierre. Soltarlo
@@ -100,7 +102,7 @@ describe('C-CIERRE-VIAJE-QUEDA: el inicio y la pantalla del viaje la usan', () =
     const i = leer('Inicio.tsx');
     const hojas = i.slice(
       i.indexOf('const hojasDeOferta = ('),
-      i.indexOf('// ───────── Divoox Moto (M4)'),
+      i.indexOf('const hojasVisibles = '),
     );
     expect(hojas).toContain('alAceptar');
     expect(hojas).not.toMatch(/setCierreViaje/);
