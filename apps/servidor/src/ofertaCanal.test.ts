@@ -84,7 +84,9 @@ describe('la oferta va por el canal de ofertas solo donde existe', () => {
     expect(mandados.at(-1)).toMatchObject({ channelId: 'ofertas' });
   });
 
-  it('una capacidad desconocida no entra', async () => {
+  // C-CANALES-AVISOS (24 nov 2026): una capacidad desconocida ya no tumba el registro (una app más
+  // nueva que el servidor seguiría sin avisos); se ignora y no llega a la base.
+  it('una capacidad desconocida no entra (se ignora sin tumbar el registro)', async () => {
     const m = mundo();
     const rep = await m.cuenta('repartidor');
     expect(
@@ -96,6 +98,10 @@ describe('la oferta va por el canal de ofertas solo donde existe', () => {
           rep.token,
         )
       ).estado,
-    ).toBe(400);
+    ).toBeLessThan(300);
+    const f = await m.DB.prepare('SELECT capacidades FROM dispositivos WHERE token = ?')
+      .bind('ExponentPushToken[driver-y]')
+      .first<{ capacidades: string | null }>();
+    expect(f?.capacidades).toBeNull();
   });
 });

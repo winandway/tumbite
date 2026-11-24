@@ -28,7 +28,12 @@ import { URL_SERVIDOR } from './servidor';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
 import { idAparato, prepararAparato } from './aparato';
-import { darDeBajaAvisos, useAvisosCelular, useAvisosWebSilencioso } from './avisos';
+import {
+  darDeBajaAvisos,
+  useAvisosCelular,
+  useAvisosWebSilencioso,
+  usePanicoVisto,
+} from './avisos';
 import { LLAVE_MARCA, guardarLocal } from '@tumbite/compartido/src/avisosWeb';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
@@ -266,6 +271,8 @@ export function SesionProvider({
   }, [llavePermisos]);
   const permisosPorExplicar = Boolean(explicarPermisos && usuario && permisosVistos === false);
   useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true, idioma);
+  // C-PANICO-INSISTE: abrir un aviso de pánico lo marca visto (deja de repetirse).
+  usePanicoVisto(api, usuario);
   // C-AVISOS-WEB: en la versión web, renueva la suscripción si el permiso ya estaba dado.
   useAvisosWebSilencioso(api, usuario);
 

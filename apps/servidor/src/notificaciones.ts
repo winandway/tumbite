@@ -1,7 +1,9 @@
 import {
   CANAL_OFERTAS,
   CAPACIDAD_OFERTAS_BUCLE,
+  type CanalAviso,
   SONIDO_OFERTAS,
+  canalParaAparato,
   formatearMonto,
 } from '@tumbite/compartido';
 import type { Env } from './env';
@@ -41,6 +43,12 @@ export type Aviso = {
    * le llega por ese canal con el tono largo (29 s); a los demás, como siempre.
    */
   oferta?: boolean;
+  /**
+   * C-CANALES-AVISOS: el canal propio de Android (y su sonido en iPhone) para este aviso: pedido
+   * nuevo, pánico, dinero o «llegó tu conductor». Solo se usa en el teléfono que lo declaró; los
+   * demás lo reciben como siempre.
+   */
+  canal?: CanalAviso;
 };
 
 /**
@@ -119,18 +127,24 @@ async function notificarExpo(
   if (!results.length) return { enviados: 0 };
   const mensajes = results.map((d) => {
     const aviso = enIdioma(idiomaAviso(d.idioma, d.idioma_cuenta));
-    const bucle =
-      aviso.oferta === true && (d.capacidades ?? '').split(',').includes(CAPACIDAD_OFERTAS_BUCLE);
+    const capacidades = (d.capacidades ?? '').split(',');
+    const bucle = aviso.oferta === true && capacidades.includes(CAPACIDAD_OFERTAS_BUCLE);
+    // Android: el canal que crea la app (importancia máxima). Sin él, el aviso cae en el canal
+    // genérico de Expo y puede llegar sin sonar ni aparecer arriba (C-AVISOS-CANAL). C-CANALES-AVISOS:
+    // el canal propio del aviso solo si ese teléfono lo trae.
+    const via = bucle
+      ? { channelId: CANAL_OFERTAS, sound: SONIDO_OFERTAS }
+      : canalParaAparato(aviso, capacidades);
     return {
       to: d.token,
       title: aviso.titulo,
       body: aviso.cuerpo,
       data: aviso.datos ?? {},
-      sound: bucle ? SONIDO_OFERTAS : (aviso.sonido ?? 'default'),
+      sound: via.sound,
       priority: 'high',
-      // Android: el canal que crea la app (importancia máxima). Sin él, el aviso cae en el canal
-      // genérico de Expo y puede llegar sin sonar ni aparecer arriba (C-AVISOS-CANAL).
-      channelId: bucle ? CANAL_OFERTAS : 'pedidos',
+      channelId: via.channelId,
+      // C-PANICO-INSISTE: el pánico atraviesa el modo «concentración» del iPhone donde se permita.
+      ...(aviso.canal === 'panico' ? { interruptionLevel: 'time-sensitive' } : {}),
     };
   });
   try {
@@ -329,10 +343,12 @@ export const AVISOS = {
       ? {
           titulo: `Extra tip: ${monto}`,
           cuerpo: 'A customer added a tip after delivery. It’s in your balance.',
+          canal: 'dinero',
         }
       : {
           titulo: `Propina extra: ${monto}`,
           cuerpo: 'Un cliente te dejó propina después de la entrega. Ya está en tu saldo.',
+          canal: 'dinero',
         },
   // C-PAUSA-SIN-SENAL: la tienda dejó de recibir pedidos porque su app o su panel no responden.
   tiendaSinSenal: (i: string): Aviso =>
@@ -382,15 +398,18 @@ export const AVISOS = {
     i === 'en'
       ? { titulo: 'Almost here', cuerpo: 'Your driver is about a minute away.' }
       : { titulo: 'Casi llega', cuerpo: 'Tu repartidor está a un minuto.' },
+  // C-SONIDOS-PROPIOS: «llegó tu conductor» suena con su campanita propia.
   llego: (i: string): Aviso =>
     i === 'en'
       ? {
           titulo: 'Your driver is at your door',
           cuerpo: 'Go meet them or check your delivery note.',
+          canal: 'llego',
         }
       : {
           titulo: 'Tu repartidor está en tu puerta',
           cuerpo: 'Sal a recibirlo o revisa tus indicaciones de entrega.',
+          canal: 'llego',
         },
   entregado: (i: string): Aviso =>
     i === 'en'
@@ -418,10 +437,12 @@ export const AVISOS = {
           titulo: `New paid order #${corto}`,
           cuerpo: 'Accept it before the alarm wakes the block.',
           sonido: 'alarma.wav',
+          canal: 'pedido_nuevo',
         }
       : {
           titulo: `Pedido nuevo pagado #${corto}`,
           cuerpo: 'Acéptalo antes de que la alarma despierte al barrio.',
           sonido: 'alarma.wav',
+          canal: 'pedido_nuevo',
         },
 };

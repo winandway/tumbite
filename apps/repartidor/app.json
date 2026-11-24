@@ -83,7 +83,12 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#F20D20",
           "defaultChannel": "pedidos",
-          "sounds": ["./assets/sonidos/oferta.wav", "./assets/sonidos/oferta_larga.wav"]
+          "sounds": [
+            "./assets/sonidos/oferta.wav",
+            "./assets/sonidos/oferta_larga.wav",
+            "./assets/sonidos/dinero.wav",
+            "./assets/sonidos/panico.wav"
+          ]
         }
       ],
       [
@@ -145,6 +150,7 @@
     },
     "extra": {
       "sonidoAvisos": "oferta.wav",
+      "canalesAvisos": { "dinero": "dinero.wav", "panico": "panico.wav" },
       "sonidoOfertas": "oferta_larga.wav",
       "eas": {
         "projectId": "f73487b3-0624-48fd-a2f1-6939df58d736"
