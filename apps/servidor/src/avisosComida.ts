@@ -191,8 +191,12 @@ export async function avisarPasoComida(
     const f = await filaPedido(db, pedidoId);
     if (!f) return;
     const datos = { pedidoId, tipo: 'pedido', paso };
+    // C-CUENTA-UNICA-AVISOS: cada aviso va a la app del papel que lo recibe.
+    const app = (para: string | null | undefined): 'cliente' | 'repartidor' | 'restaurante' =>
+      para === f.cliente_id ? 'cliente' : para === f.dueno_id ? 'restaurante' : 'repartidor';
     const a = async (para: string | null | undefined, aviso: (i: Idioma) => Aviso) => {
-      if (para) await notificar(env, db, para, (i) => ({ ...aviso(i), datos }));
+      if (para)
+        await notificar(env, db, { id: para, app: app(para) }, (i) => ({ ...aviso(i), datos }));
     };
     switch (paso) {
       case 'cancelado_restaurante':

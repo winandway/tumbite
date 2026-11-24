@@ -11221,7 +11221,10 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
         ],
       };
     if (s.id === 'restaurants')
-      return { ...s, guias: [...s.guias, avisosActor.restaurante, ...de(s.id)] };
+      return {
+        ...s,
+        guias: [...s.guias, avisosActor.restaurante, ...restaurantesUnica, ...de(s.id)],
+      };
     // C-DOCS-LUPA (15 nov 2026): cómo buscar en Docs y ampliar una captura, al final de «Tu cuenta».
     if (s.id === 'account')
       return {
@@ -11237,8 +11240,6 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...(idioma === 'es' ? GUIAS_DOCS.es : GUIAS_DOCS.en),
         ],
       };
-    if (s.id === 'restaurants')
-      return { ...s, guias: [...s.guias, ...restaurantesUnica, ...de(s.id)] };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
   // C-AYUDA-INTERNA (16 nov 2026, Richard): Docs es solo para clientes y terceros. Las guías del

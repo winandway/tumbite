@@ -140,7 +140,8 @@ export async function revisarSaldoBajo(
       )
       .run();
     if (!marca.meta.changes) return null;
-    await notificar(env, db, p.usuarioId, (i) => ({
+    const app = p.quien === 'conductor' ? ('repartidor' as const) : ('restaurante' as const);
+    await notificar(env, db, { id: p.usuarioId, app }, (i) => ({
       ...(p.quien === 'conductor'
         ? AVISOS_SALDO.conductor(i, nivel, quedan)
         : AVISOS_SALDO.restaurante(i, quedan)),
