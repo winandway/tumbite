@@ -17,6 +17,7 @@ import {
 import { textosInicio } from '../inicio/textos';
 import { Pressable } from 'react-native';
 import { conCuenta } from '../ConCuenta';
+import { rutaDelViaje } from '../viajes/rutaDelViaje';
 
 /**
  * La campana (como en los grandes): una lista de avisos reales. Pedidos en curso (tocar abre el
@@ -51,18 +52,34 @@ function Avisos() {
 
   const tarjeta = (a: Aviso | AvisoGuardado, i: number) => {
     // C-AVISOS-GUARDADOS: lo que le llegó al teléfono, con su título, su texto y su hora.
-    if (esAvisoGuardado(a))
-      return (
+    // C-AVISOS-VIAJE: el de un viaje se toca y abre ese viaje; lo nuevo lleva su punto.
+    if (esAvisoGuardado(a)) {
+      const tarjetaGuardada = (
+        <Tarjeta>
+          <Titulo texto={a.titulo} punto={a.leido === false} />
+          <Texto texto={a.cuerpo} />
+          <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>
+            {horaAviso(a.en, idioma)}
+          </Text>
+        </Tarjeta>
+      );
+      const viaje = rutaDelViaje(a.datos);
+      return viaje ? (
+        <Pressable
+          key={`g-${a.en}-${i}`}
+          testID="aviso-guardado"
+          onPress={() => router.push(viaje)}
+          accessibilityRole="button"
+          accessibilityLabel={a.titulo}
+        >
+          {tarjetaGuardada}
+        </Pressable>
+      ) : (
         <View key={`g-${a.en}-${i}`} testID="aviso-guardado">
-          <Tarjeta>
-            <Titulo texto={a.titulo} />
-            <Texto texto={a.cuerpo} />
-            <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>
-              {horaAviso(a.en, idioma)}
-            </Text>
-          </Tarjeta>
+          {tarjetaGuardada}
         </View>
       );
+    }
     if (a.tipo === 'pedido')
       return (
         <Pressable

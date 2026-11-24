@@ -99,6 +99,8 @@ export type AvisoGuardado = {
   cuerpo: string;
   datos: Record<string, unknown>;
   en: string;
+  /** C-CAMPANA-SE-VACIA: si ya lo vio (los servidores viejos no lo dicen). */
+  leido?: boolean;
 };
 export const esAvisoGuardado = (a: unknown): a is AvisoGuardado =>
   typeof a === 'object' && a !== null && (a as { tipo?: unknown }).tipo === 'aviso';

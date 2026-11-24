@@ -15,6 +15,7 @@ import { MisViajes } from '../viajes/MisViajes';
 import { TEXTOS_MOTO } from '../viajes/textos';
 import { conCuenta } from '../ConCuenta';
 import { useUbicacionConRegalo } from '../viajes/useUbicacionConRegalo';
+import { ID_VIAJE } from '../viajes/rutaDelViaje';
 
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
 
@@ -27,17 +28,22 @@ function PantallaMoto() {
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
-  const pedido = useLocalSearchParams<{ servicio?: string }>().servicio;
+  // C-AVISOS-VIAJE: tocar un aviso de viaje abre ESE viaje (`viaje`), aunque ya haya terminado
+  // (así «Viaje terminado» lleva a calificar).
+  const params = useLocalSearchParams<{ servicio?: string; viaje?: string }>();
+  const pedido = params.servicio;
+  const delAviso =
+    typeof params.viaje === 'string' && ID_VIAJE.test(params.viaje) ? params.viaje : null;
   const servicio = pedido === 'carro' || pedido === 'envios' ? pedido : 'moto';
   // C-ENVIOS: lo que se envía (quién recibe y su PIN de entrega).
   const [paquete, setPaquete] = useState<PaqueteCliente | null>(null);
   const [viaje, setViaje] = useState<ViajePasajero | null>(null);
-  const [viajeId, setViajeId] = useState<string | null>(null);
+  const [viajeId, setViajeId] = useState<string | null>(delAviso);
   // C-PEDIR-OTRA-VEZ-UN-TOQUE (robot de Android, 18 nov 2026): `cargar` lee el viaje por esta
   // referencia, no por el valor de su cierre. Antes, «Pedir otra vez» limpiaba el viaje y llamaba a
   // `cargar` del render anterior, que todavía tenía el id viejo: volvía a traer el viaje cancelado y
   // la pantalla no cambiaba; hacía falta un segundo toque.
-  const viajeIdRef = useRef<string | null>(null);
+  const viajeIdRef = useRef<string | null>(delAviso);
   useEffect(() => {
     viajeIdRef.current = viajeId;
   }, [viajeId]);
