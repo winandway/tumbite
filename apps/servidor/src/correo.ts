@@ -336,8 +336,8 @@ export async function enviarCorreo(env: Env, correoPedido: Correo): Promise<Resu
     if (porHilo?.ok) return { ok: true, id: porHilo.id ?? '', rebotado: false };
   }
   let res: Response;
-  try {
-    res = await transporte(ENDPOINT, {
+  const enviar = () =>
+    transporte(ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(cuerpo),
@@ -345,6 +345,16 @@ export async function enviarCorreo(env: Env, correoPedido: Correo): Promise<Resu
       // se queda colgada (antes podía esperar para siempre y trabar la entrega).
       signal: AbortSignal.timeout(TIEMPO_CORREO_MS),
     });
+  try {
+    try {
+      res = await enviar();
+    } catch (primero) {
+      // C-CORREO-REINTENTO (24 nov 2026): un corte de red o de tiempo suelto no es un fallo del
+      // correo. Se reintenta una vez; solo si el segundo intento también falla se anota el fallo
+      // (antes un único corte dejaba el canario en rojo 24 horas y trancaba las publicaciones).
+      console.error('correo: primer intento sin respuesta, se reintenta una vez', String(primero));
+      res = await enviar();
+    }
   } catch (e) {
     return falloDeSistema(
       env,
