@@ -50,14 +50,17 @@ export const identidadEnVerde = (
   cara?.tono === 'hecho';
 
 /** Reduce la selfie aprobada a una miniatura y la guarda; si no se puede, el pasajero no ve foto. */
-export async function guardarMiniatura(id: string) {
+export async function guardarMiniatura(id: string): Promise<boolean> {
   try {
     const r = await fetch(`/datos/admin/kyc/${id}/foto/selfie`, { credentials: 'same-origin' });
-    if (!r.ok) return;
+    if (!r.ok) return false;
     const mini = await miniaturaWebp(await r.blob());
-    if (mini) await api.subirFoto(mini, `/datos/admin/kyc/${id}/miniatura`);
+    if (!mini) return false;
+    await api.subirFoto(mini, `/datos/admin/kyc/${id}/miniatura`);
+    return true;
   } catch (e) {
     console.error('kyc: miniatura de la selfie', e);
+    return false;
   }
 }
 

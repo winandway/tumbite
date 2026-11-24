@@ -1,5 +1,6 @@
 export * from './almacen';
 export * from './sesion';
+export * from './fotoPrivada';
 export * from './useSondeo';
 export * from './ui';
 export * from './Acceso';

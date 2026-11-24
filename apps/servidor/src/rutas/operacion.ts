@@ -3589,7 +3589,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, r.nombre AS restaurante_nombre, r.dueno_id, r.lat AS rest_lat, r.lng AS rest_lng, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en,
-        (SELECT 1 FROM kyc k WHERE k.usuario_id = p.repartidor_id AND k.estado = 'aprobado' AND k.selfie IS NOT NULL) AS rep_foto,
+        (SELECT 1 FROM kyc k WHERE k.usuario_id = p.repartidor_id AND k.estado = 'aprobado' AND k.selfie_miniatura IS NOT NULL) AS rep_foto,
         (SELECT a.auditiva FROM accesibilidad_repartidor a WHERE a.usuario_id = p.repartidor_id) AS rep_auditiva
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id WHERE p.id = ?`,

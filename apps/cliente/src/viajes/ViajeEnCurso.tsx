@@ -21,8 +21,7 @@ import {
   Campo,
   ChatPedido,
   MontoEnMano,
-  URL_SERVIDOR,
-  leerTokenGuardado,
+  useFotoPrivada,
   useSesion,
   Text,
   COLOR,
@@ -209,15 +208,11 @@ function FotoConductor({
   /** C-PERFIL-CONDUCTOR: dentro del perfil oscuro, la foto llena su círculo (lado = alto del aro). */
   enPerfil?: number;
 }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [fallo, setFallo] = useState(false);
-  useEffect(() => {
-    if (hay) void leerTokenGuardado().then(setToken);
-  }, [hay]);
+  // C-FOTO-CONDUCTOR-SE-VE: con la sesión por api.verFoto (nunca <Image headers>, que dejaba la inicial).
+  const uri = useFotoPrivada(hay ? `/datos/viajes/${viajeId}/conductor/foto` : null);
   const lado = 56;
-  if (enPerfil && (!hay || fallo || !token))
-    return <InicialConductor nombre={nombre} tamano={enPerfil - 16} />;
-  if (!hay || fallo || !token)
+  if (enPerfil && !uri) return <InicialConductor nombre={nombre} tamano={enPerfil - 16} />;
+  if (!uri)
     return (
       <View
         style={{
@@ -237,11 +232,7 @@ function FotoConductor({
   return (
     <Image
       accessibilityIgnoresInvertColors
-      onError={() => setFallo(true)}
-      source={{
-        uri: `${URL_SERVIDOR}/datos/viajes/${viajeId}/conductor/foto`,
-        headers: { authorization: `Bearer ${token}` },
-      }}
+      source={{ uri }}
       style={
         enPerfil
           ? { width: '100%', height: '100%' }

@@ -45,6 +45,10 @@ describe('foto verificada del repartidor (C-FOTO-VERIFICADA)', () => {
     )
       .bind(pid, cliente.id, rid, rep.id)
       .run();
+    // C-FOTO-CONDUCTOR-SE-VE: el cliente ve la miniatura (la guarda el panel al aprobar), no la original.
+    await m.DB.prepare('UPDATE kyc SET selfie_miniatura = selfie WHERE usuario_id = ?')
+      .bind(rep.id)
+      .run();
     expect((await ver(`/datos/pedidos/${pid}/repartidor/foto`, cliente.token)).status).toBe(200);
     expect((await ver(`/datos/pedidos/${pid}/repartidor/foto`, otro.token)).status).toBe(404);
     const seg = await m.llamar(

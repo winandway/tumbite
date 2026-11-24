@@ -25,10 +25,9 @@ import {
   PerfilConductor,
   RADIO,
   Text,
-  URL_SERVIDOR,
   alSalirTelefono,
   almacenTelefono,
-  leerTokenGuardado,
+  useFotoPrivada,
   useSesion,
 } from '@tumbite/movil';
 
@@ -36,21 +35,13 @@ const TAMANO_FOTO = 128;
 
 /** Su propia foto verificada (la que ve el pasajero); sin foto o si no carga, su inicial. */
 function FotoPropia({ hay, nombre }: { hay: boolean; nombre: string }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [fallo, setFallo] = useState(false);
-  useEffect(() => {
-    if (hay) void leerTokenGuardado().then(setToken);
-  }, [hay]);
-  if (!hay || fallo || !token)
-    return <InicialConductor nombre={nombre} tamano={TAMANO_FOTO - 16} />;
+  // C-FOTO-CONDUCTOR-SE-VE: con la sesión por api.verFoto (nunca <Image headers>).
+  const uri = useFotoPrivada(hay ? '/datos/repartidor/perfil/foto' : null);
+  if (!uri) return <InicialConductor nombre={nombre} tamano={TAMANO_FOTO - 16} />;
   return (
     <Image
       accessibilityIgnoresInvertColors
-      onError={() => setFallo(true)}
-      source={{
-        uri: `${URL_SERVIDOR}/datos/repartidor/perfil/foto`,
-        headers: { authorization: `Bearer ${token}` },
-      }}
+      source={{ uri }}
       style={{ width: '100%', height: '100%' }}
     />
   );

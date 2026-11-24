@@ -556,6 +556,30 @@ kyc.get('/admin/kyc', async (c) => {
   });
 });
 
+/**
+ * C-FOTO-CONDUCTOR-SE-VE (24 nov 2026) — todos los países. La reparación de la foto que ve el
+ * pasajero: las verificaciones APROBADAS con cara y sin miniatura (aprobadas antes de la miniatura, o
+ * desde un navegador que no sabe hacer WebP). Un Worker no reduce fotos, así que el panel del equipo
+ * pide esta lista al abrir Verificaciones, hace cada miniatura y la sube por
+ * `POST /admin/kyc/:id/miniatura`: una escritura por conductor, una sola vez (la lista ya no lo trae).
+ * Solo ids, solo de su alcance, como mucho MAX_MINIATURAS_POR_VUELTA por vuelta.
+ */
+export const MAX_MINIATURAS_POR_VUELTA = 10;
+kyc.get('/admin/kyc/miniaturas-faltantes', async (c) => {
+  exigir(c, 'admin');
+  if (!tienePermiso(c, 'repartidores.documentos')) return c.json({ ids: [] });
+  const alcance = alcanceObjetoSql(accesoDe(c), 'persona', 'k.usuario_id');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT k.usuario_id AS id FROM kyc k
+        WHERE k.estado = 'aprobado' AND k.selfie IS NOT NULL AND k.selfie_miniatura IS NULL${alcance.sql}
+        ORDER BY k.revisado_en DESC LIMIT ${MAX_MINIATURAS_POR_VUELTA}`,
+    )
+    .bind(...alcance.valores)
+    .all<{ id: string }>();
+  return c.json({ ids: results.map((r) => r.id) });
+});
+
 kyc.get('/admin/kyc/:id', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
@@ -771,12 +795,17 @@ kyc.get('/admin/kyc/:id/foto/:pieza', async (c) => {
  * C-FOTO-VERIFICADA (29 oct 2026), como Uber: la selfie aprobada contra el documento es la foto de perfil
  * del repartidor. La ven él mismo, el cliente de un pedido que lleva y el equipo; nadie más.
  */
-async function servirFoto(c: Parameters<typeof base>[0], usuarioId: string) {
+async function servirFoto(
+  c: Parameters<typeof base>[0],
+  usuarioId: string,
+  /** C-FOTO-CONDUCTOR-SE-VE: a un cliente, solo la miniatura (la original es evidencia de identidad). */
+  pieza: 'selfie' | 'selfie_miniatura' = 'selfie',
+) {
   const f = await base(c)
-    .prepare("SELECT selfie FROM kyc WHERE usuario_id = ? AND estado = 'aprobado'")
+    .prepare(`SELECT ${pieza} AS clave FROM kyc WHERE usuario_id = ? AND estado = 'aprobado'`)
     .bind(usuarioId)
-    .first<{ selfie: string | null }>();
-  const obj = f?.selfie ? await almacen(c.env).get(f.selfie) : null;
+    .first<{ clave: string | null }>();
+  const obj = f?.clave ? await almacen(c.env).get(f.clave) : null;
   if (!obj) return c.text('No encontrado', 404);
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
@@ -796,7 +825,7 @@ kyc.get('/pedidos/:id/repartidor/foto', async (c) => {
     .bind(c.req.param('id'))
     .first<{ cliente_id: string; repartidor_id: string }>();
   if (!p || (p.cliente_id !== u.id && u.rol !== 'admin')) return c.text('No encontrado', 404);
-  return servirFoto(c, p.repartidor_id);
+  return servirFoto(c, p.repartidor_id, 'selfie_miniatura');
 });
 
 /**
