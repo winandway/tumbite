@@ -6872,3 +6872,10 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Arreglo:** un párrafo nuevo en la sección de datos de la política de privacidad, en español y en inglés (`apps/panel/src/sitio/legales.ts`): para qué son (soporte y arreglar fallos), que van ligados a la cuenta, que no son publicidad ni se venden y que se borran con la cuenta.
 - **Prueba (rojo comprobado quitando el párrafo):** `apps/panel/src/sitio/legales.test.tsx`, «eventos de uso de Driver para soporte y diagnóstico».
 - **Qué NO tocar:** si se agregan eventos nuevos en Driver (`api.hito`), se amplía este párrafo y la declaración de Play en el mismo trabajo; si se apagan, se avisa a Gerencia para retirar la declaración.
+
+## C-PRIVACIDAD-INTENTOS — la política dice que se guardan los intentos fallidos de entrar y de crear cuenta (24 nov 2026) — todos los países
+
+- **Qué faltaba:** desde C-INTENTOS-ACCESO el servidor guarda cada intento fallido (correo escrito, motivo, app, versión, teléfono, país y ciudad aproximados; nunca contraseña ni código) en `intentos_acceso`, y la política no lo decía (condición del dictamen vigésimo primero para Driver 0.1.75).
+- **Arreglo:** párrafo en la sección de datos de la política, en español e inglés (`apps/panel/src/sitio/legales.ts`), con el plazo de 30 días que cumple el borrado diario de `anotarIntento` (`apps/servidor/src/accesoIntentos.ts`).
+- **Prueba (rojo comprobado quitando el párrafo):** `apps/panel/src/sitio/legales.test.tsx`, «intentos fallidos de entrar y de crear cuenta»; además exige que el servidor siga borrando a los 30 días.
+- **Qué NO tocar:** si cambia el plazo o lo que se guarda, se cambian el código, el párrafo es/en y la prueba en el mismo trabajo.

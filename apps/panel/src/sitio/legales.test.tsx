@@ -300,3 +300,27 @@ describe('eventos de uso de Driver para soporte y diagnóstico', () => {
     expect(en).toMatch(/linked to your account/);
   });
 });
+
+// C-PRIVACIDAD-INTENTOS (24 nov 2026, dictamen vigésimo primero): la política dice que se guardan los
+// intentos fallidos de entrar y de registrarse, para qué y por cuánto (30 días, lo que borra el servidor).
+describe('intentos fallidos de entrar y de crear cuenta', () => {
+  it('la política lo dice en español y en inglés, con el plazo que cumple el servidor', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const es = PRIVACIDAD.es.secciones.flatMap((s) => s.parrafos).join(' ');
+    const en = PRIVACIDAD.en.secciones.flatMap((s) => s.parrafos).join(' ');
+    expect(es).toMatch(
+      /Intentos fallidos de entrar o de crear cuenta.*Se borra solo a los 30 días/,
+    );
+    expect(en).toMatch(
+      /Failed attempts to sign in or create an account.*deleted automatically after 30 days/,
+    );
+    const servidor = readFileSync(
+      resolve(__dirname, '../../../servidor/src/accesoIntentos.ts'),
+      'utf8',
+    );
+    expect(servidor).toContain(
+      "DELETE FROM intentos_acceso WHERE creado_en < datetime('now', '-30 days')",
+    );
+  });
+});
