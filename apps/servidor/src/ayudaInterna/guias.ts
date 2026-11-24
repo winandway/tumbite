@@ -2642,6 +2642,96 @@ const lineasTaxi: Record<IdiomaAyuda, Guia> = {
 
 // ───────────────────────── Cuentas de prueba (C-CUENTA-PRUEBA, 21 nov 2026) ─────────────────────────
 
+// C-ZONA-MUNICIPIO (24 nov 2026): el municipio de cada zona, elegido de la lista o escrito a mano.
+const capMunicipio = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({
+  archivo: `zona-municipio-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+const zonaMunicipio: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'zone-municipality',
+    titulo: 'Zonas: el municipio de cada zona y el filtro por municipio',
+    resumen:
+      'Cómo se le pone el municipio a una zona al crearla o después, de dónde sale la lista sugerida, cómo se escribe uno que no está y cómo se filtra la lista de Zonas por municipio.',
+    explicacion: [
+      'Cada zona lleva su municipio, además del país, el estado o la provincia y la ciudad. Sirve para ordenar las zonas y encontrarlas rápido cuando hay muchas en el mismo estado.',
+      'La casilla «Municipio» sugiere los municipios oficiales del país mientras escribes. En Venezuela salen los 336 del instituto oficial; los del estado de la zona van primero, y los de los pueblos donde ya trabajamos llevan el pueblo entre paréntesis: «Alberto Adriani (El Vigía), Mérida» y «Caracciolo Parra Olmedo (Tucaní), Mérida». También puedes escribir solo «El Vigía» o «Tucaní»: se guarda el municipio oficial.',
+      'Si el municipio no está en la lista, o el país todavía no tiene su lista cargada (Estados Unidos, Perú, Colombia), escríbelo tal cual y se guarda así. Lo que ya escribiste en otras zonas del mismo país también aparece como sugerencia.',
+      'En Venezuela, si no eliges ninguno, la zona toma sola el municipio donde cae su centro. El que elijas manda sobre ese. Debajo del nombre de cada zona se ve «Municipio: …» y, si es oficial, su estado y su código.',
+      'Arriba de la lista está «Filtrar por municipio»: deja solo las zonas de ese municipio, o las que no tienen ninguno. Lo que elijas se recuerda la próxima vez que entres a Zonas.',
+    ],
+    capturas: [
+      capMunicipio(
+        'lista',
+        'es',
+        'Lista de Zonas filtrada por el municipio Alberto Adriani, con la zona de El Vigía y su municipio a la vista',
+        'El filtro deja solo las zonas de ese municipio; cada una dice su municipio.',
+      ),
+      capMunicipio(
+        'nueva',
+        'es',
+        'Formulario de zona nueva con el código, el nombre, el estado y la casilla Municipio con un municipio escrito',
+        'Al crear la zona, la casilla Municipio sugiere los del país y deja escribir uno a mano.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo le pongo el municipio a una zona?',
+      '¿Qué hago si el municipio no aparece en la lista?',
+      '¿Cómo veo solo las zonas de un municipio?',
+    ],
+    pasos: [
+      'Abre «Zonas» en el menú de la izquierda, en Territorio.',
+      'Para una zona nueva: llena el código, el nombre y el estado, escribe el municipio en «Municipio» (elígelo de la lista o escríbelo) y toca «Guardar zona».',
+      'Para una zona que ya existe: en su tarjeta, en «Municipio de la zona», escribe o elige el municipio y toca «Guardar municipio». Si lo dejas vacío y guardas, vuelve al municipio oficial de su centro.',
+      'Para filtrar: elige el municipio en «Filtrar por municipio». «Restablecer» vuelve a mostrar todas.',
+    ],
+  },
+  en: {
+    id: 'zone-municipality',
+    titulo: 'Zones: each zone’s municipality and the municipality filter',
+    resumen:
+      'How to set a zone’s municipality when you create it or later, where the suggested list comes from, how to type one that isn’t listed, and how to filter the Zones list by municipality.',
+    explicacion: [
+      'Every zone has its municipality, in addition to the country, the state or province, and the city. It keeps zones organized and makes them quick to find when there are many in the same state.',
+      'The “Municipality” box suggests the country’s official municipalities as you type. For countries with an official list loaded, the ones in the zone’s state come first, and the towns where we already work show in parentheses.',
+      'If the municipality isn’t on the list, or the country doesn’t have its list loaded yet (the United States, Peru, Colombia), type it as is and it’s saved that way. Names you already typed for other zones in the same country also show up as suggestions.',
+      'Where the official list exists, a zone with no municipality chosen gets the one its center falls in automatically. The one you choose takes priority. Under each zone’s name you’ll see “Municipality: …” and, when it’s official, its state and code.',
+      'Above the list is “Filter by municipality”: it shows only that municipality’s zones, or the ones without one. Your choice is remembered the next time you open Zones.',
+    ],
+    capturas: [
+      capMunicipio(
+        'lista',
+        'en',
+        'Zones list filtered by Oakland County, with the Novi zone and its municipality shown',
+        'The filter keeps only that municipality’s zones; each one shows its municipality.',
+      ),
+      capMunicipio(
+        'nueva',
+        'en',
+        'New zone form with the code, name, state and the Municipality box filled in with a county',
+        'When you create a zone, the Municipality box suggests options and lets you type your own.',
+      ),
+    ],
+    preguntas: [
+      'How do I set a zone’s municipality?',
+      'What if the municipality isn’t on the list?',
+      'How do I see only one municipality’s zones?',
+    ],
+    pasos: [
+      'Open “Zones” in the left menu, under Territory.',
+      'For a new zone: fill in the code, name and state, type the municipality in “Municipality” (pick it from the list or type it) and tap “Save zone.”',
+      'For an existing zone: on its card, under “Zone municipality,” type or pick the municipality and tap “Save municipality.” If you leave it empty and save, it goes back to the official municipality of its center.',
+      'To filter: pick the municipality in “Filter by municipality.” “Reset” shows all zones again.',
+    ],
+  },
+};
+
 const cuentasPrueba: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'test-accounts',
@@ -3416,6 +3506,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         ...tomar(['time-zone-clock', 'add-team-members-permissions']),
         de(banners),
         de(cuentasPrueba),
+        de(zonaMunicipio),
         de(celularAlRegistrarse),
       ],
     },

@@ -246,6 +246,8 @@ export const PANTALLAS_PREFERENCIAS = [
   'verificaciones',
   // C-VERIFICACIONES-EN-VIVO: los avisos de quien trabaja en el panel (sonido y aviso al aparato).
   'avisos',
+  // C-ZONA-MUNICIPIO: el filtro por municipio de la lista de Zonas.
+  'zonas',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [
@@ -265,6 +267,8 @@ export const CLAVES_PREFERENCIAS = [
   // C-VERIFICACIONES-EN-VIVO: «si»/«no»: el sonido del panel y el aviso al teléfono o la computadora («aparato»).
   'sonido',
   'aparato',
+  // C-ZONA-MUNICIPIO: la clave del municipio («alberto-adriani»), nunca el nombre con espacios.
+  'municipio',
 ] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;

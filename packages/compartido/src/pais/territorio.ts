@@ -88,3 +88,98 @@ export function lugarDePunto(contornos: Contornos, lat: number, lng: number): st
   }
   return null;
 }
+
+// ───────────── C-ZONA-MUNICIPIO: el municipio que el equipo elige para cada zona ─────────────
+
+/**
+ * C-ZONA-MUNICIPIO (24 nov 2026): el pueblo cabecera de los municipios donde ya trabajamos, para que
+ * el equipo lo reconozca en la lista («El Vigía» es Alberto Adriani; «Tucaní», Caracciolo Parra
+ * Olmedo). Se suma una línea por cada pueblo nuevo; el resto de la lista sale del territorio oficial.
+ */
+const CABECERAS = new Map<string, string>([
+  ['VE1401', 'El Vigía'],
+  ['VE1407', 'Tucaní'],
+  ['VE1412', 'Mérida'],
+]);
+
+export type SugerenciaMunicipio = {
+  pcode: string;
+  nombre: string;
+  entidad: string;
+  cabecera?: string;
+  /** Lo que se ve y se escribe en la casilla: «Alberto Adriani (El Vigía), Mérida». */
+  etiqueta: string;
+};
+
+/** Minúsculas, sin acentos y sin espacios de más: para comparar lo escrito. */
+export function normalizarMunicipio(texto: string): string {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** La clave del filtro (cabe en los filtros guardados: sin espacios ni acentos). */
+export function claveMunicipio(nombre: string): string {
+  return normalizarMunicipio(nombre)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
+/**
+ * Los municipios oficiales del país, para la lista sugerida. Los de la región de la zona (su estado o
+ * provincia, «MER» → Mérida) y los que tienen cabecera conocida van primero. Sin territorio: vacía.
+ */
+export function sugerenciasMunicipio(
+  pais: string | null | undefined,
+  region?: string | null,
+): SugerenciaMunicipio[] {
+  const t = territorio(pais);
+  if (!t) return [];
+  const entidades = new Map(t.entidades.map((e) => [e.c, e.n]));
+  const reg = normalizarMunicipio(region ?? '');
+  const lista = t.municipios.map((m) => {
+    const entidad = entidades.get(m.p ?? '') ?? '';
+    const cabecera = CABECERAS.get(m.c);
+    return {
+      pcode: m.c,
+      nombre: m.n,
+      entidad,
+      ...(cabecera ? { cabecera } : {}),
+      etiqueta: `${m.n}${cabecera ? ` (${cabecera})` : ''}${entidad ? `, ${entidad}` : ''}`,
+    };
+  });
+  const peso = (s: SugerenciaMunicipio) =>
+    (reg && normalizarMunicipio(s.entidad).startsWith(reg) ? 0 : 2) + (s.cabecera ? 0 : 1);
+  return lista.sort((a, b) => peso(a) - peso(b) || a.etiqueta.localeCompare(b.etiqueta, 'es'));
+}
+
+/**
+ * Lee lo que el equipo escribió en la casilla. Si es un municipio oficial (por su etiqueta, su nombre
+ * con o sin estado, o el pueblo cabecera) devuelve su nombre oficial y su P-code; si no, lo escrito
+ * tal cual (sin espacios de más) y sin código: un municipio a mano también vale.
+ */
+export function resolverMunicipio(
+  pais: string | null | undefined,
+  texto: string,
+): { nombre: string; pcode: string | null } {
+  const limpio = texto.replace(/\s+/g, ' ').trim();
+  if (!limpio) return { nombre: '', pcode: null };
+  const buscado = normalizarMunicipio(limpio);
+  const lista = sugerenciasMunicipio(pais);
+  const iguales = (s: SugerenciaMunicipio) =>
+    [
+      s.etiqueta,
+      `${s.nombre}, ${s.entidad}`,
+      `${s.nombre} (${s.entidad})`,
+      ...(s.cabecera ? [`${s.cabecera}, ${s.entidad}`] : []),
+    ].some((x) => normalizarMunicipio(x) === buscado);
+  const porNombre = (campo: 'nombre' | 'cabecera') =>
+    lista.filter(
+      (s) => normalizarMunicipio((campo === 'nombre' ? s.nombre : s.cabecera) ?? '') === buscado,
+    );
+  const exacto = lista.find(iguales);
+  const unico = [porNombre('nombre'), porNombre('cabecera')].find((l) => l.length === 1)?.[0];
+  const hallado = exacto ?? unico;
+  return hallado
+    ? { nombre: hallado.nombre, pcode: hallado.pcode }
+    : { nombre: limpio, pcode: null };
+}

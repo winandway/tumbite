@@ -14,6 +14,10 @@ import { AreasCiudad } from './AreasCiudad';
 import { AvisoBorrador } from './AvisoBorrador';
 import { CiudadesWeb } from './CiudadesWeb';
 import { ResponsableZona } from './ResponsableZona';
+import { CampoMunicipio, MunicipioZona, useSugerenciasMunicipio } from './MunicipioZona';
+import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
+import { AyudaAqui } from './AyudaAqui';
+import { usePreferencias } from './usePreferencias';
 import { pedir } from './api';
 
 type Zona = {
@@ -32,6 +36,9 @@ type Zona = {
   responsableTelefono?: string;
   /** C-TERRITORIO-OFICIAL: el municipio oficial donde cae su centro. */
   municipio?: { pcode: string; nombre: string; entidad: { pcode: string; nombre: string } } | null;
+  /** C-ZONA-MUNICIPIO: el que eligió el equipo (o el oficial) y su clave para el filtro. */
+  municipioNombre?: string;
+  municipioClave?: string;
 };
 type Persona = {
   id: string;
@@ -63,6 +70,11 @@ const T = {
     repartidores: 'repartidores',
     enEspera: 'en espera',
     municipio: 'Municipio oficial',
+    municipioZona: 'Municipio',
+    filtroMunicipio: 'Filtrar por municipio',
+    todosMunicipios: 'Todos los municipios',
+    sinMunicipio: 'Sin municipio',
+    ningunaZona: 'Ninguna zona en ese municipio.',
     nueva: 'Nueva zona',
     codigo: 'Código (ej. US-FL-OCALA)',
     nombre: 'Nombre',
@@ -97,6 +109,11 @@ const T = {
     repartidores: 'drivers',
     enEspera: 'waiting',
     municipio: 'Official municipality',
+    municipioZona: 'Municipality',
+    filtroMunicipio: 'Filter by municipality',
+    todosMunicipios: 'All municipalities',
+    sinMunicipio: 'No municipality',
+    ningunaZona: 'No zones in that municipality.',
     nueva: 'New zone',
     codigo: 'Code (e.g. US-FL-OCALA)',
     nombre: 'Name',
@@ -118,7 +135,9 @@ const T = {
   },
 };
 
-const ZONA_VACIA = { id: '', nombre: '', region: '', lat: '', lng: '', radio: '30' };
+const ZONA_VACIA = { id: '', nombre: '', region: '', municipio: '', lat: '', lng: '', radio: '30' };
+/** C-ZONA-MUNICIPIO: la clave del filtro para las zonas sin municipio. */
+const SIN_MUNICIPIO = 'sin-municipio';
 
 export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
@@ -133,6 +152,27 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
   const [conAreas, setConAreas] = useState<string | null>(null);
+  // C-ZONA-MUNICIPIO: el filtro por municipio, guardado por empleado (C-FILTROS-GUARDADOS).
+  const pref = usePreferencias('zonas', { municipio: '' });
+  const filtro = pref.valores.municipio ?? '';
+  const municipios = [
+    ...new Map(
+      zonas
+        .filter((z) => z.municipioClave)
+        .map((z) => [z.municipioClave ?? '', z.municipioNombre ?? ''] as const),
+    ),
+  ].sort((a, b) => a[1].localeCompare(b[1]));
+  const visibles = zonas.filter((z) =>
+    !filtro ? true : filtro === SIN_MUNICIPIO ? !z.municipioClave : z.municipioClave === filtro,
+  );
+  const paisNueva = nueva.id.slice(0, 2).toUpperCase();
+  const usadosEn = (pais: string) =>
+    zonas.filter((z) => z.pais === pais && z.municipioNombre).map((z) => z.municipioNombre ?? '');
+  const sugerenciasNueva = useSugerenciasMunicipio(
+    paisNueva,
+    nueva.region || (nueva.id.split('-')[1] ?? ''),
+    usadosEn(paisNueva),
+  );
 
   const cargar = () =>
     pedir<{ zonas: Zona[] }>('GET', '/datos/admin/zonas')
@@ -175,6 +215,8 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
         lng: Number(nueva.lng),
         radioKm: Number(nueva.radio),
         region: nueva.region,
+        // C-ZONA-MUNICIPIO: el municipio elegido de la lista o escrito a mano.
+        municipio: nueva.municipio,
         // Una ciudad nueva nace apagada: se enciende a mano cuando esté lista.
         activa: false,
       });
@@ -192,8 +234,32 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
     <section>
       <h1>{t.zonas}</h1>
       <CiudadesWeb idioma={idioma} />
+      <label className="campo">
+        <span>
+          {t.filtroMunicipio} <AyudaAqui guia="zone-municipality" parrafo={4} idioma={idioma} />
+        </span>
+        <select
+          value={filtro}
+          onChange={(e) => pref.cambiar('municipio', e.target.value)}
+          data-testid="filtro-municipio"
+        >
+          <option value="">{t.todosMunicipios}</option>
+          {municipios.map(([clave, nombre]) => (
+            <option key={clave} value={clave}>
+              {nombre}
+            </option>
+          ))}
+          <option value={SIN_MUNICIPIO}>{t.sinMunicipio}</option>
+        </select>
+      </label>
+      <AvisoFiltrosGuardados
+        visible={pref.guardados}
+        idioma={idioma}
+        restablecer={pref.restablecer}
+      />
+      {zonas.length > 0 && visibles.length === 0 && <p className="suave">{t.ningunaZona}</p>}
       <ul className="lista">
-        {zonas.map((z) => (
+        {visibles.map((z) => (
           <li key={z.id}>
             <div className="lista-texto">
               <strong>
@@ -203,7 +269,15 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
                 {z.restaurantes} {t.restaurantes} · {z.repartidores} {t.repartidores} · {z.enEspera}{' '}
                 {t.enEspera}
               </span>
-              {z.municipio ? (
+              {z.municipioNombre ? (
+                <span data-testid={`zona-municipio-${z.id}`}>
+                  {t.municipioZona}: {z.municipioNombre}
+                  {z.municipio && z.municipio.nombre === z.municipioNombre
+                    ? `, ${z.municipio.entidad.nombre} (${z.municipio.pcode})`
+                    : ''}
+                </span>
+              ) : null}
+              {z.municipio && z.municipio.nombre !== z.municipioNombre ? (
                 <span>
                   {t.municipio}: {z.municipio.nombre}, {z.municipio.entidad.nombre} (
                   {z.municipio.pcode})
@@ -241,6 +315,13 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
               </span>
               <span>{t.fotoPuertaAyuda}</span>
             </label>
+            <MunicipioZona
+              zona={z}
+              cuenta={usuario.id}
+              idioma={idioma}
+              yaUsados={usadosEn(z.pais)}
+              alGuardar={cargar}
+            />
             <ResponsableZona zona={z} cuenta={usuario.id} idioma={idioma} alGuardar={cargar} />
             {conAreas === z.id && <AreasCiudad zona={z} usuario={usuario} idioma={idioma} />}
           </li>
@@ -253,35 +334,27 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
           idioma={idioma}
           empezar={() => void b.empezarDeNuevo()}
         />
-        {(['id', 'nombre', 'region', 'lat', 'lng', 'radio'] as const).map((k) => (
+        {(['id', 'nombre', 'region'] as const).map((k) => (
           <label className="campo" key={k}>
-            <span>
-              {k === 'id'
-                ? t.codigo
-                : k === 'nombre'
-                  ? t.nombre
-                  : k === 'region'
-                    ? t.region
-                    : k === 'lat'
-                      ? t.lat
-                      : k === 'lng'
-                        ? t.lng
-                        : t.radio}
-            </span>
+            <span>{k === 'id' ? t.codigo : k === 'nombre' ? t.nombre : t.region}</span>
             <input
-              value={
-                k === 'id'
-                  ? nueva.id
-                  : k === 'nombre'
-                    ? nueva.nombre
-                    : k === 'region'
-                      ? nueva.region
-                      : k === 'lat'
-                        ? nueva.lat
-                        : k === 'lng'
-                          ? nueva.lng
-                          : nueva.radio
-              }
+              value={k === 'id' ? nueva.id : k === 'nombre' ? nueva.nombre : nueva.region}
+              onChange={(e) => b.cambiar(k, e.target.value)}
+            />
+          </label>
+        ))}
+        <CampoMunicipio
+          id="nueva"
+          valor={nueva.municipio}
+          cambiar={(v) => b.cambiar('municipio', v)}
+          sugerencias={sugerenciasNueva}
+          idioma={idioma}
+        />
+        {(['lat', 'lng', 'radio'] as const).map((k) => (
+          <label className="campo" key={k}>
+            <span>{k === 'lat' ? t.lat : k === 'lng' ? t.lng : t.radio}</span>
+            <input
+              value={k === 'lat' ? nueva.lat : k === 'lng' ? nueva.lng : nueva.radio}
               onChange={(e) => b.cambiar(k, e.target.value)}
             />
           </label>

@@ -47,6 +47,8 @@ const MAPA: [archivo: string, guia: string][] = [
   // C-CUENTA-UNICA-UNIR
   ['UnirCuentas.tsx', 'merge-two-accounts'],
   ['SuperFichas.tsx', 'test-accounts'],
+  ['AdminZonas.tsx', 'zone-municipality'],
+  ['MunicipioZona.tsx', 'zone-municipality'],
   ['VerificacionCelular.tsx', 'sms-code-at-sign-up'],
   ['armazon/Campana.tsx', 'bell-and-menu-numbers'],
   ['avisosEnVivo.tsx', 'live-verifications'],
