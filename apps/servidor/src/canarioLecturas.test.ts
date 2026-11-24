@@ -43,7 +43,11 @@ afterEach(() => vi.unstubAllGlobals());
 // misma lectura por fecha, y suma la pieza «whatsapp».
 // +2 (23 nov 2026, C-LLEGA-SOLO-A-REVISION): la reparación deja dos filas en `config` (su marca y a
 // quién envió), y el canario recorre esa tabla.
-const TOPE_CANARIO = 1165;
+// +1 (23 nov 2026, C-VEHICULO-ACTIVO-SOLO): la fila de su reparación en `config`.
+// +207 (23 nov 2026, C-APROBADOS-NO-ELEGIBLES): la pieza nueva evalúa con la misma vista del reparto
+// SOLO a los conductores con vehículo aprobado (CROSS JOIN desde esa lista corta); lo fijo es el catálogo
+// de servicios y sus vehículos. Medido: 207 filas con la base de esta prueba. Se guarda 5 min en memoria.
+const TOPE_CANARIO = 1373;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

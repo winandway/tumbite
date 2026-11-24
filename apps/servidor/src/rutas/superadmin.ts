@@ -35,6 +35,7 @@ import {
 } from './cuentas';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { sqlFiltroCuentas } from './cuentaPrueba';
+import { aprobadosNoElegibles } from '../aprobadosNoElegibles';
 import { accesoDe, alcanceObjetoSql, alcancePedidos, alcanceViajes } from '../accesoInterno';
 
 /**
@@ -489,6 +490,19 @@ export async function queLeFaltaParaViajes(
   const r = await queTeFalta(db, id, env);
   return { recibeViajes: r.recibeViajes, falta: r.faltas[0]?.clave ?? null, faltas: r.faltas };
 }
+
+// C-APROBADOS-NO-ELEGIBLES (23 nov 2026, Richard): los conductores con vehículo aprobado que el reparto
+// no tomaría aunque abran Driver, con su motivo. Solo lee; misma regla que el reparto.
+superadmin.get('/admin/repartidores/no-elegibles', async (c) => {
+  exigir(c, 'admin');
+  const lista = await aprobadosNoElegibles(
+    base(c),
+    50,
+    alcanceObjetoSql(accesoDe(c), 'repartidor', 'd.usuario_id'),
+  );
+  c.header('cache-control', 'private, no-store');
+  return c.json({ conductores: lista.filter((x) => !x.esPrueba && !x.esRevisor) });
+});
 
 superadmin.get('/admin/repartidores/:id', async (c) => {
   exigir(c, 'admin');

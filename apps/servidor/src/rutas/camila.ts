@@ -27,7 +27,7 @@ import {
   unirConCorreo,
 } from '../camila/memoria';
 import { accesoDe, filtroAlcance } from '../accesoInterno';
-import { alcanceEsTotal, correoCanonico } from '@tumbite/compartido';
+import { alcanceEsTotal, correoCanonico, esMarcaLineaIa } from '@tumbite/compartido';
 import {
   CODIGOS_POR_CORREO_DIA,
   LARGO_MENSAJE_ANONIMO,
@@ -165,9 +165,9 @@ camila.post('/camila/permiso-ia', async (c) => {
   if (p.permiso_ia == null || Number(p.permiso_ia) !== valor)
     await base(c)
       .prepare(
-        "UPDATE camila_personas SET permiso_ia = ?, permiso_ia_en = datetime('now') WHERE id = ?",
+        "UPDATE camila_personas SET permiso_ia = ?, permiso_ia_en = datetime('now'), permiso_ia_version = ? WHERE id = ?",
       )
-      .bind(valor, p.id)
+      .bind(valor, `explicito-${VERSION_PERMISO_IA_CHAT}`, p.id)
       .run();
   return c.json({ ok: true, permisoIa: d.acepto });
 });
@@ -179,6 +179,8 @@ camila.post('/camila/mensaje', async (c) => {
       .object({
         texto: z.string().trim().max(2000).default(''),
         canal: z.enum(['web', 'app']).default('web'),
+        // C-CHAT-WEB-SIN-MURO: la marca de la línea informativa (solo la web, sin muro).
+        avisoIa: z.string().max(40).optional(),
         // C-CAMILA-REPORTE-CONVERSADO: la captura del borrador viaja con el mensaje.
         adjunto: z
           .string()
@@ -227,6 +229,19 @@ camila.post('/camila/mensaje', async (c) => {
   if (d.adjunto && !adjunto)
     throw new ErrorDatos('Esa captura ya no está disponible. Adjúntala otra vez.', 'adjunto', 409);
   if (!d.texto && !adjunto) throw new ErrorDatos('Escribe tu mensaje.', undefined, 400);
+  // C-CHAT-WEB-SIN-MURO (23 nov 2026): en el chat de la web no hay muro; la línea debajo de
+  // la casilla informa y su marca viaja con el mensaje. Si la persona nunca contestó (ni sí ni no), se
+  // guarda UNA vez cuándo y con qué versión se le informó. Un «no» (prefiero una persona) no se toca.
+  // Android e iPhone no valen (el patrón solo acepta la web) y las apps ya publicadas tampoco: siguen como hoy.
+  if (p.permiso_ia == null && esMarcaLineaIa(d.avisoIa)) {
+    await db
+      .prepare(
+        "UPDATE camila_personas SET permiso_ia = 1, permiso_ia_en = datetime('now'), permiso_ia_version = ? WHERE id = ? AND permiso_ia IS NULL",
+      )
+      .bind(d.avisoIa, p.id)
+      .run();
+    p = { ...p, permiso_ia: 1 };
+  }
   const r = await recibirMensaje(
     c.env,
     db,

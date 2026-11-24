@@ -27,6 +27,7 @@ import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { EnviarMensaje } from './EnviarMensaje';
 import { usePermisos } from './permisosPanel';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
+import { AvisoNoElegibles } from './AvisoNoElegibles';
 import { usePreferencias } from './usePreferencias';
 import { FiltroPapeles, InsigniaPapeles, PapelesConductor } from './SuperPapeles';
 
@@ -714,6 +715,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
         </button>
       </div>
       <AvisoFiltrosGuardados visible={b.guardados} idioma={idioma} restablecer={b.restablecer} />
+      <AvisoNoElegibles base={base} idioma={idioma} />
       {b.sinZona > 0 && b.zona !== 'sin_zona' ? (
         <p className="aviso-alarma" role="status" data-testid="aviso-sin-zona">
           {t.avisoSinZona(b.sinZona)}{' '}

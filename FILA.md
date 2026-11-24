@@ -753,3 +753,8 @@
 - [x] HECHO 21 nov: compilación adelantada por Gerencia. Driver 66 y clientes 59 en la prueba interna de Google; Driver 52 y clientes 65 en TestFlight (VALID). Nada a revisión: el dictamen y el envío son de Gerencia. Notas del revisor al día, sin enviar.
 - [ ] [para: revisor-calidad] Revisar la rama fase-driver-foto-cara (commits f4ef86e40a…6f8bd62014, todos los países): C-FOTO-CARA-A-LA-VISTA, C-QUE-TE-FALTA y tramo 1 del registro real de Tucaní; el aviso de IA NO se toca en esta rama (su rediseño quedó apartado en fase-driver-aviso-ia-apartado, espera el dictamen del auditor).
 - [ ] [para: revisor-calidad] Revisar una vez C-COMIDA-VE-QUIEN-PAGA en la rama fase-relevo-23nov (servidor, tarjeta del panel, carrito sin ceros, Driver y restaurante, Docs es/en y ayuda interna; CANDADOS y VERIFICAR-PAGOS). Venezuela.
+
+## Chat de soporte de la web sin muro (23 nov 2026, orden de Richard, decisión de Gerencia) — todos los países
+
+- [ ] [para: revisor-calidad] Revisar una vez la rama fase-chat-web-sin-muro (C-CHAT-WEB-SIN-MURO): chat de la web sin muro con línea, servidor con registro de versión solo para la web, política y Docs es/en; apps y papeles sin cambio.
+- [ ] [para: auditor-tiendas] Dictamen sobre papeles del conductor y chat en Android sin muro (lo construido está guardado en la rama fase-permiso-ia-por-plataforma): divulgación destacada y consentimiento de Google Play (ayuda 10144311) y versión corta del permiso de iPhone.

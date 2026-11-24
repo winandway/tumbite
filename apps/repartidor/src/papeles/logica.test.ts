@@ -250,3 +250,27 @@ describe('C-AVISO-IA-UNICO: un solo aviso de IA, en su pantalla, antes de la pri
     expect(inicio).toContain('<AvisoIa');
   });
 });
+
+/**
+ * C-CHAT-WEB-SIN-MURO (23 nov 2026, decisión de Gerencia) — todos los países. Solo el chat de la web
+ * pública pierde el muro. En Divoox Driver (iPhone, Android y también servido en el navegador) la
+ * pantalla «Cómo revisamos tus documentos» sigue saliendo antes de la primera foto y al entrar, y es la
+ * que da el permiso del chat de ayuda. Si alguien la condiciona por plataforma, esto se pone en rojo.
+ */
+describe('C-CHAT-WEB-SIN-MURO: Driver conserva su pantalla de permiso en todas las plataformas', () => {
+  it('la pantalla depende solo de lo que diga el servidor, nunca de la plataforma', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const asistente = readFileSync(join(__dirname, 'AsistentePapeles.tsx'), 'utf8');
+    const inicio = readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8');
+    const chat = readFileSync(join(__dirname, '..', 'soporte', 'ChatSoporteApp.tsx'), 'utf8');
+    expect(asistente).toMatch(/if \(hayQueMostrarAvisoIa\(v\)\)\s*return <AvisoIa/);
+    expect(inicio).toMatch(/hayQueMostrarAvisoIa\(papeles\.v\) &&/);
+    expect(inicio).toContain('<AvisoIa');
+    // El chat de Driver no manda la marca de la línea de la web en ninguna plataforma.
+    expect(chat).not.toMatch(/avisoIa:/);
+    const { hayQueMostrarAvisoIa } = await import('./textosAvisoIa');
+    expect(hayQueMostrarAvisoIa.length).toBe(1);
+    expect(hayQueMostrarAvisoIa({ avisoIaPendiente: true })).toBe(true);
+  });
+});

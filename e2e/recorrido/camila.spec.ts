@@ -7,15 +7,14 @@ import { sqlLocal } from './sqlLocal';
 import { DOCS_PUBLICOS } from '../../apps/servidor/src/camila/docsPublicos';
 
 /**
- * C-PERMISO-IA-CHAT: quien abre el chat por primera vez contesta el permiso antes de escribir (aquí,
- * que sí: estas pruebas describen la conversación con la asistente). Si ya lo contestó, no hay aviso.
+ * C-CHAT-WEB-SIN-MURO (23 nov 2026): el chat de la web NO tiene muro: la casilla está desde el principio
+ * y debajo va la línea discreta. En Divoox Driver el chat sigue como hoy: su permiso es el del aviso
+ * «Cómo revisamos tus documentos» (aquí ya contestado por las cuentas del recorrido).
  */
-async function darPermisoIa(p: Page) {
-  const si = p.getByTestId('chat-permiso-ia-si');
-  await si.waitFor({ timeout: 8_000 }).catch(() => null);
-  if ((await si.count()) === 0) return;
-  await si.click();
-  await p.getByTestId('chat-permiso-ia').waitFor({ state: 'hidden', timeout: 15_000 });
+async function darPermisoIa(p: Page, web = true) {
+  if (web) await p.getByTestId('chat-linea-ia').first().waitFor({ timeout: 15_000 });
+  else await p.getByTestId('chat-soporte-casilla').first().waitFor({ timeout: 15_000 });
+  expect(await p.getByTestId('chat-permiso-ia').count()).toBe(0);
 }
 
 /**
@@ -197,7 +196,7 @@ for (const idioma of ['es', 'en'] as const) {
     await expect(pr.getByTestId('ayuda-driver')).toBeVisible({ timeout: 30_000 });
     if (CAPTURAS) await pr.screenshot({ path: join(CARPETA, `camila-driver-ayuda-${idioma}.png`) });
     await pr.getByTestId('ayuda-hablar').click();
-    await darPermisoIa(pr);
+    await darPermisoIa(pr, false);
     await expect(pr.getByTestId('chat-soporte-app')).toBeVisible({ timeout: 30_000 });
     // Camila ya le escribió (la bienvenida de líder y el aviso del registro): se cuenta desde aquí.
     await pr.waitForTimeout(1500);
@@ -513,7 +512,11 @@ for (const idioma of ['es', 'en'] as const) {
     const chat = p.getByTestId('chat-soporte');
     await expect(chat).toBeVisible();
     await expect(chat).not.toContainText(/asistente virtual|virtual assistant/i);
-    await expect(chat).not.toContainText(/hablar con una persona|talk to a person/i);
+    // Lo que dice Camila (la lista de mensajes) no empuja a «hablar con una persona»; la opción
+    // «Prefiero que me atienda una persona» vive en la línea discreta de debajo (C-CHAT-WEB-SIN-MURO).
+    await expect(chat.getByRole('list')).not.toContainText(
+      /hablar con una persona|talk to a person/i,
+    );
     if (CAPTURAS) await p.screenshot({ path: join(CARPETA, `camila-web-saludo-${idioma}.png`) });
     await chat.getByLabel(T.escribe).fill(T.pregunta);
     await chat.getByRole('button', { name: T.enviar, exact: true }).click();

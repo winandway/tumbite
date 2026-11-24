@@ -1097,6 +1097,75 @@ servicios.post('/conductor/vehiculos/:id/retirar', async (c) => {
   return c.json({ estado: 'retirado' });
 });
 
+/**
+ * C-VEHICULO-ACTIVO-SOLO (23 nov 2026, Gerencia por Richard: «la moto aprobada y única debe quedar
+ * activa sola, para todos»). El equipo aprueba un vehículo y el conductor no tiene ninguno activo (o
+ * el que tenía está retirado, rechazado o suspendido): ese vehículo queda activo solo, con las
+ * mismas puertas que «Usar este vehículo» (`PUT /conductor/vehiculo-activo`): solo un vehículo suyo y
+ * aprobado, nunca con un pedido u operación en curso (la base lo frena también, C-FLEX-OCUPACION), y si
+ * reemplaza a otro que tenía, solo desconectado. Si ya tiene otro activo y válido, no se toca.
+ *
+ * Y el servicio de pasajeros de ese vehículo (Moto con la moto, Carro con el carro) queda elegido si
+ * él nunca lo eligió ni lo apagó y hoy ya lo puede activar (mismas reglas que el panel: ciudad,
+ * habilitación, papeles, plazo). Como en Uber, los tipos de viaje para los que estás aprobado vienen
+ * encendidos; él lo apaga cuando quiera. Si le falta algo, no se enciende nada.
+ *
+ * Devuelve qué hizo (para la reparación y las pruebas).
+ */
+const SERVICIO_PASAJEROS_DE = new Map([
+  ['moto', 'moto'],
+  ['carro', 'carro'],
+]);
+
+export async function activarVehiculoAprobadoSolo(
+  db: Db,
+  conductorId: string,
+  vehiculoId: string,
+): Promise<{ activo: boolean; servicio: string | null }> {
+  if (await conPedidoEnCurso(db, conductorId)) return { activo: false, servicio: null };
+  await db.prepare(ALTA_REPARTIDOR).bind(conductorId).run();
+  let r: D1Result;
+  try {
+    r = await db
+      .prepare(
+        `UPDATE repartidores SET vehiculo_activo_id = ?1
+          WHERE usuario_id = ?2
+            AND EXISTS (SELECT 1 FROM vehiculos WHERE id = ?1 AND conductor_id = ?2 AND estado = 'aprobado')
+            AND (vehiculo_activo_id IS NULL
+                 OR (conectado = 0 AND NOT EXISTS (
+                       SELECT 1 FROM vehiculos x WHERE x.id = repartidores.vehiculo_activo_id
+                          AND x.estado NOT IN ('retirado', 'rechazado', 'suspendido'))))`,
+      )
+      .bind(vehiculoId, conductorId)
+      .run();
+  } catch (e) {
+    if (esConductorOcupado(e)) return { activo: false, servicio: null };
+    throw e;
+  }
+  if (!Number(r.meta?.changes ?? 0)) return { activo: false, servicio: null };
+  const v = await db
+    .prepare('SELECT tipo FROM vehiculos WHERE id = ?')
+    .bind(vehiculoId)
+    .first<{ tipo: string }>();
+  const servicio = SERVICIO_PASAJEROS_DE.get(v?.tipo ?? '') ?? null;
+  if (!servicio) return { activo: true, servicio: null };
+  const ya = await db
+    .prepare('SELECT 1 FROM preferencias_servicio WHERE conductor_id = ? AND servicio_id = ?')
+    .bind(conductorId, servicio)
+    .first();
+  if (ya) return { activo: true, servicio: null };
+  const estado = await estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER);
+  if (!estado.servicios.find((s) => s.servicioId === servicio)?.puedeActivar)
+    return { activo: true, servicio: null };
+  await db
+    .prepare(
+      'INSERT OR IGNORE INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, ?, 1)',
+    )
+    .bind(conductorId, servicio)
+    .run();
+  return { activo: true, servicio };
+}
+
 servicios.put('/conductor/vehiculo-activo', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
@@ -1626,7 +1695,12 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
     ]),
   );
   await auditar(db, admin.id, 'vehiculo.revision', `vehiculo:${id}`, antes, { ...d, categoria });
-  return c.json({ estado: d.estado, categoria });
+  // C-VEHICULO-ACTIVO-SOLO: si no tiene otro activo y válido, el aprobado queda activo solo.
+  const activo =
+    d.estado === 'aprobado'
+      ? await activarVehiculoAprobadoSolo(db, antes.conductor_id, id)
+      : { activo: false, servicio: null };
+  return c.json({ estado: d.estado, categoria, activo: activo.activo });
 });
 
 servicios.get('/admin/habilitaciones', async (c) => {

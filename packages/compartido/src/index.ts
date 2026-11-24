@@ -128,6 +128,7 @@ export * from './puntoExacto';
 export * from './inicioNuevo';
 export * from './lugaresGuardados';
 export * from './camilaChat';
+export * from './permisoIaPorPlataforma';
 export * from './categoriaRestaurante';
 export * from './sugerirCorreo';
 export * from './revisarRegistro';
