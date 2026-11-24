@@ -244,9 +244,10 @@ function Entrar({ t, idioma, alPasar }: { t: T; idioma: Idioma; alPasar: () => v
         alPasar();
       }
     } catch (x) {
-      if (x instanceof ErrorApi && x.estado === 403) reiniciarTurnstile();
       setError(mensaje(x));
     } finally {
+      // C-TURNSTILE-LISTO: el pase del escudo sirve una sola vez; después de cada intento, otro.
+      reiniciarTurnstile();
       setEnviando(false);
     }
   }
@@ -292,7 +293,8 @@ function Entrar({ t, idioma, alPasar }: { t: T; idioma: Idioma; alPasar: () => v
               {error}
             </p>
           ) : null}
-          {olvide ? null : <Turnstile sitio={sitio} idioma={idioma} />}
+          {/* C-TURNSTILE-LISTO: también al recuperar la clave (el servidor lo pide en las dos). */}
+          <Turnstile sitio={sitio} idioma={idioma} />
           <button type="submit" className="boton ancho" disabled={enviando}>
             {enviando ? t.enviando : olvide ? t.olvideEnviar : t.entrar}
           </button>

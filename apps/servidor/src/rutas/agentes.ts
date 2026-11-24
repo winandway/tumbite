@@ -114,7 +114,11 @@ agentes.use('/agent/verify', limiteIntentosPersistente(10, 60_000));
 agentes.use('/agent/password', limiteIntentosPersistente(8, 60_000));
 agentes.use('/agent/password/forgot', limiteIntentosPersistente(4, 60_000));
 
-agentes.post('/agent/login', async (c) => {
+/**
+ * Escudo anti-robots (C-TURNSTILE-LISTO): antes de mirar la contraseña o el correo. Sin
+ * TURNSTILE_SECRET_KEY no pide nada (apagado); con ella, sin pase bueno no se sigue.
+ */
+async function escudoAgente(c: Context<{ Bindings: Env; Variables: Variables }>) {
   const ok = await pasaTurnstile(
     c.env.TURNSTILE_SECRET_KEY,
     c.req.header('cf-turnstile-response'),
@@ -126,6 +130,10 @@ agentes.post('/agent/login', async (c) => {
       undefined,
       403,
     );
+}
+
+agentes.post('/agent/login', async (c) => {
+  await escudoAgente(c);
   const d = await leerCuerpo(
     c,
     z.object({ correo: z.string().trim().toLowerCase().max(200), clave: z.string().max(200) }),
@@ -285,6 +293,8 @@ async function mandarEnlaceClave(
 }
 
 agentes.post('/agent/password/forgot', async (c) => {
+  // C-TURNSTILE-LISTO: recuperar la clave también pasa por el escudo (antes no lo pedía).
+  await escudoAgente(c);
   const { correo } = await leerCuerpo(
     c,
     z.object({ correo: z.string().trim().toLowerCase().max(200) }),
