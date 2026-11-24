@@ -4481,6 +4481,19 @@ CREATE TABLE IF NOT EXISTS embudo_cuenta (
   PRIMARY KEY (usuario_id, paso)
 ) WITHOUT ROWID;
 CREATE INDEX IF NOT EXISTS embudo_cuenta_dia ON embudo_cuenta(creado_en);
+-- C-FOTO-CARA-A-LA-VISTA (23 nov 2026): los hitos del conductor alrededor de la foto de la cara y de la
+-- conexión (vio la tarjeta, abrió la cámara, la subida falló, no lo dejamos conectarse…). UNA fila por
+-- cuenta, hito y motivo, la primera vez (nunca una por vistazo). Se borra con la cuenta.
+CREATE TABLE IF NOT EXISTS hitos_cuenta (
+  usuario_id TEXT NOT NULL,
+  hito TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  app TEXT,
+  version TEXT,
+  plataforma TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, hito, motivo)
+) WITHOUT ROWID;
 -- Los pasos de ANTES de crear la cuenta (abrió, empezó a llenar, revisó): solo contadores por día,
 -- app, plataforma, país y paso. No guarda persona, aparato ni dirección IP.
 CREATE TABLE IF NOT EXISTS embudo_anonimo (
