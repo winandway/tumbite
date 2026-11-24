@@ -119,6 +119,10 @@ async function ciudadA(m: Mundo, adminToken: string) {
     m.DB.prepare(
       "INSERT INTO vehiculos (id, conductor_id, tipo, placa, estado) VALUES (?, ?, 'carro', 'ZETA123', 'en_revision')",
     ).bind(vehiculo, rep.id),
+    // C-APROBADOS-NO-ELEGIBLES: una moto aprobada sin usar (la lista de trabados lo muestra solo en A).
+    m.DB.prepare(
+      "INSERT INTO vehiculos (id, conductor_id, tipo, placa, estado) VALUES (?, ?, 'moto', 'ZETA124', 'aprobado')",
+    ).bind(crypto.randomUUID(), rep.id),
     m.DB.prepare(
       "INSERT INTO conductor_documentos (id, conductor_id, tipo, clave, estado) VALUES (?, ?, 'licencia_moto', 'x', 'pendiente')",
     ).bind(papel, rep.id),
@@ -226,6 +230,7 @@ const LISTAS_CON_FILAS = [
   'GET /admin/viajes-fijos',
   'GET /admin/clientes',
   'GET /admin/repartidores',
+  'GET /admin/repartidores/no-elegibles',
   'GET /admin/vehiculos',
   'GET /admin/habilitaciones',
   'GET /admin/papeles-conductor',

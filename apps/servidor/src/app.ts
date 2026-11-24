@@ -149,6 +149,7 @@ import { lugares } from './rutas/lugares';
 import { tiendas } from './rutas/tiendas';
 import { tiendasPeso } from './rutas/tiendasPeso';
 import { saludExclusividad } from './operaciones';
+import { PIEZAS_DE_OPERACION, saludAprobadosNoElegibles } from './aprobadosNoElegibles';
 import { correoConfigurado, saludCorreo, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 // C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
@@ -451,6 +452,12 @@ app.get('/datos/salud', async (c) => {
         return 'error' as const;
       },
     );
+  // C-APROBADOS-NO-ELEGIBLES: un conductor real con vehículo aprobado que el reparto no tomaría.
+  if (c.env.DB)
+    piezas.aprobadosNoElegibles = await saludAprobadosNoElegibles(c.env.DB).catch((e: unknown) => {
+      console.error('salud: aprobados no elegibles', e);
+      return 'error' as const;
+    });
   // C-SERVICIO-SIN-TARIFA: nada encendido sin su tarifa en la ciudad.
   if (c.env.DB)
     piezas.tarifas = await saludTarifas(c.env.DB, entornoDe(c.req.url)).catch((e: unknown) => {
@@ -605,7 +612,11 @@ app.get('/datos/salud', async (c) => {
     piezas.respaldo = ultimoErrorRespaldo ? 'error' : estadoRespaldo(fechaRespaldo);
   }
 
-  const algunError = Object.values(piezas).includes('error');
+  // C-APROBADOS-NO-ELEGIBLES: una pieza de operación (un conductor trabado) se ve en rojo y avisa por
+  // correo, pero no tumba la salud del sitio (no es una caída: el sitio y el dinero siguen bien).
+  const algunError = Object.entries(piezas).some(
+    ([k, v]) => v === 'error' && !PIEZAS_DE_OPERACION.has(k),
+  );
   // F11: un correo al equipo cuando una pieza pasa a rojo y otro cuando se recupera.
   if (c.env.DB)
     await alertarCanario(c.env, c.env.DB, piezas).catch((e: unknown) =>

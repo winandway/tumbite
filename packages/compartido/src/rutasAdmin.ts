@@ -75,6 +75,7 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/datos-personales/:tipo/:id/:campo': 'clientes.datos_personales',
   // ─── Repartidores, vehículos y papeles
   'GET /admin/repartidores': 'repartidores.ver',
+  'GET /admin/repartidores/no-elegibles': 'repartidores.ver',
   'GET /admin/repartidores/:id': 'repartidores.ver',
   // C-RASTRO: la actividad de la cuenta (solo lectura) va con el mismo permiso de su ficha.
   'GET /admin/repartidores/:id/actividad': 'repartidores.ver',
@@ -519,6 +520,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/usuarios/:id/rebote/quitar': ficha('persona'),
   'GET /admin/datos-personales/:tipo/:id/:campo': CONSULTA,
   'GET /admin/repartidores': CONSULTA,
+  'GET /admin/repartidores/no-elegibles': CONSULTA,
   'GET /admin/repartidores/:id': ficha('repartidor'),
   'GET /admin/repartidores/:id/actividad': ficha('repartidor'),
   'PATCH /admin/repartidores/:id': ficha('repartidor'),
