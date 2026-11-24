@@ -108,14 +108,14 @@ describe('la tarjeta según el servidor', () => {
     ).toEqual(['comida', 'moto', 'carro']);
   });
 
-  it('a igual estado, el orden del diseño: Comida, Envíos, Moto y Carro', () => {
+  it('a igual estado, los viajes con pasajero primero: Moto, Carro, Comida y Envíos (tramo 1)', () => {
     expect(
       ordenarServicios([
         s('moto', 'conectado'),
         s('envios', 'conectado'),
         s('comida', 'conectado'),
       ]).map((x) => x.servicioId),
-    ).toEqual(['comida', 'envios', 'moto']);
+    ).toEqual(['moto', 'comida', 'envios']);
   });
 
   it('une listas en palabras', () => {

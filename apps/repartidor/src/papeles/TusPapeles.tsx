@@ -1,43 +1,186 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import type { Api, Idioma } from '@tumbite/compartido';
-import { COLOR, FUENTE, Icono, Text } from '@tumbite/movil';
+import { type Api, ErrorApi, type Idioma } from '@tumbite/compartido';
+import { Boton, COLOR, FUENTE, Icono, Text } from '@tumbite/movil';
 import { useMiniaturas } from './AsistentePapeles';
 import { AnilloPerfil } from './Horma';
 import {
   type Verificacion,
   avanceDeFotos,
+  conFotosLocales,
   estadoDePapel,
   nombreDePapel,
   tarjetaPapeles,
 } from './logica';
 
-/** Lo del asistente del conductor. Mirar solo LEE (la cuenta nueva estrena su plazo una vez). */
+/**
+ * Lo del asistente del conductor. Mirar solo LEE (la cuenta nueva estrena su plazo una vez).
+ * C-FOTO-CARA-A-LA-VISTA: si la lectura falla se dice (`error`) y se puede reintentar; antes la tarjeta
+ * no salía y nada lo explicaba. `marcar` y `fotoSubida` ponen al día lo que ya se sabe (el aviso
+ * contestado, la foto que ya subió) aunque la relectura falle con mala señal.
+ */
 export function usePapeles(api: Api) {
   const [v, setV] = useState<Verificacion | null>(null);
+  const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(true);
+  const vivo = useRef(true);
   const recargar = useCallback(async () => {
+    setCargando(true);
     try {
       const r = await api.pedir<Verificacion>('GET', '/datos/conductor/verificacion');
-      setV(r);
+      if (vivo.current) {
+        setV(r);
+        setError('');
+      }
       return r;
-    } catch {
+    } catch (x) {
+      if (vivo.current) setError(x instanceof ErrorApi && x.message ? x.message : String(x));
       return null;
+    } finally {
+      if (vivo.current) setCargando(false);
     }
   }, [api]);
   useEffect(() => {
-    let vivo = true;
-    api
-      .pedir<Verificacion>('GET', '/datos/conductor/verificacion')
-      .then((r) => {
-        if (vivo) setV(r);
-      })
-      // Sin red o sin sesión: la tarjeta no sale y el inicio sigue igual; se reintenta al volver.
-      .catch(() => undefined);
+    vivo.current = true;
+    const primero = setTimeout(() => void recargar(), 0);
     return () => {
-      vivo = false;
+      clearTimeout(primero);
+      vivo.current = false;
     };
+  }, [recargar]);
+  const marcar = useCallback(
+    (cambio: Partial<Verificacion>) => setV((x) => (x ? { ...x, ...cambio } : x)),
+    [],
+  );
+  const fotoSubida = useCallback(
+    (paso: string) =>
+      setV((x) => (x ? conFotosLocales(x, new Map([[paso, new Date().toISOString()]])) : x)),
+    [],
+  );
+  return { v, recargar, error, cargando, marcar, fotoSubida };
+}
+
+/** Una vez por sesión de la app: el servidor igual guarda solo la primera (C-FOTO-CARA-A-LA-VISTA). */
+let tarjetaCaraAnotada = false;
+
+const TEXTOS_CARA = {
+  es: {
+    titulo: 'Tómate la foto de tu cara para empezar',
+    detalle: 'Es la foto que ven los pasajeros. Con ella ya puedes conectarte y trabajar.',
+    boton: 'Tomar mi foto',
+    sinPapeles: 'No pudimos cargar tus papeles',
+    sinPapelesTexto: 'Revisa tu señal y vuelve a intentarlo.',
+    reintentar: 'Reintentar',
+  },
+  en: {
+    titulo: 'Take your face photo to start',
+    detalle: 'It’s the photo riders see. With it you can go online and start working.',
+    boton: 'Take my photo',
+    sinPapeles: 'We couldn’t load your documents',
+    sinPapelesTexto: 'Check your signal and try again.',
+    reintentar: 'Retry',
+  },
+};
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): mientras la cara sea lo que le falta para empezar, esta
+ * tarjeta va ARRIBA DE TODO en el inicio (encima de «Desliza para conectarte»), corta y con su botón
+ * a la vista en un celular chico (360×568). Antes quedaba cortada abajo y nunca se veía el botón.
+ */
+export function TarjetaCara({
+  api,
+  idioma,
+  alTomar,
+}: {
+  api: Api;
+  idioma: Idioma;
+  alTomar: () => void;
+}) {
+  const t = idioma === 'en' ? TEXTOS_CARA.en : TEXTOS_CARA.es;
+  useEffect(() => {
+    if (tarjetaCaraAnotada) return;
+    tarjetaCaraAnotada = true;
+    void api.hito('tarjeta_cara_vista');
   }, [api]);
-  return { v, recargar };
+  return (
+    <View
+      testID="tarjeta-cara"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLOR.borde,
+        padding: 14,
+        gap: 12,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: COLOR.superficie,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icono nombre="person-circle-outline" tamano={26} color={COLOR.texto} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text
+            accessibilityRole="header"
+            style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 21 }}
+          >
+            {t.titulo}
+          </Text>
+          <Text style={{ color: COLOR.textoSuave, fontSize: 13, lineHeight: 18 }}>{t.detalle}</Text>
+        </View>
+      </View>
+      <Boton texto={t.boton} icono="camera-outline" alTocar={alTomar} testID="tarjeta-cara-tomar" />
+    </View>
+  );
+}
+
+/** Si «Tus papeles» no se pudo leer: se dice y se reintenta (antes la tarjeta simplemente no salía). */
+export function PapelesSinCargar({
+  idioma,
+  cargando,
+  alReintentar,
+}: {
+  idioma: Idioma;
+  cargando: boolean;
+  alReintentar: () => void;
+}) {
+  const t = idioma === 'en' ? TEXTOS_CARA.en : TEXTOS_CARA.es;
+  return (
+    <View
+      testID="papeles-sin-cargar"
+      accessibilityRole="alert"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLOR.borde,
+        padding: 14,
+        gap: 10,
+      }}
+    >
+      <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 15, color: COLOR.error }}>
+        {t.sinPapeles}
+      </Text>
+      <Text style={{ color: COLOR.textoSuave, fontSize: 13, lineHeight: 18 }}>
+        {t.sinPapelesTexto}
+      </Text>
+      <Boton
+        texto={t.reintentar}
+        alTocar={alReintentar}
+        cargando={cargando}
+        secundario
+        testID="papeles-reintentar"
+      />
+    </View>
+  );
 }
 
 const COLORES = {
@@ -102,7 +245,15 @@ export function TusPapeles({
           // La cara primero, como en el asistente: es la que deja empezar.
           .sort((a, b) => Number(b.papel === 'cara') - Number(a.papel === 'cara'))
           .map((p) => {
-            const e = estadoDePapel(p.estado, idioma);
+            // Tramo 1 (registro real, 23 nov): la cara tomada ya le deja trabajar; no se dice «Lista
+            // para enviar» como si faltara algo de su lado.
+            const e =
+              p.papel === 'cara' && p.estado === 'por_enviar' && v.plazo.estado === 'en_plazo'
+                ? {
+                    texto: idioma === 'en' ? 'Ready: you can work' : 'Lista: ya puedes trabajar',
+                    tono: 'exito' as const,
+                  }
+                : estadoDePapel(p.estado, idioma);
             return (
               <View
                 key={p.papel}

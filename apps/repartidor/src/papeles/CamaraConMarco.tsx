@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   type LayoutRectangle,
@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import type { Idioma, PasoVerificacion } from '@tumbite/compartido';
-import { Boton, FUENTE, Icono, Text } from '@tumbite/movil';
+import { Boton, FUENTE, Icono, Text, avisarFalloApp } from '@tumbite/movil';
 import { DibujoHorma } from './Horma';
 import {
   dibujoDePaso,
@@ -35,6 +35,12 @@ const T = {
     sinCamara:
       'No pudimos abrir la cámara. Cierra las otras apps que la estén usando y vuelve a intentar. Las fotos de verificación solo se toman con la cámara.',
     fallo: 'No se pudo tomar la foto. Intenta otra vez.',
+    noArranca:
+      'La cámara no arrancó. Toca Reintentar. Si sigue igual, revisa que Divoox Driver tenga permiso para usar la cámara.',
+    noArrancaWeb:
+      'La cámara no arrancó. Toca Reintentar. Si sigue igual, revisa que este navegador tenga permiso para usar la cámara.',
+    reintentar: 'Reintentar',
+    revisarPermiso: 'Revisar el permiso',
   },
   en: {
     volver: 'Back',
@@ -49,10 +55,18 @@ const T = {
     sinCamara:
       'We couldn’t open the camera. Close any other app using it and try again. Verification photos can only be taken with the camera.',
     fallo: 'The photo couldn’t be taken. Try again.',
+    noArranca:
+      'The camera didn’t start. Tap Retry. If it still doesn’t, check that Divoox Driver is allowed to use the camera.',
+    noArrancaWeb:
+      'The camera didn’t start. Tap Retry. If it still doesn’t, check that this browser is allowed to use the camera.',
+    reintentar: 'Retry',
+    revisarPermiso: 'Check the permission',
   },
 };
 
 const LADO_MAXIMO = 1400;
+/** C-FOTO-CARA-A-LA-VISTA: si la cámara no avisa que está lista en este tiempo, se dice y se reintenta. */
+export const ESPERA_CAMARA_MS = 8_000;
 const SOMBRA = 1200;
 
 /**
@@ -67,12 +81,15 @@ export function CamaraConMarco({
   idioma,
   alTomar,
   alCerrar,
+  alFallo,
 }: {
   paso: PasoVerificacion;
   pais: string | null;
   idioma: Idioma;
   alTomar: (foto: { uri: string }) => void;
   alCerrar: () => void;
+  /** C-FOTO-CARA-A-LA-VISTA: para el embudo (la cámara no arrancó, no abrió o no tomó la foto). */
+  alFallo?: (motivo: 'no_arranca' | 'montaje' | 'disparo' | 'permiso') => void;
 }) {
   const t = idioma === 'en' ? T.en : T.es;
   const tx = textosDelPaso(paso, pais, idioma);
@@ -83,6 +100,34 @@ export function CamaraConMarco({
   const [lista, setLista] = useState(false);
   const [tomando, setTomando] = useState(false);
   const [error, setError] = useState('');
+  // C-FOTO-CARA-A-LA-VISTA: la cámara que no arranca no deja el disparador apagado para siempre.
+  const [noArranca, setNoArranca] = useState(false);
+  const [intento, setIntento] = useState(0);
+  const avisado = useRef(false);
+  useEffect(() => {
+    if (!permiso?.granted || lista) return;
+    const reloj = setTimeout(() => {
+      setNoArranca(true);
+      if (!avisado.current) {
+        avisado.current = true;
+        alFallo?.('no_arranca');
+      }
+    }, ESPERA_CAMARA_MS);
+    return () => clearTimeout(reloj);
+  }, [permiso?.granted, lista, intento, alFallo]);
+  const permisoAvisado = useRef(false);
+  useEffect(() => {
+    if (permiso && !permiso.granted && permiso.canAskAgain === false && !permisoAvisado.current) {
+      permisoAvisado.current = true;
+      alFallo?.('permiso');
+    }
+  }, [permiso, alFallo]);
+  const reintentar = () => {
+    setNoArranca(false);
+    setError('');
+    setLista(false);
+    setIntento((n) => n + 1);
+  };
   // C-PAPELES-SOLO-CAMARA: sin permiso o sin cámara se explica cómo darlo; nunca se ofrecen archivos.
   const bloqueada = Boolean(permiso && !permiso.granted && permiso.canAskAgain === false);
   const redonda = esRedonda(paso);
@@ -114,7 +159,14 @@ export function CamaraConMarco({
         { compress: 0.72, format: SaveFormat.JPEG },
       );
       alTomar({ uri: r.uri });
-    } catch {
+    } catch (x) {
+      // Nunca en silencio: queda en el reporte de errores de la app y en el embudo.
+      avisarFalloApp(
+        'repartidor',
+        x instanceof Error ? x : new Error(String(x)),
+        `papeles:camara:${paso}`,
+      );
+      alFallo?.('disparo');
       setError(t.fallo);
     } finally {
       setTomando(false);
@@ -131,11 +183,23 @@ export function CamaraConMarco({
       >
         {permiso?.granted ? (
           <CameraView
+            key={intento}
             ref={camara}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             facing={redonda ? 'front' : 'back'}
-            onCameraReady={() => setLista(true)}
-            onMountError={() => setError(t.sinCamara)}
+            onCameraReady={() => {
+              setLista(true);
+              setNoArranca(false);
+            }}
+            onMountError={(ev) => {
+              avisarFalloApp(
+                'repartidor',
+                new Error(`la cámara no abrió: ${ev?.message ?? ''}`),
+                `papeles:camara:${paso}`,
+              );
+              alFallo?.('montaje');
+              setError(t.sinCamara);
+            }}
           />
         ) : null}
         <SafeAreaView style={{ flex: 1 }}>
@@ -243,16 +307,50 @@ export function CamaraConMarco({
             >
               {tx.marco}
             </Text>
-            {error ? (
-              <Text
-                accessibilityRole="alert"
-                style={{ color: '#FFD9D4', marginTop: 12, textAlign: 'center', fontWeight: '700' }}
-              >
-                {error}
-              </Text>
-            ) : null}
           </View>
           <View style={{ flex: 1 }} />
+          {/* C-FOTO-CARA-A-LA-VISTA: el error y la cámara que no arranca, junto al disparador. */}
+          {error || noArranca ? (
+            <View style={{ paddingHorizontal: 20, gap: 10, zIndex: 3 }}>
+              <Text
+                accessibilityRole="alert"
+                testID={noArranca && !error ? 'camara-no-arranca' : 'camara-error'}
+                style={{
+                  color: '#FFFFFF',
+                  textAlign: 'center',
+                  fontWeight: '700',
+                  fontSize: 15,
+                  lineHeight: 21,
+                  textShadowColor: 'rgba(0,0,0,0.7)',
+                  textShadowRadius: 6,
+                }}
+              >
+                {error || (Platform.OS === 'web' ? t.noArrancaWeb : t.noArranca)}
+              </Text>
+              {noArranca || error === t.sinCamara ? (
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <Boton texto={t.reintentar} alTocar={reintentar} testID="camara-reintentar" />
+                  </View>
+                  {Platform.OS === 'web' ? null : (
+                    <View style={{ flex: 1 }}>
+                      <Boton
+                        texto={t.revisarPermiso}
+                        alTocar={() =>
+                          void Linking.openSettings().catch((x: unknown) =>
+                            console.warn('papeles: no se abrieron los ajustes', x),
+                          )
+                        }
+                        secundario
+                        oscuro
+                        testID="camara-revisar-permiso"
+                      />
+                    </View>
+                  )}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
           {permiso && !permiso.granted ? (
             <View style={{ padding: 20, gap: 10, zIndex: 3 }}>
               <Text

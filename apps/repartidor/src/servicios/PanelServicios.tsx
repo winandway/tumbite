@@ -143,6 +143,9 @@ export function PanelServiciosInicio({
   alAbrirFlex,
   alDesconectado,
   debajo,
+  arriba,
+  motivo,
+  motivoServicio,
 }: {
   panel: Panel;
   idioma: Idioma;
@@ -165,16 +168,30 @@ export function PanelServiciosInicio({
   alDesconectado: (id: string, nombre: string, texto: string) => void;
   /** Lo que va debajo de la lista (errores y avisos del inicio), dentro del mismo bloque. */
   debajo?: ReactNode;
+  /**
+   * C-FOTO-CARA-A-LA-VISTA y C-QUE-TE-FALTA: lo que le falta para recibir carreras (la foto de la cara,
+   * su vehículo, las puertas para conectarse). Va ARRIBA DE TODO, encima del estado y de la barra.
+   */
+  arriba?: ReactNode;
+  /** Por qué el servidor no lo dejó conectarse: pegado a la barra (o a la tarjeta de ese servicio). */
+  motivo?: ReactNode;
+  /** El servicio que no se pudo conectar (el motivo va debajo de su tarjeta). */
+  motivoServicio?: string;
 }) {
   const t = textosServicios(idioma);
   const servicios = ordenarServicios(panel.servicios);
   // Mientras lleva algo (una ruta de Flex, por ejemplo) los demás están en pausa, no apagados.
   const conectado = panel.conectadoGeneral && (panel.conectados > 0 || Boolean(panel.lleva));
   const hayAprobados = servicios.some((s) => s.estado === 'desconectado');
+  const enSuTarjeta = Boolean(
+    motivoServicio && servicios.some((s) => s.servicioId === motivoServicio),
+  );
+  const motivoArriba = enSuTarjeta ? null : motivo;
 
   return (
     <ConRelojBucle>
       <View style={{ gap: 16 }}>
+        {arriba}
         {panel.lleva ? (
           <>
             <AvisoLlevando
@@ -193,6 +210,8 @@ export function PanelServiciosInicio({
           />
         )}
         {resumen}
+        {/* C-FOTO-CARA-A-LA-VISTA: el motivo va justo encima de la barra que se acaba de deslizar. */}
+        {motivoArriba}
         {!conectado && hayAprobados ? (
           // C-CONECTAR-DESLIZANDO: conectarse se desliza (un toque en el bolsillo no conecta).
           <Deslizador
@@ -228,7 +247,7 @@ export function PanelServiciosInicio({
             </View>
             {servicios.map((s, i) => {
               const nombre = nombreServicio(s, idioma);
-              return (
+              const tarjeta = (
                 <TarjetaServicio
                   key={s.servicioId}
                   testID={`servicio-${s.servicioId}`}
@@ -262,6 +281,14 @@ export function PanelServiciosInicio({
                       alDesconectado(s.servicioId, nombre, texto);
                   }}
                 />
+              );
+              return enSuTarjeta && motivoServicio === s.servicioId ? (
+                <View key={s.servicioId} style={{ gap: 8 }}>
+                  {tarjeta}
+                  {motivo}
+                </View>
+              ) : (
+                tarjeta
               );
             })}
             {conectado ? (
@@ -326,12 +353,12 @@ export function PanelServiciosInicio({
                 <Icono nombre="cube-outline" tamano={24} color={COLOR.logistica} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={LETRA.tarjeta} numberOfLines={1}>
+                <Text style={LETRA.tarjeta} numberOfLines={2}>
                   {textoBloqueFlex ?? rutaFlex.nombre}
                 </Text>
                 <Text
                   style={{ fontSize: 13, lineHeight: 18, color: COLOR.textoSuave }}
-                  numberOfLines={1}
+                  numberOfLines={2}
                 >
                   {textoBloqueFlex ? `${rutaFlex.nombre} · ` : ''}
                   {idioma === 'en'

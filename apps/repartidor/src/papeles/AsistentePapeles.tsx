@@ -80,6 +80,7 @@ const T = {
     seguir: 'Seguir con mis papeles',
     listos: (a: number, b: number) => `${a} de ${b} fotos listas`,
     hola: (n: string) => (n ? `Hola, ${n}` : 'Hola'),
+    reintentar: 'Reintentar',
   },
   en: {
     volver: 'Back',
@@ -123,6 +124,7 @@ const T = {
     seguir: 'Continue with my documents',
     listos: (a: number, b: number) => `${a} of ${b} photos ready`,
     hola: (n: string) => (n ? `Hi, ${n}` : 'Hi'),
+    reintentar: 'Retry',
   },
 };
 
@@ -178,11 +180,17 @@ export function AsistentePapeles({
   alSalir,
   alAyuda,
   abrirEn,
+  alSubida,
+  alConsentir,
 }: {
   v: Verificacion;
   recargar: () => Promise<Verificacion | null>;
   alSalir: () => void;
   alAyuda: () => void;
+  /** C-FOTO-CARA-A-LA-VISTA: la foto ya subió (cuenta como tomada aunque la relectura falle). */
+  alSubida?: (paso: PasoVerificacion) => void;
+  /** El consentimiento de la cara ya quedó guardado. */
+  alConsentir?: () => void;
   /** «revisar» abre directo en «Revisa tus papeles». */
   abrirEn?: 'revisar';
 }) {
@@ -200,6 +208,11 @@ export function AsistentePapeles({
   const [camara, setCamara] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
+  const [consintio, setConsintio] = useState(false);
+  // C-FOTO-CARA-A-LA-VISTA: el embudo (una fila la primera vez; el servidor descarta las repeticiones).
+  useEffect(() => {
+    void api.hito('asistente_abierto');
+  }, [api]);
 
   const orden = pasosEnOrden(v);
   const irA = (p: Pantalla) => {
@@ -215,6 +228,9 @@ export function AsistentePapeles({
     setError('');
     try {
       await api.pedir('POST', '/datos/kyc/consentimiento', { acepto: true });
+      // Guardado: se sigue aunque la relectura falle con mala señal.
+      setConsintio(true);
+      alConsentir?.();
       await recargar();
     } catch (x) {
       fallo(x);
@@ -235,6 +251,7 @@ export function AsistentePapeles({
         `/datos/conductor/verificacion/foto/${paso}?origen=camara`,
       );
       poner(paso, nueva.uri);
+      alSubida?.(paso);
       setNueva(null);
       setRecien(paso);
       const nuevo = await recargar();
@@ -258,6 +275,14 @@ export function AsistentePapeles({
         }
       }
     } catch (x) {
+      // La foto tomada se queda: «Reintentar» la vuelve a subir sin repetirla.
+      const motivo = x instanceof ErrorApi ? (x.datos?.motivo as string | undefined) : undefined;
+      void api.hito(
+        'subida_fallida',
+        motivo === 'tiempo' || motivo === 'sin_conexion' || motivo === 'servidor'
+          ? motivo
+          : 'rechazo',
+      );
       fallo(x);
     } finally {
       setOcupado(false);
@@ -320,19 +345,6 @@ export function AsistentePapeles({
       <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
     </View>
   );
-  const pie = (arriba: ReactNode) => (
-    <View style={{ paddingHorizontal: 22, paddingBottom: 14, paddingTop: 8, gap: 10 }}>
-      {arriba}
-      <Pressable
-        testID="papeles-ayuda"
-        onPress={alAyuda}
-        accessibilityRole="link"
-        style={{ alignSelf: 'center', padding: 6 }}
-      >
-        <Text style={{ color: COLOR.textoSuave, textDecorationLine: 'underline' }}>{t.ayuda}</Text>
-      </Pressable>
-    </View>
-  );
   const marco = (cuerpo: ReactNode) => (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} testID="asistente-papeles">
       {cuerpo}
@@ -341,11 +353,34 @@ export function AsistentePapeles({
   const textoError = error ? (
     <Text
       accessibilityRole="alert"
-      style={{ color: COLOR.error, fontWeight: '700', textAlign: 'center', marginTop: 10 }}
+      testID="papeles-error"
+      style={{ color: COLOR.error, fontWeight: '700', textAlign: 'center', lineHeight: 20 }}
     >
       {error}
     </Text>
   ) : null;
+  const enlaces = (
+    <View style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 4 }}>
+      <Pressable
+        testID="papeles-guardar"
+        onPress={alSalir}
+        accessibilityRole="button"
+        style={{ padding: 6 }}
+      >
+        <Text style={{ fontFamily: FUENTE.tituloMedio, textDecorationLine: 'underline' }}>
+          {t.guardar}
+        </Text>
+      </Pressable>
+      <Pressable
+        testID="papeles-ayuda"
+        onPress={alAyuda}
+        accessibilityRole="link"
+        style={{ padding: 6 }}
+      >
+        <Text style={{ color: COLOR.textoSuave, textDecorationLine: 'underline' }}>{t.ayuda}</Text>
+      </Pressable>
+    </View>
+  );
 
   // C-AVISO-IA-UNICO: la pantalla propia del aviso de IA va ANTES de la primera foto y del permiso
   // de cámara (reemplaza el «Sí / No» que salía encima de la horma).
@@ -504,22 +539,36 @@ export function AsistentePapeles({
               );
             })}
           </View>
-          {textoError}
         </ScrollView>
-        {pie(
-          enRevision ? (
-            <Boton texto={t.alInicio} alTocar={alSalir} secundario testID="papeles-al-inicio" />
-          ) : (
-            <View style={{ opacity: todas ? 1 : 0.45 }}>
-              <Boton
-                texto={t.enviar}
-                alTocar={() => (todas ? void enviar() : setError(t.faltan))}
-                cargando={ocupado}
-                testID="papeles-enviar"
-              />
-            </View>
-          ),
-        )}
+        <PieFijo
+          error={textoError}
+          principal={
+            enRevision ? (
+              <Boton texto={t.alInicio} alTocar={alSalir} secundario testID="papeles-al-inicio" />
+            ) : (
+              <View style={{ opacity: todas ? 1 : 0.45 }}>
+                <Boton
+                  texto={t.enviar}
+                  alTocar={() => (todas ? void enviar() : setError(t.faltan))}
+                  cargando={ocupado}
+                  testID="papeles-enviar"
+                />
+              </View>
+            )
+          }
+          secundario={
+            <Pressable
+              testID="papeles-ayuda"
+              onPress={alAyuda}
+              accessibilityRole="link"
+              style={{ alignSelf: 'center', padding: 6 }}
+            >
+              <Text style={{ color: COLOR.textoSuave, textDecorationLine: 'underline' }}>
+                {t.ayuda}
+              </Text>
+            </Pressable>
+          }
+        />
       </>,
     );
   }
@@ -533,23 +582,157 @@ export function AsistentePapeles({
   const indice = orden.findIndex((p) => p.paso === paso) + 1;
   const momento = momentoDelPaso({ foto: dato.foto, fotoNueva: Boolean(nueva), aviso });
   const cambiable = sePuedeCambiar(v, dato);
-  const pideConsentimiento = paso === 'cara' && !v.consentimiento && momento === 'horma';
+  const pideConsentimiento =
+    paso === 'cara' && !(v.consentimiento || consintio) && momento === 'horma';
   const sigue = siguientePaso(v, paso);
   const uri = nueva?.uri ?? uriDe(dato);
-  const anchoHorma = redonda ? (momento === 'horma' ? 170 : 184) : 260;
+  const anchoHorma = redonda ? (momento === 'horma' ? 150 : 164) : 240;
   const abrirCamara = () => {
     setError('');
     setCamara(true);
+    void api.hito('camara_abierta');
   };
-  // C-PAPELES-SOLO-CAMARA: un solo camino, la cámara de la app; nunca la galería ni los archivos.
-  const botonesTomar = (
-    <>
-      <Boton texto={t.tomar} icono="camera-outline" alTocar={abrirCamara} testID="papeles-tomar" />
-      <Text style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 13 }}>
-        {t.soloCamara}
-      </Text>
-    </>
+  const nota = (texto: string, id?: string) => (
+    <Text
+      testID={id}
+      style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 13, lineHeight: 18 }}
+    >
+      {texto}
+    </Text>
   );
+  // C-FOTO-CARA-A-LA-VISTA: lo que se dice arriba de la horma (a la vista) y el botón principal del
+  // momento, que va en el pie FIJO. Lo demás se desliza por detrás.
+  let explicacion: ReactNode = null;
+  let principal: ReactNode = null;
+  if (momento === 'horma' && pideConsentimiento) {
+    explicacion = (
+      <View
+        testID="papeles-consentimiento"
+        style={{ borderWidth: 1, borderColor: COLOR.bordeFuerte, borderRadius: 12, padding: 12 }}
+      >
+        <Text style={{ fontSize: 14, lineHeight: 20 }}>{t.consentimiento}</Text>
+      </View>
+    );
+    principal = (
+      <Boton
+        texto={t.acepto}
+        alTocar={() => void aceptarConsentimiento()}
+        cargando={ocupado}
+        testID="papeles-acepto"
+      />
+    );
+  } else if (momento === 'horma' || momento === 'repetir') {
+    if (momento === 'repetir')
+      explicacion = (
+        <View
+          accessibilityRole="alert"
+          style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 12, padding: 12 }}
+        >
+          <Text style={{ color: COLOR.aviso, fontSize: 14, lineHeight: 20 }}>
+            {t.pidieron} {dato.foto?.motivo}
+          </Text>
+        </View>
+      );
+    // C-PAPELES-SOLO-CAMARA: un solo camino, la cámara de la app; nunca la galería ni los archivos.
+    principal = (
+      <>
+        <Boton
+          texto={t.tomar}
+          icono="camera-outline"
+          alTocar={abrirCamara}
+          testID="papeles-tomar"
+        />
+        {nota(momento === 'horma' ? `${t.asi} ${t.soloCamara}` : t.soloCamara)}
+      </>
+    );
+  } else if (momento === 'vista_previa') {
+    principal = (
+      <>
+        {nota(redonda ? t.seVeCara : t.seVe)}
+        <Boton
+          // Con la subida caída, la misma foto se vuelve a subir: no hay que repetirla.
+          texto={error ? t.reintentar : t.usar}
+          alTocar={() => void usar(paso)}
+          cargando={ocupado}
+          testID="papeles-usar"
+        />
+        <Boton
+          texto={t.repetir}
+          icono="camera-outline"
+          alTocar={() => {
+            setNueva(null);
+            abrirCamara();
+          }}
+          secundario
+          testID="papeles-repetir"
+        />
+      </>
+    );
+  } else if (momento === 'aviso') {
+    explicacion = (
+      <View
+        accessibilityRole="alert"
+        testID="papeles-aviso"
+        style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 12, padding: 12 }}
+      >
+        <Text
+          style={{
+            color: COLOR.aviso,
+            fontFamily: FUENTE.textoFuerte,
+            fontSize: 14,
+            lineHeight: 20,
+            textAlign: 'center',
+          }}
+        >
+          {aviso}
+        </Text>
+      </View>
+    );
+    principal = (
+      <>
+        <Boton
+          texto={t.repetir}
+          icono="camera-outline"
+          alTocar={abrirCamara}
+          testID="papeles-repetir"
+        />
+        <Pressable
+          testID="papeles-usar-igual"
+          onPress={() => void insistir(paso)}
+          accessibilityRole="button"
+          style={{ alignSelf: 'center', padding: 6 }}
+        >
+          <Text style={{ fontFamily: FUENTE.textoFuerte, textDecorationLine: 'underline' }}>
+            {t.usarIgual}
+          </Text>
+        </Pressable>
+      </>
+    );
+  } else if (momento === 'lista') {
+    principal = (
+      <>
+        <Boton
+          texto={sigue ? t.siguiente : t.revisar}
+          alTocar={() => irA(sigue ? { tipo: 'paso', paso: sigue } : { tipo: 'revisar' })}
+          testID="papeles-siguiente"
+        />
+        {cambiable ? (
+          <Pressable
+            testID="papeles-cambiar"
+            onPress={abrirCamara}
+            accessibilityRole="button"
+            style={{ alignSelf: 'center', padding: 6 }}
+          >
+            <Text style={{ fontFamily: FUENTE.textoFuerte, textDecorationLine: 'underline' }}>
+              {t.cambiar}
+            </Text>
+          </Pressable>
+        ) : (
+          nota(t.aprobada)
+        )}
+      </>
+    );
+  }
   return marco(
     <>
       {cabecera(t.paso(indice, orden.length), alSalir)}
@@ -571,7 +754,7 @@ export function AsistentePapeles({
         horizontal
         showsHorizontalScrollIndicator={false}
         style={{ flexGrow: 0 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 12, gap: 6 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 8, gap: 6 }}
         testID="tira-de-fotos"
       >
         {orden.map((p) => (
@@ -601,11 +784,19 @@ export function AsistentePapeles({
           </Pressable>
         ))}
       </ScrollView>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 16 }}>
-        <Text style={{ fontFamily: FUENTE.titulo, fontSize: 25, lineHeight: 31 }}>{tx.titulo}</Text>
-        <Text style={{ color: COLOR.textoSuave, fontSize: 15, lineHeight: 22, marginTop: 4 }}>
-          {tx.ayuda}
-        </Text>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 12, gap: 10 }}
+      >
+        <View>
+          <Text style={{ fontFamily: FUENTE.titulo, fontSize: 24, lineHeight: 30 }}>
+            {tx.titulo}
+          </Text>
+          <Text style={{ color: COLOR.textoSuave, fontSize: 15, lineHeight: 21, marginTop: 2 }}>
+            {tx.ayuda}
+          </Text>
+        </View>
+        {explicacion}
         {tx.lado ? (
           <Text
             style={{
@@ -614,19 +805,17 @@ export function AsistentePapeles({
               letterSpacing: 2.2,
               color: COLOR.textoSuave,
               textAlign: 'center',
-              marginTop: 18,
+              marginTop: 6,
             }}
           >
             {tx.lado}
           </Text>
-        ) : (
-          <View style={{ height: 18 }} />
-        )}
+        ) : null}
         <View
           testID={`horma-${momento}`}
           style={{
             alignSelf: 'center',
-            marginTop: 8,
+            marginTop: 4,
             width: anchoHorma,
             aspectRatio: momento === 'horma' ? proporcionDeHorma(paso) : redonda ? 1 : 1.586,
           }}
@@ -656,175 +845,73 @@ export function AsistentePapeles({
           )}
           {momento === 'lista' ? <MarcaLista lado={32} animada={recien === paso} /> : null}
         </View>
-
-        <View style={{ marginTop: 16, gap: 10 }}>
-          {momento === 'horma' ? (
-            pideConsentimiento ? (
-              <>
-                <View
-                  style={{
-                    borderWidth: 1,
-                    borderColor: COLOR.bordeFuerte,
-                    borderRadius: 12,
-                    padding: 12,
-                  }}
-                >
-                  <Text style={{ fontSize: 14, lineHeight: 20 }}>{t.consentimiento}</Text>
-                </View>
-                <Boton
-                  texto={t.acepto}
-                  alTocar={() => void aceptarConsentimiento()}
-                  cargando={ocupado}
-                  testID="papeles-acepto"
-                />
-              </>
-            ) : (
-              <>
-                <Text style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 14 }}>
-                  {t.asi}
-                </Text>
-                {botonesTomar}
-              </>
-            )
-          ) : null}
-          {momento === 'vista_previa' ? (
-            <>
-              <Text style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 14 }}>
-                {redonda ? t.seVeCara : t.seVe}
-              </Text>
-              <Boton
-                texto={t.usar}
-                alTocar={() => void usar(paso)}
-                cargando={ocupado}
-                testID="papeles-usar"
-              />
-              <Boton
-                texto={t.repetir}
-                icono="camera-outline"
-                alTocar={() => {
-                  setNueva(null);
-                  abrirCamara();
-                }}
-                secundario
-                testID="papeles-repetir"
-              />
-            </>
-          ) : null}
-          {momento === 'aviso' ? (
-            <>
-              <View
-                accessibilityRole="alert"
-                testID="papeles-aviso"
-                style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 12, padding: 12 }}
-              >
-                <Text
-                  style={{
-                    color: COLOR.aviso,
-                    fontFamily: FUENTE.textoFuerte,
-                    fontSize: 14,
-                    lineHeight: 20,
-                    textAlign: 'center',
-                  }}
-                >
-                  {aviso}
-                </Text>
-              </View>
-              <Boton
-                texto={t.repetir}
-                icono="camera-outline"
-                alTocar={abrirCamara}
-                testID="papeles-repetir"
-              />
-              <Pressable
-                testID="papeles-usar-igual"
-                onPress={() => void insistir(paso)}
-                accessibilityRole="button"
-                style={{ alignSelf: 'center', padding: 8 }}
-              >
-                <Text style={{ fontFamily: FUENTE.textoFuerte, textDecorationLine: 'underline' }}>
-                  {t.usarIgual}
-                </Text>
-              </Pressable>
-            </>
-          ) : null}
-          {momento === 'repetir' ? (
-            <>
-              <View
-                accessibilityRole="alert"
-                style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 12, padding: 12 }}
-              >
-                <Text style={{ color: COLOR.aviso, fontSize: 14, lineHeight: 20 }}>
-                  {t.pidieron} {dato.foto?.motivo}
-                </Text>
-              </View>
-              {botonesTomar}
-            </>
-          ) : null}
-          {momento === 'lista' ? (
-            <>
-              <Text
-                testID="papeles-foto-lista"
-                style={{
-                  color: COLOR.exito,
-                  fontFamily: FUENTE.textoNegrita,
-                  textAlign: 'center',
-                  fontSize: 15,
-                }}
-              >
-                ✓ {t.lista}
-              </Text>
-              <Boton
-                texto={sigue ? t.siguiente : t.revisar}
-                alTocar={() => irA(sigue ? { tipo: 'paso', paso: sigue } : { tipo: 'revisar' })}
-                testID="papeles-siguiente"
-              />
-              {cambiable ? (
-                <Pressable
-                  testID="papeles-cambiar"
-                  onPress={abrirCamara}
-                  accessibilityRole="button"
-                  style={{ alignSelf: 'center', padding: 8 }}
-                >
-                  <Text style={{ fontFamily: FUENTE.textoFuerte, textDecorationLine: 'underline' }}>
-                    {t.cambiar}
-                  </Text>
-                </Pressable>
-              ) : (
-                <Text style={{ color: COLOR.textoSuave, textAlign: 'center', fontSize: 13 }}>
-                  {t.aprobada}
-                </Text>
-              )}
-            </>
-          ) : null}
-          {textoError}
-        </View>
-      </ScrollView>
-      {pie(
-        <Pressable
-          testID="papeles-guardar"
-          onPress={alSalir}
-          accessibilityRole="button"
-          style={{ alignSelf: 'center', padding: 6 }}
-        >
-          <Text style={{ fontFamily: FUENTE.tituloMedio, textDecorationLine: 'underline' }}>
-            {t.guardar}
+        {momento === 'lista' ? (
+          <Text
+            testID="papeles-foto-lista"
+            style={{
+              color: COLOR.exito,
+              fontFamily: FUENTE.textoNegrita,
+              textAlign: 'center',
+              fontSize: 15,
+            }}
+          >
+            ✓ {t.lista}
           </Text>
-        </Pressable>,
-      )}
+        ) : null}
+      </ScrollView>
+      <PieFijo error={textoError} principal={principal} secundario={enlaces} />
       {camara ? (
         <CamaraConMarco
           paso={paso}
           pais={v.pais}
           idioma={idioma}
           alCerrar={() => setCamara(false)}
+          alFallo={(motivo) => void api.hito('camara_fallo', motivo)}
           alTomar={(foto) => {
             setCamara(false);
             setAviso('');
+            setError('');
             setNueva({ uri: foto.uri });
+            void api.hito('foto_tomada');
           }}
         />
       ) : null}
     </>,
+  );
+}
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): el pie FIJO del asistente. El error va pegado al botón
+ * principal, el botón principal siempre a la vista, y «Guardar y seguir después» y la ayuda debajo,
+ * como secundarios. Lo de arriba se desliza por detrás (antes, en un celular chico, «Acepto y sigo»
+ * quedaba fuera de pantalla y lo único visible era «Guardar y seguir después»).
+ */
+function PieFijo({
+  error,
+  principal,
+  secundario,
+}: {
+  error: ReactNode;
+  principal: ReactNode;
+  secundario: ReactNode;
+}) {
+  return (
+    <View
+      testID="papeles-pie"
+      style={{
+        paddingHorizontal: 22,
+        paddingTop: 10,
+        paddingBottom: 10,
+        gap: 8,
+        borderTopWidth: 1,
+        borderTopColor: COLOR.borde,
+        backgroundColor: '#FFFFFF',
+      }}
+    >
+      {error}
+      {principal}
+      {secundario}
+    </View>
   );
 }
 

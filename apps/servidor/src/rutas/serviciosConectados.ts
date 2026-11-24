@@ -12,6 +12,9 @@ import {
   versionNum,
 } from './servicios';
 import { MENSAJE_EN_BLOQUE_FLEX, bloqueFlexDe, conectarRepartidor, miFicha } from './operacion';
+import { anotarRechazoConectar, origenDePeticion } from '../rastro';
+import { queTeFalta } from '../queTeFalta';
+import { MENSAJE_SIN_RESTAURANTES, hayRestaurantesDelConductor } from '../servicioSinOferta';
 
 /**
  * C-SERVICIOS-CONECTADOS (Richard, 16 nov 2026, al probar Driver; diseño en DRIVER.md de Gerencia).
@@ -77,7 +80,10 @@ export function estadoTarjeta(e: {
   const { s } = e;
   if (s.estadoServicio !== 'disponible') return null; // no funciona aquí: no se dibuja
   if (s.motivo === 'actualizar_app') return 'en_revision';
-  if (s.habilitacion === 'sin_solicitar' || s.habilitacion === 'rechazada') return 'agregar';
+  // Tramo 1 (registro real de un mototaxista, 23 nov 2026): sin pedirlo pero ya activable (dentro del
+  // plazo de papeles, la misma regla de `conductores_elegibles`) viene listo para deslizar.
+  if (s.habilitacion === 'rechazada' || (s.habilitacion === 'sin_solicitar' && !s.puedeActivar))
+    return 'agregar';
   if (!s.puedeActivar) return 'en_revision';
   if (e.enBloqueFlex) return 'bloqueado_flex';
   if (e.lleva === s.servicioId) return 'haciendo';
@@ -96,9 +102,15 @@ async function panelDe(db: Db, conductorId: string, ingles: boolean, version: nu
     queLleva(db, conductorId),
   ]);
   const conectadoGeneral = Number(ficha?.conectado) === 1;
+  // Tramo 1: Comida solo se ofrece donde hay algún restaurante aprobado en su zona (un conductor real se
+  // conectó a Comida en un pueblo sin restaurantes y quedó esperando pedidos que no existen).
+  const conRestaurantes = await hayRestaurantesDelConductor(db, conductorId);
   const vehiculo = estado.vehiculoActivo?.estado === 'aprobado' ? estado.vehiculoActivo.tipo : null;
   const servicios = estado.servicios
     .filter((s) => (SERVICIOS_AL_MOMENTO as readonly string[]).includes(s.servicioId))
+    // C-SERVICIO-SIN-OFERTA: Comida sin restaurantes en la zona no se dibuja, tampoco a quien ya la
+    // tenía encendida (no figura «esperando pedidos» que no existen). Solo si lleva uno en curso.
+    .filter((s) => s.servicioId !== 'comida' || conRestaurantes || lleva?.servicioId === 'comida')
     .map((s) => ({
       servicioId: s.servicioId,
       nombre: s.nombre,
@@ -132,6 +144,16 @@ const versionDriver = (c: { req: { header: (n: string) => string | undefined } }
   return versionNum(nombre === 'driver' ? v : undefined);
 };
 
+/**
+ * C-QUE-TE-FALTA (23 nov 2026): lo que le falta al conductor para recibir carreras, en orden, calculado
+ * con la misma regla del reparto. Driver lo pide al entrar al inicio y al volver a él. Solo lee.
+ */
+serviciosConectados.get('/conductor/que-te-falta', async (c) => {
+  const u = exigir(c, 'repartidor');
+  c.header('cache-control', 'private, no-store');
+  return c.json(await queTeFalta(base(c), u.id, c.env));
+});
+
 serviciosConectados.get('/conductor/panel-servicios', async (c) => {
   const u = exigir(c, 'repartidor');
   c.header('cache-control', 'private, no-store');
@@ -159,12 +181,20 @@ serviciosConectados.post('/conductor/servicios/:id/conexion', async (c) => {
   const s = estado.servicios.find((x) => x.servicioId === servicioId);
   if (!s) throw new ErrorDatos('Ese servicio no existe.', 'servicioId', 404);
   if (d.conectado) {
-    if (await bloqueFlexDe(db, u.id))
-      throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
-    if (!s.puedeActivar)
-      throw new ErrorDatos('Este servicio todavía no está aprobado para ti.', 'servicioId', 409);
-    // Primero las puertas del encendido general (si alguna falla, no se toca la preferencia).
-    const general = await conectarRepartidor(c, u, db, d);
+    // C-FOTO-CARA-A-LA-VISTA: un «no» al conectarse deja su hito (una vez por motivo y cuenta).
+    const general = await (async () => {
+      if (await bloqueFlexDe(db, u.id))
+        throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
+      // C-SERVICIO-SIN-OFERTA: Comida sin restaurantes en la zona no se conecta (se dice la verdad).
+      if (servicioId === 'comida' && !(await hayRestaurantesDelConductor(db, u.id)))
+        throw new ErrorDatos(MENSAJE_SIN_RESTAURANTES, 'sin_restaurantes', 409);
+      if (!s.puedeActivar)
+        throw new ErrorDatos('Este servicio todavía no está aprobado para ti.', 'servicioId', 409);
+      // Primero las puertas del encendido general (si alguna falla, no se toca la preferencia).
+      return await conectarRepartidor(c, u, db, d);
+    })().catch(async (e: unknown) => {
+      throw await anotarRechazoConectar(db, u.id, e, origenDePeticion(c.req));
+    });
     await db.prepare(UPSERT_PREFERENCIA).bind(u.id, servicioId, 1).run();
     return c.json({
       ...general,

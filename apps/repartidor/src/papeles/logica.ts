@@ -356,3 +356,59 @@ export function nombreDeFoto(paso: PasoVerificacion, pais: string | null, idioma
     .nombre.replace(' (', ', ')
     .replace(')', '');
 }
+
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): la cara es lo que le falta para empezar a trabajar (su país la
+ * pide para empezar y todavía no la tomó). Mientras sea así, la tarjeta de la cara va ARRIBA DE TODO
+ * en el inicio, con su botón a la vista.
+ */
+export function faltaCaraParaEmpezar(v: Verificacion | null): boolean {
+  return Boolean(
+    v &&
+    v.asistente &&
+    v.plazo.estado !== 'vencido' &&
+    !v.perfil.tieneCara &&
+    v.plazo.paraEmpezar.includes('cara'),
+  );
+}
+
+/**
+ * Las fotos que ya subieron en esta pantalla cuentan como tomadas aunque la relectura de «Tus papeles»
+ * falle (con mala señal): antes volvía a pedir la foto que ya estaba guardada.
+ */
+export function conFotosLocales(
+  v: Verificacion,
+  subidas: ReadonlyMap<string, string>,
+): Verificacion {
+  if (!subidas.size) return v;
+  const pasos = v.pasos.map((p) => {
+    const cuando = subidas.get(p.paso);
+    if (!cuando || p.foto?.estado === 'vigente') return p;
+    return {
+      ...p,
+      foto: { id: 'local', estado: 'vigente' as const, motivo: '', color: '', creadoEn: cuando },
+    };
+  });
+  return {
+    ...v,
+    pasos,
+    perfil: { ...v.perfil, tieneCara: v.perfil.tieneCara || subidas.has('cara') },
+  };
+}
+
+/**
+ * Qué se le ofrece junto al motivo de «no te puedes conectar»: tomar la foto de la cara, ir a «Mis
+ * datos y vehículo», o la tarjeta que ya está arriba (términos, celular, foto de control).
+ */
+export function accionDeMotivo(campo: string | undefined): 'cara' | 'datos' | 'arriba' | null {
+  if (campo === 'cara') return 'cara';
+  if (campo === 'kyc' || campo === 'papeles') return 'datos';
+  if (
+    campo === 'terminos' ||
+    campo === 'telefono' ||
+    campo === 'selfie' ||
+    campo === 'selfie_casco'
+  )
+    return 'arriba';
+  return null;
+}

@@ -1,3 +1,4 @@
+import { avisarSaldoRecargado } from '../avisoSaldo';
 import { anotarCambioDinero } from './dinero';
 import { cargasDeConductor } from '../saldoConductores';
 import { porCobrarRegalos, regalosEnRevision } from '../regalosDivoox';
@@ -382,6 +383,7 @@ internacional.post('/repartidor/recargar', async (c) => {
   const db = base(c);
   const { pais, moneda } = await paisDelRepartidor(db, u.id);
   const r = await canjearCodigo(db, { codigo, repartidorId: u.id, pais, moneda });
+  await avisarSaldoRecargado(c.env, db, u.id, r.monto, moneda);
   return c.json({ ...r, disponible: await saldoLibro(db, u.id, 'prepago', pais, moneda) });
 });
 

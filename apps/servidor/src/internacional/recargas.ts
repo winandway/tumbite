@@ -1,3 +1,5 @@
+import { avisarSaldoRecargado } from '../avisoSaldo';
+import type { Env } from '../env';
 import { ErrorDatos } from '../validar';
 import { anotarLibro, cuentaPunto, saldoLibro, sentenciaDescontar, sentenciaLibro } from './libro';
 import { leerConfigPais } from './paises';
@@ -273,7 +275,12 @@ export async function crearRecargaStripe(
 }
 
 /** Aviso payment_intent.succeeded con metadata.recarga_id: acredita UNA vez (referencia única). */
-export async function acreditarRecargaStripe(db: D1Database, obj: Record<string, unknown>) {
+export async function acreditarRecargaStripe(
+  db: D1Database,
+  obj: Record<string, unknown>,
+  /** Tramo 1: con el entorno, al conductor le llega el aviso de la recarga. */
+  env?: Env,
+) {
   const recargaId = (obj.metadata as Record<string, string> | undefined)?.recarga_id;
   if (!recargaId) return false;
   const r = await db
@@ -325,5 +332,6 @@ export async function acreditarRecargaStripe(db: D1Database, obj: Record<string,
       referencia: `recarga:${r.id}`,
     }),
   ]);
+  await avisarSaldoRecargado(env, db, r.usuario_id, r.monto, r.moneda);
   return true;
 }

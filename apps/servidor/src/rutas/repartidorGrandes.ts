@@ -1,3 +1,4 @@
+import { CONCEPTOS_RECARGA } from '../avisoSaldo';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -479,6 +480,27 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
       centavos: Number(p.monto),
       moneda: p.moneda ?? 'USD',
       en: p.creado_en,
+    });
+  // Tramo 1 (orden de Richard, 23 nov 2026): cada recarga de saldo, por cualquier vía, en la campana.
+  const recargas = await db
+    .prepare(
+      `SELECT monto, moneda, creado_en FROM libro
+        WHERE cuenta_id = ? AND bolsillo = 'prepago' AND monto > 0
+          AND concepto IN (${CONCEPTOS_RECARGA.map((x) => `'${x}'`).join(',')})
+          AND creado_en > datetime('now','-7 days') ORDER BY creado_en DESC LIMIT 20`,
+    )
+    .bind(u.id)
+    .all<{ monto: number; moneda: string; creado_en: string }>();
+  for (const r of recargas.results)
+    lista.push({
+      tipo: 'saldo_recargado',
+      pedidoId: null,
+      codigo: null,
+      restaurante: null,
+      detalle: '',
+      centavos: Number(r.monto),
+      moneda: r.moneda,
+      en: r.creado_en,
     });
   const listo = await db
     .prepare(

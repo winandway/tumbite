@@ -147,7 +147,8 @@ const ORDEN: Record<EstadoTarjetaServidor, number> = {
   en_revision: 5,
   agregar: 6,
 };
-const ORDEN_SERVICIO = ['comida', 'envios', 'moto', 'carro'];
+// Tramo 1 (registro real, 23 nov 2026): los viajes con pasajero primero (el trabajo del mototaxista).
+const ORDEN_SERVICIO = ['moto', 'carro', 'comida', 'envios'];
 export function ordenarServicios(servicios: ServicioPanel[]): ServicioPanel[] {
   const rango = (s: ServicioPanel) => new Map(Object.entries(ORDEN)).get(s.estado) ?? 9;
   const lugar = (s: ServicioPanel) => {

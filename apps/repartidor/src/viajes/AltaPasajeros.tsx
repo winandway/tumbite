@@ -9,9 +9,11 @@ import {
   nombrePapelPais,
   nombreRequisitoPais,
   useBorrador,
-  type Idioma,
   type ServicioPasajeros,
 } from '@tumbite/compartido';
+import { EditarVehiculo } from './EditarVehiculo';
+import { FilaPapel } from '../servicios/FilaPapel';
+import { detallePapelVehiculo, faltaParaEnviar } from '../servicios/papelesVehiculo';
 import {
   AvisoBorrador,
   Boton,
@@ -19,7 +21,8 @@ import {
   alSalirTelefono,
   almacenTelefono,
   e,
-  fotoConCamara,
+  fotoConOrigen,
+  estadoPapel,
   useSesion,
   Text,
 } from '@tumbite/movil';
@@ -43,6 +46,7 @@ type Vehiculo = {
   anio: number | null;
   color: string;
   placa: string;
+  placaEstado?: string;
   plazas: number | null;
   estado: string;
   motivo: string;
@@ -413,68 +417,6 @@ const colorEstado = (estado: string) =>
       ? ROJO_ERROR
       : '#666B73';
 
-function Fila({
-  nombre,
-  estado,
-  motivo,
-  idioma,
-  subiendo,
-  alSubir,
-}: {
-  nombre: string;
-  estado: string;
-  motivo?: string;
-  idioma: Idioma;
-  subiendo: boolean;
-  alSubir: () => void;
-}) {
-  const t = enIdioma(COMUN, idioma);
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        paddingVertical: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#E6E7EA',
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: '700', color: C.secundario }}>{nombre}</Text>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: colorEstado(estado) }}>
-          {de(t.estados, estado) ?? estado}
-        </Text>
-        {estado === 'rechazado' && motivo ? (
-          <Text style={{ fontSize: 12, color: ROJO_ERROR }}>
-            {t.rechazo}: {motivo}
-          </Text>
-        ) : null}
-      </View>
-      {estado !== 'aprobado' ? (
-        <Pressable
-          onPress={alSubir}
-          disabled={subiendo}
-          accessibilityRole="button"
-          accessibilityLabel={`${t.subir}: ${nombre}`}
-          style={{
-            borderWidth: 1,
-            borderColor: '#2a2a2a',
-            borderRadius: 999,
-            paddingHorizontal: 14,
-            paddingVertical: 6,
-            opacity: subiendo ? 0.5 : 1,
-          }}
-        >
-          <Text style={{ fontWeight: '700', color: C.secundario }}>
-            {estado === 'sin_subir' ? t.subir : t.subirOtra}
-          </Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const { api, idioma, usuario } = useSesion();
   const tc = enIdioma(COMUN, idioma);
@@ -483,10 +425,13 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [estado, setEstado] = useState<ServicioConductor | null>(null);
   const [error, setError] = useState('');
+  // C-QUE-TE-FALTA: el error de una casilla (la placa) va debajo de ella, no arriba de todo.
+  const [errorCampo, setErrorCampo] = useState<{ campo: string; texto: string } | null>(null);
   const [subiendo, setSubiendo] = useState('');
   const [verCiudades, setVerCiudades] = useState(false);
   // C-CARRO-CATEGORIAS: cuántos años admite Comfort en el país del conductor.
   const [aniosComfort, setAniosComfort] = useState<number | null>(null);
+  const [seguroEnPlazo, setSeguroEnPlazo] = useState(false);
   const b = useBorrador({
     formulario: servicio === 'carro' ? 'driver-mi-carro' : 'driver-mi-moto',
     cuenta: usuario?.id,
@@ -512,6 +457,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
         api.pedir<{
           vehiculos: Vehiculo[];
           requisitosCategoria?: { comfort?: { antiguedadMaxima: number } };
+          seguroEnPlazo?: boolean;
         }>('GET', '/datos/conductor/vehiculos'),
         api.pedir<{ servicios: ServicioConductor[] }>('GET', '/datos/conductor/servicios'),
       ])
@@ -519,6 +465,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           setPapeles(p);
           setVehiculo(v.vehiculos.find((x) => x.tipo === servicio) ?? null);
           setAniosComfort(v.requisitosCategoria?.comfort?.antiguedadMaxima ?? null);
+          setSeguroEnPlazo(Boolean(v.seguroEnPlazo));
           setEstado(s.servicios.find((x) => x.servicioId === servicio) ?? null);
         })
         .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x))),
@@ -528,20 +475,34 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     void cargar();
   }, [cargar]);
 
-  async function hacer(f: () => Promise<unknown>) {
+  // C-FOTO-CARA-A-LA-VISTA (pantallas hermanas): el error de un botón va JUNTO a ese botón (antes
+  // salía arriba de todo, fuera de la vista de quien tocó «Enviar a revisión» al final de la pantalla).
+  const [errorEn, setErrorEn] = useState<string | null>(null);
+  const errorAqui = (donde: string) =>
+    error && errorEn === donde ? (
+      <Text accessibilityRole="alert" testID={`error-${donde}`} style={{ color: ROJO_ERROR }}>
+        {error}
+      </Text>
+    ) : null;
+  async function hacer(f: () => Promise<unknown>, donde: string | null = null) {
     setError('');
+    setErrorEn(donde);
     try {
       await f();
       await cargar();
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      if (x instanceof ErrorApi && (x.campo === 'placa' || x.campo === 'placaEstado'))
+        setErrorCampo({ campo: x.campo, texto: x.message });
+      else setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
 
-  async function subir(ruta: string, clave: string) {
+  async function subir(ruta: string, clave: string, origen: 'camara' | 'archivos') {
     setError('');
+    setErrorEn(null);
     try {
-      const foto = await fotoConCamara(idioma, CAMARA, deArchivos);
+      // Tramo 1: la misma fila y los mismos dos botones que en el perfil (sin el diálogo gris).
+      const foto = await fotoConOrigen(idioma, CAMARA, deArchivos, origen);
       if (!foto) return;
       setSubiendo(clave);
       const blob = await (await fetch(foto.uri)).blob();
@@ -556,6 +517,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
 
   async function guardar() {
     const v = b.valores;
+    setErrorCampo(null);
     await hacer(async () => {
       await api.pedir('POST', '/datos/conductor/vehiculos', {
         tipo: servicio,
@@ -570,7 +532,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       });
       // Solo se borra lo escrito cuando el servidor confirmó que el vehículo quedó guardado.
       await b.limpiar();
-    });
+    }, 'guardar');
   }
 
   const delServicio = <T,>(m: Partial<Record<ServicioPasajeros, T>> | undefined) =>
@@ -593,22 +555,33 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     etiqueta: string,
     teclado: 'default' | 'number-pad' = 'default',
   ) => (
-    <TextInput
-      value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
-      onChangeText={(x) => b.cambiar(campo, x)}
-      placeholder={etiqueta}
-      accessibilityLabel={etiqueta}
-      keyboardType={teclado}
-      autoCapitalize={campo === 'placa' || campo === 'placaEstado' ? 'characters' : 'words'}
-      style={e.input}
-    />
+    <View style={{ gap: 4 }}>
+      <TextInput
+        testID={`alta-${campo}`}
+        value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
+        onChangeText={(x) => {
+          b.cambiar(campo, x);
+          if (errorCampo?.campo === campo) setErrorCampo(null);
+        }}
+        placeholder={etiqueta}
+        accessibilityLabel={etiqueta}
+        keyboardType={teclado}
+        autoCapitalize={campo === 'placa' || campo === 'placaEstado' ? 'characters' : 'words'}
+        style={[e.input, errorCampo?.campo === campo ? { borderColor: ROJO_ERROR } : null]}
+      />
+      {errorCampo?.campo === campo ? (
+        <Text accessibilityRole="alert" style={{ color: ROJO_ERROR, fontSize: 13 }}>
+          {errorCampo.texto}
+        </Text>
+      ) : null}
+    </View>
   );
 
   return (
     <View style={{ gap: 12, paddingVertical: 8 }} testID={`alta-${servicio}`}>
       <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
-      {error ? <Text style={{ color: ROJO_ERROR }}>{error}</Text> : null}
+      {error && !errorEn ? <Text style={{ color: ROJO_ERROR }}>{error}</Text> : null}
 
       {papeles ? (
         <View style={e.tarjeta}>
@@ -677,6 +650,16 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 {tc.rechazo}: {vehiculo.motivo}
               </Text>
             ) : null}
+            {/* C-QUE-TE-FALTA: completar o corregir el vehículo ya guardado, sin borrarlo. */}
+            <EditarVehiculo
+              key={vehiculo.id}
+              api={api}
+              idioma={idioma}
+              cuenta={usuario?.id}
+              vehiculo={vehiculo}
+              placaNacional={Boolean(papeles?.perfil.placaNacional)}
+              alGuardar={() => cargar()}
+            />
             {servicio === 'carro' && (vehiculo.plazas ?? 0) >= PLAZAS_XL ? (
               <Text style={{ color: VERDE, fontSize: 12, fontWeight: '700' }}>{t.xl}</Text>
             ) : null}
@@ -760,14 +743,17 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 texto={t.usar}
                 exito
                 alTocar={() =>
-                  void hacer(() =>
-                    api.pedir('PUT', '/datos/conductor/vehiculo-activo', {
-                      vehiculoId: vehiculo.id,
-                    }),
+                  void hacer(
+                    () =>
+                      api.pedir('PUT', '/datos/conductor/vehiculo-activo', {
+                        vehiculoId: vehiculo.id,
+                      }),
+                    'usar',
                   )
                 }
               />
             ) : null}
+            {errorAqui('usar')}
           </>
         ) : (
           <View style={{ gap: 8, marginTop: 6 }}>
@@ -832,6 +818,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 <Text style={{ flex: 1, color: C.secundario }}>{tc.cajon}</Text>
               </Pressable>
             ) : null}
+            {errorAqui('guardar')}
             <Boton texto={t.guardar} alTocar={() => void guardar()} />
           </View>
         )}
@@ -845,33 +832,56 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           </Text>
           {docsVehiculo.map((tipo) => {
             const d = docVehiculo(tipo);
+            // C-PAPEL-DICE-LA-VERDAD: la misma pieza que en el perfil.
+            const dice = detallePapelVehiculo(
+              {
+                docEstado: d?.estado,
+                vehiculoEstado: vehiculo.estado,
+                vehiculoTipo: vehiculo.tipo,
+              },
+              idioma,
+            );
             return (
-              <Fila
+              <FilaPapel
                 key={tipo}
+                testID={`papel-${tipo}`}
                 nombre={nombreDoc(tipo)}
-                estado={d?.estado ?? 'sin_subir'}
+                estado={estadoPapel(d?.estado ?? 'sin_subir')}
+                textoEstado={dice.pildora ?? undefined}
+                detalle={dice.texto || undefined}
                 motivo={d?.motivo}
                 idioma={idioma}
                 subiendo={subiendo === tipo}
-                alSubir={() =>
+                alSubir={(origen) =>
                   void subir(
                     `/datos/conductor/vehiculos/${vehiculo.id}/documentos?tipo=${tipo}`,
                     tipo,
+                    origen,
                   )
                 }
               />
             );
           })}
-          {['registrado', 'rechazado'].includes(vehiculo.estado) ? (
+          {['registrado', 'rechazado'].includes(vehiculo.estado) &&
+          faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma, seguroEnPlazo)
+            .length ? (
+            <Text testID="falta-para-enviar" style={{ color: '#666B73' }}>
+              {idioma === 'en'
+                ? `To send it for review, you still need: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma, seguroEnPlazo).join(', ')}.`
+                : `Para enviar tu vehículo a revisión falta: ${faltaParaEnviar(vehiculo, Boolean(papeles?.perfil.placaNacional), idioma, seguroEnPlazo).join(', ')}.`}
+            </Text>
+          ) : ['registrado', 'rechazado'].includes(vehiculo.estado) ? (
             <Boton
               texto={t.enviar}
               alTocar={() =>
-                void hacer(() =>
-                  api.pedir('POST', `/datos/conductor/vehiculos/${vehiculo.id}/enviar`),
+                void hacer(
+                  () => api.pedir('POST', `/datos/conductor/vehiculos/${vehiculo.id}/enviar`),
+                  'enviar',
                 )
               }
             />
           ) : null}
+          {errorAqui('enviar')}
         </View>
       ) : null}
 
@@ -881,14 +891,17 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           {docsMios.map((tipo) => {
             const d = docMio(tipo);
             return (
-              <Fila
+              <FilaPapel
                 key={tipo}
+                testID={`papel-${tipo}`}
                 nombre={nombreDoc(tipo)}
-                estado={d?.estado ?? 'sin_subir'}
+                estado={estadoPapel(d?.estado ?? 'sin_subir')}
                 motivo={d?.motivo}
                 idioma={idioma}
                 subiendo={subiendo === tipo}
-                alSubir={() => void subir(`/datos/conductor/papeles?tipo=${tipo}`, tipo)}
+                alSubir={(origen) =>
+                  void subir(`/datos/conductor/papeles?tipo=${tipo}`, tipo, origen)
+                }
               />
             );
           })}
@@ -924,15 +937,18 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               texto={t.activar}
               exito
               alTocar={() =>
-                void hacer(() =>
-                  api.pedir('PUT', '/datos/conductor/preferencias', {
-                    servicioId: servicio,
-                    activa: true,
-                  }),
+                void hacer(
+                  () =>
+                    api.pedir('PUT', '/datos/conductor/preferencias', {
+                      servicioId: servicio,
+                      activa: true,
+                    }),
+                  'activar',
                 )
               }
             />
           ) : null}
+          {errorAqui('activar')}
         </View>
       ) : null}
     </View>

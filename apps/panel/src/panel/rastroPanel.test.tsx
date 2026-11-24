@@ -203,6 +203,14 @@ describe('C-RASTRO · la actividad de una cuenta en su ficha', () => {
     expect(screen.getAllByText('Email confirmation').length).toBeGreaterThan(0);
     expect(textoEvento('foto:doc_frente', 'verificacion', 'en')).toBe('Photo uploaded: ID (front)');
     expect(textoEvento('algo_nuevo', 'otro', 'es')).toBe('algo_nuevo');
+    // C-FOTO-CARA-A-LA-VISTA: los hitos se dicen en palabras, con su motivo.
+    expect(textoEvento('hito:conectar_rechazado', 'hito', 'es', 'cara')).toBe(
+      'No lo dejamos conectarse · falta la foto de la cara',
+    );
+    expect(textoEvento('hito:subida_fallida', 'hito', 'en', 'tiempo')).toBe(
+      'Photo upload failed · the upload took too long',
+    );
+    expect(textoEvento('hito:camara_abierta', 'hito', 'es', null)).toBe('Abrió la cámara');
   });
 
   it('si el servidor falla, lo dice en la tarjeta (no queda en blanco)', async () => {
@@ -308,6 +316,7 @@ describe('C-RASTRO · el embudo del registro', () => {
             { paso: 'foto_cara', personas: 5, seQuedan: null },
           ],
           porPais: [{ pais: 'VE', cuentas: 20 }],
+          hitos: [{ hito: 'conectar_rechazado', motivo: 'cara', personas: 7 }],
         });
       }
       return json({});
@@ -319,6 +328,10 @@ describe('C-RASTRO · el embudo del registro', () => {
     expect(mayor.getAttribute('data-tono')).toBe('pendiente');
     expect(mayor.closest('tr')?.getAttribute('data-paso')).toBe('cuenta');
     expect(caja.querySelector('tr[data-paso="cuenta"]')?.textContent).toContain('15');
+    // C-FOTO-CARA-A-LA-VISTA: dónde se traban, en palabras.
+    expect(screen.getByTestId('embudo-hitos').textContent).toContain(
+      'No lo dejamos conectarse · falta la foto de la cara: 7 personas',
+    );
     // Quien llegó al último paso no «se queda»: va en verde.
     expect(caja.querySelector('tr[data-paso="foto_cara"] [data-tono="hecho"]')).toBeTruthy();
     expect(pedidas.at(-1)).toContain('app=repartidor');

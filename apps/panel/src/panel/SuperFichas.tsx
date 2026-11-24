@@ -85,14 +85,40 @@ const T = {
         : `Hay ${n} conductores sin zona: no sabemos su ciudad. Ábrelos y, en sus tres puntos, toca «Cambiar ciudad».`,
     verSinZona: 'Ver los que no tienen zona',
     conectadoSinViajes: 'Conectado, todavía no recibe viajes',
+    // C-QUE-TE-FALTA: lo mismo que ve el conductor en Driver, dicho para el equipo.
     faltas: {
       desconectado: 'Le falta conectarse.',
+      cara: 'Le falta tomarse la foto de la cara.',
+      telefono: 'Le falta confirmar su celular.',
       sin_vehiculo: 'Le falta registrar su vehículo en Driver.',
+      sin_placa: 'Tiene el vehículo registrado, pero le falta la placa.',
+      vehiculo_rechazado: 'Rechazamos su vehículo: le falta corregirlo.',
+      vehiculo_sin_enviar: 'Tiene el vehículo registrado; le falta enviarlo a revisión.',
+      papeles_sin_enviar: 'Tomó todas las fotos de sus papeles; le falta enviarlas a revisión.',
+      sin_restaurantes: 'Solo podría hacer Comida y su zona todavía no tiene restaurantes.',
+      vehiculo_en_revision: 'Falta que aprobemos su vehículo (está en revisión).',
       vehiculo_sin_aprobar: 'Le falta que aprobemos su vehículo.',
+      vehiculo_sin_activar: 'Tiene el vehículo; le falta activarlo en Driver.',
       sin_servicio_encendido: 'Le falta encender un servicio en Driver.',
       sin_habilitacion: 'Le falta que aprobemos sus papeles del servicio.',
       servicio_no_disponible: 'Su servicio no está abierto en su ciudad.',
+      sin_saldo: 'No le alcanza el saldo para la comisión.',
+      sin_pago_movil: 'Le falta cargar su cuenta de pago móvil.',
+      ubicacion_vieja: 'Conectado, pero su ubicación no se actualiza (GPS o señal).',
     } as Record<string, string>,
+    tambien: 'Además:',
+    vehiculosReales: 'Vehículos',
+    sinVehiculos: 'Todavía no registró ningún vehículo.',
+    enUso: 'En uso',
+    estadosVehiculo: {
+      registrado: 'Registrado, sin enviar',
+      en_revision: 'En revisión',
+      aprobado: 'Aprobado',
+      rechazado: 'Rechazado',
+      suspendido: 'Suspendido',
+    } as Record<string, string>,
+    sinPlaca: 'Sin placa',
+    motivoRechazo: 'Motivo',
     liderDe: (l: string) => `Líder de ${l}`,
     miembroDe: (l: string) => `En la línea ${l}`,
     contrato: 'Contrato',
@@ -204,12 +230,37 @@ const T = {
     conectadoSinViajes: 'Connected, can’t get trips yet',
     faltas: {
       desconectado: 'They need to go online.',
+      cara: 'They need to take their face photo.',
+      telefono: 'They need to confirm their phone.',
       sin_vehiculo: 'They need to add their vehicle in Driver.',
+      sin_placa: 'Their vehicle is saved, but the license plate is missing.',
+      vehiculo_rechazado: 'We rejected their vehicle: they need to fix it.',
+      vehiculo_sin_enviar: 'Their vehicle is saved; they need to send it for review.',
+      papeles_sin_enviar: 'They took all their document photos; they need to send them for review.',
+      sin_restaurantes: 'They could only do Food and their area has no restaurants yet.',
+      vehiculo_en_revision: 'We need to approve their vehicle (under review).',
       vehiculo_sin_aprobar: 'We need to approve their vehicle.',
+      vehiculo_sin_activar: 'They have the vehicle; they need to turn it on in Driver.',
       sin_servicio_encendido: 'They need to turn on a service in Driver.',
       sin_habilitacion: 'We need to approve their documents for the service.',
       servicio_no_disponible: 'Their service isn’t open in their city.',
+      sin_saldo: 'Their balance doesn’t cover the commission.',
+      sin_pago_movil: 'They need to add their mobile payment account.',
+      ubicacion_vieja: 'Online, but their location isn’t updating (GPS or signal).',
     } as Record<string, string>,
+    tambien: 'Also:',
+    vehiculosReales: 'Vehicles',
+    sinVehiculos: 'No vehicle registered yet.',
+    enUso: 'In use',
+    estadosVehiculo: {
+      registrado: 'Saved, not sent',
+      en_revision: 'Under review',
+      aprobado: 'Approved',
+      rechazado: 'Rejected',
+      suspendido: 'Suspended',
+    } as Record<string, string>,
+    sinPlaca: 'No plate',
+    motivoRechazo: 'Reason',
     liderDe: (l: string) => `Leader of ${l}`,
     miembroDe: (l: string) => `In the ${l} line`,
     contrato: 'Contract',
@@ -806,6 +857,21 @@ type Repartidor = {
   recibeViajes?: boolean;
   /** C-FICHA-SIN-CONTRADICCION: el primer paso que le falta para recibir viajes, según la regla. */
   falta?: string | null;
+  /** C-QUE-TE-FALTA: todo lo que le falta, en orden (la misma pieza que ve Driver). */
+  faltas?: { clave: string; quien: string; motivo?: string }[];
+  /** C-QUE-TE-FALTA: los vehículos de la tabla real (un servidor de antes no lo manda). */
+  vehiculos?: {
+    id: string;
+    tipo: string;
+    marca: string;
+    modelo: string;
+    anio: number | null;
+    color: string;
+    placa: string;
+    estado: string;
+    motivo: string;
+    activo: boolean;
+  }[];
   linea?: { nombre: string; rol: 'lider' | 'miembro' } | null;
   /** C-ID-DEL-PAIS: los ID que tuvo antes. */
   codigosAnteriores?: string[];
@@ -957,6 +1023,12 @@ export function SuperRepartidor({
       {r.recibeViajes === false && r.falta ? (
         <p className="pista" data-testid="ficha-falta">
           {t.faltas[r.falta] ?? r.falta}
+          {(r.faltas ?? []).length > 1
+            ? ` ${t.tambien} ${(r.faltas ?? [])
+                .slice(1)
+                .map((x) => t.faltas[x.clave] ?? x.clave)
+                .join(' ')}`
+            : ''}
         </p>
       ) : null}
       <p className="pista">
@@ -1048,6 +1120,36 @@ export function SuperRepartidor({
             </dd>
           </dl>
         </div>
+        {r.vehiculos ? (
+          // C-QUE-TE-FALTA: los vehículos de verdad, con su estado (antes salía vacía con una moto guardada).
+          <div className="tarjeta-form" data-testid="ficha-vehiculos">
+            <h2>{t.vehiculosReales}</h2>
+            {r.vehiculos.length ? (
+              r.vehiculos.map((v) => (
+                <dl className="super-dl" key={v.id} data-vehiculo={v.id}>
+                  <dt>{t.tipo}</dt>
+                  <dd>
+                    {t.vehiculos[v.tipo] ?? v.tipo}{' '}
+                    <Insignia estado={v.estado}>{t.estadosVehiculo[v.estado] ?? v.estado}</Insignia>{' '}
+                    {v.activo ? <Insignia tono="hecho">{t.enUso}</Insignia> : null}
+                  </dd>
+                  <dt>{t.marcaModelo}</dt>
+                  <dd>{[v.marca, v.modelo, v.anio, v.color].filter(Boolean).join(' · ') || '—'}</dd>
+                  <dt>{t.placa}</dt>
+                  <dd>{v.placa || t.sinPlaca}</dd>
+                  {v.estado === 'rechazado' && v.motivo ? (
+                    <>
+                      <dt>{t.motivoRechazo}</dt>
+                      <dd>{v.motivo}</dd>
+                    </>
+                  ) : null}
+                </dl>
+              ))
+            ) : (
+              <p>{t.sinVehiculos}</p>
+            )}
+          </div>
+        ) : null}
         <div className="tarjeta-form">
           <h2>{t.vehiculo}</h2>
           <dl className="super-dl">

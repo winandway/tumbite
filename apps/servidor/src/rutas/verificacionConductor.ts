@@ -25,7 +25,8 @@ import {
   politicaPlazo,
   recordarPlazos,
 } from '../plazoPapeles';
-import { type Variables, base, exigir } from '../sesion';
+import { type Ctx, type UsuarioSesion, type Variables, base, exigir } from '../sesion';
+import { anotarHito, origenDePeticion } from '../rastro';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   aciertoDeLaIa,
@@ -387,6 +388,15 @@ verificacionConductor.get('/conductor/verificacion', async (c) => {
   // La cuenta nueva de un país con plazo nace con él (una sola escritura, la primera vez).
   await empezarPlazo(c.env, db, u.id, 'registro');
   const [g, e] = await Promise.all([graciaDe(db, u.id), estadoVerificacion(db, u.id)]);
+  // C-FOTO-CARA-A-LA-VISTA: Driver le pide la cara para empezar (la tarjeta del inicio le toca). Una
+  // fila la primera vez; solo mientras falte (después ya no se intenta escribir).
+  if (
+    g.politica.asistente &&
+    g.estado === 'en_plazo' &&
+    !e.tieneCara &&
+    g.politica.paraEmpezar.includes('cara')
+  )
+    await anotarHito(db, u.id, 'cara_pedida', '', origenDePeticion(c.req));
   return c.json({
     pais: g.pais,
     asistente: g.politica.asistente,
@@ -426,9 +436,39 @@ verificacionConductor.get('/conductor/verificacion', async (c) => {
   });
 });
 
+/**
+ * C-FOTO-CARA-A-LA-VISTA (23 nov 2026): por qué el servidor rechazó una foto, en una clave corta para
+ * el hito (el panel la dice en palabras).
+ */
+export function motivoRechazoFoto(e: ErrorDatos): string {
+  if (e.estado === 413) return 'tamano';
+  if (e.estado === 415) return 'tipo';
+  if (e.estado === 503) return 'almacen';
+  if (e.estado === 422) return 'en_vivo';
+  if (e.campo === 'consentimiento') return 'consentimiento';
+  if (e.estado === 409) return 'aprobado';
+  return e.message.startsWith('No llegó') ? 'vacia' : 'otro';
+}
+
 verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
   const u = exigir(c, 'repartidor');
-  const paso = c.req.param('paso');
+  // C-FOTO-CARA-A-LA-VISTA: un rechazo deja su hito (una vez por motivo y cuenta), también con la app
+  // ya publicada. La foto que sí entra ya queda en `verificacion_fotos` (y en el paso del embudo).
+  return subirFotoDePaso(c, u).catch(async (e: unknown) => {
+    if (e instanceof ErrorDatos)
+      await anotarHito(
+        base(c),
+        u.id,
+        'subida_rechazada',
+        motivoRechazoFoto(e),
+        origenDePeticion(c.req),
+      );
+    throw e;
+  });
+});
+
+async function subirFotoDePaso(c: Ctx, u: UsuarioSesion) {
+  const paso = c.req.param('paso') ?? '';
   if (!esPasoVerificacion(paso)) throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
@@ -554,7 +594,7 @@ verificacionConductor.post('/conductor/verificacion/foto/:paso', async (c) => {
   // C-LLEGA-SOLO-A-REVISION: con esta foto, ¿algún papel quedó completo? Entonces va a revisión solo.
   await enviarSoloTrasSubir(c.env, db, u);
   return c.json({ id, paso, ia: { color: ia.color, aviso: ia.aviso } }, 201);
-});
+}
 
 /** «Usar de todos modos»: la persona deja la foto pese al aviso. Se marca para quien revisa. */
 verificacionConductor.post('/conductor/verificacion/foto/:paso/insistir', async (c) => {

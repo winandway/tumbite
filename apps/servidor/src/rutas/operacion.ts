@@ -78,7 +78,8 @@ import { volverPlatosAgotados } from './catalogo';
 import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
-import { encenderTodosSiNinguno } from './servicios';
+import { SERVICIOS_AL_MOMENTO, encenderTodosSiNinguno, estadoDelConductor } from './servicios';
+import { MENSAJE_SIN_RESTAURANTES, hayRestaurantesDelConductor } from '../servicioSinOferta';
 import { recalcularDinamica } from '../viajesDinamica';
 import {
   accesoDe,
@@ -175,6 +176,7 @@ import {
 import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
 import { crearTicket } from './tickets';
+import { anotarRechazoConectar, origenDePeticion } from '../rastro';
 import {
   abrirPase,
   enviarSms,
@@ -1540,8 +1542,26 @@ operacion.post('/repartidor/conectar', async (c) => {
   // C-SERVICIOS-CONECTADOS: el encendido general (app vieja) conecta todos los servicios aprobados
   // si ninguno quedó encendido; si el repartidor ya eligió los suyos, se respetan.
   // Solo después de pasar todas las puertas: si una frena, no se escribe nada.
-  const r = await conectarRepartidor(c, u, db, d);
+  // C-FOTO-CARA-A-LA-VISTA: un «no» al conectarse deja su hito (una vez por motivo y cuenta).
+  const r = await conectarRepartidor(c, u, db, d).catch(async (e: unknown) => {
+    throw d.conectado ? await anotarRechazoConectar(db, u.id, e, origenDePeticion(c.req)) : e;
+  });
   if (d.conectado) await encenderTodosSiNinguno(db, u.id);
+  // C-SERVICIO-SIN-OFERTA: si lo único que puede hacer es Comida y su zona no tiene restaurantes, se
+  // le dice la verdad en la respuesta (Driver 0.1.69 muestra `avisoComida` al conectarse) y su panel
+  // no lo muestra «esperando pedidos» de Comida.
+  if (d.conectado && !(await hayRestaurantesDelConductor(db, u.id))) {
+    const ofrece = (
+      await estadoDelConductor(db, u.id, false, Number.MAX_SAFE_INTEGER)
+    ).servicios.filter(
+      (s) =>
+        (SERVICIOS_AL_MOMENTO as readonly string[]).includes(s.servicioId) &&
+        s.estadoServicio === 'disponible' &&
+        s.puedeActivar,
+    );
+    if (ofrece.length && ofrece.every((s) => s.servicioId === 'comida'))
+      return c.json({ ...r, avisoComida: MENSAJE_SIN_RESTAURANTES });
+  }
   return c.json(r);
 });
 
@@ -1585,7 +1605,7 @@ export async function conectarRepartidor(
   // está encendido y le queda presupuesto) se le da aquí, la primera vez que pasa esta puerta. Una
   // vez en la vida (índice único); sin saldo prepago no recibiría ningún viaje.
   if (gracia?.activa)
-    await darRegaloConductorNuevo(db, u.id).catch((e: unknown) =>
+    await darRegaloConductorNuevo(db, u.id, c.env).catch((e: unknown) =>
       console.error('saldo: regalo de arranque en plazo', e),
     );
   const identidadEnPlazo = Boolean(gracia?.activa) && !gracia?.exigidos.has('identidad');

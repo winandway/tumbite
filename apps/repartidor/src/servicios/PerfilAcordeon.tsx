@@ -10,17 +10,16 @@ import {
   LETRA,
   MOVIMIENTO,
   MOTOR_NATIVO,
-  MotivoRechazo,
-  PildoraPapel,
   RADIO,
   Text,
   confirmarConSistema,
   estadoPapel,
   fotoConOrigen,
   useSesion,
-  type EstadoPapel,
   type NombreIcono,
 } from '@tumbite/movil';
+import { BotonSubir, FilaPapel } from './FilaPapel';
+import { detallePapelVehiculo, faltaParaEnviar } from './papelesVehiculo';
 import { MisDatos } from '../MisDatos';
 import { Verificacion } from '../Verificacion';
 import { POR_SERVICIO } from '../viajes/AltaPasajeros';
@@ -46,12 +45,13 @@ type Vehiculo = {
   marca: string;
   modelo: string;
   placa: string;
+  placaEstado?: string;
   estado: string;
   motivo: string;
   documentos: Doc[];
 };
 type Papeles = {
-  perfil: { documentosVehiculo?: Partial<Record<string, string[]>> };
+  perfil: { documentosVehiculo?: Partial<Record<string, string[]>>; placaNacional?: boolean };
   documentos: Doc[];
 };
 type PapelReq = {
@@ -174,7 +174,7 @@ function Seccion({
       </View>
       <Text style={[LETRA.subtitulo, { flexShrink: 0 }]}>{titulo}</Text>
       <Text
-        numberOfLines={1}
+        numberOfLines={2}
         style={{
           flex: 1,
           textAlign: 'right',
@@ -191,161 +191,6 @@ function Seccion({
 }
 
 /** Una fila de papel: nombre, detalle, píldora y, si hace falta, el motivo y las dos subidas. */
-function FilaPapel({
-  nombre,
-  detalle,
-  estado,
-  motivo,
-  chips,
-  idioma,
-  subiendo,
-  alSubir,
-  alAbrir,
-  primera,
-  testID,
-}: {
-  testID?: string;
-  nombre: string;
-  detalle?: string;
-  estado: EstadoPapel;
-  motivo?: string;
-  chips?: string[];
-  idioma: Idioma;
-  subiendo?: boolean;
-  /** Sube el papel con la cámara o desde los archivos. */
-  alSubir?: (origen: 'camara' | 'archivos') => void;
-  /** Abre la pantalla completa de ese papel (identidad, antecedentes). */
-  alAbrir?: () => void;
-  primera?: boolean;
-}) {
-  const t = textosServicios(idioma);
-  const necesita = estado === 'rechazado' || estado === 'falta';
-  return (
-    <View
-      testID={testID}
-      style={{
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderTopWidth: primera ? 0 : 1,
-        borderTopColor: COLOR.borde,
-        gap: 10,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 22 }}>
-            {nombre}
-          </Text>
-          {detalle ? <Text style={LETRA.secundario}>{detalle}</Text> : null}
-          {chips?.length ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-              {chips.map((c) => (
-                <View
-                  key={c}
-                  style={{
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: RADIO.s,
-                    backgroundColor: COLOR.superficie,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: FUENTE.textoFuerte,
-                      fontSize: 12,
-                      color: COLOR.textoSuave,
-                    }}
-                  >
-                    {c}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
-        </View>
-        <PildoraPapel estado={estado} texto={de(t.estados, estado) ?? estado} />
-      </View>
-      {estado === 'rechazado' && motivo ? (
-        <MotivoRechazo etiqueta={t.motivo} texto={motivo} />
-      ) : null}
-      {necesita && alSubir ? (
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <BotonSubir
-              texto={subiendo ? t.subiendo : t.tomarFoto}
-              icono="camera-outline"
-              fuerte
-              cargando={subiendo}
-              alTocar={() => alSubir('camara')}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <BotonSubir
-              texto={t.subirArchivo}
-              cargando={subiendo}
-              alTocar={() => alSubir('archivos')}
-            />
-          </View>
-        </View>
-      ) : necesita && alAbrir ? (
-        <BotonSubir texto={nombre} icono="arrow-forward" fuerte alTocar={alAbrir} />
-      ) : null}
-    </View>
-  );
-}
-
-function BotonSubir({
-  texto,
-  icono,
-  fuerte,
-  cargando,
-  alTocar,
-}: {
-  texto: string;
-  icono?: NombreIcono;
-  fuerte?: boolean;
-  cargando?: boolean;
-  alTocar: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={alTocar}
-      disabled={cargando}
-      accessibilityRole="button"
-      accessibilityLabel={texto}
-      style={({ pressed }) => ({
-        height: 48,
-        borderRadius: RADIO.m,
-        backgroundColor: fuerte
-          ? pressed
-            ? '#2A2A2A'
-            : COLOR.negro
-          : pressed
-            ? '#E3E3E3'
-            : COLOR.superficie,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        opacity: cargando ? 0.6 : 1,
-      })}
-    >
-      {icono ? (
-        <Icono nombre={icono} tamano={18} color={fuerte ? COLOR.blanco : COLOR.texto} />
-      ) : null}
-      <Text
-        numberOfLines={1}
-        style={{
-          fontFamily: FUENTE.tituloMedio,
-          fontSize: 15,
-          color: fuerte ? COLOR.blanco : COLOR.texto,
-        }}
-      >
-        {texto}
-      </Text>
-    </Pressable>
-  );
-}
 
 const fechaCorta = (f: string, idioma: Idioma) =>
   new Date(
@@ -395,6 +240,7 @@ export function PerfilAcordeon({
   const [fotoMala, setFotoMala] = useState(false);
   // C-CAMBIAR-VEHICULO: el vehículo con el que trabaja ahora (se cambia desde «Mi vehículo»).
   const [activoId, setActivoId] = useState<string | null>(null);
+  const [seguroEnPlazo, setSeguroEnPlazo] = useState(false);
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
   const ids = servicios.map((s) => s.servicioId).join(',');
@@ -403,10 +249,11 @@ export function PerfilAcordeon({
     try {
       const lista = ids ? ids.split(',') : [];
       const [v, p, k, ...reqs] = await Promise.all([
-        api.pedir<{ vehiculos: Vehiculo[]; vehiculoActivoId?: string | null }>(
-          'GET',
-          '/datos/conductor/vehiculos',
-        ),
+        api.pedir<{
+          vehiculos: Vehiculo[];
+          vehiculoActivoId?: string | null;
+          seguroEnPlazo?: boolean;
+        }>('GET', '/datos/conductor/vehiculos'),
         api.pedir<Papeles>('GET', '/datos/conductor/papeles').catch(() => null),
         api
           .pedir<{ kyc: { estado: string; motivo: string } }>('GET', '/datos/kyc')
@@ -420,6 +267,7 @@ export function PerfilAcordeon({
       ]);
       setVehiculos(v.vehiculos.filter((x) => x.estado !== 'retirado'));
       setActivoId(v.vehiculoActivoId ?? null);
+      setSeguroEnPlazo(Boolean(v.seguroEnPlazo));
       setPapeles(p);
       setKyc(k?.kyc ?? null);
       setRequisitos(
@@ -474,6 +322,17 @@ export function PerfilAcordeon({
       await api.pedir('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: id });
       await cargar();
       alCambiarVehiculo?.();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  /** C-PAPEL-DICE-LA-VERDAD: enviar el vehículo a revisión desde «Mi vehículo». */
+  async function enviarVehiculo(id: string) {
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/conductor/vehiculos/${id}/enviar`, {});
+      await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
@@ -583,6 +442,9 @@ export function PerfilAcordeon({
 
   // ───── Los vehículos con sus papeles (pantalla 06) ─────
   const ofrece = (tipo: 'moto' | 'carro') => servicios.some((s) => s.servicioId === tipo);
+  const haceReparto = servicios.some(
+    (s) => (s.servicioId === 'comida' || s.servicioId === 'envios') && s.estado !== 'agregar',
+  );
   const papelesDe = (v: Vehiculo) => {
     const pedidos =
       papeles?.perfil.documentosVehiculo?.[v.tipo] ??
@@ -595,20 +457,21 @@ export function PerfilAcordeon({
         : (idioma === 'en' ? POR_SERVICIO.moto.en : POR_SERVICIO.moto.es).docs;
     return tipos.map((tipo) => {
       const d = v.documentos.find((x) => x.tipo === tipo);
+      // C-PAPEL-DICE-LA-VERDAD: lo que dice sale del estado del vehículo (una sola pieza).
+      const dice = detallePapelVehiculo(
+        { docEstado: d?.estado, vehiculoEstado: v.estado, vehiculoTipo: v.tipo },
+        idioma,
+      );
       return {
         tipo,
         nombre: de(nombres, tipo) ?? tipo,
         estado: estadoPapel(d?.estado ?? 'falta'),
         motivo: d?.motivo ?? '',
-        detalle: d
-          ? d.venceEn
+        textoEstado: dice.pildora ?? undefined,
+        detalle:
+          d?.venceEn && !dice.sinEnviar
             ? t.vence(fechaCorta(d.venceEn, idioma))
-            : d.estado === 'aprobado'
-              ? t.revisado
-              : d.estado === 'pendiente'
-                ? t.enviadoHoy
-                : undefined
-          : t.sinSubir,
+            : dice.texto || undefined,
       };
     });
   };
@@ -833,6 +696,7 @@ export function PerfilAcordeon({
                               nombre={d.nombre}
                               detalle={d.detalle}
                               estado={d.estado}
+                              textoEstado={d.textoEstado}
                               motivo={d.motivo}
                               idioma={idioma}
                               subiendo={subiendo === `${v.id}:${d.tipo}`}
@@ -845,6 +709,47 @@ export function PerfilAcordeon({
                               }
                             />
                           ))}
+                          {/* C-PAPEL-DICE-LA-VERDAD: lo subido no se revisa hasta enviar el vehículo. Aquí
+                              mismo se envía, o se dice exactamente qué falta para poder enviarlo. */}
+                          {v.estado === 'registrado' || v.estado === 'rechazado'
+                            ? (() => {
+                                const falta = faltaParaEnviar(
+                                  v,
+                                  Boolean(papeles?.perfil.placaNacional),
+                                  idioma,
+                                  seguroEnPlazo,
+                                );
+                                return (
+                                  <View
+                                    testID={`enviar-vehiculo-${v.tipo}`}
+                                    style={{
+                                      padding: 12,
+                                      gap: 8,
+                                      borderTopWidth: 1,
+                                      borderTopColor: COLOR.borde,
+                                    }}
+                                  >
+                                    {falta.length ? (
+                                      <Text style={{ color: COLOR.textoSuave, fontSize: 14 }}>
+                                        {idioma === 'en'
+                                          ? `To send it for review, you still need: ${falta.join(', ')}.`
+                                          : `Para enviar tu vehículo a revisión falta: ${falta.join(', ')}.`}
+                                      </Text>
+                                    ) : (
+                                      <Boton
+                                        texto={
+                                          idioma === 'en'
+                                            ? 'Send it for review'
+                                            : 'Enviar a revisión'
+                                        }
+                                        testID={`enviar-vehiculo-boton-${v.tipo}`}
+                                        alTocar={() => void enviarVehiculo(v.id)}
+                                      />
+                                    )}
+                                  </View>
+                                );
+                              })()
+                            : null}
                           {v.estado === 'aprobado' && v.id !== activoId ? (
                             // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): elegir el vehículo con el que
                             // trabajar, como «Vehicles» de Uber Driver.
@@ -940,30 +845,33 @@ export function PerfilAcordeon({
                   alTocar={() => setAbierto('carro')}
                 />
               ) : null}
-              {/* Los datos de reparto de Comida y Envíos (ID, vehículo, licencia y seguro). */}
-              <Pressable
-                onPress={() => setAbierto('reparto')}
-                accessibilityRole="button"
-                style={({ pressed }) => ({
-                  borderWidth: 1,
-                  borderColor: COLOR.borde,
-                  borderRadius: RADIO.l,
-                  padding: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  backgroundColor: pressed ? COLOR.superficie : COLOR.fondo,
-                })}
-              >
-                <Icono nombre="bag-handle-outline" tamano={22} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16 }}>
-                    {t.datosReparto}
-                  </Text>
-                  <Text style={LETRA.secundario}>{t.datosRepartoDetalle}</Text>
-                </View>
-                <Icono nombre="chevron-forward" tamano={20} color={COLOR.textoSuave} />
-              </Pressable>
+              {/* Los datos de reparto de Comida y Envíos (ID, vehículo, licencia y seguro). Tramo 1:
+                  solo a quien hace Comida o Envíos (al de Moto con pasajero le parecía otro registro). */}
+              {haceReparto ? (
+                <Pressable
+                  onPress={() => setAbierto('reparto')}
+                  accessibilityRole="button"
+                  style={({ pressed }) => ({
+                    borderWidth: 1,
+                    borderColor: COLOR.borde,
+                    borderRadius: RADIO.l,
+                    padding: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    backgroundColor: pressed ? COLOR.superficie : COLOR.fondo,
+                  })}
+                >
+                  <Icono nombre="bag-handle-outline" tamano={22} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16 }}>
+                      {t.datosReparto}
+                    </Text>
+                    <Text style={LETRA.secundario}>{t.datosRepartoDetalle}</Text>
+                  </View>
+                  <Icono nombre="chevron-forward" tamano={20} color={COLOR.textoSuave} />
+                </Pressable>
+              ) : null}
             </View>
           </Contenido>
         ) : null}

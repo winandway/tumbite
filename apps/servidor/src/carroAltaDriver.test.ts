@@ -28,7 +28,8 @@ describe('C-CARRO-ALTA-DRIVER: el taxista se da de alta en Driver', () => {
     const s = leer('apps/repartidor/src/viajes/AltaPasajeros.tsx');
     expect(s).toMatch(/useBorrador\(/);
     expect(s).toMatch(/'driver-mi-carro'/);
-    expect(s).toMatch(/fotoConCamara\(/);
+    // Tramo 1: los dos botones de la fila única (cámara y archivos), con la pieza de la cámara.
+    expect(s).toMatch(/fotoConOrigen\(/);
     expect(s).toMatch(/PLAZAS_CARRO = \[4, 6\]/);
     expect(s).toMatch(/plazas: Number\(v\.plazas\)/);
     expect(s).toMatch(/servicioId: servicio,/);

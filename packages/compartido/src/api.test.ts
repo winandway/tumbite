@@ -1,6 +1,44 @@
 import { describe, expect, it } from 'vitest';
 import { ESTADO_CANCELADA, ErrorApi, crearApi } from './api';
 
+// C-FOTO-CARA-A-LA-VISTA (23 nov 2026): con mala señal la subida de la foto de la cara se quedaba
+// esperando para siempre, sin mensaje. Ahora se corta y dice qué pasó, con su motivo.
+describe('subida de fotos con tiempo límite', () => {
+  const colgada: typeof fetch = (_u, init) =>
+    new Promise((_ok, falla) => {
+      init?.signal?.addEventListener('abort', () => falla(new Error('abortado')));
+    });
+  it('una subida que no responde se corta y avisa que tardó (motivo «tiempo»)', async () => {
+    const api = crearApi({ base: '', idioma: () => 'es', tiempoFotoMs: 30, fetch: colgada });
+    const e = await api.subirFotoCon(new Blob(['x']), '/datos/foto').catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(ErrorApi);
+    expect(e).toMatchObject({ estado: 0, datos: { motivo: 'tiempo' } });
+    expect((e as ErrorApi).message).toMatch(/tard/i);
+  });
+  it('sin red, el motivo es «sin_conexion»', async () => {
+    const api = crearApi({
+      base: '',
+      fetch: () => Promise.reject(new Error('sin red')),
+    });
+    await expect(api.subirFoto(new Blob(['x']), '/datos/foto')).rejects.toMatchObject({
+      estado: 0,
+      datos: { motivo: 'sin_conexion' },
+    });
+  });
+  it('el hito del embudo nunca rompe la pantalla, aunque falle', async () => {
+    const pedidos: string[] = [];
+    const api = crearApi({
+      base: '',
+      fetch: (u, init) => {
+        pedidos.push(`${String(init?.method)} ${String(u)} ${String(init?.body)}`);
+        return Promise.reject(new Error('sin red'));
+      },
+    });
+    await expect(api.hito('camara_abierta')).resolves.toBe(false);
+    expect(pedidos[0]).toBe('POST /datos/rastro/hito {"hito":"camara_abierta","motivo":""}');
+  });
+});
+
 describe('cliente del servidor', () => {
   it('una respuesta que nunca llega se corta a tiempo y se cuenta como sin conexión', async () => {
     // Candado C-PEDIDO-CON-LIMITE: en el sitio de pruebas una petición quedó sin respuesta y la

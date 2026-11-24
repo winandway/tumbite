@@ -3,6 +3,8 @@ import {
   type Idioma,
   type PasoRegistro,
   ErrorApi,
+  NOMBRE_HITO,
+  NOMBRE_MOTIVO_HITO,
   NOMBRE_PASO,
   enIdioma,
 } from '@tumbite/compartido';
@@ -23,6 +25,8 @@ type Embudo = {
   hasta: string;
   pasos: { paso: PasoRegistro; personas: number; seQuedan: number | null }[];
   porPais: { pais: string; cuentas: number }[];
+  /** C-FOTO-CARA-A-LA-VISTA: dónde se traban (un servidor de antes no lo manda). */
+  hitos?: { hito: string; motivo: string; personas: number }[];
 };
 type Zona = { id: string; nombre: string; pais: string };
 
@@ -51,6 +55,9 @@ const T = {
     porPais: 'Cuentas creadas por país de la red',
     sinPais: 'Sin país',
     cuentas: 'Cuentas',
+    hitos: 'Dónde se traban (foto de la cara y conexión)',
+    hitosAyuda:
+      'De las mismas cuentas: cuántas personas vieron, abrieron o sufrieron cada cosa al menos una vez.',
   },
   en: {
     titulo: 'Sign-up funnel',
@@ -76,6 +83,9 @@ const T = {
     porPais: 'Accounts created by network country',
     sinPais: 'No country',
     cuentas: 'Accounts',
+    hitos: 'Where they get stuck (face photo and going online)',
+    hitosAyuda:
+      'For the same accounts: how many people saw, opened or hit each thing at least once.',
   },
 };
 
@@ -85,6 +95,16 @@ const nombrePaso = (p: string, idioma: Idioma) => {
   return n ? enIdioma(n, idioma) : p;
 };
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+const HITOS = new Map(Object.entries(NOMBRE_HITO));
+const MOTIVOS = new Map(Object.entries(NOMBRE_MOTIVO_HITO));
+/** «No lo dejamos conectarse · falta la foto de la cara». */
+export function textoHito(hito: string, motivo: string, idioma: Idioma) {
+  const h = HITOS.get(hito);
+  const m = motivo ? MOTIVOS.get(motivo) : undefined;
+  return [h ? enIdioma(h, idioma) : hito, motivo ? (m ? enIdioma(m, idioma) : motivo) : '']
+    .filter(Boolean)
+    .join(' · ');
+}
 
 /** El paso donde se queda más gente (null si nadie se quedó en ninguno). */
 export function dondeSeQuedanMas(pasos: { paso: string; seQuedan: number | null }[]) {
@@ -235,6 +255,20 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
             {x.porPais.map((p) => (
               <li key={p.pais || 'sin'}>
                 {p.pais || t.sinPais}: <strong>{p.cuentas}</strong> {t.cuentas.toLowerCase()}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {x?.hitos?.length ? (
+        <>
+          <h2>{t.hitos}</h2>
+          <p className="ficha-nota">{t.hitosAyuda}</p>
+          <ul className="super-lista" data-testid="embudo-hitos">
+            {x.hitos.map((h) => (
+              <li key={`${h.hito}:${h.motivo}`}>
+                {textoHito(h.hito, h.motivo, idioma)}: <strong>{h.personas}</strong>{' '}
+                {t.personas.toLowerCase()}
               </li>
             ))}
           </ul>

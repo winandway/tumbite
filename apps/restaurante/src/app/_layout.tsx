@@ -7,6 +7,7 @@ import {
   PantallaConFallo,
   registrarAtrapaFallos,
   useFuentesDivoox,
+  HojaFoto,
 } from '@tumbite/movil';
 
 // C-NUNCA-EN-BLANCO: todo error de la app llega al registro, con la app y la versión.
@@ -45,6 +46,8 @@ export default function Raiz() {
         {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
         <SobreLosBotones>
           <Stack screenOptions={{ headerShown: false }} />
+          {/* Tramo 1: la hoja propia de «Tomar foto / Subir desde archivos». */}
+          <HojaFoto />
         </SobreLosBotones>
       </SesionProvider>
     </SafeAreaProvider>
