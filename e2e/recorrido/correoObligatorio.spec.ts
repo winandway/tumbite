@@ -181,7 +181,9 @@ for (const idioma of ['en', 'es'] as const) {
     await ctx.close();
   });
 
-  test(`olvidé mi contraseña ofrece el código del celular, sin revelar qué cuenta lo tiene (${idioma})`, async ({
+  // C-MENSAJES-ACCESO (24 nov 2026, decisión de Richard): con un correo sin cuenta, «olvidé mi
+  // contraseña» ya no finge que mandó algo: dice que no hay cuenta y ofrece crearla.
+  test(`olvidé mi contraseña con un correo sin cuenta lo dice y ofrece crearla (${idioma})`, async ({
     browser,
   }) => {
     const es = idioma === 'es';
@@ -195,7 +197,8 @@ for (const idioma of ['en', 'es'] as const) {
     await p.goto(`${es ? '/es' : ''}/forgot-password`);
     await p.getByRole('textbox').first().fill('nombre@ejemplo.com');
     await p.getByRole('button', { name: es ? 'Mandarme el enlace' : 'Send me the link' }).click();
-    await expect(p.getByTestId('restablecer-codigo')).toBeVisible({ timeout: 20_000 });
+    await expect(p.getByTestId('olvide-sin-cuenta')).toBeVisible({ timeout: 20_000 });
+    await expect(p.getByTestId('accion-crear')).toBeVisible();
     if (CAPTURAS) {
       mkdirSync(join(RAIZ, 'docs', 'capturas', 'recorrido'), { recursive: true });
       await p.screenshot({
