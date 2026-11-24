@@ -2,6 +2,15 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-BARRA-IGUAL-REPARTO · «Ahora mismo / En línea» solo con la condición del reparto, y «sin carro» dicho claro (24 nov 2026, Gerencia mirando a un conductor real de madrugada) — todos los países
+
+- **Qué pasaba:** VE-TUC-000001 tenía `conectado = 1` con la ubicación de hace 4 horas; la barra decía «Está recibiendo carreras de Envíos, Moto ahora mismo» y la ficha «En línea». El reparto NO le ofrecía nada: `candidatosParaOperacion` (operaciones.ts) exige `ubicacion_en` de los últimos `MINUTOS_UBICACION_VIGENTE` (2) minutos (10 para la oferta de confianza). No existe ningún mecanismo que lo desconecte por inactividad.
+- **Qué se hizo:** `queTeFalta` (`recibeViajes`) exige además la ubicación reciente, la misma que el reparto; la barra (`activacion.ts`) y la ficha (`superadmin.ts`) leen esa pieza. Sin ubicación reciente dice «Conectado, pero su ubicación no se actualiza» (`ubicacion_vieja`).
+- **Sin carro:** `GET /admin/conductores/:id/pasajeros` dice por servicio si tiene un vehículo (no retirado ni rechazado) que le sirva (`tieneVehiculo`, por `servicio_vehiculos`); el panel dice «No tiene un carro registrado…» en vez de «No le falta nada para Carro».
+- **Lo del cliente sigue igual a propósito:** «no ofrecer Envíos si nadie lo toma» cuenta a quien está apto aunque no esté conectado en ese momento (como los grandes: el servicio no desaparece cada vez que un conductor apaga la app; si nadie acepta, el pedido vence «sin conductor»).
+- **Cómo se comprueba:** `rutas/barraIgualReparto.test.ts` (2, en ROJO sin el arreglo), `RevisionConductor.test.tsx` («sin carro registrado…»).
+- **Qué NO tocar:** no volver a dar «recibe viajes» solo con `conectado`; no reescribir el umbral aparte (sale de `MINUTOS_UBICACION_VIGENTE`).
+
 ## C-SERVICIO-SIN-OFERTA (Comida y tiendas al cliente), C-FICHA-TODOS-LOS-SERVICIOS y C-FICHA-UN-BLOQUE (24 nov 2026, ensayo general y Gerencia) — todos los países
 
 - **Comida y tiendas al cliente (`apps/servidor/src/servicioSinOferta.ts` → `COMERCIOS_DE_SERVICIO`, `hayComerciosEnZona`; usado por `sinQuienLoTome` en `rutas/servicios.ts`):** Comida, Mercado, Farmacia y Licores abiertos al público en la zona salen `no_disponible_zona` si no hay ni un comercio `aprobado` de su `tipo_comercio` (restaurante; mercado o conveniencia; farmacia; licores). La app de clientes 0.1.60 ya abre la hoja «aún no hay» y su portada no pinta el catálogo ni «No restaurants in your area yet. Coming soon!» (solo lo hace con Comida disponible). Piloto y pruebas no se tocan. El texto de la app quedó sin «¡Muy pronto! / Coming soon!» para la próxima versión.

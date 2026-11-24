@@ -574,7 +574,22 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
     identidad: kycFila?.estado ?? 'sin_enviar',
     documentos,
     vehiculoActivo: estado.vehiculoActivo,
-    servicios: estado.servicios.filter((s) => s.servicioId === 'moto' || s.servicioId === 'carro'),
+    // C-BARRA-IGUAL-REPARTO: si tiene un vehículo (no retirado ni rechazado) que sirva para cada
+    // servicio; sin él, el panel dice que no lo tiene en vez de «no le falta nada».
+    servicios: await (async () => {
+      const { results } = await db
+        .prepare(
+          `SELECT DISTINCT sv.servicio_id AS s FROM vehiculos v
+             JOIN servicio_vehiculos sv ON sv.vehiculo_tipo = v.tipo
+            WHERE v.conductor_id = ? AND v.estado NOT IN ('retirado', 'rechazado')`,
+        )
+        .bind(id)
+        .all<{ s: string }>();
+      const con = new Set(results.map((r) => r.s));
+      return estado.servicios
+        .filter((s) => s.servicioId === 'moto' || s.servicioId === 'carro')
+        .map((s) => ({ ...s, tieneVehiculo: con.has(s.servicioId) }));
+    })(),
   });
 });
 

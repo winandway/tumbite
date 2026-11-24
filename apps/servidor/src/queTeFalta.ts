@@ -227,9 +227,10 @@ export async function queTeFalta(
   if (f && !Number(f.conectado) && !faltas.some((x) => x.quien === 'conductor'))
     poner({ clave: 'desconectado', quien: 'conductor' });
 
-  // «Recibe viajes» = la misma regla del reparto (C-EN-LINEA-DE-VERDAD); la ubicación vieja va aparte.
+  // «Recibe viajes» = la misma regla del reparto (C-EN-LINEA-DE-VERDAD), con la ubicación reciente que
+  // el reparto exige para ofrecer (C-BARRA-IGUAL-REPARTO): conectado con la señal de hace horas no recibe.
   return {
-    recibeViajes: Boolean(f && Number(f.elegible)) && !soloComidaVacia,
+    recibeViajes: Boolean(f && Number(f.elegible) && Number(f.ubicacion)) && !soloComidaVacia,
     faltas,
     vehiculo: elegido ? { id: elegido.id, tipo: elegido.tipo, estado: elegido.estado } : null,
   };

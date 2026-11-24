@@ -777,3 +777,4 @@
 
 - [ ] [para: desarrollador] El recorrido «cobro en mano en VES» (internacional.spec.ts) falla si corre después de «cambiarCiudadAdmin» («That code isn’t valid or was already used»): dependencia de orden entre recorridos, ya presente en 17fa884. En la nube pasa por el orden de las tandas. Aislarlo. Todos los países.
 - [ ] [para: Richard] 👤 Al publicarse la Verificación única, los conductores que ya trabajan recibirían una vez «Ya puedes recibir carreras»: decidir si se deja así (va como vino de la rama). Todos los países.
+- [ ] [para: investigador] Desconectar solo al conductor que lleva X minutos sin mandar ubicación, como los grandes (hoy nadie lo desconecta; el reparto ya no le ofrece, pero queda «conectado»). Medir escrituras antes de proponer el tope. Todos los países.

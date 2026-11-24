@@ -226,6 +226,10 @@ const T = {
     // C-CARRO-PANEL: lo mismo para Carro.
     habilitacionCarro: 'Habilitación para Carro',
     nadaFaltaCarro: 'No le falta nada para Carro.',
+    sinMotoServicio:
+      'No tiene una moto registrada: Moto no le llega hasta que registre una y la aprobemos.',
+    sinCarroServicio:
+      'No tiene un carro registrado: Carro no le llega hasta que registre uno y lo aprobemos.',
     habilitarCarro: 'Habilitar para Carro',
     habilitadoCarro: 'Conductor habilitado para Carro.',
     vehiculoActivo: 'Vehículo activo',
@@ -469,6 +473,10 @@ const T = {
     habilitado: 'Driver approved for Moto.',
     habilitacionCarro: 'Car approval',
     nadaFaltaCarro: 'Nothing missing for Car.',
+    sinMotoServicio:
+      'No motorcycle registered: Moto trips won’t reach them until they register one and we approve it.',
+    sinCarroServicio:
+      'No car registered: Car trips won’t reach them until they register one and we approve it.',
     habilitarCarro: 'Approve for Car',
     habilitadoCarro: 'Driver approved for Car.',
     vehiculoActivo: 'Active vehicle',
@@ -1223,6 +1231,8 @@ type DetalleConductor = {
     requisitosFaltantes: string[];
     puedeActivar: boolean;
     motivo: string;
+    /** C-BARRA-IGUAL-REPARTO: tiene un vehículo que sirve para este servicio. */
+    tieneVehiculo?: boolean;
   }[];
 };
 
@@ -1625,7 +1635,11 @@ export function Conductor({
           {enPalabras(t.estadosHabilitacion, x.habilitacion ?? 'ninguna')}
         </Insignia>
       </h3>
-      {x.requisitosFaltantes.length ? (
+      {x.tieneVehiculo === false ? (
+        <p className="pista" data-testid={`sin-vehiculo-${x.servicioId}`}>
+          {x.servicioId === 'carro' ? t.sinCarroServicio : t.sinMotoServicio}
+        </p>
+      ) : x.requisitosFaltantes.length ? (
         <>
           <p>{t.leFalta}:</p>
           <ul aria-label={`${t.leFalta} · ${titulo}`}>

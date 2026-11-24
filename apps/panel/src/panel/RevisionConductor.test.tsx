@@ -387,6 +387,36 @@ describe('C-VERIFICACION-UNICA: todo lo de un conductor se decide en una sola pi
     );
   });
 
+  it('C-BARRA-IGUAL-REPARTO: sin carro registrado no dice «No le falta nada para Carro»', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      servicios: [
+        {
+          servicioId: 'moto',
+          habilitacion: 'aprobada',
+          requisitosFaltantes: [],
+          puedeActivar: true,
+          motivo: '',
+          tieneVehiculo: true,
+        },
+        {
+          servicioId: 'carro',
+          habilitacion: 'aprobada',
+          requisitosFaltantes: [],
+          puedeActivar: false,
+          motivo: '',
+          tieneVehiculo: false,
+        },
+      ],
+    });
+    render(<RevisionConductor id="c1" base="/panel/control-x" idioma="es" />);
+    expect(await screen.findByTestId('sin-vehiculo-carro')).toHaveTextContent(
+      'No tiene un carro registrado',
+    );
+    expect(screen.queryByText('No le falta nada para Carro.')).toBeNull();
+    expect(screen.getByText('No le falta nada para Moto.')).toBeTruthy();
+  });
+
   it('en la ficha del conductor no repite «Cambiar ciudad» (ya está en sus tres puntos)', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);
