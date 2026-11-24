@@ -66,7 +66,10 @@ function conNavegacionReintentada(p: Page): Page {
  */
 async function avisoIaContestado(c: BrowserContext) {
   await c.route('**/datos/conductor/verificacion', async (ruta) => {
-    const r = await ruta.fetch();
+    // Si la prueba ya cerró su contexto con esta lectura en vuelo, no hay a quién contestarle: se suelta
+    // sin tumbar la prueba (pasó en el sitio de pruebas: «Request context disposed»).
+    const r = await ruta.fetch().catch(() => null);
+    if (!r) return;
     let cuerpo = (await r.json().catch(() => null)) as Record<string, unknown> | null;
     if (ruta.request().method() === 'GET' && cuerpo?.avisoIaPendiente === true) {
       const url = new URL(ruta.request().url());

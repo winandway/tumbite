@@ -59,6 +59,9 @@ test('alta de conductor de punta a punta: de cero a una cuenta que entra (es)', 
   // 4) Se crea con «Crear mi cuenta» y la app sigue.
   await p.getByTestId('crear-mi-cuenta').click();
   await expect(p.getByRole('button', { name: L.permisosListo })).toBeVisible({ timeout: 30_000 });
+  // Las intercepciones del arnés (fixtures.ts) pueden tener una lectura en vuelo al terminar: se sueltan
+  // antes de cerrar para que un cierre a destiempo no tumbe la prueba (falló así en el sitio de pruebas).
+  await ctx.unrouteAll({ behavior: 'ignoreErrors' });
   await ctx.close();
 
   // 5) La cuenta existe y entra; con otra contraseña, el mensaje propio.
