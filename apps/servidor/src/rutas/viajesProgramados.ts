@@ -216,7 +216,7 @@ async function avisar(
   aviso: (i: 'es' | 'en') => { titulo: string; cuerpo: string },
   id: string,
 ) {
-  await notificar(env, db, usuarioId, (i) => ({
+  await notificar(env, db, { id: usuarioId, app: 'cliente' }, (i) => ({
     ...aviso(i),
     datos: { tipo: 'viaje', viajeId: id },
   })).catch((e: unknown) => console.error('viajes programados: aviso', id, e));

@@ -285,7 +285,7 @@ export async function avisarSiQuedoActivo(env: Env, db: D1Database, id: string):
     const soloEfectivo = (await queTeFalta(db, id)).faltas.some(
       (f) => f.clave === 'sin_pago_movil',
     );
-    await notificar(env, db, id, (i) => ({
+    await notificar(env, db, { id: id, app: 'repartidor' }, (i) => ({
       titulo: i === 'en' ? 'You can now receive trips' : 'Ya puedes recibir carreras',
       cuerpo: soloEfectivo
         ? i === 'en'

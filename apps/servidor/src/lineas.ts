@@ -730,7 +730,7 @@ export async function pedirEntrada(
       .prepare('SELECT nombre FROM usuarios WHERE id = ?')
       .bind(usuarioId)
       .first<{ nombre: string }>();
-    await notificar(env, db, l.liderId, (i) => ({
+    await notificar(env, db, { id: l.liderId, app: 'repartidor' }, (i) => ({
       titulo: i === 'es' ? 'Quiere entrar a tu línea' : 'Someone wants to join your line',
       cuerpo:
         i === 'es'
@@ -786,7 +786,7 @@ export async function resolverPedido(
   }
   const l = await lineaPorId(db, mia.equipoId);
   if (env && l)
-    await notificar(env, db, usuarioId, (i) => ({
+    await notificar(env, db, { id: usuarioId, app: 'repartidor' }, (i) => ({
       titulo: aceptar
         ? i === 'es'
           ? 'Ya estás en la línea'
@@ -975,7 +975,7 @@ export async function avisarLinea(
       enviados++;
   }
   if (l.liderId !== p.usuarioId) {
-    const r = await notificar(env, db, l.liderId, (i) => ({
+    const r = await notificar(env, db, { id: l.liderId, app: 'repartidor' }, (i) => ({
       titulo: i === 'es' ? `EMERGENCIA en ${l.nombre}` : `EMERGENCY in ${l.nombre}`,
       cuerpo,
       datos: { tipo: 'panico' },

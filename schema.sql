@@ -50,7 +50,9 @@ CREATE TABLE IF NOT EXISTS dispositivos (
   plataforma TEXT NOT NULL DEFAULT 'desconocida',
   activo INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  visto_en TEXT NOT NULL DEFAULT (datetime('now'))
+  visto_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-CUENTA-UNICA-AVISOS: de qué app es el token (cliente, repartidor, restaurante). También en COLUMNAS.
+  app TEXT
 );
 CREATE INDEX IF NOT EXISTS dispositivos_usuario ON dispositivos(usuario_id, activo);
 -- C-AVISOS-WEB (13 nov 2026, todos los países): suscripciones Web Push de las apps instaladas desde el
@@ -87,7 +89,11 @@ CREATE TABLE IF NOT EXISTS sesiones (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),
   creada_en TEXT NOT NULL DEFAULT (datetime('now')),
-  expira_en TEXT NOT NULL
+  expira_en TEXT NOT NULL,
+  -- C-CUENTA-UNICA: el papel con el que actúa esta sesión (el de la app que la abrió) y, en el panel
+  -- web, el restaurante (cuenta de negocio) de su dueño. También en COLUMNAS.
+  papel TEXT,
+  actua_como TEXT
 );
 CREATE INDEX IF NOT EXISTS sesiones_usuario ON sesiones(usuario_id);
 -- C-PUENTE-PANEL (2 nov 2026): código de un solo uso para abrir el panel dentro de la app con la sesión.
@@ -95,7 +101,9 @@ CREATE TABLE IF NOT EXISTS puentes_sesion (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),
   expira_en TEXT NOT NULL,
-  usado INTEGER NOT NULL DEFAULT 0
+  usado INTEGER NOT NULL DEFAULT 0,
+  -- C-CUENTA-UNICA: el papel de la sesión que pidió el puente (la página abre con ese mismo papel).
+  papel TEXT
 );
 
 -- Enlaces de un solo uso para confirmar el correo al registrarse (se guarda el hash).
@@ -5262,3 +5270,45 @@ CREATE TABLE IF NOT EXISTS quien_paga_viajes (
 -- cambio hecho desde el panel nunca se pisa al publicar).
 INSERT OR IGNORE INTO quien_paga_viajes (pais, ciudad, valor, cambiado_por)
   VALUES ('VE', '', 'cliente', 'C-QUIEN-PAGA-VIAJES');
+
+-- C-CUENTA-UNICA (24 nov 2026, Richard; todos los países): UNA persona, varios papeles. El papel
+-- principal sigue en usuarios.rol (lo leen las apps publicadas y cada consulta de hoy); aquí van los
+-- papeles añadidos y la suspensión de un solo papel. Una fila por persona y papel, solo cuando hace
+-- falta (nada se escribe para las cuentas de un solo papel). Sin claves foráneas a propósito (cada una
+-- le cobra lecturas a todo borrado de usuarios, C-LECTURAS-POR-PETICION); las borra borrarCuenta.
+CREATE TABLE IF NOT EXISTS usuario_papeles (
+  usuario_id TEXT NOT NULL,
+  papel TEXT NOT NULL CHECK (papel IN ('cliente', 'repartidor')),
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'suspendido')),
+  motivo TEXT NOT NULL DEFAULT '',
+  desde TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, papel)
+) WITHOUT ROWID;
+-- C-CUENTA-UNICA: los términos de cada papel se aceptan aparte (cliente y conductor son dos
+-- aceptaciones distintas en la misma cuenta).
+CREATE TABLE IF NOT EXISTS terminos_papel (
+  usuario_id TEXT NOT NULL,
+  papel TEXT NOT NULL CHECK (papel IN ('cliente', 'repartidor', 'restaurante')),
+  version TEXT NOT NULL,
+  aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, papel, version)
+) WITHOUT ROWID;
+-- C-CUENTA-UNICA-RESTAURANTE: cada restaurante registrado desde una cuenta de persona es un negocio
+-- aparte (su propia cuenta de restaurante, con su ficha, su dinero y su equipo); aquí, quién es su dueño.
+CREATE TABLE IF NOT EXISTS duenos_negocio (
+  negocio_id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS duenos_negocio_persona ON duenos_negocio(persona_id);
+-- C-CUENTA-UNICA-UNIR: registro de cada unión de dos cuentas de la misma persona (la hace el equipo).
+CREATE TABLE IF NOT EXISTS uniones_cuenta (
+  id TEXT PRIMARY KEY,
+  principal_id TEXT NOT NULL,
+  secundaria_id TEXT NOT NULL UNIQUE,
+  hecha_por TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  resumen_json TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -118,7 +118,7 @@ async function marcarConfianza(
     );
   }
   const quien = nombrePila(cliente.nombre);
-  await notificar(env, db, conductorId, (i) => ({
+  await notificar(env, db, { id: conductorId, app: 'repartidor' }, (i) => ({
     ...(i === 'en'
       ? {
           titulo: 'You’re a trusted driver',
@@ -530,7 +530,7 @@ async function avisarConductorNuevaRutina(
   d: Pick<DatosRutina, 'horaIda' | 'menor'>,
 ) {
   const quien = d.menor ? d.menor.nombre : nombrePila(cliente);
-  await notificar(env, db, conductorId, (i) => ({
+  await notificar(env, db, { id: conductorId, app: 'repartidor' }, (i) => ({
     ...(i === 'en'
       ? {
           titulo: 'New regular ride',
@@ -949,7 +949,7 @@ viajesFijos.post('/conductor/rutinas/:id/no-puedo', async (c) => {
     .prepare('SELECT nombre FROM usuarios WHERE id = ?')
     .bind(u.id)
     .first<{ nombre: string }>();
-  await notificar(c.env, db, f.cliente_id, (i) => ({
+  await notificar(c.env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
     ...(i === 'en'
       ? {
           titulo: `${nombrePila(yo?.nombre)} can’t make it`,
@@ -990,7 +990,7 @@ viajesFijos.post('/conductor/rutinas/:id/dejar', async (c) => {
     .prepare('SELECT nombre FROM usuarios WHERE id = ?')
     .bind(u.id)
     .first<{ nombre: string }>();
-  await notificar(c.env, db, f.cliente_id, (i) => ({
+  await notificar(c.env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
     ...(i === 'en'
       ? {
           titulo: 'Your regular ride changed',
@@ -1044,7 +1044,7 @@ export async function avisarResponsableMenor(
   const menor = f.menor_nombre;
   const quien = nombrePila(f.conductor);
   const placa = f.placa ? ` (${f.placa})` : '';
-  await notificar(env, db, f.cliente_id, (i) => {
+  await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => {
     const h = horaLocal(new Date(), f.zona_horaria, i, false);
     const textos: Record<MomentoMenor, [string, string]> =
       i === 'en'
@@ -1139,7 +1139,7 @@ async function crearSalida(env: Env, db: D1Database, f: FilaRutina, s: Salida) {
       )
       .bind(motivo.slice(0, 200), f.id, s.fecha, s.sentido)
       .run();
-    await notificar(env, db, f.cliente_id, (i) => ({
+    await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
       ...(i === 'en'
         ? {
             titulo: 'We couldn’t book your regular ride',
@@ -1256,7 +1256,7 @@ async function avisarConductores(env: Env, db: D1Database) {
     const ida = s.sentido === 'ida';
     const desde = ida ? s.origen_direccion : s.destino_direccion;
     avisos++;
-    await notificar(env, db, s.conductor_id, (i) => ({
+    await notificar(env, db, { id: s.conductor_id, app: 'repartidor' }, (i) => ({
       ...(i === 'en'
         ? {
             titulo: `Regular ride at ${horaLocal(hora, s.zona_horaria, i, false)}`,

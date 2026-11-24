@@ -316,6 +316,8 @@ export async function notificarWeb(
   db: D1Database,
   usuarioId: string,
   aviso: AvisoWeb | ((idioma: 'es' | 'en') => AvisoWeb),
+  /** C-CUENTA-UNICA-AVISOS: solo los navegadores de la app de ese papel (el panel recibe todo). */
+  app: 'cliente' | 'repartidor' | 'restaurante' | null = null,
 ): Promise<number> {
   if (!avisosWebConfigurado(env)) return 0;
   try {
@@ -324,10 +326,11 @@ export async function notificarWeb(
     const { results } = await db
       .prepare(
         `SELECT s.endpoint, s.p256dh, s.auth, s.idioma, u.idioma AS idioma_cuenta FROM suscripciones_web s
-           LEFT JOIN usuarios u ON u.id = s.usuario_id WHERE s.usuario_id = ?
+           LEFT JOIN usuarios u ON u.id = s.usuario_id WHERE s.usuario_id = ?1
+            AND (?2 IS NULL OR s.app IN (?2, 'panel'))
           ORDER BY s.creado_en DESC, s.rowid DESC LIMIT ${avisosWebInterno.MAX_POR_USUARIO}`,
       )
-      .bind(usuarioId)
+      .bind(usuarioId, app)
       .all<{
         endpoint: string;
         p256dh: string;

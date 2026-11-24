@@ -15,6 +15,7 @@ import { VerDato } from './DatoProtegido';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { UnirCuentas } from './UnirCuentas';
 import { AyudaAqui } from './AyudaAqui';
 import { EtiquetaPrueba, FiltroCuentas, opcionMarcarPrueba } from './CuentasPrueba';
 import {
@@ -1357,6 +1358,8 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
           {t.mas}
         </button>
       )}
+      {/* C-CUENTA-UNICA-UNIR: unir dos cuentas de la misma persona (solo el equipo central). */}
+      <UnirCuentas idioma={idioma} />
     </section>
   );
 }

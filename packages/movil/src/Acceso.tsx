@@ -18,6 +18,7 @@ import {
   pistaDeEntrada,
   validarRegistro,
   accionDeError,
+  CODIGO_PAPEL_POR_ACTIVAR,
   resumenFallos,
   textoAccionAcceso,
   type CasillaRegistro,
@@ -41,6 +42,7 @@ import { EncabezadoVolver, useVolverDelSistema } from './VolverAEntrar';
 import { RevisaTusDatos } from './RevisaTusDatos';
 import { SelectorPaisTelefono, usePaisSugerido } from './SelectorPaisTelefono';
 import { useInvitacionLider } from './invitacionLider';
+import { ActivarPapel } from './ActivarPapel';
 
 const INICIAL = {
   nombre: '',
@@ -138,6 +140,10 @@ export function Acceso({
   // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
   const [acepto, setAcepto] = useState(false);
   const v = b.valores;
+  // C-CUENTA-UNICA: solo la app de clientes y Driver ofrecen el papel que falta con la misma cuenta.
+  // Divoox Restaurants (rolRegistro «restaurante») no lo manda y se comporta como siempre.
+  const papelApp = rolRegistro === 'cliente' || rolRegistro === 'repartidor' ? rolRegistro : null;
+  const porActivar = papelApp && modo === 'entrar' && error?.codigo === CODIGO_PAPEL_POR_ACTIVAR;
   // C-RASTRO: los pasos de antes de crear la cuenta, una vez por aparato (solo un contador).
   const registrando = modo === 'registro';
   usePasoRegistro(api, rolRegistro, 'abrio', registrando);
@@ -253,7 +259,11 @@ export function Acceso({
     }
     setEnviando(true);
     try {
-      const sesion = await api.entrar({ correo: v.correo, clave: v.clave });
+      const sesion = await api.entrar({
+        correo: v.correo,
+        clave: v.clave,
+        ...(papelApp ? { cuentaUnica: true } : {}),
+      });
       if (!rolesPermitidos.includes(sesion.usuario.rol)) {
         setError({ mensaje: t.rolEquivocado });
         return;
@@ -264,6 +274,33 @@ export function Acceso({
       alFallar(x);
     } finally {
       // C-MENSAJES-ACCESO: el pase del escudo sirve una sola vez; el escudo pide otro ya.
+      olvidarPaseTurnstile();
+      setEnviando(false);
+    }
+  }
+
+  /** C-CUENTA-UNICA: «Activar mi cuenta de cliente» / «Empezar mi registro de conductor». */
+  async function activarYEntrar() {
+    if (!papelApp) return;
+    setEnviando(true);
+    try {
+      const sesion = await api.entrar({
+        correo: v.correo,
+        clave: v.clave,
+        cuentaUnica: true,
+        activarPapel: true,
+        aceptaTerminosPapel: true,
+      });
+      if (!rolesPermitidos.includes(sesion.usuario.rol)) {
+        setError({ mensaje: t.rolEquivocado });
+        return;
+      }
+      setError(null);
+      await b.limpiar();
+      await alEntrar(sesion.token, sesion.usuario);
+    } catch (x) {
+      alFallar(x);
+    } finally {
       olvidarPaseTurnstile();
       setEnviando(false);
     }
@@ -337,7 +374,8 @@ export function Acceso({
     }
   }
 
-  const mensajeGeneral = mensajeSinCasilla(error, casillasVisibles);
+  // C-CUENTA-UNICA: con la tarjeta de activar el papel, el texto va en la tarjeta (no como error).
+  const mensajeGeneral = porActivar ? null : mensajeSinCasilla(error, casillasVisibles);
   // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
   const abrir = (ruta: string) => abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
   // Cada app con su color en la píldora del idioma: Driver azul, Restaurants (la única sin registro)
@@ -628,7 +666,21 @@ export function Acceso({
           {pista === 'appDePruebas' ? t.pistaAppDePruebas : t.pistaAppReal}
         </Text>
       ) : null}
-      {registro ? (
+      {porActivar && papelApp ? (
+        <ActivarPapel
+          papel={papelApp}
+          idioma={idioma}
+          enviando={enviando}
+          alActivar={() => void activarYEntrar()}
+          abrirTerminos={() => abrir(papelApp === 'repartidor' ? '/driver-terms' : '/terms')}
+          alOtroCorreo={() => {
+            setError(null);
+            setFallos([]);
+            setPaso('formulario');
+            setModo('registro');
+          }}
+        />
+      ) : registro ? (
         // C-REVISA-TUS-DATOS: «Continuar» lleva a revisar; la cuenta todavía no se crea.
         <Boton testID="registro-continuar" texto={r.continuar} alTocar={continuar} />
       ) : (

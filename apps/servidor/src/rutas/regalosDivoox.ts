@@ -449,7 +449,7 @@ regalosDivoox.post('/admin/regalos-divoox/revisiones/:id', async (c) => {
     )
     .run();
   const monto = `${(r.monto / 100).toFixed(2)} ${r.moneda}`;
-  await notificar(c.env, db, r.conductorId, (i) =>
+  await notificar(c.env, db, { id: r.conductorId, app: 'repartidor' }, (i) =>
     d.aprobar
       ? i === 'es'
         ? {

@@ -43,7 +43,7 @@ export async function avisarComidaAbierta(env: Env, db: D1Database, zonaId: stri
       .bind(zonaId)
       .all<{ id: string }>();
     for (const r of results)
-      await notificar(env, db, r.id, (i) => ({
+      await notificar(env, db, { id: r.id, app: 'repartidor' }, (i) => ({
         titulo: i === 'en' ? 'Food is open in your area' : 'Ya hay Comida en tu zona',
         cuerpo:
           i === 'en'

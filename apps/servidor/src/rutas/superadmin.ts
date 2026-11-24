@@ -5,6 +5,13 @@ import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { Hono } from 'hono';
+import {
+  revisarUnion,
+  unirCuentas,
+  sentenciasReactivarPapeles,
+  sentenciasSuspenderNegociosDe,
+  suspenderPapelConductor,
+} from '../cuentaUnica';
 import { z } from 'zod';
 import {
   correoCanonico,
@@ -1188,6 +1195,9 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
       motivo: z.string().trim().max(300).default(''),
       // C-IDENTIDAD-UNICA: cerrada por mala conducta: su correo y su teléfono no vuelven a entrar.
       malaConducta: z.boolean().default(false),
+      // C-CUENTA-UNICA-SUSPENSION: por qué. Fraude o seguridad suspenden a la persona entera (y sus
+      // restaurantes); papeles vencidos, solo el papel de conductor (sigue pudiendo pedir).
+      motivoTipo: z.enum(['fraude', 'seguridad', 'papeles', 'otro']).default('otro'),
     }),
   );
   const db = base(c);
@@ -1199,6 +1209,22 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
     .bind(id)
     .first<{ id: string; rol: string; correo: string; telefono: string | null }>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  // C-CUENTA-UNICA-SUSPENSION: los papeles vencidos de un conductor suspenden solo ese papel.
+  if (!d.activo && d.motivoTipo === 'papeles' && !d.malaConducta) {
+    if (u.rol !== 'repartidor')
+      throw new ErrorDatos('Solo un conductor se suspende por papeles.', 'motivoTipo', 422);
+    await suspenderPapelConductor(db, id, d.motivo);
+    console.warn('papel de conductor suspendido por soporte', id, d.motivo);
+    return c.json({ activo: true, papelConductor: 'suspendido' });
+  }
+  // Un restaurante (cuenta de negocio) suspendido por fraude o seguridad arrastra a su dueño.
+  const duenoDelNegocio =
+    !d.activo && (d.motivoTipo === 'fraude' || d.motivoTipo === 'seguridad' || d.malaConducta)
+      ? await db
+          .prepare('SELECT persona_id FROM duenos_negocio WHERE negocio_id = ?')
+          .bind(id)
+          .first<{ persona_id: string }>()
+      : null;
   if (!d.activo && d.malaConducta) {
     if (d.motivo.length < 5)
       throw new ErrorDatos('Escribe el motivo de la mala conducta.', 'motivo');
@@ -1222,17 +1248,51 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
       db.prepare('UPDATE huellas_caras SET mala_conducta = 1 WHERE usuario_id = ?').bind(id),
     ]);
   }
+  const fraude = d.motivoTipo === 'fraude' || d.motivoTipo === 'seguridad' || d.malaConducta;
+  const personas = duenoDelNegocio ? [id, duenoDelNegocio.persona_id] : [id];
   await db.batch([
-    db.prepare('UPDATE usuarios SET activo = ? WHERE id = ?').bind(d.activo ? 1 : 0, id),
+    ...personas.map((p) =>
+      db.prepare('UPDATE usuarios SET activo = ? WHERE id = ?').bind(d.activo ? 1 : 0, p),
+    ),
     ...(d.activo
-      ? []
-      : [
-          db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(id),
-          db.prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?').bind(id),
-        ]),
+      ? sentenciasReactivarPapeles(db, id)
+      : personas.flatMap((p) => [
+          db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(p),
+          db.prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?').bind(p),
+          // La persona suspendida por fraude o seguridad pierde también sus restaurantes.
+          ...(fraude ? sentenciasSuspenderNegociosDe(db, p) : []),
+        ])),
   ]);
   console.warn(`cuenta ${d.activo ? 'reactivada' : 'suspendida'} por soporte`, id, d.motivo);
   return c.json({ activo: d.activo });
+});
+
+/**
+ * C-CUENTA-UNICA-UNIR (24 nov 2026): unir dos cuentas de la misma persona (una de conductor y una de
+ * cliente con correos distintos). Nunca se unen solas: el equipo mira la revisión y confirma.
+ */
+const esquemaUnir = z.object({
+  conductorId: z.string().trim().min(1).max(80),
+  clienteId: z.string().trim().min(1).max(80),
+});
+// Revisar es un POST a propósito: solo el equipo central (con permiso de cambiar) mira dos cuentas juntas.
+superadmin.post('/admin/cuentas/unir/revisar', async (c) => {
+  exigir(c, 'admin');
+  const d = await leerCuerpo(c, esquemaUnir);
+  return c.json(await revisarUnion(base(c), d.conductorId, d.clienteId));
+});
+superadmin.post('/admin/cuentas/unir', async (c) => {
+  const admin = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    esquemaUnir.extend({
+      motivo: z.string().trim().min(5, { error: 'Escribe por qué se unen.' }).max(300),
+      confirmo: z.literal(true, { error: 'Confirma que es la misma persona.' }),
+    }),
+  );
+  const r = await unirCuentas(base(c), d.conductorId, d.clienteId, admin.id, d.motivo);
+  console.warn('cuentas unidas por el equipo', d.conductorId, d.clienteId, admin.id);
+  return c.json({ ok: true, ...r });
 });
 
 /** Correo enmascarado para el registro: las dos primeras letras y el dominio. */

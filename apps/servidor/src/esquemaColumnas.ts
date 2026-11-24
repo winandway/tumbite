@@ -39,7 +39,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "plataforma",
     "activo",
     "creado_en",
-    "visto_en"
+    "visto_en",
+    "app"
   ],
   "suscripciones_web": [
     "endpoint",
@@ -64,13 +65,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "id",
     "usuario_id",
     "creada_en",
-    "expira_en"
+    "expira_en",
+    "papel",
+    "actua_como"
   ],
   "puentes_sesion": [
     "id",
     "usuario_id",
     "expira_en",
-    "usado"
+    "usado",
+    "papel"
   ],
   "confirmaciones": [
     "id",
@@ -3452,5 +3456,33 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "valor",
     "cambiado_por",
     "cambiado_en"
+  ],
+  "usuario_papeles": [
+    "usuario_id",
+    "papel",
+    "estado",
+    "motivo",
+    "desde",
+    "actualizado_en"
+  ],
+  "terminos_papel": [
+    "usuario_id",
+    "papel",
+    "version",
+    "aceptado_en"
+  ],
+  "duenos_negocio": [
+    "negocio_id",
+    "persona_id",
+    "creado_en"
+  ],
+  "uniones_cuenta": [
+    "id",
+    "principal_id",
+    "secundaria_id",
+    "hecha_por",
+    "motivo",
+    "resumen_json",
+    "creado_en"
   ]
 };

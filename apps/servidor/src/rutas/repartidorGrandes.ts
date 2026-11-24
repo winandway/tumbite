@@ -648,7 +648,7 @@ repartidorGrandes.post('/repartidor/pedidos/:id/no-esta-listo', async (c) => {
   if (!p) throw new ErrorDatos('Este pedido no está contigo.', undefined, 409);
   const nuevo = await anotarEvento(db, id, 'no_esta_listo', `${u.id}`);
   if (nuevo)
-    await notificar(c.env, db, p.dueno_id, (i) => ({
+    await notificar(c.env, db, { id: p.dueno_id, app: 'restaurante' }, (i) => ({
       ...AVISOS.restNoListo(i, id.slice(0, 4).toUpperCase()),
       datos: { pedidoId: id },
     })).catch((e: unknown) => console.error('aviso no está listo', e));

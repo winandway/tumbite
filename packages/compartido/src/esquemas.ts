@@ -45,6 +45,12 @@ export type DatosRegistro = z.input<typeof esquemaRegistro>;
 export const esquemaEntrar = z.object({
   correo,
   clave: z.string().min(1, { error: 'Escribe tu contraseña.' }).max(200),
+  // C-CUENTA-UNICA: la app sabe ofrecer el papel que falta (las publicadas antes no lo mandan).
+  cuentaUnica: z.boolean().optional(),
+  // C-CUENTA-UNICA: la persona tocó «Activar mi cuenta de cliente» / «Empezar mi registro de conductor»
+  // y marcó la casilla de los términos de ese papel.
+  activarPapel: z.boolean().optional(),
+  aceptaTerminosPapel: z.boolean().optional(),
 });
 export type DatosEntrar = z.infer<typeof esquemaEntrar>;
 

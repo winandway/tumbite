@@ -203,9 +203,10 @@ async function avisar(
   conductorId: string,
   texto: (i: Idioma) => { titulo: string; cuerpo: string },
 ) {
-  await notificar(env, db, conductorId, (i) => ({ ...texto(i), datos: { tipo: 'papeles' } })).catch(
-    (e: unknown) => console.error('plazo de papeles: aviso', e),
-  );
+  await notificar(env, db, { id: conductorId, app: 'repartidor' }, (i) => ({
+    ...texto(i),
+    datos: { tipo: 'papeles' },
+  })).catch((e: unknown) => console.error('plazo de papeles: aviso', e));
   const u = await db
     .prepare('SELECT correo, idioma FROM usuarios WHERE id = ?')
     .bind(conductorId)

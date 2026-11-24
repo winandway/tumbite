@@ -747,7 +747,7 @@ flexEmpresas.post('/empresas/:id/conductores/invitaciones', async (c) => {
     .first<{ id: string; idioma: string }>();
   if (yaEsConductor)
     avisos.push(
-      notificar(c.env, db, yaEsConductor.id, (i) => ({
+      notificar(c.env, db, { id: yaEsConductor.id, app: 'repartidor' }, (i) => ({
         titulo:
           i === 'en'
             ? `${e?.nombre ?? 'A company'} invited you`

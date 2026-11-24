@@ -2103,7 +2103,11 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     const noVa = bloqueadas.get(p.cliente_id);
     const ordenar = (libres: Libre[]) =>
       libres
-        .filter((d) => !excluir.has(d.id) && !ocupados.has(d.id) && !noVa?.has(d.id))
+        // C-CUENTA-UNICA-AUTOVIAJE: nadie recibe la oferta de su propio pedido (la base lo frena también).
+        .filter(
+          (d) =>
+            !excluir.has(d.id) && !ocupados.has(d.id) && !noVa?.has(d.id) && d.id !== p.cliente_id,
+        )
         .map((d) => ({
           ...d,
           km:
@@ -2154,7 +2158,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
             .run();
           if (env && r.meta.changes > 0)
             // C-AVISOS-IDIOMA: antes salía solo en español.
-            await notificar(env, db, p.dueno_id, (i) => ({
+            await notificar(env, db, { id: p.dueno_id, app: 'restaurante' }, (i) => ({
               ...AVISOS.flotaSinRepartidor(i, p.id.slice(0, 4).toUpperCase()),
               datos: { tipo: 'flota_sin_repartidor', pedidoId: p.id },
             })).catch((e: unknown) => console.error('flota: no se pudo avisar al restaurante', e));
@@ -2281,7 +2285,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
                 { lat: Number(p.lat), lng: Number(p.lng) },
               )
             : 0;
-        await notificar(env, db, elegido.id, (i) =>
+        await notificar(env, db, { id: elegido.id, app: 'repartidor' }, (i) =>
           AVISOS.ofertaNueva(
             i,
             formatearMonto(Number(p.pago_repartidor ?? 0) + bono, String(p.moneda ?? 'USD'), i),
@@ -2310,7 +2314,7 @@ async function avisarAlCliente(
     .first<{ cliente_id: string; idioma: string; telefono: string | null; restaurante: string }>();
   if (!f) return;
   const texto = aviso(f.idioma, { restaurante: f.restaurante });
-  await notificar(env, db, f.cliente_id, (i) => ({
+  await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
     ...aviso(i, { restaurante: f.restaurante }),
     datos: { pedidoId },
   }));
@@ -2338,7 +2342,7 @@ export async function avisarAlRepartidor(
     .bind(pedidoId)
     .first<{ repartidor_id: string; idioma: string; restaurante: string }>();
   if (!f) return;
-  await notificar(env, db, f.repartidor_id, (i) => ({
+  await notificar(env, db, { id: f.repartidor_id, app: 'repartidor' }, (i) => ({
     ...aviso(i, { restaurante: f.restaurante }),
     datos: { pedidoId },
   })).catch((e: unknown) => console.error('aviso al repartidor', e));
@@ -4145,10 +4149,15 @@ operacion.post('/pedidos/:id/mensajes/foto', async (c) => {
     .run();
   const para = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
   if (!(await bloqueo(db, para, u.id)))
-    await notificar(c.env, db, para, (i) => ({
-      ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', i === 'en' ? 'Photo' : 'Foto'),
-      datos: { pedidoId: p.id },
-    }));
+    await notificar(
+      c.env,
+      db,
+      { id: para, app: para === p.repartidor_id ? 'repartidor' : 'cliente' },
+      (i) => ({
+        ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', i === 'en' ? 'Photo' : 'Foto'),
+        datos: { pedidoId: p.id },
+      }),
+    );
   // C-FOTO-ENTREGA-IPHONE: con su dirección, para que ninguna versión de la app diga «no se pudo».
   return c.json(
     { ok: true, url: `/datos/pedidos/${p.id}/mensajes/${String(nuevo.meta.last_row_id)}/foto` },
@@ -4212,10 +4221,15 @@ operacion.post('/pedidos/:id/mensajes', async (c) => {
   const para = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
   // Si la otra persona lo bloqueó, no recibe el aviso (y quien escribe no se entera).
   if (!(await bloqueo(db, para, u.id)))
-    await notificar(c.env, db, para, (i) => ({
-      ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', texto),
-      datos: { pedidoId: p.id },
-    }));
+    await notificar(
+      c.env,
+      db,
+      { id: para, app: para === p.repartidor_id ? 'repartidor' : 'cliente' },
+      (i) => ({
+        ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', texto),
+        datos: { pedidoId: p.id },
+      }),
+    );
   return c.json({ ok: true, ...(tapado ? { tapado: true } : {}) });
 });
 

@@ -3254,6 +3254,89 @@ const verificacionesEnVivo: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// C-CUENTA-UNICA-UNIR (24 nov 2026): unir dos cuentas de la misma persona (conductor y cliente).
+const capUnion = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `cuenta-unica-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+const unirCuentas: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'merge-two-accounts',
+    titulo: 'Unir dos cuentas de la misma persona',
+    resumen:
+      'Desde el 24 de noviembre de 2026 una persona usa UNA sola cuenta de Divoox para pedir y para conducir. Quien ya tenía dos (una de conductor y otra de cliente, con correos distintos) se une aquí, en Clientes, al final de la página: «Unir dos cuentas de la misma persona». Nunca se unen solas.',
+    explicacion: [
+      'Cómo funciona la cuenta única: con el mismo correo y la misma contraseña, la persona entra a la app de clientes y a Divoox Driver. Si entra con su cuenta de conductor a la app de clientes, la app le ofrece «Activar mi cuenta de cliente»; si entra con su cuenta de cliente a Driver, «Empezar mi registro de conductor». Cada papel acepta sus propios términos. Divoox Restaurants no cambia.',
+      'Lo que queda separado en cada papel: el saldo y las ganancias del conductor, sus documentos y su vehículo; los pedidos, las tarjetas, las direcciones y la deuda del cliente. Las calificaciones de conductor y de pasajero nunca se mezclan. La base no deja que nadie reciba la oferta de su propio viaje o pedido, ni que se califique a sí mismo, ni que sea su propio conductor de confianza.',
+      'Al unir, la cuenta de conductor queda como la única: su correo y su contraseña siguen. Gana el papel de cliente y recibe el historial de cliente (pedidos, viajes, envíos, direcciones y calificaciones). La cuenta de cliente se cierra y su correo queda reservado: la persona ya no entra con ese correo.',
+      'Regalos y premios (decisión de Richard): un solo regalo de bienvenida por persona. Lo ya cobrado se respeta y pasa a la cuenta que queda (así no se puede volver a usar); lo pendiente de la cuenta que se cierra se anula, y los premios por invitar que estaban por darse se cierran. Nada se acumula doble.',
+      'Qué impide unirlas (el panel lo dice en «Revisar»): que el celular no sea el mismo en las dos o que no esté confirmado con su código; un pedido o un viaje en curso; saldo o deuda en la cuenta de cliente (se resuelve primero: el dinero nunca se mueve entre cuentas); que la cuenta de conductor ya tenga su papel de cliente; o que alguna ya se haya unido antes.',
+      'Suspensiones con la cuenta única: si suspendes a un conductor por papeles vencidos, solo se apaga su papel de conductor (Driver se cierra) y puede seguir pidiendo como cliente. Si la suspensión es por fraude o seguridad, se suspende la persona entera: también como cliente y también sus restaurantes. Suspender un restaurante no suspende a su dueño, salvo por fraude.',
+      'Lo usa solo el equipo central (permiso para cambiar la configuración, con alcance total), porque junta dos cuentas que pueden ser de ciudades distintas. Cada unión queda registrada con tu nombre, el motivo y lo que se movió.',
+    ],
+    capturas: [
+      capUnion(
+        'revisar',
+        'es',
+        'El formulario Unir dos cuentas de la misma persona con los números de una cuenta de conductor y de una de cliente escritos y el botón Revisar.',
+        'Escribe el número de las dos cuentas y toca «Revisar».',
+      ),
+      capUnion(
+        'frenos',
+        'es',
+        'La revisión de dos cuentas que no se pueden unir, con la lista de lo que lo impide: el celular no es el mismo.',
+        'Si algo impide unirlas, el panel lo dice en palabras.',
+      ),
+    ],
+    pasos: [
+      'Confirma con la persona, por su celular, que las dos cuentas son suyas.',
+      'En Clientes, baja hasta «Unir dos cuentas de la misma persona».',
+      'Escribe el número de la cuenta de conductor y el de la cuenta de cliente, y toca «Revisar».',
+      'Si dice que se pueden unir, lee qué se mueve, escribe el motivo, marca la casilla de confirmación y toca «Unir las dos cuentas».',
+      'Dile a la persona que desde ahora entra a las dos apps con el correo de su cuenta de conductor.',
+    ],
+    nota: 'Si no se pueden unir por saldo o deuda en la cuenta de cliente, resuélvelo primero desde Dinero. El dinero nunca se mueve entre cuentas al unir.',
+  },
+  en: {
+    id: 'merge-two-accounts',
+    titulo: 'Merge two accounts of the same person',
+    resumen:
+      'Since November 24, 2026, a person uses ONE Divoox account to order and to drive. Anyone who already had two (a driver account and a customer account with different emails) is merged here, in Customers, at the bottom of the page: “Merge two accounts of the same person.” They never merge on their own.',
+    explicacion: [
+      'How the single account works: with the same email and password, the person signs in to the customer app and to Divoox Driver. If they sign in to the customer app with their driver account, the app offers “Activate my customer account”; if they sign in to Driver with their customer account, “Start my driver sign-up.” Each role accepts its own terms. Divoox Restaurants doesn’t change.',
+      'What stays separate for each role: the driver’s balance and earnings, documents and vehicle; the customer’s orders, cards, addresses and balance due. Driver and rider ratings are never mixed. The database never lets anyone get the offer for their own ride or order, rate themselves, or be their own trusted driver.',
+      'When you merge, the driver account stays as the only one: its email and password keep working. It gains the customer role and receives the customer history (orders, rides, deliveries, addresses and ratings). The customer account is closed and its email is reserved: the person no longer signs in with it.',
+      'Gifts and rewards (Richard’s decision): one welcome gift per person. What was already redeemed is respected and moves to the remaining account (so it can’t be used again); anything pending on the closed account is canceled, and referral rewards that were about to be paid are closed. Nothing is doubled.',
+      'What blocks a merge (the panel says it under “Review”): the phone isn’t the same in both or isn’t confirmed with its code; an order or ride in progress; a balance or amount due on the customer account (settle it first: money never moves between accounts); the driver account already has its customer role; or one of them was already merged.',
+      'Suspensions with the single account: if you suspend a driver for expired documents, only their driver role is turned off (Driver signs out) and they can keep ordering as a customer. If the suspension is for fraud or safety, the whole person is suspended: as a customer too, and their restaurants. Suspending a restaurant doesn’t suspend its owner, except for fraud.',
+      'Only the central team uses it (permission to change settings, with full scope), because it joins two accounts that may be in different cities. Every merge is logged with your name, the reason and what moved.',
+    ],
+    capturas: [
+      capUnion(
+        'revisar',
+        'en',
+        'The Merge two accounts of the same person form with a driver account ID and a customer account ID typed in and the Review button.',
+        'Type both account IDs and tap “Review.”',
+      ),
+      capUnion(
+        'frenos',
+        'en',
+        'The review of two accounts that can’t be merged, listing what blocks it: the phone isn’t the same.',
+        'If something blocks the merge, the panel says it in plain words.',
+      ),
+    ],
+    pasos: [
+      'Confirm with the person, on their phone, that both accounts are theirs.',
+      'In Customers, scroll down to “Merge two accounts of the same person.”',
+      'Type the driver account ID and the customer account ID, and tap “Review.”',
+      'If it says they can be merged, read what moves, write the reason, check the confirmation box and tap “Merge both accounts.”',
+      'Tell the person that from now on they sign in to both apps with their driver account email.',
+    ],
+    nota: 'If they can’t be merged because of a balance or amount due on the customer account, settle it first from Money. Money never moves between accounts when merging.',
+  },
+};
+
 /** Las secciones de la ayuda, en el orden del menú lateral. */
 function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
   const g = porId(idioma === 'es' ? es : en);
@@ -3292,6 +3375,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(dobleFirma),
         de(cambiarCiudad),
         de(corregirCorreo),
+        de(unirCuentas),
         de(plazoPapeles),
         de(verificacionUnica),
       ],

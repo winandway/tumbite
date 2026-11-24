@@ -932,7 +932,7 @@ export async function anotarDecisionHumana(
     .bind(d.conductorId)
     .run();
   if (!r.meta.changes) return;
-  await notificar(env, db, d.conductorId, (i) => ({
+  await notificar(env, db, { id: d.conductorId, app: 'repartidor' }, (i) => ({
     ...T_VERIFICADO(i),
     datos: { tipo: 'papeles' },
   })).catch((err: unknown) => console.error('verificación: aviso', err));
@@ -1073,7 +1073,7 @@ verificacionConductor.post('/admin/verificacion/:id/pedir-foto', async (c) => {
     )
     .bind(admin.id, 'verificacion.pedir_foto', `conductor:${id}`, '{}', JSON.stringify(d))
     .run();
-  await notificar(c.env, db, id, (i) =>
+  await notificar(c.env, db, { id: id, app: 'repartidor' }, (i) =>
     i === 'en'
       ? {
           titulo: 'We need one photo again',

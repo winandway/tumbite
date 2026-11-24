@@ -68,6 +68,10 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/clientes/:id': 'clientes.ver',
   'GET /admin/clientes/:id/actividad': 'clientes.ver',
   'PATCH /admin/usuarios/:id': 'clientes.suspender',
+  // C-CUENTA-UNICA-UNIR: revisar y unir dos cuentas de la misma persona (solo el equipo central,
+  // con alcance total: junta dos cuentas que pueden ser de ciudades distintas).
+  'POST /admin/cuentas/unir/revisar': 'config.editar',
+  'POST /admin/cuentas/unir': 'config.editar',
   'POST /admin/usuarios/:id/borrar': 'clientes.suspender',
   // C-CORREGIR-CORREO: corregir el correo de la cuenta y reenviar la confirmación.
   'POST /admin/usuarios/:id/correo': 'clientes.corregir_correo',
@@ -523,6 +527,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/clientes/:id': ficha('cliente'),
   'GET /admin/clientes/:id/actividad': ficha('cliente'),
   'PATCH /admin/usuarios/:id': ficha('persona'),
+  'POST /admin/cuentas/unir/revisar': CENTRAL,
+  'POST /admin/cuentas/unir': CENTRAL,
   'POST /admin/usuarios/:id/borrar': ficha('persona'),
   'POST /admin/usuarios/:id/correo': ficha('persona'),
   'POST /admin/usuarios/:id/telefono/confirmar': ficha('persona'),

@@ -557,7 +557,7 @@ export async function pagarCobro(
     .first<{ conductor_id: string }>();
   if (conductor && recibo) {
     const usd = (recibo.monto / 100).toFixed(2);
-    await notificar(env, db, conductor.conductor_id, (i) =>
+    await notificar(env, db, { id: conductor.conductor_id, app: 'repartidor' }, (i) =>
       i === 'es'
         ? {
             titulo: 'Cobraste en efectivo',
@@ -818,7 +818,7 @@ export async function venderSaldo(
   );
   const recibo = sinConductor((await reciboVenta(db, a.id, id))!);
   const usd = (p.monto / 100).toFixed(2);
-  await notificar(env, db, p.conductorId, (i) =>
+  await notificar(env, db, { id: p.conductorId, app: 'repartidor' }, (i) =>
     i === 'es'
       ? {
           titulo: 'Recargaste tu saldo',

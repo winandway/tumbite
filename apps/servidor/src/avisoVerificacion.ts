@@ -91,7 +91,7 @@ export async function avisarVerificacionLista(env: Env, usuarioId: string) {
     .run();
   // El aviso al aparato de quien lo encendió (nunca frena: el correo ya salió).
   for (const id of await telefonosDelEquipo(db))
-    await notificar(env, db, id, (i) => ({
+    await notificar(env, db, { id: id, app: 'repartidor' }, (i) => ({
       titulo: i === 'en' ? 'Verification ready to review' : 'Verificación lista para revisar',
       cuerpo: `${p.nombre} · ${ciudad}`,
       datos: { tipo: 'verificacion', id: usuarioId },

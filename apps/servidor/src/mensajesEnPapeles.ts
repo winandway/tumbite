@@ -1,4 +1,5 @@
 import { APPS_DE_CELULAR, type AppDeCelular, mensajeCuentaDeOtraApp } from '@tumbite/compartido';
+import { MENSAJES_EN_CUENTA_UNICA } from './mensajesEnCuentaUnica';
 
 /** C-ENTRAR-APP-EQUIVOCADA: el mismo aviso en inglés, para cada cuenta en cada app que no es la suya. */
 const APP_EN = new Map<AppDeCelular, string>([
@@ -48,6 +49,7 @@ export const MENSAJES_EN_PAPELES: [string, string][] = [
     'Take the photo of your face before going online. It is how riders recognize you.',
   ],
   ...MENSAJES_EN_OTRA_APP,
+  ...MENSAJES_EN_CUENTA_UNICA,
   ['Esa foto no corresponde.', 'That photo doesn’t belong here.'],
   [
     'Esa foto no se pide en el país de esta persona.',

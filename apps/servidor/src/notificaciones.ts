@@ -1,3 +1,4 @@
+import type { AppDeCelular } from '@tumbite/compartido';
 import {
   CANAL_OFERTAS,
   CAPACIDAD_OFERTAS_BUCLE,
@@ -83,11 +84,31 @@ export function avisoPara(aviso: AvisoEnIdioma): (i: Idioma) => Aviso {
  * instalada desde el navegador (Web Push, C-AVISOS-WEB). Cada canal tiene su propio destino (un
  * token de Expo no es una suscripción web), así que el mismo aviso no llega dos veces al mismo canal.
  */
-export async function notificar(env: Env, db: D1Database, usuarioId: string, aviso: AvisoEnIdioma) {
+/**
+ * C-CUENTA-UNICA-AVISOS (24 nov 2026, Richard; todos los países): a quién va el aviso. Con solo el id,
+ * a todos sus teléfonos (como siempre). Con `{ id, app }`, solo a la app de ese papel: el aviso de
+ * conductor llega a Driver y el de cliente a la app de clientes aunque sea la misma cuenta en el mismo
+ * teléfono. Un aviso de oferta va siempre a Driver.
+ */
+export type DestinoAviso = string | { id: string; app: AppDeCelular };
+
+export async function notificar(
+  env: Env,
+  db: D1Database,
+  destino: DestinoAviso,
+  aviso: AvisoEnIdioma,
+) {
   const enIdioma = avisoPara(aviso);
+  const usuarioId = typeof destino === 'string' ? destino : destino.id;
+  const app: AppDeCelular | null =
+    typeof destino === 'string'
+      ? enIdioma('es').oferta === true
+        ? 'repartidor'
+        : null
+      : destino.app;
   const [expo, web] = await Promise.all([
-    notificarExpo(env, db, usuarioId, enIdioma),
-    notificarWeb(env, db, usuarioId, enIdioma),
+    notificarExpo(env, db, usuarioId, enIdioma, app),
+    notificarWeb(env, db, usuarioId, enIdioma, app),
     // C-AVISOS-GUARDADOS: queda en su campana con su hora (UNA fila por aviso, no por aparato). Si no
     // se puede guardar, el aviso sale igual y la salud lo dice.
     guardarAviso(db, usuarioId, enIdioma).catch((e: unknown) => {
@@ -103,13 +124,16 @@ async function notificarExpo(
   db: D1Database,
   usuarioId: string,
   enIdioma: (i: Idioma) => Aviso,
+  app: AppDeCelular | null = null,
 ) {
+  // C-CUENTA-UNICA-AVISOS: con la app del papel, solo sus tokens (y los viejos, sin app guardada).
   const { results } = await db
     .prepare(
       `SELECT d.token, d.idioma, d.capacidades, u.idioma AS idioma_cuenta FROM dispositivos d
-         LEFT JOIN usuarios u ON u.id = d.usuario_id WHERE d.usuario_id = ? AND d.activo = 1`,
+         LEFT JOIN usuarios u ON u.id = d.usuario_id WHERE d.usuario_id = ?1 AND d.activo = 1
+          AND (?2 IS NULL OR d.app IS NULL OR d.app = ?2)`,
     )
-    .bind(usuarioId)
+    .bind(usuarioId, app)
     .all<{
       token: string;
       idioma: string | null;

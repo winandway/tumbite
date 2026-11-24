@@ -96,7 +96,7 @@ export async function pausarSinSenal(env: Env, db: D1Database) {
 
 async function avisar(env: Env, db: D1Database, r: Fila, que: 'pausa' | 'vuelta') {
   const aviso = que === 'pausa' ? AVISOS.tiendaSinSenal(r.idioma) : AVISOS.tiendaConSenal(r.idioma);
-  await notificar(env, db, r.dueno_id, (i) =>
+  await notificar(env, db, { id: r.dueno_id, app: 'restaurante' }, (i) =>
     que === 'pausa' ? AVISOS.tiendaSinSenal(i) : AVISOS.tiendaConSenal(i),
   ).catch((e: unknown) => console.error('pausa sin señal: aviso al celular', r.id, e));
   if (que !== 'pausa') return;

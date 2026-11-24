@@ -24,6 +24,12 @@ import {
   CAPACIDAD_OFERTAS_BUCLE,
   CANALES_CONSENTIMIENTO_SMS,
   CODIGO_CUENTA_DE_OTRA_APP,
+  CODIGO_PAPEL_POR_ACTIVAR,
+  CODIGO_PAPEL_SUSPENDIDO,
+  APPS_CUENTA_UNICA,
+  MENSAJE_PAPEL_POR_ACTIVAR,
+  type AppDeCelular,
+  esPapelDePersona,
   ROL_DE_APP,
   esAppDeCelular,
   mensajeCuentaDeOtraApp,
@@ -39,6 +45,15 @@ import { anotarAparato, codigoPara, vincularCliente } from '../programaReferidos
 import { usarCodigoDeConductor } from '../lineas';
 import { huellaAparato } from '../regalosDivoox';
 import { Hono } from 'hono';
+import {
+  activarPapel,
+  crearNegocio,
+  esDuenoDe,
+  estadoPapel,
+  negociosDe,
+  papelesDe,
+  sentenciaTerminosPapel,
+} from '../cuentaUnica';
 import {
   PAGINAS,
   enIdiomaDireccion,
@@ -56,6 +71,7 @@ import {
   DIAS_SESION,
   type Ctx,
   type Variables,
+  SESION_TERMINADA,
   base,
   exigir,
   leerToken,
@@ -210,16 +226,34 @@ async function abrirSesion(
   db: D1Database,
   usuarioId: string,
   permisosJson: string | null = null,
+  /** C-CUENTA-UNICA: el papel con el que actúa la sesión (el de la app que la abre). */
+  papel: string | null = null,
 ): Promise<string> {
   const token = nuevoToken();
   // C-PERMISOS-FINOS: una cuenta del equipo entra con sus permisos ya calculados (en la misma fila).
   await db
     .prepare(
-      `INSERT INTO sesiones (id, usuario_id, expira_en, permisos_json) VALUES (?, ?, datetime('now', ?), ?)`,
+      `INSERT INTO sesiones (id, usuario_id, expira_en, permisos_json, papel) VALUES (?, ?, datetime('now', ?), ?, ?)`,
     )
-    .bind(await sha256(token), usuarioId, `+${DIAS_SESION} days`, permisosJson)
+    .bind(await sha256(token), usuarioId, `+${DIAS_SESION} days`, permisosJson, papel)
     .run();
   return token;
+}
+
+/** C-CUENTA-UNICA: el papel de la app de celular que hace la petición (o null: panel web y demás). */
+function papelDeLaApp(cabecera: string | undefined): AppDeCelular | null {
+  const app = leerCabeceraApp(cabecera)?.app;
+  return esAppDeCelular(app) ? (ROL_DE_APP.get(app) ?? null) : null;
+}
+
+/** C-CUENTA-UNICA: la app nueva sabe ofrecer el papel que falta (cabecera o cuerpo). */
+function appConCuentaUnica(c: Ctx, cuerpo?: boolean): boolean {
+  const app = leerCabeceraApp(c.req.header('x-tumbite-app'))?.app;
+  return (
+    esAppDeCelular(app) &&
+    APPS_CUENTA_UNICA.includes(app) &&
+    (cuerpo === true || c.req.header('x-cuenta-unica') === '1')
+  );
 }
 
 function cookie(token: string, borrar = false): string {
@@ -355,6 +389,20 @@ cuentas.post('/registro', async (c) => {
     .first<{ correo: string; rol: string }>();
   // C-ENTRAR-APP-EQUIVOCADA: el correo es de una cuenta de otro tipo que el que registra esta app:
   // mandarlo a «Entrar» lo deja en un círculo. Se le dice qué app le corresponde y qué puede hacer.
+  // C-CUENTA-UNICA: en las apps nuevas (cliente y Driver), el correo de una cuenta de cliente o de
+  // conductor no se repite: se entra con él y se activa el papel que falta.
+  if (
+    existe &&
+    existe.correo.toLowerCase() === d.correo.toLowerCase() &&
+    esPapelDePersona(existe.rol) &&
+    appConCuentaUnica(c)
+  )
+    throw new ErrorDatos(
+      'Ya tienes una cuenta de Divoox con este correo. Entra con tu misma contraseña: ahí te ofrecemos usarla también aquí.',
+      'correo',
+      409,
+      'correo_con_cuenta',
+    );
   if (existe && existe.correo.toLowerCase() === d.correo.toLowerCase())
     exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), existe.rol, 'correo');
   if (existe)
@@ -426,13 +474,16 @@ cuentas.post('/registro', async (c) => {
     )
     .run();
   // C-TERMINOS-ACTUALIZADOS: al crear la cuenta acepta los términos vigentes (casilla del registro).
-  await db
-    .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
-    .bind(id, VERSION_TERMINOS)
-    .run();
+  // C-CUENTA-UNICA: y los términos de SU papel, aparte (si después activa otro, acepta los de ese).
+  await db.batch([
+    db
+      .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
+      .bind(id, VERSION_TERMINOS),
+    sentenciaTerminosPapel(db, id, rol),
+  ]);
   // C-SMS-CONSENTIMIENTO: solo si marcó la casilla de SMS (aparte de los términos y sin marcar).
   if (d.smsConsentimiento) await guardarConsentimientoSms(db, id, true, d.canal ?? 'web');
-  const token = await abrirSesion(db, id);
+  const token = await abrirSesion(db, id, null, papelDeLaApp(c.req.header('x-tumbite-app')));
   // C-RASTRO: de dónde vino el alta (app, versión, plataforma y red aproximada) y el paso «cuenta».
   const origen = origenDePeticion(c.req);
   await anotarRastro(db, id, 'alta', origen).catch((e: unknown) =>
@@ -509,9 +560,79 @@ cuentas.post('/entrar', async (c) => {
   if (!Number(fila.activo))
     throw new ErrorDatos(MENSAJE_CUENTA_CERRADA, undefined, 403, CODIGO_CUENTA_CERRADA);
   await limpiarFallosCuenta(db, d.correo);
-  // C-ENTRAR-APP-EQUIVOCADA: con la contraseña ya comprobada, una cuenta en la app de celular que no
-  // es la suya no abre sesión ni cierra las que tiene (al conductor, entrar le borraba la de Driver).
-  exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), fila.rol);
+  // C-CUENTA-UNICA: el papel con el que entra esta app. Con la misma cuenta, la app de clientes entra
+  // como cliente y Driver como conductor; si el papel falta, la app nueva lo ofrece y la publicada
+  // antes ve el aviso de C-ENTRAR-APP-EQUIVOCADA (sin abrir ni cerrar ninguna sesión).
+  const papelApp = papelDeLaApp(c.req.header('x-tumbite-app'));
+  let rolSesion: Usuario['rol'] = fila.rol;
+  if (
+    papelApp &&
+    papelApp !== fila.rol &&
+    esPapelDePersona(papelApp) &&
+    esPapelDePersona(fila.rol)
+  ) {
+    const estado = await estadoPapel(db, fila, papelApp);
+    if (estado === 'suspendido')
+      throw new ErrorDatos(
+        'Tu cuenta de conductor está suspendida. Puedes seguir pidiendo en la app de Divoox; para saber qué falta, escríbenos a soporte.',
+        undefined,
+        403,
+        CODIGO_PAPEL_SUSPENDIDO,
+      );
+    if (estado !== 'activo') {
+      if (!appConCuentaUnica(c, d.cuentaUnica))
+        exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), fila.rol);
+      if (!d.activarPapel)
+        throw new ErrorDatos(
+          MENSAJE_PAPEL_POR_ACTIVAR.get(papelApp) ?? '',
+          undefined,
+          409,
+          CODIGO_PAPEL_POR_ACTIVAR,
+        );
+      if (!d.aceptaTerminosPapel)
+        throw new ErrorDatos(
+          'Para seguir, marca la casilla de los términos.',
+          'aceptaTerminosPapel',
+          422,
+        );
+      const principal = await activarPapel(db, fila, papelApp);
+      await anotarPaso(db, fila.id, 'cuenta', origenDePeticion(c.req)).catch((e: unknown) =>
+        console.error('entrar: paso del papel nuevo', e),
+      );
+      // El conductor nuevo, como en el registro: su ciudad por la ubicación, la línea que lo espera
+      // y la bienvenida de Camila. Nada de esto frena la entrada.
+      if (papelApp === 'repartidor' && principal === 'repartidor') {
+        const zona = await zonaPorUbicacionDelRegistro(
+          db,
+          (c.req.raw as { cf?: { latitude?: unknown; longitude?: unknown } }).cf,
+        ).catch(() => null);
+        if (zona)
+          await db
+            .prepare('UPDATE usuarios SET zona_id = ? WHERE id = ? AND zona_id IS NULL')
+            .bind(zona, fila.id)
+            .run();
+        await alRegistrarseConductor(
+          c.env,
+          db,
+          { id: fila.id, nombre: fila.nombre, idioma: fila.idioma },
+          c.req.header('cf-ipcountry'),
+        );
+      }
+    }
+    rolSesion = papelApp;
+  } else {
+    // C-ENTRAR-APP-EQUIVOCADA: con la contraseña ya comprobada, una cuenta en la app de celular que no
+    // es la suya no abre sesión ni cierra las que tiene (al conductor, entrar le borraba la de Driver).
+    exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), fila.rol);
+    // C-CUENTA-UNICA-SUSPENSION: el conductor con su papel suspendido no entra a Driver ni al panel.
+    if (esPapelDePersona(fila.rol) && (await estadoPapel(db, fila, fila.rol)) === 'suspendido')
+      throw new ErrorDatos(
+        'Tu cuenta de conductor está suspendida. Puedes seguir pidiendo en la app de Divoox; para saber qué falta, escríbenos a soporte.',
+        undefined,
+        403,
+        CODIGO_PAPEL_SUSPENDIDO,
+      );
+  }
   // C-PERMISOS-FINOS: una cuenta del equipo suspendida, retirada o vencida no entra (lo dice claro).
   const acceso = fila.rol === 'admin' ? await leerAccesoInterno(db, c.env, fila) : null;
   if (acceso && acceso.estado !== 'activo')
@@ -531,14 +652,20 @@ cuentas.post('/entrar', async (c) => {
   // C-REPARTIDOR-UN-TELEFONO (8 nov 2026, Richard): un repartidor trabaja en UN solo teléfono, como
   // en Uber y DoorDash. Entrar en otro cierra la sesión del anterior: si no, los dos reciben las
   // mismas ofertas. Restaurantes y empresas sí pueden tener varias pantallas abiertas.
-  if (fila.rol === 'repartidor') {
-    await db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(fila.id).run();
+  // C-CUENTA-UNICA: solo las sesiones de conductor; la app de clientes de la misma persona sigue.
+  if (rolSesion === 'repartidor') {
+    await db
+      .prepare(
+        "DELETE FROM sesiones WHERE usuario_id = ? AND (papel IS NULL OR papel = 'repartidor')",
+      )
+      .bind(fila.id)
+      .run();
     // C-LINEA-SE-UNE-SOLA: la línea que lo espera se une también al entrar.
     await unirLineaQueEspera(db, fila.id).catch((e: unknown) =>
       console.error('entrar: línea del líder invitado', e),
     );
   }
-  const token = await abrirSesion(db, fila.id, acceso ? JSON.stringify(acceso) : null);
+  const token = await abrirSesion(db, fila.id, acceso ? JSON.stringify(acceso) : null, papelApp);
   // C-RASTRO: cada entrada queda con su app, versión, plataforma y red aproximada.
   await anotarRastro(db, fila.id, 'entrada', origenDePeticion(c.req)).catch((e: unknown) =>
     console.error('entrar: rastro', e),
@@ -550,7 +677,7 @@ cuentas.post('/entrar', async (c) => {
     id: fila.id,
     nombre: fila.nombre,
     correo: fila.correo,
-    rol: fila.rol,
+    rol: rolSesion,
     idioma: fila.idioma,
   };
   c.header('Set-Cookie', cookie(token));
@@ -620,10 +747,11 @@ cuentas.post('/dispositivo', async (c) => {
   const idioma = idiomaDeLaApp(d.idioma, c.req.header('x-idioma'));
   const r = await db
     .prepare(
-      `INSERT INTO dispositivos (token, usuario_id, plataforma, idioma, capacidades) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO dispositivos (token, usuario_id, plataforma, idioma, capacidades, app) VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now'),
          idioma = COALESCE(excluded.idioma, dispositivos.idioma),
-         capacidades = COALESCE(excluded.capacidades, dispositivos.capacidades)
+         capacidades = COALESCE(excluded.capacidades, dispositivos.capacidades),
+         app = COALESCE(excluded.app, dispositivos.app)
        WHERE dispositivos.usuario_id = excluded.usuario_id OR dispositivos.activo = 0`,
     )
     .bind(
@@ -632,6 +760,9 @@ cuentas.post('/dispositivo', async (c) => {
       d.plataforma,
       idioma,
       d.capacidades?.length ? d.capacidades.join(',') : null,
+      // C-CUENTA-UNICA-AVISOS: de qué app es este token, para que el aviso de conductor llegue a
+      // Driver y el de cliente a la app de clientes aunque sea la misma cuenta en el mismo teléfono.
+      papelDeLaApp(c.req.header('x-tumbite-app')),
     )
     .run();
   if (!r.meta.changes)
@@ -959,6 +1090,87 @@ cuentas.get('/yo', async (c) => {
     console.error('confirmación: reintento tras el freno', e),
   );
   return c.json({ usuario: usuarioPublico(u) });
+});
+
+// ---------- C-CUENTA-UNICA: los papeles de la persona y sus restaurantes ----------
+
+/** La persona detrás de la sesión (la dueña, si la sesión actúa como uno de sus restaurantes). */
+async function personaDeLaSesion(c: Ctx) {
+  const u = exigir(c);
+  if (u.persona) {
+    const f = await base(c)
+      .prepare('SELECT id, nombre, correo, rol, idioma FROM usuarios WHERE id = ? AND activo = 1')
+      .bind(u.persona.id)
+      .first<Usuario>();
+    if (!f) throw new ErrorDatos(SESION_TERMINADA, undefined, 401);
+    return { sesion: u, persona: f };
+  }
+  return { sesion: u, persona: u };
+}
+
+async function fijarActuaComo(c: Ctx, negocioId: string | null) {
+  const token = leerToken(c);
+  if (!token) throw new ErrorDatos(SESION_TERMINADA, undefined, 401);
+  await base(c)
+    .prepare('UPDATE sesiones SET actua_como = ? WHERE id = ?')
+    .bind(negocioId, await sha256(token))
+    .run();
+}
+
+/** Qué papeles tiene la persona y de qué restaurantes es dueña (para el panel web y las apps). */
+cuentas.get('/papeles', async (c) => {
+  const { sesion, persona } = await personaDeLaSesion(c);
+  const db = base(c);
+  const [papeles, negocios] = await Promise.all([
+    esPapelDePersona(persona.rol) ? papelesDe(db, persona) : Promise.resolve([]),
+    negociosDe(db, persona.id),
+  ]);
+  return c.json({
+    persona: { id: persona.id, nombre: persona.nombre, correo: persona.correo },
+    papeles,
+    negocios,
+    actuaComo: sesion.persona ? sesion.id : null,
+    // C-CUENTA-UNICA-RESTAURANTE: el panel ofrece «Registrar mi restaurante» solo a una persona
+    // (cliente o conductor). Una cuenta de restaurante o de un empleado no se vuelve dueña sola.
+    puedeRegistrarRestaurante: esPapelDePersona(persona.rol),
+  });
+});
+
+/**
+ * C-CUENTA-UNICA-RESTAURANTE: «Registrar mi restaurante» desde una cuenta de cliente o de conductor,
+ * con lo ya conocido (nombre, correo y celular de la persona). Crea el negocio aparte y la sesión del
+ * panel pasa a actuar como ese restaurante; la ficha se llena en «Mi restaurante» y pasa por la
+ * aprobación del equipo como cualquier alta.
+ */
+cuentas.post('/mis-restaurantes', limiteIntentos(10, 60_000), async (c) => {
+  const { persona } = await personaDeLaSesion(c);
+  if (!esPapelDePersona(persona.rol))
+    throw new ErrorDatos(
+      'Esta cuenta no puede registrar un restaurante. Entra con tu cuenta personal de Divoox.',
+      undefined,
+      403,
+    );
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      nombre: z.string().trim().min(2, { error: 'Escribe el nombre de tu restaurante.' }).max(80),
+      aceptaTerminos: z.literal(true, { error: 'Para seguir, marca la casilla de los términos.' }),
+    }),
+  );
+  const db = base(c);
+  const id = await crearNegocio(db, persona, d.nombre);
+  await fijarActuaComo(c, id);
+  return c.json({ negocioId: id }, 201);
+});
+
+/** Elegir con cuál de sus restaurantes trabaja el panel (o volver a la cuenta personal con null). */
+cuentas.post('/actuar-como', async (c) => {
+  const { persona } = await personaDeLaSesion(c);
+  const d = await leerCuerpo(c, z.object({ negocioId: z.string().min(1).max(80).nullable() }));
+  if (d.negocioId && !(await esDuenoDe(base(c), persona.id, d.negocioId)))
+    throw new ErrorDatos('Ese restaurante no es tuyo.', undefined, 403);
+  await fijarActuaComo(c, d.negocioId);
+  return c.json({ ok: true });
 });
 
 // ---------- C-TELEFONO-AL-REGISTRARSE: el celular se confirma con un código por SMS ----------
@@ -1362,9 +1574,10 @@ cuentas.post('/puente', limiteIntentos(20, 60_000), async (c) => {
   const codigo = nuevoToken();
   await db
     .prepare(
-      "INSERT INTO puentes_sesion (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+60 seconds'))",
+      "INSERT INTO puentes_sesion (id, usuario_id, expira_en, papel) VALUES (?, ?, datetime('now', '+60 seconds'), ?)",
     )
-    .bind(await sha256(codigo), u.id)
+    // C-CUENTA-UNICA: la página se abre con el mismo papel de la app que la pidió.
+    .bind(await sha256(codigo), u.id, esPapelDePersona(u.rol) ? u.rol : null)
     .run();
   const origen = new URL(c.req.url).origin;
   return c.json({ url: `${origen}/datos/cuentas/puente/${codigo}?a=${encodeURIComponent(d.a)}` });
@@ -1376,13 +1589,13 @@ cuentas.get('/puente/:codigo', limiteIntentos(30, 60_000), async (c) => {
   const db = base(c);
   const fila = await db
     .prepare(
-      "UPDATE puentes_sesion SET usado = 1 WHERE id = ? AND usado = 0 AND expira_en > datetime('now') RETURNING usuario_id",
+      "UPDATE puentes_sesion SET usado = 1 WHERE id = ? AND usado = 0 AND expira_en > datetime('now') RETURNING usuario_id, papel",
     )
     .bind(await sha256(c.req.param('codigo')))
-    .first<{ usuario_id: string }>();
+    .first<{ usuario_id: string; papel: string | null }>();
   // Código usado, vencido o inventado: se llega a la página igual y el panel pide entrar.
   if (!fila) return c.redirect(destino, 302);
-  const token = await abrirSesion(db, fila.usuario_id);
+  const token = await abrirSesion(db, fila.usuario_id, null, fila.papel);
   c.header('Set-Cookie', cookie(token));
   c.header('Cache-Control', 'no-store');
   return c.redirect(destino, 302);

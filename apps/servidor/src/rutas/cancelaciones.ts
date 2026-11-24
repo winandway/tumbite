@@ -251,7 +251,7 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
     .run();
   const codigo = s.pedido_id.slice(0, 4).toUpperCase();
   // C-AVISOS-IDIOMA: antes salía solo en español.
-  await notificar(c.env, db, s.dueno_id, (i) => ({
+  await notificar(c.env, db, { id: s.dueno_id, app: 'restaurante' }, (i) => ({
     titulo:
       i === 'en'
         ? decision === 'aprobar'
