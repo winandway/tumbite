@@ -2,6 +2,17 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CLIENTE-FIJO-ROTULO · La oferta de un cliente fijo dice «Cliente fijo: nombre» (primera carrera real, 24 nov 2026) — todos los países
+
+- **Qué pasaba:** la oferta exclusiva al conductor de confianza no decía de quién era. El aviso decía «Tu cliente de confianza te pidió un viaje» y la pantalla de oferta, una línea pequeña.
+- **Servidor (llega a las apps de la tienda):**
+  - `turnoDeConfianza` (`apps/servidor/src/operaciones.ts`) titula el aviso con `avisoClienteFijo(idioma, primerNombre(nombre))`: «Cliente fijo: Marta» / «Regular rider: Marta». Sin nombre, «Tu cliente fijo te pidió un viaje».
+  - Los datos del aviso llevan `clienteFijo: '1'`. Es una lectura más (el nombre), solo cuando sale el aviso.
+  - `GET /datos/conductor/operaciones/ofertas` (`rutas/viajes.ts`) trae `clienteNombre` (primer nombre) SOLO en la oferta exclusiva. A los demás conductores no se les da el nombre.
+- **App:** la hoja de la oferta lo pone grande y arriba (ver el mismo candado en la app, `OfertaViaje.tsx`).
+- **Cómo se comprueba:** `viajesFijos.test.ts` → «el aviso y la oferta dicen «Cliente fijo: nombre» (solo a él)», en ROJO antes del cambio.
+- **Qué NO tocar:** no dar el nombre en las ofertas que no son exclusivas; no volver al título genérico.
+
 ## C-VEHICULO-ACTIVO-SOLO · El vehículo aprobado queda en uso solo y su servicio de viajes listo (Gerencia por Richard, conductor real, 23 nov 2026) — todos los países
 
 - **Qué pasaba:** el equipo aprobó la identidad, los papeles y la moto de un conductor de Venezuela, pero `repartidores.vehiculo_activo_id` seguía en NULL, no tenía `preferencias_servicio` y no salía en `conductores_elegibles`: no recibía viajes hasta tocar «Mi vehículo → Usar este vehículo» y deslizar «Moto con pasajero».

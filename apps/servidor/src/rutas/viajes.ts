@@ -34,6 +34,7 @@ import {
   aceptarOperacion,
   cambiarEstadoViaje,
   liberarViaje,
+  primerNombre,
   puedeRecibirOferta,
   repartirOperaciones,
 } from '../operaciones';
@@ -174,6 +175,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
               v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng, q.total, v.ref_tasa, v.ref_fecha,
+              CASE WHEN v.conductor_preferido_id = f.conductor_id
+                   THEN (SELECT c.nombre FROM usuarios c WHERE c.id = o.cliente_id) END AS cliente_nombre,
               ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
@@ -262,6 +265,9 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: la oferta dice que es de un cliente que lo eligió de
         // confianza (solo para él, por un minuto), si es un viaje fijo y si lleva a un menor.
         deConfianza: f.conductor_preferido_id === u.id,
+        // C-CLIENTE-FIJO-ROTULO: solo en la exclusiva, el primer nombre de su cliente fijo.
+        clienteNombre:
+          f.conductor_preferido_id === u.id ? primerNombre(str(f.cliente_nombre)) || null : null,
         viajeFijo: f.rutina_id != null,
         menor: f.menor_nombre == null ? null : String(f.menor_nombre),
       };
