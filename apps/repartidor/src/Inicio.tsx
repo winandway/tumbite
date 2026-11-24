@@ -24,7 +24,11 @@ import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from '
 import * as ImagePicker from 'expo-image-picker';
 import { AsistentePapeles } from './papeles/AsistentePapeles';
 import { QueTeFalta } from './piezas/QueTeFalta';
-import { type AccionFalta, type FaltaServidor } from './piezas/queTeFaltaLogica';
+import {
+  type AccionFalta,
+  type FaltaServidor,
+  franjaSoloEfectivo,
+} from './piezas/queTeFaltaLogica';
 import { AltaPasajeros } from './viajes/AltaPasajeros';
 import { accionDeMotivo, faltaCaraParaEmpezar } from './papeles/logica';
 import { AvisoIa } from './papeles/AvisoIa';
@@ -3635,7 +3639,31 @@ export function Inicio() {
   const primeraClave = faltasVista?.find((f) => f.clave !== 'desconectado')?.clave;
   const telefonoEnBloque = primeraClave === 'telefono' && Boolean(tarjetaTelefono);
   const caraArriba = primeraClave === 'cara' || (!faltas && caraLocal);
-  const arribaInicio = !estado?.activo ? (
+  // C-SOLO-EFECTIVO: franja fija (no una ventana) mientras no tenga su pago móvil: solo le llegan
+  // carreras en efectivo. Sale conectado o no, y se va sola al cargar la cuenta.
+  const efectivo = franjaSoloEfectivo(faltas, idioma);
+  const franjaEfectivo = efectivo ? (
+    <View
+      testID="franja-solo-efectivo"
+      accessibilityRole="summary"
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#E3E6EB',
+        padding: 12,
+        gap: 10,
+      }}
+    >
+      <Text style={{ fontSize: 15, lineHeight: 21, fontWeight: '600' }}>{efectivo.texto}</Text>
+      <Boton
+        texto={efectivo.boton}
+        secundario
+        alTocar={() => void accionFalta('pago_movil', efectivo.falta)}
+      />
+    </View>
+  ) : null;
+  const arribaSinFranja = !estado?.activo ? (
     <View style={{ gap: 10 }}>
       <QueTeFalta
         api={api}
@@ -3659,6 +3687,13 @@ export function Inicio() {
       ) : null}
     </View>
   ) : null;
+  const arribaInicio =
+    franjaEfectivo || arribaSinFranja ? (
+      <View style={{ gap: 10 }}>
+        {franjaEfectivo}
+        {arribaSinFranja}
+      </View>
+    ) : null;
   // C-FOTO-CARA-A-LA-VISTA: el motivo de no poder conectarse, pegado a la barra, con su botón.
   const accionMotivo = accionDeMotivo(motivoConexion?.campo);
   const motivoInicio = motivoConexion ? (

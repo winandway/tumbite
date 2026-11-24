@@ -1,12 +1,40 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { avisoDeFalta, faltaPlaca, primeraFalta } from './queTeFaltaLogica';
+import { avisoDeFalta, faltaPlaca, franjaSoloEfectivo, primeraFalta } from './queTeFaltaLogica';
 
 /**
  * C-QUE-TE-FALTA (23 nov 2026): Driver dice lo que el servidor calculó, una cosa a la vez, con su
  * botón directo; lo que está en manos del equipo va sin botón. Y el vehículo guardado se corrige.
  */
+describe('C-SOLO-EFECTIVO · la franja «solo recibes carreras en efectivo»', () => {
+  it('sale solo mientras le falta el pago móvil, en los dos idiomas, con su botón', () => {
+    const f = [
+      { clave: 'desconectado', quien: 'conductor' as const },
+      { clave: 'sin_pago_movil', quien: 'conductor' as const },
+    ];
+    expect(franjaSoloEfectivo(f, 'es')?.texto).toBe(
+      'Solo recibes carreras en efectivo. Agrega tu pago móvil para recibir más.',
+    );
+    expect(franjaSoloEfectivo(f, 'es')?.boton).toBe('Agregar mi pago móvil');
+    expect(franjaSoloEfectivo(f, 'en')?.texto).toBe(
+      'You only get cash trips. Add your mobile payment account to get more.',
+    );
+    expect(franjaSoloEfectivo([{ clave: 'desconectado', quien: 'conductor' }], 'es')).toBeNull();
+    expect(franjaSoloEfectivo(null, 'es')).toBeNull();
+  });
+  it('es una franja fija del inicio, no una ventana que haya que cerrar', () => {
+    const inicio = readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8');
+    expect(inicio).toContain('testID="franja-solo-efectivo"');
+    expect(inicio).toMatch(/franjaSoloEfectivo\(faltas, idioma\)/);
+    const bloque = inicio.slice(
+      inicio.indexOf('testID="franja-solo-efectivo"') - 400,
+      inicio.indexOf('testID="franja-solo-efectivo"') + 1200,
+    );
+    expect(bloque).not.toMatch(/<Modal|Alert\.alert/);
+  });
+});
+
 describe('C-QUE-TE-FALTA · lo que ve el conductor', () => {
   it('una cosa a la vez, la primera de la lista; «desconectado» lo dice la barra', () => {
     const p = primeraFalta(
@@ -19,8 +47,10 @@ describe('C-QUE-TE-FALTA · lo que ve el conductor', () => {
     );
     expect(p?.aviso.titulo).toBe('A tu moto le falta la placa');
     expect(p?.aviso.accion).toBe('vehiculo');
-    expect(p?.despues).toBe(1);
+    // C-SOLO-EFECTIVO: el pago móvil es opcional: no cuenta como paso (lo avisa su franja).
+    expect(p?.despues).toBe(0);
     expect(primeraFalta([{ clave: 'desconectado', quien: 'conductor' }], 'es')).toBeNull();
+    expect(primeraFalta([{ clave: 'sin_pago_movil', quien: 'conductor' }], 'es')).toBeNull();
   });
   it('lo que hacemos nosotros va sin botón y lo dice así', () => {
     const a = avisoDeFalta(
