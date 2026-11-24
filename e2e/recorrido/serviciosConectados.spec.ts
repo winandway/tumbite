@@ -34,6 +34,9 @@ let antes: {
   zona: Record<string, unknown>[];
   implementados: Record<string, unknown>[];
 } | null = null;
+// C-SERVICIO-SIN-OFERTA: Comida solo se ofrece donde hay un restaurante aprobado. Si esta prueba corre
+// antes que las que crean uno en Miami, deja uno de ejemplo (cerrado) y lo borra al terminar.
+const restaurantesTemporales: string[] = [];
 test.beforeAll(() => {
   if (process.env.RECORRIDO_URL) return;
   const lista = "('envios', 'moto', 'carro')";
@@ -48,6 +51,8 @@ test.beforeAll(() => {
   };
 });
 test.afterAll(() => {
+  for (const r of restaurantesTemporales)
+    sqlLocalTexto(`DELETE FROM restaurantes WHERE id = '${r}'`);
   if (!antes) return;
   for (const s of antes.servicios)
     sqlLocalTexto(
@@ -90,6 +95,17 @@ for (const idioma of ['es', 'en'] as const)
     // ───── Un repartidor con identidad aprobada, una moto y Comida, Envíos y Moto aprobados
     const admin = await cuenta('cliente', 'Soporte Divoox');
     sqlLocalTexto(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.id}'`);
+    if (
+      !process.env.RECORRIDO_URL &&
+      !sqlLocal(
+        `SELECT 1 AS hay FROM restaurantes WHERE zona_id = '${ZONA}' AND estado = 'aprobado' LIMIT 1`,
+      ).length
+    ) {
+      const r = `rest-servicios-${idioma}-${id}`;
+      sqlLocalTexto(`INSERT INTO restaurantes (id, dueno_id, nombre, telefono, direccion, lat, lng, estado, abierto, zona_id)
+        VALUES ('${r}', '${admin.id}', 'Restaurante de Ejemplo', '+13055550100', 'Dirección de ejemplo', ${MIAMI.lat}, ${MIAMI.lng}, 'aprobado', 0, '${ZONA}')`);
+      restaurantesTemporales.push(r);
+    }
     const cond = await cuenta('repartidor', P.nombre);
     const c = cond.id;
     const v = `veh-sc-${idioma}-${id}`;
