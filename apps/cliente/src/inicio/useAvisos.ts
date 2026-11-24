@@ -43,7 +43,8 @@ export function useAvisos(
     () =>
       api.pedir<RespuestaAvisos>(
         'GET',
-        `/datos/mis-avisos${lat != null && lng != null ? `?lat=${lat}&lng=${lng}` : ''}`,
+        // C-AVISOS-GUARDADOS: `historial=1` trae también lo que le llegó al teléfono, con su hora.
+        `/datos/mis-avisos?historial=1${lat != null && lng != null ? `&lat=${lat}&lng=${lng}` : ''}`,
       ),
     [api, lat, lng],
   );
@@ -77,3 +78,27 @@ export function useAvisos(
   }, [pedir, activo]);
   return { datos, error, recargar };
 }
+
+/**
+ * C-AVISOS-GUARDADOS (24 nov 2026): un aviso que le llegó al teléfono (su conductor llegó, mensajes,
+ * viaje cancelado…), con su hora. Solo viene si la app lo pide con `historial=1`.
+ */
+export type AvisoGuardado = {
+  tipo: 'aviso';
+  tipoAviso: string;
+  titulo: string;
+  cuerpo: string;
+  datos: Record<string, unknown>;
+  en: string;
+};
+export const esAvisoGuardado = (a: unknown): a is AvisoGuardado =>
+  typeof a === 'object' && a !== null && (a as { tipo?: unknown }).tipo === 'aviso';
+
+/** La hora de un aviso («24 nov, 9:05 p. m.»), en el idioma de la app. */
+export const horaAviso = (en: string, idioma: string) =>
+  new Date(`${en.replace(' ', 'T')}Z`).toLocaleString(idioma === 'en' ? 'en-US' : 'es-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
