@@ -143,7 +143,7 @@ const ES: Guias = {
     resumen:
       'Los clientes que te eligen de confianza te ven primero cuando piden, y sus viajes fijos aparecen en tu agenda de la semana.',
     explicacion: [
-      'Cuando un cliente te elige como su conductor de confianza, te llega un aviso. Desde ese momento, cuando pide y estás conectado y cerca, su viaje te llega primero a ti, solo a ti, durante 1 minuto. La oferta dice «Cliente de confianza · solo para ti».',
+      'Cuando un cliente te elige como su conductor de confianza, te llega un aviso. Desde ese momento, cuando pide y estás conectado y cerca, su viaje te llega primero a ti, solo a ti, durante 1 minuto. El aviso del celular y la oferta lo dicen en grande, con su nombre: «Cliente fijo: Marta». La oferta sale y suena en cualquier pantalla de la app, también si estás mirando tu agenda o tus ganancias.',
       'Si el cliente arma un viaje fijo contigo (por ejemplo, la escuela de lunes a viernes), lo ves en «Clientes fijos»: la agenda de los próximos 7 días con la hora, de dónde a dónde y la forma de pago. 30 minutos antes de cada viaje te llega un aviso: conéctate para recibirlo primero.',
       'Si un día no puedes, toca «No puedo» en ese viaje: el cliente recibe un aviso y el viaje pasa a otro conductor. Si ya no vas a hacer ese viaje fijo, usa «Dejar este viaje fijo».',
       'Viajes de menores: la oferta dice «Recoges a un menor» con su nombre. Pídele su PIN de 4 números para empezar el viaje. Para recibirlos, activa «Acepto llevar menores» en tu vehículo.',
@@ -172,7 +172,7 @@ const ES: Guias = {
       'En la app Driver, abre «Clientes fijos».',
       'Revisa la agenda de la semana: hora, cliente, recogida y destino.',
       'Conéctate antes de la hora: el aviso te llega 30 minutos antes.',
-      'Acepta la oferta «solo para ti» y haz el viaje como siempre.',
+      'Acepta la oferta «Cliente fijo» y haz el viaje como siempre.',
       'Si un día no puedes, toca «No puedo» en ese viaje.',
     ],
     nota: 'Cobrar o llevar a un cliente fuera de la app no está permitido: pierdes la protección de Divoox y puede cerrar tu cuenta.',
@@ -287,7 +287,7 @@ const EN: Guias = {
     resumen:
       'Riders who choose you as their trusted driver reach you first when they request, and their regular rides show up in your weekly schedule.',
     explicacion: [
-      'When a rider chooses you as their trusted driver, you get a notification. From then on, when they request and you’re online and nearby, their ride reaches you first, and only you, for 1 minute. The request says “Trusted rider · just for you.”',
+      'When a rider chooses you as their trusted driver, you get a notification. From then on, when they request and you’re online and nearby, their ride reaches you first, and only you, for 1 minute. The notification and the request say it in large type, with their name: “Regular rider: Emily.” The request shows up and rings on any screen of the app, even while you’re checking your schedule or your earnings.',
       'If the rider sets up a regular ride with you (for example, school Monday to Friday), you see it in “Regular riders”: your schedule for the next 7 days with the time, where from and where to, and the payment method. 30 minutes before each ride you get a reminder: go online to receive it first.',
       'If you can’t make it one day, tap “Can’t make it” on that ride: the rider gets a notification and the ride goes to another driver. If you’ll no longer do that regular ride, use “Leave this regular ride.”',
       'Rides for minors: the request says “You’re picking up a minor” with their name. Ask for their 4-digit PIN to start the ride. To receive them, turn on “I accept minors” for your vehicle.',
@@ -316,7 +316,7 @@ const EN: Guias = {
       'In the Driver app, open “Regular riders.”',
       'Check the weekly schedule: time, rider, pickup, and destination.',
       'Go online before the time: the reminder arrives 30 minutes before.',
-      'Accept the “just for you” request and do the ride as usual.',
+      'Accept the “Regular rider” request and do the ride as usual.',
       'If you can’t make it one day, tap “Can’t make it” on that ride.',
     ],
     nota: 'Charging or driving a rider outside the app isn’t allowed: you lose Divoox protection and it may close your account.',

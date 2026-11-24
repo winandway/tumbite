@@ -295,6 +295,9 @@ describe('C-CAMPANA-SE-VACIA · las campanas de las apps (cliente y conductor)',
 
   it('conductor: las ofertas vencidas no salen «nuevas» en cada vistazo; abrir la campana la deja en cero', async () => {
     const { m, conductor } = await conPedido();
+    // C-AVISOS-GUARDADOS: el saludo de Camila al registrarse también queda en su campana; aquí se mide
+    // solo la oferta vencida.
+    await m.DB.prepare('DELETE FROM avisos_enviados WHERE usuario_id = ?').bind(conductor.id).run();
     await m.DB.prepare(
       "INSERT INTO ofertas (pedido_id, repartidor_id, estado, creada_en) VALUES ('p1', ?, 'vencida', datetime('now', '-30 minutes'))",
     )

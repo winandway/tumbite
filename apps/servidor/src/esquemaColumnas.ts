@@ -49,6 +49,17 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "auth",
     "creado_en"
   ],
+  "avisos_enviados": [
+    "id",
+    "usuario_id",
+    "tipo",
+    "titulo_es",
+    "cuerpo_es",
+    "titulo_en",
+    "cuerpo_en",
+    "datos_json",
+    "creado_en"
+  ],
   "sesiones": [
     "id",
     "usuario_id",

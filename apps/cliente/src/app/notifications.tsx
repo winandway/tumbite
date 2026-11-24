@@ -7,7 +7,13 @@ import { C, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
-import { type Aviso, useAvisos } from '../inicio/useAvisos';
+import {
+  type Aviso,
+  type AvisoGuardado,
+  esAvisoGuardado,
+  horaAviso,
+  useAvisos,
+} from '../inicio/useAvisos';
 import { textosInicio } from '../inicio/textos';
 import { Pressable } from 'react-native';
 import { conCuenta } from '../ConCuenta';
@@ -43,7 +49,20 @@ function Avisos() {
   const llenar = (s: string, v: Record<string, string | number>) =>
     Object.entries(v).reduce((acc, [k, x]) => acc.replaceAll(`{${k}}`, String(x)), s);
 
-  const tarjeta = (a: Aviso, i: number) => {
+  const tarjeta = (a: Aviso | AvisoGuardado, i: number) => {
+    // C-AVISOS-GUARDADOS: lo que le llegó al teléfono, con su título, su texto y su hora.
+    if (esAvisoGuardado(a))
+      return (
+        <View key={`g-${a.en}-${i}`} testID="aviso-guardado">
+          <Tarjeta>
+            <Titulo texto={a.titulo} />
+            <Texto texto={a.cuerpo} />
+            <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>
+              {horaAviso(a.en, idioma)}
+            </Text>
+          </Tarjeta>
+        </View>
+      );
     if (a.tipo === 'pedido')
       return (
         <Pressable

@@ -86,3 +86,16 @@ export function textoOfertaConfianza(
     o.menor ? t.menor(o.menor) : '',
   ].filter(Boolean);
 }
+
+/**
+ * C-CLIENTE-FIJO-ROTULO (24 nov 2026, primera carrera real; todos los países): el rótulo grande de la
+ * oferta exclusiva, para que el conductor le dé prioridad de un vistazo. Nada si no es de confianza.
+ */
+export function rotuloClienteFijo(
+  o: { deConfianza?: boolean; clienteNombre?: string | null },
+  idioma: 'es' | 'en',
+): string | null {
+  if (!o.deConfianza) return null;
+  const base = idioma === 'en' ? 'Regular rider' : 'Cliente fijo';
+  return o.clienteNombre ? `${base}: ${o.clienteNombre}` : base;
+}

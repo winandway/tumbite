@@ -61,6 +61,46 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Qué NO tocar:** no volver a meter el botón principal del asistente dentro de lo que se desliza; no pintar el motivo de conectarse en el `error` de abajo; no tocar la pantalla del aviso de IA sin el dictamen del auditor; «qué falta» se calcula SOLO en `queTeFalta.ts` (la app no lo adivina); `hitos_cuenta` nunca una fila por vistazo.
 - **Pendiente de decisión (no construido):** que la foto de la cara se ENVÍE sola a revisión al tomarla (hoy dice «Lista: ya puedes trabajar» y viaja con los demás papeles): exige separar la revisión de la cara de la de identidad en la bandeja; dejar activar un vehículo «registrado» fuera del plazo.
 
+## C-AVISOS-GUARDADOS · Todo aviso que llega al teléfono queda en la campana con su hora (primera carrera real, 24 nov 2026) — todos los países
+
+- **Qué pasaba:** después de una carrera completa, la campana de Driver decía «No tienes avisos por ahora». La campana calculaba solo eventos de pedidos de comida; nada de viajes, ofertas, mensajes, recargas ni papeles. La del cliente, igual.
+- **Qué se hizo (servidor):**
+  - Tabla `avisos_enviados` (`schema.sql`; id INTEGER PRIMARY KEY, título y texto en español y en inglés, datos, hora; índice usuario+hora; sin FK).
+  - `notificar()` (`notificaciones.ts`) guarda UNA fila por aviso y persona (no por aparato), también si la persona no tiene teléfono registrado, en paralelo con Expo y la web (`guardarAviso`, `apps/servidor/src/avisosGuardados.ts`). Si no se puede guardar, el aviso sale igual y la salud marca la pieza `avisosGuardados: error`.
+  - Presupuesto: 2 filas escritas por aviso (la fila y su índice). Mirar la campana no escribe.
+  - Limpieza diaria del reloj: borra lo de más de 30 días por el id (`LIMPIEZA_AVISOS_ENVIADOS`), sin índice de fecha. `borrarCuenta` la borra.
+  - `GET /datos/repartidor/avisos` suma lo guardado de 7 días (tope 30) con la forma que YA pinta Driver 0.1.69 de la tienda: el título en `tipo` y el texto en `restaurante`, además de `titulo`, `cuerpo`, `tipoAviso` y `guardado: true`, en el idioma de `x-idioma`. Lo de un pedido que la campana ya calcula no se repite (`historialParaRepartidor`).
+  - `GET /datos/mis-avisos` lo suma SOLO con `?historial=1` (tipo `aviso`), porque la app de clientes de la tienda (0.1.60) pintaría mal un tipo que no conoce.
+- **Apps:** Driver no necesita cambio (su campana pinta `tipo` como título y `restaurante` debajo). La app de clientes (necesita app nueva) pide `?historial=1` (`useAvisos.ts`) y pinta el aviso guardado con su título, su texto y su hora (`esAvisoGuardado`, `horaAviso`, `app/notifications.tsx`, `testID="aviso-guardado"`). Prueba: `apps/cliente/src/inicio/avisosGuardados.test.ts` (2 casos, en ROJO antes).
+- **Campana que se vacía:** el número y lo leído son de C-CAMPANA-SE-VACIA (rama `fase-panel-y-correo`, marca «visto hasta» por persona). Lo guardado lleva su `en`, así que al juntarse `campanaDe` lo marca leído o no leído sin tocar nada más. Mientras esa rama no esté en la principal, la campana ya muestra el historial, pero su número no baja.
+- **Cómo se comprueba:** `apps/servidor/src/avisosGuardados.test.ts` (5 casos, en ROJO antes: no existía la pieza).
+- **Qué NO tocar:** no escribir una fila por aparato ni por lectura; no mandar el tipo `aviso` a la app de clientes sin `historial=1`; no quitar la limpieza.
+
+## C-CLIENTE-FIJO-ROTULO · La oferta de un cliente fijo dice «Cliente fijo: nombre» (primera carrera real, 24 nov 2026) — todos los países
+
+- **Qué pasaba:** la oferta exclusiva al conductor de confianza no decía de quién era. El aviso decía «Tu cliente de confianza te pidió un viaje» y la pantalla de oferta, una línea pequeña.
+- **Servidor (llega a las apps de la tienda):**
+  - `turnoDeConfianza` (`apps/servidor/src/operaciones.ts`) titula el aviso con `avisoClienteFijo(idioma, primerNombre(nombre))`: «Cliente fijo: Marta» / «Regular rider: Marta». Sin nombre, «Tu cliente fijo te pidió un viaje».
+  - Los datos del aviso llevan `clienteFijo: '1'`. Es una lectura más (el nombre), solo cuando sale el aviso.
+  - `GET /datos/conductor/operaciones/ofertas` (`rutas/viajes.ts`) trae `clienteNombre` (primer nombre) SOLO en la oferta exclusiva. A los demás conductores no se les da el nombre.
+- **App (necesita app nueva de Driver):** `rotuloClienteFijo` (`apps/repartidor/src/viajes/agendaFijos.ts`) y la hoja de la oferta (`OfertaViaje.tsx`) lo pintan grande (24, negrita) en la parte de arriba, siempre a la vista junto a la cuenta atrás (`testID="oferta-cliente-fijo"`). Prueba: `agendaFijos.test.ts`, bloque del rótulo (2 casos, en ROJO antes).
+- **Cómo se comprueba:** `viajesFijos.test.ts` → «el aviso y la oferta dicen «Cliente fijo: nombre» (solo a él)», en ROJO antes del cambio.
+- **Qué NO tocar:** no dar el nombre en las ofertas que no son exclusivas; no volver al título genérico.
+
+## C-OFERTA-EN-CUALQUIER-PANTALLA y C-AVISOS-PRIMER-PLANO · La oferta se ve y suena en cualquier pantalla, y ningún aviso se descarta con la app abierta (primera carrera real, 24 nov 2026) — todos los países · necesita app nueva (Driver y clientes)
+
+- **Qué pasaba:** un pasajero pidió a su conductor de confianza (cliente fijo). El minuto exclusivo pasó sin que la oferta saliera en pantalla ni sonara; sonó «al rato», cuando la oferta pasó a todos. En producción (solo lectura) dos de los tres viajes de la prueba tienen la oferta con `intentos = 2`: la exclusiva de 60 s venció sin respuesta y la normal sí se vio y se respondió. En el tercero el conductor estaba en el Inicio y la rechazó a los 18 s.
+- **Causa real (en el código de Driver; el servidor manda el mismo aviso para la exclusiva y la normal):**
+  1. Las hojas de oferta (viaje, envío y comida), con la alarma dentro, solo se pintaban en el Inicio y sobre «Viaje terminado». En Clientes fijos, Avisos, Ganancias, Perfil o Ayuda la oferta llegaba por el sondeo, pero no se veía ni sonaba.
+  2. Driver y clientes no tenían manejador de avisos con la app abierta. Con expo-notifications 57, sin manejador, un aviso que llega con la app abierta se DESCARTA (sin bandeja y sin sonido; `ExpoHandlingDelegate.handleNotification`).
+- **Sin verificar:** con la app en segundo plano el sistema muestra el aviso con el tono del canal de ofertas, igual que la oferta normal. Que «se vio pero no sonó» con la app de fondo no lo explica el código. Hipótesis: estaban en videollamada de WhatsApp compartiendo pantalla, y Android baja o calla los avisos durante una llamada. Lo decide la prueba del ensayo general (oferta de cliente fijo con Driver en segundo plano y la pantalla apagada, sin llamada activa).
+- **Qué se hizo:**
+  - `hojasDeOferta` se arma ANTES del lienzo, y `hojasVisibles` (nada con un viaje en curso; sí sobre «Viaje terminado») se pinta en el lienzo común (todas las pantallas con cabecera), en el asistente de papeles y en «Mi ruta». Un solo sitio por pantalla: dos hojas serían dos alarmas.
+  - Pieza única `useAvisosPrimerPlano` (`packages/movil/src/avisosPrimerPlano.ts`), con la regla pura en `avisosPrimerPlanoRegla.ts`. Una oferta con hoja (`oferta_operacion`, `oferta_pedido`) va a la bandeja sin el sonido del sistema (suena la alarma de la hoja) y llama a `cargar()` al instante. Cualquier otro aviso sale arriba, suena y queda en la bandeja. La ruta de Flex (`oferta`), que no tiene hoja con alarma, suena como siempre. La usan Driver (`Inicio.tsx`) y clientes (`AbrirAvisos.tsx`). La app del restaurante no se tocó: tiene su propia alarma de pedidos.
+- **Cómo se comprueba:** `apps/repartidor/src/viajes/ofertaEnCualquierPantalla.test.ts` (6 casos) y `packages/movil/src/avisosPrimerPlano.test.ts` (5 casos), los dos vistos en ROJO antes del arreglo. `cierreViaje.test.ts`, puesta al día.
+- **Pendiente fuera de este trabajo:** la pantalla del aviso de IA (`AvisoIa`) no lleva las hojas porque pertenece a otra rama. Si el conductor está conectado y en esa pantalla, la oferta no sale hasta que la conteste.
+- **Qué NO tocar:** no volver a pintar `{hojasDeOferta}` suelto en una rama de pantalla; no quitar el manejador (vuelve el silencio con la app abierta); no dejar que el sistema suene también en una oferta con hoja (sonido doble).
+
 ## C-VEHICULO-ACTIVO-SOLO · El vehículo aprobado queda en uso solo y su servicio de viajes listo (Gerencia por Richard, conductor real, 23 nov 2026) — todos los países
 
 - **Qué pasaba:** el equipo aprobó la identidad, los papeles y la moto de un conductor de Venezuela, pero `repartidores.vehiculo_activo_id` seguía en NULL, no tenía `preferencias_servicio` y no salía en `conductores_elegibles`: no recibía viajes hasta tocar «Mi vehículo → Usar este vehículo» y deslizar «Moto con pasajero».

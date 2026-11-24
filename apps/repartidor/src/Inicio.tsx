@@ -167,6 +167,7 @@ import {
   useSesion,
   useSondeo,
   useToqueAviso,
+  useAvisosPrimerPlano,
   URL_SERVIDOR,
   capturasConCamara,
   achicarFotoEvidencia,
@@ -898,6 +899,9 @@ export function Inicio() {
   // lo que pasara, también con la sesión vencida).
   // Estado y ofertas no pueden llegar tarde: con fallos, como mucho cada 20 s.
   useSondeo(cargar, 5000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
+  // C-AVISOS-PRIMER-PLANO: con la app abierta ningún aviso se descarta en silencio; el de una oferta
+  // trae la oferta YA (su hoja y su alarma salen en cualquier pantalla), sin esperar el sondeo.
+  useAvisosPrimerPlano('repartidor', () => void cargar());
   // C-OFERTA-VENCIDA-SE-CIERRA (robot, 18 nov 2026): al volver la app al frente (el conductor estaba
   // en otra app) se pregunta YA: una oferta no puede aparecer con la cuenta atrás ya gastada.
   useEffect(() => {
@@ -2022,6 +2026,46 @@ export function Inicio() {
       nombre: o.restaurante.nombre,
     }));
   const etiquetasMapa = { yo: td.tuUbicacion, restaurante: t.recoger, casa: t.entregar };
+  // Las hojas de oferta (viaje, envío y comida). C-OFERTA-EN-CUALQUIER-PANTALLA (24 nov 2026, primera
+  // carrera real): salen sobre TODAS las pantallas de Driver (Clientes fijos, Avisos, Ganancias,
+  // Perfil, Ayuda…), no solo en el Inicio: antes la oferta de un cliente fijo llegaba con el conductor
+  // en otra pantalla y el minuto exclusivo pasaba sin verse ni sonar (la alarma vive en la hoja).
+  // Con un viaje en curso no salen; sobre «Viaje terminado» sí (C-CIERRE-VIAJE-QUEDA).
+  // Aceptar NO suelta el cierre al tocar (la hoja se mudaría de sitio y la alarma volvería a sonar):
+  // lo suelta el trabajo nuevo cuando el sondeo lo trae (`cierreVigente`).
+  const hojasDeOferta = (
+    <>
+      {ofertaViaje && !ofertaComida ? (
+        <OfertaViajeModal
+          // Una oferta nueva (o la reoferta del mismo viaje, con otro vencimiento) arranca su
+          // cuenta atrás y su sonido desde cero (C-OFERTA-TIEMPO-REAL, C-OFERTA-VENCIDA-SE-CIERRA).
+          key={claveOferta(ofertaViaje)}
+          oferta={ofertaViaje}
+          idioma={idioma}
+          yo={aqui}
+          alAceptar={() =>
+            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`)
+          }
+          alRechazar={() =>
+            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/rechazar`)
+          }
+          alVencer={() => vencer(claveOferta(ofertaViaje))}
+        />
+      ) : null}
+      {ofertaComida ? (
+        <Oferta
+          key={ofertaComida.id}
+          oferta={ofertaComida}
+          idioma={idioma}
+          alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`)}
+          alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/rechazar`)}
+          alVencer={() => vencer(`comida@${ofertaComida.id}`)}
+        />
+      ) : null}
+    </>
+  );
+  const hojasVisibles = viajeMostrado && !ofertasSobreCierre ? null : hojasDeOferta;
+
   // Fase cero (C-SERVICIOS-CONECTADOS): el inicio, el perfil y «Agregar un servicio» van en fondo
   // blanco, como el diseño aprobado; las demás pantallas siguen en el gris de siempre.
   const lienzo = (pestana: Pestana, cuerpo: ReactNode, sinScroll = false, blanco = false) => (
@@ -2096,6 +2140,8 @@ export function Inicio() {
           texto={`${desconectado?.texto ?? ts.avisoTexto} ${ts.avisoVolver}`}
           alCerrar={() => setDesconectado(null)}
         />
+        {/* C-OFERTA-EN-CUALQUIER-PANTALLA: la oferta (hoja con su alarma) sobre cualquier pantalla. */}
+        {hojasVisibles}
       </View>
       <BarraInferior
         idioma={idioma}
@@ -2520,23 +2566,28 @@ export function Inicio() {
           activa="pedidos"
           alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
         />
+        {/* C-OFERTA-EN-CUALQUIER-PANTALLA (en un bloque de Flex el servidor no ofrece nada más). */}
+        {hojasVisibles}
       </SafeAreaView>
     );
   // C-ASISTENTE-DRIVER: el asistente ocupa toda la pantalla (un paso por foto, como el borrador).
   if (vista === 'papeles' && papeles.v)
     return (
-      <AsistentePapeles
-        v={papeles.v}
-        recargar={papeles.recargar}
-        alSalir={() => {
-          void papeles.recargar();
-          void cargarFaltas();
-          setVista(vueltaPapeles);
-        }}
-        alAyuda={() => setVista('ayuda')}
-        alSubida={papeles.fotoSubida}
-        alConsentir={() => papeles.marcar({ consentimiento: true })}
-      />
+      <>
+        <AsistentePapeles
+          v={papeles.v}
+          recargar={papeles.recargar}
+          alSalir={() => {
+            void papeles.recargar();
+            void cargarFaltas();
+            setVista(vueltaPapeles);
+          }}
+          alAyuda={() => setVista('ayuda')}
+          alSubida={papeles.fotoSubida}
+          alConsentir={() => papeles.marcar({ consentimiento: true })}
+        />
+        {hojasVisibles}
+      </>
     );
   if (vista === 'alta')
     return lienzo(
@@ -2801,41 +2852,6 @@ export function Inicio() {
     );
   }
 
-  // Las hojas de oferta (viaje y comida): en el inicio y, encima de «Viaje terminado», también ahí.
-  // Aceptar NO suelta el cierre al tocar (la hoja se mudaría de sitio y la alarma volvería a sonar):
-  // lo suelta el trabajo nuevo cuando el sondeo lo trae (`cierreVigente`).
-  const hojasDeOferta = (
-    <>
-      {ofertaViaje && !ofertaComida ? (
-        <OfertaViajeModal
-          // Una oferta nueva (o la reoferta del mismo viaje, con otro vencimiento) arranca su
-          // cuenta atrás y su sonido desde cero (C-OFERTA-TIEMPO-REAL, C-OFERTA-VENCIDA-SE-CIERRA).
-          key={claveOferta(ofertaViaje)}
-          oferta={ofertaViaje}
-          idioma={idioma}
-          yo={aqui}
-          alAceptar={() =>
-            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`)
-          }
-          alRechazar={() =>
-            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/rechazar`)
-          }
-          alVencer={() => vencer(claveOferta(ofertaViaje))}
-        />
-      ) : null}
-      {ofertaComida ? (
-        <Oferta
-          key={ofertaComida.id}
-          oferta={ofertaComida}
-          idioma={idioma}
-          alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`)}
-          alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/rechazar`)}
-          alVencer={() => vencer(`comida@${ofertaComida.id}`)}
-        />
-      ) : null}
-    </>
-  );
-
   // ───────── Divoox Moto (M4): el viaje en curso ocupa el inicio, como Uber Driver ─────────
   if (viajeMostrado && vista === 'inicio')
     return lienzo(
@@ -2881,8 +2897,8 @@ export function Inicio() {
           cierre={cierreViaje}
           alCierre={setCierreViaje}
         />
-        {/* C-CIERRE-VIAJE-QUEDA: sobre «Viaje terminado», la oferta nueva con su sonido (como Uber). */}
-        {ofertasSobreCierre ? hojasDeOferta : null}
+        {/* C-CIERRE-VIAJE-QUEDA: sobre «Viaje terminado», la oferta nueva con su sonido (como Uber):
+            la pinta el lienzo (hojasVisibles). */}
       </View>,
     );
 
@@ -3952,7 +3968,6 @@ export function Inicio() {
             <Text style={{ color: '#666B73', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
           </View>
         ) : null}
-        {hojasDeOferta}
         {/* C-CONECTAR-DESLIZANDO: volver de la pausa trae ofertas: se desliza, nunca se toca.
             Pausar (dejar de recibir) sigue siendo un botón. */}
         {estado?.conectado && !activo && estado.pausado ? (

@@ -6,6 +6,8 @@ import { type Variables, base, exigir } from '../sesion';
 import { configRegalos } from './regalos';
 import { zonaPara } from './zonas';
 import { campanaDe } from '../campana';
+import { avisoGuardado, leerAvisosGuardados } from '../avisosGuardados';
+import { idiomaDeLaPeticion } from '../mensajesEn';
 
 /**
  * La campana del inicio (18 oct 2026, «como los grandes»): avisos reales del cliente, calculados
@@ -46,11 +48,24 @@ export type Aviso =
     }
   | { tipo: 'apertura'; area: string; ciudad: string; apertura: string | null; en: string };
 
+/**
+ * C-AVISOS-GUARDADOS: lo que le llegó al teléfono, con su hora. Solo lo recibe la app que lo pide con
+ * `?historial=1` (la de la tienda pintaría mal un tipo que no conoce).
+ */
+export type AvisoGuardadoCliente = {
+  tipo: 'aviso';
+  tipoAviso: string;
+  titulo: string;
+  cuerpo: string;
+  datos: Record<string, unknown>;
+  en: string;
+};
+
 avisos.get('/mis-avisos', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
   const q = z.object({ lat: coord, lng: coord }).safeParse(c.req.query());
-  const lista: Aviso[] = [];
+  const lista: (Aviso | AvisoGuardadoCliente)[] = [];
 
   const pedidos = await db
     .prepare(
@@ -87,6 +102,13 @@ avisos.get('/mis-avisos', async (c) => {
       creadoEn: p.creado_en,
       en: p.cambio_en || p.creado_en,
     });
+
+  // C-AVISOS-GUARDADOS: lo que le llegó al teléfono (su conductor llegó, mensajes, viaje cancelado…).
+  if (c.req.query('historial') === '1') {
+    const idioma = idiomaDeLaPeticion((n) => c.req.header(n));
+    for (const f of await leerAvisosGuardados(db, u.id))
+      lista.push({ tipo: 'aviso', ...avisoGuardado(f, idioma) });
+  }
 
   // Regalos: solo donde ya compró (hasta 20 restaurantes, los más recientes).
   const historial = await db

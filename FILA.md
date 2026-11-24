@@ -12,6 +12,15 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Avisos de la primera carrera real (24 nov 2026) — todos los países · rama `fase-avisos-apps`, sin subir
+
+- [ ] [para: revisor-calidad] Revisar la rama `fase-avisos-apps` una vez: C-OFERTA-EN-CUALQUIER-PANTALLA y C-AVISOS-PRIMER-PLANO (apps), C-CLIENTE-FIJO-ROTULO (servidor y Driver), C-AVISOS-GUARDADOS (servidor y clientes). Servidor primero (47d34c8, b4acec9); apps y Docs con la compilación (45eb32b, f31427d, 129bad9, 7b72c5d). Todos los países.
+- [x] [para: desarrollador] Cuando `fase-panel-y-correo` entre a la principal: comprobado que `campanaDe` marca leído también lo guardado (prueba en `avisosGuardados.test.ts`, Driver y clientes) y guía de la campana de Driver al día es/en con «lo que te llegó al teléfono, con su hora» (la de la tienda ya lo muestra). Todos los países.
+- [ ] [para: desarrollador] Con la app nueva de clientes (la que pide `historial=1`): poner al día la guía «La campana y el cupón» es/en con «lo que te llegó al teléfono, con su hora». Antes sería falso: la app de la tienda no lo pinta. Todos los países.
+- [ ] [para: desarrollador] Con la app nueva de Driver: rehacer la captura `driver-oferta` (es en El Vigía, en en Novi) con el rótulo «Cliente fijo: nombre». Todos los países.
+- [ ] [para: desarrollador] La pantalla del aviso de IA de Driver (`AvisoIa`) no lleva las hojas de oferta (es de otra rama): pintarlas ahí cuando esa rama entre. Todos los países.
+- [ ] [para: ensayo-general] Prueba que decide la hipótesis SIN VERIFICAR de la videollamada: oferta de cliente fijo con Driver en segundo plano y la pantalla apagada, SIN llamada activa. Tiene que verse y sonar con el tono largo durante el minuto exclusivo. Repetir con la app abierta en «Clientes fijos» (con la app nueva) y con una llamada activa, y anotar los tres resultados. Venezuela (Tucaní) y EE. UU.
+
 ## Correo de confirmación honesto (19 nov 2026, emergencia) — todos los países
 
 - [ ] [para: revisor-calidad] Revisar después de publicado (fue emergencia) el cambio C-CORREO-HONESTO y C-CORREO-SUGERENCIA: servidor del correo, canario, pantalla «Confirma tu correo», registro y Configuración. Todos los países.

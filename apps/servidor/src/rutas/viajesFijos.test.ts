@@ -264,6 +264,42 @@ describe('C-CONDUCTOR-CONFIANZA', () => {
     expect((await ofertaDe(e, id))?.conductor_id).toBe(cerca.id);
   });
 
+  // C-CLIENTE-FIJO-ROTULO (24 nov 2026, primera carrera real): el conductor tiene que saber de un
+  // vistazo que es su cliente fijo y quién. El aviso al teléfono lo dice en el título, en su idioma,
+  // y la oferta trae el primer nombre (solo la exclusiva: a los demás no se les da el nombre).
+  it('el aviso y la oferta dicen «Cliente fijo: nombre» (solo a él)', async () => {
+    const e = await escenario();
+    const fiel = await conductorDeMoto(e.m, ORIGEN);
+    await viajeCompleto(e, fiel);
+    const ultimo = (await e.m.llamar('GET', '/datos/viajes/historial', undefined, e.cliente.token))
+      .datos.viajes[0].id;
+    expect(
+      (await e.m.llamar('PUT', `/datos/viajes/${ultimo}/confianza`, {}, e.cliente.token)).estado,
+    ).toBe(200);
+    await e.m.DB.prepare(
+      "INSERT INTO dispositivos (token, usuario_id, plataforma, idioma) VALUES ('ExponentPushToken[fiel-es]', ?, 'android', 'es'), ('ExponentPushToken[fiel-en]', ?, 'android', 'en')",
+    )
+      .bind(fiel.id, fiel.id)
+      .run();
+    const avisos = capturarAvisos();
+    const id = await pedir(e);
+    const es = avisos.find((a) => a.to === 'ExponentPushToken[fiel-es]');
+    const en = avisos.find((a) => a.to === 'ExponentPushToken[fiel-en]');
+    expect(es?.title).toBe('Cliente fijo: Marta');
+    expect(en?.title).toBe('Regular rider: Marta');
+    const suya = await e.m.llamar(
+      'GET',
+      '/datos/conductor/operaciones/ofertas',
+      undefined,
+      fiel.token,
+    );
+    expect(suya.datos.ofertas[0]).toMatchObject({
+      operacionId: id,
+      deConfianza: true,
+      clienteNombre: 'Marta',
+    });
+  });
+
   it('si no está conectado, un viaje para ya va directo a los demás (no se espera)', async () => {
     const e = await escenario();
     const fiel = await conductorDeMoto(e.m, ORIGEN);

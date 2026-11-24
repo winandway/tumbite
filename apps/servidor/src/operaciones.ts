@@ -541,23 +541,43 @@ export async function turnoDeConfianza(
       ],
       hacer,
     );
-    // Un aviso al teléfono también: puede tener la app en segundo plano.
+    // Un aviso al teléfono también: puede tener la app en segundo plano. C-CLIENTE-FIJO-ROTULO: el
+    // título dice quién es («Cliente fijo: Marta»), para que le dé prioridad de un vistazo.
+    const cliente = await db
+      .prepare('SELECT nombre FROM usuarios WHERE id = ?')
+      .bind(op.cliente_id)
+      .first<{ nombre: string | null }>()
+      .catch(() => null);
+    const nombre = primerNombre(cliente?.nombre);
     await notificar(env, db, pref, (i) => ({
-      ...(i === 'en'
-        ? {
-            titulo: 'Your regular rider requested you',
-            cuerpo: 'You have 1 minute to accept before it goes to other drivers.',
-          }
-        : {
-            titulo: 'Tu cliente de confianza te pidió un viaje',
-            cuerpo: 'Tienes 1 minuto para aceptarlo antes de que pase a otros conductores.',
-          }),
+      ...avisoClienteFijo(i, nombre),
       sonido: 'oferta.wav',
       oferta: true,
-      datos: { tipo: 'oferta_operacion', operacionId: op.id },
+      datos: { tipo: 'oferta_operacion', operacionId: op.id, clienteFijo: '1' },
     })).catch((x: unknown) => console.error('confianza: aviso al conductor', x));
   }
   return 'ofrecida';
+}
+
+/** El primer nombre de una persona (lo que ve el conductor de su cliente fijo). */
+export function primerNombre(nombre: string | null | undefined) {
+  return (nombre ?? '').trim().split(/\s+/)[0] ?? '';
+}
+
+/**
+ * C-CLIENTE-FIJO-ROTULO (24 nov 2026, primera carrera real; todos los países): el aviso de la oferta
+ * exclusiva al conductor de confianza dice en el título que es su cliente fijo y quién.
+ */
+export function avisoClienteFijo(idioma: string, nombre: string) {
+  return idioma === 'en'
+    ? {
+        titulo: nombre ? `Regular rider: ${nombre}` : 'Your regular rider requested you',
+        cuerpo: 'You have 1 minute to accept before it goes to other drivers.',
+      }
+    : {
+        titulo: nombre ? `Cliente fijo: ${nombre}` : 'Tu cliente fijo te pidió un viaje',
+        cuerpo: 'Tienes 1 minuto para aceptarlo antes de que pase a otros conductores.',
+      };
 }
 
 /** C-OFERTA-AVISO: el aviso al celular de una oferta de viaje o envío, en el idioma del conductor. */

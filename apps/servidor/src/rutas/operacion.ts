@@ -1,4 +1,5 @@
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
+import { LIMPIEZA_AVISOS_ENVIADOS } from '../avisosGuardados';
 import {
   TAREA_CAMILA_LIMPIEZA,
   TAREA_CAMILA_RESUMEN_FALLOS,
@@ -3333,6 +3334,8 @@ export async function correrRelojUnaVez(
         'DELETE FROM reloj_tareas WHERE rowid IN (SELECT rowid FROM reloj_tareas WHERE ok = 1 LIMIT 50000)',
       ),
       db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
+      // C-AVISOS-GUARDADOS: la campana guarda 30 días (por el id, sin recorrer la tabla).
+      db.prepare(LIMPIEZA_AVISOS_ENVIADOS),
     ]);
   }
   return { ok: true as const, ...resultado.resumen, fallidas: resultado.vuelta.fallidas, ventana };

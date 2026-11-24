@@ -10,7 +10,7 @@ import {
 import { Boton, C, HojaOferta, MontoEnMano, Text } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { Mapa } from '../piezas/Mapa';
-import { textoOfertaConfianza } from './agendaFijos';
+import { rotuloClienteFijo, textoOfertaConfianza } from './agendaFijos';
 import { useAlarmaOferta } from '../sonidoOferta';
 import { venceOferta } from './ofertaTiempo';
 import { CuentaTarifa } from './CuentaTarifa';
@@ -51,6 +51,8 @@ export type OfertaViaje = {
   paradas?: string[];
   /** C-CONDUCTOR-CONFIANZA: el cliente lo eligió de confianza (solo para él, por un minuto). */
   deConfianza?: boolean;
+  /** C-CLIENTE-FIJO-ROTULO: el primer nombre de su cliente fijo (solo en la oferta exclusiva). */
+  clienteNombre?: string | null;
   /** C-VIAJES-FIJOS: sale de un viaje fijo, y el nombre del menor si lleva a uno. */
   viajeFijo?: boolean;
   menor?: string | null;
@@ -113,6 +115,7 @@ export function OfertaViajeModal({
   // C-CONDUCTOR-CONFIANZA: la oferta exclusiva al conductor de confianza dura un minuto.
   const total = oferta.deConfianza ? 60 : 30;
   const lineas = textoOfertaConfianza(oferta, idioma === 'en' ? 'en' : 'es');
+  const rotulo = rotuloClienteFijo(oferta, idioma === 'en' ? 'en' : 'es');
   return (
     // C-HOJA-OFERTA: arriba (título, cuenta atrás y lo que gana) y abajo (Aceptar y Rechazar) siempre
     // a la vista; el medio se desplaza si no cabe. Nunca encima de la barra de estado.
@@ -121,6 +124,16 @@ export function OfertaViajeModal({
       alCerrar={rechazar}
       arriba={
         <>
+          {rotulo ? (
+            // C-CLIENTE-FIJO-ROTULO: «Cliente fijo: Marta», grande y arriba de todo.
+            <Text
+              testID="oferta-cliente-fijo"
+              accessibilityRole="header"
+              style={{ fontSize: 24, fontWeight: '900', color: C.secundario }}
+            >
+              {rotulo}
+            </Text>
+          ) : null}
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
