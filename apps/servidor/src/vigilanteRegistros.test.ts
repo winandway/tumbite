@@ -283,6 +283,67 @@ describe('C-VIGILANTE-REGISTROS: la vuelta', () => {
     expect(enviados[0]!.texto).not.toMatch(/\d+[.,]\d{2}|USD|\$/);
   });
 
+  it('le cuesta entrar: tres fallos de contraseña y sin entrar después → UNO para crear una contraseña nueva; al entrar bien, nada más', async () => {
+    const s = await escenario();
+    const enviados = correos();
+    await s.ajustar({ plazosHoras: [1, 2, 3] });
+    const { correo } = (await s.m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(s.rep.id)
+      .first<{ correo: string }>())!;
+    const fallar = (n: number) =>
+      s.m.DB.batch(
+        Array.from({ length: n }, () =>
+          s.m.DB.prepare(
+            "INSERT INTO intentos_acceso (accion, correo, codigo) VALUES ('entrar', ?, 'clave_incorrecta')",
+          ).bind(correo.toLowerCase()),
+        ),
+      );
+    // Dos fallos no bastan.
+    await fallar(2);
+    const ajustes = {
+      ...AJUSTES_REZAGADOS_DE_FABRICA,
+      plazosHoras: [1, 2, 3] as [number, number, number],
+    };
+    const antes = await candidatos(s.env, s.m.DB, ajustes, [CCS.id], dentroDe(4));
+    expect(antes.find((x) => x.id === s.rep.id)?.paso).not.toBe('clave');
+    // Uno más: le llega UNO (no dos en la vuelta siguiente), con el enlace de la contraseña nueva.
+    await fallar(1);
+    await correrRezagados(s.env, s.m.DB, dentroDe(4.5));
+    await correrRezagados(s.env, s.m.DB, dentroDe(5));
+    expect(enviados).toHaveLength(1);
+    expect(enviados[0]!.asunto).toBe('¿Te cuesta entrar a tu cuenta de Divoox?');
+    expect(enviados[0]!.texto).toContain('/forgot-password');
+    expect(
+      (await s.filas()).filter((f) => f.paso === 'clave' && f.canal === 'correo'),
+    ).toHaveLength(1);
+    // Entra bien: ese paso se cumplió y no le llega nada más por él.
+    await s.m.DB.prepare(
+      "INSERT INTO rastro_cuenta (usuario_id, tipo, creado_en) VALUES (?, 'entrada', datetime('now', '+1 minute'))",
+    )
+      .bind(s.rep.id)
+      .run();
+    await correrRezagados(s.env, s.m.DB, dentroDe(40));
+    expect((await s.filas()).filter((f) => f.paso === 'clave')).toHaveLength(2);
+    expect(enviados.filter((e) => e.asunto.includes('entrar'))).toHaveLength(1);
+  });
+
+  it('los fallos de un correo sin cuenta no le llegan a nadie', async () => {
+    const s = await escenario();
+    const enviados = correos();
+    await s.ajustar();
+    await s.m.DB.batch(
+      Array.from({ length: 5 }, () =>
+        s.m.DB.prepare(
+          "INSERT INTO intentos_acceso (accion, correo, codigo) VALUES ('entrar', 'nadie@ejemplo.com', 'correo_sin_cuenta')",
+        ),
+      ),
+    );
+    const c = await candidatos(s.env, s.m.DB, AJUSTES_REZAGADOS_DE_FABRICA, [CCS.id], dentroDe(10));
+    expect(c.some((x) => x.paso === 'clave')).toBe(false);
+    await correrRezagados(s.env, s.m.DB, dentroDe(10));
+    expect(enviados.some((e) => e.para === 'nadie@ejemplo.com')).toBe(false);
+  });
+
   it('mirar no escribe: la lista del panel y la vuelta apagada no dejan filas', async () => {
     const s = await escenario();
     correos();

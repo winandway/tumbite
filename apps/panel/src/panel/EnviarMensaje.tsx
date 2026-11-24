@@ -117,14 +117,14 @@ export function EnviarMensaje({
   alEnviar,
 }: {
   id: string;
-  /** El conductor ve las cinco plantillas; el cliente solo la del correo. */
+  /** El conductor ve todas las plantillas; el cliente, la del correo y la de «le cuesta entrar». */
   rol: 'repartidor' | 'cliente';
   idioma: Idioma;
   alCerrar: () => void;
   alEnviar: () => void;
 }) {
   const t = enIdioma(T, idioma);
-  const pasos = rol === 'repartidor' ? PASOS_MENSAJE : (['correo'] as const);
+  const pasos = rol === 'repartidor' ? PASOS_MENSAJE : (['correo', 'clave'] as const);
   const b = useBorrador({
     formulario: `mensaje-cuenta-${id}`,
     cuenta: 'superadmin',

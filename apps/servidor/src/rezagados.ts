@@ -30,6 +30,7 @@ import { humanoActivo, personaDeUsuario, sentenciaMensaje } from './camila/memor
  */
 
 export const PASOS_REZAGADO = [
+  'clave',
   'fotos',
   'repetir',
   'vehiculo',
@@ -64,6 +65,21 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       texto:
         'Hi {nombre}, this is Camila from Divoox. You are almost ready to earn with Divoox! Only your photos are missing: your face, your ID and your license. They take a few minutes in the app.{plazo}\n\nContinue here:\n{enlace}\n\nIf something is stopping you, reply to this email and I will help.',
       sms: 'Divoox: {nombre}, your photos are missing to start getting trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
+    },
+  },
+  // C-VIGILANTE-REGISTROS: varios intentos de entrar con la contraseña equivocada en una cuenta que existe.
+  clave: {
+    es: {
+      asunto: '¿Te cuesta entrar a tu cuenta de Divoox?',
+      texto:
+        'Hola, {nombre}. Soy Camila, de Divoox. Vimos que intentaste entrar a tu cuenta varias veces y la contraseña no coincidía. Tu cuenta está bien: puedes crear una contraseña nueva en un minuto.\n\nCrea tu contraseña nueva aquí:\n{enlace}\n\nSi no fuiste tú, o sigues sin poder entrar, respóndeme este correo y te ayudo.',
+      sms: 'Divoox: {nombre}, vimos que te cuesta entrar a tu cuenta. Crea una contrasena nueva en la app con Olvide mi contrasena: {enlace_corto} Camila',
+    },
+    en: {
+      asunto: 'Having trouble signing in to Divoox?',
+      texto:
+        'Hi {nombre}, this is Camila from Divoox. We saw you tried to sign in to your account several times and the password did not match. Your account is fine: you can create a new password in a minute.\n\nCreate your new password here:\n{enlace}\n\nIf it was not you, or you still cannot sign in, reply to this email and I will help.',
+      sms: 'Divoox: {nombre}, we saw you are having trouble signing in. Create a new password in the app with Forgot my password: {enlace_corto} Camila',
     },
   },
   // C-VIGILANTE-REGISTROS: el equipo pidió repetir una foto o un papel (borrosa, oscura, rechazada).
@@ -156,6 +172,13 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
 };
 
 const AVISO: Record<PasoRezagado, Record<Idioma, { titulo: string; cuerpo: string }>> = {
+  clave: {
+    es: {
+      titulo: '¿Te cuesta entrar?',
+      cuerpo: 'Toca «Olvidé mi contraseña» y crea una nueva.',
+    },
+    en: { titulo: 'Trouble signing in?', cuerpo: 'Tap “Forgot my password” and create a new one.' },
+  },
   repetir: {
     es: {
       titulo: 'Repite una foto de tu registro',
@@ -219,6 +242,7 @@ const plantilla = z.object({
 });
 const plantillasPaso = z.object({ es: plantilla, en: plantilla });
 const porPaso = z.object({
+  clave: plantillasPaso.optional(),
   fotos: plantillasPaso.optional(),
   repetir: plantillasPaso.optional(),
   vehiculo: plantillasPaso.optional(),
@@ -373,8 +397,12 @@ export function frasePlazo(venceEn: string | null, idioma: Idioma): string {
 
 const sitio = (env: Pick<Env, 'SITIO_URL'>) =>
   (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
-export const enlaceDelPaso = (env: Pick<Env, 'SITIO_URL'>, rol: string) =>
-  rol === 'repartidor' ? `${sitio(env)}/driver` : `${sitio(env)}/app`;
+export const enlaceDelPaso = (env: Pick<Env, 'SITIO_URL'>, rol: string, paso?: string) =>
+  paso === 'clave'
+    ? `${sitio(env)}/forgot-password`
+    : rol === 'repartidor'
+      ? `${sitio(env)}/driver`
+      : `${sitio(env)}/app`;
 export const RUTA_BAJA = '/datos/reminders/off';
 export const enlaceDeBaja = (env: Pick<Env, 'SITIO_URL'>, mensajeId: string) =>
   `${sitio(env)}${RUTA_BAJA}?m=${mensajeId}`;
@@ -400,7 +428,11 @@ export function pasoPendiente(d: {
   enLinea: boolean;
   /** C-VIGILANTE-REGISTROS: el equipo le pidió repetir una foto o un papel (o rechazó su verificación). */
   repetir?: boolean;
+  /** C-VIGILANTE-REGISTROS: falló varias veces la contraseña y no ha vuelto a entrar desde entonces. */
+  clave?: boolean;
 }): PasoRezagado | null {
+  // Quien no puede entrar no puede dar ningún otro paso: esto va primero, para pasajeros y conductores.
+  if (d.clave) return 'clave';
   const correo = d.correoConfirmado || d.pasos.has('correo') ? null : 'correo';
   if (d.rol !== 'repartidor') return correo;
   const aprobado = d.pasos.has('aprobado');
@@ -515,7 +547,8 @@ const SQL_CANDIDATOS = (zonas: string[]) => `
          (EXISTS (SELECT 1 FROM verificacion_fotos vf WHERE vf.conductor_id = u.id AND vf.estado = 'repetir')
            OR EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = u.id AND k.estado = 'rechazado')) AS repetir,
          (SELECT rc.pais_red FROM rastro_cuenta rc WHERE rc.usuario_id = u.id AND rc.tipo = 'alta' LIMIT 1) AS pais_alta,
-         z.pais AS zona_pais
+         z.pais AS zona_pais,
+         (SELECT MAX(rc.creado_en) FROM rastro_cuenta rc WHERE rc.usuario_id = u.id AND rc.tipo = 'entrada') AS ultima_entrada
     FROM usuarios u
     LEFT JOIN repartidores r ON r.usuario_id = u.id
     JOIN zonas z ON z.id = ${zonaRealSql()}
@@ -545,7 +578,38 @@ type FilaCandidato = {
   repetir: number;
   pais_alta: string | null;
   zona_pais: string | null;
+  ultima_entrada: string | null;
 };
+
+/** C-VIGILANTE-REGISTROS: fallos de contraseña en 7 días que cuentan como «le cuesta entrar». */
+export const FALLOS_PARA_CLAVE = 3;
+const CODIGOS_FALLO_CLAVE = ['clave_incorrecta', 'cuenta_bloqueada'];
+
+/**
+ * Los correos con varios fallos de contraseña recientes (`intentos_acceso`, C-INTENTOS-ACCESO). Esos
+ * códigos solo se anotan cuando la cuenta EXISTE (un correo sin cuenta da otro código), y además solo
+ * se cruzan con las cuentas que ya están en la lista. Una lectura por el índice de fecha, con tope.
+ */
+async function fallosDeClave(db: D1Database, ahora: Date) {
+  const { results } = await db
+    .prepare(
+      `SELECT correo, COUNT(*) AS n, MAX(creado_en) AS ultima FROM intentos_acceso
+        WHERE creado_en >= ? AND accion = 'entrar' AND correo IS NOT NULL
+          AND codigo IN (${CODIGOS_FALLO_CLAVE.map(() => '?').join(',')})
+        GROUP BY correo HAVING COUNT(*) >= ? LIMIT 500`,
+    )
+    .bind(
+      sqlFecha(new Date(ahora.getTime() - 7 * 86_400_000)),
+      ...CODIGOS_FALLO_CLAVE,
+      FALLOS_PARA_CLAVE,
+    )
+    .all<{ correo: string; n: number; ultima: string }>()
+    .catch((e: unknown) => {
+      console.error('rezagados: no se pudieron leer los intentos de entrar', String(e));
+      return { results: [] as { correo: string; n: number; ultima: string }[] };
+    });
+  return new Map(results.map((r) => [r.correo.toLowerCase(), r.ultima]));
+}
 
 /** ¿Puede salir un SMS a ese teléfono hoy? (proveedor encendido para su país). Solo mira la configuración. */
 /** El SMS de los recordatorios tiene su propia llave: apagado hasta que Gerencia ponga REZAGADOS_SMS=si. */
@@ -578,10 +642,18 @@ export async function candidatos(
       ),
     )
   ).flatMap((r) => r.results);
-  const pendientes: { f: FilaCandidato; paso: PasoRezagado | null; equipo: RarezaEquipo | null }[] =
-    [];
+  const pendientes: {
+    f: FilaCandidato;
+    paso: PasoRezagado | null;
+    equipo: RarezaEquipo | null;
+    quieto?: string;
+  }[] = [];
   let barras = 0;
+  const fallos = filas.length ? await fallosDeClave(db, ahora) : new Map<string, string>();
   for (const f of filas) {
+    // Le cuesta entrar: varios fallos y no volvió a entrar bien después del último.
+    const ultimoFallo = fallos.get(f.correo.toLowerCase());
+    const clave = Boolean(ultimoFallo && (!f.ultima_entrada || f.ultima_entrada < ultimoFallo));
     let paso = pasoPendiente({
       rol: f.rol,
       pasos: new Set((f.pasos ?? '').split(',').filter(Boolean)),
@@ -589,6 +661,7 @@ export async function candidatos(
       zonaConLineas: Boolean(f.zona_con_lineas),
       enLinea: Boolean(f.en_linea),
       repetir: Boolean(f.repetir),
+      clave,
     });
     let equipo: RarezaEquipo | null = null;
     // C-VIGILANTE-REGISTROS: cuando el rastro ya no le pide nada importante (nada, «conéctate», «tu
@@ -615,7 +688,13 @@ export async function candidatos(
       f.pais_alta !== f.zona_pais
     )
       equipo = 'zona_ajena';
-    if (paso || equipo) pendientes.push({ f, paso, equipo });
+    if (paso || equipo)
+      pendientes.push({
+        f,
+        paso,
+        equipo,
+        ...(clave && ultimoFallo ? { quieto: ultimoFallo } : {}),
+      });
   }
   if (!pendientes.length) return [];
   // Lo ya enviado a esas personas (solo lo automático cuenta para los topes).
@@ -648,7 +727,7 @@ export async function candidatos(
         { ...r, canal: Number(r.equipo) ? 'equipo' : 'persona' },
       ]);
   }
-  return pendientes.map(({ f, paso, equipo }) => {
+  return pendientes.map(({ f, paso, equipo, quieto }) => {
     const todos = enviados.get(f.id) ?? [];
     // Los avisos al equipo no cuentan para los topes de la persona.
     const suyos = todos.filter((s) => s.canal !== 'equipo');
@@ -662,7 +741,9 @@ export async function candidatos(
         .map((s) => s.creado_en)
         .sort()
         .at(-1) ?? null;
-    const quietoDesde = f.ultimo_paso && f.ultimo_paso > f.creado_en ? f.ultimo_paso : f.creado_en;
+    // Para «le cuesta entrar», el plazo corre desde su último fallo.
+    const quietoDesde =
+      quieto ?? (f.ultimo_paso && f.ultimo_paso > f.creado_en ? f.ultimo_paso : f.creado_en);
     const horasQuieto = horasEntre(quietoDesde, ahora);
     const { minutos } = momentoEn(f.zona_horaria, ahora);
     const aceptaSms = Boolean(f.sms_consentido_en);
@@ -856,7 +937,7 @@ export function envioDePlantilla(
   const pl = plantillaDe(a, paso, p.idioma, p.zona);
   const d = {
     nombre: p.nombre,
-    enlace: enlaceDelPaso(env, p.rol),
+    enlace: enlaceDelPaso(env, p.rol, paso),
     plazo: frasePlazo(p.plazoVence ?? null, p.idioma),
   };
   return {

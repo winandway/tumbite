@@ -14,6 +14,8 @@ export const PASOS_MENSAJE = [
   'servicio',
   'linea',
   'correo',
+  // C-VIGILANTE-REGISTROS: al final de la lista (la primera es la que viene elegida en «Enviar mensaje»).
+  'clave',
 ] as const;
 export type PasoMensaje = (typeof PASOS_MENSAJE)[number];
 export type CanalMensaje = 'correo' | 'sms' | 'aviso';
@@ -22,6 +24,7 @@ export type EstadoMensaje = 'enviado' | 'entregado' | 'rebotado' | 'fallido' | '
 const T = {
   es: {
     paso: {
+      clave: 'Le cuesta entrar: contraseña nueva',
       fotos: 'Sus fotos',
       repetir: 'Repetir una foto o un papel',
       vehiculo: 'Registrar su vehículo',
@@ -31,6 +34,7 @@ const T = {
       correo: 'Confirmar su correo',
     } as Record<string, string>,
     recordatorio: {
+      clave: 'ayuda para entrar a su cuenta',
       fotos: 'recordatorio de sus fotos',
       repetir: 'recordatorio para repetir una foto',
       vehiculo: 'recordatorio de su vehículo',
@@ -80,6 +84,7 @@ const T = {
   },
   en: {
     paso: {
+      clave: 'Trouble signing in: new password',
       fotos: 'Their photos',
       repetir: 'Retake a photo or document',
       vehiculo: 'Register their vehicle',
@@ -89,6 +94,7 @@ const T = {
       correo: 'Confirm their email',
     } as Record<string, string>,
     recordatorio: {
+      clave: 'help signing in',
       fotos: 'photos reminder',
       repetir: 'retake-a-photo reminder',
       vehiculo: 'vehicle reminder',
