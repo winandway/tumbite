@@ -84,6 +84,36 @@ describe('C-VERIFICACIONES-EN-VIVO · la marca barata del panel', () => {
     expect((await marca()).firma).toBe(despues.firma);
   });
 
+  // C-VERIFICACIONES-EN-VIVO-VEHICULO (ensayo general, 24 nov 2026): el conductor ya esperaba por su
+  // identidad, mandó su moto y el registro, y el panel abierto no se enteró (ni lista ni sonido)
+  // hasta recargar: la marca solo miraba la identidad. Su vehículo y sus papeles también cuentan.
+  it('cambia cuando llega un vehículo a revisión o un papel suelto, aunque ya esperara por su identidad', async () => {
+    const e = await armar();
+    const firma = async () =>
+      (
+        (await e.m.llamar('GET', '/datos/admin/kyc/marca', undefined, e.admin.token)).datos as {
+          firma: string;
+        }
+      ).firma;
+    await e.listo(e.ana.id);
+    const conIdentidad = await firma();
+    await e.m.DB.prepare(
+      `INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, placa, estado)
+       VALUES ('v-ana', ?, 'moto', 'Marca', 'Modelo', 'AB1C23D', 'en_revision')`,
+    )
+      .bind(e.ana.id)
+      .run();
+    const conMoto = await firma();
+    expect(conMoto).not.toBe(conIdentidad);
+    await e.m.DB.prepare(
+      `INSERT INTO conductor_documentos (id, conductor_id, tipo, clave, estado)
+       VALUES ('d-ana', ?, 'licencia_moto', 'papeles/ana/licencia.jpg', 'pendiente')`,
+    )
+      .bind(e.ana.id)
+      .run();
+    expect(await firma()).not.toBe(conMoto);
+  });
+
   it('solo el equipo la lee, y mirarla no escribe nada', async () => {
     const e = await armar();
     expect((await e.m.llamar('GET', '/datos/admin/kyc/marca', undefined, e.ana.token)).estado).toBe(

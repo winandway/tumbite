@@ -460,8 +460,8 @@ kyc.post('/kyc/enviar', async (c) => {
 kyc.get('/admin/kyc/marca', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
-  // Cinco preguntas chicas en UN viaje, cada una por su índice y con su tope (una fila cada una).
-  const [p, u, rc, rr, f] = await db.batch<Record<string, unknown>>([
+  // Siete preguntas chicas en UN viaje, cada una por su índice y con su tope (una fila cada una).
+  const [p, u, rc, rr, f, vh, pp] = await db.batch<Record<string, unknown>>([
     db.prepare("SELECT COUNT(*) AS n FROM kyc WHERE estado = 'pendiente'"),
     db.prepare(
       "SELECT enviado_en AS v FROM kyc WHERE estado = 'pendiente' ORDER BY enviado_en DESC LIMIT 1",
@@ -473,6 +473,15 @@ kyc.get('/admin/kyc/marca', async (c) => {
       "SELECT creado_en AS v FROM usuarios WHERE rol = 'restaurante' ORDER BY creado_en DESC LIMIT 1",
     ),
     db.prepare('SELECT rowid AS v FROM verificacion_fotos ORDER BY rowid DESC LIMIT 1'),
+    // C-VERIFICACIONES-EN-VIVO-VEHICULO: el vehículo en revisión y los papeles sueltos también son
+    // «por decidir» (C-VERIFICACION-UNICA); sin esto, la moto de quien ya esperaba por su identidad
+    // llegaba sin sonido ni lista nueva. Por sus índices (estado, fecha): una fila cada una.
+    db.prepare(
+      "SELECT COUNT(*) || ':' || COALESCE(MAX(actualizado_en), '') AS v FROM vehiculos WHERE estado = 'en_revision'",
+    ),
+    db.prepare(
+      "SELECT COUNT(*) || ':' || COALESCE(MAX(creado_en), '') AS v FROM conductor_documentos WHERE estado = 'pendiente'",
+    ),
   ]);
   const v = (r: D1Result<Record<string, unknown>> | undefined, k = 'v') =>
     (new Map(Object.entries(r?.results[0] ?? {})).get(k) as string | number | null | undefined) ??
@@ -483,7 +492,7 @@ kyc.get('/admin/kyc/marca', async (c) => {
   return c.json({
     pendientes,
     ultimaEnviada: ultima,
-    firma: [pendientes, ultima, v(rc), v(rr), v(f)].join('|'),
+    firma: [pendientes, ultima, v(rc), v(rr), v(f), v(vh), v(pp)].join('|'),
   });
 });
 

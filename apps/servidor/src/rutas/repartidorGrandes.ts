@@ -494,7 +494,17 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
     )
     .bind(u.id)
     .all<{ monto: number; moneda: string; creado_en: string }>();
-  for (const r of recargas.results)
+  // C-CAMPANA-RECARGA-UNA-VEZ: la recarga que ya tiene su aviso guardado (con su texto) sale una
+  // sola vez; la del libro queda para las que no lo tienen (las de antes de guardarse los avisos).
+  const guardados = await leerAvisosGuardados(db, u.id);
+  const horasAvisadas = guardados
+    .filter((g) => g.tipo === 'saldo_recargado')
+    .map((g) => Date.parse(`${g.creado_en.replace(' ', 'T')}Z`));
+  const yaAvisada = (en: string) => {
+    const t = Date.parse(`${en.replace(' ', 'T')}Z`);
+    return horasAvisadas.some((h) => Math.abs(h - t) <= 120_000);
+  };
+  for (const r of recargas.results.filter((x) => !yaAvisada(x.creado_en)))
     lista.push({
       tipo: 'saldo_recargado',
       pedidoId: null,
@@ -526,7 +536,7 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
   // papeles, viaje cancelado), con su hora. Lo de un pedido que ya está arriba no se repite.
   lista.push(
     ...historialParaRepartidor(
-      await leerAvisosGuardados(db, u.id),
+      guardados,
       new Set(lista.map((a) => a.pedidoId).filter((x): x is string => Boolean(x))),
       idiomaDeLaPeticion((n) => c.req.header(n)),
     ),

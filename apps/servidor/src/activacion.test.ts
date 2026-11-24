@@ -10,7 +10,7 @@ import type { Env } from './env';
  * estaría seguro que su moto ya puede recibir carreras»). La barra dice lo MISMO que el reparto, en
  * los dos sentidos, y Verificaciones es un pendiente por conductor cuyo número baja al decidir.
  */
-async function escenario() {
+async function escenario({ conSaldo = true }: { conSaldo?: boolean } = {}) {
   const m = mundo({}, { host: 'staging.tumbite.com' });
   const admin = await m.cuenta('admin', 'Soporte Divoox');
   const cliente = await m.cuenta('cliente', 'Pasajero de ejemplo');
@@ -39,6 +39,13 @@ async function escenario() {
     placaEstado: 'FL',
   });
   const id = v.datos.id as string;
+  // Un conductor listo de verdad tiene saldo para la comisión (C-SALDO-OFERTAS, C-BARRA-SALDO).
+  if (conSaldo)
+    await m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES (?, ?, 'prepago', 'VE', 'USD', 10000, 'recarga', ?)",
+    )
+      .bind(`rec-${rep.id}`, rep.id, `rec-${rep.id}`)
+      .run();
   await subirA(e, `/datos/conductor/vehiculos/${id}/documentos?tipo=registro`, rep.token);
   const aprobarMoto = async () => {
     const cola = await equipo('GET', '/datos/admin/vehiculos?estado=en_revision');
@@ -115,6 +122,35 @@ describe('C-BARRA-ACTIVACION: la barra dice lo mismo que el reparto', () => {
     const ya = await barraActivacion(s.m.DB, s.rep.id);
     expect(ya.recibiendo).toBe(true);
     expect(ya.siguiente).toBeNull();
+  });
+
+  // C-BARRA-SALDO (ensayo general, 24 nov 2026): conductor nuevo de El Vigía con todo aprobado y saldo
+  // cero. El panel decía «10 de 11 · Ya puede recibir carreras de Envíos, Moto» y «Saldo para la
+  // comisión · No lo frena»; Driver decía «así no te llegan»; el pasajero pidió y nadie recibió la
+  // oferta (C-SALDO-OFERTAS la salta). La barra dice lo mismo que el reparto: el saldo SÍ frena.
+  it('donde rige el prepago y no le alcanza el saldo, no está listo y el saldo es lo que falta', async () => {
+    const s = await escenario({ conSaldo: false });
+    await s.m.DB.prepare(
+      `INSERT OR IGNORE INTO politicas_financieras (id, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada)
+       VALUES ('pol-ride-ve', 'ride', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', datetime('now', '-1 day'), 1)`,
+    ).run();
+    await s.aprobarMoto();
+    const b = await barraActivacion(s.m.DB, s.rep.id);
+    const saldo = b.pasos.find((p) => p.clave === 'saldo');
+    expect(saldo?.estado).toBe('pendiente');
+    expect(saldo?.opcional).toBe(false);
+    expect(b.listo).toBe(false);
+    expect(b.servicios).not.toContain('moto');
+    expect(b.siguiente?.clave).toBe('saldo');
+    // Con saldo para la comisión, vuelve a estar listo.
+    await s.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('rec-ve', ?, 'prepago', 'VE', 'USD', 10000, 'recarga', 'rec-ve')",
+    )
+      .bind(s.rep.id)
+      .run();
+    const con = await barraActivacion(s.m.DB, s.rep.id);
+    expect(con.listo).toBe(true);
+    expect(con.pasos.find((p) => p.clave === 'saldo')?.estado).toBe('hecho');
   });
 
   it('en cada estado, «listo» es exactamente lo que el reparto haría (y al revés)', async () => {

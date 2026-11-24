@@ -158,6 +158,9 @@ export async function aptosDeVarios(db: D1Database, ids: readonly string[]): Pro
   return new Set(results.map((r) => r.conductor_id));
 }
 
+/** Los servicios que se reparten como operación (viaje o envío): ahí el saldo prepago frena la oferta. */
+export const SERVICIOS_CON_SALDO: ReadonlySet<string> = new Set(['moto', 'carro', 'envios']);
+
 const bloquea = (p: Paso) => !p.opcional && p.clave !== 'conectado';
 
 export async function barraActivacion(db: D1Database, id: string, env?: Env): Promise<Activacion> {
@@ -171,8 +174,13 @@ export async function barraActivacion(db: D1Database, id: string, env?: Env): Pr
       .first<{ estado: string; motivo: string; documento: number }>(),
     serviciosAptos(db, id),
   ]);
-  const listo = aptos.length > 0;
-  const recibiendo = q.recibeViajes;
+  // C-BARRA-SALDO (ensayo general, 24 nov 2026): donde rige el prepago, el reparto de viajes y envíos
+  // salta a quien no le alcanza el saldo para la comisión (C-SALDO-OFERTAS, en operaciones.ts). La
+  // vista no lo sabe: sin esto la barra decía «Ya puede recibir carreras» y «Saldo · No lo frena».
+  const sinSaldo = q.faltas.some((f) => f.clave === 'sin_saldo');
+  const aptosDeVerdad = sinSaldo ? aptos.filter((sv) => !SERVICIOS_CON_SALDO.has(sv)) : aptos;
+  const listo = aptosDeVerdad.length > 0;
+  const recibiendo = q.recibeViajes && listo;
   const porPaso = new Map<ClavePaso, Paso>();
   const poner = (p: Paso) => {
     if (!porPaso.has(p.clave)) porPaso.set(p.clave, p);
@@ -245,7 +253,7 @@ export async function barraActivacion(db: D1Database, id: string, env?: Env): Pr
     pasos,
     listo,
     recibiendo,
-    servicios: aptos,
+    servicios: aptosDeVerdad,
     siguiente,
     hechos: cuentan.filter((p) => p.estado === 'hecho').length,
     total: cuentan.length,

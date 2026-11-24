@@ -498,6 +498,32 @@ describe('C-VERIFICACIONES-BANDEJA · la ficha de una persona', () => {
     );
   });
 
+  // C-FICHA-SE-REFRESCA-AL-DECIDIR (ensayo general, 24 nov 2026): se aprobó la identidad y la misma
+  // ficha seguía diciendo «7 de 12 · falta identidad aprobada» y «Documento de identidad: En revisión»
+  // hasta recargar. Al decidir, la barra y los papeles se vuelven a leer.
+  it('al aprobar la identidad, la barra de activación y los papeles se vuelven a leer', async () => {
+    const llamadas = ficha();
+    render(<SuperKyc base={BASE} idioma="es" id={ID} />);
+    const boton = await screen.findByRole('button', { name: 'Aprobar' });
+    await waitFor(() =>
+      expect(llamadas.filter((l) => l.url.endsWith('/activacion')).length).toBeGreaterThan(0),
+    );
+    const barraAntes = llamadas.filter((l) => l.url.endsWith('/activacion')).length;
+    const papelesAntes = llamadas.filter((l) => l.url.includes('/admin/verificacion/')).length;
+    await userEvent.click(boton);
+    await waitFor(() => expect(llamadas.some((l) => l.metodo === 'PATCH')).toBe(true));
+    await waitFor(() =>
+      expect(llamadas.filter((l) => l.url.endsWith('/activacion')).length).toBeGreaterThan(
+        barraAntes,
+      ),
+    );
+    await waitFor(() =>
+      expect(llamadas.filter((l) => l.url.includes('/admin/verificacion/')).length).toBeGreaterThan(
+        papelesAntes,
+      ),
+    );
+  });
+
   it('rechazar exige motivo: sin motivo no sale nada; con un motivo frecuente sí', async () => {
     const llamadas = ficha();
     render(<SuperKyc base={BASE} idioma="es" id={ID} />);

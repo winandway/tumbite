@@ -306,6 +306,8 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
   /** null = sin tocar: se abre solo si se recuperó un motivo a medio escribir. */
   const [rechazandoElegido, setRechazando] = useState<boolean | null>(null);
   const [grande, setGrande] = useState<{ src: string; titulo: string } | null>(null);
+  /** C-FICHA-SE-REFRESCA-AL-DECIDIR: sube al decidir; los papeles y la barra se vuelven a leer. */
+  const [vueltaFicha, setVueltaFicha] = useState(0);
   const b = useBorrador({
     formulario: 'kyc-motivo',
     cuenta: id,
@@ -337,6 +339,7 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
       setRechazando(false);
       setAviso(deTabla(t.hecho, estado, ''));
       cargar();
+      setVueltaFicha((v) => v + 1);
     } catch (x) {
       // Si falla, lo escrito se queda en pantalla para reintentar.
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -617,11 +620,14 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
 
       {/* Las fotos grandes ya están arriba: aquí la tarjeta «Papeles» va en miniatura (plazo, licencia,
           seguro y «Pedir de nuevo» una sola foto). */}
-      {p.rol === 'repartidor' ? <PapelesConductor id={id} idioma={idioma} /> : null}
+      {p.rol === 'repartidor' ? (
+        <PapelesConductor key={`papeles-${vueltaFicha}`} id={id} idioma={idioma} />
+      ) : null}
       {/* C-VERIFICACION-UNICA: todo lo demás que se decide de él (vehículo, papeles, servicios) y su
           barra de activación, aquí mismo: la misma pieza que en su ficha. */}
       {p.rol === 'repartidor' ? (
         <RevisionConductor
+          key={`revision-${vueltaFicha}`}
           id={id}
           base={base}
           idioma={idioma}
