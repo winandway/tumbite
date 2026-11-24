@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-24T01:30:00Z",
+  "actualizado": "2026-11-24T09:25:00Z",
   "version": "fe71f3f",
-  "ahora": "23 nov, noche: el registro de conductores quedó destrabado desde el servidor, sin versión nueva de la app. La cédula de Venezuela ya no se pide por detrás, la póliza entra en los treinta días, lo que el conductor sube llega solo a revisión, la moto aprobada queda activa sola y el primer conductor de Tucaní ya puede recibir carreras. El chat de soporte de la web deja escribir de una vez. Antes, el mismo día, salió el modelo de comida de Venezuela.",
+  "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
     {
       "quien": "ia",
@@ -350,6 +350,30 @@
       "para": "Abrir la página «borrador-registro» de este sitio (enlace «Borrador del registro nuevo» en el menú), recorrer Divoox, Driver y Restaurants como si fueran la app, y decir qué se cambia. A la derecha están las cinco decisiones que solo tú puedes tomar: entrar con código o con contraseña, «Continuar con Google y Apple», cuándo se pide el celular del cliente, cómo entra el restaurante, y la edad y los documentos del conductor por país.",
       "destraba": "Construir el registro nuevo en las tres apps. No se toca el código hasta tu visto bueno.",
       "numero": 38
+    },
+    {
+      "id": "cuenta-unica-decisiones",
+      "prioridad": "media",
+      "titulo": "Cuenta Única: tres decisiones tuyas",
+      "para": "Decir (1) si el fraude como conductor suspende también la cuenta de cliente de la misma persona, (2) si al unir dos cuentas se acumulan los regalos y premios de ambas, y (3) el texto legal de las dos aceptaciones de términos. La ficha con cómo lo hacen los grandes está en docs, investigaciones, «cuenta única».",
+      "destraba": "Programar la Cuenta Única (misma identidad para conducir y pedir). Mientras tanto queda en su ficha, sin programar.",
+      "numero": 39
+    },
+    {
+      "id": "aviso-ya-puedes-recibir",
+      "prioridad": "baja",
+      "titulo": "¿Los conductores que ya trabajan reciben una vez «Ya puedes recibir carreras»?",
+      "para": "Hoy quedó así: lo reciben una sola vez, con la primera decisión del equipo sobre ellos. Si no lo quieres, dilo y se marcan como ya avisados.",
+      "destraba": "Dejar cerrado el aviso de activación para los conductores antiguos.",
+      "numero": 40
+    },
+    {
+      "id": "probar-android-nuevo",
+      "prioridad": "alta",
+      "titulo": "Probar en un teléfono Driver 0.1.70 y clientes 0.1.61 antes de subirlas",
+      "para": "Los archivos están en Documentos, Entregas, Divoox, «android para auditor». Hace falta el dictamen del auditor de tiendas y una prueba en un Android real: oferta de cliente fijo con Driver en segundo plano y pantalla apagada (que suene), foto del conductor al pasajero y la campana.",
+      "destraba": "Subir las dos apps a Google Play con todo lo de la primera carrera real.",
+      "numero": 41
     }
   ],
   "terceros": [
@@ -529,6 +553,26 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-24",
+      "titulo": "Versiones nuevas de Android compiladas, sin subir",
+      "texto": "Driver 0.1.70 y la app de clientes 0.1.61 quedaron compiladas con todo lo de la noche: la oferta se ve y suena en cualquier pantalla, «Cliente fijo: nombre» en grande, la campana guarda cada aviso y el pasajero ve la foto del conductor. No se subieron: primero las revisa el auditor de tiendas. Falta probarlas en un teléfono."
+    },
+    {
+      "fecha": "2026-11-24",
+      "titulo": "Una sola Verificación por conductor, con su barra de activación",
+      "texto": "En el panel cada conductor tiene un solo pendiente y una barra que dice qué le falta y de quién depende, con el mismo criterio con que el reparto ofrece carreras. La ficha cuenta viajes y entregas, lo ganado, el saldo prepago y las estrellas, y dice «En línea» solo con ubicación reciente."
+    },
+    {
+      "fecha": "2026-11-24",
+      "titulo": "Solo se ofrece lo que alguien puede atender",
+      "texto": "Comida y las tiendas ya no aparecen donde no hay un comercio aprobado, y Envíos no se ofrece donde ningún conductor puede tomarlo. Al aprobar un vehículo se encienden solos los servicios que ese vehículo permite, sin un segundo registro."
+    },
+    {
+      "fecha": "2026-11-24",
+      "titulo": "La campana se vacía al leerla y los avisos quedan guardados",
+      "texto": "En el panel la campana cuenta solo lo no leído y los números del menú bajan al hacer la tarea; las verificaciones nuevas llegan en vivo con sonido y un correo. El aviso de un cliente fijo dice «Cliente fijo: nombre» y cada aviso al teléfono queda guardado con su hora."
+    },
     {
       "fecha": "2026-11-23",
       "titulo": "El chat de soporte de la web deja escribir de una vez",
@@ -1389,5 +1433,5 @@
       ]
     }
   ],
-  "siguienteProgreso": 39
+  "siguienteProgreso": 42
 }
