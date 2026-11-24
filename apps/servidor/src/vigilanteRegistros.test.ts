@@ -239,6 +239,43 @@ describe('C-VIGILANTE-REGISTROS: la vuelta', () => {
     expect((await s.filas()).find((x) => x.canal === 'equipo')?.estado).toBe('resuelto');
   });
 
+  it('un aviso del equipo solo se cierra si su cuenta se miró en esta vuelta; los de otras cuentas no tapan ni se cierran', async () => {
+    const s = await escenario();
+    correos();
+    await s.ajustar();
+    const id = await s.moto();
+    await correrRezagados(s.env, s.m.DB, dentroDe(80));
+    expect((await s.filas()).find((x) => x.canal === 'equipo')?.estado).toBe('enviado');
+    // 30 avisos abiertos, más viejos, de cuentas que esta vuelta no mira (fuera de la ventana, otra
+    // ciudad o sin barra leída): nunca se cierran por no haberse mirado.
+    await s.m.DB.batch(
+      Array.from({ length: 30 }, (_, i) =>
+        s.m.DB.prepare(
+          "INSERT INTO rezagados_mensajes (id, usuario_id, paso, canal, origen, estado, creado_en) VALUES (?, ?, 'identidad', 'equipo', 'auto', 'enviado', datetime('now', '-2 days'))",
+        ).bind(`ajeno-${i}`, `cuenta-sin-mirar-${i}`),
+      ),
+    );
+    // Le piden repetir una foto: esta vuelta no lee su barra, así que su aviso sigue abierto.
+    await s.m.DB.prepare(
+      "INSERT INTO verificacion_fotos (id, conductor_id, paso, clave, estado) VALUES ('vf-repetir', ?, 'cara', 'kyc/cara', 'repetir')",
+    )
+      .bind(s.rep.id)
+      .run();
+    await s.aprobarMoto(id);
+    await correrRezagados(s.env, s.m.DB, dentroDe(81));
+    expect((await s.filas()).find((x) => x.canal === 'equipo')?.estado).toBe('enviado');
+    // Su barra se vuelve a leer y ya no lo frena el equipo: se cierra el suyo, aunque haya 30 más viejos.
+    await s.m.DB.prepare(
+      "UPDATE verificacion_fotos SET estado = 'vigente' WHERE id = 'vf-repetir'",
+    ).run();
+    await correrRezagados(s.env, s.m.DB, dentroDe(82));
+    expect((await s.filas()).find((x) => x.canal === 'equipo')?.estado).toBe('resuelto');
+    const ajenos = await s.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM rezagados_mensajes WHERE usuario_id LIKE 'cuenta-sin-mirar-%' AND estado = 'enviado'",
+    ).first<{ n: number }>();
+    expect(Number(ajenos?.n)).toBe(30);
+  });
+
   it('a un correo sin confirmar no se le escribe: solo el aviso en su app', async () => {
     const s = await escenario({ correoConfirmado: false });
     const enviados = correos();

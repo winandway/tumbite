@@ -633,7 +633,26 @@ export async function candidatos(
   zonas: string[],
   ahora = new Date(),
 ): Promise<Candidato[]> {
-  if (!zonas.length) return [];
+  return (await revisarCuentas(env, db, a, zonas, ahora)).lista;
+}
+
+/**
+ * C-VIGILANTE-REGISTROS: qué se evaluó DE VERDAD en esta vuelta, por conductor. `barra` = se leyó su
+ * barra de activación (hay tope por vuelta: a los demás no se les puede decir que ya no los frena);
+ * `zona` = se miró su país de alta; `motivos` = lo que hoy sí le toca al equipo. Solo con esto se
+ * cierra un aviso del equipo: nunca el de una cuenta que no se miró.
+ */
+export type Evaluacion = { id: string; barra: boolean; zona: boolean; motivos: RarezaEquipo[] };
+
+async function revisarCuentas(
+  env: Env,
+  db: D1Database,
+  a: AjustesRezagados,
+  zonas: string[],
+  ahora: Date,
+): Promise<{ lista: Candidato[]; evaluados: Evaluacion[] }> {
+  const evaluados: Evaluacion[] = [];
+  if (!zonas.length) return { lista: [], evaluados };
   const desde = sqlFecha(new Date(ahora.getTime() - a.ventanaDias * 86_400_000));
   const filas = (
     await db.batch<FilaCandidato>(
@@ -664,6 +683,7 @@ export async function candidatos(
       clave,
     });
     let equipo: RarezaEquipo | null = null;
+    let barraLeida = false;
     // C-VIGILANTE-REGISTROS: cuando el rastro ya no le pide nada importante (nada, «conéctate», «tu
     // línea» o el correo, que no frena), se pregunta a la barra de activación qué lo frena de verdad y
     // de quién depende. Sin `env`: mirar no escribe.
@@ -673,6 +693,7 @@ export async function candidatos(
       barras < LOTE_BARRAS
     ) {
       barras++;
+      barraLeida = true;
       const l = lecturaDeBarra(await barraActivacion(db, f.id));
       if (l.paso) paso = l.paso;
       else if (l.equipo) {
@@ -680,14 +701,17 @@ export async function candidatos(
         if (paso === 'servicio') paso = null;
       }
     }
-    if (
-      !equipo &&
-      f.rol === 'repartidor' &&
-      f.pais_alta &&
-      f.zona_pais &&
-      f.pais_alta !== f.zona_pais
-    )
-      equipo = 'zona_ajena';
+    const zonaAjena = Boolean(
+      f.rol === 'repartidor' && f.pais_alta && f.zona_pais && f.pais_alta !== f.zona_pais,
+    );
+    if (f.rol === 'repartidor')
+      evaluados.push({
+        id: f.id,
+        barra: barraLeida,
+        zona: true,
+        motivos: [...(equipo ? [equipo] : []), ...(zonaAjena ? ['zona_ajena' as const] : [])],
+      });
+    if (!equipo && zonaAjena) equipo = 'zona_ajena';
     if (paso || equipo)
       pendientes.push({
         f,
@@ -696,7 +720,7 @@ export async function candidatos(
         ...(clave && ultimoFallo ? { quieto: ultimoFallo } : {}),
       });
   }
-  if (!pendientes.length) return [];
+  if (!pendientes.length) return { lista: [], evaluados };
   // Lo ya enviado a esas personas (solo lo automático cuenta para los topes).
   const ids = pendientes.map((p) => p.f.id);
   const enviados = new Map<
@@ -727,7 +751,7 @@ export async function candidatos(
         { ...r, canal: Number(r.equipo) ? 'equipo' : 'persona' },
       ]);
   }
-  return pendientes.map(({ f, paso, equipo, quieto }) => {
+  const lista = pendientes.map(({ f, paso, equipo, quieto }) => {
     const todos = enviados.get(f.id) ?? [];
     // Los avisos al equipo no cuentan para los topes de la persona.
     const suyos = todos.filter((s) => s.canal !== 'equipo');
@@ -789,6 +813,7 @@ export async function candidatos(
       canales: conSms ? ['sms'] : correoOk ? ['correo', 'aviso'] : ['aviso'],
     } satisfies Candidato;
   });
+  return { lista, evaluados };
 }
 
 // ───────────────────────── Enviar ─────────────────────────
@@ -989,12 +1014,12 @@ export async function correrRezagados(env: Env, db: D1Database, ahora = new Date
     resueltos: 0,
   };
   if (!zonas.length) return cuenta;
-  const todos = await candidatos(env, db, a, zonas, ahora);
+  const { lista: todos, evaluados } = await revisarCuentas(env, db, a, zonas, ahora);
   const lista = todos.filter(
     (c) => c.toca !== null && c.paso && (encendidas.has(c.zona) || autorizados.has(c.id)),
   );
   // C-VIGILANTE-REGISTROS: lo que le toca al equipo va a su campana, UNA vez por cuenta y motivo.
-  const equipo = await avisarAlEquipo(db, todos, encendidas, ahora);
+  const equipo = await avisarAlEquipo(db, todos, evaluados, encendidas);
   cuenta.alEquipo = equipo.nuevos;
   cuenta.resueltos = equipo.resueltos;
   cuenta.vistos = lista.length;
@@ -1042,8 +1067,8 @@ export const LOTE_EQUIPO = 30;
 async function avisarAlEquipo(
   db: D1Database,
   lista: Candidato[],
+  evaluados: Evaluacion[],
   encendidas: ReadonlySet<string>,
-  ahora: Date,
 ) {
   let nuevos = 0;
   for (const c of lista) {
@@ -1058,18 +1083,27 @@ async function avisarAlEquipo(
       .run();
     nuevos++;
   }
-  // Los avisos abiertos de cuentas que ya no tienen ese motivo pasan a resueltos.
-  const vigentes = new Set(lista.filter((c) => c.equipo).map((c) => `${c.id}|${c.equipo}`));
+  // Se cierra un aviso abierto SOLO si su cuenta se evaluó en esta vuelta (la barra para lo de la
+  // barra, el país de alta para «zona_ajena») y ese motivo ya no la frena. Lo que sigue vigente queda
+  // fuera de la consulta (no tapa a los que hay que cerrar) y van primero los más viejos.
+  const mirados = evaluados.filter((e) => e.barra || e.zona);
+  if (!mirados.length) return { nuevos, resueltos: 0 };
   const { results } = await db
     .prepare(
-      `SELECT id, usuario_id, paso FROM rezagados_mensajes
-        WHERE canal = 'equipo' AND estado = 'enviado' AND creado_en >= ? LIMIT ${LOTE_EQUIPO}`,
+      `WITH ev AS MATERIALIZED (
+         SELECT json_extract(e.value, '$.id') AS id, json_extract(e.value, '$.barra') AS barra,
+                json_extract(e.value, '$.zona') AS zona, json_extract(e.value, '$.motivos') AS motivos
+           FROM json_each(?) e)
+       SELECT m.id FROM ev JOIN rezagados_mensajes m ON m.usuario_id = ev.id
+        WHERE m.canal = 'equipo' AND m.estado = 'enviado'
+          AND m.paso NOT IN (SELECT value FROM json_each(ev.motivos))
+          AND ((m.paso = 'zona_ajena' AND ev.zona) OR (m.paso <> 'zona_ajena' AND ev.barra))
+        ORDER BY m.creado_en LIMIT ${LOTE_EQUIPO}`,
     )
-    .bind(sqlFecha(new Date(ahora.getTime() - 30 * 86_400_000)))
-    .all<{ id: string; usuario_id: string; paso: string }>();
+    .bind(JSON.stringify(mirados))
+    .all<{ id: string }>();
   let resueltos = 0;
   for (const r of results) {
-    if (vigentes.has(`${r.usuario_id}|${r.paso}`)) continue;
     await db
       .prepare(
         "UPDATE rezagados_mensajes SET estado = 'resuelto' WHERE id = ? AND estado = 'enviado'",
