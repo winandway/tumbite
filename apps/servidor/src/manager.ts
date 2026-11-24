@@ -269,7 +269,7 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
       .all<{ id: string; dueno_id: string; idioma_dueno: string }>();
     for (const p of aPreparar)
       if (await anotarEvento(db, p.id, 'programado_preparar'))
-        await notificar(env, db, p.dueno_id, (i) => ({
+        await notificar(env, db, { id: p.dueno_id, app: 'restaurante' }, (i) => ({
           ...TEXTOS.programadoPreparar(i, p.id.slice(0, 6).toUpperCase()),
           datos: { pedidoId: p.id },
         })).catch((e: unknown) => console.error('manager: aviso de programado', p.id, e));
@@ -310,18 +310,20 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
         if (await cancelarConReembolso(env, db, p.id, { desde: ['pagado'], actorId: null })) {
           await anotarEvento(db, p.id, 'cancelado_sin_respuesta', `${p.minutos} min`);
           resumen.cancelados++;
-          await notificar(env, db, p.cliente_id, (i) => ({
+          await notificar(env, db, { id: p.cliente_id, app: 'cliente' }, (i) => ({
             ...TEXTOS.canceladoAlCliente(i, p.restaurante),
             datos: { pedidoId: p.id },
           }));
-          await notificar(env, db, p.dueno_id, (i) => TEXTOS.canceladoAlRestaurante(i, corto));
+          await notificar(env, db, { id: p.dueno_id, app: 'restaurante' }, (i) =>
+            TEXTOS.canceladoAlRestaurante(i, corto),
+          );
         }
         continue;
       }
       const evento = p.minutos >= REGLAS.recordatorio2 ? 'recordatorio_2' : 'recordatorio_1';
       if (await anotarEvento(db, p.id, evento, `${p.minutos} min`)) {
         resumen.recordatorios++;
-        await notificar(env, db, p.dueno_id, (i) => ({
+        await notificar(env, db, { id: p.dueno_id, app: 'restaurante' }, (i) => ({
           ...TEXTOS.recordatorio(i, corto, p.minutos),
           // C-PEDIDO-NUEVO-INSISTE: el recordatorio suena como la alarma del pedido nuevo.
           sonido: 'alarma.wav',

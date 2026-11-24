@@ -41,6 +41,20 @@ export async function borrarCuenta(
       undefined,
       409,
     );
+  // C-CUENTA-UNICA-RESTAURANTE: el dueño de un restaurante activo no borra su cuenta personal sin
+  // antes cerrarlo o traspasarlo (el restaurante es un negocio aparte, con su dinero y su equipo).
+  const negocio = await db
+    .prepare(
+      'SELECT 1 FROM duenos_negocio d JOIN usuarios n ON n.id = d.negocio_id WHERE d.persona_id = ? AND n.activo = 1',
+    )
+    .bind(u.id)
+    .first();
+  if (negocio)
+    throw new ErrorDatos(
+      'Eres dueño de un restaurante en Divoox. Escríbenos a soporte para cerrarlo o traspasarlo antes de borrar tu cuenta.',
+      undefined,
+      409,
+    );
   // C-BORRADO-SERVICIOS: las claves de las fotos de recogida y de entrega de sus pedidos (como
   // cliente o como repartidor) y de sus envíos, y de su selfie con casco, para borrar los archivos.
   const misPedidos = 'SELECT id FROM pedidos WHERE cliente_id = ?1 OR repartidor_id = ?1';
@@ -167,6 +181,9 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare('DELETE FROM direcciones_cliente WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
+    // C-CUENTA-UNICA: sus papeles y el vínculo con restaurantes ya cerrados se van con la persona.
+    db.prepare('DELETE FROM usuario_papeles WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM duenos_negocio WHERE persona_id = ?').bind(u.id),
     // C-CAMPANA-SE-VACIA: hasta cuándo vio cada campana.
     db.prepare('DELETE FROM campana_vista WHERE usuario_id = ?').bind(u.id),
     // C-VERIFICACIONES-EN-VIVO: el aviso al equipo de su verificación.

@@ -885,8 +885,9 @@ catalogo.put('/mi-restaurante', async (c) => {
       .run();
     await avisoRestauranteNuevoAlAdmin(c.env, {
       restaurante: d.nombre,
-      dueno: u.nombre,
-      correoDueno: u.correo,
+      // C-CUENTA-UNICA-RESTAURANTE: el dueño de verdad, si es un negocio de una persona.
+      dueno: u.persona?.nombre ?? u.nombre,
+      correoDueno: u.persona?.correo ?? u.correo,
       direccion: d.direccion,
       categoria: d.categoria,
     });

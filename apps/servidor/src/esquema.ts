@@ -30,6 +30,7 @@ import {
   SQL_CANDIDATOS_SERVICIOS_VEHICULO,
   repararServiciosVehiculo,
 } from './reparacionServiciosVehiculo';
+import { ESQUEMA_CUENTA_UNICA } from './esquemaCuentaUnica';
 import {
   DISPARADORES_RASTRO,
   FUENTES_PASO,
@@ -411,6 +412,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-VIAJES-FIJOS: el conductor decide si lleva menores en ESE vehículo (nace apagado). No es
   // `acepta_menores`, que en Carro significa «recibir también los viajes de categorías de abajo».
   ['vehiculos', 'lleva_menores', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-CUENTA-UNICA (24 nov 2026, todos los países): el papel con el que actúa cada sesión (el de la app
+  // que la abrió), el negocio del dueño en el panel web, la app de cada token de avisos y el papel del
+  // puente al panel. Sin valor, todo sigue como hoy (una cuenta, un papel).
+  ['sesiones', 'papel', 'TEXT'],
+  ['sesiones', 'actua_como', 'TEXT'],
+  ['dispositivos', 'app', 'TEXT'],
+  ['puentes_sesion', 'papel', 'TEXT'],
 ];
 
 /**
@@ -683,7 +691,14 @@ async function asegurarFase3(db: D1Database): Promise<void> {
   // Una sola consulta para los disparadores de la Fase 3 y los de los pedidos
   // (C-TRANSICIONES-PEDIDO): el arranque sigue barato.
   // C-AGENTE-DIVOOX: los disparadores del dinero del Agente Divoox van en la misma comprobación.
-  const todo = [...ESQUEMA_FASE3, ...ESQUEMA_PEDIDOS, ...ESQUEMA_FLEX, ...ESQUEMA_AGENTES];
+  // C-CUENTA-UNICA: los frenos de la cuenta única (nadie se ofrece, lleva ni califica lo suyo).
+  const todo = [
+    ...ESQUEMA_FASE3,
+    ...ESQUEMA_PEDIDOS,
+    ...ESQUEMA_FLEX,
+    ...ESQUEMA_AGENTES,
+    ...ESQUEMA_CUENTA_UNICA,
+  ];
   const nombres = todo
     .map((sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1])
     .filter((n): n is string => Boolean(n));
@@ -738,6 +753,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         ESQUEMA_PEDIDOS,
         ESQUEMA_FLEX,
         ESQUEMA_AGENTES,
+        ESQUEMA_CUENTA_UNICA,
         COLUMNAS_DEL_ESQUEMA,
         CONFIG_DINERO_INICIAL,
         [...serviciosImplementados(entorno)],

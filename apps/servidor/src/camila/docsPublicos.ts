@@ -2465,7 +2465,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "account/create-account",
   "titulo": "Crear tu cuenta",
-  "resumen": "Una cuenta para pedir, otra para tu restaurante y otra para repartir. Cada una en un minuto.",
+  "resumen": "Una sola cuenta de Divoox para pedir, conducir y tener tu restaurante, con el mismo correo y la misma contraseña. Se crea en un minuto.",
   "preguntas": [
    "¿Cómo me registro en Divoox?",
    "¿Cómo creo una cuenta de restaurante?",
@@ -2477,7 +2477,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.",
    "Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox."
   ],
-  "cuerpo": "En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver. Cada correo sirve para un solo tipo de cuenta. Si eres conductor y también quieres pedir, crea tu cuenta de cliente con otro correo; puedes usar el mismo celular. Si pones tu correo de conductor en la app de clientes (o al revés), la app te dice qué app le corresponde y tu otra cuenta sigue abierta, sin cerrarse. En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito. Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero. Mientras ves «Revisa tus datos», tu cuenta todavía no existe: la pantalla te lo dice arriba. Si sales ahí, no se creó nada. Y si al tocar «Continuar» alguna casilla está mal, junto al botón te decimos cuál («Revisa lo marcado en rojo: Celular»), para que no tengas que buscarla. Al entrar, si algo falla te decimos ex…"
+  "cuerpo": "En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien conduce o reparte se registra en la app Divoox Driver. Tu cuenta es una sola. Si ya eres conductor y quieres pedir, entra a la app de Divoox con tu mismo correo y tu misma contraseña: la app te ofrece «Activar mi cuenta de cliente». Si ya pides y quieres conducir, entra a Divoox Driver igual y toca «Empezar mi registro de conductor». Lo explicamos en «Una cuenta para todo». En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito. Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero. Mientras ves «Revisa tus datos», tu cuenta todavía no existe: la pantalla te lo dice arriba. Si sales ahí, no se creó nada. Y si al tocar «Continuar» alguna casilla está mal, junto al botón te decimos cuál («Revisa lo marcado en rojo: Celular»), para que no tengas que buscarla. Al entrar, si algo fa…"
  },
  {
   "idioma": "es",
@@ -2650,6 +2650,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Cuando veas «Tu celular quedó confirmado», toca «Continuar» y sigue usando la app."
   ],
   "cuerpo": "Confirmar el celular protege tu cuenta: así sabemos que el número es tuyo, podemos avisarte de tus pedidos y viajes, y nadie puede crear cuentas a tu nombre. Apenas creas tu cuenta, la app te muestra «Confirma tu celular» y te envía el código por WhatsApp, desde la cuenta oficial de Divoox, al número que escribiste. En el mensaje toca «Copiar código» y pégalo en la app. Si WhatsApp no está disponible, el código te llega por SMS, y en muchos teléfonos aparece solo encima del teclado. El código vale 10 minutos. Si no te llega por WhatsApp, espera unos segundos y toca «Enviármelo por SMS»: la app te dice cuánto falta para poder pedirlo. Si escribiste mal el número, toca «¿Número equivocado? Cámbialo», corrígelo y te enviamos el código al número nuevo. Si después de varios intentos sigue sin llegar, en la misma pantalla tienes cómo escribirnos. Nunca te quedas sin salida. Si ya tenías tu cuenta de antes, no tienes que hacer nada para seguir usándola. Puedes confirmar tu celular cuando quieras desde el aviso de arriba de la app. Nunca te vamos a pedir ese código por teléfono, por chat ni por correo. No se lo des a nadie."
+ },
+ {
+  "idioma": "es",
+  "ruta": "account/one-account-for-everything",
+  "titulo": "Una cuenta para todo: pedir y conducir",
+  "resumen": "Con tu mismo correo y tu misma contraseña puedes pedir en la app de Divoox y conducir o repartir en Divoox Driver. No hace falta crear otra cuenta.",
+  "preguntas": [
+   "¿Puedo pedir con mi cuenta de conductor?",
+   "¿Necesito otro correo para conducir si ya pido en Divoox?",
+   "¿Se mezclan mis ganancias de conductor con mis pedidos?",
+   "¿Qué hago si tengo dos cuentas con correos distintos?"
+  ],
+  "pasos": [
+   "Abre la app que vas a usar: Divoox para pedir o Divoox Driver para conducir.",
+   "Entra con tu correo y tu contraseña de siempre.",
+   "Si la app te lo ofrece, marca la casilla de los términos de ese papel y toca «Activar mi cuenta de cliente» o «Empezar mi registro de conductor».",
+   "Si es para conducir, completa tus documentos y tu vehículo y espera la revisión del equipo."
+  ],
+  "cuerpo": "En Divoox eres una sola persona con una sola cuenta. Esa cuenta puede tener varios papeles: cliente (pides comida, compras, viajes y envíos), conductor (llevas pedidos, pasajeros o paquetes) y dueño de restaurante. Si ya eres conductor y quieres pedir, abre la app de Divoox y entra con tu correo y tu contraseña de siempre. La app te muestra «Activar mi cuenta de cliente»: marcas la casilla de los términos para clientes, tocas el botón y ya puedes pedir. Tu sesión de Divoox Driver sigue abierta. Si ya pides y quieres conducir, abre Divoox Driver y entra igual. La app te muestra «Empezar mi registro de conductor». Tu nombre, tu correo y tu celular ya están: solo te pedimos lo que necesita un conductor, como tus documentos y tu vehículo, y nuestro equipo los revisa antes de que recibas viajes. Cada papel tiene lo suyo, aparte. Tus ganancias y tu saldo de conductor no se mezclan con tus pedidos ni con lo que pagas como cliente. Tu calificación como conductor y tu calificación como cliente son distintas. Y cada aviso llega a la app que corresponde: los de tus viajes como conductor, a Divoox Driver; los de tus pedidos, a la app de Divoox. Por seguridad, nunca te llega la oferta de tu propio pedido o viaje, y no puedes calificarte a ti mismo. Si ya tenías dos cuentas con correos distintos (una para pedir y otra para conducir), escríbenos a soporte desde la app: las unimos en una sola después de confirmarlo contigo y con tu celular."
  },
  {
   "idioma": "es",
@@ -5132,7 +5151,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "en",
   "ruta": "account/create-account",
   "titulo": "Create your account",
-  "resumen": "One account to order, one for your restaurant, and one to deliver. Each takes a minute.",
+  "resumen": "One Divoox account to order, drive and run your restaurant, with the same email and password. It takes a minute.",
   "preguntas": [
    "How do I sign up for Divoox?",
    "How do I create a restaurant account?",
@@ -5144,7 +5163,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.",
    "We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox."
   ],
-  "cuerpo": "Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app. Each email works for one type of account. If you drive and also want to order, create your customer account with a different email; you can use the same phone number. If you enter your driver email in the customer app (or the other way around), the app tells you which app it belongs to, and your other account stays signed in. All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back. Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over. While you see “Review your details,” your account doesn’t exist yet: the screen says so at the top. If you leave there, nothing was created. And if a field is wrong when you tap “Continue,” we tell you which one right next to the button (“Check what’s marked in red:…"
+  "cuerpo": "Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app. You have just one account. If you already drive and want to order, sign in to the Divoox app with the same email and password: the app offers “Activate my customer account.” If you already order and want to drive, sign in to Divoox Driver the same way and tap “Start my driver sign-up.” We explain it in “One account for everything.” All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back. Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over. While you see “Review your details,” your account doesn’t exist yet: the screen says so at the top. If you leave there, nothing was created. And if a field is wrong when you tap “Continue,” we tell you which one right next to the button (“Check what’s marked i…"
  },
  {
   "idioma": "en",
@@ -5317,6 +5336,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "When you see “Your cell phone is confirmed,” tap “Continue” and keep using the app."
   ],
   "cuerpo": "Confirming your cell phone protects your account: it tells us the number is yours, lets us update you about your orders and rides, and keeps anyone from opening accounts in your name. Right after you create your account, the app shows “Confirm your cell phone” and sends the code on WhatsApp, from Divoox’s official account, to the number you entered. In the message, tap “Copy code” and paste it in the app. If WhatsApp isn’t available, the code comes by text, and on many phones it shows up above the keyboard. The code is good for 10 minutes. If it doesn’t arrive on WhatsApp, wait a few seconds and tap “Text it to me instead”: the app tells you how long until you can request it. If you mistyped your number, tap “Wrong number? Change it,” fix it, and we’ll send the code to the new number. If it still doesn’t arrive after a few tries, the same screen shows you how to reach us. You’re never stuck. If you already had an account, you don’t need to do anything to keep using it. You can confirm your cell phone anytime from the notice at the top of the app. We will never ask you for that code by phone, chat or email. Don’t share it with anyone."
+ },
+ {
+  "idioma": "en",
+  "ruta": "account/one-account-for-everything",
+  "titulo": "One account for everything: order and drive",
+  "resumen": "With the same email and password you can order in the Divoox app and drive or deliver in Divoox Driver. You don’t need another account.",
+  "preguntas": [
+   "Can I order with my driver account?",
+   "Do I need another email to drive if I already order on Divoox?",
+   "Do my driver earnings mix with my orders?",
+   "What if I have two accounts with different emails?"
+  ],
+  "pasos": [
+   "Open the app you want to use: Divoox to order or Divoox Driver to drive.",
+   "Sign in with your usual email and password.",
+   "If the app offers it, check that role’s terms box and tap “Activate my customer account” or “Start my driver sign-up.”",
+   "To drive, add your documents and your vehicle and wait for our team’s review."
+  ],
+  "cuerpo": "On Divoox you are one person with one account. That account can have several roles: customer (you order food, groceries, rides and deliveries), driver (you deliver orders, people or packages) and restaurant owner. If you already drive and want to order, open the Divoox app and sign in with your usual email and password. The app shows “Activate my customer account”: check the customer terms box, tap the button and you can order. Your Divoox Driver session stays signed in. If you already order and want to drive, open Divoox Driver and sign in the same way. The app shows “Start my driver sign-up.” Your name, email and phone are already there: we only ask for what a driver needs, like your documents and your vehicle, and our team reviews them before you get trips. Each role keeps its own things, separately. Your driver earnings and balance never mix with your orders or with what you pay as a customer. Your driver rating and your customer rating are different. And each notification goes to the right app: your trips as a driver go to Divoox Driver; your orders go to the Divoox app. For your safety, you never get the offer for your own order or ride, and you can’t rate yourself. If you already had two accounts with different emails (one to order and one to drive), contact support from the app: we merge them into one after confirming it with you and with your phone."
  },
  {
   "idioma": "en",

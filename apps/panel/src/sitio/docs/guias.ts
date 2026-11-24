@@ -14,6 +14,7 @@ import { GUIAS_AVISOS_QUE_RECIBES } from './avisosQueRecibes';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
 import { FOTO_CARA_PUBLICADA, GUIAS_FOTO_CARA } from './fotoCara';
+import { CUENTA_UNICA_PUBLICADA, GUIAS_CUENTA_UNICA } from './cuentaUnica';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -5216,10 +5217,10 @@ const es: SeccionDocs[] = [
         id: 'create-account',
         titulo: 'Crear tu cuenta',
         resumen:
-          'Una cuenta para pedir, otra para tu restaurante y otra para repartir. Cada una en un minuto.',
+          'Una sola cuenta de Divoox para pedir, conducir y tener tu restaurante, con el mismo correo y la misma contraseña. Se crea en un minuto.',
         explicacion: [
-          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver.',
-          'Cada correo sirve para un solo tipo de cuenta. Si eres conductor y también quieres pedir, crea tu cuenta de cliente con otro correo; puedes usar el mismo celular. Si pones tu correo de conductor en la app de clientes (o al revés), la app te dice qué app le corresponde y tu otra cuenta sigue abierta, sin cerrarse.',
+          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien conduce o reparte se registra en la app Divoox Driver.',
+          'Tu cuenta es una sola. Si ya eres conductor y quieres pedir, entra a la app de Divoox con tu mismo correo y tu misma contraseña: la app te ofrece «Activar mi cuenta de cliente». Si ya pides y quieres conducir, entra a Divoox Driver igual y toca «Empezar mi registro de conductor». Lo explicamos en «Una cuenta para todo».',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
           'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero.',
           'Mientras ves «Revisa tus datos», tu cuenta todavía no existe: la pantalla te lo dice arriba. Si sales ahí, no se creó nada. Y si al tocar «Continuar» alguna casilla está mal, junto al botón te decimos cuál («Revisa lo marcado en rojo: Celular»), para que no tengas que buscarla.',
@@ -10750,10 +10751,10 @@ const en: SeccionDocs[] = [
         id: 'create-account',
         titulo: 'Create your account',
         resumen:
-          'One account to order, one for your restaurant, and one to deliver. Each takes a minute.',
+          'One Divoox account to order, drive and run your restaurant, with the same email and password. It takes a minute.',
         explicacion: [
           'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
-          'Each email works for one type of account. If you drive and also want to order, create your customer account with a different email; you can use the same phone number. If you enter your driver email in the customer app (or the other way around), the app tells you which app it belongs to, and your other account stays signed in.',
+          'You have just one account. If you already drive and want to order, sign in to the Divoox app with the same email and password: the app offers “Activate my customer account.” If you already order and want to drive, sign in to Divoox Driver the same way and tap “Start my driver sign-up.” We explain it in “One account for everything.”',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
           'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over.',
           'While you see “Review your details,” your account doesn’t exist yet: the screen says so at the top. If you leave there, nothing was created. And if a field is wrong when you tap “Continue,” we tell you which one right next to the button (“Check what’s marked in red: Mobile phone”), so you don’t have to hunt for it.',
@@ -11181,6 +11182,10 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   // C-FOTO-CARA-A-LA-VISTA y C-QUE-TE-FALTA: la foto de la cara y «qué te falta para recibir carreras».
   const fc = idioma === 'es' ? GUIAS_FOTO_CARA.es : GUIAS_FOTO_CARA.en;
   const fotoCara = FOTO_CARA_PUBLICADA ? [fc.cara, fc.falta] : [];
+  // C-CUENTA-UNICA: «Una cuenta para todo» y los restaurantes de una persona, con capturas reales.
+  const cu = idioma === 'es' ? GUIAS_CUENTA_UNICA.es : GUIAS_CUENTA_UNICA.en;
+  const cuentaUnica = CUENTA_UNICA_PUBLICADA ? [cu.cuenta] : [];
+  const restaurantesUnica = CUENTA_UNICA_PUBLICADA ? [cu.restaurantes] : [];
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
@@ -11227,10 +11232,13 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...(VERIFICAR_CELULAR_PUBLICADA
             ? [idioma === 'es' ? GUIA_VERIFICAR_CELULAR.es : GUIA_VERIFICAR_CELULAR.en]
             : []),
+          ...cuentaUnica,
           ...de(s.id),
           ...(idioma === 'es' ? GUIAS_DOCS.es : GUIAS_DOCS.en),
         ],
       };
+    if (s.id === 'restaurants')
+      return { ...s, guias: [...s.guias, ...restaurantesUnica, ...de(s.id)] };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
   // C-AYUDA-INTERNA (16 nov 2026, Richard): Docs es solo para clientes y terceros. Las guías del

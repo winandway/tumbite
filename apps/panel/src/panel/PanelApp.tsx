@@ -1,5 +1,6 @@
 import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
 import { Flota } from './Flota';
+import { BarraNegocio, MisRestaurantes } from './MisRestaurantes';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AyudaInterna } from './AyudaInterna';
 import { BaseAyudaInterna } from './AyudaAqui';
@@ -557,6 +558,8 @@ export function PanelApp({ ruta }: { ruta: string }) {
             a="/panel/settings"
           />
         </Metricas>
+        {/* C-CUENTA-UNICA-RESTAURANTE: sus restaurantes y «Registrar mi restaurante». */}
+        <MisRestaurantes idioma={idioma} />
       </section>
     );
   else
@@ -574,6 +577,14 @@ export function PanelApp({ ruta }: { ruta: string }) {
       ) : (
         <p role="alert">{t.noExiste}</p>
       ));
+  // C-CUENTA-UNICA-RESTAURANTE: la persona dueña ve con cuál de sus restaurantes trabaja.
+  if (esRestaurante)
+    contenido = (
+      <>
+        <BarraNegocio idioma={idioma} />
+        {contenido}
+      </>
+    );
 
   return (
     <SesionArmazon.Provider value={sesion}>

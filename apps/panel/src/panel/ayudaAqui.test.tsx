@@ -44,6 +44,8 @@ const MAPA: [archivo: string, guia: string][] = [
   ['EnviarMensaje.tsx', 'signup-reminders'],
   ['CambiarCiudadConductor.tsx', 'change-driver-city'],
   ['CorregirCorreo.tsx', 'fix-account-email'],
+  // C-CUENTA-UNICA-UNIR
+  ['UnirCuentas.tsx', 'merge-two-accounts'],
   ['SuperFichas.tsx', 'test-accounts'],
   ['VerificacionCelular.tsx', 'sms-code-at-sign-up'],
   ['armazon/Campana.tsx', 'bell-and-menu-numbers'],

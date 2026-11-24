@@ -389,8 +389,15 @@ export async function cambiarParadas(
   };
 }
 
-async function avisarCambio(env: Env, db: D1Database, para: string, viajeId: string) {
-  await notificar(env, db, para, (i) => ({
+async function avisarCambio(
+  env: Env,
+  db: D1Database,
+  para: string,
+  viajeId: string,
+  app: 'cliente' | 'repartidor',
+) {
+  // C-CUENTA-UNICA-AVISOS: a la app del papel que tiene en este viaje.
+  await notificar(env, db, { id: para, app }, (i) => ({
     titulo: i === 'en' ? 'The trip stops changed' : 'Cambiaron las paradas del viaje',
     cuerpo:
       i === 'en' ? 'Open the trip to see the new route.' : 'Abre el viaje para ver la ruta nueva.',
@@ -411,7 +418,8 @@ paradasViaje.post('/viajes/:id/paradas', async (c) => {
     confirmar: d.confirmar,
     ...(d.totalVisto != null ? { totalVisto: d.totalVisto } : {}),
   });
-  if (cambio.aplicado && v.conductor_id) await avisarCambio(c.env, db, v.conductor_id, v.id);
+  if (cambio.aplicado && v.conductor_id)
+    await avisarCambio(c.env, db, v.conductor_id, v.id, 'repartidor');
   return c.json({
     cambio,
     paradas: await paradasDe(db, v.id),
@@ -508,7 +516,7 @@ paradasViaje.post(
       confirmar: true,
       soloSiNoSube: true,
     });
-    await avisarCambio(c.env, db, v.cliente_id, v.id);
+    await avisarCambio(c.env, db, v.cliente_id, v.id, 'cliente');
     return c.json({ ok: true, cambio, paradas: await paradasDe(db, v.id) });
   },
 );

@@ -280,7 +280,7 @@ export async function avisarGruposVencidos(env: Env, db: D1Database) {
       .bind(g.id)
       .run();
     if (!r.meta.changes) continue;
-    await notificar(env, db, g.anfitrion_id, (i) => ({
+    await notificar(env, db, { id: g.anfitrion_id, app: 'cliente' }, (i) => ({
       titulo:
         i === 'en' ? 'Your group order is ready to check out' : 'Tu pedido en grupo ya se cerró',
       cuerpo:

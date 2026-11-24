@@ -136,7 +136,18 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
             lng: x.lng == null ? '' : String(x.lng),
             imagen: x.imagen ?? '',
           });
-        }
+        } else if (usuario.correo.endsWith('@negocio.divoox.invalid'))
+          // C-CUENTA-UNICA-RESTAURANTE: el restaurante nuevo de una persona arranca con lo ya
+          // conocido: el nombre que eligió y el celular de su dueño (solo si no hay borrador).
+          void pedir<{ persona: { telefono?: string | null } }>('GET', '/datos/cuentas/papeles')
+            .then((p) =>
+              cargarBase({
+                ...INICIAL,
+                nombre: usuario.nombre,
+                telefono: p.persona.telefono ?? '',
+              }),
+            )
+            .catch(() => cargarBase({ ...INICIAL, nombre: usuario.nombre }));
       })
       .catch((e: unknown) => setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) }))
       .finally(() => setCargado(true));

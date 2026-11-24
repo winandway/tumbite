@@ -475,7 +475,7 @@ viajesHistorial.post('/viajes/:id/ayuda', async (c) => {
   if (d.motivo === 'objeto_olvidado' && f.conductor_id) {
     // Se avisa al conductor; si el aviso no sale, el caso igual queda en su historial y en soporte.
     // C-AVISOS-IDIOMA: antes salía en los dos idiomas a la vez; ahora en el de su app.
-    await notificar(c.env, db, f.conductor_id, (i) => ({
+    await notificar(c.env, db, { id: f.conductor_id, app: 'repartidor' }, (i) => ({
       ...(i === 'en'
         ? {
             titulo: 'Lost item',

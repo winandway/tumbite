@@ -477,7 +477,7 @@ export async function aplicarAjuste(
   );
   // Pedido en mano: la comisión apartada baja con la comida (C-RESERVA-AJUSTE).
   await ajustarReservaDirecta(db, pedidoId);
-  await notificar(env, db, String(f.cliente_id), (i) => {
+  await notificar(env, db, { id: String(f.cliente_id), app: 'cliente' }, (i) => {
     const nombreFalta = i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es);
     return {
       ...(reemplazo
@@ -1721,7 +1721,7 @@ pedidos.post('/stripe/aviso', async (c) => {
         duenio?.idioma === 'en' ? 'en' : 'es',
       );
       if (duenio) {
-        await notificar(c.env, db, duenio.usuario_id, (i) =>
+        await notificar(c.env, db, { id: duenio.usuario_id, app: 'restaurante' }, (i) =>
           AVISOS.abonoFallido(i, formatearDolares(Number(obj.amount ?? 0), i)),
         ).catch((e: unknown) => console.error('abono fallido: aviso', e));
         await enviarCorreo(c.env, {
@@ -1842,7 +1842,7 @@ async function avisosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) 
     moneda: String(f.moneda ?? 'USD'),
   });
   await avisoDeRegalo(env, db, pedidoId);
-  await notificar(env, db, String(f.dueno_id), (i) => ({
+  await notificar(env, db, { id: String(f.dueno_id), app: 'restaurante' }, (i) => ({
     ...AVISOS.pedidoNuevo(i, pedidoId.slice(0, 8).toUpperCase()),
     datos: { pedidoId },
   }));
@@ -2406,7 +2406,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
     .bind(id)
     .first<{ repartidor_id: string; idioma: string }>();
   if (asignado)
-    await notificar(c.env, db, asignado.repartidor_id, (i) => ({
+    await notificar(c.env, db, { id: asignado.repartidor_id, app: 'repartidor' }, (i) => ({
       ...AVISOS.repDireccion(i, d.direccion),
       datos: { pedidoId: id },
     })).catch((e: unknown) => console.error('aviso dirección al repartidor', e));
@@ -2526,7 +2526,7 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
       )
       .bind(nuevoId(), String(f.repartidor_id), id, centavos, id),
   ]);
-  await notificar(c.env, db, String(f.repartidor_id), (i) =>
+  await notificar(c.env, db, { id: String(f.repartidor_id), app: 'repartidor' }, (i) =>
     AVISOS.propinaExtra(
       i,
       // C-MONEDA-RECORRIDO: en la moneda del pedido (con tarjeta hoy siempre es USD).

@@ -235,12 +235,17 @@ export async function avisarPasoViaje(
       vehiculo: [f.marca, f.modelo].filter(Boolean).join(' '),
       placa: f.placa ?? '',
     };
-    await notificar(env, db, destino, (i) => ({
-      ...textoAvisoViaje(paso, datos, i),
-      datos: { tipo: 'viaje', viajeId: operacionId, paso, servicio: f.servicio_id },
-      // C-SONIDOS-PROPIOS: «llegó tu conductor» con su campanita propia.
-      ...(paso === 'llego' ? { canal: 'llego' as const } : {}),
-    }));
+    await notificar(
+      env,
+      db,
+      { id: destino, app: paraConductor ? 'repartidor' : 'cliente' },
+      (i) => ({
+        ...textoAvisoViaje(paso, datos, i),
+        datos: { tipo: 'viaje', viajeId: operacionId, paso, servicio: f.servicio_id },
+        // C-SONIDOS-PROPIOS: «llegó tu conductor» con su campanita propia.
+        ...(paso === 'llego' ? { canal: 'llego' as const } : {}),
+      }),
+    );
   } catch (e) {
     console.error('viajes: aviso del paso', paso, operacionId, e);
   }

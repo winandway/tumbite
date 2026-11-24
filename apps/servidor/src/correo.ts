@@ -1,3 +1,4 @@
+import { correoDelDueno, esCorreoDeNegocio } from './cuentaUnica';
 import { CORREOS_SOPORTE, MARCA } from '@tumbite/compartido';
 import type { Env } from './env';
 
@@ -269,7 +270,16 @@ async function falloDeDestinatario(
   return { ok: false, motivo, rebotado: true };
 }
 
-export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoCorreo> {
+export async function enviarCorreo(env: Env, correoPedido: Correo): Promise<ResultadoCorreo> {
+  // C-CUENTA-UNICA-RESTAURANTE: la cuenta de un restaurante de una persona no tiene buzón propio; lo
+  // que se le escribe al restaurante le llega a su dueño. Una sola lectura, y solo para esas cuentas.
+  let correo = correoPedido;
+  if (esCorreoDeNegocio(correo.para)) {
+    const dueno = env.DB ? await correoDelDueno(env.DB, correo.para).catch(() => null) : null;
+    if (!dueno)
+      return { ok: false, motivo: 'El restaurante no tiene dueño con correo.', rebotado: false };
+    correo = { ...correo, para: dueno };
+  }
   // No es un fallo: esa dirección no existe, así que no se gasta un envío en ella.
   if (omitirDePrueba && esCorreoDePrueba(correo.para))
     return { ok: true, id: 'omitido-de-prueba', rebotado: false };

@@ -133,9 +133,14 @@ chatViaje.post('/viajes/:id/mensajes', limiteIntentos(30, 60_000), async (c) => 
   const para = u.id === v.cliente_id ? v.conductor_id : v.cliente_id;
   // Si la otra persona lo bloqueó, no recibe el aviso (y quien escribe no se entera).
   if (await bloqueo(db, para, u.id)) return c.json({ ok: true });
-  await notificar(c.env, db, para, (i) => ({
-    ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', limpio),
-    datos: { tipo: 'viaje', viajeId: v.id },
-  })).catch((e: unknown) => console.error('chat del viaje: aviso', e));
+  await notificar(
+    c.env,
+    db,
+    { id: para, app: para === v.conductor_id ? 'repartidor' : 'cliente' },
+    (i) => ({
+      ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', limpio),
+      datos: { tipo: 'viaje', viajeId: v.id },
+    }),
+  ).catch((e: unknown) => console.error('chat del viaje: aviso', e));
   return c.json({ ok: true });
 });

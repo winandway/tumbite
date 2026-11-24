@@ -343,7 +343,7 @@ export async function exigirSaldoRestaurante(
       .bind(p.rid)
       .first<{ dueno_id: string }>();
     if (d)
-      await notificar(env, db, d.dueno_id, (i) => ({
+      await notificar(env, db, { id: d.dueno_id, app: 'restaurante' }, (i) => ({
         ...AVISOS_PAGO.sinSaldo(i),
         datos: { tipo: 'saldo_restaurante' },
       })).catch((e: unknown) => console.error('saldo del restaurante: aviso', e));
@@ -540,7 +540,7 @@ export async function pedirPagoComida(env: Env | null, db: D1Database, pedidoId:
   if (!r.meta.changes) return false;
   await anotarEvento(db, pedidoId, 'pago_comida_pedido', `${minutos} min`);
   if (env)
-    await notificar(env, db, f.cliente_id, (i) => ({
+    await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
       ...AVISOS_PAGO.paga(i, minutos),
       datos: { pedidoId, tipo: 'pago_comida' },
     })).catch((e: unknown) => console.error('pago de la comida: aviso al cliente', e));
@@ -643,7 +643,7 @@ export async function reportarPagoComida(
   );
   const corto = p.pedidoId.slice(0, 4).toUpperCase();
   if (f.dueno_id)
-    await notificar(env, db, f.dueno_id, (i) => ({
+    await notificar(env, db, { id: f.dueno_id, app: 'restaurante' }, (i) => ({
       ...AVISOS_PAGO.revisaTuBanco(i, corto),
       datos: { pedidoId: p.pedidoId, tipo: 'pago_comida' },
     })).catch((e: unknown) => console.error('pago de la comida: aviso al restaurante', e));
@@ -741,12 +741,12 @@ export async function responderPagoComida(
         moneda: f.moneda,
         porOperacion: cobrada,
       });
-    await notificar(env, db, f.cliente_id, (i) => ({
+    await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
       ...AVISOS_PAGO.confirmado(i),
       datos: { pedidoId: p.pedidoId, tipo: 'pago_comida' },
     })).catch((e: unknown) => console.error('pago de la comida: aviso al cliente', e));
     if (f.repartidor_id)
-      await notificar(env, db, f.repartidor_id, (i) => ({
+      await notificar(env, db, { id: f.repartidor_id, app: 'repartidor' }, (i) => ({
         ...AVISOS_PAGO.yaPuedesIr(i, corto),
         datos: { pedidoId: p.pedidoId, tipo: 'pago_comida' },
       })).catch((e: unknown) => console.error('pago de la comida: aviso al conductor', e));
@@ -788,7 +788,7 @@ export async function responderPagoComida(
     .bind(` Otra vez: ${detalle}`, `pago-comida:${p.pedidoId}`)
     .run();
   await anotarEvento(db, p.pedidoId, 'pago_comida_no_llego', `referencia ${f.referencia}`);
-  await notificar(env, db, f.cliente_id, (i) => ({
+  await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
     ...AVISOS_PAGO.noLlego(i, !f.corregido_en),
     datos: { pedidoId: p.pedidoId, tipo: 'pago_comida' },
   })).catch((e: unknown) => console.error('pago de la comida: aviso al cliente', e));
@@ -833,7 +833,7 @@ export async function marcarDevolucionHecha(
     )
     .run();
   await anotarEvento(db, p.pedidoId, 'devolucion_comida_hecha', `referencia ${referencia}`);
-  await notificar(env, db, f.cliente_id, (i) => ({
+  await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
     ...AVISOS_PAGO.devuelto(i),
     datos: { pedidoId: p.pedidoId, tipo: 'pago_comida' },
   })).catch((e: unknown) => console.error('pago de la comida: aviso de devolución', e));
@@ -871,11 +871,11 @@ export async function alCancelarPedido(env: Env, db: D1Database, pedidoId: strin
     await anotarEvento(db, pedidoId, 'devolucion_comida_pendiente', f.estado);
     const corto = pedidoId.slice(0, 4).toUpperCase();
     if (f.dueno_id)
-      await notificar(env, db, f.dueno_id, (i) => ({
+      await notificar(env, db, { id: f.dueno_id, app: 'restaurante' }, (i) => ({
         ...AVISOS_PAGO.devuelve(i, corto),
         datos: { pedidoId, tipo: 'pago_comida' },
       })).catch((e: unknown) => console.error('pago de la comida: aviso de devolver', e));
-    await notificar(env, db, f.cliente_id, (i) => ({
+    await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
       ...AVISOS_PAGO.teDevuelven(i),
       datos: { pedidoId, tipo: 'pago_comida' },
     })).catch((e: unknown) => console.error('pago de la comida: aviso al cliente', e));
@@ -905,17 +905,17 @@ async function cancelarPorPago(env: Env, db: D1Database, f: FilaPago, evento: st
         : evento === 'cancelado_restaurante_no_confirmo'
           ? 'restaurante_no_confirmo'
           : 'sin_cuenta';
-  await notificar(env, db, f.cliente_id, (i) => ({
+  await notificar(env, db, { id: f.cliente_id, app: 'cliente' }, (i) => ({
     ...AVISOS_PAGO.cancelado(i, motivo),
     datos: { pedidoId: f.pedido_id, tipo: 'pago_comida' },
   })).catch((e: unknown) => console.error('pago de la comida: aviso de cancelación', e));
   if (f.dueno_id)
-    await notificar(env, db, f.dueno_id, (i) => ({
+    await notificar(env, db, { id: f.dueno_id, app: 'restaurante' }, (i) => ({
       ...AVISOS_PAGO.canceladoRestaurante(i, corto, motivo),
       datos: { pedidoId: f.pedido_id, tipo: 'pago_comida' },
     })).catch((e: unknown) => console.error('pago de la comida: aviso de cancelación', e));
   if (f.repartidor_id)
-    await notificar(env, db, f.repartidor_id, (i) => ({
+    await notificar(env, db, { id: f.repartidor_id, app: 'repartidor' }, (i) => ({
       ...AVISOS_PAGO.canceladoConductor(i, corto),
       datos: { pedidoId: f.pedido_id, tipo: 'pago_comida' },
     })).catch((e: unknown) => console.error('pago de la comida: aviso de cancelación', e));
@@ -1005,7 +1005,7 @@ export async function vigilarPagosComida(env: Env, db: D1Database, pedidoId?: st
         const corto = f.pedido_id.slice(0, 4).toUpperCase();
         const quedan = Math.max(1, t.minutosConfirmar - min);
         if (f.dueno_id)
-          await notificar(env, db, f.dueno_id, (i) => ({
+          await notificar(env, db, { id: f.dueno_id, app: 'restaurante' }, (i) => ({
             ...AVISOS_PAGO.recordatorio(i, corto, quedan),
             datos: { pedidoId: f.pedido_id, tipo: 'pago_comida' },
           })).catch((e: unknown) => console.error('pago de la comida: recordatorio', e));

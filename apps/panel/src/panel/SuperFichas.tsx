@@ -15,6 +15,8 @@ import { VerDato } from './DatoProtegido';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { UnirCuentas } from './UnirCuentas';
+import { SuspenderCuenta } from './SuspenderCuenta';
 import { AyudaAqui } from './AyudaAqui';
 import { EtiquetaPrueba, FiltroCuentas, opcionMarcarPrueba } from './CuentasPrueba';
 import {
@@ -407,6 +409,8 @@ function BotonSuspender({
   const [error, setError] = useState('');
   const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
   const [escribiendo, setEscribiendo] = useState(false);
+  // C-CUENTA-UNICA-SUSPENSION: suspender abre el formulario que pide el por qué.
+  const [suspendiendo, setSuspendiendo] = useState(false);
   const puedeEscribir = usePermisos().puedeVer('tickets.responder') && Boolean(rol);
   const [aviso, setAviso] = useState('');
   const [borrada, setBorrada] = useState(false);
@@ -438,6 +442,8 @@ function BotonSuspender({
         activo: !activo,
         motivo,
         malaConducta,
+        // C-CUENTA-UNICA-SUSPENSION: la mala conducta es de la persona entera.
+        ...(activo && malaConducta ? { motivoTipo: 'fraude' } : {}),
       });
       recargar();
     } catch (e) {
@@ -447,7 +453,11 @@ function BotonSuspender({
   return (
     <div className="super-suspender">
       {!activo ? <strong className="error-general">{t.suspendida}</strong> : null}{' '}
-      <button type="button" className="enlace" onClick={() => void cambiar()}>
+      <button
+        type="button"
+        className="enlace"
+        onClick={() => (activo ? setSuspendiendo(true) : void cambiar())}
+      >
         {activo ? t.suspender : t.reactivar}
       </button>
       {activo ? (
@@ -481,6 +491,18 @@ function BotonSuspender({
         </span>
       ) : null}
       {aviso ? <strong role="status"> {aviso}</strong> : null}
+      {suspendiendo && activo ? (
+        <SuspenderCuenta
+          id={id}
+          esConductor={rol === 'repartidor'}
+          idioma={idioma}
+          alCerrar={() => setSuspendiendo(false)}
+          alSuspender={() => {
+            setSuspendiendo(false);
+            recargar();
+          }}
+        />
+      ) : null}
       {escribiendo && rol ? (
         <EnviarMensaje
           id={id}
@@ -1357,6 +1379,8 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
           {t.mas}
         </button>
       )}
+      {/* C-CUENTA-UNICA-UNIR: unir dos cuentas de la misma persona (solo el equipo central). */}
+      <UnirCuentas idioma={idioma} />
     </section>
   );
 }

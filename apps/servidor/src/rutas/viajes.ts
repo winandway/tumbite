@@ -640,7 +640,7 @@ viajes.post(
       const regaloDivoox = cierre.monto;
       const cobrarEnMano = totalFinal == null ? null : totalFinal - regaloDivoox;
       if (cierre.enRevision)
-        await notificar(c.env, db, u.id, (i) =>
+        await notificar(c.env, db, { id: u.id, app: 'repartidor' }, (i) =>
           i === 'es'
             ? {
                 titulo: 'Divoox está revisando este regalo',

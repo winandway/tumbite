@@ -27,7 +27,7 @@ export async function avisarSaldoRecargado(
 ) {
   if (!env || !(monto > 0)) return;
   try {
-    await notificar(env, db, conductorId, (i) => ({
+    await notificar(env, db, { id: conductorId, app: 'repartidor' }, (i) => ({
       titulo: i === 'en' ? 'Balance added' : 'Te recargamos saldo',
       cuerpo:
         i === 'en'

@@ -368,7 +368,7 @@ async function avisarProgramadoSinConductor(
   operacionId: string,
   clienteId: string,
 ) {
-  await notificar(env, db, clienteId, (i) => ({
+  await notificar(env, db, { id: clienteId, app: 'cliente' }, (i) => ({
     ...(i === 'en'
       ? {
           titulo: 'No driver for your scheduled ride',
@@ -550,7 +550,7 @@ export async function turnoDeConfianza(
       .first<{ nombre: string | null }>()
       .catch(() => null);
     const nombre = primerNombre(cliente?.nombre);
-    await notificar(env, db, pref, (i) => ({
+    await notificar(env, db, { id: pref, app: 'repartidor' }, (i) => ({
       ...avisoClienteFijo(i, nombre),
       sonido: 'oferta.wav',
       oferta: true,
@@ -903,7 +903,7 @@ export async function repartirOperaciones(
     // real puede no estar. Sin esto el conductor no se enteraba y la oferta vencía en silencio.
     // C-REOFERTA-TOPE: al celular, solo la primera oferta y la primera vuelta.
     if (env && Number(intentos) <= AVISOS_POR_CONDUCTOR)
-      await notificar(env, db, elegido.conductorId, (i) =>
+      await notificar(env, db, { id: elegido.conductorId, app: 'repartidor' }, (i) =>
         avisoOfertaOperacion(
           i,
           op.servicio_id,

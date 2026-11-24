@@ -198,7 +198,7 @@ flota.post('/mi-restaurante/flota/invitaciones', async (c) => {
     .first<{ id: string; idioma: string }>();
   if (ya)
     avisos.push(
-      notificar(c.env, db, ya.id, (i) => ({
+      notificar(c.env, db, { id: ya.id, app: 'repartidor' }, (i) => ({
         titulo: i === 'en' ? `${nombre} invited you` : `${nombre} te invitó`,
         cuerpo:
           i === 'en'

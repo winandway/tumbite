@@ -31,6 +31,11 @@ export type UsuarioSesion = Usuario & {
   segundoFactorEn?: string | null;
   /** La huella de la sesión (el token nunca se guarda): la usa el segundo factor. */
   sesionId?: string;
+  /**
+   * C-CUENTA-UNICA-RESTAURANTE: la persona dueña cuando la sesión actúa como uno de sus restaurantes
+   * (cuenta de negocio) en el panel web. Sin valor, la sesión es de la persona misma.
+   */
+  persona?: { id: string; nombre: string; correo: string };
 };
 export type Variables = { usuario: UsuarioSesion | null };
 
@@ -70,6 +75,9 @@ export const cargarSesion: MiddlewareHandler<{ Bindings: Env; Variables: Variabl
     const sesionId = await sha256(token);
     const fila = await c.env.DB.prepare(
       `SELECT u.id, u.nombre, u.correo, u.rol, u.idioma, s.permisos_json, s.segundo_factor_en,
+              s.papel, s.actua_como,
+              (SELECT p.estado FROM usuario_papeles p
+                WHERE p.usuario_id = u.id AND p.papel = COALESCE(s.papel, u.rol)) AS estado_papel,
               (s.expira_en < datetime('now', ?2)
                 AND s.expira_en < datetime(s.creada_en, ?3)) AS renovar
          FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id
@@ -89,10 +97,27 @@ export const cargarSesion: MiddlewareHandler<{ Bindings: Env; Variables: Variabl
           permisos_json: string | null;
           segundo_factor_en: string | null;
           renovar: number | null;
+          papel: string | null;
+          actua_como: string | null;
+          estado_papel: string | null;
         }
       >();
-    if (fila) {
-      const { permisos_json, segundo_factor_en, renovar, ...usuario } = fila;
+    // C-CUENTA-UNICA-SUSPENSION: la sesión de un papel suspendido (el conductor con papeles vencidos)
+    // ya no sirve; las de sus otros papeles (la app de clientes) siguen.
+    if (fila && fila.estado_papel !== 'suspendido') {
+      const {
+        permisos_json,
+        segundo_factor_en,
+        renovar,
+        papel,
+        actua_como,
+        estado_papel,
+        ...usuario
+      } = fila;
+      // C-CUENTA-UNICA: la sesión abierta en la app de clientes ve a la persona como cliente aunque su
+      // papel principal sea el de conductor (y al revés). Solo con el papel activo; si no, el de siempre.
+      if (papel && papel !== usuario.rol && usuario.rol !== 'admin' && estado_papel === 'activo')
+        usuario.rol = papel as Usuario['rol'];
       // C-SESION-SE-RENUEVA: una escritura al día como mucho (la condición se repite en el UPDATE
       // para que dos peticiones a la vez no escriban dos veces). El equipo interno no se renueva.
       if (renovar && usuario.rol !== 'admin') {
@@ -114,8 +139,29 @@ export const cargarSesion: MiddlewareHandler<{ Bindings: Env; Variables: Variabl
             `${COOKIE_SESION}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${DIAS_SESION * 86400}`,
           );
       }
-      if (usuario.rol !== 'admin') c.set('usuario', usuario);
-      else {
+      if (usuario.rol !== 'admin') {
+        // C-CUENTA-UNICA-RESTAURANTE: en el panel web, el dueño actúa como uno de sus restaurantes
+        // (cuenta de negocio aparte, con su ficha, su dinero y su equipo). Si el negocio ya no está
+        // activo o ya no es suyo, la sesión sigue siendo de la persona.
+        const negocio = actua_como
+          ? await c.env.DB.prepare(
+              `SELECT n.id, n.nombre, n.correo, n.rol, n.idioma FROM duenos_negocio d
+                 JOIN usuarios n ON n.id = d.negocio_id
+                WHERE d.negocio_id = ? AND d.persona_id = ? AND n.activo = 1 AND n.rol = 'restaurante'`,
+            )
+              .bind(actua_como, usuario.id)
+              .first<Usuario>()
+          : null;
+        c.set(
+          'usuario',
+          negocio
+            ? {
+                ...negocio,
+                persona: { id: usuario.id, nombre: usuario.nombre, correo: usuario.correo },
+              }
+            : usuario,
+        );
+      } else {
         // C-PERMISOS-FINOS: el cálculo vive en la sesión; solo se rehace si falta o cambió algo.
         let interno = accesoGuardado(permisos_json);
         // Si cambió la lista de dueños del sitio (ADMIN_CORREOS), se recalcula (sin leer la base).
