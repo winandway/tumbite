@@ -151,7 +151,7 @@ import { tiendasPeso } from './rutas/tiendasPeso';
 import { saludExclusividad } from './operaciones';
 import { PIEZAS_DE_OPERACION, saludAprobadosNoElegibles } from './aprobadosNoElegibles';
 import { correoConfigurado, saludCorreo, ultimoErrorCorreo } from './correo';
-import { ultimoErrorAviso } from './notificaciones';
+import { ultimoErrorAviso, ultimoErrorGuardarAviso } from './notificaciones';
 // C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
 import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
 // C-TASA-BCV-AUTO (14 nov 2026): canario de la tasa oficial automática de Venezuela.
@@ -389,6 +389,8 @@ app.get('/datos/salud', async (c) => {
     Boolean(ultimoErrorCorreo) || correo?.estado === 'error' || (Boolean(c.env.DB) && !correo);
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : correoMal ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
+  // C-AVISOS-GUARDADOS: un aviso que no quedó en la campana de la persona.
+  piezas.avisosGuardados = ultimoErrorGuardarAviso ? 'error' : 'ok';
   // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
   piezas.avisosWeb = saludAvisosWeb(c.env);
   // C-TASA-BCV-AUTO: «pendiente» mientras no se haya tomado nunca; «error» si la última quedó retenida.

@@ -2,6 +2,20 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-AVISOS-GUARDADOS · Todo aviso que llega al teléfono queda en la campana con su hora (primera carrera real, 24 nov 2026) — todos los países
+
+- **Qué pasaba:** después de una carrera completa, la campana de Driver decía «No tienes avisos por ahora». La campana calculaba solo eventos de pedidos de comida; nada de viajes, ofertas, mensajes, recargas ni papeles. La del cliente, igual.
+- **Qué se hizo (servidor):**
+  - Tabla `avisos_enviados` (`schema.sql`; id INTEGER PRIMARY KEY, título y texto en español y en inglés, datos, hora; índice usuario+hora; sin FK).
+  - `notificar()` (`notificaciones.ts`) guarda UNA fila por aviso y persona (no por aparato), también si la persona no tiene teléfono registrado, en paralelo con Expo y la web (`guardarAviso`, `apps/servidor/src/avisosGuardados.ts`). Si no se puede guardar, el aviso sale igual y la salud marca la pieza `avisosGuardados: error`.
+  - Presupuesto: 2 filas escritas por aviso (la fila y su índice). Mirar la campana no escribe.
+  - Limpieza diaria del reloj: borra lo de más de 30 días por el id (`LIMPIEZA_AVISOS_ENVIADOS`), sin índice de fecha. `borrarCuenta` la borra.
+  - `GET /datos/repartidor/avisos` suma lo guardado de 7 días (tope 30) con la forma que YA pinta Driver 0.1.69 de la tienda: el título en `tipo` y el texto en `restaurante`, además de `titulo`, `cuerpo`, `tipoAviso` y `guardado: true`, en el idioma de `x-idioma`. Lo de un pedido que la campana ya calcula no se repite (`historialParaRepartidor`).
+  - `GET /datos/mis-avisos` lo suma SOLO con `?historial=1` (tipo `aviso`), porque la app de clientes de la tienda (0.1.60) pintaría mal un tipo que no conoce.
+- **Campana que se vacía:** el número y lo leído son de C-CAMPANA-SE-VACIA (rama `fase-panel-y-correo`, marca «visto hasta» por persona). Lo guardado lleva su `en`, así que al juntarse `campanaDe` lo marca leído o no leído sin tocar nada más. Mientras esa rama no esté en la principal, la campana ya muestra el historial, pero su número no baja.
+- **Cómo se comprueba:** `apps/servidor/src/avisosGuardados.test.ts` (5 casos, en ROJO antes: no existía la pieza).
+- **Qué NO tocar:** no escribir una fila por aparato ni por lectura; no mandar el tipo `aviso` a la app de clientes sin `historial=1`; no quitar la limpieza.
+
 ## C-CLIENTE-FIJO-ROTULO · La oferta de un cliente fijo dice «Cliente fijo: nombre» (primera carrera real, 24 nov 2026) — todos los países
 
 - **Qué pasaba:** la oferta exclusiva al conductor de confianza no decía de quién era. El aviso decía «Tu cliente de confianza te pidió un viaje» y la pantalla de oferta, una línea pequeña.

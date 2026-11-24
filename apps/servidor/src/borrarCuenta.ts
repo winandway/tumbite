@@ -167,6 +167,8 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare('DELETE FROM direcciones_cliente WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
+    // C-AVISOS-GUARDADOS: lo que llegó a su campana se va con la cuenta.
+    db.prepare('DELETE FROM avisos_enviados WHERE usuario_id = ?').bind(u.id),
     // C-RASTRO: de dónde entró (app, plataforma, red aproximada) y sus pasos del registro se van con la cuenta.
     db.prepare('DELETE FROM rastro_cuenta WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM embudo_cuenta WHERE usuario_id = ?').bind(u.id),

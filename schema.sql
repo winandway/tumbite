@@ -65,6 +65,23 @@ CREATE TABLE IF NOT EXISTS suscripciones_web (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS suscripciones_web_usuario ON suscripciones_web(usuario_id);
+-- C-AVISOS-GUARDADOS (24 nov 2026, Richard; todos los países): cada aviso que sale al teléfono de una
+-- persona queda guardado con su hora, en los dos idiomas, para su campana («después de una carrera
+-- completa decía "No tienes avisos"»). UNA fila por aviso y persona (no por aparato); mirar no escribe.
+-- `id` crece con el tiempo: la limpieza diaria borra lo de más de 30 días por el id, sin otro índice.
+-- Sin clave foránea a propósito (cada una le cobra lecturas a todo borrado); la borra borrarCuenta.
+CREATE TABLE IF NOT EXISTS avisos_enviados (
+  id INTEGER PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT '',
+  titulo_es TEXT NOT NULL,
+  cuerpo_es TEXT NOT NULL,
+  titulo_en TEXT NOT NULL,
+  cuerpo_en TEXT NOT NULL,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS avisos_enviados_usuario ON avisos_enviados(usuario_id, creado_en);
 
 CREATE TABLE IF NOT EXISTS sesiones (
   id TEXT PRIMARY KEY,

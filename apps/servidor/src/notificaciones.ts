@@ -6,6 +6,7 @@ import {
 } from '@tumbite/compartido';
 import type { Env } from './env';
 import { notificarWeb } from './avisosWeb';
+import { guardarAviso } from './avisosGuardados';
 
 /**
  * Avisos al celular por el servicio de Expo. Cada teléfono registra su token en
@@ -15,6 +16,8 @@ import { notificarWeb } from './avisosWeb';
 const ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 
 export let ultimoErrorAviso: { cuando: string; motivo: string } | null = null;
+/** C-AVISOS-GUARDADOS: el último aviso que no se pudo guardar para la campana (va a la salud). */
+export let ultimoErrorGuardarAviso: { cuando: string; motivo: string } | null = null;
 
 type Transporte = (entrada: string, init: RequestInit) => Promise<Response>;
 let transporte: Transporte = (e, i) => fetch(e, i);
@@ -85,6 +88,12 @@ export async function notificar(env: Env, db: D1Database, usuarioId: string, avi
   const [expo, web] = await Promise.all([
     notificarExpo(env, db, usuarioId, enIdioma),
     notificarWeb(env, db, usuarioId, enIdioma),
+    // C-AVISOS-GUARDADOS: queda en su campana con su hora (UNA fila por aviso, no por aparato). Si no
+    // se puede guardar, el aviso sale igual y la salud lo dice.
+    guardarAviso(db, usuarioId, enIdioma).catch((e: unknown) => {
+      ultimoErrorGuardarAviso = { cuando: new Date().toISOString(), motivo: String(e) };
+      console.error('avisos: no se pudo guardar para la campana', e);
+    }),
   ]);
   return { enviados: expo.enviados + web };
 }

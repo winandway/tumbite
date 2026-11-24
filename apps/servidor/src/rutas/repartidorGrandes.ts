@@ -1,4 +1,6 @@
 import { Hono } from 'hono';
+import { historialParaRepartidor, leerAvisosGuardados } from '../avisosGuardados';
+import { idiomaDeLaPeticion } from '../mensajesEn';
 import { z } from 'zod';
 import {
   RADIO_LLEGADA_M,
@@ -497,6 +499,15 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
       centavos: null,
       en: p.listo_en,
     });
+  // C-AVISOS-GUARDADOS: todo aviso que le llegó al teléfono (oferta, cliente fijo, mensaje, recarga,
+  // papeles, viaje cancelado), con su hora. Lo de un pedido que ya está arriba no se repite.
+  lista.push(
+    ...historialParaRepartidor(
+      await leerAvisosGuardados(db, u.id),
+      new Set(lista.map((a) => a.pedidoId).filter((x): x is string => Boolean(x))),
+      idiomaDeLaPeticion((n) => c.req.header(n)),
+    ),
+  );
   const vencidas = await db
     .prepare(
       "SELECT COUNT(*) AS n FROM ofertas WHERE repartidor_id = ? AND estado = 'vencida' AND creada_en > datetime('now','-1 day')",
