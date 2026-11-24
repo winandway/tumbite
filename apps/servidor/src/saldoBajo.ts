@@ -37,20 +37,20 @@ export const AVISOS_SALDO = {
         ? {
             titulo: 'You’re out of balance',
             cuerpo:
-              'Tap “Top up balance” in Divoox Driver or go to the agent in your area to keep getting trips.',
+              'Tap “View my balance” on the Divoox Driver home screen to top up, or go to the agent in your area to keep getting trips.',
             canal: 'dinero',
           }
         : {
             titulo: 'Te quedaste sin saldo',
             cuerpo:
-              'Toca «Recargar saldo» en Divoox Driver o acude al agente de tu zona para seguir recibiendo carreras.',
+              'Toca «Ver mi saldo» en el inicio de Divoox Driver para recargar, o acude al agente de tu zona para seguir recibiendo carreras.',
             canal: 'dinero',
           }
       : i === 'en'
         ? {
             titulo: quedan === 1 ? 'Balance for 1 more trip' : `Balance for ${quedan} more trips`,
             cuerpo:
-              'Tap “Top up balance” in Divoox Driver or go to the agent in your area so you don’t stop getting trips.',
+              'Tap “View my balance” on the Divoox Driver home screen to top up, or go to the agent in your area so you don’t stop getting trips.',
             canal: 'dinero',
           }
         : {
@@ -59,7 +59,7 @@ export const AVISOS_SALDO = {
                 ? 'Te queda saldo para 1 carrera'
                 : `Te queda saldo para ${quedan} carreras`,
             cuerpo:
-              'Toca «Recargar saldo» en Divoox Driver o acude al agente de tu zona para no dejar de recibir carreras.',
+              'Toca «Ver mi saldo» en el inicio de Divoox Driver para recargar, o acude al agente de tu zona para no dejar de recibir carreras.',
             canal: 'dinero',
           },
   restaurante: (i: Idioma, quedan: number): Aviso => {
