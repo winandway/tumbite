@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { numeroEmergencia } from '@tumbite/compartido';
 import {
   avisarResponsableZona,
+  smsDePanicoPermitido,
   marcarPanicoVisto,
   panicosSinAtender,
   zonasSinResponsable,
@@ -66,11 +67,13 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
       asunto: `EMERGENCIA de un repartidor: ${r?.nombre ?? ''} (${r?.codigo ?? ''})`,
       texto: `El repartidor ${r?.nombre ?? ''} (${r?.codigo ?? ''}, teléfono ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia.\n\nDónde: ${donde}\nPedido: ${d.pedidoId ?? 'ninguno'}\n\nLlámalo ya.`,
     }).catch((e: unknown) => console.error('seguridad: correo de emergencia', e));
-  await smsEquipo(
-    c.env,
-    'sistema',
-    `Divoox EMERGENCIA: ${r?.nombre ?? ''} (${r?.codigo ?? ''}, tel. ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia. ${donde}`,
-  ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
+  // C-PANICO-SMS-POR-PERSONA: quien toca el botón una y otra vez no gasta los SMS de todos.
+  if (await smsDePanicoPermitido(db, u.id))
+    await smsEquipo(
+      c.env,
+      'sistema',
+      `Divoox EMERGENCIA: ${r?.nombre ?? ''} (${r?.codigo ?? ''}, tel. ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia. ${donde}`,
+    ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
   // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del repartidor.
   await avisarResponsableZona(c.env, db, {
     usuarioId: u.id,
@@ -176,8 +179,10 @@ seguridadRepartidor.post('/panico/:id/visto', async (c) => {
   const u = exigir(c);
   const id = c.req.param('id');
   if (!/^[\w-]{6,80}$/.test(id)) throw new ErrorDatos('No encontrado.', undefined, 404);
-  if (!(await marcarPanicoVisto(base(c), id, u.id)))
-    throw new ErrorDatos('No encontrado.', undefined, 404);
+  const r = await marcarPanicoVisto(c.env, base(c), id, u);
+  if (r === 'no_existe') throw new ErrorDatos('No encontrado.', undefined, 404);
+  if (r === 'prohibido')
+    throw new ErrorDatos('Este aviso de pánico no es para tu cuenta.', undefined, 403);
   return c.json({ ok: true });
 });
 

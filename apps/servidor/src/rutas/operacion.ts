@@ -334,6 +334,10 @@ export async function soltarPedido(
     db.prepare("DELETE FROM evidencias WHERE pedido_id = ? AND tipo = 'recogida'").bind(pedidoId),
     // C-FALLOS-CRITICOS 5: un pedido suelto ya no viaja agrupado con los del repartidor que lo dejó.
     db.prepare('DELETE FROM grupos_pedido WHERE pedido_id = ?').bind(pedidoId),
+    // C-AVISOS-COMIDA: el «llega en 5 minutos» al restaurante vuelve a salir con el siguiente conductor.
+    db
+      .prepare("DELETE FROM avisos_pedido WHERE pedido_id = ? AND aviso = 'rest_llega_5'")
+      .bind(pedidoId),
   ]);
   // Fase 2: la comisión apartada para este pedido vuelve al prepago del repartidor.
   await liberarReserva(db, pedidoId, repartidorId, `soltado:${motivo}`.slice(0, 80));

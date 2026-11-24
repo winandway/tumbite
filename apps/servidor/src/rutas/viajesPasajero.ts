@@ -39,7 +39,12 @@ import {
   referenciaConTasa,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
-import { TIPO_SMS_PANICO, avisarResponsableZona, textoPanico } from '../panicoZona';
+import {
+  TIPO_SMS_PANICO,
+  avisarResponsableZona,
+  smsDePanicoPermitido,
+  textoPanico,
+} from '../panicoZona';
 import { smsEquipo } from '../avisosEquipo';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
@@ -1533,9 +1538,11 @@ export async function registrarEmergencia(
   };
   // C-PANICO-CENTRAL (24 nov 2026): el pánico de un VIAJE también va por SMS al equipo (antes, solo
   // el del repartidor), como pánico: sale a cualquier país y cuenta en su tope diario. Sin montos.
-  await smsEquipo(c.env, 'sistema', textoPanico(panico, 'un viaje'), TIPO_SMS_PANICO).catch(
-    (e: unknown) => console.error('viajes: SMS de pánico al equipo', e),
-  );
+  // C-PANICO-SMS-POR-PERSONA: quien toca el botón una y otra vez no gasta los SMS de todos.
+  if (await smsDePanicoPermitido(db, p.actorId))
+    await smsEquipo(c.env, 'sistema', textoPanico(panico, 'un viaje'), TIPO_SMS_PANICO).catch(
+      (e: unknown) => console.error('viajes: SMS de pánico al equipo', e),
+    );
   // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del viaje.
   await avisarResponsableZona(c.env, db, panico).catch((e: unknown) =>
     console.error('viajes: pánico al responsable de la zona', e),

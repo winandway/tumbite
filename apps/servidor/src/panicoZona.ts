@@ -117,7 +117,11 @@ export async function destinosPanico(
       )
       .bind(`%${ultimos}`)
       .all<{ id: string; telefono: string }>()
-      .catch(() => ({ results: [] as { id: string; telefono: string }[] }));
+      .catch((e: unknown) => {
+        // Nunca en silencio: sin esta lectura el responsable no recibe el aviso al celular.
+        console.error('pánico: no se pudo buscar la cuenta del responsable', String(e));
+        return { results: [] as { id: string; telefono: string }[] };
+      });
     return {
       zona: z.nombre,
       telefono: para,
@@ -133,7 +137,10 @@ export async function destinosPanico(
     )
     .bind(JSON.stringify(correos))
     .all<{ id: string }>()
-    .catch(() => ({ results: [] as { id: string }[] }));
+    .catch((e: unknown) => {
+      console.error('pánico: no se pudo buscar al equipo central', String(e));
+      return { results: [] as { id: string }[] };
+    });
   return {
     zona: z?.nombre ?? null,
     telefono: null,
@@ -158,6 +165,37 @@ export function textoPanico(p: Panico, zona: string): string {
     .filter(Boolean)
     .join(' ')
     .slice(0, 480);
+}
+
+/**
+ * C-PANICO-SMS-POR-PERSONA (24 nov 2026): el SMS de pánico cuesta y tiene un tope diario para todos.
+ * Una persona que toca el botón una y otra vez no puede gastarlo y dejar sin SMS a un pánico real de
+ * otra: con más de `PANICO_SMS_POR_PERSONA_HORA` pánicos suyos en la última hora, los siguientes salen
+ * solo por el celular y la campana (que salen siempre). Cuenta lo que ya está guardado (los pánicos de
+ * la persona, incluido el de ahora): no escribe nada.
+ */
+export const PANICO_SMS_POR_PERSONA_HORA = 3;
+
+export async function smsDePanicoPermitido(db: D1Database, usuarioId: string): Promise<boolean> {
+  const f = await db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM emergencias_viaje WHERE actor_id = ?1 AND creado_en >= datetime('now', '-1 hour'))
+            + (SELECT COUNT(*) FROM incidentes_repartidor WHERE repartidor_id = ?1 AND tipo = 'emergencia'
+                 AND creado_en >= datetime('now', '-1 hour')) AS n`,
+    )
+    .bind(usuarioId)
+    .first<{ n: number }>()
+    .catch((e: unknown) => {
+      // Si no se puede contar, el SMS sale: ante la duda, que el pánico llegue.
+      console.error('pánico: no se pudo contar los pánicos de la persona', String(e));
+      return null;
+    });
+  const permitido = Number(f?.n ?? 0) <= PANICO_SMS_POR_PERSONA_HORA;
+  if (!permitido)
+    console.error(
+      `pánico: ${usuarioId} pasó ${PANICO_SMS_POR_PERSONA_HORA} pánicos en una hora; sale sin SMS`,
+    );
+  return permitido;
 }
 
 /** Avisa al responsable de la zona. Devuelve cuántos avisos salieron (SMS + celular). */
@@ -185,23 +223,25 @@ export async function avisarResponsableZona(env: Env, db: D1Database, p: Panico)
       : null);
   const d = await destinosPanico(env, db, zonaId);
   let enviados = 0;
+  const conSms = await smsDePanicoPermitido(db, p.usuarioId);
   if (d.telefono) {
     if (
-      await enviarSms(env, db, {
+      conSms &&
+      (await enviarSms(env, db, {
         usuarioId: p.usuarioId,
         pedidoId: null,
         tipo: TIPO_SMS_PANICO,
         telefono: d.telefono,
         texto: textoPanico(p, d.zona ?? ''),
         textoCorto: cortoPanico(p, ROL[p.rol], d.zona ?? ''),
-      })
+      }))
     )
       enviados++;
   } else {
     // C-PANICO-CENTRAL: sin responsable con teléfono, el pánico NO se queda sin nadie: va al equipo
     // central (SMS si el que llama no lo mandó ya, y aviso al celular abajo). El canario lo marca.
     console.error(`pánico: la zona ${zonaId ?? 'desconocida'} no tiene responsable con teléfono`);
-    if (!p.smsEquipoHecho)
+    if (!p.smsEquipoHecho && conSms)
       enviados += await smsEquipo(
         env,
         'sistema',
@@ -296,7 +336,14 @@ export async function insistirPanicos(env: Env, db: D1Database): Promise<number>
       referencia: a.referencia,
       panicoId: a.id,
     };
-    const d = await destinosPanico(env, db, a.zona);
+    const d = await destinosPanico(
+      env,
+      db,
+      a.zona ??
+        (a.lat != null && a.lng != null
+          ? ((await zonaPara(db, a.lat, a.lng, false))?.id ?? null)
+          : null),
+    );
     for (const u of d.usuarios) {
       await notificar(env, db, u, (i) => {
         const aviso = avisoPanico(p, d.zona, i);
@@ -311,23 +358,49 @@ export async function insistirPanicos(env: Env, db: D1Database): Promise<number>
   return repetidos;
 }
 
-/** Quien abrió el aviso de pánico lo marca visto: deja de insistir (una escritura, por la acción). */
-export async function marcarPanicoVisto(db: D1Database, id: string, usuarioId: string) {
-  const existe = await db
+/** La zona de un pánico: la del viaje, la del repartidor o, si no la tiene, la del lugar donde lo tocó. */
+async function zonaDePanico(db: D1Database, id: string) {
+  const f = await db
     .prepare(
-      `SELECT 1 FROM emergencias_viaje WHERE id = ?1
-       UNION ALL SELECT 1 FROM incidentes_repartidor WHERE id = ?1 AND tipo = 'emergencia' LIMIT 1`,
+      `SELECT o.zona_id AS zona, e.lat, e.lng FROM emergencias_viaje e JOIN operaciones o ON o.id = e.operacion_id WHERE e.id = ?1
+       UNION ALL SELECT d.zona_id, i.lat, i.lng FROM incidentes_repartidor i
+         LEFT JOIN repartidores d ON d.usuario_id = i.repartidor_id WHERE i.id = ?1 AND i.tipo = 'emergencia'
+       LIMIT 1`,
     )
     .bind(id)
-    .first();
-  if (!existe) return false;
+    .first<{ zona: string | null; lat: number | null; lng: number | null }>();
+  if (!f) return undefined;
+  if (f.zona) return f.zona;
+  return f.lat != null && f.lng != null
+    ? ((await zonaPara(db, f.lat, f.lng, false))?.id ?? null)
+    : null;
+}
+
+/**
+ * Quien abrió el aviso de pánico lo marca visto: deja de insistir (una escritura, por la acción).
+ * C-PANICO-VISTO-SOLO-DESTINO: solo puede hacerlo quien recibe ese pánico (el responsable de la zona o,
+ * si la zona no tiene, el equipo central) o una cuenta del equipo; cualquier otra recibe 403.
+ */
+export async function marcarPanicoVisto(
+  env: Env,
+  db: D1Database,
+  id: string,
+  usuario: { id: string; rol: string },
+): Promise<'ok' | 'no_existe' | 'prohibido'> {
+  const zona = await zonaDePanico(db, id);
+  if (zona === undefined) return 'no_existe';
+  if (
+    usuario.rol !== 'admin' &&
+    !(await destinosPanico(env, db, zona)).usuarios.includes(usuario.id)
+  )
+    return 'prohibido';
   await db
     .prepare(
       "INSERT OR IGNORE INTO flex_avisos (clave, usuario_id, tipo) VALUES (?, ?, 'panico_visto')",
     )
-    .bind(clavePanicoVisto(id), usuarioId)
+    .bind(clavePanicoVisto(id), usuario.id)
     .run();
-  return true;
+  return 'ok';
 }
 
 /**
@@ -362,11 +435,24 @@ export async function panicosSinAtender(db: D1Database) {
  * en el panel (y avisa una vez al equipo por el canario). El pánico de esa zona igual llega al equipo
  * central, pero alguien de la zona tiene que poder llegar en minutos.
  */
+const MS_MEMORIA_SALUD = 60_000;
+let memoriaSalud: { db: D1Database; en: number; estado: 'ok' | 'error' } | null = null;
+/** Al cambiar el responsable de una zona, la salud se vuelve a mirar en la próxima llamada. */
+export const olvidarSaludPanico = () => {
+  memoriaSalud = null;
+};
+
 export async function saludPanicoZonas(db: D1Database): Promise<'ok' | 'error'> {
+  // El canario se llama a menudo: el resultado se guarda en memoria un minuto (sin escribir nada).
+  const ahora = Date.now();
+  if (memoriaSalud && memoriaSalud.db === db && ahora - memoriaSalud.en < MS_MEMORIA_SALUD)
+    return memoriaSalud.estado;
   const { results } = await db
     .prepare('SELECT responsable_telefono AS t FROM zonas WHERE activa = 1 LIMIT 500')
     .all<{ t: string | null }>();
-  return results.some((z) => !telefonoE164(z.t)) ? 'error' : 'ok';
+  const estado = results.some((z) => !telefonoE164(z.t)) ? 'error' : 'ok';
+  memoriaSalud = { db, en: ahora, estado };
+  return estado;
 }
 
 export async function zonasSinResponsable(db: D1Database) {

@@ -439,3 +439,105 @@ describe('C-PANICO-INSISTE · el pánico insiste hasta que alguien lo abre o lo 
     ).toBe(403);
   });
 });
+
+describe('Revisión del 24 nov: el pánico sin fallos silenciosos, sin silenciadores ajenos y sin gastar SMS', () => {
+  it('si no se puede leer a quién avisar, queda en el registro de errores (nunca en silencio)', async () => {
+    const { destinosPanico } = await import('./panicoZona');
+    const errores = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const falla = (fila: unknown) =>
+      ({
+        prepare: () => ({
+          bind: () => ({
+            first: async () => fila,
+            all: async () => {
+              throw new Error('D1 caída');
+            },
+          }),
+        }),
+      }) as unknown as D1Database;
+    const env = { ADMIN_CORREOS: 'dueno@ejemplo.com' } as unknown as Env;
+    const conResponsable = await destinosPanico(
+      env,
+      falla({ nombre: 'Zona', responsable_telefono: '+584120000000' }),
+      ZONA,
+    );
+    expect(conResponsable.usuarios).toEqual([]);
+    const central = await destinosPanico(env, falla(null), null);
+    expect(central.central).toBe(true);
+    const textos = errores.mock.calls.map((c) => String(c[0]));
+    expect(textos).toContain('pánico: no se pudo buscar la cuenta del responsable');
+    expect(textos).toContain('pánico: no se pudo buscar al equipo central');
+    errores.mockRestore();
+  });
+
+  it('solo un destinatario del pánico (o el equipo) lo marca visto; cualquier otra cuenta, 403', async () => {
+    capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/zonas/${ZONA}`,
+      { responsableNombre: 'Responsable Zona', responsableTelefono: RESPONSABLE },
+      admin.token,
+    );
+    const responsable = await m.cuenta('repartidor', 'Responsable Zona');
+    await m.DB.prepare("UPDATE usuarios SET telefono = '+584120000000' WHERE id = ?")
+      .bind(responsable.id)
+      .run();
+    const { cliente } = await viajeConEmergencia(m, admin);
+    const id = (await m.DB.prepare('SELECT id FROM emergencias_viaje').first<{ id: string }>())!.id;
+    const ajeno = await m.cuenta('cliente', 'Otra Persona');
+    expect((await m.llamar('POST', `/datos/panico/${id}/visto`, {}, ajeno.token)).estado).toBe(403);
+    expect((await m.llamar('POST', `/datos/panico/${id}/visto`, {}, cliente.token)).estado).toBe(
+      403,
+    );
+    const visto = () =>
+      m.DB.prepare('SELECT 1 FROM flex_avisos WHERE clave = ?').bind(`panico:${id}:visto`).first();
+    expect(await visto()).toBeNull();
+    expect(
+      (await m.llamar('POST', `/datos/panico/${id}/visto`, {}, responsable.token)).estado,
+    ).toBe(200);
+    expect(await visto()).not.toBeNull();
+    expect((await m.llamar('POST', `/datos/panico/${id}/visto`, {}, admin.token)).estado).toBe(200);
+    expect(
+      (await m.llamar('POST', '/datos/panico/no-existe-123/visto', {}, admin.token)).estado,
+    ).toBe(404);
+  });
+
+  it('una persona que toca el botón una y otra vez no gasta los SMS de todos; el aviso al celular sale siempre', async () => {
+    const { sms, expo } = capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/zonas/${ZONA}`,
+      { responsableNombre: 'Responsable Zona', responsableTelefono: RESPONSABLE },
+      admin.token,
+    );
+    const responsable = await m.cuenta('repartidor', 'Responsable Zona');
+    await m.DB.prepare("UPDATE usuarios SET telefono = '+584120000000' WHERE id = ?")
+      .bind(responsable.id)
+      .run();
+    await telefonoConCanales(m, responsable.id, 'ExponentPushToken[responsable-tope]');
+    const rep = await m.cuenta('repartidor', 'Rita Riesgo');
+    const { PANICO_SMS_POR_PERSONA_HORA } = await import('./panicoZona');
+    for (let i = 0; i < PANICO_SMS_POR_PERSONA_HORA + 2; i++)
+      await m.llamar(
+        'POST',
+        '/datos/repartidor/emergencia',
+        { lat: 25.77, lng: -80.19 },
+        rep.token,
+      );
+    expect(sms.filter((s) => s.para === '+584120000000')).toHaveLength(PANICO_SMS_POR_PERSONA_HORA);
+    expect(sms.filter((s) => s.para === '+13055550111')).toHaveLength(PANICO_SMS_POR_PERSONA_HORA);
+    expect(expo.filter((x) => x.to === 'ExponentPushToken[responsable-tope]')).toHaveLength(
+      PANICO_SMS_POR_PERSONA_HORA + 2,
+    );
+    // Otra persona sigue teniendo su SMS.
+    const otra = await m.cuenta('repartidor', 'Otra Conductora');
+    await m.llamar('POST', '/datos/repartidor/emergencia', { lat: 25.77, lng: -80.19 }, otra.token);
+    expect(sms.filter((s) => s.para === '+584120000000')).toHaveLength(
+      PANICO_SMS_POR_PERSONA_HORA + 1,
+    );
+  });
+});

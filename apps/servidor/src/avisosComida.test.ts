@@ -282,3 +282,34 @@ describe('C-AVISOS-COMIDA · candado: ninguna cancelación ni pedido soltado que
       expect(todo.includes(`'${paso}')`) || todo.includes(`'${paso}',`)).toBe(true);
   });
 });
+
+describe('C-AVISOS-COMIDA · revisión: al soltar el pedido, el «llega en 5» vuelve a salir', () => {
+  it('soltar borra la marca rest_llega_5 y el siguiente conductor la genera otra vez', async () => {
+    const { m, admin, dueno, conConductor, avisos } = await escenario();
+    const { id, rep } = await conConductor(25.755, -80.19);
+    await m.ubicar(rep.token, { lat: 25.755, lng: -80.19 });
+    expect(await avisos(dueno.id, 'rest_llega_5')).toHaveLength(1);
+    await m.llamar(
+      'POST',
+      `/datos/admin/pedidos/${id}/soltar-repartidor`,
+      { motivo: 'no contesta' },
+      admin.token,
+    );
+    const marca = await m.DB.prepare(
+      "SELECT 1 FROM avisos_pedido WHERE pedido_id = ? AND aviso = 'rest_llega_5'",
+    )
+      .bind(id)
+      .first();
+    expect(marca).toBeNull();
+    const otro = await m.cuenta('repartidor', 'Otro Conductor');
+    await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.755, lng: -80.19 },
+      otro.token,
+    );
+    await m.DB.prepare('UPDATE pedidos SET repartidor_id = ? WHERE id = ?').bind(otro.id, id).run();
+    await m.ubicar(otro.token, { lat: 25.755, lng: -80.19 });
+    expect(await avisos(dueno.id, 'rest_llega_5')).toHaveLength(2);
+  });
+});
