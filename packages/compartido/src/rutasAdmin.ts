@@ -57,6 +57,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PUT /admin/viajes/dinamica/:servicio/:zona': 'viajes.configurar',
   'POST /admin/viajes/emergencias/:id/atender': 'viajes.emergencias',
   'GET /admin/conductores/:id/pasajeros': 'repartidores.ver',
+  // C-BARRA-ACTIVACION: la barra de activación del conductor (solo lee).
+  'GET /admin/conductores/:id/activacion': 'repartidores.ver',
   'PUT /admin/conductores/:id/ciudad': 'repartidores.gestionar',
   'GET /admin/conductores/:id/ciudades-destino': 'repartidores.ver',
   // ─── Clientes
@@ -507,6 +509,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PUT /admin/viajes/dinamica/:servicio/:zona': CONFIG,
   'POST /admin/viajes/emergencias/:id/atender': ficha('emergencia'),
   'GET /admin/conductores/:id/pasajeros': ficha('repartidor'),
+  'GET /admin/conductores/:id/activacion': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),
   'GET /admin/conductores/:id/ciudades-destino': ficha('repartidor'),
   'GET /admin/clientes': CONSULTA,
