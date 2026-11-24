@@ -27,6 +27,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **App (necesita app nueva de Driver):** `rotuloClienteFijo` (`apps/repartidor/src/viajes/agendaFijos.ts`) y la hoja de la oferta (`OfertaViaje.tsx`) lo pintan grande (24, negrita) en la parte de arriba, siempre a la vista junto a la cuenta atrás (`testID="oferta-cliente-fijo"`). Prueba: `agendaFijos.test.ts`, bloque del rótulo (2 casos, en ROJO antes).
 - **Cómo se comprueba:** `viajesFijos.test.ts` → «el aviso y la oferta dicen «Cliente fijo: nombre» (solo a él)», en ROJO antes del cambio.
 - **Qué NO tocar:** no dar el nombre en las ofertas que no son exclusivas; no volver al título genérico.
+
 ## C-OFERTA-EN-CUALQUIER-PANTALLA y C-AVISOS-PRIMER-PLANO · La oferta se ve y suena en cualquier pantalla, y ningún aviso se descarta con la app abierta (primera carrera real, 24 nov 2026) — todos los países · necesita app nueva (Driver y clientes)
 
 - **Qué pasaba:** un pasajero pidió a su conductor de confianza (cliente fijo). El minuto exclusivo pasó sin que la oferta saliera en pantalla ni sonara; sonó «al rato», cuando la oferta pasó a todos. En producción (solo lectura) dos de los tres viajes de la prueba tienen la oferta con `intentos = 2`: la exclusiva de 60 s venció sin respuesta y la normal sí se vio y se respondió. En el tercero el conductor estaba en el Inicio y la rechazó a los 18 s.
