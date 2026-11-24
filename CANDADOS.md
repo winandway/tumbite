@@ -23,7 +23,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
   - `turnoDeConfianza` (`apps/servidor/src/operaciones.ts`) titula el aviso con `avisoClienteFijo(idioma, primerNombre(nombre))`: «Cliente fijo: Marta» / «Regular rider: Marta». Sin nombre, «Tu cliente fijo te pidió un viaje».
   - Los datos del aviso llevan `clienteFijo: '1'`. Es una lectura más (el nombre), solo cuando sale el aviso.
   - `GET /datos/conductor/operaciones/ofertas` (`rutas/viajes.ts`) trae `clienteNombre` (primer nombre) SOLO en la oferta exclusiva. A los demás conductores no se les da el nombre.
-- **App:** la hoja de la oferta lo pone grande y arriba (ver el mismo candado en la app, `OfertaViaje.tsx`).
+- **App (necesita app nueva de Driver):** `rotuloClienteFijo` (`apps/repartidor/src/viajes/agendaFijos.ts`) y la hoja de la oferta (`OfertaViaje.tsx`) lo pintan grande (24, negrita) en la parte de arriba, siempre a la vista junto a la cuenta atrás (`testID="oferta-cliente-fijo"`). Prueba: `agendaFijos.test.ts`, bloque del rótulo (2 casos, en ROJO antes).
 - **Cómo se comprueba:** `viajesFijos.test.ts` → «el aviso y la oferta dicen «Cliente fijo: nombre» (solo a él)», en ROJO antes del cambio.
 - **Qué NO tocar:** no dar el nombre en las ofertas que no son exclusivas; no volver al título genérico.
 ## C-OFERTA-EN-CUALQUIER-PANTALLA y C-AVISOS-PRIMER-PLANO · La oferta se ve y suena en cualquier pantalla, y ningún aviso se descarta con la app abierta (primera carrera real, 24 nov 2026) — todos los países · necesita app nueva (Driver y clientes)

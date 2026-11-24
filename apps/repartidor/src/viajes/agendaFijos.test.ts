@@ -62,3 +62,30 @@ describe('agenda de clientes fijos', () => {
     expect(textoOfertaConfianza({}, 'es')).toEqual([]);
   });
 });
+
+/**
+ * C-CLIENTE-FIJO-ROTULO (24 nov 2026, primera carrera real): la oferta de un cliente fijo lo dice en
+ * grande y arriba (siempre a la vista, junto a la cuenta atrás): «Cliente fijo: Marta».
+ */
+describe('rótulo «Cliente fijo: nombre» en la oferta', () => {
+  it('con nombre, sin nombre y en los dos idiomas; nada si no es de confianza', async () => {
+    const { rotuloClienteFijo } = await import('./agendaFijos');
+    expect(rotuloClienteFijo({ deConfianza: true, clienteNombre: 'Marta' }, 'es')).toBe(
+      'Cliente fijo: Marta',
+    );
+    expect(rotuloClienteFijo({ deConfianza: true, clienteNombre: 'Marta' }, 'en')).toBe(
+      'Regular rider: Marta',
+    );
+    expect(rotuloClienteFijo({ deConfianza: true }, 'es')).toBe('Cliente fijo');
+    expect(rotuloClienteFijo({ deConfianza: false, clienteNombre: 'Marta' }, 'es')).toBeNull();
+  });
+  it('la hoja de la oferta lo pinta grande en la parte de arriba (siempre visible)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const s = readFileSync(join(import.meta.dirname, 'OfertaViaje.tsx'), 'utf8');
+    const arriba = s.slice(s.indexOf('arriba={'), s.indexOf('abajo={'));
+    expect(arriba).toMatch(/testID="oferta-cliente-fijo"/);
+    expect(arriba).toMatch(/\{rotulo \?/);
+    expect(s).toMatch(/const rotulo = rotuloClienteFijo\(oferta,/);
+  });
+});
