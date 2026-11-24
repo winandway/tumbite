@@ -34,6 +34,11 @@ const notas = [
 ]
   .filter(([, texto]) => texto)
   .map(([language, text]) => ({ language, text }));
+const fraccion = process.env.FRACCION ? Number(process.env.FRACCION) : undefined;
+if (fraccion !== undefined && !(fraccion > 0 && fraccion < 1)) {
+  console.error('FRACCION tiene que ser mayor que 0 y menor que 1 (por ejemplo 0.2).');
+  process.exit(2);
+}
 const { pedir, editar } = await googlePlay(paquete);
 await editar(async (id) => {
   // YA_SUBIDA=<compilación>: el mismo archivo ya está en Play (por ejemplo en prueba interna) y solo
@@ -52,7 +57,10 @@ await editar(async (id) => {
       releases: [
         {
           name: nombre,
-          status: 'completed',
+          // FRACCION=0.2: despliegue escalonado (24 nov 2026); sin ella, al 100 %.
+          ...(fraccion
+            ? { status: 'inProgress', userFraction: fraccion }
+            : { status: 'completed' }),
           versionCodes: [String(subido.versionCode)],
           // Notas de la versión (aprobadas por el auditor), si se pasan: NOTAS_ES y NOTAS_EN.
           ...(notas.length ? { releaseNotes: notas } : {}),
