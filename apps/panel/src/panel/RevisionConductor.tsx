@@ -303,6 +303,7 @@ export function RevisionConductor({
   idioma,
   identidad,
   alCambiar,
+  enFicha = false,
 }: {
   id: string;
   base: string;
@@ -310,6 +311,8 @@ export function RevisionConductor({
   /** Aprobar su identidad (solo cuando todas sus comprobaciones están en verde). */
   identidad?: { enVerde: boolean; aprobar: () => Promise<void> } | null;
   alCambiar?: () => void;
+  /** Dentro de la ficha del conductor (que ya trae «Cambiar ciudad» en sus tres puntos). */
+  enFicha?: boolean;
 }) {
   const t = enIdioma(T_ACTIVACION, idioma);
   const tm = enIdioma(T_MOTO, idioma);
@@ -440,7 +443,14 @@ export function RevisionConductor({
       </section>
       <section id="revision-servicios" data-testid="revision-servicios">
         <h2>{t.servicios_}</h2>
-        <Conductor key={`${id}-${vuelta}`} id={id} base={base} idioma={idioma} t={tm} />
+        <Conductor
+          key={`${id}-${vuelta}`}
+          id={id}
+          base={base}
+          idioma={idioma}
+          t={tm}
+          conCambiarCiudad={!enFicha}
+        />
       </section>
     </>
   );
