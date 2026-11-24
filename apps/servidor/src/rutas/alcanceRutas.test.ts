@@ -246,6 +246,8 @@ const LISTAS_CON_FILAS = [
 /** Las que solo dan números o comprueban por dentro: se revisan aparte (números en cero). */
 const LISTAS_DE_NUMEROS = [
   'GET /admin/resumen',
+  // C-FOTO-CONDUCTOR-SE-VE: solo ids, con el alcance sobre la persona (como la bandeja).
+  'GET /admin/kyc/miniaturas-faltantes',
   // C-RASTRO: contadores con el alcance en la consulta (prueba propia en rastro.test.ts).
   'GET /admin/embudo',
   'GET /admin/informes',

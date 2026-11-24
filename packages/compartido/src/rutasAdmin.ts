@@ -99,6 +99,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PUT /admin/papeles-conductor/:id': 'repartidores.gestionar',
   // ─── Verificaciones
   'GET /admin/kyc': 'kyc.ver',
+  // C-FOTO-CONDUCTOR-SE-VE: aprobados sin miniatura, para que el panel la haga y la suba.
+  'GET /admin/kyc/miniaturas-faltantes': 'kyc.ver',
   'GET /admin/kyc/:id': 'kyc.ver',
   'GET /admin/kyc/:id/control/:cid': 'kyc.ver',
   'GET /admin/kyc/:id/foto/:pieza': 'repartidores.documentos',
@@ -542,6 +544,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/papeles-conductor/:id/archivo': ficha('papel'),
   'PUT /admin/papeles-conductor/:id': ficha('papel'),
   'GET /admin/kyc': CONSULTA,
+  'GET /admin/kyc/miniaturas-faltantes': CONSULTA,
   'GET /admin/kyc/:id': ficha('persona'),
   'GET /admin/kyc/:id/control/:cid': ficha('persona'),
   'GET /admin/kyc/:id/foto/:pieza': ficha('persona'),
