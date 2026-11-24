@@ -58,6 +58,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PUT /admin/viajes/ajustes': 'viajes.configurar',
   'PUT /admin/viajes/dinamica/:servicio/:zona': 'viajes.configurar',
   'POST /admin/viajes/emergencias/:id/atender': 'viajes.emergencias',
+  // C-PANICO-PANEL: cuántos pánicos hay sin atender (el panel suena con la pestaña detrás).
+  'GET /admin/panico/sin-atender': 'viajes.ver',
   'GET /admin/conductores/:id/pasajeros': 'repartidores.ver',
   // C-BARRA-ACTIVACION: la barra de activación del conductor (solo lee).
   'GET /admin/conductores/:id/activacion': 'repartidores.ver',
@@ -515,6 +517,10 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PUT /admin/viajes/ajustes': CONFIG,
   'PUT /admin/viajes/dinamica/:servicio/:zona': CONFIG,
   'POST /admin/viajes/emergencias/:id/atender': ficha('emergencia'),
+  'GET /admin/panico/sin-atender': sinCiudad(
+    'propio',
+    'La alarma de quien mira el panel: solo cuántos pánicos siguen sin atender y qué zonas no tienen responsable, sin datos de personas.',
+  ),
   'GET /admin/conductores/:id/pasajeros': ficha('repartidor'),
   'GET /admin/conductores/:id/activacion': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),

@@ -1,3 +1,4 @@
+import { avisarPasoComida } from '../avisosComida';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -231,6 +232,9 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
     await avisarAlRepartidor(c.env, db, s.pedido_id, (i, f) =>
       AVISOS.repCancelado(i, f.restaurante),
     ).catch((e: unknown) => console.error('cancelaciones: no se pudo avisar al repartidor', e));
+    // C-AVISOS-COMIDA: el cliente sabe que el restaurante no pudo y qué pasa con su dinero (al
+    // restaurante le llega abajo «Soporte aprobó la cancelación»).
+    await avisarPasoComida(c.env, db, s.pedido_id, 'cancelado_restaurante');
     await anotarEvento(
       db,
       s.pedido_id,

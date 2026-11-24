@@ -9,6 +9,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { cancelarConReembolso, anotarEvento } from '../manager';
 import { notificar } from '../notificaciones';
+import { revisarSaldoBajo } from '../saldoBajo';
 import { politicaVigente } from '../finanzas/politicas';
 import { tasaParaFijar } from '../rutas/tasasReferencia';
 import { ErrorDatos } from '../validar';
@@ -729,7 +730,17 @@ export async function responderPagoComida(
       corrigio ? 'pago_comida_confirmado_corregido' : 'pago_comida_confirmado',
       `confirmación manual del restaurante ${p.actorId}`,
     );
-    await cobrarComisionRestaurante(db, f, pais);
+    const cobrada = await cobrarComisionRestaurante(db, f, pais);
+    // C-SALDO-BAJO: el restaurante sabe antes de quedarse en cero (una vez por cruce).
+    if (cobrada > 0 && f.dueno_id)
+      await revisarSaldoBajo(env, db, {
+        quien: 'restaurante',
+        cuentaId: cuentaRestaurante(f.restaurante_id),
+        usuarioId: f.dueno_id,
+        pais,
+        moneda: f.moneda,
+        porOperacion: cobrada,
+      });
     await notificar(env, db, f.cliente_id, (i) => ({
       ...AVISOS_PAGO.confirmado(i),
       datos: { pedidoId: p.pedidoId, tipo: 'pago_comida' },
@@ -878,6 +889,7 @@ export async function alCancelarPedido(env: Env, db: D1Database, pedidoId: strin
 }
 
 async function cancelarPorPago(env: Env, db: D1Database, f: FilaPago, evento: string) {
+  // C-AVISOS-COMIDA: avisa abajo a los tres (AVISOS_PAGO.cancelado…).
   const ok = await cancelarConReembolso(env, db, f.pedido_id, {
     desde: ['pagado', 'aceptado', 'listo'],
     actorId: null,

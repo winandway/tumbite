@@ -918,6 +918,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "ordering/customer-notifications",
+  "titulo": "Qué avisos recibes de tu pedido",
+  "resumen": "Te avisamos al celular, aunque tengas la app cerrada, en cada paso de tu pedido de comida: cuando el restaurante lo acepta, cuando sale, cuando tu conductor está por llegar y cuando llega. Y si algo se cancela, te decimos qué pasa con tu dinero.",
+  "preguntas": [
+   "¿Me avisan si el restaurante cancela mi pedido?",
+   "¿Qué pasa con mi dinero si cancelan mi pedido?",
+   "¿Me avisan cuando llega mi conductor?",
+   "¿Dónde veo los avisos que ya me llegaron?"
+  ],
+  "pasos": [
+   "La primera vez que abras la app, toca «Permitir» cuando te pida enviarte avisos.",
+   "Haz tu pedido como siempre. Puedes cerrar la app: los avisos te llegan igual.",
+   "Toca un aviso para abrir tu pedido.",
+   "Para ver los avisos que ya te llegaron, toca la campana en el inicio de la app."
+  ],
+  "cuerpo": "Cuando el restaurante acepta tu pedido te llega «Tu pedido está en cocina». Después, cuando tu conductor lo recoge, cuando está a unos 5 minutos y cuando llega a tu puerta. El aviso de «llegó tu conductor» tiene su propio sonido, para que lo reconozcas sin mirar el celular. Si el restaurante no puede tomar tu pedido, te llega «El restaurante no pudo tomar tu pedido» con lo que pasa con tu dinero: si pagaste con tarjeta, te devolvemos todo (según tu banco, puede tardar unos días en verse); si ibas a pagar al recibir, no se te cobró nada. Si nuestro equipo de soporte tiene que cancelar tu pedido, también te avisamos y te decimos qué pasa con tu dinero. Todos los avisos quedan en la campana de la app con su hora. El número rojo cuenta solo lo que todavía no viste y se va a cero al abrirla."
+ },
+ {
+  "idioma": "es",
   "ruta": "ordering/ride-service-fee",
   "titulo": "La tarifa de servicio de Divoox en tu viaje",
   "resumen": "En algunas ciudades, al precio de tu viaje se le suma una línea aparte: la tarifa de servicio de Divoox. La ves antes de pedir, ya sumada en el total, y nunca cambia después.",
@@ -1587,6 +1606,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Cuando ya no te falte nada, desliza «Desliza para conectarte» y empiezan a llegarte carreras."
   ],
   "cuerpo": "Arriba de todo en el inicio ves lo PRIMERO que te falta. Cuando lo resuelves, aparece lo siguiente. Debajo dice cuántas cosas te quedan. Lo que te puede faltar: la foto de tu cara; registrar tu vehículo; la placa de tu vehículo; enviarlo a revisión; activarlo (usarlo) en la app; encender un servicio; saldo para la comisión, donde se cobra así; confirmar tu celular; o que tu ubicación (GPS) se actualice mientras estás conectado. Cada aviso tiene su botón: «Tomar mi foto», «Registrar mi vehículo», «Completar la placa», «Enviar a revisión», «Usar tu moto», «Recargar saldo», «Revisar mi ubicación». Te lleva directo a la pantalla donde se hace. Tu cuenta de pago móvil no es un paso obligatorio: sin ella ya puedes trabajar, pero solo te llegan las carreras que se pagan en efectivo. Mientras no la cargues, arriba del inicio ves la franja «Solo recibes carreras en efectivo. Agrega tu pago móvil para recibir más», con el botón «Agregar mi pago móvil». Al cargarla, la franja se va sola. Cuando el equipo aprueba lo último que te faltaba, te llega el aviso «Ya puedes recibir carreras». Desde ahí solo tienes que abrir Divoox Driver y deslizar para conectarte. Cuando lo que falta lo hacemos nosotros, la app te lo dice así, sin botón: por ejemplo, «Estamos revisando tu moto». No tienes que hacer nada: te avisamos ahí mismo cuando esté listo. Si tu vehículo quedó guardado sin placa o con un dato mal escrito, no tienes que borrarlo: en la pantalla de tu vehículo toca «Completar la placa» o «Corregir los datos», arregla lo que haga falta y toca «Guardar los cambios». Mientras lo estamos rev…"
+ },
+ {
+  "idioma": "es",
+  "ruta": "drivers/driver-notifications",
+  "titulo": "Qué avisos recibes como conductor",
+  "resumen": "Además de tus ofertas, te avisamos cuando te queda poco saldo para la comisión, cuando un pedido se cancela o se te quita, y cuando te recargan. Cada clase de aviso tiene su sonido, y el de pánico es fuerte y distinto de todos.",
+  "preguntas": [
+   "¿Me avisan cuando me queda poco saldo?",
+   "¿Por qué me quitaron un pedido?",
+   "¿Por qué solo recibo carreras en efectivo?",
+   "¿Cómo suena el aviso de pánico?"
+  ],
+  "pasos": [
+   "Permite los avisos de Divoox Driver la primera vez que abras la app.",
+   "Cuando te llegue «Te queda saldo para…», toca «Ver mi saldo» en el inicio para recargar o acude al agente de tu zona.",
+   "Si te llega «Te quitamos el pedido», revisa tu conexión y que el GPS esté encendido.",
+   "Toca la campana para ver todos tus avisos."
+  ],
+  "cuerpo": "Saldo: cuando con tu saldo te alcanza para pocas carreras más, te llega «Te queda saldo para 3 carreras» (el número depende de tu país), y si se acaba, «Te quedaste sin saldo». Te lo decimos una sola vez hasta que recargues, y el aviso te dice cómo: con «Ver mi saldo» en el inicio de la app o con el agente de tu zona. Si estás conectado con un pedido y tu celular deja de mandar tu ubicación por 10 minutos antes de llegar al restaurante, se lo ofrecemos a otro conductor y te llega «Te quitamos el pedido», para que revises tu conexión y tu GPS. Si soporte te quita o cancela un pedido, también te avisamos. Cuando tu cuenta queda lista para recibir carreras, te llega «Ya puedes recibir carreras». Si todavía no agregaste tu pago móvil donde se usa, el aviso te dice que por ahora solo recibes carreras en efectivo. Las recargas, los cobros con el agente y las propinas suenan con el sonido de dinero. Si eres responsable de una zona, el aviso de pánico suena fuerte, se ve aunque el celular esté en «no molestar» (donde el celular lo permite) y se repite unos minutos hasta que lo abres. Todo queda en la campana de la app con su hora."
  },
  {
   "idioma": "es",
@@ -3556,6 +3594,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "en",
+  "ruta": "ordering/customer-notifications",
+  "titulo": "Notifications about your order",
+  "resumen": "We notify you on your phone, even with the app closed, at every step of your food order: when the restaurant accepts it, when it’s on the way, when your driver is almost there, and when they arrive. If something is canceled, we tell you what happens with your money.",
+  "preguntas": [
+   "Will I be notified if the restaurant cancels my order?",
+   "What happens with my money if my order is canceled?",
+   "Will I be notified when my driver arrives?",
+   "Where can I see notifications I already got?"
+  ],
+  "pasos": [
+   "The first time you open the app, tap “Allow” when it asks to send you notifications.",
+   "Place your order as usual. You can close the app: notifications still reach you.",
+   "Tap a notification to open your order.",
+   "To see notifications you already got, tap the bell on the app’s home screen."
+  ],
+  "cuerpo": "When the restaurant accepts your order you get “Your order is being prepared.” Then, when your driver picks it up, when they’re about 5 minutes away, and when they’re at your door. The “your driver is here” notification has its own sound, so you recognize it without looking at your phone. If the restaurant can’t take your order, you get “The restaurant couldn’t take your order” with what happens with your money: if you paid by card, we return everything (depending on your bank, it can take a few days to show); if you were paying on delivery, you weren’t charged anything. If our support team has to cancel your order, we let you know too and tell you what happens with your money. Every notification stays in the app’s bell with its time. The red number counts only what you haven’t seen yet and goes back to zero when you open it."
+ },
+ {
+  "idioma": "en",
   "ruta": "ordering/ride-service-fee",
   "titulo": "The Divoox service fee on your ride",
   "resumen": "In some cities, a separate line is added to your ride price: the Divoox service fee. You see it before you request, already included in the total, and it never changes afterward.",
@@ -4220,6 +4277,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Once nothing is missing, slide “Slide to go online” and trips start coming in."
   ],
   "cuerpo": "At the very top of the home screen you see the FIRST thing you need. Once it’s done, the next one shows up. Below it, you see how many things are left. What you might need: your face photo; to add your vehicle; your vehicle’s license plate; to send it for review; to turn it on (use it) in the app; to turn on a service; balance for the commission, where it’s charged that way; to confirm your phone; or for your location (GPS) to update while you’re online. Each notice has its button: “Take my photo,” “Add my vehicle,” “Add the plate,” “Send for review,” “Use your motorbike,” “Add balance,” “Check my location.” It takes you straight to the screen where you do it. When our team approves the last thing you were missing, you get the “You can now receive trips” notification. From then on, just open Divoox Driver and swipe to go online. When what’s missing is on us, the app says so, without a button: for example, “We’re reviewing your motorbike.” You don’t need to do anything: we’ll let you know right there when it’s ready. If your vehicle was saved without a plate or with a typo, you don’t have to delete it: on your vehicle’s screen tap “Add the license plate” or “Fix the details,” fix what’s needed and tap “Save changes.” While we’re reviewing it, or once it’s approved, it can’t be changed: if something is wrong, write to us from Help. When you add a motor vehicle, the license plate is required from the start. If it’s missing, the app tells you right under the field. Food shows up in Divoox Driver once your area has at least one restaurant open on Divoox. Before that it doesn’t…"
+ },
+ {
+  "idioma": "en",
+  "ruta": "drivers/driver-notifications",
+  "titulo": "Notifications you get as a driver",
+  "resumen": "Besides your offers, we notify you when your balance for the commission is running low, when an order is canceled or taken off your list, and when you top up. Each kind of notification has its own sound, and the panic one is loud and unlike any other.",
+  "preguntas": [
+   "Will I be notified when my balance is low?",
+   "Why was an order taken off my list?",
+   "Why do I only get cash trips?",
+   "What does the panic notification sound like?"
+  ],
+  "pasos": [
+   "Allow Divoox Driver notifications the first time you open the app.",
+   "When you get “Balance for … more trips,” tap “View my balance” on the home screen to top up, or go to the agent in your area.",
+   "If you get “We took the order off your list,” check your connection and that GPS is on.",
+   "Tap the bell to see all your notifications."
+  ],
+  "cuerpo": "Balance: when your balance covers only a few more trips, you get “Balance for 3 more trips” (the number depends on your country), and if it runs out, “You’re out of balance.” We tell you once until you top up, and the notification tells you how: with “View my balance” on the app’s home screen or with the agent in your area. If you’re online with an order and your phone stops sending your location for 10 minutes before you reach the restaurant, we offer it to another driver and you get “We took the order off your list,” so you can check your connection and GPS. If support takes an order off your list or cancels it, we let you know too. When your account is ready to get trips, you get “You can now receive trips.” If you haven’t added the account where riders can pay you by phone, the notification tells you that for now you only get cash trips. Top-ups, cash-outs with an agent, and tips play the money sound. If you’re responsible for an area, the panic notification is loud, shows up even in “do not disturb” (where your phone allows it), and repeats for a few minutes until you open it. Everything stays in the app’s bell with its time."
  },
  {
   "idioma": "en",

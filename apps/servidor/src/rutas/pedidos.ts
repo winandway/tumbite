@@ -1,3 +1,4 @@
+import { avisarPasoComida } from '../avisosComida';
 import { frenarSinCelularConfirmado } from '../telefonoVuelta';
 import { recobroDesdeAviso } from '../autorizacionVencida';
 import { direccionDelPedido } from './fotoPuerta';
@@ -418,6 +419,14 @@ export async function aplicarAjuste(
       .bind(Number(f.total), pedidoId)
       .run();
     await anotarEvento(db, pedidoId, 'cancelado_por_plato_agotado');
+    // C-AVISOS-COMIDA: si lo canceló el cliente, el restaurante deja de prepararlo; si no quedó nada
+    // que entregar, el cliente sabe que el restaurante no pudo y qué pasa con su dinero.
+    await avisarPasoComida(
+      env,
+      db,
+      pedidoId,
+      decision === 'cancelar' ? 'cancelado_cliente' : 'cancelado_restaurante',
+    );
     return { devolucion: Number(f.total), cancelado: true };
   }
   const capturado = await db
@@ -727,6 +736,7 @@ async function cerrarPendientesSinPagar(
         actorId: clienteId,
         clienteId,
       });
+      // C-AVISOS-COMIDA: sin aviso — nunca se pagó y el cliente ya está pagando el nuevo.
       if (cerrado) await anotarEvento(db, p.id, 'reemplazado_sin_pagar');
     } catch (e) {
       await guardarError(db, 'POST', `/pedidos:pendiente-sin-pagar:${p.id}`, e).catch(

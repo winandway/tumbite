@@ -654,6 +654,7 @@ async function pedidosVivosDeJuego(ctx: Ctx, robots: Robot[]) {
 async function cancelarColgados(ctx: Ctx, robots: Robot[]) {
   for (const p of await pedidosVivosDeJuego(ctx, robots)) {
     try {
+      // C-AVISOS-COMIDA: sin aviso — son cuentas robot de la ciudad de pruebas.
       const ok = await cancelarConReembolso(ctx.env, ctx.db, p.id, {
         desde: ['pagado', 'aceptado', 'listo', 'en_camino'],
         actorId: null,

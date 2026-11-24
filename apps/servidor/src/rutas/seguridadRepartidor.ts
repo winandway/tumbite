@@ -1,7 +1,13 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { numeroEmergencia } from '@tumbite/compartido';
-import { avisarResponsableZona } from '../panicoZona';
+import {
+  avisarResponsableZona,
+  smsDePanicoPermitido,
+  marcarPanicoVisto,
+  panicosSinAtender,
+  zonasSinResponsable,
+} from '../panicoZona';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
@@ -43,11 +49,12 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
   const d = await leerCuerpo(c, z.object({ ...lugar, pedidoId: z.string().max(80).optional() }));
   const db = base(c);
   const r = await datosRepartidor(db, u.id);
+  const panicoId = nuevoId();
   await db
     .prepare(
       "INSERT INTO incidentes_repartidor (id, repartidor_id, tipo, pedido_id, lat, lng) VALUES (?, ?, 'emergencia', ?, ?, ?)",
     )
-    .bind(nuevoId(), u.id, d.pedidoId ?? null, d.lat ?? null, d.lng ?? null)
+    .bind(panicoId, u.id, d.pedidoId ?? null, d.lat ?? null, d.lng ?? null)
     .run();
   const donde =
     d.lat != null && d.lng != null
@@ -60,11 +67,13 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
       asunto: `EMERGENCIA de un repartidor: ${r?.nombre ?? ''} (${r?.codigo ?? ''})`,
       texto: `El repartidor ${r?.nombre ?? ''} (${r?.codigo ?? ''}, teléfono ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia.\n\nDónde: ${donde}\nPedido: ${d.pedidoId ?? 'ninguno'}\n\nLlámalo ya.`,
     }).catch((e: unknown) => console.error('seguridad: correo de emergencia', e));
-  await smsEquipo(
-    c.env,
-    'sistema',
-    `Divoox EMERGENCIA: ${r?.nombre ?? ''} (${r?.codigo ?? ''}, tel. ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia. ${donde}`,
-  ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
+  // C-PANICO-SMS-POR-PERSONA: quien toca el botón una y otra vez no gasta los SMS de todos.
+  if (await smsDePanicoPermitido(db, u.id))
+    await smsEquipo(
+      c.env,
+      'sistema',
+      `Divoox EMERGENCIA: ${r?.nombre ?? ''} (${r?.codigo ?? ''}, tel. ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia. ${donde}`,
+    ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
   // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del repartidor.
   await avisarResponsableZona(c.env, db, {
     usuarioId: u.id,
@@ -75,6 +84,9 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
     lat: d.lat,
     lng: d.lng,
     referencia: d.pedidoId ? `Pedido ${d.pedidoId}` : '',
+    panicoId,
+    // El SMS al equipo ya salió arriba: si la zona no tiene responsable, no se repite.
+    smsEquipoHecho: true,
   }).catch((e: unknown) => console.error('seguridad: pánico al responsable de la zona', e));
   return c.json({ numero: numeroEmergencia(r?.pais) }, 201);
 });
@@ -157,4 +169,33 @@ seguridadRepartidor.get('/admin/seguridad', async (c) => {
     )
     .all();
   return c.json({ incidentes: results });
+});
+
+/**
+ * C-PANICO-INSISTE: quien abre el aviso de pánico (la app lo manda al tocarlo) lo marca visto y deja
+ * de insistir. Cualquiera con sesión: el aviso solo le llega al responsable o al equipo.
+ */
+seguridadRepartidor.post('/panico/:id/visto', async (c) => {
+  const u = exigir(c);
+  const id = c.req.param('id');
+  if (!/^[\w-]{6,80}$/.test(id)) throw new ErrorDatos('No encontrado.', undefined, 404);
+  const r = await marcarPanicoVisto(c.env, base(c), id, u);
+  if (r === 'no_existe') throw new ErrorDatos('No encontrado.', undefined, 404);
+  if (r === 'prohibido')
+    throw new ErrorDatos('Este aviso de pánico no es para tu cuenta.', undefined, 403);
+  return c.json({ ok: true });
+});
+
+/**
+ * C-PANICO-PANEL: el panel del equipo pregunta esto aunque la pestaña esté detrás, para sonar y
+ * ponerse en rojo con un pánico sin atender. Una lectura chica; no escribe nada.
+ */
+seguridadRepartidor.get('/admin/panico/sin-atender', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const [abiertos, sinResponsable] = await Promise.all([
+    panicosSinAtender(db),
+    zonasSinResponsable(db),
+  ]);
+  return c.json({ ...abiertos, zonasSinResponsable: sinResponsable });
 });

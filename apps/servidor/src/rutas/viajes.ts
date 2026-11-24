@@ -1,3 +1,4 @@
+import { revisarSaldoBajo } from '../saldoBajo';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -403,6 +404,15 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
         undefined,
         409,
       );
+    // C-SALDO-BAJO: si con esta comisión le queda poco saldo, se le avisa una vez.
+    await revisarSaldoBajo(c.env, base(c), {
+      quien: 'conductor',
+      cuentaId: u.id,
+      usuarioId: u.id,
+      pais: info.pais,
+      moneda: info.moneda,
+      porOperacion: reserva.monto,
+    });
   }
   const r = await aceptarOperacion(base(c), {
     operacionId: id,

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
 import {
   CANAL_AVISOS,
   CANAL_OFERTAS,
   canalOfertas,
+  capacidadesDeCanales,
   canalPedidos,
   type Api,
   type Usuario,
@@ -108,13 +109,25 @@ export function useAvisosCelular(
         );
         if (ofertas && Platform.OS === 'android')
           await Notifications.setNotificationChannelAsync(CANAL_OFERTAS, ofertas);
+        // C-CANALES-AVISOS: los canales propios de la app (pánico, dinero, pedido nuevo, llegó tu
+        // conductor, lo común) con su sonido; el servidor solo los usa si la app se lo dice.
+        const canales = capacidadesDeCanales(Constants.expoConfig?.extra, Platform.OS, {
+          max: Notifications.AndroidImportance.MAX,
+          normal: Notifications.AndroidImportance.DEFAULT,
+        });
+        if (Platform.OS === 'android')
+          for (const canal of canales.crear) {
+            const { id, ...ajustes } = canal;
+            await Notifications.setNotificationChannelAsync(id, ajustes);
+          }
         const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: proyecto });
         if (!vivo) return;
+        const capacidades = [...(ofertas ? ['ofertas-bucle'] : []), ...canales.capacidades];
         await api.pedir('POST', '/datos/cuentas/dispositivo', {
           token,
           plataforma: Platform.OS,
           ...(idioma ? { idioma } : {}),
-          ...(ofertas ? { capacidades: ['ofertas-bucle'] } : {}),
+          ...(capacidades.length ? { capacidades } : {}),
         });
       } catch (e) {
         console.warn('avisos: no se pudo registrar el teléfono', e);
@@ -157,4 +170,26 @@ export function useToqueAviso(alTocar: (datos: Record<string, unknown>) => void)
       quitar?.();
     };
   }, [alTocar]);
+}
+
+/**
+ * C-PANICO-INSISTE: quien abre (toca) un aviso de pánico lo marca visto en el servidor, que deja de
+ * repetirlo. Solo para avisos de pánico; los demás toques los atiende cada app.
+ */
+export function panicoDelToque(datos: Record<string, unknown>): string | null {
+  return datos.tipo === 'panico' && typeof datos.panicoId === 'string' ? datos.panicoId : null;
+}
+
+export function usePanicoVisto(api: Api, usuario: Usuario | null) {
+  const alTocar = useCallback(
+    (datos: Record<string, unknown>) => {
+      const id = panicoDelToque(datos);
+      if (!id || !usuario) return;
+      void api
+        .pedir('POST', `/datos/panico/${encodeURIComponent(id)}/visto`, {})
+        .catch((e: unknown) => console.warn('pánico: no se pudo marcar visto', e));
+    },
+    [api, usuario],
+  );
+  useToqueAviso(alTocar);
 }

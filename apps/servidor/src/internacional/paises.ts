@@ -89,6 +89,11 @@ export const esquemaConfigPais = z.object({
    */
   comidaPagoRestaurante: z.boolean().optional(),
   /**
+   * C-SALDO-BAJO (24 nov 2026): con cuántas carreras (o pedidos, en el restaurante) de saldo que le
+   * queden se le avisa «te queda poco saldo». Sin escribir = 3. 0 = solo «te quedaste sin saldo».
+   */
+  avisoSaldoBajo: z.number().int().min(0).max(50).optional(),
+  /**
    * C-COMIDA-VE-QUIEN-PAGA (23 nov 2026): en un pedido de pago directo, la comisión de Divoox que se
    * le aparta al conductor, en puntos base sobre el ENVÍO. De fábrica 0: el conductor cobra el envío
    * entero y no necesita saldo. Se cambia desde la palanca «¿Quién paga qué en la comida?».

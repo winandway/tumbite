@@ -983,6 +983,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa tarjeta no existe.', 'That card doesn’t exist.'],
   ['Esa verificación no está pendiente.', 'That verification isn’t pending.'],
   ['Esa zona no existe.', 'That zone doesn’t exist.'],
+  ['Este aviso de pánico no es para tu cuenta.', 'This panic alert isn’t for your account.'],
   // C-TELEFONO-E164 y C-TERRITORIO-OFICIAL (21 nov 2026).
   [
     'Ese celular no existe en el país de la zona. Revisa los dígitos o escribe el código del país, por ejemplo +58 412 0000000.',

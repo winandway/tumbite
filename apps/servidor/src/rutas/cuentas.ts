@@ -21,7 +21,7 @@ import {
 } from '../accesoIntentos';
 import { leerCabeceraApp } from '../versionApp';
 import {
-  CAPACIDAD_OFERTAS_BUCLE,
+  CAPACIDADES_AVISOS,
   CANALES_CONSENTIMIENTO_SMS,
   CODIGO_CUENTA_DE_OTRA_APP,
   ROL_DE_APP,
@@ -161,9 +161,12 @@ const esquemaDispositivo = z.object({
   // C-AVISOS-IDIOMA: el idioma de la app en ese teléfono (si no viene, el de la cabecera x-idioma).
   idioma: z.enum(['es', 'en']).optional(),
   // C-OFERTA-SUENA-EN-BUCLE: lo que trae la app (Driver nuevo: el canal de ofertas con tono largo).
+  // C-CANALES-AVISOS: también los canales propios (`canal-panico`…). Lo que el servidor no conoce se
+  // ignora en vez de rechazar el registro: una app más nueva que el servidor sigue recibiendo avisos.
   capacidades: z
-    .array(z.enum([CAPACIDAD_OFERTAS_BUCLE]))
-    .max(5)
+    .array(z.string().max(40))
+    .max(12)
+    .transform((l) => l.filter((x) => CAPACIDADES_AVISOS.includes(x)))
     .optional(),
 });
 

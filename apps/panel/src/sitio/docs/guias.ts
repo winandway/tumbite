@@ -10,6 +10,7 @@ import { GUIA_VERIFICAR_CELULAR, VERIFICAR_CELULAR_PUBLICADA } from './verificar
 import { GUIAS_TARIFA_SERVICIO, TARIFA_SERVICIO_PUBLICADA } from './tarifaServicio';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIA_AVISOS_VIAJE } from './avisosViaje';
+import { GUIAS_AVISOS_QUE_RECIBES } from './avisosQueRecibes';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
 import { FOTO_CARA_PUBLICADA, GUIAS_FOTO_CARA } from './fotoCara';
@@ -11171,6 +11172,8 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
   // C-AVISOS-VIAJE: qué avisos recibe el pasajero en cada paso de su viaje.
   const avisosViaje = idioma === 'es' ? GUIA_AVISOS_VIAJE.es : GUIA_AVISOS_VIAJE.en;
+  // C-AVISOS-COMIDA y C-SALDO-BAJO: «Qué avisos recibes», una guía por actor.
+  const avisosActor = idioma === 'es' ? GUIAS_AVISOS_QUE_RECIBES.es : GUIAS_AVISOS_QUE_RECIBES.en;
   // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, para el pasajero y para el conductor.
   const ts = idioma === 'es' ? GUIAS_TARIFA_SERVICIO.es : GUIAS_TARIFA_SERVICIO.en;
   const tarifaPasajero = TARIFA_SERVICIO_PUBLICADA ? [ts.pasajero] : [];
@@ -11188,6 +11191,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...carro.pasajero,
           espera,
           avisosViaje,
+          avisosActor.cliente,
           ...tarifaPasajero,
           ...mismaRuta,
           ...fijosPasajero,
@@ -11201,6 +11205,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
         guias: [
           ...s.guias,
           ...fotoCara,
+          avisosActor.conductor,
           ...moto.conductor,
           ...carro.conductor,
           ...tarifaConductor,
@@ -11210,6 +11215,8 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...de(s.id),
         ],
       };
+    if (s.id === 'restaurants')
+      return { ...s, guias: [...s.guias, avisosActor.restaurante, ...de(s.id)] };
     // C-DOCS-LUPA (15 nov 2026): cómo buscar en Docs y ampliar una captura, al final de «Tu cuenta».
     if (s.id === 'account')
       return {

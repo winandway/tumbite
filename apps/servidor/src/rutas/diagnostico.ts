@@ -2117,6 +2117,7 @@ diagnostico.post('/interno/diagnostico/s12', async (c) => {
         .bind(pedido, cliente, rest, pi),
     ]);
     // 3. Cancelar ANTES del aviso: el código real, contra Stripe real.
+    // C-AVISOS-COMIDA: sin aviso — es la prueba de diagnóstico de Stripe, sin personas reales.
     const cancelado = await cancelarConReembolso(c.env, db, pedido, {
       desde: ['pago_pendiente', 'pagado'],
       actorId: cliente,
@@ -2163,6 +2164,7 @@ diagnostico.post('/interno/diagnostico/s12', async (c) => {
       detalle: rechazo.slice(0, 80),
     });
     // 6. El pedido ya cancelado no se vuelve a tocar.
+    // C-AVISOS-COMIDA: sin aviso — misma prueba de diagnóstico.
     const otraVez = await cancelarConReembolso(c.env, db, pedido, {
       desde: ['pago_pendiente', 'pagado'],
       actorId: cliente,

@@ -165,7 +165,12 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#F20D20",
           "defaultChannel": "pedidos",
-          "sounds": ["./assets/sonidos/aviso.wav"]
+          "sounds": [
+            "./assets/sonidos/aviso.wav",
+            "./assets/sonidos/llego.wav",
+            "./assets/sonidos/dinero.wav",
+            "./assets/sonidos/panico.wav"
+          ]
         }
       ],
       [
@@ -219,6 +224,7 @@
     },
     "extra": {
       "sonidoAvisos": "aviso.wav",
+      "canalesAvisos": { "llego": "llego.wav", "dinero": "dinero.wav", "panico": "panico.wav" },
       "eas": {
         "projectId": "0f62355b-be8a-44a8-b4b4-098976dc8f90"
       }

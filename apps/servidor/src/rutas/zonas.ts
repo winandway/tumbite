@@ -1,3 +1,4 @@
+import { olvidarSaludPanico } from '../panicoZona';
 import { leerConfigPais, paisIncompleto } from '../internacional/paises';
 import { asignarMunicipio, municipioParaMostrar } from '../municipioDeZona';
 import { Hono } from 'hono';
@@ -228,6 +229,8 @@ zonas.patch('/admin/zonas/:id', async (c) => {
     )
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Esa zona no existe.', undefined, 404);
+  // C-PANICO-CENTRAL: el canario de responsables se vuelve a mirar con el cambio.
+  olvidarSaludPanico();
   return c.json({ ok: true });
 });
 

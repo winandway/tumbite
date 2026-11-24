@@ -562,10 +562,12 @@ export async function pagarCobro(
         ? {
             titulo: 'Cobraste en efectivo',
             cuerpo: `${a.nombre} te pagó $${usd} de tus ganancias. Recibo ${recibo.numero}.`,
+            canal: 'dinero',
           }
         : {
             titulo: 'You cashed out',
             cuerpo: `${a.nombre} paid you $${usd} from your earnings. Receipt ${recibo.numero}.`,
+            canal: 'dinero',
           },
     ).catch((e: unknown) => console.error('agente: aviso de pago', e));
   }
@@ -823,10 +825,12 @@ export async function venderSaldo(
       ? {
           titulo: 'Recargaste tu saldo',
           cuerpo: `${a.nombre} te acreditó $${usd} de saldo. Recibo ${recibo.numero}.`,
+          canal: 'dinero',
         }
       : {
           titulo: 'Balance topped up',
           cuerpo: `${a.nombre} added $${usd} to your balance. Receipt ${recibo.numero}.`,
+          canal: 'dinero',
         },
   ).catch((e: unknown) => console.error('agente: aviso de venta', e));
   return recibo;

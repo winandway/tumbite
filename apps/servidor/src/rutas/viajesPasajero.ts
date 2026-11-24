@@ -39,7 +39,13 @@ import {
   referenciaConTasa,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
-import { avisarResponsableZona } from '../panicoZona';
+import {
+  TIPO_SMS_PANICO,
+  avisarResponsableZona,
+  smsDePanicoPermitido,
+  textoPanico,
+} from '../panicoZona';
+import { smsEquipo } from '../avisosEquipo';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
@@ -1505,11 +1511,12 @@ export async function registrarEmergencia(
     )
     .bind(p.actorId, p.operacionId)
     .first<{ pais: string; zona_id: string; nombre: string; telefono: string | null }>();
+  const panicoId = nuevoId();
   await db
     .prepare(
       'INSERT INTO emergencias_viaje (id, operacion_id, actor_id, rol, lat, lng) VALUES (?, ?, ?, ?, ?, ?)',
     )
-    .bind(nuevoId(), p.operacionId, p.actorId, p.rol, p.lat ?? null, p.lng ?? null)
+    .bind(panicoId, p.operacionId, p.actorId, p.rol, p.lat ?? null, p.lng ?? null)
     .run();
   await avisoEmergenciaViaje(c.env, {
     operacionId: p.operacionId,
@@ -1517,8 +1524,7 @@ export async function registrarEmergencia(
     nombre: f?.nombre ?? '',
     donde: p.lat != null && p.lng != null ? `${p.lat},${p.lng}` : 'sin ubicación',
   }).catch((e: unknown) => console.error('viajes: correo de emergencia', e));
-  // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del viaje.
-  await avisarResponsableZona(c.env, db, {
+  const panico = {
     usuarioId: p.actorId,
     zonaId: f?.zona_id,
     rol: p.rol,
@@ -1527,7 +1533,20 @@ export async function registrarEmergencia(
     lat: p.lat,
     lng: p.lng,
     referencia: `Viaje ${p.operacionId}`,
-  }).catch((e: unknown) => console.error('viajes: pánico al responsable de la zona', e));
+    panicoId,
+    smsEquipoHecho: true,
+  };
+  // C-PANICO-CENTRAL (24 nov 2026): el pánico de un VIAJE también va por SMS al equipo (antes, solo
+  // el del repartidor), como pánico: sale a cualquier país y cuenta en su tope diario. Sin montos.
+  // C-PANICO-SMS-POR-PERSONA: quien toca el botón una y otra vez no gasta los SMS de todos.
+  if (await smsDePanicoPermitido(db, p.actorId))
+    await smsEquipo(c.env, 'sistema', textoPanico(panico, 'un viaje'), TIPO_SMS_PANICO).catch(
+      (e: unknown) => console.error('viajes: SMS de pánico al equipo', e),
+    );
+  // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del viaje.
+  await avisarResponsableZona(c.env, db, panico).catch((e: unknown) =>
+    console.error('viajes: pánico al responsable de la zona', e),
+  );
   return { numero: numeroEmergencia(f?.pais) };
 }
 

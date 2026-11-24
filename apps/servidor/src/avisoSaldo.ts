@@ -34,6 +34,8 @@ export async function avisarSaldoRecargado(
           ? `${formatearMonto(monto, moneda, 'en')} was added to your balance. You can now get trips.`
           : `Se acreditaron ${formatearMonto(monto, moneda, 'es')} a tu saldo. Ya puedes recibir carreras.`,
       datos: { tipo: 'saldo_recargado' },
+      // C-SONIDOS-PROPIOS: el dinero suena a dinero.
+      canal: 'dinero',
     }));
   } catch (e) {
     console.error('saldo: no salió el aviso de recarga', String(e));
