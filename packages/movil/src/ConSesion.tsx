@@ -1,10 +1,11 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import { Text } from './diseno';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { Acceso } from './Acceso';
 import { PuertaCorreo } from './VerificarCorreo';
 import { PuertaTelefono } from './PuertaTelefono';
 import { useSesion } from './sesion';
+import { PantallaCarga } from './PantallaCarga';
 import { Boton, C } from './ui';
 import { TEXTOS_MOVIL } from './textos';
 import { enIdioma } from '@tumbite/compartido';
@@ -33,19 +34,8 @@ export function ConSesion({
   seguirMirando?: () => void;
 }) {
   const { cargando, usuario, sinConfirmar } = useSesion();
-  if (cargando)
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: C.primario,
-        }}
-      >
-        <ActivityIndicator color="#FFFFFF" size="large" />
-      </View>
-    );
+  // C-ARRANQUE-CON-MARCA: mientras se lee la sesión, la pantalla de carga con la marca de la app.
+  if (cargando) return <PantallaCarga />;
   // C-SESION-CON-LIMITE: no se pudo confirmar la sesión guardada. Nada protegido se muestra; se
   // ofrece reintentar (la sesión sigue guardada) o entrar con otra cuenta.
   if (!usuario && sinConfirmar) return <SesionSinConfirmar />;

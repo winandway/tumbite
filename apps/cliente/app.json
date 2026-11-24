@@ -186,6 +186,27 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 240,
+          "resizeMode": "contain",
+          "backgroundColor": "#F20D20",
+          "android": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 240,
+            "resizeMode": "contain",
+            "backgroundColor": "#F20D20"
+          },
+          "ios": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 240,
+            "resizeMode": "contain",
+            "backgroundColor": "#F20D20"
+          }
+        }
       ]
     ],
     "description": "Food delivery from local restaurants. Order in a few taps and track your driver live.",

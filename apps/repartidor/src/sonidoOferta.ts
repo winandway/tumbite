@@ -117,9 +117,12 @@ export function pararAlarmaOferta(motivo: MotivoParada = 'sesion') {
  */
 export function useAlarmaOferta(id: string, venceEn: number) {
   useEffect(() => {
-    alarmaOferta.empezar(id, venceEn);
+    // C-OFERTA-SUENA-EN-SEGUNDO-PLANO: detrás suena el aviso del sistema; la alarma propia, solo al
+    // frente (detrás sus relojes se frenan y no se callaba al vencer).
+    if (AppState.currentState === 'active') alarmaOferta.empezar(id, venceEn);
     const sub = AppState.addEventListener('change', (e) => {
-      if (e !== 'active') alarmaOferta.parar('fondo', id);
+      if (e === 'active') alarmaOferta.empezar(id, venceEn);
+      else alarmaOferta.parar('fondo', id);
     });
     return () => {
       sub.remove();

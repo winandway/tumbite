@@ -1,7 +1,9 @@
 import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import logoArranque from '../../assets/splash-logo.png';
 import {
+  fijarPantallaCarga,
   SesionProvider,
   SobreLosBotones,
   PantallaConFallo,
@@ -11,6 +13,10 @@ import {
 } from '@tumbite/movil';
 import { AbrirAvisos } from '../AbrirAvisos';
 import { CarritoProvider } from '../carrito';
+
+// C-ARRANQUE-CON-MARCA: la pantalla de carga (después del arranque del sistema) con el color y el
+// logo de esta app, iguales a los de expo-splash-screen en app.json.
+fijarPantallaCarga({ fondo: '#F20D20', logo: logoArranque });
 
 // C-NUNCA-EN-BLANCO: todo error de la app llega al registro, con la app y la versión.
 registrarAtrapaFallos('cliente');

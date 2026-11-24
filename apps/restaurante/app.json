@@ -74,7 +74,28 @@
       ],
       "../../plugins/escenas-ios",
       "../../plugins/pantalla-vertical-opcional",
-      "../../plugins/firma-ios-local"
+      "../../plugins/firma-ios-local",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 240,
+          "resizeMode": "contain",
+          "backgroundColor": "#101010",
+          "android": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 240,
+            "resizeMode": "contain",
+            "backgroundColor": "#101010"
+          },
+          "ios": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 240,
+            "resizeMode": "contain",
+            "backgroundColor": "#101010"
+          }
+        }
+      ]
     ],
     "description": "Receive and manage your Divoox orders.",
     "owner": "windoce-llc",

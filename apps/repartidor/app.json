@@ -112,7 +112,28 @@
       ],
       "../../plugins/escenas-ios",
       "../../plugins/pantalla-vertical-opcional",
-      "../../plugins/firma-ios-local"
+      "../../plugins/firma-ios-local",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-logo.png",
+          "imageWidth": 240,
+          "resizeMode": "contain",
+          "backgroundColor": "#1F4D69",
+          "android": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 240,
+            "resizeMode": "contain",
+            "backgroundColor": "#1F4D69"
+          },
+          "ios": {
+            "image": "./assets/splash-logo.png",
+            "imageWidth": 240,
+            "resizeMode": "contain",
+            "backgroundColor": "#1F4D69"
+          }
+        }
+      ]
     ],
     "description": "Deliver with Divoox and earn. Keep 100% of your tips.",
     "owner": "windoce-llc",

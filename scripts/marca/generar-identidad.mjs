@@ -37,7 +37,14 @@ function palabraLimpia(svg) {
     .replace(/<title>[^<]*<\/title>/, '<title>Divoox</title>');
 }
 
+/**
+ * C-ARRANQUE-CON-MARCA (24 nov 2026): `--solo-arranque` genera solo el logo de la pantalla de
+ * arranque de las tres apps (sin rehacer las demás piezas).
+ */
+const SOLO_ARRANQUE = process.argv.includes('--solo-arranque');
+
 function guardar(ruta, contenido) {
+  if (SOLO_ARRANQUE) return;
   mkdirSync(dirname(ruta), { recursive: true });
   writeFileSync(ruta, contenido);
 }
@@ -56,10 +63,11 @@ guardar(
   join(MARCA_WEB, 'divoox-palabra-oscuro.svg'),
   palabraLimpia(leer('04_Logotipo_Solo_Fondo_Oscuro.svg')),
 );
-copyFileSync(
-  join(RAIZ, 'identidad-divoox/favicon.ico'),
-  join(RAIZ, 'apps/panel/public/favicon.ico'),
-);
+if (!SOLO_ARRANQUE)
+  copyFileSync(
+    join(RAIZ, 'identidad-divoox/favicon.ico'),
+    join(RAIZ, 'apps/panel/public/favicon.ico'),
+  );
 
 // 1b. C-MAPA-ISOTIPO (14 nov 2026): la marca del repartidor o conductor en los mapas de la web es
 // el isotipo, tal cual el vector. Se guarda como texto para dibujarlo dentro de la marca.
@@ -90,6 +98,28 @@ async function png(
   mkdirSync(dirname(ruta), { recursive: true });
   await p.screenshot({ path: ruta, omitBackground: fondo === 'transparent' });
   await p.close();
+}
+
+// C-ARRANQUE-CON-MARCA (24 nov 2026, Richard: en teléfonos reales salía la imagen de plantilla de
+// Expo, «círculos con rayas en cruz»). El logo completo de la pantalla de arranque de cada app, sobre
+// el color de esa app (el fondo lo pinta el sistema; aquí va transparente). Driver y Restaurants:
+// el logo para fondo oscuro tal cual. Clientes va sobre rojo, donde el manual no deja la X roja: el
+// mismo logo en una sola tinta blanca (como el ícono monocromo), sin tocar los trazos.
+export const LOGO_ARRANQUE = {
+  cliente: LOGO_OSCURO.replace(/fill="#[0-9A-Fa-f]{6}"/g, 'fill="#FFFFFF"'),
+  repartidor: LOGO_OSCURO,
+  restaurante: LOGO_OSCURO,
+};
+for (const [app, svg] of Object.entries(LOGO_ARRANQUE))
+  await png(join(RAIZ, 'apps', app, 'assets', 'splash-logo.png'), {
+    svg,
+    ancho: 1200,
+    alto: 400,
+    escala: 0.9,
+  });
+if (SOLO_ARRANQUE) {
+  await navegador.close();
+  process.exit(0);
 }
 
 guardar(join(MARCA_WEB, 'divoox-isotipo-blanco.svg'), ISO_SOBRE_ROJO);

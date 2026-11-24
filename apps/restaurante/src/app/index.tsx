@@ -1,5 +1,5 @@
-import { ActivityIndicator, Image, View } from 'react-native';
-import { Acceso, C, useSesion, Text } from '@tumbite/movil';
+import { Image, View } from 'react-native';
+import { Acceso, C, PantallaCarga, useSesion, Text } from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 import { textosRest } from '../piezas/textos';
@@ -28,19 +28,7 @@ function Portada() {
 
 export default function Entrada() {
   const { cargando, usuario } = useSesion();
-  if (cargando) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: C.primario,
-        }}
-      >
-        <ActivityIndicator color="#FFFFFF" size="large" />
-      </View>
-    );
-  }
+  // C-ARRANQUE-CON-MARCA: la pantalla de carga con la marca de la app mientras se lee la sesión.
+  if (cargando) return <PantallaCarga />;
   return usuario ? <Inicio /> : <Acceso rolRegistro="restaurante" portada={<Portada />} />;
 }

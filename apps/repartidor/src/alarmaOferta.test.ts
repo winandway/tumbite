@@ -133,3 +133,21 @@ describe('alarma de la oferta (C-OFERTA-SUENA-EN-BUCLE)', () => {
     aviso.mockRestore();
   });
 });
+
+// C-OFERTA-SUENA-EN-SEGUNDO-PLANO (ensayo general, 24 nov 2026): con la app detrás, la oferta ya suena
+// por el canal del sistema (una vez, el tono largo). La alarma propia de la hoja NO debe arrancar
+// detrás: en el emulador siguió sonando más de un minuto después de vencida (los relojes de la app
+// se frenan con la app detrás y el tope no llegaba). Arranca solo al frente, y si la app vuelve al
+// frente con la oferta todavía viva, suena desde ahí.
+describe('alarma de la oferta con la app detrás', () => {
+  it('solo empieza con la app al frente, y empieza al volver al frente', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const s = readFileSync(join(__dirname, 'sonidoOferta.ts'), 'utf8');
+    const gancho = s.slice(s.indexOf('export function useAlarmaOferta'));
+    expect(gancho).toMatch(
+      /if \(AppState\.currentState === 'active'\) alarmaOferta\.empezar\(id, venceEn\);/,
+    );
+    expect(gancho).toMatch(/if \(e === 'active'\) alarmaOferta\.empezar\(id, venceEn\);/);
+  });
+});
