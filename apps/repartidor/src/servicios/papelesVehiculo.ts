@@ -30,8 +30,9 @@ export function detallePapelVehiculo(
   if (p.docEstado === 'aprobado')
     return { texto: en ? 'Reviewed' : 'Revisado', pildora: null, sinEnviar: false };
   if (p.docEstado === 'rechazado') return { texto: '', pildora: null, sinEnviar: false };
-  // Subido y pendiente: depende de si el vehículo ya se envió a revisión.
-  if (p.vehiculoEstado === 'en_revision')
+  // Subido y pendiente: depende de si el vehículo ya se envió a revisión. Con el vehículo ya aprobado,
+  // un papel nuevo (una renovación, la foto que faltaba) lo revisa el equipo igual.
+  if (p.vehiculoEstado === 'en_revision' || p.vehiculoEstado === 'aprobado')
     return {
       texto: en ? 'Under review · usually takes 1 day' : 'En revisión · suele tardar 1 día',
       pildora: null,
