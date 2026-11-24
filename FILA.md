@@ -772,3 +772,8 @@
 - [ ] [para: revisor-calidad] Revisar C-VERIFICACIONES-EN-VIVO en la rama fase-campana (todos los países): marca /datos/admin/kyc/marca, sondeo y sonido del panel, tabla nueva avisos_verificacion, correo uno por persona. Al publicar: subir las capturas de la ayuda interna (campana-*) con scripts/docs/subir-ayuda-interna.mjs.
 - [ ] [para: revisor-calidad] Revisar la rama fase-correo-segundo-plano (C-CORREO-NO-FRENA, C-CORREO-FRANJA, C-RECUPERAR-POR-CELULAR, C-CORREO-REBOTES-CANARIO; todos los países): commits cc7d536ab6, 00ff2de6e8 y 10eea08c64. Servidor y web salen solos al publicar; la franja necesita compilar cliente y Driver.
 - [ ] [para: tiendas-lanzamientos] En la próxima compilación de cliente y Driver entra la franja del correo (C-CORREO-FRANJA). El destrabe de la puerta del correo no la necesita: sale con el servidor.
+
+## Publicación en fila del 24 nov (desarrollador A) — todos los países
+
+- [ ] [para: desarrollador] El recorrido «cobro en mano en VES» (internacional.spec.ts) falla si corre después de «cambiarCiudadAdmin» («That code isn’t valid or was already used»): dependencia de orden entre recorridos, ya presente en 17fa884. En la nube pasa por el orden de las tandas. Aislarlo. Todos los países.
+- [ ] [para: Richard] 👤 Al publicarse la Verificación única, los conductores que ya trabajan recibirían una vez «Ya puedes recibir carreras»: decidir si se deja así (va como vino de la rama). Todos los países.
