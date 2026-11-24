@@ -76,6 +76,7 @@ rezagadosRutas.get('/admin/camila/recordatorios', async (c) => {
       autorizado: ajustes.autorizados.includes(p.id),
       creadoEn: p.creadoEn,
       paso: p.paso,
+      equipo: p.equipo,
       horasQuieto: p.horasQuieto,
       delPaso: p.delPaso,
       toca: p.toca,

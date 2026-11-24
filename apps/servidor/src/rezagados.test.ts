@@ -61,8 +61,11 @@ async function rezagado(
   nombre = 'Marina Ejemplo',
 ) {
   const c = await m.cuenta(rol, nombre);
-  await m.DB.prepare("UPDATE usuarios SET zona_id = ?, creado_en = ?, idioma = 'es' WHERE id = ?")
-    .bind(ZONA, hace(horas), c.id)
+  // C-VIGILANTE-REGISTROS: el correo confirmado (a uno sin confirmar no se le escribe nunca).
+  await m.DB.prepare(
+    "UPDATE usuarios SET zona_id = ?, creado_en = ?, idioma = 'es', correo_confirmado_en = ? WHERE id = ?",
+  )
+    .bind(ZONA, hace(horas), hace(horas), c.id)
     .run();
   await m.DB.prepare('UPDATE embudo_cuenta SET creado_en = ? WHERE usuario_id = ?')
     .bind(hace(horas), c.id)
@@ -498,9 +501,9 @@ describe('C-REZAGADOS: la vuelta del reloj', () => {
     expect(de('Sinplazo')).not.toMatch(/tienes hasta|\{plazo\}/);
   });
 
-  it('la tarea está en el reloj, una vez por hora, con sus escrituras declaradas', () => {
+  it('la tarea está en el reloj, cada media hora, con sus escrituras declaradas', () => {
     const t = TAREAS_RELOJ.find((x) => x.nombre === 'rezagados');
-    expect(t).toMatchObject({ cada: 'hora', critica: false });
+    expect(t).toMatchObject({ cada: 'media_hora', critica: false });
     expect(t?.escriturasEsperadas).toBeGreaterThan(0);
   });
 });

@@ -26,6 +26,7 @@ const TEXTOS = {
     emergencia: 'Emergencia en un viaje',
     moderacion: 'Reporte de un mensaje o reseña',
     sin_zona: 'Conductor sin ciudad: ponle su ciudad',
+    registro: 'Conductor parado: le toca al equipo',
     pedido: 'Pedido nuevo',
     incidencia: 'Incidencia en una entrega',
     otro: 'Aviso',
@@ -40,6 +41,7 @@ const TEXTOS = {
     emergencia: 'Emergency on a ride',
     moderacion: 'Message or review reported',
     sin_zona: 'Driver with no city: set their city',
+    registro: 'Driver stuck: up to the team',
     pedido: 'New order',
     incidencia: 'Delivery issue',
     otro: 'Notification',
@@ -73,6 +75,9 @@ function enlaceSuper(a: AvisoServidor, raiz: string) {
     // La ficha del conductor: ahí, en sus tres puntos, «Cambiar ciudad».
     case 'sin_zona':
       return `${raiz}/drivers/${id}`;
+    // C-VIGILANTE-REGISTROS: el conductor parado en un paso del equipo, en Verificaciones.
+    case 'registro':
+      return `${raiz}/verifications/${id}`;
     default:
       return raiz;
   }

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
 import { zonaRealSql } from './cuentaPais';
+import { type ClavePaso, barraActivacion } from './activacion';
 import { notificar } from './notificaciones';
 import { aceptoSms, destinoPermitido, enviarSms, smsConfigurado, telefonoE164 } from './sms';
 import { estadoEnSmsMasivo, vaPorSmsMasivo } from './smsMasivo';
@@ -13,7 +14,7 @@ import { humanoActivo, personaDeUsuario, sentenciaMensaje } from './camila/memor
 /**
  * C-REZAGADOS (22 nov 2026, orden de Richard por Gerencia) — todos los países, encendido por zona.
  *
- * Camila le escribe sola a quien se quedó a medio registro. Una tarea del reloj (una vez por hora)
+ * Camila le escribe sola a quien se quedó a medio registro. Una tarea del reloj (cada media hora)
  * mira, con el rastro del registro (`embudo_cuenta`, C-RASTRO), en qué paso exacto se quedó cada
  * cuenta nueva y, si lleva quieta el plazo que toca, le manda la plantilla de ESE paso: primero correo
  * y aviso en la app, después un SMS corto, y un último correo. Luego se detiene.
@@ -28,7 +29,15 @@ import { humanoActivo, personaDeUsuario, sentenciaMensaje } from './camila/memor
  * - Regla de la nube: la vuelta solo escribe una fila por mensaje que de verdad sale.
  */
 
-export const PASOS_REZAGADO = ['fotos', 'vehiculo', 'servicio', 'linea', 'correo'] as const;
+export const PASOS_REZAGADO = [
+  'fotos',
+  'repetir',
+  'vehiculo',
+  'saldo',
+  'servicio',
+  'linea',
+  'correo',
+] as const;
 export type PasoRezagado = (typeof PASOS_REZAGADO)[number];
 export type CanalRezagado = 'correo' | 'sms' | 'aviso';
 export type ModoZona = 'apagado' | 'previa' | 'encendido';
@@ -57,6 +66,21 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       sms: 'Divoox: {nombre}, your photos are missing to start getting trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
     },
   },
+  // C-VIGILANTE-REGISTROS: el equipo pidió repetir una foto o un papel (borrosa, oscura, rechazada).
+  repetir: {
+    es: {
+      asunto: 'Te pedimos repetir una foto de tu registro',
+      texto:
+        'Hola, {nombre}. Soy Camila, de Divoox. Revisamos tu registro de conductor y necesitamos que repitas una foto o un papel: no se veía bien o no se pudo aprobar. Abre Divoox Driver: arriba verás cuál es y por qué, con el botón para tomarla otra vez.{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi no sabes qué foto es, respóndeme este correo y te ayudo.',
+      sms: 'Divoox: {nombre}, necesitamos que repitas una foto de tu registro de conductor. Abre Divoox Driver y mira arriba cual es: {enlace_corto} Camila',
+    },
+    en: {
+      asunto: 'Please retake a photo from your sign-up',
+      texto:
+        'Hi {nombre}, this is Camila from Divoox. We reviewed your driver sign-up and need you to retake a photo or a document: it was not clear or could not be approved. Open Divoox Driver: at the top you will see which one and why, with the button to take it again.{plazo}\n\nContinue here:\n{enlace}\n\nIf you are not sure which photo it is, reply to this email and I will help.',
+      sms: 'Divoox: {nombre}, please retake a photo from your driver sign-up. Open Divoox Driver and check the top of the screen: {enlace_corto} Camila',
+    },
+  },
   vehiculo: {
     es: {
       asunto: 'Falta registrar tu vehículo en Divoox',
@@ -69,6 +93,22 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       texto:
         'Hi {nombre}, this is Camila from Divoox. You are doing great! Just register your vehicle so we can send you trips: make, model and plate. It takes a few minutes.{plazo}\n\nContinue here:\n{enlace}\n\nIf you are unsure about any detail, reply to this email and we will sort it out.',
       sms: 'Divoox: {nombre}, just register your vehicle to get trips. It takes a few minutes. Continue here: {enlace_corto} Camila',
+    },
+  },
+  // C-VIGILANTE-REGISTROS: aprobado, pero donde rige el prepago no tiene saldo para la comisión.
+  // Nunca lleva montos: la app le dice cuánto y cómo recargar.
+  saldo: {
+    es: {
+      asunto: 'Recarga tu saldo para recibir viajes',
+      texto:
+        'Hola, {nombre}. Soy Camila, de Divoox. Tu cuenta de conductor ya puede trabajar, pero todavía no te llegan viajes porque te falta saldo en tu billetera. Abre Divoox Driver y entra en «Billetera»: ahí ves cuánto necesitas y cómo recargar.\n\nContinúa aquí:\n{enlace}\n\nSi tienes dudas para recargar, respóndeme este correo y te ayudo.',
+      sms: 'Divoox: {nombre}, ya puedes trabajar pero te falta saldo para recibir viajes. Abre Divoox Driver y entra en Billetera: {enlace_corto} Camila',
+    },
+    en: {
+      asunto: 'Top up your balance to get trips',
+      texto:
+        'Hi {nombre}, this is Camila from Divoox. Your driver account can already work, but you are not getting trips yet because your wallet balance is too low. Open Divoox Driver and go to “Wallet”: you will see how much you need and how to top up.\n\nContinue here:\n{enlace}\n\nIf you have questions about topping up, reply to this email and I will help.',
+      sms: 'Divoox: {nombre}, you can work now but you need balance to get trips. Open Divoox Driver and go to Wallet: {enlace_corto} Camila',
     },
   },
   servicio: {
@@ -116,6 +156,23 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
 };
 
 const AVISO: Record<PasoRezagado, Record<Idioma, { titulo: string; cuerpo: string }>> = {
+  repetir: {
+    es: {
+      titulo: 'Repite una foto de tu registro',
+      cuerpo: 'Abre la app: arriba verás cuál es y por qué.',
+    },
+    en: {
+      titulo: 'Retake a photo from your sign-up',
+      cuerpo: 'Open the app: the top of the screen shows which one and why.',
+    },
+  },
+  saldo: {
+    es: {
+      titulo: 'Te falta saldo para recibir viajes',
+      cuerpo: 'Entra en «Billetera» y recarga para empezar.',
+    },
+    en: { titulo: 'Add balance to get trips', cuerpo: 'Go to “Wallet” and top up to start.' },
+  },
   fotos: {
     es: {
       titulo: 'Te faltan tus fotos',
@@ -163,7 +220,9 @@ const plantilla = z.object({
 const plantillasPaso = z.object({ es: plantilla, en: plantilla });
 const porPaso = z.object({
   fotos: plantillasPaso.optional(),
+  repetir: plantillasPaso.optional(),
   vehiculo: plantillasPaso.optional(),
+  saldo: plantillasPaso.optional(),
   servicio: plantillasPaso.optional(),
   linea: plantillasPaso.optional(),
   correo: plantillasPaso.optional(),
@@ -204,7 +263,8 @@ export const AJUSTES_REZAGADOS_DE_FABRICA: AjustesRezagados = {
   topeDiario: 40,
   horaDesde: 8,
   horaHasta: 20,
-  ventanaDias: 21,
+  // C-VIGILANTE-REGISTROS: se miran las altas de los últimos 30 días.
+  ventanaDias: 30,
   zonas: {},
   autorizados: [],
   enlaceCorto: 'divoox.com/go',
@@ -338,16 +398,63 @@ export function pasoPendiente(d: {
   correoConfirmado: boolean;
   zonaConLineas: boolean;
   enLinea: boolean;
+  /** C-VIGILANTE-REGISTROS: el equipo le pidió repetir una foto o un papel (o rechazó su verificación). */
+  repetir?: boolean;
 }): PasoRezagado | null {
   const correo = d.correoConfirmado || d.pasos.has('correo') ? null : 'correo';
   if (d.rol !== 'repartidor') return correo;
   const aprobado = d.pasos.has('aprobado');
+  // Una foto o un papel pedido de nuevo frena aunque ya estuviera aprobado (licencia vencida, foto oscura).
+  if (d.repetir) return 'repetir';
   if (!aprobado && FOTOS.some((p) => !d.pasos.has(p))) return 'fotos';
   if (!d.pasos.has('vehiculo')) return 'vehiculo';
   if (aprobado && !d.pasos.has('conectado')) return 'servicio';
   if (d.zonaConLineas && !d.enLinea) return 'linea';
   return correo;
 }
+
+/**
+ * C-VIGILANTE-REGISTROS (24 nov 2026, orden de Richard por Gerencia): lo que le toca al EQUIPO y no al
+ * conductor. Nunca se le manda al conductor: sale en la campana del panel y en Verificaciones.
+ * `zona_ajena` = se registró desde otro país que el de la ciudad donde quedó su cuenta.
+ */
+export const RAREZAS_EQUIPO = [
+  'identidad',
+  'vehiculo_aprobado',
+  'servicio',
+  'zona',
+  'requisitos',
+  'zona_ajena',
+] as const;
+export type RarezaEquipo = (typeof RAREZAS_EQUIPO)[number];
+const ES_RAREZA_EQUIPO = new Set<string>(RAREZAS_EQUIPO);
+
+/**
+ * Lo que dice la barra de activación (la MISMA del panel y del reparto) cuando el rastro del registro
+ * ya no le pide nada al conductor: qué le falta a él (vehículo sin placa o sin enviar, saldo, una foto
+ * rechazada) o qué le toca al equipo. Pieza pura.
+ */
+export function lecturaDeBarra(b: {
+  listo: boolean;
+  siguiente: { clave: ClavePaso; quien: string; estado: string } | null;
+}): { paso: PasoRezagado | null; equipo: RarezaEquipo | null } {
+  const s = b.siguiente;
+  if (b.listo || !s) return { paso: null, equipo: null };
+  if (s.quien === 'equipo')
+    return {
+      paso: null,
+      equipo: ES_RAREZA_EQUIPO.has(s.clave) ? (s.clave as RarezaEquipo) : 'requisitos',
+    };
+  if (s.quien !== 'conductor') return { paso: null, equipo: null };
+  if (s.clave === 'vehiculo') return { paso: 'vehiculo', equipo: null };
+  if (s.clave === 'saldo') return { paso: 'saldo', equipo: null };
+  if ((s.clave === 'identidad' || s.clave === 'vehiculo_aprobado') && s.estado === 'problema')
+    return { paso: 'repetir', equipo: null };
+  return { paso: null, equipo: null };
+}
+
+/** Cuántas barras de activación mira una vuelta como mucho (cada una son unas pocas lecturas). */
+export const LOTE_BARRAS = 40;
 
 export type Candidato = {
   id: string;
@@ -360,7 +467,12 @@ export type Candidato = {
   zonaNombre: string;
   zonaHoraria: string;
   creadoEn: string;
-  paso: PasoRezagado;
+  /** El paso que le toca a la persona, o null si lo que falta es del equipo. */
+  paso: PasoRezagado | null;
+  /** Lo que le toca al equipo (va a la campana, nunca al conductor). */
+  equipo: RarezaEquipo | null;
+  /** El equipo ya tiene ese aviso en la campana (no se repite). */
+  equipoAvisado: boolean;
   /** Desde cuándo está quieto en ese paso (su último avance, o el alta). */
   quietoDesde: string;
   horasQuieto: number;
@@ -398,7 +510,12 @@ const SQL_CANDIDATOS = (zonas: string[]) => `
          EXISTS (SELECT 1 FROM equipos q JOIN lineas l ON l.equipo_id = q.id
                   WHERE q.zona_id = z.id AND q.activo = 1) AS zona_con_lineas,
          (SELECT pp.vence_en FROM plazo_papeles pp WHERE pp.conductor_id = u.id AND pp.estado = 'en_plazo') AS plazo_vence,
-         EXISTS (SELECT 1 FROM rezagados_bajas b WHERE b.usuario_id = u.id) AS baja
+         EXISTS (SELECT 1 FROM rezagados_bajas b WHERE b.usuario_id = u.id) AS baja,
+         -- C-VIGILANTE-REGISTROS: una foto o un papel pedido de nuevo, o la verificación rechazada.
+         (EXISTS (SELECT 1 FROM verificacion_fotos vf WHERE vf.conductor_id = u.id AND vf.estado = 'repetir')
+           OR EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = u.id AND k.estado = 'rechazado')) AS repetir,
+         (SELECT rc.pais_red FROM rastro_cuenta rc WHERE rc.usuario_id = u.id AND rc.tipo = 'alta' LIMIT 1) AS pais_alta,
+         z.pais AS zona_pais
     FROM usuarios u
     LEFT JOIN repartidores r ON r.usuario_id = u.id
     JOIN zonas z ON z.id = ${zonaRealSql()}
@@ -425,6 +542,9 @@ type FilaCandidato = {
   zona_con_lineas: number;
   plazo_vence: string | null;
   baja: number;
+  repetir: number;
+  pais_alta: string | null;
+  zona_pais: string | null;
 };
 
 /** ¿Puede salir un SMS a ese teléfono hoy? (proveedor encendido para su país). Solo mira la configuración. */
@@ -458,34 +578,84 @@ export async function candidatos(
       ),
     )
   ).flatMap((r) => r.results);
-  const pendientes = filas.flatMap((f) => {
-    const paso = pasoPendiente({
+  const pendientes: { f: FilaCandidato; paso: PasoRezagado | null; equipo: RarezaEquipo | null }[] =
+    [];
+  let barras = 0;
+  for (const f of filas) {
+    let paso = pasoPendiente({
       rol: f.rol,
       pasos: new Set((f.pasos ?? '').split(',').filter(Boolean)),
       correoConfirmado: Boolean(f.correo_confirmado_en),
       zonaConLineas: Boolean(f.zona_con_lineas),
       enLinea: Boolean(f.en_linea),
+      repetir: Boolean(f.repetir),
     });
-    return paso ? [{ f, paso }] : [];
-  });
+    let equipo: RarezaEquipo | null = null;
+    // C-VIGILANTE-REGISTROS: cuando el rastro ya no le pide nada importante (nada, «conéctate», «tu
+    // línea» o el correo, que no frena), se pregunta a la barra de activación qué lo frena de verdad y
+    // de quién depende. Sin `env`: mirar no escribe.
+    if (
+      f.rol === 'repartidor' &&
+      (paso === null || paso === 'servicio' || paso === 'linea' || paso === 'correo') &&
+      barras < LOTE_BARRAS
+    ) {
+      barras++;
+      const l = lecturaDeBarra(await barraActivacion(db, f.id));
+      if (l.paso) paso = l.paso;
+      else if (l.equipo) {
+        equipo = l.equipo;
+        if (paso === 'servicio') paso = null;
+      }
+    }
+    if (
+      !equipo &&
+      f.rol === 'repartidor' &&
+      f.pais_alta &&
+      f.zona_pais &&
+      f.pais_alta !== f.zona_pais
+    )
+      equipo = 'zona_ajena';
+    if (paso || equipo) pendientes.push({ f, paso, equipo });
+  }
   if (!pendientes.length) return [];
   // Lo ya enviado a esas personas (solo lo automático cuenta para los topes).
   const ids = pendientes.map((p) => p.f.id);
-  const enviados = new Map<string, { paso: string; creado_en: string; numero: number }[]>();
+  const enviados = new Map<
+    string,
+    { paso: string; canal: string; abiertos: number; creado_en: string; numero: number }[]
+  >();
   for (let i = 0; i < ids.length; i += 80) {
     const lote = ids.slice(i, i + 80);
     const { results } = await db
       .prepare(
-        `SELECT usuario_id, paso, numero, MAX(creado_en) AS creado_en FROM rezagados_mensajes
+        `SELECT usuario_id, paso, numero, canal = 'equipo' AS equipo, SUM(estado <> 'resuelto') AS abiertos,
+                MAX(creado_en) AS creado_en FROM rezagados_mensajes
           WHERE origen = 'auto' AND usuario_id IN (${lote.map(() => '?').join(',')})
-          GROUP BY usuario_id, paso, numero`,
+          GROUP BY usuario_id, paso, numero, canal = 'equipo'`,
       )
       .bind(...lote)
-      .all<{ usuario_id: string; paso: string; numero: number; creado_en: string }>();
-    for (const r of results) enviados.set(r.usuario_id, [...(enviados.get(r.usuario_id) ?? []), r]);
+      .all<{
+        usuario_id: string;
+        paso: string;
+        numero: number;
+        equipo: number;
+        abiertos: number;
+        creado_en: string;
+      }>();
+    for (const r of results)
+      enviados.set(r.usuario_id, [
+        ...(enviados.get(r.usuario_id) ?? []),
+        { ...r, canal: Number(r.equipo) ? 'equipo' : 'persona' },
+      ]);
   }
-  return pendientes.map(({ f, paso }) => {
-    const suyos = enviados.get(f.id) ?? [];
+  return pendientes.map(({ f, paso, equipo }) => {
+    const todos = enviados.get(f.id) ?? [];
+    // Los avisos al equipo no cuentan para los topes de la persona.
+    const suyos = todos.filter((s) => s.canal !== 'equipo');
+    const equipoAvisado = Boolean(
+      equipo &&
+      todos.some((s) => s.canal === 'equipo' && s.paso === equipo && Number(s.abiertos) > 0),
+    );
     const delPaso = suyos.filter((s) => s.paso === paso).length;
     const ultimoEn =
       suyos
@@ -498,14 +668,19 @@ export async function candidatos(
     const aceptaSms = Boolean(f.sms_consentido_en);
     const siguiente = delPaso + 1;
     let motivo: string | null = null;
-    if (f.baja) motivo = 'baja';
+    if (!paso) motivo = 'del_equipo';
+    else if (f.baja) motivo = 'baja';
     else if (delPaso >= a.topePorPaso) motivo = 'tope_paso';
     else if (suyos.length >= a.topePorPersona) motivo = 'tope_persona';
     else if (horasQuieto < (a.plazosHoras[siguiente - 1] ?? Infinity)) motivo = 'aun_no';
-    else if (ultimoEn && horasEntre(ultimoEn, ahora) < 20) motivo = 'ya_hoy';
+    // C-VIGILANTE-REGISTROS: como mucho un recordatorio cada 24 horas por persona.
+    else if (ultimoEn && horasEntre(ultimoEn, ahora) < 24) motivo = 'ya_hoy';
     else if (minutos < a.horaDesde * 60 || minutos >= a.horaHasta * 60) motivo = 'fuera_de_horario';
     // 2.º recordatorio: SMS si se puede (proveedor encendido y casilla marcada); si no, correo.
     const conSms = siguiente === 2 && aceptaSms && smsDisponible(env, f.telefono);
+    // C-VIGILANTE-REGISTROS: a un correo sin confirmar no se le escribe (riesgo de spam): solo el aviso
+    // en la app, que llega a su propio aparato.
+    const correoOk = Boolean(f.correo_confirmado_en);
     return {
       id: f.id,
       rol: f.rol,
@@ -518,6 +693,8 @@ export async function candidatos(
       zonaHoraria: f.zona_horaria,
       creadoEn: f.creado_en,
       paso,
+      equipo,
+      equipoAvisado,
       quietoDesde,
       horasQuieto: Math.floor(horasQuieto),
       delPaso,
@@ -528,7 +705,7 @@ export async function candidatos(
       baja: Boolean(f.baja),
       toca: motivo ? null : siguiente,
       motivo,
-      canales: conSms ? ['sms'] : ['correo', 'aviso'],
+      canales: conSms ? ['sms'] : correoOk ? ['correo', 'aviso'] : ['aviso'],
     } satisfies Candidato;
   });
 }
@@ -706,7 +883,7 @@ export function envioDePlantilla(
 const esDeCobro = (c: CanalRezagado) => c === 'correo' || c === 'sms';
 
 /**
- * La vuelta de cada hora. Con todas las zonas apagadas o en vista previa no lee más que los ajustes
+ * La vuelta de cada media hora. Con todas las zonas apagadas o en vista previa no lee más que los ajustes
  * y no escribe nada. Escribe una fila por canal de cada recordatorio que sale.
  */
 export async function correrRezagados(env: Env, db: D1Database, ahora = new Date()) {
@@ -721,11 +898,24 @@ export async function correrRezagados(env: Env, db: D1Database, ahora = new Date
   const zonas = Object.entries(a.zonas)
     .filter(([z, m]) => encendidas.has(z) || (m === 'previa' && autorizados.size > 0))
     .map(([z]) => z);
-  const cuenta = { zonas: zonas.length, vistos: 0, enviados: 0, tope: false, entregados: 0 };
+  const cuenta = {
+    zonas: zonas.length,
+    vistos: 0,
+    enviados: 0,
+    tope: false,
+    entregados: 0,
+    alEquipo: 0,
+    resueltos: 0,
+  };
   if (!zonas.length) return cuenta;
-  const lista = (await candidatos(env, db, a, zonas, ahora)).filter(
-    (c) => c.toca !== null && (encendidas.has(c.zona) || autorizados.has(c.id)),
+  const todos = await candidatos(env, db, a, zonas, ahora);
+  const lista = todos.filter(
+    (c) => c.toca !== null && c.paso && (encendidas.has(c.zona) || autorizados.has(c.id)),
   );
+  // C-VIGILANTE-REGISTROS: lo que le toca al equipo va a su campana, UNA vez por cuenta y motivo.
+  const equipo = await avisarAlEquipo(db, todos, encendidas, ahora);
+  cuenta.alEquipo = equipo.nuevos;
+  cuenta.resueltos = equipo.resueltos;
   cuenta.vistos = lista.length;
   if (lista.length) {
     const hoy = await db
@@ -744,6 +934,7 @@ export async function correrRezagados(env: Env, db: D1Database, ahora = new Date
       // Una persona del equipo está atendiendo su conversación: Camila no se mete.
       const persona = await personaDeUsuario(db, c.id);
       if (humanoActivo(persona, ahora)) continue;
+      if (!c.paso) continue;
       const r = await enviarMensajeRegistro(env, db, {
         ...envioDePlantilla(env, a, c, c.paso),
         canales: c.canales,
@@ -756,6 +947,57 @@ export async function correrRezagados(env: Env, db: D1Database, ahora = new Date
   }
   cuenta.entregados = await refrescarEntregas(env, db, ahora);
   return cuenta;
+}
+
+/** Cuántos avisos nuevos al equipo deja una vuelta como mucho (y cuántos cierra). */
+export const LOTE_EQUIPO = 30;
+
+/**
+ * C-VIGILANTE-REGISTROS: lo que frena a un conductor y depende del EQUIPO (aprobar su verificación o
+ * su vehículo, su servicio, su ciudad) nunca se le manda a él: queda UNA fila `canal = 'equipo'` por
+ * cuenta y motivo, que la campana del panel muestra y lleva a Verificaciones. Cuando ya no lo frena, se
+ * marca resuelta (una escritura). Una vuelta sin cambios no escribe nada.
+ */
+async function avisarAlEquipo(
+  db: D1Database,
+  lista: Candidato[],
+  encendidas: ReadonlySet<string>,
+  ahora: Date,
+) {
+  let nuevos = 0;
+  for (const c of lista) {
+    if (nuevos >= LOTE_EQUIPO) break;
+    if (!c.equipo || c.equipoAvisado || !encendidas.has(c.zona)) continue;
+    await db
+      .prepare(
+        `INSERT INTO rezagados_mensajes (id, usuario_id, paso, canal, origen, numero, estado, detalle)
+         VALUES (?, ?, ?, 'equipo', 'auto', 1, 'enviado', ?)`,
+      )
+      .bind(nuevoId(), c.id, c.equipo, `horas_quieto:${c.horasQuieto}`)
+      .run();
+    nuevos++;
+  }
+  // Los avisos abiertos de cuentas que ya no tienen ese motivo pasan a resueltos.
+  const vigentes = new Set(lista.filter((c) => c.equipo).map((c) => `${c.id}|${c.equipo}`));
+  const { results } = await db
+    .prepare(
+      `SELECT id, usuario_id, paso FROM rezagados_mensajes
+        WHERE canal = 'equipo' AND estado = 'enviado' AND creado_en >= ? LIMIT ${LOTE_EQUIPO}`,
+    )
+    .bind(sqlFecha(new Date(ahora.getTime() - 30 * 86_400_000)))
+    .all<{ id: string; usuario_id: string; paso: string }>();
+  let resueltos = 0;
+  for (const r of results) {
+    if (vigentes.has(`${r.usuario_id}|${r.paso}`)) continue;
+    await db
+      .prepare(
+        "UPDATE rezagados_mensajes SET estado = 'resuelto' WHERE id = ? AND estado = 'enviado'",
+      )
+      .bind(r.id)
+      .run();
+    resueltos++;
+  }
+  return { nuevos, resueltos };
 }
 
 /** Pregunta al proveedor por los SMS recientes todavía «enviado» y escribe solo los que cambiaron. */

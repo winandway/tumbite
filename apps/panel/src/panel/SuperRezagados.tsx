@@ -19,6 +19,7 @@ import {
   type PasoMensaje,
   motivoMensaje,
   nombreCanal,
+  nombreFaltaEquipo,
   nombrePasoMensaje,
   palabraEstado,
   tonoMensaje,
@@ -60,7 +61,10 @@ type FilaLista = {
   zonaNombre: string;
   modo: Modo;
   creadoEn: string;
-  paso: PasoMensaje;
+  /** null cuando lo que falta le toca al equipo (C-VIGILANTE-REGISTROS). */
+  paso: PasoMensaje | null;
+  /** Lo que le toca al equipo: va a la campana, nunca al conductor. */
+  equipo?: string | null;
   horasQuieto: number;
   delPaso: number;
   toca: number | null;
@@ -186,12 +190,14 @@ const T = {
     toca: (n: number, canales: string) =>
       `Le toca el ${n === 1 ? '1.er' : n === 2 ? '2.º' : '3.er'} recordatorio, por ${canales}`,
     soloPrevia: 'vista previa: no se envía',
+    alEquipo: 'Le toca al equipo',
     y: ' y ',
     motivo: {
       baja: 'No le toca: pidió no recibir más recordatorios.',
       tope_paso: 'No le toca: ya recibió todos los recordatorios de este paso.',
       tope_persona: 'No le toca: ya recibió el máximo de recordatorios.',
-      ya_hoy: 'Todavía no: ya recibió uno en las últimas 20 horas.',
+      ya_hoy: 'Todavía no: ya recibió uno en las últimas 24 horas.',
+      del_equipo: 'No se le escribe: le toca al equipo. Está en la campana y en Verificaciones.',
       fuera_de_horario: 'Todavía no: es fuera del horario de su zona.',
     } as Record<string, string>,
     aunNo: (h: number) => `Todavía no: le toca cuando lleve ${h} h quieta.`,
@@ -301,12 +307,14 @@ const T = {
     toca: (n: number, canales: string) =>
       `${n === 1 ? '1st' : n === 2 ? '2nd' : '3rd'} reminder is due, by ${canales}`,
     soloPrevia: 'preview: not sent',
+    alEquipo: 'Up to the team',
     y: ' and ',
     motivo: {
       baja: 'Not due: they asked for no more reminders.',
       tope_paso: 'Not due: they already got every reminder for this step.',
       tope_persona: 'Not due: they already got the maximum number of reminders.',
-      ya_hoy: 'Not yet: they got one in the last 20 hours.',
+      ya_hoy: 'Not yet: they got one in the last 24 hours.',
+      del_equipo: 'Not messaged: it is up to the team. It is in the bell and in Verifications.',
       fuera_de_horario: 'Not yet: it is outside their zone’s hours.',
     } as Record<string, string>,
     aunNo: (h: number) => `Not yet: due once they have been stuck for ${h} h.`,
@@ -1161,7 +1169,14 @@ function Lista({
                       </span>
                     ) : null}
                   </td>
-                  <td>{nombrePasoMensaje(p.paso, idioma)}</td>
+                  <td data-testid="rez-falta">
+                    {p.paso ? nombrePasoMensaje(p.paso, idioma) : null}
+                    {p.equipo ? (
+                      <Insignia tono="pendiente" testId="rez-equipo">
+                        {`${t.alEquipo}: ${nombreFaltaEquipo(p.equipo, idioma)}`}
+                      </Insignia>
+                    ) : null}
+                  </td>
                   <td>{t.horas(p.horasQuieto)}</td>
                   <td className="rez-celda-texto" data-testid="rez-que-pasa">
                     {queHay(p)}
@@ -1245,7 +1260,13 @@ function Recientes({
                         {m.nombre || t.sinNombre}
                       </Enlace>
                     </td>
-                    <td>{m.paso === 'libre' ? t.libre : nombrePasoMensaje(m.paso, idioma)}</td>
+                    <td>
+                      {m.paso === 'libre'
+                        ? t.libre
+                        : m.canal === 'equipo'
+                          ? nombreFaltaEquipo(m.paso, idioma)
+                          : nombrePasoMensaje(m.paso, idioma)}
+                    </td>
                     <td>{nombreCanal(m.canal, idioma)}</td>
                     <td>{m.origen === 'manual' ? t.equipo : t.camila}</td>
                     <td className="rez-celda-texto">

@@ -70,6 +70,7 @@ import {
   anotarTareas,
   correrTareas,
   esPrimeraDeLaHora,
+  esPrimeraDeLaMediaHora,
   esPrimeraDelDia,
   relojEnPausa,
   tomarMinuto,
@@ -3289,8 +3290,12 @@ export async function correrRelojUnaVez(
   // La vuelta anterior: la más nueva de las marcadas que sea más vieja que esta.
   const anterior = marcadas.find((v) => v.ventana < ventana)?.ventana;
   const deLaHora = esPrimeraDeLaHora(ventana, anterior);
-  // Las limpiezas que pueden esperar (cada: 'hora') corren solo en la primera vuelta de la hora.
-  const tareas = (prueba?.tareas ?? TAREAS_RELOJ).filter((t) => t.cada !== 'hora' || deLaHora);
+  // Las limpiezas que pueden esperar (cada: 'hora') corren solo en la primera vuelta de la hora; las
+  // de cada media hora (cada: 'media_hora'), en la primera de cada media hora.
+  const deLaMediaHora = esPrimeraDeLaMediaHora(ventana, anterior);
+  const tareas = (prueba?.tareas ?? TAREAS_RELOJ).filter((t) =>
+    t.cada === 'hora' ? deLaHora : t.cada === 'media_hora' ? deLaMediaHora : true,
+  );
   let resultado: Awaited<ReturnType<typeof correrReloj>>;
   try {
     // C-RELOJ-AISLADO: cada tarea con su propio manejo de errores; esto ya no lanza por una tarea.
@@ -3361,14 +3366,15 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     escriturasEsperadas: 150,
     correr: (env, db) => correrPlazoPapeles(env, db),
   },
-  // C-REZAGADOS: Camila le recuerda su paso a quien se quedó a medio registro. Una vez por hora; con
-  // todas las zonas apagadas o en vista previa solo lee los ajustes. Escribe una fila por canal de cada
-  // recordatorio que sale (como mucho el tope diario, 200, por dos canales, más su hilo de soporte).
+  // C-REZAGADOS + C-VIGILANTE-REGISTROS: Camila le recuerda su paso a quien se quedó a medio registro
+  // y lo que le toca al equipo va a su campana. Cada media hora; con todas las zonas apagadas o en vista
+  // previa solo lee los ajustes. Escribe una fila por canal de cada recordatorio que sale (como mucho el
+  // tope diario, 200, por dos canales, más su hilo de soporte) y una por aviso al equipo (30 + 30).
   {
     nombre: 'rezagados',
     critica: false,
-    cada: 'hora',
-    escriturasEsperadas: 900,
+    cada: 'media_hora',
+    escriturasEsperadas: 960,
     correr: (env, db) => correrRezagados(env, db),
   },
   // C-CARRO-DINAMICA: el multiplicador de cada ciudad con tarifa dinámica encendida. Escribe como

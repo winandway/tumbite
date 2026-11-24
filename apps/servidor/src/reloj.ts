@@ -32,7 +32,7 @@ export type TareaReloj = {
    * LECT-3: las limpiezas que pueden esperar corren una vez por hora (la primera vuelta de cada
    * hora), no cada minuto. Sin esto, cada vuelta.
    */
-  cada?: 'hora';
+  cada?: 'hora' | 'media_hora';
   /** LECT-3: cuántas filas espera escribir como mucho en una vuelta (la declara cada limpieza). */
   escriturasEsperadas?: number;
 };
@@ -399,6 +399,11 @@ export const horaDeVentana = (ventana: string) => `${ventana.replace('T', ' ')}:
 /** Las tareas de cada hora corren en la primera vuelta de cada hora (y en la primera de todas). */
 export const esPrimeraDeLaHora = (ventana: string, anterior: string | undefined) =>
   !anterior || anterior.slice(0, 13) !== ventana.slice(0, 13);
+
+/** C-VIGILANTE-REGISTROS: la primera vuelta de cada media hora (minutos 00-29 y 30-59). */
+const mediaHora = (v: string) => `${v.slice(0, 13)}:${Number(v.slice(14, 16)) < 30 ? 'a' : 'b'}`;
+export const esPrimeraDeLaMediaHora = (ventana: string, anterior: string | undefined) =>
+  !anterior || mediaHora(anterior) !== mediaHora(ventana);
 
 /** La limpieza diaria: la primera vuelta del día desde las 04:00 UTC. */
 export const esPrimeraDelDia = (ventana: string, anterior: string | undefined) => {

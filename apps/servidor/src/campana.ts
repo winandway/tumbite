@@ -125,7 +125,8 @@ export type AvisoSuper = {
     | 'aprobacion'
     | 'emergencia'
     | 'moderacion'
-    | 'sin_zona';
+    | 'sin_zona'
+    | 'registro';
   id: string;
   /** Un dato corto para reconocerlo (el asunto, el nombre). */
   titulo: string;
@@ -230,6 +231,17 @@ export async function avisosSuperadmin(
        WHERE u.rol = 'repartidor' AND u.creado_en >= ${desde} AND u.activo = 1 AND u.es_prueba = 0
          AND ${zonaRealSql('d', 'u')} IS NULL${conductorD.sql}
        ORDER BY u.creado_en DESC LIMIT ${POR_TIPO}`,
+      conductorD.valores,
+    ],
+    // C-VIGILANTE-REGISTROS: un conductor parado en un paso que le toca al EQUIPO (aprobar su
+    // verificación o su vehículo, su servicio, su ciudad). Lo escribe el vigilante una vez por cuenta y
+    // motivo; queda resuelto cuando ya no lo frena. Lleva a Verificaciones.
+    [
+      `SELECT 'registro' AS tipo, m.usuario_id AS id, u.nombre AS titulo, m.creado_en AS en,
+        m.estado = 'resuelto' AS resuelto
+       FROM rezagados_mensajes m JOIN usuarios u ON u.id = m.usuario_id
+       WHERE m.canal = 'equipo' AND m.creado_en >= ${desde} AND u.es_prueba = 0${conductorD.sql}
+       ORDER BY m.creado_en DESC LIMIT ${POR_TIPO}`,
       conductorD.valores,
     ],
   ];
