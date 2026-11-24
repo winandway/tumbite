@@ -25,6 +25,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/tablero': 'monitoreo.ver',
   // C-RASTRO: el embudo del registro (contadores, sin personas).
   'GET /admin/embudo': 'monitoreo.ver',
+  // C-INTENTOS-ACCESO: los intentos de crear cuenta, entrar y recuperar (llevan el correo escrito).
+  'GET /admin/accesos': 'tickets.ver',
   'GET /admin/buscar': 'monitoreo.buscar',
   'GET /admin/informes': 'monitoreo.exportar',
   'GET /admin/pedidos': 'pedidos.ver',
@@ -487,6 +489,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/resumen': CONSULTA,
   'GET /admin/tablero': CONSULTA,
   'GET /admin/embudo': CONSULTA,
+  'GET /admin/accesos': CONSULTA,
   'GET /admin/buscar': CONSULTA,
   'GET /admin/informes': CONSULTA,
   'GET /admin/pedidos': CONSULTA,

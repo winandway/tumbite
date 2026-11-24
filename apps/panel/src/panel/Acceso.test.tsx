@@ -116,7 +116,7 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
     expect(cuerpos).toHaveLength(0);
     // El correo, arriba y aparte, con su explicación; la contraseña nunca se muestra.
     expect(screen.getByTestId('revisar-correo').textContent).toBe('ana@ejemplo.com');
-    expect(screen.getByText(/Aquí te mandamos el enlace para activar tu cuenta/)).toBeTruthy();
+    expect(screen.getByText(/aquí te llegará el enlace para activarla/)).toBeTruthy();
     expect(screen.getByTestId('revisar-nombre').textContent).toBe('Ana Prueba');
     // El celular quedó en números aunque se escribió con guiones.
     expect(screen.getByTestId('revisar-telefono').textContent).toBe('3055550100');
@@ -183,7 +183,65 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
     await userEvent.click(screen.getAllByRole('checkbox')[0]!);
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByRole('heading', { name: 'Review your details' })).toBeInTheDocument();
-    expect(screen.getByText(/We’ll send the link to activate your account here/)).toBeTruthy();
+    expect(screen.getByText(/the link to activate it will arrive here/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Create my account' })).toBeInTheDocument();
+  });
+});
+
+/**
+ * C-MENSAJES-ACCESO (24 nov 2026, Richard) — todos los países. El error de entrar dice qué pasó y
+ * debajo va el botón que toca: «Crear cuenta» si el correo no tiene cuenta (con el correo puesto),
+ * «¿Olvidaste tu contraseña?» si la contraseña está mal. Y al tocar «Continuar» con casillas mal, junto
+ * al botón se dice cuáles (C-SIN-EXITO-FALSO).
+ */
+describe('C-MENSAJES-ACCESO: el error de entrar trae su botón', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  function servidor(codigo: string, error: string, campo: string) {
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('/entrar')
+        ? new Response(JSON.stringify({ error, campo, codigo }), { status: 401 })
+        : new Response('{}', { status: 200 }),
+    );
+  }
+  async function entrar() {
+    render(<Acceso idioma="es" alEntrar={() => undefined} />);
+    await userEvent.type(screen.getByLabelText('Correo'), 'nadie@ejemplo.com');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-segura-1');
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+  }
+
+  it('correo sin cuenta: «No hay ninguna cuenta con ese correo» y «Crear cuenta» lleva al registro con el correo puesto', async () => {
+    servidor('correo_sin_cuenta', 'No hay ninguna cuenta con ese correo.', 'correo');
+    await entrar();
+    expect(await screen.findByText('No hay ninguna cuenta con ese correo.')).toBeTruthy();
+    expect(screen.queryByTestId('accion-olvide')).toBeNull();
+    await userEvent.click(screen.getByTestId('accion-crear'));
+    expect(await screen.findByLabelText('Tu nombre')).toBeInTheDocument();
+    await waitFor(() =>
+      expect((screen.getByLabelText('Correo') as HTMLInputElement).value).toBe('nadie@ejemplo.com'),
+    );
+  });
+
+  it('contraseña mala: «La contraseña no es correcta» y «¿Olvidaste tu contraseña?»', async () => {
+    servidor('clave_incorrecta', 'La contraseña no es correcta.', 'clave');
+    await entrar();
+    expect(await screen.findByText('La contraseña no es correcta.')).toBeTruthy();
+    expect(screen.getByTestId('accion-olvide').textContent).toBe('¿Olvidaste tu contraseña?');
+    expect(screen.queryByTestId('accion-crear')).toBeNull();
+    await userEvent.click(screen.getByTestId('accion-olvide'));
+    expect(window.location.pathname).toBe('/forgot-password');
+  });
+
+  it('«Continuar» con casillas mal dice cuáles junto al botón (no solo arriba, fuera de la vista)', async () => {
+    vi.stubGlobal('fetch', async () => new Response('{}', { status: 200 }));
+    render(<Acceso idioma="es" alEntrar={() => undefined} />);
+    await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
+    await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(screen.getByTestId('registro-revisar-casillas').textContent).toBe(
+      'Revisa lo marcado en rojo: Nombre, Contraseña.',
+    );
   });
 });

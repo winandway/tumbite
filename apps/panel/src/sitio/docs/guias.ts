@@ -5221,6 +5221,8 @@ const es: SeccionDocs[] = [
           'Cada correo sirve para un solo tipo de cuenta. Si eres conductor y también quieres pedir, crea tu cuenta de cliente con otro correo; puedes usar el mismo celular. Si pones tu correo de conductor en la app de clientes (o al revés), la app te dice qué app le corresponde y tu otra cuenta sigue abierta, sin cerrarse.',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
           'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero.',
+          'Mientras ves «Revisa tus datos», tu cuenta todavía no existe: la pantalla te lo dice arriba. Si sales ahí, no se creó nada. Y si al tocar «Continuar» alguna casilla está mal, junto al botón te decimos cuál («Revisa lo marcado en rojo: Celular»), para que no tengas que buscarla.',
+          'Al entrar, si algo falla te decimos exactamente qué pasó. «No hay ninguna cuenta con ese correo» quiere decir que con ese correo no se ha creado ninguna cuenta: revisa que esté bien escrito o toca «Crear cuenta» y el correo ya va puesto. «La contraseña no es correcta» quiere decir que la cuenta existe pero la contraseña no: toca «¿Olvidaste tu contraseña?». Por tu seguridad, después de varios intentos con la contraseña equivocada pausamos la entrada a esa cuenta por 15 minutos.',
         ],
         capturas: [
           {
@@ -5242,6 +5244,16 @@ const es: SeccionDocs[] = [
             src: '/docs/recorrido-registro-revisa-tus-datos-es.webp',
             alt: 'La pantalla «Revisa tus datos» con el correo arriba y en grande, debajo el nombre y el celular cada uno con «Editar», y los botones «Crear mi cuenta» y «Editar datos».',
             pie: 'Antes de crear tu cuenta revisas tus datos; el correo va arriba y en grande.',
+          },
+          {
+            src: '/docs/acceso-correo-sin-cuenta-es.webp',
+            alt: 'Pantalla «Entrar» de Divoox con el aviso «No hay ninguna cuenta con ese correo.» debajo del correo y el botón «Crear cuenta» debajo de «Entrar».',
+            pie: 'Si el correo no tiene cuenta te lo decimos, y con «Crear cuenta» la creas con ese mismo correo.',
+          },
+          {
+            src: '/docs/acceso-clave-incorrecta-es.webp',
+            alt: 'Pantalla «Entrar» de Divoox con el aviso «La contraseña no es correcta.» debajo de la contraseña y el botón «¿Olvidaste tu contraseña?» debajo de «Entrar».',
+            pie: 'Si la cuenta existe pero la contraseña no, tienes a mano «¿Olvidaste tu contraseña?».',
           },
         ],
         preguntas: [
@@ -5378,6 +5390,11 @@ const es: SeccionDocs[] = [
             pie: 'Escribe tu correo y te mandamos el enlace.',
           },
           {
+            src: '/docs/olvide-sin-cuenta-es.webp',
+            alt: 'Página «Olvidé mi contraseña» de Divoox con el aviso «No hay ninguna cuenta con ese correo.» y el botón «Crear cuenta».',
+            pie: 'Si el correo no tiene cuenta, te lo decimos en vez de esperar un enlace que no va a llegar.',
+          },
+          {
             src: '/docs/recorrido-web-olvide-codigo-es.webp',
             alt: 'Página «Olvidé mi contraseña» de Divoox después de pedir el enlace, con «¿Te llegó un código al celular?», la casilla «Código de 6 números» y las dos casillas de la contraseña nueva.',
             pie: 'Si tu correo todavía no está confirmado, el código llega a tu celular y lo escribes aquí.',
@@ -5391,7 +5408,7 @@ const es: SeccionDocs[] = [
         preguntas: ['¿Qué hago si olvidé mi contraseña?', '¿Cómo cambio mi contraseña?'],
         pasos: [
           'En la pantalla de entrar, toca «¿Olvidaste tu contraseña?».',
-          'Escribe tu correo. Si tiene cuenta en Divoox, te llega un enlace (revisa también la carpeta de spam).',
+          'Escribe tu correo y toca «Mandarme el enlace». Te llega un enlace (revisa también la carpeta de spam). Si ese correo no tiene cuenta, la página te dice «No hay ninguna cuenta con ese correo» y te ofrece «Crear cuenta»: revisa que esté bien escrito.',
           'Toca el enlace y escribe tu contraseña nueva dos veces.',
           'Si todavía no confirmaste tu correo, por seguridad no te mandamos el enlace: te mandamos un código de 6 números por WhatsApp o SMS a tu celular confirmado. Escríbelo en la misma página, debajo de «¿Te llegó un código al celular?», junto con tu contraseña nueva dos veces.',
           'Listo. Por seguridad, se cierran todas las sesiones abiertas y entras de nuevo con la contraseña nueva.',
@@ -10738,6 +10755,8 @@ const en: SeccionDocs[] = [
           'Each email works for one type of account. If you drive and also want to order, create your customer account with a different email; you can use the same phone number. If you enter your driver email in the customer app (or the other way around), the app tells you which app it belongs to, and your other account stays signed in.',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
           'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over.',
+          'While you see “Review your details,” your account doesn’t exist yet: the screen says so at the top. If you leave there, nothing was created. And if a field is wrong when you tap “Continue,” we tell you which one right next to the button (“Check what’s marked in red: Mobile phone”), so you don’t have to hunt for it.',
+          'When you sign in, if something goes wrong we tell you exactly what happened. “There’s no account with that email” means no account was ever created with that email: check the spelling or tap “Create account,” and your email is already filled in. “That password isn’t correct” means the account exists but the password doesn’t match: tap “Forgot your password?” For your security, after several tries with the wrong password we pause sign-in to that account for 15 minutes.',
         ],
         capturas: [
           {
@@ -10759,6 +10778,16 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-registro-revisa-tus-datos-en.webp',
             alt: 'The “Review your details” screen with the email at the top in large type, your name and mobile phone below, each with “Edit,” and the “Create my account” and “Edit details” buttons.',
             pie: 'Before your account is created you review your details; your email is at the top in large type.',
+          },
+          {
+            src: '/docs/acceso-correo-sin-cuenta-en.webp',
+            alt: 'Divoox “Sign in” screen with the message “There’s no account with that email.” under the email and a “Create account” button under “Sign in.”',
+            pie: 'If the email has no account we say so, and “Create account” creates it with that same email.',
+          },
+          {
+            src: '/docs/acceso-clave-incorrecta-en.webp',
+            alt: 'Divoox “Sign in” screen with the message “That password isn’t correct.” under the password and a “Forgot your password?” button under “Sign in.”',
+            pie: 'If the account exists but the password doesn’t match, “Forgot your password?” is right there.',
           },
         ],
         preguntas: [
@@ -10895,6 +10924,11 @@ const en: SeccionDocs[] = [
             pie: 'Enter your email and we send you the link.',
           },
           {
+            src: '/docs/olvide-sin-cuenta-en.webp',
+            alt: 'Divoox “Forgot my password” page with the message “There’s no account with that email.” and a “Create account” button.',
+            pie: 'If the email has no account, we tell you instead of making you wait for a link that won’t come.',
+          },
+          {
             src: '/docs/recorrido-web-olvide-codigo-en.webp',
             alt: 'Divoox “Forgot my password” page after requesting the link, with “Did you get a code on your phone?”, the “6-digit code” box and the two new password boxes.',
             pie: 'If your email isn’t confirmed yet, the code goes to your cell phone and you enter it here.',
@@ -10908,7 +10942,7 @@ const en: SeccionDocs[] = [
         preguntas: ['What if I forgot my password?', 'How do I change my password?'],
         pasos: [
           'On the sign-in screen, tap “Forgot your password?”',
-          'Enter your email. If it has a Divoox account, you get a link (check spam too).',
+          'Enter your email and tap “Send me the link.” You get a link (check spam too). If that email has no account, the page says “There’s no account with that email” and offers “Create account”: check the spelling.',
           'Tap the link and type your new password twice.',
           'If you haven’t confirmed your email yet, for your safety we don’t send the link: we send a 6-digit code by WhatsApp or text to your confirmed cell phone. Enter it on the same page, under “Did you get a code on your phone?”, along with your new password twice.',
           'Done. For safety, all open sessions are closed and you sign in again with the new password.',

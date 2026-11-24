@@ -2954,6 +2954,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "paso",
     "personas"
   ],
+  "intentos_acceso": [
+    "id",
+    "accion",
+    "paso",
+    "correo",
+    "codigo",
+    "detalle",
+    "app",
+    "version",
+    "plataforma",
+    "pais_red",
+    "ciudad_red",
+    "creado_en"
+  ],
   "banners": [
     "id",
     "lugar",

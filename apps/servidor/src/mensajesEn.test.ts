@@ -75,11 +75,12 @@ describe('mensajes del servidor en inglés', () => {
         },
         body: JSON.stringify({ correo: 'nadie@ejemplo.com', clave: 'clave-que-no-existe' }),
       });
+    // C-MENSAJES-ACCESO (24 nov 2026): un correo sin cuenta se dice tal cual, en los dos idiomas.
     expect(((await (await pedir('en')).json()) as { error: string }).error).toBe(
-      'The email or password is incorrect.',
+      'There’s no account with that email.',
     );
     expect(((await (await pedir('es')).json()) as { error: string }).error).toBe(
-      'El correo o la contraseña no coinciden.',
+      'No hay ninguna cuenta con ese correo.',
     );
   });
 });

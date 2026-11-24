@@ -7,17 +7,42 @@ describe('recuperar la contraseña', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => vi.unstubAllGlobals());
 
-  it('pide el enlace y dice lo mismo exista o no el correo', async () => {
+  it('pide el enlace y, con cuenta, dice que salió', async () => {
     const llamadas: string[] = [];
     vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
-      llamadas.push(String(init.body));
+      if (String(url).includes('/recuperar')) llamadas.push(String(init.body));
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     });
     render(<Olvide idioma="es" />);
     await userEvent.type(screen.getByLabelText('Correo'), 'rosa@ejemplo.com');
     await userEvent.click(screen.getByRole('button', { name: 'Mandarme el enlace' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('ya te llegó el enlace');
+    expect(await screen.findByRole('status')).toHaveTextContent('te mandamos el enlace');
     expect(llamadas[0]).toContain('rosa@ejemplo.com');
+  });
+
+  // C-MENSAJES-ACCESO (24 nov 2026, Richard): antes decía «ya te llegó el enlace» aunque el correo no
+  // tuviera cuenta, y la persona esperaba un correo que nunca llegaba.
+  it('correo sin cuenta: lo dice, no finge que salió el enlace y ofrece «Crear cuenta»', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('/recuperar')
+        ? new Response(
+            JSON.stringify({
+              error: 'No hay ninguna cuenta con ese correo.',
+              campo: 'correo',
+              codigo: 'correo_sin_cuenta',
+            }),
+            { status: 404 },
+          )
+        : new Response('{}', { status: 200 }),
+    );
+    render(<Olvide idioma="es" />);
+    await userEvent.type(screen.getByLabelText('Correo'), 'nadie@ejemplo.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Mandarme el enlace' }));
+    expect(await screen.findByText('No hay ninguna cuenta con ese correo.')).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByTestId('accion-crear').textContent).toBe('Crear cuenta');
+    // Lo escrito se queda para corregirlo.
+    expect((screen.getByLabelText('Correo') as HTMLInputElement).value).toBe('nadie@ejemplo.com');
   });
 
   it('las dos contraseñas deben coincidir y el token viaja al servidor', async () => {

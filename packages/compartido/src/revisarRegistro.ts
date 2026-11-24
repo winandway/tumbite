@@ -33,9 +33,12 @@ export type FilaRevision = { campo: CasillaRegistro; etiqueta: string; valor: st
 
 const ES = {
   titulo: 'Revisa tus datos',
-  intro: 'Antes de crear tu cuenta, mira que todo esté bien escrito.',
+  // C-SIN-EXITO-FALSO (24 nov 2026): nada aquí suena a «ya está»; la cuenta todavía no existe.
+  intro: 'Tu cuenta todavía no está creada. Revisa que todo esté bien y toca «Crear mi cuenta».',
   etiquetaCorreo: 'Tu correo',
-  correoPregunta: '¿Está bien escrito? Aquí te mandamos el enlace para activar tu cuenta.',
+  correoPregunta:
+    '¿Está bien escrito? Cuando crees tu cuenta, aquí te llegará el enlace para activarla.',
+  revisaCasillas: 'Revisa lo marcado en rojo:',
   editar: 'Editar',
   crearMiCuenta: 'Crear mi cuenta',
   creando: 'Creando tu cuenta…',
@@ -46,6 +49,8 @@ const ES = {
     telefono: 'Celular',
     fechaNacimiento: 'Cumpleaños',
     invitacion: 'Código de invitación',
+    correo: 'Correo',
+    clave: 'Contraseña',
   },
   errores: {
     correoVacio: 'Escribe tu correo.',
@@ -80,9 +85,12 @@ const ES = {
 
 const EN: typeof ES = {
   titulo: 'Review your details',
-  intro: 'Before we create your account, make sure everything is spelled right.',
+  intro:
+    'Your account isn’t created yet. Check that everything is right and tap “Create my account.”',
   etiquetaCorreo: 'Your email',
-  correoPregunta: 'Is it spelled right? We’ll send the link to activate your account here.',
+  correoPregunta:
+    'Is it spelled right? Once you create your account, the link to activate it will arrive here.',
+  revisaCasillas: 'Check what’s marked in red:',
   editar: 'Edit',
   crearMiCuenta: 'Create my account',
   creando: 'Creating your account…',
@@ -93,6 +101,8 @@ const EN: typeof ES = {
     telefono: 'Mobile phone',
     fechaNacimiento: 'Birthday',
     invitacion: 'Invitation code',
+    correo: 'Email',
+    clave: 'Password',
   },
   errores: {
     correoVacio: 'Enter your email.',
@@ -220,6 +230,19 @@ export function validarRegistro(
     // La fecha la valida su propia casilla (CampoFecha): a medias queda vacía y no bloquea.
   }
   return fallos;
+}
+
+/**
+ * C-SIN-EXITO-FALSO (24 nov 2026): al tocar «Continuar» con casillas mal, junto al botón se dice cuáles
+ * («Revisa lo marcado en rojo: Celular, Contraseña.»). Antes el error salía solo al lado de la casilla,
+ * arriba y fuera de la vista, y el botón parecía no responder. Vacío si no hay fallos.
+ */
+export function resumenFallos(fallos: readonly FalloCasilla[], idioma: Idioma): string {
+  if (!fallos.length) return '';
+  const t = textosRevisar(idioma);
+  const nombres = new Map<string, string>(Object.entries(t.etiquetas));
+  const lista = [...new Set(fallos.map((f) => nombres.get(f.campo) ?? f.campo))].join(', ');
+  return `${t.revisaCasillas} ${lista}.`;
 }
 
 /** «AAAA-MM-DD» → «15 de marzo de 1990» / «March 15, 1990». Otra cosa: tal cual. */

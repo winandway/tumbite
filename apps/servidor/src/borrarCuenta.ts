@@ -176,6 +176,8 @@ export async function borrarCuenta(
     // C-RASTRO: de dónde entró (app, plataforma, red aproximada) y sus pasos del registro se van con la cuenta.
     db.prepare('DELETE FROM rastro_cuenta WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM embudo_cuenta WHERE usuario_id = ?').bind(u.id),
+    // C-INTENTOS-ACCESO: los intentos fallidos de entrar o crear cuenta con su correo.
+    db.prepare('DELETE FROM intentos_acceso WHERE correo = ?').bind(u.correo.toLowerCase()),
     // C-FOTO-CARA-A-LA-VISTA: sus hitos (vio la tarjeta, abrió la cámara, la subida falló…).
     db.prepare('DELETE FROM hitos_cuenta WHERE usuario_id = ?').bind(u.id),
     // C-REZAGADOS: los recordatorios de registro que recibió y su baja.

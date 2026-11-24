@@ -13,6 +13,7 @@ import { AyudaAqui } from './AyudaAqui';
 import { CampoFecha } from './CampoFecha';
 import { pedir } from './api';
 import { Insignia } from './diseno/Insignia';
+import { IntentosAcceso } from './IntentosAcceso';
 import { usePreferencias } from './usePreferencias';
 
 /**
@@ -279,6 +280,8 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
           </ul>
         </>
       ) : null}
+      {/* C-INTENTOS-ACCESO: quién intentó crear cuenta o entrar, y dónde se cayó. */}
+      <IntentosAcceso idioma={idioma} app={app} desde={desde} hasta={hasta} />
     </section>
   );
 }

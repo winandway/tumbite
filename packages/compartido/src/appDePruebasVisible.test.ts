@@ -51,9 +51,11 @@ describe('la pista cuando una cuenta no entra', () => {
     expect(acceso).toMatch(/setPista\(pistaDeEntrada\(URL_SERVIDOR, v\.correo\)\)/);
     expect(acceso).toMatch(/x\.estado === 401/);
     expect(acceso).toContain('testID="pista-entrada"');
-    // El servidor sigue respondiendo lo mismo exista o no la cuenta.
+    // C-MENSAJES-ACCESO (24 nov 2026, Richard): el servidor ahora dice cuál de las dos falló, cada una
+    // con su código (los dos siguen en 401: la pista de la app equivocada sigue saliendo igual).
     const cuentas = leer('apps', 'servidor', 'src', 'rutas', 'cuentas.ts');
-    expect(cuentas).toContain("'El correo o la contraseña no coinciden.', undefined, 401");
+    expect(cuentas).toContain("MENSAJE_CORREO_SIN_CUENTA, 'correo', 401");
+    expect(cuentas).toContain("MENSAJE_CLAVE_INCORRECTA, 'clave', 401");
   });
 });
 

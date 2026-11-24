@@ -1,4 +1,8 @@
 {
+  "acceso-clave-incorrecta-en": [1082, 1480],
+  "acceso-clave-incorrecta-es": [1082, 1480],
+  "acceso-correo-sin-cuenta-en": [1082, 1480],
+  "acceso-correo-sin-cuenta-es": [1082, 1480],
   "agente-cobrar-codigo-en": [540, 911],
   "agente-cobrar-codigo-es": [540, 982],
   "agente-cobrar-historial-en": [540, 371],
@@ -255,6 +259,8 @@
   "mapa-dia-sin-senal-es": [540, 1169],
   "mapa-noche-en-camino-en": [540, 1169],
   "mapa-noche-en-camino-es": [540, 1169],
+  "olvide-sin-cuenta-en": [1082, 1480],
+  "olvide-sin-cuenta-es": [1082, 1480],
   "panel-buscador-en": [1440, 900],
   "panel-buscador-es": [1440, 900],
   "panel-inicio-en": [1440, 900],

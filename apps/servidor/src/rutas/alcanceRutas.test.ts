@@ -250,6 +250,9 @@ const LISTAS_DE_NUMEROS = [
   'GET /admin/kyc/miniaturas-faltantes',
   // C-RASTRO: contadores con el alcance en la consulta (prueba propia en rastro.test.ts).
   'GET /admin/embudo',
+  // C-INTENTOS-ACCESO: los buenos con el alcance en la consulta; los fallidos (sin cuenta, sin zona) solo
+  // con alcance total.
+  'GET /admin/accesos',
   'GET /admin/informes',
   'GET /admin/pedidos/contadores',
   'GET /admin/datos-personales/:tipo/:id/:campo',

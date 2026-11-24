@@ -468,6 +468,28 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['El almacén no está disponible.', 'Storage isn’t available.'],
   ['El correo o la contraseña no coinciden.', 'The email or password is incorrect.'],
+  // C-MENSAJES-ACCESO (24 nov 2026): cada caso de entrar y recuperar con su mensaje.
+  [
+    'Hiciste muchos intentos con este correo. Espera 15 minutos y vuelve a intentarlo.',
+    'Too many tries with this email. Wait 15 minutes and try again.',
+  ],
+  [
+    'Hubo demasiados intentos con correos sin cuenta desde esta conexión. Espera una hora o escríbenos a soporte.',
+    'Too many tries with emails that have no account from this connection. Wait an hour or contact support.',
+  ],
+  ['No hay ninguna cuenta con ese correo.', 'There’s no account with that email.'],
+  [
+    'Por tu seguridad pausamos la entrada a esta cuenta por 15 minutos, después de varios intentos con la contraseña equivocada. Espera o recupera tu contraseña.',
+    'For your security, we paused sign-in to this account for 15 minutes after several tries with the wrong password. Wait or reset your password.',
+  ],
+  [
+    'Esta cuenta está cerrada. Si crees que es un error, escríbenos a soporte.',
+    'This account is closed. If you think this is a mistake, contact support.',
+  ],
+  [
+    'No pudimos confirmar que eres una persona. Espera unos segundos y vuelve a intentarlo.',
+    'We couldn’t confirm you’re a person. Wait a few seconds and try again.',
+  ],
   [
     'El código va así: US-FL-OCALA (país, estado, ciudad).',
     'Use this format: US-FL-OCALA (country, state, city).',
@@ -700,7 +722,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'Enter your wallet’s mobile number: nine digits starting with 9.',
   ],
   ['Tu cuenta no es de un punto de venta.', 'Your account isn’t a sales point.'],
-  ['La contraseña no es correcta.', 'The password isn’t correct.'],
+  ['La contraseña no es correcta.', 'That password isn’t correct.'],
   ['Escribe tu contraseña.', 'Enter your password.'],
   ['Escribe el nombre del titular.', 'Enter the account holder’s name.'],
   ['Escribe el número de la cuenta o el teléfono.', 'Enter the account number or phone number.'],
@@ -1223,7 +1245,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your password must be at least 8 characters.',
   ],
   ['La contraseña es demasiado larga.', 'Your password is too long.'],
-  ['La contraseña no es correcta.', 'The password is incorrect.'],
+  ['La contraseña no es correcta.', 'That password isn’t correct.'],
   [
     'La contraseña nueva debe tener al menos 8 caracteres.',
     'Your new password must be at least 8 characters.',

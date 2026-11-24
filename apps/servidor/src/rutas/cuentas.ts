@@ -1,5 +1,24 @@
 import { alRegistrarseConductor } from '../camila/bienvenida';
 import { anotarPaso, anotarRastro, origenDePeticion } from '../rastro';
+import {
+  CODIGO_CLAVE_INCORRECTA,
+  CODIGO_CORREO_SIN_CUENTA,
+  CODIGO_CUENTA_CERRADA,
+  CODIGO_ESCUDO,
+  MENSAJE_CLAVE_INCORRECTA,
+  MENSAJE_CORREO_SIN_CUENTA,
+  MENSAJE_CUENTA_CERRADA,
+  MENSAJE_ESCUDO,
+  anotarIntento,
+  codigoDeError,
+  exigirCuentaSinBloqueo,
+  exigirLimiteCorreo,
+  exigirRedSinPausa,
+  sumarSinCuentaRed,
+  limpiarFallosCuenta,
+  sumarFalloCuenta,
+  type AccionIntento,
+} from '../accesoIntentos';
 import { leerCabeceraApp } from '../versionApp';
 import {
   CAPACIDAD_OFERTAS_BUCLE,
@@ -173,12 +192,6 @@ If it wasn't you, do nothing: your password stays the same.`,
   },
 };
 
-let hashFalsoGuardado: Promise<string> | null = null;
-function hashFalso(): Promise<string> {
-  hashFalsoGuardado ??= hashClave(crypto.randomUUID());
-  return hashFalsoGuardado;
-}
-
 async function igualesSeguro(a: string, b: string): Promise<boolean> {
   return (await sha256(a)) === (await sha256(b));
 }
@@ -220,13 +233,59 @@ async function escudo(c: Ctx) {
     c.req.header('cf-turnstile-response'),
     c.req.header('cf-connecting-ip'),
   );
-  if (!ok)
-    throw new ErrorDatos(
-      'No pudimos confirmar que eres una persona. Recarga la página e intenta de nuevo.',
-      undefined,
-      403,
-    );
+  // C-MENSAJES-ACCESO: con su código, y sin «recarga la página» (en las apps no hay página).
+  if (!ok) throw new ErrorDatos(MENSAJE_ESCUDO, undefined, 403, CODIGO_ESCUDO);
 }
+
+/**
+ * C-INTENTOS-ACCESO (24 nov 2026): todo intento de crear cuenta, entrar o recuperar que termina en
+ * error queda anotado (correo escrito, código, app y red aproximada), para que el equipo vea a quien
+ * se cae aunque su cuenta no exista. Los que salen bien ya quedan en rastro_cuenta. Nunca frena.
+ */
+function anotarFallos(accion: AccionIntento) {
+  return async (c: Ctx, next: () => Promise<void>) => {
+    await next();
+    if (!c.error && c.res.status < 400) return;
+    const cuerpo = (await c.req.json().catch(() => null)) as { correo?: unknown } | null;
+    const { codigo, detalle } = c.error
+      ? codigoDeError(c.error)
+      : { codigo: `estado_${c.res.status}`, detalle: null };
+    if (!c.env.DB) return;
+    await anotarIntento(
+      c.env.DB,
+      {
+        accion,
+        paso: 'servidor',
+        correo: typeof cuerpo?.correo === 'string' ? cuerpo.correo : null,
+        codigo,
+        detalle,
+      },
+      origenDePeticion(c.req),
+    );
+  };
+}
+cuentas.use('/registro', anotarFallos('registro'));
+cuentas.use('/entrar', anotarFallos('entrar'));
+cuentas.use('/recuperar', anotarFallos('recuperar'));
+
+/**
+ * C-INTENTOS-ACCESO: lo que falló EN EL TELÉFONO y nunca llegó a ser una petición de alta (casillas
+ * mal al tocar «Continuar», términos sin marcar, sin señal al crear la cuenta). Solo de las listas
+ * conocidas; una fila por aviso con el mismo tope diario. Sin sesión y sin escudo: es solo un registro.
+ */
+const cuerpoIntento = z.object({
+  accion: z.enum(['registro', 'entrar']),
+  paso: z.enum(['formulario', 'revisar']),
+  codigo: z.enum(['validacion', 'sin_aceptar', 'sin_conexion']),
+  detalle: z.string().max(100).optional(),
+  correo: z.string().max(120).optional(),
+});
+cuentas.post('/intento', async (c) => {
+  const leido = cuerpoIntento.safeParse(await c.req.json().catch(() => null));
+  if (!leido.success) return c.json({ ok: false }, 400);
+  const ok = c.env.DB ? await anotarIntento(c.env.DB, leido.data, origenDePeticion(c.req)) : false;
+  return c.json({ ok });
+});
 
 // C-TELEFONO-E164: el país desde donde se abre la app, para que el selector del celular arranque ahí.
 // No lee ni escribe la base.
@@ -252,6 +311,8 @@ cuentas.post('/registro', async (c) => {
   await escudo(c);
   const d = await leerCuerpo(c, esquemaRegistro);
   const db = base(c);
+  // C-LIMITES-SIN-ESCUDO: el mismo correo una y otra vez (probar si existe) se pausa 15 minutos.
+  await exigirLimiteCorreo(db, 'registro', d.correo);
   // C-IDENTIDAD-UNICA: el mismo correo o teléfono escrito de otra forma cuenta como el mismo, y los de
   // cuentas cerradas por mala conducta no vuelven a entrar.
   const correoUnico = correoCanonico(d.correo);
@@ -305,6 +366,7 @@ cuentas.post('/registro', async (c) => {
         : 'Ya hay una cuenta con este mismo correo escrito de otra forma (por ejemplo, con un «+» o con puntos). Entra con esa cuenta o usa otro correo.',
       'correo',
       409,
+      'correo_con_cuenta',
     );
   // El mismo teléfono no abre dos cuentas del mismo tipo (un repartidor puede pedir como cliente).
   if (telUnico) {
@@ -424,18 +486,29 @@ cuentas.post('/entrar', async (c) => {
   await escudo(c);
   const d = await leerCuerpo(c, esquemaEntrar);
   const db = base(c);
+  // C-MENSAJES-ACCESO (24 nov 2026, Richard): cada caso con su mensaje y su código. Antes «El correo o
+  // la contraseña no coinciden» servía para los dos y la persona sin cuenta creía que fallaba la clave.
+  // Contra quien prueba correos o claves a lo bruto: Turnstile, el límite por red y la pausa por cuenta.
+  const ip = c.req.header('cf-connecting-ip');
+  await exigirRedSinPausa(db, ip);
+  await exigirCuentaSinBloqueo(db, d.correo);
   const fila = await db
     .prepare(
-      'SELECT id, nombre, correo, rol, idioma, clave_hash FROM usuarios WHERE correo = ? AND activo = 1',
+      'SELECT id, nombre, correo, rol, idioma, clave_hash, activo FROM usuarios WHERE correo = ?',
     )
     .bind(d.correo)
-    .first<Usuario & { clave_hash: string }>();
-  // Mismo mensaje y mismo tiempo si el correo no existe o la clave está mal:
-  // no se le dice a un atacante cuál de las dos falló.
-  const claveOk = await verificarClave(d.clave, fila?.clave_hash ?? (await hashFalso()));
-  if (!fila || !claveOk) {
-    throw new ErrorDatos('El correo o la contraseña no coinciden.', undefined, 401);
+    .first<Usuario & { clave_hash: string; activo: number }>();
+  if (!fila) {
+    await sumarSinCuentaRed(db, ip);
+    throw new ErrorDatos(MENSAJE_CORREO_SIN_CUENTA, 'correo', 401, CODIGO_CORREO_SIN_CUENTA);
   }
+  if (!(await verificarClave(d.clave, fila.clave_hash))) {
+    await sumarFalloCuenta(db, d.correo);
+    throw new ErrorDatos(MENSAJE_CLAVE_INCORRECTA, 'clave', 401, CODIGO_CLAVE_INCORRECTA);
+  }
+  if (!Number(fila.activo))
+    throw new ErrorDatos(MENSAJE_CUENTA_CERRADA, undefined, 403, CODIGO_CUENTA_CERRADA);
+  await limpiarFallosCuenta(db, d.correo);
   // C-ENTRAR-APP-EQUIVOCADA: con la contraseña ya comprobada, una cuenta en la app de celular que no
   // es la suya no abre sesión ni cierra las que tiene (al conductor, entrar le borraba la de Driver).
   exigirAppDeLaCuenta(c.req.header('x-tumbite-app'), fila.rol);
@@ -633,6 +706,9 @@ cuentas.post('/recuperar', async (c) => {
   await escudo(c);
   const d = await leerCuerpo(c, esquemaRecuperar);
   const db = base(c);
+  // C-LIMITES-SIN-ESCUDO: por red (correos sin cuenta) y por correo, además del límite por minuto.
+  await exigirRedSinPausa(db, c.req.header('cf-connecting-ip'));
+  await exigirLimiteCorreo(db, 'recuperar', d.correo);
   const fila = await db
     .prepare(
       `SELECT id, nombre, idioma, correo_confirmado_en IS NOT NULL AS correo_ok,
@@ -669,7 +745,13 @@ cuentas.post('/recuperar', async (c) => {
     );
     return c.json({ ok: true });
   }
-  if (fila) {
+  // C-MENSAJES-ACCESO: sin cuenta se dice (antes respondía «listo» y la persona esperaba un enlace
+  // que nunca iba a llegar). El escudo y el límite por red siguen delante.
+  if (!fila) {
+    await sumarSinCuentaRed(db, c.req.header('cf-connecting-ip'));
+    throw new ErrorDatos(MENSAJE_CORREO_SIN_CUENTA, 'correo', 404, CODIGO_CORREO_SIN_CUENTA);
+  }
+  {
     const token = nuevoToken();
     await db
       .prepare(

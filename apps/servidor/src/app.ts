@@ -294,6 +294,8 @@ app.use('/datos/*', (c, next) =>
 app.use('/datos/cuentas/entrar', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
+// C-INTENTOS-ACCESO: el aviso de un fallo que pasó en el teléfono (en memoria: el límite no escribe).
+app.use('/datos/cuentas/intento', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 // C-TELEFONO-TOPES: el código por SMS cuesta dinero; además de los topes por cuenta, número y red del

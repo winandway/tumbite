@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  resumenFallos,
   trozosDeCorreo,
   errorCorreo,
   errorTelefono,
@@ -130,10 +131,38 @@ describe('filasParaRevisar: lo que se ve debajo del correo', () => {
   });
 });
 
+describe('C-SIN-EXITO-FALSO: «Revisa tus datos» nunca suena a cuenta ya creada (24 nov 2026)', () => {
+  it('dice que la cuenta todavía no existe y no promete un enlace ya mandado', () => {
+    for (const idioma of ['es', 'en'] as const) {
+      const t = textosRevisar(idioma);
+      expect(`${t.intro} ${t.correoPregunta}`).not.toMatch(
+        /te mandamos|We’ll send|ya te|was sent/i,
+      );
+    }
+    expect(textosRevisar('es').intro).toContain('todavía no está creada');
+    expect(textosRevisar('en').intro).toContain('isn’t created yet');
+  });
+  it('junto al botón «Continuar» se dicen las casillas que faltan', () => {
+    expect(
+      resumenFallos(
+        [
+          { campo: 'telefono', mensaje: 'x' },
+          { campo: 'clave', mensaje: 'y' },
+        ],
+        'es',
+      ),
+    ).toBe('Revisa lo marcado en rojo: Celular, Contraseña.');
+    expect(resumenFallos([{ campo: 'correo', mensaje: 'x' }], 'en')).toBe(
+      'Check what’s marked in red: Email.',
+    );
+    expect(resumenFallos([], 'es')).toBe('');
+  });
+});
+
 describe('los textos de la pantalla, completos en los dos idiomas', () => {
   it('el correo se explica y los botones dicen lo que hacen', () => {
     expect(textosRevisar('es').correoPregunta).toBe(
-      '¿Está bien escrito? Aquí te mandamos el enlace para activar tu cuenta.',
+      '¿Está bien escrito? Cuando crees tu cuenta, aquí te llegará el enlace para activarla.',
     );
     expect(textosRevisar('es').crearMiCuenta).toBe('Crear mi cuenta');
     expect(textosRevisar('en').crearMiCuenta).toBe('Create my account');

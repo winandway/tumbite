@@ -128,3 +128,95 @@ rastroRutas.get('/admin/embudo', async (c) => {
     })),
   });
 });
+
+/**
+ * C-INTENTOS-ACCESO (24 nov 2026, Richard): cada intento de crear cuenta, entrar o recuperar, también
+ * los que no terminaron (quién, cuándo, en qué paso y qué error vio). Los fallidos salen de
+ * `intentos_acceso`; los que salieron bien, de `rastro_cuenta` (no se guardan dos veces). Dos lecturas
+ * por índice (o por el orden de inserción), como mucho 200 filas cada una. Quien trabaja con una zona
+ * ve solo las cuentas de su zona que entraron o se crearon: un intento sin cuenta no tiene zona.
+ */
+export type FilaIntentoAcceso = {
+  resultado: 'ok' | 'fallo';
+  accion: string;
+  paso: string | null;
+  correo: string | null;
+  codigo: string;
+  detalle: string | null;
+  app: string | null;
+  version: string | null;
+  plataforma: string | null;
+  pais: string | null;
+  ciudad: string | null;
+  fecha: string;
+};
+rastroRutas.get('/admin/accesos', async (c) => {
+  exigir(c, 'admin');
+  const hoy = new Date().toISOString().slice(0, 10);
+  const hace7 = new Date(Date.now() - 6 * 86_400_000).toISOString().slice(0, 10);
+  const desde = DIA.test(c.req.query('desde') ?? '') ? c.req.query('desde')! : hace7;
+  const hasta = DIA.test(c.req.query('hasta') ?? '') ? c.req.query('hasta')! : hoy;
+  if (desde > hasta)
+    throw new ErrorDatos('La fecha inicial va antes que la final.', undefined, 400);
+  const app = ['repartidor', 'cliente', 'restaurante'].includes(c.req.query('app') ?? '')
+    ? c.req.query('app')!
+    : null;
+  const correo = (c.req.query('correo') ?? '').trim().toLowerCase().slice(0, 120);
+  const db = base(c);
+  const alcance = alcanceObjetoSql(
+    accesoDe(c),
+    app === 'cliente' ? 'cliente' : 'repartidor',
+    'u.id',
+  );
+  const total = alcance.sql === '';
+  const filtroApp = app ? ' AND app = ?' : '';
+  const filtroCorreo = correo ? ' AND correo LIKE ?' : '';
+  const valores = [desde, hasta, ...(app ? [app] : []), ...(correo ? [`%${correo}%`] : [])];
+  const fallos = total
+    ? (
+        await db
+          .prepare(
+            `SELECT 'fallo' AS resultado, accion, paso, correo, codigo, detalle, app, version, plataforma,
+                    pais_red AS pais, ciudad_red AS ciudad, creado_en AS fecha
+               FROM intentos_acceso
+              WHERE creado_en >= ? AND creado_en < date(?, '+1 day')${filtroApp}${filtroCorreo}
+              ORDER BY creado_en DESC LIMIT 200`,
+          )
+          .bind(...valores)
+          .all<FilaIntentoAcceso>()
+      ).results
+    : [];
+  const buenos = (
+    await db
+      .prepare(
+        `SELECT 'ok' AS resultado, CASE r.tipo WHEN 'alta' THEN 'registro' ELSE 'entrar' END AS accion,
+                'servidor' AS paso, u.correo AS correo,
+                CASE r.tipo WHEN 'alta' THEN 'cuenta_creada' ELSE 'entro' END AS codigo, NULL AS detalle,
+                r.app AS app, r.version AS version, r.plataforma AS plataforma, r.pais_red AS pais,
+                r.ciudad_red AS ciudad, r.creado_en AS fecha
+           FROM rastro_cuenta r JOIN usuarios u ON u.id = r.usuario_id
+          WHERE r.creado_en >= ? AND r.creado_en < date(?, '+1 day')${app ? ' AND r.app = ?' : ''}${
+            correo ? ' AND u.correo LIKE ?' : ''
+          }${alcance.sql}
+          ORDER BY r.id DESC LIMIT 200`,
+      )
+      .bind(...valores, ...alcance.valores)
+      .all<FilaIntentoAcceso>()
+  ).results;
+  const resumen = total
+    ? (
+        await db
+          .prepare(
+            `SELECT accion, codigo, count(*) AS veces FROM intentos_acceso
+              WHERE creado_en >= ? AND creado_en < date(?, '+1 day')${filtroApp}${filtroCorreo}
+              GROUP BY accion, codigo ORDER BY veces DESC LIMIT 30`,
+          )
+          .bind(...valores)
+          .all<{ accion: string; codigo: string; veces: number }>()
+      ).results
+    : [];
+  const intentos = [...fallos, ...buenos]
+    .sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0))
+    .slice(0, 300);
+  return c.json({ desde, hasta, app, conFallos: total, resumen, intentos });
+});

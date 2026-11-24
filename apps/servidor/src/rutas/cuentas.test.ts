@@ -91,7 +91,8 @@ describe('cuentas', () => {
     expect(fila?.clave_hash).not.toContain('clave-segura-1');
   });
 
-  it('rechaza contraseña mala con un mensaje que no revela cuál falló', async () => {
+  // C-MENSAJES-ACCESO (24 nov 2026, decisión de Richard): cada caso con su mensaje y su código.
+  it('rechaza la contraseña mala y el correo sin cuenta, cada uno con su mensaje', async () => {
     await llamar('/datos/cuentas/registro', nueva);
     const mala = await llamar('/datos/cuentas/entrar', {
       correo: 'ana@correo.com',
@@ -102,7 +103,10 @@ describe('cuentas', () => {
       clave: 'otra-clave',
     });
     expect(mala.res.status).toBe(401);
-    expect(mala.datos.error).toBe(noExiste.datos.error);
+    expect(noExiste.res.status).toBe(401);
+    expect(mala.datos.codigo).toBe('clave_incorrecta');
+    expect(noExiste.datos.codigo).toBe('correo_sin_cuenta');
+    expect(mala.datos.error).not.toBe(noExiste.datos.error);
   });
 
   it('no deja registrar el mismo correo dos veces', async () => {

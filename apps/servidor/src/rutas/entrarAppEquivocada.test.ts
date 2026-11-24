@@ -86,13 +86,14 @@ describe('C-ENTRAR-APP-EQUIVOCADA: una cuenta en la app que no es la suya', () =
     expect(await p.sesiones(conductor.id)).toBe(1);
   });
 
-  it('con la contraseña mala se contesta lo de siempre (no se revela de qué tipo es la cuenta)', async () => {
+  it('con la contraseña mala se dice solo eso (no se revela de qué tipo es la cuenta)', async () => {
     const p = await preparar();
     const conductor = await p.nueva('repartidor');
     const r = await p.entrar(conductor.correo, 'otra-clave-9', es('cliente'));
     expect(r.estado).toBe(401);
-    expect(r.datos.error).toBe('El correo o la contraseña no coinciden.');
-    expect(r.datos.codigo).toBeUndefined();
+    // C-MENSAJES-ACCESO (24 nov 2026): el mensaje específico de la contraseña, nunca el de otra app.
+    expect(r.datos.error).toBe('La contraseña no es correcta.');
+    expect(r.datos.codigo).toBe('clave_incorrecta');
     expect(await p.sesiones(conductor.id)).toBe(1);
   });
 
@@ -119,7 +120,8 @@ describe('C-ENTRAR-APP-EQUIVOCADA: una cuenta en la app que no es la suya', () =
     );
     expect(mismo.estado).toBe(409);
     expect(mismo.datos.error).toBe('Ya existe una cuenta con ese correo. Entra con tu contraseña.');
-    expect(mismo.datos.codigo).toBeUndefined();
+    // C-MENSAJES-ACCESO: con su código, para que la app ofrezca «Entrar».
+    expect(mismo.datos.codigo).toBe('correo_con_cuenta');
   });
 
   it('la tabla de apps es la misma que acepta cada app de celular', () => {

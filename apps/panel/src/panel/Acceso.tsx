@@ -10,6 +10,9 @@ import {
   soloNumerosTelefono,
   textosRevisar,
   validarRegistro,
+  accionDeError,
+  resumenFallos,
+  textoAccionAcceso,
   type CasillaRegistro,
   type FalloCasilla,
   type Idioma,
@@ -56,7 +59,9 @@ export function Acceso({
     almacen: almacenNavegador,
     sensibles: ['clave'],
   });
-  const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
+  const [error, setError] = useState<{ mensaje: string; campo?: string; codigo?: unknown } | null>(
+    null,
+  );
   // C-REVISA-TUS-DATOS: al crear la cuenta hay dos pasos, el formulario y «Revisa tus datos». La
   // cuenta solo se crea desde el segundo, con el toque en «Crear mi cuenta».
   const [paso, setPaso] = useState<'formulario' | 'revisar'>('formulario');
@@ -84,14 +89,41 @@ export function Acceso({
 
   /** Si falla, lo escrito se queda en pantalla; el error de una casilla se ve a su lado. */
   function alFallar(x: unknown) {
-    // Un 403 del escudo pide otro pase.
-    if (x instanceof ErrorApi && x.estado === 403) reiniciarTurnstile();
     if (x instanceof ErrorApi && x.campo && CASILLAS.some((c) => c === x.campo))
       setPaso('formulario');
     setError(
-      x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
+      x instanceof ErrorApi
+        ? { mensaje: x.message, campo: x.campo, codigo: x.datos?.codigo }
+        : { mensaje: String(x) },
     );
   }
+
+  /**
+   * C-MENSAJES-ACCESO (24 nov 2026): el botón que acompaña al error. Correo sin cuenta → «Crear
+   * cuenta» con el correo puesto; contraseña mala o cuenta pausada → «¿Olvidaste tu contraseña?»;
+   * al crear con un correo que ya tiene cuenta → «Entrar».
+   */
+  const accion = accionDeError(error?.codigo, modo);
+  function hacerAccion() {
+    if (accion === 'olvide') {
+      ir('/forgot-password?desde=panel');
+      return;
+    }
+    if (!accion) return;
+    const correo = v.correo;
+    setError(null);
+    setFallos([]);
+    setPaso('formulario');
+    setModo(accion === 'crear' ? 'registro' : 'entrar');
+    setCorreoQueSigue(correo);
+  }
+  const [correoQueSigue, setCorreoQueSigue] = useState('');
+  useEffect(() => {
+    if (!correoQueSigue) return;
+    if (!b.valores.correo) b.cambiar('correo', correoQueSigue);
+    setCorreoQueSigue('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo cuando cambia de modo
+  }, [modo, correoQueSigue]);
 
   /** El formulario: al entrar, entra; al crear la cuenta, solo lleva a «Revisa tus datos». */
   async function enviar(e: React.FormEvent) {
@@ -113,6 +145,8 @@ export function Acceso({
     } catch (x) {
       alFallar(x);
     } finally {
+      // C-MENSAJES-ACCESO: el pase del escudo sirve una sola vez; se pide otro ya.
+      reiniciarTurnstile();
       setEnviando(false);
     }
   }
@@ -163,6 +197,8 @@ export function Acceso({
     } catch (x) {
       alFallar(x);
     } finally {
+      // C-MENSAJES-ACCESO: el pase del escudo sirve una sola vez; se pide otro ya.
+      reiniciarTurnstile();
       setEnviando(false);
     }
   }
@@ -269,6 +305,12 @@ export function Acceso({
               {error.mensaje}
             </p>
           )}
+          {/* C-SIN-EXITO-FALSO: junto al botón, qué casillas faltan. */}
+          {modo === 'registro' && fallos.length ? (
+            <p className="error-general" role="alert" data-testid="registro-revisar-casillas">
+              {resumenFallos(fallos, idioma)}
+            </p>
+          ) : null}
           {modo === 'registro' && (
             <label className="nota-legal casilla-acepto">
               <input
@@ -311,6 +353,16 @@ export function Acceso({
           >
             {enviando ? t.enviando : modo === 'entrar' ? t.entrar : r.continuar}
           </button>
+          {accion ? (
+            <button
+              type="button"
+              className="boton secundario ancho"
+              data-testid={`accion-${accion}`}
+              onClick={hacerAccion}
+            >
+              {textoAccionAcceso(accion, idioma)}
+            </button>
+          ) : null}
         </form>
       )}
       <button
@@ -326,7 +378,7 @@ export function Acceso({
         {modo === 'entrar' ? t.noTengo : t.yaTengo}
       </button>
       {modo === 'entrar' && (
-        <button type="button" className="enlace" onClick={() => ir('/forgot-password')}>
+        <button type="button" className="enlace" onClick={() => ir('/forgot-password?desde=panel')}>
           {t.olvide}
         </button>
       )}

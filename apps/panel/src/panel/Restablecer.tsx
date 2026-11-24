@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import {
+  accionDeError,
+  textoAccionAcceso,
   correoEjemplo,
   ErrorApi,
   type Idioma,
   almacenNavegador,
   enIdioma,
+  enIdiomaDireccion,
   useBorrador,
 } from '@tumbite/compartido';
 import { Icono } from '../sitio/Icono';
 import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
 import { api } from './api';
+import { reiniciarTurnstile } from './Turnstile';
 
 const T = {
   es: {
@@ -18,8 +22,10 @@ const T = {
     olvideTexto: 'Escribe tu correo y te mandamos un enlace para crear una contraseña nueva.',
     correo: 'Correo',
     mandar: 'Mandarme el enlace',
+    // C-MENSAJES-ACCESO (24 nov 2026): ahora solo sale si la cuenta existe (si no, se dice).
     mandado:
-      'Si ese correo tiene cuenta en Divoox, ya te llegó el enlace. Revisa también la carpeta de spam. Vence en 30 minutos.',
+      'Listo: te mandamos el enlace a ese correo. Revisa también la carpeta de spam. Vence en 30 minutos.',
+    sinCuentaApp: 'Si ya tienes la app de Divoox, ábrela y toca «Crear cuenta».',
     // C-RECUPERAR-POR-CELULAR: si el correo todavía no está confirmado, el código va al celular.
     codigoTitulo: '¿Te llegó un código al celular?',
     codigoTexto:
@@ -44,7 +50,8 @@ const T = {
     correo: 'Email',
     mandar: 'Send me the link',
     mandado:
-      'If that email has a Divoox account, the link is on its way. Check your spam folder too. It expires in 30 minutes.',
+      'Done: we sent the link to that email. Check your spam folder too. It expires in 30 minutes.',
+    sinCuentaApp: 'If you already have the Divoox app, open it and tap “Create account.”',
     codigoTitulo: 'Did you get a code on your phone?',
     codigoTexto:
       'If you haven’t confirmed your email yet, we don’t send the link: we send a 6-digit code by WhatsApp or text to your confirmed cell phone. Enter it here with your new password. It expires in 10 minutes.',
@@ -64,7 +71,11 @@ const T = {
   },
 };
 
-/** Pide el enlace de recuperación. Lo escrito se guarda; nunca revela si el correo existe. */
+/**
+ * Pide el enlace de recuperación. Lo escrito se guarda. C-MENSAJES-ACCESO (24 nov 2026, Richard): si el
+ * correo no tiene cuenta se dice («No hay ninguna cuenta con ese correo») y se ofrece crearla; antes
+ * decía «ya te llegó el enlace» y la persona esperaba un correo que nunca iba a llegar.
+ */
 export function Olvide({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const b = useBorrador({
@@ -74,12 +85,16 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
   });
   const [estado, setEstado] = useState<'inicio' | 'enviando' | 'listo'>('inicio');
   const [error, setError] = useState('');
+  const [sinCuenta, setSinCuenta] = useState(false);
   // El correo al que se pidió: el código del celular se comprueba con él.
   const [pedido, setPedido] = useState('');
+  // Desde el panel (restaurantes y empresas) se crea la cuenta ahí; desde las apps, en la app.
+  const desdePanel = new URLSearchParams(window.location.search).get('desde') === 'panel';
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setSinCuenta(false);
     setEstado('enviando');
     try {
       await api.pedir('POST', '/datos/cuentas/recuperar', { correo: b.valores.correo, idioma });
@@ -88,7 +103,13 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
       setEstado('listo');
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
+      setSinCuenta(
+        x instanceof ErrorApi && accionDeError(x.datos?.codigo, 'recuperar') === 'crear',
+      );
       setEstado('inicio');
+    } finally {
+      // El pase del escudo sirve una sola vez.
+      reiniciarTurnstile();
     }
   }
 
@@ -119,6 +140,19 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
           <button type="submit" className="boton ancho" disabled={estado === 'enviando'}>
             {estado === 'enviando' ? t.enviando : t.mandar}
           </button>
+          {sinCuenta ? (
+            <div data-testid="olvide-sin-cuenta">
+              <button
+                type="button"
+                className="boton secundario ancho"
+                data-testid="accion-crear"
+                onClick={() => ir(desdePanel ? '/panel' : enIdiomaDireccion('/download', idioma))}
+              >
+                {textoAccionAcceso('crear', idioma)}
+              </button>
+              {desdePanel ? null : <p className="pista">{t.sinCuentaApp}</p>}
+            </div>
+          ) : null}
           <button type="button" className="enlace" onClick={() => ir('/panel')}>
             {t.volver}
           </button>
