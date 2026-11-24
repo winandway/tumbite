@@ -80,6 +80,7 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   // C-CUENTA-UNICA: qué aceptó en cada papel (como terminos_aceptados) y quién unió dos cuentas.
   terminos_papel: 'legal',
   uniones_cuenta: 'equipo',
+  suspensiones_negocio: 'equipo',
   regalos_config: 'sin_persona',
   reloj_tareas: 'sin_persona',
   requisitos_def: 'sin_persona',

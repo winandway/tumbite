@@ -3484,5 +3484,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motivo",
     "resumen_json",
     "creado_en"
+  ],
+  "suspensiones_negocio": [
+    "negocio_id",
+    "persona_id",
+    "creado_en"
   ]
 };

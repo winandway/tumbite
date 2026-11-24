@@ -155,6 +155,15 @@ export function sentenciasReactivarPapeles(db: D1Database, usuarioId: string) {
  */
 export function sentenciasSuspenderNegociosDe(db: D1Database, personaId: string) {
   return [
+    // Se anota cuáles caen por ESTA suspensión: al reactivar a la persona vuelven solo esos (no los
+    // que ya estaban apagados por otra causa).
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO suspensiones_negocio (negocio_id, persona_id)
+         SELECT d.negocio_id, d.persona_id FROM duenos_negocio d JOIN usuarios n ON n.id = d.negocio_id
+          WHERE d.persona_id = ? AND n.activo = 1`,
+      )
+      .bind(personaId),
     db
       .prepare(
         'UPDATE usuarios SET activo = 0 WHERE id IN (SELECT negocio_id FROM duenos_negocio WHERE persona_id = ?)',
@@ -170,6 +179,18 @@ export function sentenciasSuspenderNegociosDe(db: D1Database, personaId: string)
         'UPDATE restaurantes SET abierto = 0 WHERE dueno_id IN (SELECT negocio_id FROM duenos_negocio WHERE persona_id = ?)',
       )
       .bind(personaId),
+  ];
+}
+
+/** Al reactivar a la persona: vuelven los restaurantes que cayeron con ella (y solo esos). */
+export function sentenciasReactivarNegociosDe(db: D1Database, personaId: string) {
+  return [
+    db
+      .prepare(
+        'UPDATE usuarios SET activo = 1 WHERE id IN (SELECT negocio_id FROM suspensiones_negocio WHERE persona_id = ?)',
+      )
+      .bind(personaId),
+    db.prepare('DELETE FROM suspensiones_negocio WHERE persona_id = ?').bind(personaId),
   ];
 }
 
@@ -288,6 +309,9 @@ export type RevisionUnion = {
   frenos: string[];
   /** Lo que pasará al unir (para que el equipo lo lea antes de confirmar). */
   mueve: { pedidos: number; viajes: number; direcciones: number };
+  /** Después de unir: lo que de verdad pasó a la principal y lo que se quedó, por tabla. */
+  movidas?: Record<string, number>;
+  quedaron?: Record<string, number>;
 };
 
 const EN_CURSO_PEDIDO = "estado IN ('pagado','aceptado','listo','en_camino')";
@@ -384,6 +408,22 @@ export async function revisarUnion(
  *   cobrado se respeta (pasa a la principal, así no se puede volver a usar), lo pendiente de la cuenta
  *   que se cierra se anula, y los premios por invitar que estaban por darse se cierran: nada doble.
  */
+/** Lo que pasa a la cuenta principal al unir: [tabla, columna, condición extra]. */
+const MOVIDAS: readonly [string, string, string][] = [
+  ['pedidos', 'cliente_id', ' AND (repartidor_id IS NULL OR repartidor_id <> ?1)'],
+  ['operaciones', 'cliente_id', ' AND (conductor_id IS NULL OR conductor_id <> ?1)'],
+  ['calificaciones_cliente', 'cliente_id', ' AND repartidor_id <> ?1'],
+  ['calificaciones_viaje', 'autor_id', " AND de = 'pasajero'"],
+  ['pagos_comida', 'cliente_id', ''],
+  ['direcciones_cliente', 'usuario_id', ''],
+  ['conductores_confianza', 'cliente_id', ' AND conductor_id <> ?1'],
+  ['rutinas_viaje', 'cliente_id', ''],
+  ['viajes_programados', 'cliente_id', ''],
+  ['contactos_confianza', 'cliente_id', ''],
+];
+/** Las tres sentencias de regalos van antes de las movidas en el lote. */
+const INICIO_MOVIDAS = 3;
+
 export async function unirCuentas(
   db: D1Database,
   conductorId: string,
@@ -399,7 +439,7 @@ export async function unirCuentas(
     db
       .prepare(`UPDATE OR IGNORE ${tabla} SET ${columna} = ?1 WHERE ${columna} = ?2${extra}`)
       .bind(P, S);
-  await db.batch([
+  const resultados = await db.batch([
     // Lo pendiente de la cuenta que se cierra se anula; lo cobrado pasa a la principal.
     db
       .prepare(
@@ -413,16 +453,7 @@ export async function unirCuentas(
       )
       .bind(S),
     // El historial de cliente, con su papel (nunca una fila donde quedaría de los dos lados).
-    mover('pedidos', 'cliente_id', ' AND (repartidor_id IS NULL OR repartidor_id <> ?1)'),
-    mover('operaciones', 'cliente_id', ' AND (conductor_id IS NULL OR conductor_id <> ?1)'),
-    mover('calificaciones_cliente', 'cliente_id', ' AND repartidor_id <> ?1'),
-    mover('calificaciones_viaje', 'autor_id', " AND de = 'pasajero'"),
-    mover('pagos_comida', 'cliente_id'),
-    mover('direcciones_cliente', 'usuario_id'),
-    mover('conductores_confianza', 'cliente_id', ' AND conductor_id <> ?1'),
-    mover('rutinas_viaje', 'cliente_id'),
-    mover('viajes_programados', 'cliente_id'),
-    mover('contactos_confianza', 'cliente_id'),
+    ...MOVIDAS.map(([tabla, columna, extra]) => mover(tabla, columna, extra)),
     // Sus teléfonos siguen recibiendo los avisos de cliente (ahora de la principal).
     db
       .prepare(
@@ -447,7 +478,35 @@ export async function unirCuentas(
       .prepare(
         'INSERT INTO uniones_cuenta (id, principal_id, secundaria_id, hecha_por, motivo, resumen_json) VALUES (?, ?, ?, ?, ?, ?)',
       )
-      .bind(nuevoId(), P, S, hechaPor, motivo, JSON.stringify(r.mueve)),
+      .bind(nuevoId(), P, S, hechaPor, motivo, '{}'),
   ]);
+  // El resumen cuenta lo que DE VERDAD se movió; lo que se quedó (por una clave única: la principal
+  // ya tenía esa fila) se anota y se dice en el registro de errores, nunca en silencio.
+  const movidas = Object.fromEntries(
+    MOVIDAS.map(([tabla], i) => [tabla, Number(resultados[INICIO_MOVIDAS + i]?.meta.changes ?? 0)]),
+  );
+  const quedanLista: [string, number][] = [];
+  for (const [tabla, columna, extra] of MOVIDAS) {
+    const n = Number(
+      (
+        await db
+          .prepare(
+            `SELECT COUNT(*) AS n FROM ${tabla} WHERE ${columna} = ?2${extra.replace(/\?1/g, '?1')}`,
+          )
+          .bind(P, S)
+          .first<{ n: number }>()
+      )?.n ?? 0,
+    );
+    if (n) quedanLista.push([tabla, n]);
+  }
+  const quedaron = Object.fromEntries(quedanLista);
+  if (Object.keys(quedaron).length)
+    console.error('unir cuentas: filas que no se pudieron mover (clave única)', P, S, quedaron);
+  await db
+    .prepare('UPDATE uniones_cuenta SET resumen_json = ? WHERE secundaria_id = ?')
+    .bind(JSON.stringify({ movidas, quedaron }), S)
+    .run();
+  r.movidas = movidas;
+  r.quedaron = quedaron;
   return r;
 }

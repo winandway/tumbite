@@ -5312,3 +5312,11 @@ CREATE TABLE IF NOT EXISTS uniones_cuenta (
   resumen_json TEXT NOT NULL DEFAULT '{}',
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-CUENTA-UNICA-SUSPENSION: los restaurantes que cayeron por la suspensión de su dueño (fraude o
+-- seguridad). Al reactivar a la persona vuelven solo estos, no los apagados por otra causa.
+CREATE TABLE IF NOT EXISTS suspensiones_negocio (
+  negocio_id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS suspensiones_negocio_persona ON suspensiones_negocio(persona_id);

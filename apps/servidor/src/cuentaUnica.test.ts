@@ -500,3 +500,136 @@ describe('C-CUENTA-UNICA-RESTAURANTE: la misma persona es dueña de uno o varios
     expect((await p.yo(cliente.token)).estado).toBe(401);
   });
 });
+
+describe('C-CUENTA-UNICA-SUSPENSION: lo que pidió el revisor de calidad', () => {
+  it('sin motivoTipo, a un conductor se le suspende solo el papel de conductor (lo más seguro)', async () => {
+    const p = await preparar();
+    const admin = await p.m.cuenta('admin');
+    const conductor = await p.nueva('repartidor');
+    const cliente = await p.entrar(conductor.correo, app('cliente'), {
+      activarPapel: true,
+      aceptaTerminosPapel: true,
+    });
+    const r = await p.m.llamar(
+      'PATCH',
+      `/datos/admin/usuarios/${conductor.id}`,
+      { activo: false, motivo: 'Panel viejo sin tipo' },
+      admin.token,
+    );
+    expect(r.datos.papelConductor).toBe('suspendido');
+    expect((await p.yo(cliente.datos.token)).datos.usuario.rol).toBe('cliente');
+    expect((await p.yo(conductor.token)).estado).toBe(401);
+    // La ficha lo muestra suspendido y «Reactivar» le devuelve el papel.
+    await p.m.DB.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)')
+      .bind(conductor.id)
+      .run();
+    const ficha = await p.m.llamar(
+      'GET',
+      `/datos/admin/repartidores/${conductor.id}`,
+      undefined,
+      admin.token,
+    );
+    expect(ficha.estado).toBe(200);
+    expect(ficha.datos.repartidor).toMatchObject({ activo: false, papelSuspendido: true });
+    await p.m.llamar(
+      'PATCH',
+      `/datos/admin/usuarios/${conductor.id}`,
+      { activo: true },
+      admin.token,
+    );
+    expect((await p.entrar(conductor.correo, app('repartidor'))).estado).toBe(200);
+  });
+
+  it('al reactivar tras un fraude vuelven los restaurantes que cayeron con la persona, no los apagados antes', async () => {
+    const p = await preparar();
+    const admin = await p.m.cuenta('admin');
+    const cliente = await p.nueva('cliente');
+    const crear = async (nombre: string) =>
+      (
+        await p.m.llamar(
+          'POST',
+          '/datos/cuentas/mis-restaurantes',
+          { nombre, aceptaTerminos: true },
+          cliente.token,
+        )
+      ).datos.negocioId as string;
+    const uno = await crear('Local uno');
+    const dos = await crear('Local dos');
+    await p.m.llamar('POST', '/datos/cuentas/actuar-como', { negocioId: null }, cliente.token);
+    const patch = (id: string, cuerpo: Record<string, unknown>) =>
+      p.m.llamar('PATCH', `/datos/admin/usuarios/${id}`, cuerpo, admin.token);
+    // El «dos» ya estaba apagado por otra causa.
+    await patch(dos, { activo: false, motivo: 'Cerrado por reformas', motivoTipo: 'otro' });
+    await patch(cliente.id, { activo: false, motivo: 'Cobros falsos', motivoTipo: 'fraude' });
+    const activo = async (id: string) =>
+      Number(
+        (
+          await p.m.DB.prepare('SELECT activo FROM usuarios WHERE id = ?')
+            .bind(id)
+            .first<{ activo: number }>()
+        )?.activo,
+      );
+    expect(await activo(uno)).toBe(0);
+    await patch(cliente.id, { activo: true });
+    expect(await activo(cliente.id)).toBe(1);
+    expect(await activo(uno)).toBe(1);
+    expect(await activo(dos)).toBe(0);
+  });
+});
+
+describe('C-CUENTA-UNICA-UNIR: el resumen cuenta lo que de verdad se movió', () => {
+  it('una fila que no se puede mover por clave única queda escrita en el resumen y en el registro de errores', async () => {
+    const p = await preparar();
+    const admin = await p.m.cuenta('admin');
+    const conductor = await p.nueva('repartidor', '+584241234567');
+    const cliente = await p.nueva('cliente', '+584241234567');
+    const db = p.m.DB;
+    await db
+      .prepare("UPDATE usuarios SET telefono_verificado_en = datetime('now') WHERE id = ?")
+      .bind(conductor.id)
+      .run();
+    await db.prepare('PRAGMA foreign_keys = OFF').run();
+    // El mismo contacto de confianza en las dos cuentas (único por cliente y teléfono) y otro distinto.
+    for (const [id, cid, tel] of [
+      ['k1', conductor.id, '+15550001'],
+      ['k2', cliente.id, '+15550001'],
+      ['k3', cliente.id, '+15550002'],
+    ] as const)
+      await db
+        .prepare(
+          "INSERT INTO contactos_confianza (id, cliente_id, nombre, telefono) VALUES (?, ?, 'Contacto', ?)",
+        )
+        .bind(id, cid, tel)
+        .run();
+    const errores: unknown[] = [];
+    const original = console.error;
+    console.error = (...a: unknown[]) => void errores.push(a);
+    try {
+      const r = await p.m.llamar(
+        'POST',
+        '/datos/admin/cuentas/unir',
+        {
+          conductorId: conductor.id,
+          clienteId: cliente.id,
+          motivo: 'Misma persona',
+          confirmo: true,
+        },
+        admin.token,
+      );
+      expect(r.estado).toBe(200);
+      expect(r.datos.movidas.contactos_confianza).toBe(1);
+      expect(r.datos.quedaron).toEqual({ contactos_confianza: 1 });
+    } finally {
+      console.error = original;
+    }
+    const u = await db
+      .prepare('SELECT resumen_json FROM uniones_cuenta WHERE secundaria_id = ?')
+      .bind(cliente.id)
+      .first<{ resumen_json: string }>();
+    expect(JSON.parse(u?.resumen_json ?? '{}')).toMatchObject({
+      movidas: { contactos_confianza: 1 },
+      quedaron: { contactos_confianza: 1 },
+    });
+    expect(JSON.stringify(errores)).toContain('no se pudieron mover');
+  });
+});

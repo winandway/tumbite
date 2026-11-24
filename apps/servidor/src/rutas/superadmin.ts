@@ -6,6 +6,7 @@ import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { Hono } from 'hono';
 import {
+  sentenciasReactivarNegociosDe,
   revisarUnion,
   unirCuentas,
   sentenciasReactivarPapeles,
@@ -529,6 +530,7 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
   const r = await db
     .prepare(
       `SELECT u.id, u.nombre, u.correo, u.telefono, u.fecha_nacimiento, u.idioma, u.creado_en, u.correo_confirmado_en, u.activo, u.es_prueba,
+        (SELECT p.estado FROM usuario_papeles p WHERE p.usuario_id = u.id AND p.papel = 'repartidor') AS estado_papel,
         d.codigo, d.zona_id, d.conectado, d.puntos, d.lat, d.lng, d.ubicacion_en, d.tipo, z.nombre AS ciudad
        FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id LEFT JOIN zonas z ON z.id = d.zona_id WHERE u.id = ?`,
     )
@@ -662,7 +664,10 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       correoConfirmado: Boolean(r.correo_confirmado_en),
       correoEstado: await estadoCorreoDe(db, id),
       historialCorreo: await historialCorreoDe(db, id),
-      activo: Number(r.activo ?? 1) === 1,
+      // C-CUENTA-UNICA-SUSPENSION: con el papel de conductor suspendido, la ficha lo dice y ofrece
+      // «Reactivar» (que lo devuelve), aunque la persona siga pudiendo pedir.
+      activo: Number(r.activo ?? 1) === 1 && r.estado_papel !== 'suspendido',
+      papelSuspendido: r.estado_papel === 'suspendido',
       // C-SIN-ZONA-VISIBLE: sin ciudad real se dice «sin zona» (nunca la ciudad por defecto de la tabla).
       ...(await (async () => {
         const real = await zonaRealDe(db, id);
@@ -1197,7 +1202,9 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
       malaConducta: z.boolean().default(false),
       // C-CUENTA-UNICA-SUSPENSION: por qué. Fraude o seguridad suspenden a la persona entera (y sus
       // restaurantes); papeles vencidos, solo el papel de conductor (sigue pudiendo pedir).
-      motivoTipo: z.enum(['fraude', 'seguridad', 'papeles', 'otro']).default('otro'),
+      // Sin tipo (panel viejo): a un conductor se le suspende solo el papel de conductor, lo más
+      // seguro (nunca le quita la cuenta de cliente por un descuido); a los demás, como siempre.
+      motivoTipo: z.enum(['fraude', 'seguridad', 'papeles', 'otro']).optional(),
     }),
   );
   const db = base(c);
@@ -1209,8 +1216,9 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
     .bind(id)
     .first<{ id: string; rol: string; correo: string; telefono: string | null }>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
+  const motivoTipo = d.motivoTipo ?? (u.rol === 'repartidor' ? 'papeles' : 'otro');
   // C-CUENTA-UNICA-SUSPENSION: los papeles vencidos de un conductor suspenden solo ese papel.
-  if (!d.activo && d.motivoTipo === 'papeles' && !d.malaConducta) {
+  if (!d.activo && motivoTipo === 'papeles' && !d.malaConducta) {
     if (u.rol !== 'repartidor')
       throw new ErrorDatos('Solo un conductor se suspende por papeles.', 'motivoTipo', 422);
     await suspenderPapelConductor(db, id, d.motivo);
@@ -1219,7 +1227,7 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
   }
   // Un restaurante (cuenta de negocio) suspendido por fraude o seguridad arrastra a su dueño.
   const duenoDelNegocio =
-    !d.activo && (d.motivoTipo === 'fraude' || d.motivoTipo === 'seguridad' || d.malaConducta)
+    !d.activo && (motivoTipo === 'fraude' || motivoTipo === 'seguridad' || d.malaConducta)
       ? await db
           .prepare('SELECT persona_id FROM duenos_negocio WHERE negocio_id = ?')
           .bind(id)
@@ -1248,14 +1256,15 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
       db.prepare('UPDATE huellas_caras SET mala_conducta = 1 WHERE usuario_id = ?').bind(id),
     ]);
   }
-  const fraude = d.motivoTipo === 'fraude' || d.motivoTipo === 'seguridad' || d.malaConducta;
+  const fraude = motivoTipo === 'fraude' || motivoTipo === 'seguridad' || d.malaConducta;
   const personas = duenoDelNegocio ? [id, duenoDelNegocio.persona_id] : [id];
   await db.batch([
     ...personas.map((p) =>
       db.prepare('UPDATE usuarios SET activo = ? WHERE id = ?').bind(d.activo ? 1 : 0, p),
     ),
     ...(d.activo
-      ? sentenciasReactivarPapeles(db, id)
+      ? // Vuelven también los restaurantes que cayeron por la suspensión de esta persona (solo esos).
+        [...sentenciasReactivarPapeles(db, id), ...sentenciasReactivarNegociosDe(db, id)]
       : personas.flatMap((p) => [
           db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(p),
           db.prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?').bind(p),
