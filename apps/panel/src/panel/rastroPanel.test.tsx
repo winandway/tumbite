@@ -169,7 +169,7 @@ describe('C-RASTRO · la actividad de una cuenta en su ficha', () => {
     expect(texto('paso-foto_cara')).toContain('la comprobación automática tiene dudas');
     expect(texto('paso-foto_documento')).toContain('entró por la verificación anterior');
     expect(texto('paso-correo')).toContain('Pendiente');
-    expect(texto('paso-correo')).toContain('el correo rebotó y está frenado');
+    expect(texto('paso-correo')).toContain('el correo rebotó: hay que corregirlo (no frena)');
     // Lo que no le toca no se cuenta como pendiente.
     expect(texto('paso-telefono')).toContain('No le toca');
     expect(texto('paso-aviso_ia')).toContain('que no llevaba este aviso');
@@ -341,5 +341,91 @@ describe('C-RASTRO · el embudo del registro', () => {
     await userEvent.selectOptions(screen.getByLabelText('Zona'), 'Z1');
     await waitFor(() => expect(pedidas.at(-1)).toContain('zona=Z1'));
     expect(screen.getByText(/VE:/)).toBeTruthy();
+  });
+});
+
+describe('C-CORREO-NO-FRENA en el panel: el correo por confirmar va al final y no es «Le falta»', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('la ficha dice «Registro completo» y aparte «Correo por confirmar (no frena)»; si rebotó, lo dice', async () => {
+    const paso = (p: string, estado: string, nota: string | null = null) => ({
+      paso: p,
+      estado,
+      fecha: null,
+      fuente: null,
+      comprobacion: null,
+      nota,
+    });
+    const actividad = (rebotado: boolean) => ({
+      actividad: {
+        ...ACTIVIDAD,
+        rol: 'cliente',
+        dondeQuedo: {
+          ultimo: 'primer_viaje',
+          sigue: null,
+          hechos: ['cuenta', 'telefono', 'primer_viaje'],
+          falta: [],
+          correoPorConfirmar: true,
+          correoRebotado: rebotado,
+          pasos: [
+            paso('cuenta', 'hecho'),
+            paso('telefono', 'hecho'),
+            paso('primer_viaje', 'hecho'),
+            paso('correo', 'pendiente', rebotado ? 'correo_frenado' : 'no_frena'),
+          ],
+        },
+      },
+    });
+    vi.stubGlobal('fetch', async () => json(actividad(false)));
+    const { unmount } = render(
+      <ActividadCuenta ruta="/datos/admin/clientes/u3/actividad" idioma="es" />,
+    );
+    await screen.findByTestId('actividad');
+    expect(screen.getByTestId('actividad-sigue').textContent).toContain('Registro completo');
+    expect(screen.getByTestId('actividad-sigue').textContent).not.toContain('Le falta');
+    expect(screen.getByTestId('actividad-correo-no-frena').textContent).toBe(
+      'Correo por confirmar (no frena)',
+    );
+    expect(screen.getByTestId('paso-correo').textContent).toContain(
+      'correo por confirmar (no frena)',
+    );
+    const filas = [...document.querySelectorAll('.actividad-pasos li')];
+    expect(filas.at(-1)?.getAttribute('data-testid')).toBe('paso-correo');
+    unmount();
+    vi.stubGlobal('fetch', async () => json(actividad(true)));
+    render(<ActividadCuenta ruta="/datos/admin/clientes/u3/actividad" idioma="en" />);
+    await screen.findByTestId('actividad');
+    const insignia = screen.getByTestId('actividad-correo-no-frena');
+    expect(insignia.textContent).toContain('The email bounced (doesn’t block)');
+    expect(insignia.getAttribute('data-tono')).toBe('problema');
+  });
+
+  it('el embudo dice que el correo no frena en vez de «Se quedaron aquí»', async () => {
+    vi.stubGlobal('fetch', async (url: string) => {
+      const ruta = String(url);
+      if (ruta.includes('/datos/admin/preferencias/')) return json({ valor: {}, guardada: false });
+      if (ruta.includes('/datos/admin/zonas')) return json({ zonas: [] });
+      if (ruta.includes('/datos/admin/embudo'))
+        return json({
+          app: 'cliente',
+          desde: '2026-11-01',
+          hasta: '2026-11-22',
+          pasos: [
+            { paso: 'cuenta', personas: 20, seQuedan: 5 },
+            { paso: 'telefono', personas: 15, seQuedan: null },
+            { paso: 'correo', personas: 8, seQuedan: null },
+          ],
+          porPais: [],
+        });
+      return json({});
+    });
+    render(<SuperEmbudo idioma="es" />);
+    const caja = await screen.findByTestId('embudo');
+    await waitFor(() => expect(caja.querySelectorAll('tbody tr')).toHaveLength(3));
+    const fila = caja.querySelector('tr[data-paso="correo"]');
+    expect(within(fila as HTMLElement).getByTestId('embudo-no-frena').textContent).toContain(
+      'no frena',
+    );
+    expect(fila?.querySelector('[data-tono="hecho"]')).toBeNull();
   });
 });

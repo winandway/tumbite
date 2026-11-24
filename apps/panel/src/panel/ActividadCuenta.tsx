@@ -39,6 +39,10 @@ export type Actividad = {
     falta: PasoRegistro[];
     /** C-RASTRO-FUENTES: cada paso en el orden en que lo hace la persona, leído de todas sus fuentes. */
     pasos?: PasoCuenta[];
+    /** C-CORREO-NO-FRENA: el correo sigue sin confirmar; no frena el registro. */
+    correoPorConfirmar?: boolean;
+    /** …y además rebotó: hay que corregirlo. */
+    correoRebotado?: boolean;
   };
   linea: {
     fecha: string;
@@ -69,6 +73,8 @@ const T = {
       'Esta cuenta se creó antes de que se guardara desde qué app y qué red se hizo el alta.',
     registro: 'Registro',
     completo: 'Registro completo',
+    correoNoFrena: 'Correo por confirmar (no frena)',
+    correoRebotoNoFrena: 'El correo rebotó (no frena): pídele que lo corrija',
     sigue: 'Le falta',
     hecho: 'Hecho',
     pendiente: 'Pendiente',
@@ -77,7 +83,8 @@ const T = {
       verificacion_anterior: 'entró por la verificación anterior',
       aprobado_equipo: 'lo aprobó el equipo',
       solo_al_volver: 'solo se pide al volver tras muchos días sin conectarse',
-      correo_frenado: 'el correo rebotó y está frenado',
+      correo_frenado: 'el correo rebotó: hay que corregirlo (no frena)',
+      no_frena: 'correo por confirmar (no frena)',
     },
     notaAviso: 'pasó por la verificación anterior, que no llevaba este aviso',
     linea: 'Línea de tiempo',
@@ -153,6 +160,8 @@ const T = {
     sinOrigen: 'This account was created before sign-up app and network were recorded.',
     registro: 'Sign-up',
     completo: 'Sign-up complete',
+    correoNoFrena: 'Email to confirm (doesn’t block)',
+    correoRebotoNoFrena: 'The email bounced (doesn’t block): ask them to fix it',
     sigue: 'Still missing',
     hecho: 'Done',
     pendiente: 'Pending',
@@ -161,7 +170,8 @@ const T = {
       verificacion_anterior: 'came in through the previous verification',
       aprobado_equipo: 'approved by the team',
       solo_al_volver: 'only asked when coming back after many days offline',
-      correo_frenado: 'the email bounced and is on hold',
+      correo_frenado: 'the email bounced: it needs fixing (doesn’t block)',
+      no_frena: 'email to confirm (doesn’t block)',
     },
     notaAviso: 'went through the previous verification, which had no such notice',
     linea: 'Timeline',
@@ -401,7 +411,15 @@ export function ActividadCuenta({
           </Insignia>
         ) : (
           <Insignia tono="hecho">{t.completo}</Insignia>
-        )}
+        )}{' '}
+        {a.dondeQuedo.correoPorConfirmar ? (
+          <Insignia
+            tono={a.dondeQuedo.correoRebotado ? 'problema' : 'apagado'}
+            testId="actividad-correo-no-frena"
+          >
+            {a.dondeQuedo.correoRebotado ? t.correoRebotoNoFrena : t.correoNoFrena}
+          </Insignia>
+        ) : null}
       </p>
       <ol className="actividad-pasos">
         {pasos.map((p) => (

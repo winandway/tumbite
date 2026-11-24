@@ -12,7 +12,8 @@ import {
 } from '@tumbite/compartido';
 import { sha256 } from '../cripto';
 import type { Env } from '../env';
-import { type Variables, base } from '../sesion';
+import { type Variables, base, exigir } from '../sesion';
+import { campanaDe } from '../campana';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   type ActorFlex,
@@ -838,6 +839,42 @@ flexRutasEmpresa.get('/empresas/:id/incidencias', async (c) => {
       creadoEn: i.creado_en,
     })),
   });
+});
+
+/**
+ * C-CAMPANA-SE-VACIA (23 nov 2026) — todos los países. La campana del panel de la empresa: lo que pasó
+ * en la calle (cada incidencia de entrega de estos 14 días, resuelta o no) y si esa persona ya lo vio.
+ * Abrirla la deja en cero (`POST /datos/campana/visto` con `flex:<empresa>`). Solo lectura.
+ */
+flexRutasEmpresa.get('/empresas/:id/campana', async (c) => {
+  const actor = await actorDeEmpresa(c, c.req.param('id'));
+  exigirPermiso(actor, 'envios.ver');
+  const u = exigir(c);
+  const db = base(c);
+  const { results } = await db
+    .prepare(
+      `SELECT i.id, i.motivo, i.estado, i.creado_en, p.codigo_seguimiento FROM flex_incidencias i
+         JOIN paquetes p ON p.id = i.paquete_id
+        WHERE i.empresa_id = ? AND i.creado_en >= datetime('now', '-14 days')
+        ORDER BY i.creado_en DESC LIMIT 20`,
+    )
+    .bind(actor.empresaId)
+    .all<{
+      id: string;
+      motivo: string;
+      estado: string;
+      creado_en: string;
+      codigo_seguimiento: string | null;
+    }>();
+  const lista = results.map((i) => ({
+    tipo: 'incidencia' as const,
+    id: i.id,
+    titulo: i.codigo_seguimiento ?? '',
+    motivo: i.motivo,
+    en: i.creado_en,
+    resuelto: i.estado !== 'abierta',
+  }));
+  return c.json(await campanaDe(db, u.id, `flex:${actor.empresaId}`, lista));
 });
 
 /** La empresa autoriza reintentar en la ruta aunque su configuración no lo permita. */

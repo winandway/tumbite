@@ -10,7 +10,7 @@ import { presupuestoWhatsappDia, whatsappEncendido } from '../whatsapp';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { guardarFoto } from '../fotoLimpia';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
-import { correosEquipo } from '../avisosEquipo';
+import { avisarVerificacionLista } from '../avisoVerificacion';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -435,14 +435,10 @@ kyc.post('/kyc/enviar', async (c) => {
       }
     }
   }
-  // Punto 27: el equipo se entera en el momento (antes nadie avisaba y la bandeja se miraba a mano).
-  for (const para of await correosEquipo(c.env, 'verificaciones'))
-    await enviarCorreo(c.env, {
-      de: 'avisos',
-      para,
-      asunto: `Verificación enviada: ${u.nombre} (${u.rol})`,
-      texto: `${u.nombre} (${u.correo}, ${u.rol}) envió su verificación de identidad${distancia != null ? ` · local a ${distancia} m de la dirección registrada` : ''}. Revísala en el superadmin → Verificaciones.`,
-    }).catch((e: unknown) => console.error('kyc: correo al equipo', e));
+  // Punto 27 y C-VERIFICACIONES-EN-VIVO: el equipo se entera en el momento, UN correo por persona.
+  await avisarVerificacionLista(c.env, u.id).catch((e: unknown) =>
+    console.error('kyc: aviso al equipo', e),
+  );
   return c.json({ ok: true, distanciaM: distancia });
 });
 
@@ -454,6 +450,42 @@ kyc.post('/kyc/enviar', async (c) => {
  * cada foto; filtros de pestaña, zona, cuentas reales o de prueba y búsqueda. Los totales de cada
  * pestaña salen con los mismos filtros (solo en la primera página). Mirar no escribe.
  */
+/**
+ * C-VERIFICACIONES-EN-VIVO (23 nov 2026, Richard): la marca que el panel pide cada pocos segundos con
+ * la pestaña a la vista. Lee lo mínimo, por índice: cuántas esperan y la última enviada (kyc_estado),
+ * el último registro de conductor o restaurante (usuarios_rol_creado) y la última foto subida (rowid).
+ * Solo si la firma cambió el panel vuelve a traer la lista. Mirar no escribe.
+ */
+kyc.get('/admin/kyc/marca', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  // Cinco preguntas chicas en UN viaje, cada una por su índice y con su tope (una fila cada una).
+  const [p, u, rc, rr, f] = await db.batch<Record<string, unknown>>([
+    db.prepare("SELECT COUNT(*) AS n FROM kyc WHERE estado = 'pendiente'"),
+    db.prepare(
+      "SELECT enviado_en AS v FROM kyc WHERE estado = 'pendiente' ORDER BY enviado_en DESC LIMIT 1",
+    ),
+    db.prepare(
+      "SELECT creado_en AS v FROM usuarios WHERE rol = 'repartidor' ORDER BY creado_en DESC LIMIT 1",
+    ),
+    db.prepare(
+      "SELECT creado_en AS v FROM usuarios WHERE rol = 'restaurante' ORDER BY creado_en DESC LIMIT 1",
+    ),
+    db.prepare('SELECT rowid AS v FROM verificacion_fotos ORDER BY rowid DESC LIMIT 1'),
+  ]);
+  const v = (r: D1Result<Record<string, unknown>> | undefined, k = 'v') =>
+    (new Map(Object.entries(r?.results[0] ?? {})).get(k) as string | number | null | undefined) ??
+    null;
+  const pendientes = Number(v(p, 'n') ?? 0);
+  const ultima = v(u) as string | null;
+  c.header('Cache-Control', 'no-store');
+  return c.json({
+    pendientes,
+    ultimaEnviada: ultima,
+    firma: [pendientes, ultima, v(rc), v(rr), v(f)].join('|'),
+  });
+});
+
 kyc.get('/admin/kyc', async (c) => {
   exigir(c, 'admin');
   const zona = c.req.query('zona') ?? '';

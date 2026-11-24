@@ -249,6 +249,16 @@ export async function puertaTelefono(
   env: Env,
   db: D1Database,
   usuarioId: string,
+  opciones: {
+    /**
+     * C-CORREO-NO-FRENA (23 nov 2026, decisión de Richard): la cuenta de cliente de antes del código
+     * todavía tiene la puerta del correo cerrada. Si hoy el código puede salir a su número, la pantalla
+     * le pide el código del celular EN LUGAR del correo (motivo «registro», obligatorio): al confirmarlo,
+     * la puerta del correo se abre sola. Solo lo pide la pantalla (`GET /datos/cuentas/telefono`); el
+     * freno del servidor no cambia para estas cuentas (el correo tampoco lo frenaba ahí).
+     */
+    enLugarDelCorreo?: boolean;
+  } = {},
 ): Promise<PuertaTelefono | null> {
   if (!algunSmsEncendido(env)) return null;
   const f = await db
@@ -284,14 +294,17 @@ export async function puertaTelefono(
   // C-TELEFONO-VUELTA: el conductor que vuelve tras 14 días.
   if (Number(f.vuelve) === 1 && para && (await codigoPosiblePara(env, db, para)))
     return { motivo: 'vuelta', ultimos: para.slice(-4), obligatorio: true };
-  // Cuentas que ya existían: nunca se bloquean, solo se sugiere.
+  // Cuentas que ya existían: nunca se bloquean, solo se sugiere. Salvo el cliente que hoy está frenado
+  // por el correo: el código del celular reemplaza esa puerta (C-CORREO-NO-FRENA).
   if (
     !f.verificado &&
     (f.rol === 'cliente' || f.rol === 'repartidor') &&
     para &&
     (await codigoPosiblePara(env, db, para))
   )
-    return { motivo: 'sugerido', ultimos: para.slice(-4), obligatorio: false };
+    return opciones.enLugarDelCorreo && f.rol === 'cliente'
+      ? { motivo: 'registro', ultimos: para.slice(-4), obligatorio: true }
+      : { motivo: 'sugerido', ultimos: para.slice(-4), obligatorio: false };
   return null;
 }
 
@@ -352,16 +365,25 @@ export async function mandarCodigo(
    * espera la cuenta atrás (no lo pidió la persona), pero sí respeta los topes del día.
    */
   respaldo = false,
+  /**
+   * C-RECUPERAR-POR-CELULAR: el código para crear una contraseña nueva de una cuenta con el celular YA
+   * confirmado y el correo sin confirmar (no hay puerta: lo comprueba quien llama). Mismos topes.
+   */
+  proposito: 'confirmar' | 'recuperar' = 'confirmar',
 ): Promise<CodigoEnviado> {
   const puerta = await puertaTelefono(env, db, usuarioId);
-  if (!puerta) throw new ErrorDatos('No hace falta confirmar tu teléfono ahora.', undefined, 409);
-  if (!puerta.ultimos)
+  // El respaldo por SMS de un código que ya salió (también el de recuperar) no vuelve a mirar la puerta.
+  if (!puerta && !respaldo && proposito !== 'recuperar')
+    throw new ErrorDatos('No hace falta confirmar tu teléfono ahora.', undefined, 409);
+  if (puerta && !puerta.ultimos)
     throw new ErrorDatos('Escribe tu número de celular para mandarte el código.', 'telefono', 422);
   const u = await db
     .prepare('SELECT telefono FROM usuarios WHERE id = ?')
     .bind(usuarioId)
     .first<{ telefono: string }>();
   const para = telefonoE164(u?.telefono) ?? '';
+  if (!para)
+    throw new ErrorDatos('Escribe tu número de celular para mandarte el código.', 'telefono', 422);
   // C-CODIGO-CANALES: WhatsApp primero y el SMS de respaldo (o solo el SMS, si lo pidió la persona).
   const disponibles = await canalesPara(env, db, para);
   const orden = canalPedido === 'sms' ? disponibles.filter((c) => c === 'sms') : disponibles;

@@ -67,6 +67,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capRez\(\s*'([a-z0-9-]+)',\s*'(
 // C-CAMBIAR-CIUDAD-ADMIN: las de «Cambiar la ciudad de un conductor» (capCiudad).
 for (const [, nombre, idioma] of guias.matchAll(/capCiudad\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`ciudad-${nombre}-${idioma}.webp`);
+// C-CAMPANA-SE-VACIA: las de «La campana y los números del menú» (capCampana).
+for (const [, nombre, idioma] of guias.matchAll(/capCampana\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`campana-${nombre}-${idioma}.webp`);
 // C-CORREGIR-CORREO: las de «Corregir el correo de una cuenta» (capCorreo).
 for (const [, nombre, idioma] of guias.matchAll(/capCorreo\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`correo-${nombre}-${idioma}.webp`);
@@ -74,6 +77,12 @@ for (const [, nombre, idioma] of guias.matchAll(/capCorreo\(\s*'([a-z0-9-]+)',\s
 for (const [, nombre, idioma] of guias.matchAll(/capPeru\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`peru-${nombre}-${idioma}.webp`);
 for (const [, archivo] of guias.matchAll(/archivo: '([a-z0-9-]+\.webp)'/g)) archivos.add(archivo);
+// Las que se nombran con el idioma dentro (archivo: `algo-${idioma}.webp`): las dos, sin tener que
+// sumar una regla por cada guía nueva (el 23 nov 2026 la de «Comida: quién paga qué» se quedó sin subir).
+for (const [, antes, despues] of guias.matchAll(
+  /archivo: `([a-z0-9-]*)\$\{idioma\}([a-z0-9-]*\.webp)`/g,
+))
+  for (const idioma of ['es', 'en']) archivos.add(`${antes}${idioma}${despues}`);
 const faltan = [...archivos].filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {
   console.error(

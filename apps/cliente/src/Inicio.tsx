@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
   type BannerInicio,
   type Restaurante,
@@ -105,7 +105,21 @@ export function Inicio() {
   const punto = catalogo.punto;
   const servicios = useServicios(api, punto);
   const zona = servicios?.zona?.id ?? null;
-  const avisos = useAvisos(api, punto, Boolean(usuario)).datos;
+  const campana = useAvisos(api, punto, Boolean(usuario));
+  const avisos = campana.datos;
+  // C-CAMPANA-SE-VACIA: al volver al inicio (por ejemplo, después de abrir la campana) se vuelve a
+  // leer, así el número queda en cero sin esperar.
+  const recargarCampana = campana.recargar;
+  const primeraVez = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (primeraVez.current) {
+        primeraVez.current = false;
+        return;
+      }
+      void recargarCampana();
+    }, [recargarCampana]),
+  );
 
   // «Ordenado por lo que más usas» (pantalla 2 del borrador): cuántas veces tocó cada servicio.
   const [usos, setUsos] = useState<Record<string, number>>({});
@@ -279,7 +293,7 @@ export function Inicio() {
               idioma={idioma}
               cambiarIdioma={cambiarIdioma}
               banner={cabecera}
-              pendientes={avisos?.pendientes ?? 0}
+              pendientes={avisos?.sinLeer ?? 0}
               alCampana={() => router.push('/notifications')}
               alTocar={abrirBanner}
             />

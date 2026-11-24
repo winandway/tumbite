@@ -121,7 +121,7 @@ describe('KYC (C-KYC)', () => {
       expect(
         (await m.llamar('POST', '/datos/kyc/enviar', { docTipo: 'licencia' }, rep.token)).estado,
       ).toBe(200);
-      const avisos = enviados.filter((x) => x.asunto.startsWith('Verificación enviada'));
+      const avisos = enviados.filter((x) => x.asunto.startsWith('Verificación lista para revisar'));
       expect(avisos.map((x) => x.para).sort()).toEqual(['equipo@ejemplo.com', 'otro@ejemplo.com']);
       expect(avisos[0]!.asunto).toContain('Rep Aviso');
     } finally {

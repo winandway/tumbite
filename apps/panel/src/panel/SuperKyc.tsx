@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Settings } from 'lucide-react';
 import { type Idioma, enIdioma, tramoCoincidente } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
@@ -20,6 +20,8 @@ import {
 } from './KycPiezas';
 import { RevisarKyc } from './SuperKycFicha';
 import { usePreferencias } from './usePreferencias';
+import { ControlesAvisos } from './avisosEnVivo';
+import { EVENTO_CAMBIO } from './sonarEvento';
 import './verificaciones.css';
 
 /** Las iniciales de un nombre («María José Pérez» → «MP»), para el círculo sin foto. */
@@ -117,6 +119,9 @@ export function SuperKyc({
   return <Bandeja base={base} idioma={idioma} />;
 }
 
+/** C-VERIFICACIONES-EN-VIVO: cuánto se queda resaltada una fila que acaba de entrar. */
+export const RESALTE_MS = 6_000;
+
 function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T_VERIFICACIONES, idioma);
   const pref = usePreferencias('verificaciones', {
@@ -163,11 +168,35 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
 
   const consulta = parametros();
   const clave = `${consulta}#${vuelta}`;
+  // C-VERIFICACIONES-EN-VIVO: cuando la marca cambia, la lista se vuelve a traer sola (sin recargar) y
+  // lo que entró se resalta unos segundos.
+  const [nuevas, setNuevas] = useState<ReadonlySet<string>>(new Set());
+  const enVivo = useRef(false);
+  const idsAntes = useRef<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    const alCambiar = () => {
+      enVivo.current = true;
+      setVuelta((v) => v + 1);
+    };
+    window.addEventListener(EVENTO_CAMBIO, alCambiar);
+    return () => window.removeEventListener(EVENTO_CAMBIO, alCambiar);
+  }, []);
+  useEffect(() => {
+    if (!nuevas.size) return;
+    const reloj = setTimeout(() => setNuevas(new Set()), RESALTE_MS);
+    return () => clearTimeout(reloj);
+  }, [nuevas]);
   useEffect(() => {
     let vivo = true; // una respuesta vieja (otra búsqueda) no pisa la última
     pedir<Respuesta>('GET', `/datos/admin/kyc?${consulta}`)
       .then((x) => {
         if (!vivo) return;
+        const ids = new Set((x?.solicitudes ?? []).map((s) => s.id));
+        if (enVivo.current) {
+          enVivo.current = false;
+          setNuevas(new Set([...ids].filter((id) => !idsAntes.current.has(id))));
+        }
+        idsAntes.current = ids;
         setResultado({
           clave,
           error: false,
@@ -228,6 +257,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
   return (
     <section className="super kyc-bandeja-pantalla">
       <EncabezadoPagina titulo={t.titulo} detalle={t.detalle}>
+        <ControlesAvisos idioma={idioma} />
         <Enlace a={`${base}/verifications/settings`} className="boton secundario chico">
           <Settings size={16} aria-hidden="true" /> {t.configuracion}
         </Enlace>
@@ -327,7 +357,11 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                 ? `/datos/admin/kyc/${s.id}/foto/selfie`
                 : null;
           return (
-            <li key={s.id} className="kyc-fila" data-testid="kyc-fila">
+            <li
+              key={s.id}
+              className={nuevas.has(s.id) ? 'kyc-fila kyc-fila-nueva' : 'kyc-fila'}
+              data-testid="kyc-fila"
+            >
               {src ? (
                 <button
                   type="button"

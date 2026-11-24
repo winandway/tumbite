@@ -47,7 +47,10 @@ afterEach(() => vi.unstubAllGlobals());
 // +207 (23 nov 2026, C-APROBADOS-NO-ELEGIBLES): la pieza nueva evalúa con la misma vista del reparto
 // SOLO a los conductores con vehículo aprobado (CROSS JOIN desde esa lista corta); lo fijo es el catálogo
 // de servicios y sus vehículos. Medido: 207 filas con la base de esta prueba. Se guarda 5 min en memoria.
-const TOPE_CANARIO = 1373;
+// +2 (23 nov 2026, C-CORREO-REBOTES-CANARIO): la pieza «correoRebotes» cuenta los enlaces de confirmación
+// de 24 h por el índice nuevo `confirmaciones_creada` (en la misma lectura del correo) y suma su fila del
+// estado del canario. Medido contra la base: dos lecturas más; nada más cambió.
+const TOPE_CANARIO = 1375;
 const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>

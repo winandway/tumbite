@@ -1637,6 +1637,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'En la ficha de un viaje o de un pedido, la línea de tiempo dice cuánto pasó entre un paso y el siguiente y cuántos metros se movió el conductor entre ellos. Si el viaje se canceló o el conductor lo soltó, sale el motivo. En el mapa, los puntos grises numerados dicen dónde estaba el conductor en cada paso.',
       'El «Embudo de registro» (menú, grupo Personas) cuenta cuántas personas llegan a cada paso y marca en ámbar el paso donde se queda la mayoría. Se puede ver por app, por fechas, por país y por zona. Solo cuenta cuentas reales.',
       'Los tres primeros pasos del embudo pasan antes de que exista la cuenta: son contadores, sin saber quién es la persona. Las cuentas creadas antes del 22 de noviembre de 2026 no tienen guardado de dónde vino el alta.',
+      'Desde el 23 de noviembre de 2026 el correo no frena el registro: la cuenta queda hecha con el celular confirmado por código, y la app le pide confirmar el correo con una franja que no estorba. Por eso la confirmación del correo va al final de los pasos, nunca sale como «Le falta» y, si falta, la ficha dice aparte «Correo por confirmar (no frena)». Si el correo rebotó, dice «El correo rebotó (no frena)»: pídele a la persona que lo corrija en su app, o corrígelo tú desde los tres puntos del correo. En el embudo, el correo no cuenta para «Se quedaron aquí». Donde el código del celular no tiene por dónde salir, la app del cliente sigue pidiendo el correo confirmado para pedir, como antes.',
     ],
     capturas: [
       capRastro(
@@ -1686,6 +1687,7 @@ const rastroActividad: Record<IdiomaAyuda, Guia> = {
       'On a ride or order file, the timeline shows how long passed between one step and the next and how far the driver moved between them. If the ride was canceled or released, the reason is shown. On the map, the numbered gray dots show where the driver was at each step.',
       'The “Sign-up funnel” (menu, People group) counts how many people reach each step and flags in amber the step where most people stop. You can view it by app, dates, country and zone. Only real accounts are counted.',
       'The first three funnel steps happen before the account exists: they are counters, with no way to know who the person is. Accounts created before November 22, 2026 have no stored sign-up origin.',
+      'Since November 23, 2026, email no longer blocks sign-up: the account is complete once the cell phone is confirmed with a code, and the app asks for the email confirmation with a banner that doesn’t get in the way. That’s why email confirmation is the last step, never shows as “Still missing,” and, if pending, the file shows “Email to confirm (doesn’t block)” on its own. If the email bounced, it says “The email bounced (doesn’t block)”: ask the person to fix it in their app, or fix it yourself from the three dots next to the email. In the funnel, email doesn’t count toward “Stopped here.” Where the phone code has no way to go out, the customer app still asks for a confirmed email to order, as before.',
     ],
     capturas: [
       capRastro(
@@ -2923,7 +2925,7 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'Al crear la cuenta en la app de Divoox o en Divoox Driver, la app muestra «Confirma tu celular» y manda el código sola. Mientras no lo confirme, la cuenta nueva no puede pedir ni conectarse (el servidor también lo frena). Al confirmarlo, el paso «teléfono» aparece en su actividad y en el embudo.',
       'El código sale primero por WhatsApp. Si WhatsApp falla, el mismo código sale por SMS al momento; y si a la persona no le llega, en la pantalla tiene «Enviármelo por SMS». Solo se exige donde algún canal sale hoy. Si los canales no tienen cupo, fallan o se agota su presupuesto del día, la exigencia se quita sola y nadie queda esperando.',
-      'Las cuentas que ya existían NO se bloquean: ven una franja arriba de la app para confirmarlo cuando quieran, que pueden cerrar.',
+      'Las cuentas que ya existían NO se bloquean: ven una franja arriba de la app para confirmarlo cuando quieran, que pueden cerrar. Excepción (23 nov 2026): el cliente de antes al que la app tenía frenado porque no confirmó su correo ve «Confirma tu celular» en lugar de «Confirma tu correo»; al confirmar el celular, el correo deja de frenarlo y se pide en segundo plano.',
       'Topes contra robots y gastos: cada cuenta espera más entre un código y otro (1, 2, 5 y 15 minutos) y pide como mucho 5 al día; el mismo número recibe como mucho 5 al día aunque cambie de cuenta; la misma red, 10 al día; y en total 300 códigos al día. El canario de salud marca «smsGasto» en amarillo al 80 % del presupuesto diario y en tope al llegar.',
       'Si alguien escribió mal su número, lo cambia él mismo en la misma pantalla. Abrir y cerrar la app no le gasta códigos: mientras el último sirva, no se manda otro solo. Si el proveedor falla, ese envío no le cuenta.',
       'Si de verdad no le llega (un número fijo, de internet o una operadora que no entrega), comprueba con la persona que el número es suyo, por ejemplo escribiéndole por WhatsApp a ese número, y en la lista toca «Confirmar a mano». Queda en el registro con tu nombre. Lo pueden hacer quienes pueden corregir correos.',
@@ -2957,7 +2959,7 @@ const celularAlRegistrarse: Record<IdiomaAyuda, Guia> = {
     explicacion: [
       'When someone creates an account in the Divoox app or in Divoox Driver, the app shows “Confirm your cell phone” and sends the code on its own. Until it’s confirmed, the new account can’t order or go online (the server blocks it too). Once confirmed, the “phone” step shows up in their activity and in the funnel.',
       'The code goes out first on WhatsApp. If WhatsApp fails, the same code goes out by text right away; and if it still doesn’t arrive, the screen offers “Text it to me instead.” It’s only required where some channel works today. If the channels are out of quota, fail, or run out of their daily budget, the requirement lifts on its own and nobody is left waiting.',
-      'Accounts that already existed are NOT blocked: they see a strip at the top of the app to confirm whenever they want, and they can close it.',
+      'Accounts that already existed are NOT blocked: they see a strip at the top of the app to confirm whenever they want, and they can close it. Exception (November 23, 2026): an older customer the app was holding because they never confirmed their email sees “Confirm your cell phone” instead of “Confirm your email”; once the phone is confirmed, email no longer holds them and is requested in the background.',
       'Caps against bots and spend: each account waits longer between codes (1, 2, 5 and 15 minutes) and gets at most 5 a day; the same number gets at most 5 a day even across accounts; the same network, 10 a day; and 300 codes a day in total. The health check marks “smsGasto” yellow at 80% of the daily budget and at the cap when it’s reached.',
       'If someone mistyped their number, they fix it themselves on the same screen. Opening and closing the app doesn’t use up codes: while the last one is still good, no new one is sent on its own. If the provider fails, that send doesn’t count against them.',
       'If it truly never arrives (a landline, an internet number, or a carrier that doesn’t deliver), check with the person that the number is theirs, for example by messaging that number on WhatsApp, then tap “Confirm manually” in the list. It’s logged with your name. Anyone who can fix emails can do it.',
@@ -2992,7 +2994,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
     resumen:
       'Cuando alguien escribió mal su correo y no le llega la confirmación, se corrige desde su ficha, en los tres puntos junto al correo: «Corregir correo». Le sale sola la confirmación al correo nuevo y queda en el registro con tu nombre.',
     explicacion: [
-      'Al lado del correo, la ficha de cada cliente, conductor y restaurante dice cómo está: «Confirmado», «Sin confirmar» o «Rebotó: el buzón no existe o está bloqueado». «Rebotó» quiere decir que el servicio de correo (por ejemplo Gmail) contestó que esa dirección no existe: casi siempre es una letra cambiada.',
+      'Al lado del correo, la ficha de cada cliente, conductor y restaurante dice cómo está: «Confirmado», «Sin confirmar» o «El correo rebotó: el buzón no existe o está bloqueado». «Rebotó» quiere decir que el servicio de correo (por ejemplo Gmail) contestó que esa dirección no existe: casi siempre es una letra cambiada.',
       'Antes de corregir, confirma con la persona el correo bueno, letra por letra. Nunca adivines: si cambias a una dirección equivocada, el enlace le llega a otra persona.',
       '«Corregir correo» deja la cuenta sin confirmar y le manda sola, al correo nuevo, el mismo enlace de confirmación que manda la app. Mientras escribes, si el dominio parece mal escrito (gmial.com, gmail.con), el panel sugiere el bueno. No deja usar un correo que ya tiene otra cuenta ni uno bloqueado por mala conducta. No cambia su contraseña ni le cierra la sesión.',
       '«Reenviar confirmación» vuelve a mandar el enlace al correo que ya tiene la cuenta. Si el correo no sale (la dirección no existe o el servicio falló), el panel lo dice con el motivo: nunca dice «enviado» si no salió.',
@@ -3006,7 +3008,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
       capCorreo(
         'estado',
         'es',
-        'La ficha de un cliente con el correo marcado «Rebotó: el buzón no existe o está bloqueado» y el menú de tres puntos abierto con Corregir correo y Reenviar confirmación.',
+        'La ficha de un cliente con el correo marcado «El correo rebotó: el buzón no existe o está bloqueado» y el menú de tres puntos abierto con Corregir correo y Reenviar confirmación.',
         'El estado del correo y las opciones de los tres puntos.',
       ),
       capCorreo(
@@ -3043,7 +3045,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
     resumen:
       'When someone typed their email wrong and the confirmation never arrives, fix it from their page, in the three-dot menu next to the email: “Fix email.” The confirmation goes out to the new email on its own, and the change is logged with your name.',
     explicacion: [
-      'Next to the email, every customer, driver and restaurant page shows its status: “Confirmed,” “Not confirmed,” or “Bounced: the mailbox doesn’t exist or is blocked.” “Bounced” means the email provider (for example, Gmail) answered that the address doesn’t exist: almost always a mistyped letter.',
+      'Next to the email, every customer, driver and restaurant page shows its status: “Confirmed,” “Not confirmed,” or “The email bounced: the mailbox doesn’t exist or is blocked.” “Bounced” means the email provider (for example, Gmail) answered that the address doesn’t exist: almost always a mistyped letter.',
       'Before fixing it, confirm the right email with the person, letter by letter. Never guess: if you change it to the wrong address, the link goes to someone else.',
       '“Fix email” leaves the account unconfirmed and sends the new email the same confirmation link the app sends. While you type, if the domain looks mistyped (gmial.com, gmail.con), the panel suggests the right one. It won’t take an email another account already uses or one blocked for misconduct. It doesn’t change their password or sign them out.',
       '“Resend confirmation” sends the link again to the email the account already has. If the email doesn’t go out (the address doesn’t exist or the service failed), the panel says so with the reason: it never says “sent” when it wasn’t.',
@@ -3057,7 +3059,7 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
       capCorreo(
         'estado',
         'en',
-        'A customer page with the email marked “Bounced: the mailbox doesn’t exist or is blocked” and the three-dot menu open with Fix email and Resend confirmation.',
+        'A customer page with the email marked “The email bounced: the mailbox doesn’t exist or is blocked” and the three-dot menu open with Fix email and Resend confirmation.',
         'The email status and the three-dot options.',
       ),
       capCorreo(
@@ -3090,6 +3092,167 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// C-CAMPANA-SE-VACIA y C-CONTADORES-DE-TAREA (23 nov 2026, Richard): la campana es de lectura y los
+// números del menú son de tarea.
+const capCampana = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `campana-${nombre}-${idioma}.webp`, alt, pie });
+const campanaYNumeros: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'bell-and-menu-numbers',
+    titulo: 'La campana y los números del menú',
+    resumen:
+      'La campana de arriba cuenta lo que llegó y todavía no viste: al abrirla vuelve a cero. Los números del menú de la izquierda cuentan lo que espera una acción: no bajan por mirarlos, bajan cuando haces la tarea.',
+    explicacion: [
+      'La campana es para LEER. Su número cuenta solo lo que tú todavía no viste: un ticket nuevo, un caso nuevo de Camila, una verificación enviada, un restaurante o una solicitud de línea por aprobar, un movimiento de dinero por aprobar, una emergencia en un viaje, un reporte de un mensaje o reseña, o un conductor que se registró sin ciudad.',
+      'Al abrir la campana, el número vuelve a cero en ese momento. Lo que ya viste queda en la lista como historial, más apagado; lo nuevo va arriba, con su punto rojo. Cada aviso dice qué pasó, hace cuánto, y si ya se resolvió (en verde). Tócalo y te lleva al lugar donde se resuelve: la ficha del ticket, la del conductor, la del restaurante, la bandeja de Camila.',
+      'Lo que viste se guarda con tu cuenta, no en el navegador: si lo leíste en la computadora, tampoco te sale nuevo en el celular ni en otra computadora. Es de cada persona: lo que tú viste no se le apaga a tu compañero. La campana vuelve a contar solo cuando llega algo nuevo.',
+      'Los números del MENÚ son de TAREA: cuántas cosas esperan que alguien actúe (tickets abiertos, casos de Camila, reportes, aprobaciones de dinero, verificaciones, restaurantes y líneas por aprobar, conductores sin ciudad, emergencias sin atender). No se quitan por mirarlos ni por abrir la campana: bajan cuando haces la tarea (respondes el ticket, apruebas, le pones la ciudad al conductor) y llegan a cero cuando no queda nada.',
+      'Tocar un ítem con número te lleva a esas tareas ya filtradas. Por ejemplo, «Repartidores» con número abre la lista en «Sin zona», y «Tickets» con número abre los tickets abiertos.',
+      'Un conductor «sin zona» es uno que todavía no nos dijo su ciudad. Ábrelo y, en sus tres puntos, toca «Cambiar ciudad». Si de verdad vive en la ciudad por defecto, elígela igual: se confirma y sale de la cuenta.',
+      'Ningún número se queda pegado: todo número del menú baja haciendo algo, y la campana baja abriéndola. Si ves uno que no baja después de atenderlo, avísale al equipo técnico: es un fallo.',
+    ],
+    capturas: [
+      capCampana(
+        'abierta',
+        'es',
+        'La campana del superadmin abierta: arriba los avisos nuevos con punto rojo (un ticket nuevo y un conductor sin ciudad) y abajo los ya vistos, más apagados.',
+        'Al abrirla, el número vuelve a cero; lo nuevo va arriba y lo visto queda como historial.',
+      ),
+      capCampana(
+        'menu',
+        'es',
+        'El menú lateral del superadmin con el número verde de «Tickets» y de «Repartidores» junto a cada sección.',
+        'Los números del menú son tareas: bajan al hacerlas, no al mirarlas.',
+      ),
+    ],
+    preguntas: [
+      '¿Por qué la campana no se borra?',
+      '¿Cómo quito el número de Repartidores?',
+      '¿Qué diferencia hay entre la campana y los números del menú?',
+    ],
+    pasos: [
+      'Toca la campana de arriba para ver lo que llegó: el número vuelve a cero.',
+      'Toca un aviso para ir al lugar donde se resuelve.',
+      'Para bajar un número del menú, toca la sección y haz la tarea (responder, aprobar, ponerle la ciudad).',
+    ],
+    nota: 'La campana y los números se actualizan solos cada medio minuto y al cambiar de sección. Solo cuentan cuentas reales (nunca las de prueba) y solo lo de tu zona de trabajo.',
+  },
+  en: {
+    id: 'bell-and-menu-numbers',
+    titulo: 'The bell and the menu numbers',
+    resumen:
+      'The bell at the top counts what came in that you haven’t seen yet: opening it clears it back to zero. The numbers in the left menu count what is waiting for action: they don’t go down by looking, they go down when you do the task.',
+    explicacion: [
+      'The bell is for READING. Its number only counts what you haven’t seen yet: a new ticket, a new Camila case, a verification submitted, a restaurant or a line request to approve, a money movement to approve, an emergency on a ride, a reported message or review, or a driver who signed up with no city.',
+      'When you open the bell, the number goes back to zero right away. What you’ve seen stays in the list as history, dimmed; new items are on top, with a red dot. Each notification says what happened, how long ago, and whether it’s already resolved (in green). Tap it to go where it gets resolved: the ticket, the driver’s or the restaurant’s file, Camila’s inbox.',
+      'What you’ve seen is saved with your account, not in the browser: if you read it on the computer, it won’t show up as new on your phone or on another computer either. It’s per person: what you saw doesn’t clear for your teammate. The bell only counts again when something new arrives.',
+      'The MENU numbers are TASKS: how many things are waiting for someone to act (open tickets, Camila cases, reports, money approvals, verifications, restaurants and lines to approve, drivers with no city, unattended emergencies). They don’t go away by looking or by opening the bell: they go down when you do the task (reply to the ticket, approve, set the driver’s city) and reach zero when nothing is left.',
+      'Tapping a menu item with a number takes you to those tasks already filtered. For example, “Drivers” with a number opens the list on “No zone”, and “Tickets” with a number opens the open tickets.',
+      'A driver with “no zone” is one who hasn’t told us their city yet. Open them and, in their three dots, tap “Change city”. If they really live in the default city, choose it anyway: it gets confirmed and drops out of the count.',
+      'No number gets stuck: every menu number goes down by doing something, and the bell goes down by opening it. If you see one that doesn’t go down after you handle it, tell the tech team: it’s a bug.',
+    ],
+    capturas: [
+      capCampana(
+        'abierta',
+        'en',
+        'The superadmin bell open: new notifications on top with a red dot (a new ticket and a driver with no city) and the ones already seen below, dimmed.',
+        'Opening it clears the number back to zero; new items go on top and what you’ve seen stays as history.',
+      ),
+      capCampana(
+        'menu',
+        'en',
+        'The superadmin side menu with the green number next to “Tickets” and “Drivers”.',
+        'Menu numbers are tasks: they go down when you do them, not when you look at them.',
+      ),
+    ],
+    preguntas: [
+      'Why doesn’t the bell clear?',
+      'How do I clear the Drivers number?',
+      'What’s the difference between the bell and the menu numbers?',
+    ],
+    pasos: [
+      'Tap the bell at the top to see what came in: the number goes back to zero.',
+      'Tap a notification to go where it gets resolved.',
+      'To lower a menu number, tap the section and do the task (reply, approve, set the city).',
+    ],
+    nota: 'The bell and the numbers refresh on their own every half minute and when you change sections. They only count real accounts (never test ones) and only what’s in your work area.',
+  },
+};
+
+// C-VERIFICACIONES-EN-VIVO (23 nov 2026, Richard): Verificaciones se actualiza sola, suena y avisa.
+const verificacionesEnVivo: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'live-verifications',
+    titulo: 'Verificaciones en vivo: sonido y avisos',
+    resumen:
+      'Con el panel abierto no hace falta recargar: cuando alguien queda listo para revisar, la lista se actualiza sola, la fila nueva se resalta y suena un aviso. Además le llega un correo al equipo y, si lo enciendes, un aviso a tu teléfono o tu computadora.',
+    explicacion: [
+      'Mientras el panel está abierto, cada pocos segundos pregunta si cambió algo en las verificaciones. Si alguien envió sus fotos o se registró, la lista de «Pendientes» y la de «Sin enviar» se actualizan solas, sin recargar, y la fila que acaba de entrar queda resaltada en verde unos segundos. La campana y los números del menú se ponen al día al mismo tiempo.',
+      'Cuando entra una verificación lista para revisar suena un aviso corto, una sola vez. No vuelve a sonar al recargar ni por lo que ya estaba cuando abriste el panel. Si estás en otra pestaña, el título de la pestaña lo dice y, si diste el permiso, sale un aviso del navegador.',
+      'El botón «Sonido encendido» lo silencia (y otra vez lo enciende). Se guarda con tu cuenta: si lo silencias en una computadora, también queda silenciado en la otra. Es de cada persona: no silencia a tus compañeros.',
+      '«Avisarme también fuera del panel» le pide al navegador el permiso de avisos (solo cuando tocas el botón, nunca al abrir la página) y deja ese aparato recibiendo un aviso cada vez que una verificación queda lista, aunque el panel esté cerrado. Hazlo en tu teléfono para tenerlo en el bolsillo. En iPhone, primero agrega el panel a la pantalla de inicio.',
+      'Al equipo le llega además UN correo por persona cuando queda lista para revisar (no uno por foto), con su nombre, su ciudad, cuántas esperan y el enlace directo a su ficha, que pide entrar con tu cuenta del equipo. Va a la lista del equipo para verificaciones; en «Configuración» cada persona puede sumarse o salirse.',
+      'Con la pestaña a la vista y alguien trabajando, el panel pregunta cada 5 segundos; si nadie toca nada por diez minutos, cada 30; con la pestaña en segundo plano, cada minuto. Mirar no escribe nada en la base.',
+    ],
+    capturas: [
+      capCampana(
+        'verificaciones',
+        'es',
+        'La pantalla Verificaciones con los botones Sonido encendido y Avisarme también fuera del panel arriba, y una fila nueva resaltada en verde en Pendientes.',
+        'La verificación que acaba de entrar, resaltada, sin recargar la página.',
+      ),
+    ],
+    preguntas: [
+      '¿Por qué suena el panel?',
+      '¿Cómo silencio el aviso de verificaciones?',
+      '¿Cómo me llega un aviso al teléfono cuando hay una verificación?',
+    ],
+    pasos: [
+      'Deja abierto el panel en Verificaciones: la lista se actualiza sola.',
+      'Para silenciar el aviso, toca «Sonido encendido».',
+      'Para recibirlo en el teléfono, abre el panel en el teléfono y toca «Avisarme también fuera del panel».',
+    ],
+    nota: 'El sonido es propio de Divoox y dura menos de medio segundo. Solo cuentan las verificaciones de tu zona de trabajo en la lista; el sonido avisa de cualquier verificación nueva.',
+  },
+  en: {
+    id: 'live-verifications',
+    titulo: 'Live verifications: sound and alerts',
+    resumen:
+      'With the dashboard open you don’t need to refresh: when someone is ready to review, the list updates on its own, the new row is highlighted and a short sound plays. The team also gets an email and, if you turn it on, an alert on your phone or computer.',
+    explicacion: [
+      'While the dashboard is open, it checks every few seconds whether anything changed in verifications. If someone sent their photos or signed up, the “Pending” and “Not sent” lists update on their own, without refreshing, and the row that just came in is highlighted in green for a few seconds. The bell and the menu numbers update at the same time.',
+      'When a verification ready to review comes in, a short sound plays, just once. It doesn’t play again when you refresh, or for what was already there when you opened the dashboard. If you’re on another tab, the tab title says so and, if you gave permission, a browser notification shows up.',
+      'The “Sound on” button mutes it (and turns it back on). It’s saved with your account: mute it on one computer and it stays muted on the other. It’s per person: it doesn’t mute your teammates.',
+      '“Also notify me outside the dashboard” asks the browser for notification permission (only when you tap the button, never when the page opens) and sets that device to get an alert every time a verification is ready, even with the dashboard closed. Do it on your phone to have it in your pocket. On iPhone, add the dashboard to your Home Screen first.',
+      'The team also gets ONE email per person when they’re ready to review (not one per photo), with their name, their city, how many are waiting and a direct link to their file, which asks you to sign in with your team account. It goes to the team list for verifications; in “Settings” each person can opt in or out.',
+      'With the tab visible and someone working, the dashboard checks every 5 seconds; if nobody touches anything for ten minutes, every 30; with the tab in the background, every minute. Looking never writes anything to the database.',
+    ],
+    capturas: [
+      capCampana(
+        'verificaciones',
+        'en',
+        'The Verifications screen with the Sound on and Also notify me outside the dashboard buttons at the top, and a new row highlighted in green under Pending.',
+        'The verification that just came in, highlighted, without refreshing the page.',
+      ),
+    ],
+    preguntas: [
+      'Why does the dashboard play a sound?',
+      'How do I mute the verification alert?',
+      'How do I get a phone alert when there’s a verification?',
+    ],
+    pasos: [
+      'Keep the dashboard open on Verifications: the list updates on its own.',
+      'To mute the alert, tap “Sound on”.',
+      'To get it on your phone, open the dashboard on your phone and tap “Also notify me outside the dashboard”.',
+    ],
+    nota: 'The sound is Divoox’s own and lasts under half a second. The list only shows verifications in your work area; the sound alerts you to any new verification.',
+  },
+};
+
 /** Las secciones de la ayuda, en el orden del menú lateral. */
 function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
   const g = porId(idioma === 'es' ? es : en);
@@ -3102,7 +3265,11 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     });
   const esp = idioma === 'es';
   return [
-    { id: 'start', titulo: esp ? 'Empieza aquí' : 'Start here', guias: [de(inicio)] },
+    {
+      id: 'start',
+      titulo: esp ? 'Empieza aquí' : 'Start here',
+      guias: [de(inicio), de(campanaYNumeros)],
+    },
     {
       id: 'monitoring',
       titulo: esp ? 'Monitoreo' : 'Monitoring',
@@ -3118,6 +3285,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       titulo: esp ? 'Soporte' : 'Support',
       guias: [
         de(camilaBuzon),
+        de(verificacionesEnVivo),
         de(recordatoriosRegistro),
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),

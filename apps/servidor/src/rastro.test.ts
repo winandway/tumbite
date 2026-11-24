@@ -157,7 +157,15 @@ describe('C-RASTRO · de dónde vino el alta y dónde lo dejó', () => {
       pais: 'VE',
       conOrigen: true,
     });
-    expect(r.datos.actividad.dondeQuedo).toMatchObject({ ultimo: 'cuenta', sigue: 'correo' });
+    // C-CORREO-NO-FRENA: el correo por confirmar no es «lo que le falta»: va aparte, al final.
+    expect(r.datos.actividad.dondeQuedo).toMatchObject({
+      ultimo: 'cuenta',
+      sigue: 'aviso_ia',
+      correoPorConfirmar: true,
+    });
+    expect(r.datos.actividad.dondeQuedo.falta).not.toContain('correo');
+    const correo = (r.datos.actividad.dondeQuedo.pasos as { paso: string; nota: string }[]).at(-1);
+    expect(correo).toMatchObject({ paso: 'correo', estado: 'pendiente', nota: 'no_frena' });
   });
 
   it('cada paso queda una sola vez, lo provoque quien lo provoque, y la ficha dice cuál sigue', async () => {
@@ -195,14 +203,16 @@ describe('C-RASTRO · de dónde vino el alta y dónde lo dejó', () => {
     const a = (
       await m.llamar('GET', `/datos/admin/repartidores/${u.id}/actividad`, undefined, admin.token)
     ).datos.actividad;
+    // C-CORREO-NO-FRENA: el correo va al final de los pasos.
     expect(a.dondeQuedo.hechos).toEqual([
       'cuenta',
-      'correo',
       'foto_cara',
       'foto_documento',
       'enviado',
       'aprobado',
+      'correo',
     ]);
+    expect(a.dondeQuedo.correoPorConfirmar).toBe(false);
     // El teléfono y el aviso no le tocan a quien ya pasó la verificación: no salen como pendientes.
     expect(a.dondeQuedo.sigue).toBe('foto_licencia');
     expect(a.linea.map((p: { evento: string }) => p.evento)).toEqual(
@@ -380,12 +390,14 @@ describe('C-RASTRO · el embudo', () => {
     expect(de(todo, 'abrio')).toBe(1);
     expect(de(todo, 'cuenta')).toBe(2); // la de prueba no cuenta
     expect(de(todo, 'correo')).toBe(1);
-    // «Se quedaron aquí»: una cuenta real se quedó en «cuenta» y la otra en «correo».
+    // «Se quedaron aquí»: las dos cuentas reales se quedaron en «cuenta» (C-CORREO-NO-FRENA: confirmar
+    // el correo no hace avanzar a nadie en el embudo ni lo frena).
     const quedan = (p: string) =>
       (todo.pasos as { paso: string; seQuedan: number | null }[]).find((x) => x.paso === p)
         ?.seQuedan;
-    expect(quedan('cuenta')).toBe(1);
-    expect(quedan('correo')).toBe(1);
+    expect(quedan('cuenta')).toBe(2);
+    expect(quedan('correo')).toBeNull();
+    expect(todo.pasos.at(-1).paso).toBe('correo');
     expect(quedan('telefono')).toBe(0);
     expect(quedan('primer_viaje')).toBeNull();
     expect(todo.porPais).toEqual(
@@ -463,8 +475,9 @@ describe('C-RASTRO-FUENTES · un paso aprobado nunca sale pendiente', () => {
       telefono: 'no_aplica',
       aviso_ia: 'no_aplica',
     });
-    expect(d.falta).toEqual(['correo', 'vehiculo', 'primer_viaje']);
-    expect(d.sigue).toBe('correo');
+    // C-CORREO-NO-FRENA: el correo sigue pendiente pero no es lo que le falta.
+    expect(d.falta).toEqual(['vehiculo', 'primer_viaje']);
+    expect(d.sigue).toBe('vehiculo');
     // Dice cómo se sabe: por la verificación anterior, con su fecha real.
     const cara = d.pasos.find((p) => p.paso === 'foto_cara');
     expect(cara).toMatchObject({
@@ -472,10 +485,10 @@ describe('C-RASTRO-FUENTES · un paso aprobado nunca sale pendiente', () => {
       nota: 'verificacion_anterior',
       fecha: '2026-11-01 10:00:00',
     });
-    // Y los pasos van en el orden en que los hace la persona, no los hechos primero.
+    // Y los pasos van en el orden en que los hace la persona, no los hechos primero. El correo, al
+    // final: se confirma en segundo plano (C-CORREO-NO-FRENA).
     expect(d.pasos.map((p) => p.paso)).toEqual([
       'cuenta',
-      'correo',
       'telefono',
       'aviso_ia',
       'foto_cara',
@@ -486,6 +499,7 @@ describe('C-RASTRO-FUENTES · un paso aprobado nunca sale pendiente', () => {
       'aprobado',
       'conectado',
       'primer_viaje',
+      'correo',
     ]);
   });
 

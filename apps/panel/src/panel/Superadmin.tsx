@@ -773,10 +773,19 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
     : 'todos';
   const [recarga, setRecarga] = useState(0);
   const [avisoNuevo, setAvisoNuevo] = useState('');
+  // C-CONTADORES-DE-TAREA: el número del menú lleva a los tickets abiertos (?estado=abierto): ese
+  // enlace manda en esta visita, sin cambiar el filtro guardado.
+  const [estadoDeEnlace, setEstadoDeEnlace] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get('estado') === 'abierto' ? 'abierto' : null,
+  );
   // «todos» se guarda con nombre; el servidor lo pide sin estado.
-  const estado = pref.valores.estado === 'todos' ? '' : (pref.valores.estado ?? 'abierto');
+  const estado =
+    estadoDeEnlace ?? (pref.valores.estado === 'todos' ? '' : (pref.valores.estado ?? 'abierto'));
   const asignado = pref.valores.asignado ?? '';
-  const setEstado = (v: string) => pref.cambiar('estado', v || 'todos');
+  const setEstado = (v: string) => {
+    setEstadoDeEnlace(null);
+    pref.cambiar('estado', v || 'todos');
+  };
   const setAsignado = (v: string) => pref.cambiar('asignado', v);
   const [lista, setLista] = useState<FilaTicket[] | null>(null);
   useEffect(() => {

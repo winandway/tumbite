@@ -14,6 +14,7 @@ import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { AVISOS, notificar } from '../notificaciones';
+import { campanaDe } from '../campana';
 import { anotarEvento } from '../manager';
 
 /**
@@ -521,10 +522,10 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
     });
   const vencidas = await db
     .prepare(
-      "SELECT COUNT(*) AS n FROM ofertas WHERE repartidor_id = ? AND estado = 'vencida' AND creada_en > datetime('now','-1 day')",
+      "SELECT COUNT(*) AS n, MAX(creada_en) AS ultima FROM ofertas WHERE repartidor_id = ? AND estado = 'vencida' AND creada_en > datetime('now','-1 day')",
     )
     .bind(u.id)
-    .first<{ n: number }>();
+    .first<{ n: number; ultima: string | null }>();
   if (Number(vencidas?.n ?? 0) > 0)
     lista.push({
       tipo: 'ofertas_vencidas',
@@ -533,7 +534,8 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
       restaurante: null,
       detalle: String(vencidas?.n ?? 0),
       centavos: null,
-      en: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      // C-CAMPANA-SE-VACIA: cuándo se venció la última (antes «ahora»: salía nueva en cada vistazo).
+      en: vencidas?.ultima ?? '',
     });
   const selfie = await db
     .prepare('SELECT pedida_en FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
@@ -550,8 +552,12 @@ repartidorGrandes.get('/repartidor/avisos', async (c) => {
       en: selfie.pedida_en,
     });
   lista.sort((a, b) => b.en.localeCompare(a.en));
+  // C-CAMPANA-SE-VACIA: cada aviso dice si ya lo vio, y `sinLeer` es el punto de la campana (baja a
+  // cero al abrirla). `pendientes` se queda igual para las versiones de la app ya publicadas.
+  const campana = await campanaDe(db, u.id, 'repartidor', lista);
   return c.json({
-    avisos: lista,
+    avisos: campana.avisos,
+    sinLeer: campana.sinLeer,
     pendientes: lista.filter((a) => a.tipo === 'pedido_listo' || a.tipo === 'foto_control').length,
   });
 });

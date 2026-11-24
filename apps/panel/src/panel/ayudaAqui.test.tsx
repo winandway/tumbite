@@ -46,6 +46,8 @@ const MAPA: [archivo: string, guia: string][] = [
   ['CorregirCorreo.tsx', 'fix-account-email'],
   ['SuperFichas.tsx', 'test-accounts'],
   ['VerificacionCelular.tsx', 'sms-code-at-sign-up'],
+  ['armazon/Campana.tsx', 'bell-and-menu-numbers'],
+  ['avisosEnVivo.tsx', 'live-verifications'],
 ];
 const fuente = (archivo: string) => readFileSync(join(AQUI, archivo), 'utf8');
 

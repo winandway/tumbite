@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Armazon, SesionArmazon } from './Armazon';
-import { conPendientes } from './menus';
+import { conPendientes, filtrosPendientes } from './menus';
 
 /**
  * C-AVISOS-MENU (21 nov 2026, Gerencia): cada sección del menú dice cuánto espera, con un punto que
@@ -64,6 +64,25 @@ describe('C-AVISOS-MENU', () => {
     expect(conPendientes(base, [])).toBe(base);
   });
 
+  it('C-CONTADORES-DE-TAREA: con tareas, tocar el ítem lleva a esas tareas ya filtradas', () => {
+    const g = conPendientes(
+      [
+        {
+          titulo: 'Personas',
+          items: [
+            { clave: 'drivers', texto: 'Repartidores', a: '/x/drivers' },
+            { clave: 'tickets', texto: 'Tickets', a: '/x/tickets' },
+          ],
+        },
+      ],
+      [{ clave: 'drivers', cantidad: 3, tono: 'trabajo' }],
+      filtrosPendientes,
+    );
+    expect(g[0]?.items[0]?.a).toBe('/x/drivers?zona=sin_zona');
+    // Sin tareas, la sección de siempre (sin filtro).
+    expect(g[0]?.items[1]?.a).toBe('/x/tickets');
+  });
+
   it('más de 99 se dice «99+»', () => {
     montar([{ clave: 'tickets', cantidad: 140, tono: 'trabajo' }]);
     expect(screen.getByTestId('pendiente-tickets')).toHaveTextContent('99+');
@@ -75,6 +94,6 @@ describe('C-AVISOS-MENU', () => {
     expect(css).toMatch(/prefers-reduced-motion: reduce\)[^}]*\{[^@]*\.pd-item-punto::after/);
     // El superadmin lo pide con la misma lectura de la campana (cada 30 s, nada escribe).
     const app = readFileSync(join(__dirname, '..', 'PanelApp.tsx'), 'utf8');
-    expect(app).toContain('conPendientes(grupos, pendientesMenu)');
+    expect(app).toContain('conPendientes(grupos, pendientesMenu, filtrosPendientes)');
   });
 });

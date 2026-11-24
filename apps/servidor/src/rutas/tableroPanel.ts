@@ -9,6 +9,7 @@ import {
   filtroAlcance,
   servicioOperacionSql,
 } from '../accesoInterno';
+import { avisosRestaurante, avisosSuperadmin, campanaDe } from '../campana';
 import { operacionesPorCuentas, pedidosPorCuentas, usuarioPorCuentas } from '../cuentasPruebaSql';
 
 /**
@@ -235,31 +236,39 @@ export async function pendientesDelMenu(
   return lista.filter((x) => x.cantidad > 0);
 }
 
-/** La campana de la cabecera: lo que espera por la persona, según su rol. Solo cantidades. */
+/**
+ * La cabecera del panel, en UNA lectura cada vez: la CAMPANA (lo que llegó y si esa persona ya lo vio,
+ * C-CAMPANA-SE-VACIA) y los números del MENÚ (lo que espera una acción, C-CONTADORES-DE-TAREA). Son
+ * cosas distintas: abrir la campana la deja en cero; los números del menú bajan solo al hacer la tarea.
+ * Solo lectura: mirar no escribe nada.
+ */
 tableroPanel.get('/panel/avisos', async (c) => {
   const u = exigir(c);
   const db = base(c);
   if (u.rol === 'admin') {
-    const menu = await pendientesDelMenu(db, accesoDe(c));
-    const de = (clave: string) => menu.find((m) => m.clave === clave)?.cantidad ?? 0;
-    return c.json({
-      avisos: [
-        { clave: 'tickets', cantidad: de('tickets') },
-        { clave: 'restaurantes', cantidad: de('restaurants') },
-      ],
-      menu,
-    });
+    const acceso = accesoDe(c);
+    const [menu, lista] = await Promise.all([
+      pendientesDelMenu(db, acceso),
+      avisosSuperadmin(db, acceso),
+    ]);
+    return c.json({ campana: await campanaDe(db, u.id, 'superadmin', lista), menu });
   }
   if (u.rol === 'restaurante') {
-    const f = await db
-      .prepare(
-        `SELECT COUNT(*) AS n FROM pedidos WHERE estado = 'pagado' AND restaurante_id IN (
-           SELECT id FROM restaurantes WHERE dueno_id = ?1
-           UNION SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1)`,
-      )
-      .bind(u.id)
-      .first<{ n: number }>();
-    return c.json({ avisos: [{ clave: 'pedidos', cantidad: Number(f?.n ?? 0) }] });
+    const [f, lista] = await Promise.all([
+      db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM pedidos WHERE estado = 'pagado' AND restaurante_id IN (
+             SELECT id FROM restaurantes WHERE dueno_id = ?1
+             UNION SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1)`,
+        )
+        .bind(u.id)
+        .first<{ n: number }>(),
+      avisosRestaurante(db, u.id),
+    ]);
+    const porAceptar = Number(f?.n ?? 0);
+    const menu: PendienteMenu[] =
+      porAceptar > 0 ? [{ clave: 'orders', cantidad: porAceptar, tono: 'trabajo' }] : [];
+    return c.json({ campana: await campanaDe(db, u.id, 'restaurante', lista), menu });
   }
-  return c.json({ avisos: [] });
+  return c.json({ campana: { avisos: [], sinLeer: 0 } });
 });

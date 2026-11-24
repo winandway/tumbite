@@ -38,7 +38,7 @@ const T = {
   es: {
     confirmado: 'Confirmado',
     sin_confirmar: 'Sin confirmar',
-    rebotado: 'Rebotó: el buzón no existe o está bloqueado',
+    rebotado: 'El correo rebotó: el buzón no existe o está bloqueado',
     // C-REBOTE-TEMPORAL: el proveedor frenó la dirección por un rechazo temporal (no es un buzón muerto).
     frenado: 'Correo frenado unas horas por un rechazo temporal; se puede volver a mandar mañana',
     corregir: 'Corregir correo',
@@ -68,7 +68,7 @@ const T = {
   en: {
     confirmado: 'Confirmed',
     sin_confirmar: 'Not confirmed',
-    rebotado: 'Bounced: the mailbox doesn’t exist or is blocked',
+    rebotado: 'The email bounced: the mailbox doesn’t exist or is blocked',
     frenado:
       'Email paused for a few hours after a temporary rejection; it can be sent again tomorrow',
     corregir: 'Fix email',

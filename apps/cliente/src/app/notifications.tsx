@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { MARCA } from '@tumbite/compartido';
+import { MARCA, marcarCampanaVista } from '@tumbite/compartido';
 import { C, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -13,9 +13,12 @@ import { Pressable } from 'react-native';
 import { conCuenta } from '../ConCuenta';
 
 /**
- * La campana (como en los grandes): una lista de avisos reales, sin tabla nueva. Pedidos en
- * curso (tocar abre el seguimiento), regalos en marcha (pestaña «Regalos», la que abre el cupón) y
- * próximas aperturas en la ciudad. Nada inventado: si no hay nada, se dice.
+ * La campana (como en los grandes): una lista de avisos reales. Pedidos en curso (tocar abre el
+ * seguimiento), regalos en marcha (pestaña «Regalos», la que abre el cupón) y próximas aperturas en
+ * la ciudad. Nada inventado: si no hay nada, se dice.
+ *
+ * C-CAMPANA-SE-VACIA (23 nov 2026): abrir esta lista deja la campana en cero y lo guarda en el
+ * servidor por cuenta (una escritura como mucho). Lo nuevo lleva su punto rojo; lo leído, no.
  */
 function Avisos() {
   const { api, idioma, usuario } = useSesion();
@@ -28,6 +31,15 @@ function Avisos() {
   const catalogo = useRestaurantes(api, null);
   const { datos } = useAvisos(api, catalogo.punto, Boolean(usuario));
   const lista = (datos?.avisos ?? []).filter((a) => pestana === 'todos' || a.tipo === 'regalo');
+  // El gesto de abrir la campana: «visto hasta» el aviso más nuevo, una sola vez por visita.
+  const marcada = useRef(false);
+  useEffect(() => {
+    if (!datos || marcada.current) return;
+    marcada.current = true;
+    void marcarCampanaVista(api, 'cliente', datos.avisos);
+  }, [api, datos]);
+  // Lo que todavía no había visto (los servidores viejos no dicen `leido`: los pedidos en curso).
+  const esNuevo = (a: Aviso) => (a.leido === undefined ? a.tipo === 'pedido' : !a.leido);
   const llenar = (s: string, v: Record<string, string | number>) =>
     Object.entries(v).reduce((acc, [k, x]) => acc.replaceAll(`{${k}}`, String(x)), s);
 
@@ -41,7 +53,10 @@ function Avisos() {
           accessibilityLabel={llenar(t.avisoPedido, { restaurante: a.restauranteNombre })}
         >
           <Tarjeta>
-            <Titulo texto={llenar(t.avisoPedido, { restaurante: a.restauranteNombre })} punto />
+            <Titulo
+              texto={llenar(t.avisoPedido, { restaurante: a.restauranteNombre })}
+              punto={esNuevo(a)}
+            />
             <Texto
               texto={
                 t.estadoPedido[a.estadoVisible ?? a.estado] ?? t.estadoPedido[a.estado] ?? a.estado
@@ -64,6 +79,7 @@ function Avisos() {
               texto={llenar(a.regalo === 'sellos' ? t.avisoSellos : t.avisoVuelve, {
                 restaurante: a.restauranteNombre,
               })}
+              punto={esNuevo(a)}
             />
             {a.regalo === 'sellos' ? (
               <>
@@ -104,7 +120,7 @@ function Avisos() {
     }
     return (
       <Tarjeta key={`a-${i}`}>
-        <Titulo texto={llenar(t.avisoApertura, { area: a.area })} />
+        <Titulo texto={llenar(t.avisoApertura, { area: a.area })} punto={esNuevo(a)} />
         <Texto
           texto={llenar(t.aperturaTexto, {
             area: a.area,

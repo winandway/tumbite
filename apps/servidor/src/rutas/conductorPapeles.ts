@@ -1,4 +1,4 @@
-import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
+import { ZONA_CONDUCTOR_SQL, zonaRealSql } from '../cuentaPais';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -299,7 +299,44 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
   )
     throw new ErrorDatos('Esa ciudad no está en tu zona de trabajo.', 'zonaId', 403);
   const antes = await paisDelConductor(db, id);
-  if (antes.zona_id === zona.id) throw new ErrorDatos('Ya está en esa ciudad.', 'zonaId', 409);
+  if (antes.zona_id === zona.id) {
+    // C-CONTADORES-DE-TAREA (23 nov 2026): un conductor «sin zona» cae en la ciudad por defecto. Si de
+    // verdad vive ahí, el equipo tiene que poder CONFIRMARLA (antes decía «Ya está en esa ciudad» y el
+    // número de «Repartidores» no bajaba nunca). Se confirma sin cambiarle el código.
+    const real = await db
+      .prepare(
+        `SELECT ${zonaRealSql('r', 'u')} AS zona FROM usuarios u JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?`,
+      )
+      .bind(id)
+      .first<{ zona: string | null }>();
+    if (!real || real.zona) throw new ErrorDatos('Ya está en esa ciudad.', 'zonaId', 409);
+    await db.batch([
+      db
+        .prepare(
+          "UPDATE repartidores SET ciudad_elegida_en = datetime('now') WHERE usuario_id = ? AND ciudad_elegida_en IS NULL",
+        )
+        .bind(id),
+      db.prepare('UPDATE usuarios SET zona_id = ?1 WHERE id = ?2').bind(zona.id, id),
+      db
+        .prepare(
+          `INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json)
+           VALUES (?1, 'conductor.ciudad', ?2, ?3, ?4)`,
+        )
+        .bind(
+          admin.id,
+          `conductor:${id}`,
+          JSON.stringify({ zonaId: null, pais: antes.pais, codigo: persona.codigo }),
+          JSON.stringify({
+            zonaId: zona.id,
+            pais: antes.pais,
+            codigo: persona.codigo,
+            motivo: d.motivo,
+            confirmada: true,
+          }),
+        ),
+    ]);
+    return c.json({ ok: true, zonaId: zona.id, codigo: persona.codigo, confirmada: true });
+  }
   if (Number(persona.conectado) === 1)
     throw new ErrorDatos(
       'Está conectado: tiene que desconectarse antes de cambiar de ciudad.',

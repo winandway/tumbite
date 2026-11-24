@@ -17,6 +17,8 @@ import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
 import { Campo } from '../CampoClave';
 import { Armazon } from '../armazon/Armazon';
+import { guardarVisto } from '../armazon/Campana';
+import { type AvisoServidor, avisosDeFlex } from '../armazon/avisosCampana';
 import type { GrupoMenu } from '../armazon/menus';
 import { crear, pedir } from '../api';
 import { TEXTOS_FLEX } from './textos';
@@ -401,6 +403,26 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
       );
   }, [id, t.noExiste]);
   useEffect(cargar, [cargar]);
+  // C-CAMPANA-SE-VACIA: la campana de la empresa (las incidencias de la calle y si ya las vio). Una
+  // lectura por minuto con la pestaña a la vista; mirar no escribe.
+  const [campanaCruda, setCampanaCruda] = useState<AvisoServidor[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    const leer = () => {
+      if (document.visibilityState === 'hidden') return;
+      void pedir<{ avisos?: AvisoServidor[] }>('GET', `${BASE_FLEX}/empresas/${id}/campana`)
+        .then((r) => {
+          if (vivo) setCampanaCruda(r.avisos ?? []);
+        })
+        .catch((x: unknown) => console.warn('campana de la empresa: no se pudo leer', x));
+    };
+    leer();
+    const reloj = window.setInterval(leer, 60_000);
+    return () => {
+      vivo = false;
+      window.clearInterval(reloj);
+    };
+  }, [id]);
   if (!ficha) return <p role={error ? 'alert' : 'status'}>{error || t.cargando}</p>;
   const raiz = `/panel/business/${id}`;
   const ctx: Contexto = {
@@ -498,7 +520,6 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
       })),
     }))
     .filter((g) => g.items.length > 0);
-  const pendientes = ficha.resumen.pendientes ?? 0;
   return (
     <Armazon
       variante="logistica"
@@ -509,14 +530,10 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
         detalle: t.roles[ficha.rol ?? ''] ?? ficha.rol ?? undefined,
       }}
       volver={{ texto: t.volver, a: '/panel/business' }}
-      avisos={[
-        {
-          clave: 'pendientes',
-          texto: t.avisoPendientes,
-          cantidad: pendientes,
-          a: `${raiz}/packages`,
-        },
-      ]}
+      campana={{
+        avisos: avisosDeFlex(campanaCruda, raiz, idioma, t.motivos),
+        alAbrir: (hasta) => guardarVisto(`flex:${id}`, hasta),
+      }}
     >
       {contenido}
     </Armazon>

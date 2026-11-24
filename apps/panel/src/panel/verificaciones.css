@@ -256,3 +256,33 @@
     flex: 1 1 100%;
   }
 }
+
+/* C-VERIFICACIONES-EN-VIVO: la fila que acaba de entrar se resalta unos segundos (verde suave). */
+.kyc-fila-nueva {
+  border-color: var(--pd-exito, #0d7a3a);
+  box-shadow: 0 0 0 3px var(--pd-exito-suave, #e6f4ec);
+  animation: kyc-entra 0.6s ease-out;
+}
+@keyframes kyc-entra {
+  from {
+    background: var(--pd-exito-suave, #e6f4ec);
+  }
+  to {
+    background: #fff;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kyc-fila-nueva {
+    animation: none;
+  }
+}
+.avisos-en-vivo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.avisos-en-vivo p {
+  flex-basis: 100%;
+  margin: 0;
+}

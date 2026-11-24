@@ -9,7 +9,6 @@ export type PasoAnonimo = (typeof PASOS_ANONIMOS)[number];
 export const PASOS_CONDUCTOR = [
   ...PASOS_ANONIMOS,
   'cuenta',
-  'correo',
   'telefono',
   'aviso_ia',
   'foto_cara',
@@ -20,16 +19,25 @@ export const PASOS_CONDUCTOR = [
   'aprobado',
   'conectado',
   'primer_viaje',
+  // C-CORREO-NO-FRENA (23 nov 2026, Richard): el correo se confirma en segundo plano; va al final.
+  'correo',
 ] as const;
 export const PASOS_CLIENTE = [
   ...PASOS_ANONIMOS,
   'cuenta',
-  'correo',
   'telefono',
   'primer_viaje',
+  'correo',
 ] as const;
 export type PasoRegistro = (typeof PASOS_CONDUCTOR)[number];
 export type AppRastro = 'cliente' | 'repartidor' | 'restaurante';
+
+/**
+ * C-CORREO-NO-FRENA (23 nov 2026, decisión de Richard): pasos que se piden en segundo plano y no frenan
+ * el registro. No cuentan para «Le falta» ni para «se quedó aquí» del embudo.
+ */
+export const PASOS_QUE_NO_FRENAN: readonly PasoRegistro[] = ['correo'];
+export const pasoQueNoFrena = (p: string) => (PASOS_QUE_NO_FRENAN as readonly string[]).includes(p);
 
 export const pasosDe = (app: AppRastro): readonly PasoRegistro[] =>
   app === 'repartidor' ? PASOS_CONDUCTOR : PASOS_CLIENTE;

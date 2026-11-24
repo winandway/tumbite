@@ -9,6 +9,14 @@ import { cruzarPuertaCelular } from './puertaCelular';
 import { sqlLocal } from './sqlLocal';
 
 /**
+ * C-CONTADORES-DE-TAREA (23 nov 2026): con pedidos por aceptar, el ítem «Pedidos» del menú del
+ * restaurante lleva su número («Pedidos 1 pendiente»), y ese número es parte de su nombre accesible.
+ */
+const enlacePedidos = (texto: string) =>
+  // eslint-disable-next-line security/detect-non-literal-regexp -- texto fijo del propio guion
+  new RegExp(`^${texto}( \\d+ (pending|pendientes?))?$`);
+
+/**
  * El recorrido completo de Divoox en el navegador, como lo haría la gente: el restaurante se
  * registra y arma su menú, nuestro equipo lo aprueba, el cliente se registra, pide y paga (con
  * Stripe simulado), el restaurante acepta, el repartidor se conecta, acepta, recoge y entrega, y
@@ -748,7 +756,7 @@ for (const idioma of ['en', 'es'] as const) {
     };
     /** El restaurante rechaza un pedido desde los tres puntos de su fila (el cliente recibe su dinero). */
     const rechazarEnPanel = async (pedidoId: string) => {
-      await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+      await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
       const codigo = pedidoId.slice(0, 4).toUpperCase();
       // La fila de ESE pedido: el ⋮ que está junto a su número.
       const fila = panel
@@ -848,21 +856,32 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(/Payment received|Recibimos tu pago|Pago recibido/)).toBeVisible();
     await expect(cli.getByText(/Order placed!|¡Pedido realizado!/)).toBeVisible();
     await foto(cli, 'cliente-pagado');
-    // La campana: el pedido pagado es un aviso real, con su punto en el inicio.
-    await cli.goto('/app/notifications');
-    await expect(cli.getByText(/Tu pedido en|Your order at/)).toBeVisible({ timeout: 20_000 });
-    await foto(cli, 'cliente-avisos');
+    // La campana (C-CAMPANA-SE-VACIA): el pedido pagado es un aviso NO leído, con su punto en el inicio.
     await cli.goto('/app/');
     // Al recargar, la app confirma la sesión con el servidor: hasta 3 intentos de 8 s
     // (C-SESION-CON-LIMITE). El sitio de pruebas a veces tarda; con 20 s la prueba fallaba en la
     // pantalla roja de carga (1 nov 2026, visto con REA y las capturas del fallo), no en la campana.
     await expect(cli.getByTestId('campana-punto')).toBeVisible({ timeout: 45_000 });
+    // Abrirla lo deja leído (se guarda en el servidor por cuenta, UNA llamada)…
+    const visto = cli.waitForResponse(
+      (r) => r.url().includes('/datos/campana/visto') && r.request().method() === 'POST',
+      { timeout: 30_000 },
+    );
+    await cli.goto('/app/notifications');
+    await expect(cli.getByText(/Tu pedido en|Your order at/)).toBeVisible({ timeout: 20_000 });
+    expect((await visto).ok()).toBe(true);
+    await foto(cli, 'cliente-avisos');
+    // …y al volver al inicio (recargando: lo dice el servidor, no la memoria de la página) el punto ya no está.
+    await cli.goto('/app/');
+    await expect(cli.getByTestId('campana-punto')).toBeHidden({ timeout: 45_000 });
     await cli.goto(`/app/order/${cobro.pedidoId}?nuevo=1`);
     await cli.getByRole('button', { name: /Track order|Ver seguimiento/ }).click();
     await expect(cli.getByText(/Confirmed|Confirmado/)).toBeVisible();
 
     // 6. El restaurante acepta con su tiempo y avisa que está listo.
-    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    // El pedido pagado espera que lo acepten: el menú lo cuenta como tarea (C-CONTADORES-DE-TAREA).
+    await expect(panel.getByTestId('pendiente-orders')).toBeVisible({ timeout: 45_000 });
+    await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
     await expect(panel.getByText(cobro.pedidoId.slice(0, 4).toUpperCase()).first()).toBeVisible({
       timeout: 20_000,
     });
@@ -1504,7 +1523,7 @@ for (const idioma of ['en', 'es'] as const) {
 
     // 14. El restaurante no puede atender un pedido y lo rechaza: el cliente recibe su dinero.
     const rechazado = await pedirYPagar([plato.pizza]);
-    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
     await rechazarEnPanel(rechazado.pedidoId);
     await cli.goto(`/app/order/${rechazado.pedidoId}`);
     await expect(cli.getByText(L.rechazado, { exact: false })).toBeVisible({ timeout: 20_000 });
@@ -1513,7 +1532,7 @@ for (const idioma of ['en', 'es'] as const) {
     // 14b. Soporte cancela un pedido YA ACEPTADO (auditoría, punto 3): la autorización de la
     //      tarjeta se anula en Stripe (no se cobra nada) y el pedido queda cancelado.
     const aceptadoYCancelado = await pedirYPagar([plato.limonada]);
-    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
     await panel
       .getByRole('button', { name: `${L.aceptar} · 10` })
       .first()
@@ -1542,7 +1561,7 @@ for (const idioma of ['en', 'es'] as const) {
     // 14b. Algo agotado: el restaurante marca el plato que no tiene; el cliente lo quita y se le
     //      devuelve esa parte; el resto del pedido sigue.
     const agotado = await pedirYPagar([plato.pizza, plato.limonada]);
-    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
     const filaAgotado = panel
       .locator('strong', { hasText: `#${agotado.pedidoId.slice(0, 4).toUpperCase()}` })
       .locator(`xpath=ancestor::*[.//button[@aria-label="${L.masOpciones}"]][1]`);
@@ -1597,7 +1616,7 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(cli, 'cliente-manager-cancela');
     // 16. Recogida en el local: sin repartidor; el restaurante entrega en el mostrador con el PIN.
     const recogida = await pedirYPagar([plato.pizza], undefined, 'recoger');
-    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
     await expect(
       panel.getByText(`#${recogida.pedidoId.slice(0, 4).toUpperCase()}`).first(),
     ).toBeVisible({ timeout: 20_000 });
@@ -1763,7 +1782,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.goto('/driver/');
     await deslizar(rep, 'conectarme');
     const otro = await pedirYPagar([plato.pizza]);
-    await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+    await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
     await panel
       .getByRole('button', { name: `${L.aceptar} · 10` })
       .first()
@@ -1874,7 +1893,7 @@ for (const idioma of ['en', 'es'] as const) {
         const directo = (await resp.json()) as { pedidoId: string; directo: boolean };
         expect(directo.directo).toBe(true);
         // El restaurante acepta; el repartidor (con saldo) recibe la oferta y la acepta.
-        await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
+        await panel.getByRole('link', { name: enlacePedidos(L.pedidos) }).click();
         await panel
           .getByRole('button', { name: `${L.aceptar} · 10` })
           .first()

@@ -90,12 +90,26 @@ const esquemaRecuperar = z.object({
     .pipe(z.email({ error: 'Escribe un correo válido.' })),
   idioma: z.enum(['es', 'en']).default('es'),
 });
-const esquemaRestablecer = z.object({
-  token: z.string().min(20).max(200),
-  clave: z
+const claveNueva = z
+  .string()
+  .min(8, { error: 'La contraseña debe tener al menos 8 caracteres.' })
+  .max(200, { error: 'La contraseña es demasiado larga.' });
+/**
+ * Con el enlace del correo ({ token }) o, C-RECUPERAR-POR-CELULAR, con el código que llegó al celular
+ * confirmado de una cuenta cuyo correo todavía no está confirmado ({ correo, codigo }).
+ */
+const esquemaRestablecer = z.object({ token: z.string().min(20).max(200), clave: claveNueva });
+const esquemaRestablecerConCodigo = z.object({
+  correo: z
     .string()
-    .min(8, { error: 'La contraseña debe tener al menos 8 caracteres.' })
-    .max(200, { error: 'La contraseña es demasiado larga.' }),
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: 'Escribe un correo válido.' })),
+  codigo: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, { error: 'El código tiene 6 números.' }),
+  clave: claveNueva,
 });
 const MINUTOS_RECUPERACION = 30;
 const esquemaPerfil = z.object({
@@ -620,9 +634,41 @@ cuentas.post('/recuperar', async (c) => {
   const d = await leerCuerpo(c, esquemaRecuperar);
   const db = base(c);
   const fila = await db
-    .prepare('SELECT id, nombre, idioma FROM usuarios WHERE correo = ? AND activo = 1')
+    .prepare(
+      `SELECT id, nombre, idioma, correo_confirmado_en IS NOT NULL AS correo_ok,
+              telefono_verificado_en IS NOT NULL AS telefono_ok
+         FROM usuarios WHERE correo = ? AND activo = 1`,
+    )
     .bind(d.correo)
-    .first<{ id: string; nombre: string; idioma: 'es' | 'en' }>();
+    .first<{
+      id: string;
+      nombre: string;
+      idioma: 'es' | 'en';
+      correo_ok: number;
+      telefono_ok: number;
+    }>();
+  // C-RECUPERAR-POR-CELULAR (23 nov 2026): la contraseña se recupera solo por un medio VERIFICADO. Con el
+  // correo sin confirmar y el celular confirmado, el código va al celular y el correo no recibe nada
+  // (quien escribió mal su correo no le regala la cuenta al dueño de ese buzón). Sin celular confirmado,
+  // el enlace va al correo, como siempre funcionó. La respuesta es la misma en todos los casos.
+  if (fila && !Number(fila.correo_ok) && Number(fila.telefono_ok)) {
+    await mandarCodigo(
+      c.env,
+      db,
+      fila.id,
+      (d.idioma ?? fila.idioma) === 'en' ? 'en' : 'es',
+      c.req.header('cf-connecting-ip') ?? null,
+      undefined,
+      false,
+      'recuperar',
+    ).catch((e: unknown) =>
+      console.error(
+        'recuperar: el código al celular no salió',
+        e instanceof Error ? e.message : String(e),
+      ),
+    );
+    return c.json({ ok: true });
+  }
   if (fila) {
     const token = nuevoToken();
     await db
@@ -648,8 +694,37 @@ cuentas.post('/recuperar', async (c) => {
 });
 
 cuentas.post('/restablecer', async (c) => {
-  const d = await leerCuerpo(c, esquemaRestablecer);
   const db = base(c);
+  // C-RECUPERAR-POR-CELULAR: con el código del celular en vez del enlace del correo.
+  const crudo: unknown = await c.req.raw
+    .clone()
+    .json()
+    .catch(() => null);
+  if (crudo && typeof crudo === 'object' && 'codigo' in crudo) {
+    const d = await leerCuerpo(c, esquemaRestablecerConCodigo);
+    const u = await db
+      .prepare(
+        `SELECT id FROM usuarios WHERE correo = ? AND activo = 1
+            AND correo_confirmado_en IS NULL AND telefono_verificado_en IS NOT NULL`,
+      )
+      .bind(d.correo)
+      .first<{ id: string }>();
+    if (!u)
+      throw new ErrorDatos(
+        'Ese código ya venció. Pide uno nuevo desde «Olvidé mi contraseña».',
+        'codigo',
+        409,
+      );
+    await comprobarCodigo(db, u.id, d.codigo);
+    await db.batch([
+      db
+        .prepare('UPDATE usuarios SET clave_hash = ? WHERE id = ?')
+        .bind(await hashClave(d.clave), u.id),
+      db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
+    ]);
+    return c.json({ ok: true });
+  }
+  const d = await leerCuerpo(c, esquemaRestablecer);
   const id = await sha256(d.token);
   const r = await db
     .prepare(
@@ -825,7 +900,24 @@ cuentas.get('/telefono', async (c) => {
   await respaldoPorSms(c.env, db, u.id).catch((e: unknown) =>
     console.error('telefono: respaldo al mirar la puerta', String(e)),
   );
-  const p = await puertaTelefono(c.env, db, u.id);
+  // C-CORREO-NO-FRENA: el cliente al que hoy lo frena el correo confirma el celular en su lugar.
+  const conCorreo =
+    u.rol === 'cliente'
+      ? await db
+          .prepare('SELECT correo, correo_confirmado_en FROM usuarios WHERE id = ?')
+          .bind(u.id)
+          .first<{ correo: string; correo_confirmado_en: string | null }>()
+      : null;
+  const p = await puertaTelefono(c.env, db, u.id, {
+    enLugarDelCorreo: conCorreo
+      ? estadoCorreoCuenta(
+          c.req.url,
+          conCorreo.correo,
+          Boolean(conCorreo.correo_confirmado_en),
+          false,
+        ).debeConfirmarCorreo
+      : false,
+  });
   // El país del celular guardado (o el de la cuenta): el selector de la pantalla arranca ahí.
   const f = p
     ? await db
@@ -948,6 +1040,7 @@ cuentas.get('/perfil', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en, sms_consentido_en,
+         telefono_verificado_en,
          EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo) AND ${reboteVigenteSql('r')}
            -- C-REBOTE-TEMPORAL: un freno temporal del proveedor no le pide a la persona cambiar su correo.
            AND NOT (r.motivo LIKE '%recipient_suppressed%' AND r.motivo NOT LIKE '%5.1.1%')) AS rebotado
@@ -966,21 +1059,43 @@ cuentas.get('/perfil', async (c) => {
       // C-CORREO-HONESTO: la dirección no existe o no recibe: la app pide revisarla o cambiarla.
       correoRebotado: !f?.correo_confirmado_en && Number(f?.rebotado ?? 0) === 1,
       smsConsentimiento: Boolean(f?.sms_consentido_en),
-      debeConfirmarCorreo: debeConfirmarCorreo(
+      ...estadoCorreoCuenta(
         c.req.url,
         String(f?.correo ?? ''),
         Boolean(f?.correo_confirmado_en),
+        Boolean(f?.telefono_verificado_en),
       ),
     },
   });
 });
 
 /**
- * C-CORREO-OBLIGATORIO (4 nov 2026, Richard): la app del cliente no deja entrar sin el correo
- * confirmado. Fuera de producción, las cuentas de dominios que no existen (las del recorrido, que no
- * pueden recibir el enlace) no pasan por la puerta, salvo las «verificar.…», que la prueban.
+ * El correo de la cuenta, para las apps:
+ * - `correoPorConfirmar`: falta confirmarlo. La franja suave de las apps lo pide en segundo plano
+ *   (C-CORREO-NO-FRENA): se puede seguir usando todo.
+ * - `debeConfirmarCorreo`: la puerta que SÍ frena (`PuertaCorreo` de la app del cliente). Desde el
+ *   23 nov 2026 (decisión de Richard) solo frena si la cuenta tampoco tiene el celular confirmado con
+ *   el código: el registro queda hecho con el teléfono y el correo se verifica cuando la persona quiera.
+ *   Sin celular confirmado (por ejemplo, donde el código no tiene por dónde salir, C-TELEFONO-SIN-CANAL)
+ *   sigue como siempre (C-CORREO-OBLIGATORIO). Las apps ya publicadas leen este campo: con publicar el
+ *   servidor, a quien confirmó el celular se le abre la puerta.
+ * Fuera de producción, las cuentas de dominios que no existen (las del recorrido) no tienen correo por
+ * confirmar, salvo las «verificar.…», que lo prueban.
  */
-function debeConfirmarCorreo(url: string, correo: string, confirmado: boolean): boolean {
+export function estadoCorreoCuenta(
+  url: string,
+  correo: string,
+  confirmado: boolean,
+  telefonoConfirmado: boolean,
+): { correoPorConfirmar: boolean; debeConfirmarCorreo: boolean } {
+  const porConfirmar = correoPorConfirmar(url, correo, confirmado);
+  return {
+    correoPorConfirmar: porConfirmar,
+    debeConfirmarCorreo: porConfirmar && !telefonoConfirmado,
+  };
+}
+
+function correoPorConfirmar(url: string, correo: string, confirmado: boolean): boolean {
   if (confirmado) return false;
   if (entornoDeHost(new URL(url).host) === 'produccion') return true;
   return !esCorreoDePrueba(correo) || correo.toLowerCase().startsWith('verificar.');
