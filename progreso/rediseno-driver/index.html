@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Divoox · Borrador de Driver</title>
+    <link rel="icon" href="img/isotipo-oscuro.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --rojo: #f20d20;
+        --rojo-osc: #c20a1a;
+        --negro: #101010;
+        --gris: #666b73;
+        --gris-2: #9a9ea5;
+        --borde: #e2e4e8;
+        --borde-osc: #2a2a2a;
+        --fondo: #f6f6f6;
+        --verde: #0d7a3a;
+        --verde-suave: #e6f2ea;
+        --ambar: #8a5a00;
+        --ambar-suave: #fff4dc;
+        --petroleo: #1f4d69;
+        --petroleo-suave: #e5eef3;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body {
+        background: #ecedef;
+        color: var(--negro);
+        font-family: Montserrat, system-ui, sans-serif;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+      }
+      button, input { font: inherit; color: inherit; }
+      button { background: none; border: 0; padding: 0; cursor: pointer; }
+      h1, h2, h3 { font-family: Poppins, system-ui, sans-serif; margin: 0; }
+      :focus-visible { outline: 2px solid #1a66d6; outline-offset: 2px; }
+      svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+      /* ===== Barra del borrador ===== */
+      .barra {
+        background: #fff; border-bottom: 1px solid var(--borde);
+        padding: 10px 16px; display: flex; gap: 12px; align-items: center;
+      }
+      .barra .titulo { font-family: Poppins, sans-serif; font-weight: 600; font-size: 15px; margin-right: auto; line-height: 1.25; }
+      .barra .titulo small { display: block; font-family: Montserrat, sans-serif; font-weight: 500; color: var(--gris); font-size: 12px; }
+      .idioma { position: relative; }
+      .idioma > button {
+        display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 6px;
+        background: var(--negro); color: #fff; font-weight: 700; font-size: 13px; border: 1px solid transparent;
+      }
+      .idioma > button:hover, .idioma > button[aria-expanded='true'] { border-color: #fff; outline: 1px solid var(--negro); }
+      .bandera { width: 20px; height: 14px; border-radius: 2px; display: inline-flex; overflow: hidden; flex: none; }
+      .idioma .caja-idioma {
+        position: absolute; right: 0; top: calc(100% + 10px); background: #fff; border: 1px solid #d5d9d9;
+        border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, .16); width: 220px; padding: 12px 14px; z-index: 50; display: none;
+      }
+      .idioma .caja-idioma::before {
+        content: ''; position: absolute; top: -7px; right: 22px; width: 12px; height: 12px; background: #fff;
+        border-left: 1px solid #d5d9d9; border-top: 1px solid #d5d9d9; transform: rotate(45deg);
+      }
+      .idioma.abierto .caja-idioma { display: block; }
+      .caja-idioma .tit { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+      .caja-idioma label { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 14px; cursor: pointer; }
+      .caja-idioma label + label { border-top: 1px solid #e7e7e7; }
+      .caja-idioma input { accent-color: #e77600; width: 17px; height: 17px; margin: 0; }
+
+      /* ===== Página: notas, teléfono, notas ===== */
+      .pagina {
+        max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px;
+        display: grid; grid-template-columns: minmax(220px, 1fr) 380px minmax(240px, 1.15fr); gap: 28px; align-items: start;
+      }
+      .lado h2 { font-size: 16px; margin-bottom: 8px; }
+      .lado p { color: var(--gris); line-height: 1.5; font-size: 14px; margin: 0 0 12px; }
+      .caja { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+      .caja ul { margin: 0; padding-left: 18px; color: #33363b; font-size: 13.5px; line-height: 1.5; }
+      .caja li + li { margin-top: 6px; }
+      .mapa-pantallas { display: flex; flex-direction: column; gap: 2px; }
+      .mapa-pantallas .grupo { font-size: 11.5px; font-weight: 700; color: var(--gris-2); text-transform: uppercase; letter-spacing: .04em; margin: 10px 0 2px 10px; }
+      .mapa-pantallas button { text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 13.5px; color: #33363b; display: flex; gap: 8px; }
+      .mapa-pantallas button .n { color: var(--gris-2); min-width: 18px; font-variant-numeric: tabular-nums; }
+      .mapa-pantallas button[aria-current='true'] { background: var(--negro); color: #fff; }
+      .mapa-pantallas button[aria-current='true'] .n { color: #bbb; }
+      .nota-pantalla h3 { font-size: 15px; margin-bottom: 6px; }
+      .ref { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--fondo); border: 1px solid var(--borde); margin: 0 4px 4px 0; }
+      .toques { font-size: 13.5px; color: #33363b; line-height: 1.6; }
+      .toques b { font-variant-numeric: tabular-nums; }
+
+      .telefono {
+        width: 380px; height: 780px; background: #0b0b0b; border-radius: 44px; padding: 10px; position: sticky; top: 16px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, .25);
+      }
+      .pantalla { position: relative; width: 100%; height: 100%; border-radius: 35px; overflow: hidden; background: #fff; }
+
+      @media (max-width: 1060px) {
+        .pagina { grid-template-columns: 1fr; max-width: 560px; }
+        .telefono { order: -1; margin: 0 auto; position: static; }
+      }
+      @media (max-width: 520px) {
+        .pagina { padding: 0 0 40px; gap: 16px; }
+        .telefono { width: 100%; height: calc(100svh - 58px); min-height: 620px; border-radius: 0; padding: 0; box-shadow: none; }
+        .pantalla { border-radius: 0; }
+        .lado { padding: 0 16px; }
+        .barra .titulo small { display: none; }
+      }
+
+      /* ===== Dentro de la app ===== */
+      .app { position: absolute; inset: 0; display: flex; flex-direction: column; font-size: 15px; }
+      .mapa { position: absolute; inset: 0; background: #eceef1; }
+      .mapa svg { width: 100%; height: 100%; display: block; }
+      .flotante { position: absolute; left: 12px; right: 12px; top: 14px; display: flex; align-items: center; gap: 10px; z-index: 3; }
+      .boton-red {
+        width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 1px solid var(--borde);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .12); display: grid; place-items: center; flex: none;
+      }
+      .pildora-ganancias {
+        margin: 0 auto; background: var(--negro); color: #fff; border-radius: 999px; padding: 10px 18px;
+        font-family: Poppins, sans-serif; font-weight: 600; font-size: 17px; box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+        display: inline-flex; align-items: baseline; gap: 6px;
+      }
+      .pildora-ganancias small { font-family: Montserrat, sans-serif; font-weight: 500; font-size: 12px; opacity: .75; }
+
+      .hoja {
+        position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, .12); padding: 10px 18px 18px; z-index: 4; max-height: 86%; overflow-y: auto;
+      }
+      .hoja::before { content: ''; display: block; width: 40px; height: 4px; border-radius: 4px; background: #d5d8dc; margin: 0 auto 12px; }
+      .con-barra .hoja { bottom: 64px; border-radius: 20px 20px 0 0; }
+      .estado { display: flex; align-items: center; gap: 8px; font-family: Poppins, sans-serif; font-weight: 600; font-size: 18px; }
+      .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--gris-2); flex: none; }
+      .punto.vivo { background: var(--verde); box-shadow: 0 0 0 0 rgba(13, 122, 58, .5); animation: late 1.6s infinite; }
+      @keyframes late { 70% { box-shadow: 0 0 0 9px rgba(13, 122, 58, 0); } 100% { box-shadow: 0 0 0 0 rgba(13, 122, 58, 0); } }
+      .sub { color: var(--gris); font-size: 13.5px; line-height: 1.45; margin: 6px 0 0; }
+      .buscando { height: 3px; border-radius: 3px; background: var(--verde-suave); overflow: hidden; margin: 12px 0 2px; position: relative; }
+      .buscando::after { content: ''; position: absolute; top: 0; bottom: 0; width: 35%; background: var(--verde); border-radius: 3px; animation: barre 1.4s ease-in-out infinite; }
+      @keyframes barre { from { left: -35%; } to { left: 100%; } }
+      .fila-chips { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+      .chip {
+        display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--borde-osc); border-radius: 999px;
+        padding: 8px 12px; font-size: 13px; font-weight: 600; background: #fff;
+      }
+      .chip svg.i { width: 17px; height: 17px; }
+      .btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; border-radius: 12px;
+        font-family: Poppins, sans-serif; font-weight: 600; font-size: 16.5px; margin-top: 14px; padding: 0 16px;
+      }
+      .btn.rojo { background: var(--rojo); color: #fff; }
+      .btn.rojo:active { background: var(--rojo-osc); }
+      .btn.negro { background: var(--negro); color: #fff; }
+      .btn.petroleo { background: var(--petroleo); color: #fff; }
+      .btn.borde { border: 1px solid var(--borde-osc); background: #fff; }
+      .btn.texto { min-height: 40px; color: var(--gris); font-size: 14.5px; margin-top: 6px; }
+      .btn[disabled] { background: #e4e6e9; color: #8a8e94; cursor: not-allowed; }
+
+      .activar {
+        position: absolute; left: 12px; right: 12px; top: 70px; z-index: 3; background: #fff; border: 1px solid var(--borde-osc);
+        border-radius: 14px; padding: 12px 14px; box-shadow: 0 3px 12px rgba(0, 0, 0, .12); display: block; width: auto; text-align: left;
+      }
+      .activar .arriba { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .activar b { font-family: Poppins, sans-serif; font-weight: 600; font-size: 15px; }
+      .activar .cuenta { font-size: 12.5px; font-weight: 700; color: var(--verde); white-space: nowrap; }
+      .progreso { display: block; height: 6px; border-radius: 6px; background: #e8eaed; margin: 9px 0 7px; overflow: hidden; }
+      .progreso > i { display: block; height: 100%; background: var(--verde); border-radius: 6px; }
+      .activar small { color: var(--gris); font-size: 12.5px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+
+      .tabs {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #fff; border-top: 1px solid var(--borde);
+        display: grid; grid-template-columns: repeat(4, 1fr); z-index: 5;
+      }
+      .tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; font-weight: 600; color: var(--gris); position: relative; }
+      .tabs button[aria-current='true'] { color: var(--negro); }
+      .tabs button[aria-current='true'] svg.i { stroke-width: 2.3; }
+      .insignia {
+        position: absolute; top: 7px; left: calc(50% + 6px); min-width: 18px; height: 18px; border-radius: 9px; background: var(--rojo);
+        color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; padding: 0 5px; border: 2px solid #fff;
+      }
+
+      /* Oferta */
+      .velo { position: absolute; inset: 0; background: rgba(16, 16, 16, .25); z-index: 3; }
+      .oferta .cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .etiqueta { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; padding: 6px 10px; border-radius: 999px; background: var(--fondo); border: 1px solid var(--borde); white-space: nowrap; }
+      .etiqueta.petroleo { background: var(--petroleo-suave); border-color: #c5d6e0; color: var(--petroleo); }
+      .etiqueta.fijo { background: #fff; border-color: var(--borde-osc); }
+      .etiqueta svg.i { width: 17px; height: 17px; }
+      .reloj { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; background: var(--fondo); border-radius: 999px; padding: 6px 10px; }
+      .cuenta-atras { height: 4px; background: #e8eaed; border-radius: 4px; overflow: hidden; margin: 12px 0 10px; }
+      .cuenta-atras i { display: block; height: 100%; background: var(--negro); animation: baja 30s linear forwards; }
+      @keyframes baja { from { width: 100%; } to { width: 0; } }
+      .monto { font-family: Poppins, sans-serif; font-weight: 700; font-size: 40px; color: var(--verde); line-height: 1.05; letter-spacing: -.01em; }
+      .monto-nota { color: var(--gris); font-size: 13px; margin-top: 3px; }
+      .datos3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
+      .datos3 div { background: var(--fondo); border-radius: 10px; padding: 9px 6px; text-align: center; }
+      .datos3 b { display: block; font-family: Poppins, sans-serif; font-size: 15.5px; }
+      .datos3 span { font-size: 11.5px; color: var(--gris); }
+      .ruta { margin-top: 12px; display: grid; grid-template-columns: 18px 1fr; column-gap: 10px; }
+      .ruta .marca { display: flex; flex-direction: column; align-items: center; padding-top: 5px; }
+      .ruta .marca i { width: 10px; height: 10px; border-radius: 50%; background: var(--negro); display: block; }
+      .ruta .marca i.fin { border-radius: 2px; }
+      .ruta .marca em { flex: 1; width: 2px; background: #cfd3d8; margin: 3px 0; min-height: 22px; }
+      .ruta .t { font-size: 12px; color: var(--gris); }
+      .ruta .v { font-weight: 600; font-size: 14.5px; margin-bottom: 10px; }
+      .linea-info { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #33363b; margin-top: 8px; }
+      .linea-info svg.i { width: 18px; height: 18px; color: var(--gris); }
+      .rechazar { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px auto 0; color: var(--gris); font-weight: 600; font-size: 14px; min-height: 40px; }
+
+      /* Viaje en curso */
+      .pasos { display: flex; gap: 6px; margin-bottom: 12px; }
+      .pasos i { flex: 1; height: 4px; border-radius: 4px; background: #e3e5e8; }
+      .pasos i.hecho { background: var(--verde); }
+      .pasos i.ahora { background: var(--negro); }
+      .titulo-paso { font-family: Poppins, sans-serif; font-weight: 600; font-size: 19px; line-height: 1.25; }
+      .acciones { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+      .acciones button { border: 1px solid var(--borde); border-radius: 12px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
+      .codigo { display: flex; gap: 8px; margin-top: 12px; }
+      .codigo span { width: 46px; height: 54px; border: 1px solid var(--borde-osc); border-radius: 10px; display: grid; place-items: center; font-family: Poppins, sans-serif; font-size: 22px; font-weight: 600; }
+      .espera { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: var(--fondo); padding: 6px 10px; border-radius: 999px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+      .tarjeta { border: 1px solid var(--borde-osc); border-radius: 14px; padding: 12px 14px; margin-top: 12px; background: #fff; }
+      .tarjeta .t { font-size: 12px; color: var(--gris); font-weight: 600; }
+      .lista-check { list-style: none; padding: 0; margin: 6px 0 0; }
+      .lista-check li { display: flex; gap: 10px; align-items: center; padding: 7px 0; font-size: 14px; }
+      .lista-check li + li { border-top: 1px solid #eef0f2; }
+      .caja-check { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #b9bdc3; display: grid; place-items: center; flex: none; }
+      .caja-check.ok { background: var(--verde); border-color: var(--verde); color: #fff; }
+      .caja-check svg.i { width: 15px; height: 15px; stroke-width: 2.6; }
+      .foto { margin-top: 12px; border-radius: 12px; border: 1px dashed #b9bdc3; height: 112px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--negro); font-size: 14px; font-weight: 600; background: var(--fondo); width: 100%; }
+      .foto.lista { border: 1px solid var(--borde-osc); background: #e9ecef; position: relative; overflow: hidden; display: block; }
+      .opciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      .opciones button { border: 1px solid var(--borde); border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+      .opciones button[aria-pressed='true'] { border-color: var(--negro); background: var(--negro); color: #fff; }
+      .etq { font-size: 12.5px; color: var(--gris); font-weight: 600; margin-top: 12px; }
+
+      .deslizar {
+        position: relative; height: 58px; border-radius: 14px; background: var(--negro); color: #fff; margin-top: 16px; overflow: hidden;
+        user-select: none; -webkit-user-select: none; touch-action: none;
+      }
+      .deslizar.petroleo { background: var(--petroleo); }
+      .deslizar.sos { background: var(--rojo); }
+      .deslizar .txt { position: absolute; inset: 0; display: grid; place-items: center; font-family: Poppins, sans-serif; font-weight: 600; font-size: 15px; padding: 0 12px 0 60px; text-align: center; }
+      .deslizar .perilla {
+        position: absolute; left: 5px; top: 5px; width: 48px; height: 48px; border-radius: 10px; background: #fff; color: var(--negro);
+        display: grid; place-items: center; cursor: grab; transition: left .2s;
+      }
+      .deslizar .perilla.arrastra { transition: none; }
+
+      .listo-ico { width: 64px; height: 64px; border-radius: 50%; background: var(--verde); color: #fff; display: grid; place-items: center; margin: 6px auto 10px; }
+      .listo-ico svg.i { width: 34px; height: 34px; stroke-width: 2.6; }
+      .centro { text-align: center; }
+      .desglose div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-top: 1px solid #eef0f2; }
+      .desglose div:first-child { border-top: 0; }
+      .desglose .total { font-weight: 700; }
+      .estrellas { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+      .estrellas button { color: #c4c7cc; }
+      .estrellas button.on { color: var(--negro); }
+      .estrellas button.on svg.i { fill: var(--negro); }
+      .estrellas svg.i { width: 30px; height: 30px; }
+
+      /* Pantallas con cabecera (ganancias, campana, cuenta) */
+      .cuerpo { position: absolute; inset: 0 0 64px 0; overflow-y: auto; background: var(--fondo); }
+      .cuerpo.sin-barra { bottom: 0; }
+      .cabecera { background: #fff; border-bottom: 1px solid var(--borde); padding: 16px 16px 12px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 2; }
+      .cabecera h1 { font-size: 21px; flex: 1; }
+      .cabecera .volver { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; margin-left: -8px; }
+      .seccion { padding: 14px 16px 0; }
+      .seg { display: grid; grid-template-columns: 1fr 1fr; background: #e8eaed; border-radius: 10px; padding: 3px; }
+      .seg button { padding: 9px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--gris); }
+      .seg button[aria-pressed='true'] { background: #fff; color: var(--negro); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+      .bloque { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 14px; margin-top: 12px; }
+      .bloque .t { font-size: 12.5px; color: var(--gris); font-weight: 600; }
+      .grande { font-family: Poppins, sans-serif; font-weight: 700; font-size: 32px; margin-top: 2px; }
+      .grande.verde { color: var(--verde); }
+      .semana { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--gris); font-weight: 600; }
+      .semana button { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--borde); }
+      .barras { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 120px; margin-top: 14px; }
+      .barras div { display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+      .barras i { width: 100%; max-width: 26px; background: #c9e2d2; border-radius: 6px 6px 2px 2px; display: block; }
+      .barras i.hoy { background: var(--verde); }
+      .barras span { font-size: 11px; color: var(--gris); }
+      .tres { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; margin-top: 12px; border-top: 1px solid #eef0f2; padding-top: 12px; }
+      .tres b { display: block; font-family: Poppins, sans-serif; font-size: 16px; }
+      .tres span { font-size: 11.5px; color: var(--gris); }
+      .fila { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #eef0f2; width: 100%; text-align: left; }
+      .lista > .fila:first-child, .bloque .t + .fila { border-top: 0; }
+      .fila .ico { width: 38px; height: 38px; border-radius: 50%; background: var(--fondo); display: grid; place-items: center; flex: none; }
+      .fila .txt { flex: 1; min-width: 0; }
+      .fila .txt b { display: block; font-weight: 600; font-size: 14.5px; }
+      .fila .txt small { color: var(--gris); font-size: 12.5px; }
+      .fila .val { font-weight: 700; font-size: 14.5px; white-space: nowrap; }
+      .val.verde { color: var(--verde); }
+      .val.gris { color: var(--gris); }
+      .dos-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .dos-btn .btn { font-size: 14.5px; min-height: 46px; margin-top: 12px; padding: 0 8px; }
+
+      .aviso { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--borde); background: #fff; width: 100%; text-align: left; }
+      .aviso.leido { background: var(--fondo); }
+      .aviso.leido b { font-weight: 600; }
+      .aviso .ico { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; background: #eceef1; }
+      .aviso .ico.verde { background: var(--verde-suave); color: var(--verde); }
+      .aviso .ico.ambar { background: var(--ambar-suave); color: var(--ambar); }
+      .aviso .txt { flex: 1; }
+      .aviso b { display: block; font-size: 14.5px; font-weight: 700; }
+      .aviso p { margin: 3px 0 0; color: var(--gris); font-size: 13px; line-height: 1.4; }
+      .aviso small { color: var(--gris-2); font-size: 12px; display: block; margin-top: 4px; }
+      .aviso .bolita { width: 9px; height: 9px; border-radius: 50%; background: var(--negro); margin-top: 6px; flex: none; }
+      .separador { padding: 14px 16px 6px; font-size: 12px; font-weight: 700; color: var(--gris); text-transform: uppercase; letter-spacing: .04em; }
+
+      .perfil-cab { background: #fff; padding: 20px 16px 16px; display: flex; gap: 14px; align-items: center; border-bottom: 1px solid var(--borde); }
+      .avatar { width: 62px; height: 62px; border-radius: 50%; background: #e3e5e8; display: grid; place-items: center; color: var(--gris); flex: none; }
+      .avatar svg.i { width: 34px; height: 34px; }
+      .perfil-cab h1 { font-size: 20px; }
+      .perfil-cab .meta { display: flex; gap: 10px; font-size: 13px; color: var(--gris); margin-top: 4px; flex-wrap: wrap; }
+      .perfil-cab .meta b { color: var(--negro); }
+      .lista { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 0 14px; margin-top: 12px; }
+      .estado-p { font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 999px; white-space: nowrap; }
+      .estado-p.ok { background: var(--verde-suave); color: var(--verde); }
+      .estado-p.ambar { background: var(--ambar-suave); color: var(--ambar); }
+      .estado-p.gris { background: #eceef1; color: var(--gris); }
+      .estado-p.falta { background: #fff; color: var(--negro); border: 1px solid var(--borde-osc); }
+      .interruptor { width: 44px; height: 26px; border-radius: 13px; background: #c9ccd1; position: relative; flex: none; }
+      .interruptor::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s; }
+      .interruptor[aria-checked='true'] { background: var(--verde); }
+      .interruptor[aria-checked='true']::after { left: 21px; }
+      .menu-puntos { position: relative; }
+      .menu-puntos .pop { position: absolute; right: 0; top: 46px; background: #fff; border: 1px solid var(--borde); border-radius: 10px; box-shadow: 0 6px 18px rgba(0, 0, 0, .14); min-width: 190px; z-index: 6; padding: 4px; display: none; }
+      .menu-puntos.abierto .pop { display: block; }
+      .menu-puntos .pop button { display: flex; gap: 8px; align-items: center; width: 100%; padding: 10px; font-size: 14px; border-radius: 8px; }
+      .menu-puntos .pop button.borrar { color: var(--rojo-osc); }
+      .nota-pie { color: var(--gris); font-size: 12px; text-align: center; padding: 18px 16px 24px; }
+
+      .hoja-modal { position: absolute; inset: 0; z-index: 20; }
+      .hoja-modal .velo { z-index: 0; }
+      .hoja-modal .hoja { z-index: 1; bottom: 0; }
+      .opcion-app { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #eef0f2; width: 100%; font-weight: 600; text-align: left; }
+      .opcion-app:first-of-type { border-top: 0; }
+    </style>
+  </head>
+  <body>
+    <header class="barra">
+      <div class="titulo">Borrador · Divoox Driver<small>Toca los botones del teléfono: cada uno lleva a la pantalla siguiente.</small></div>
+      <div class="idioma" id="idioma">
+        <button type="button" aria-haspopup="true" aria-expanded="false" id="btn-idioma"></button>
+        <div class="caja-idioma" role="dialog" aria-label="Cambiar idioma">
+          <div class="tit" id="tit-idioma">Cambiar idioma</div>
+          <label><input type="radio" name="lang" value="en" /> <span class="bandera" data-b="us"></span> English - EN</label>
+          <label><input type="radio" name="lang" value="es" /> <span class="bandera" data-b="es"></span> español - ES</label>
+        </div>
+      </div>
+    </header>
+
+    <div class="pagina">
+      <aside class="lado">
+        <h2>Pantallas</h2>
+        <p>Entra directo a cualquiera, o sigue el recorrido desde el teléfono.</p>
+        <div class="caja"><nav class="mapa-pantallas" id="mapa" aria-label="Pantallas del borrador"></nav></div>
+      </aside>
+
+      <div class="telefono"><div class="pantalla" id="pantalla"></div></div>
+
+      <aside class="lado">
+        <div class="caja nota-pantalla" id="nota"></div>
+        <div class="caja">
+          <h3 style="font-size: 15px; margin-bottom: 6px">Toques hasta cada cosa</h3>
+          <div class="toques">
+            Conectarse: <b>1</b> toque.<br />
+            Aceptar una oferta: <b>1</b> toque.<br />
+            Llegué, iniciar y terminar: <b>1</b> toque o un deslizar cada uno.<br />
+            Ganancias, campana y cuenta: <b>1</b> toque (barra de abajo).<br />
+            Papeles: <b>1</b> toque desde la barra de activación; <b>2</b> desde Cuenta.<br />
+            Seguridad: <b>1</b> toque (escudo arriba a la izquierda).
+          </div>
+        </div>
+        <div class="caja">
+          <h3 style="font-size: 15px; margin-bottom: 6px">Reglas que cumple</h3>
+          <ul>
+            <li>Una sola barra de abajo con cuatro lugares; nada se repite en otra pantalla y no hay pantallas puente.</li>
+            <li>Lo ganado y lo aprobado va en verde; el rojo es la marca y los problemas.</li>
+            <li>Envíos y Flex en azul petróleo, para reconocerlos de un vistazo.</li>
+            <li>Iniciar y terminar se hacen deslizando, nunca con un toque suelto.</li>
+            <li>Quitar un vehículo está dentro de los tres puntos.</li>
+            <li>Cada papel ofrece «Tomar foto» y «Subir desde archivos».</li>
+            <li>El número de la campana se va a cero al abrirla.</li>
+            <li>Ejemplos neutros: ni ciudades ni datos reales. En inglés, millas y direcciones al estilo de EE. UU.</li>
+            <li>Íconos de un solo estilo de línea, sin ilustraciones mezcladas.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      'use strict';
+      // ---------- Estado del borrador ----------
+      const S = {
+        lang: 'es',
+        pantalla: 'inicio',
+        conectado: false,
+        registro: 'activo', // 'activo' | 'incompleto'
+        tipo: 'viaje', // viaje | envio | comida | fijo
+        paso: 0,
+        foto: false,
+        dejado: 'puerta',
+        pestanaGan: 'ganancias',
+        avisosLeidos: false,
+        avisosRecien: false,
+        estrellas: 5,
+        modal: null,
+        servicios: { carro: true, moto: false, comida: true, envios: true },
+        efectivo: true,
+      };
+      let temporizador = null;
+      let reloj = null;
+      const L = (es, en) => (S.lang === 'en' ? en : es);
+      const dist = (km) => (S.lang === 'en' ? (km * 0.621).toFixed(1) + ' mi' : km.toFixed(1).replace('.', ',') + ' km');
+      const din = (n) => '$' + n.toFixed(2);
+      const hora = (h, m, pm) => (S.lang === 'en' ? `${h}:${m} ${pm ? 'PM' : 'AM'}` : `${h}:${m} ${pm ? 'p. m.' : 'a. m.'}`);
+
+      // ---------- Íconos (un solo estilo de línea) ----------
+      const P = {
+        home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+        chart: 'M4 20V11M10 20V5M16 20v-7M2 20h20',
+        bell: 'M6 9a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9M10 20a2 2 0 0 0 4 0',
+        user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
+        shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+        nav: 'M3 11l18-8-8 18-2-8z',
+        phone: 'M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2',
+        chat: 'M4 5h16v11H9l-5 4z',
+        x: 'M6 6l12 12M18 6L6 18',
+        check: 'M5 12.5l4.5 4.5L19 7',
+        chev: 'M9 6l6 6-6 6',
+        back: 'M15 6l-6 6 6 6',
+        car: 'M3 16v-4l2.2-5h13.6L21 12v4M3 16h18M6 16v2.5M18 16v2.5M3 12h18',
+        moto: 'M5.5 18.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18.5 18.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.5 15.5h5l3-6h-3M5.5 15.5L9 9.5h3',
+        bag: 'M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0',
+        box: 'M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5l9 4.5 9-4.5M12 12v9',
+        star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z',
+        camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+        upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
+        wallet: 'M3 7h17v13H3zM3 7l13-4v4M15.5 13.5h4.5',
+        doc: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6',
+        clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
+        pin: 'M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+        help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5M12 16.5h.01',
+        logout: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
+        repeat: 'M17 3l3 3-3 3M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3M20 13v2a3 3 0 0 1-3 3H4',
+        flag: 'M5 21V4h11l-2 4 2 4H5',
+        scan: 'M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M7 12h10',
+        dots: 'M12 5h.01M12 12h.01M12 19h.01',
+        trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+        edit: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4',
+        plus: 'M12 5v14M5 12h14',
+        sliders: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',
+        globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z',
+        lock: 'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3',
+        arrow: 'M5 12h14M13 6l6 6-6 6',
+      };
+      const I = (n, extra = '') => `<svg class="i" ${extra} viewBox="0 0 24 24" aria-hidden="true"><path d="${P[n]}"/></svg>`;
+      const banderas = {
+        es: '<svg viewBox="0 0 20 14" width="20" height="14" aria-hidden="true"><rect width="20" height="14" fill="#AA151B"/><rect y="3.5" width="20" height="7" fill="#F1BF00"/></svg>',
+        us: '<svg viewBox="0 0 20 14" width="20" height="14" aria-hidden="true"><rect width="20" height="14" fill="#fff"/><g fill="#B22234"><rect width="20" height="1.08"/><rect y="2.15" width="20" height="1.08"/><rect y="4.3" width="20" height="1.08"/><rect y="6.46" width="20" height="1.08"/><rect y="8.6" width="20" height="1.08"/><rect y="10.77" width="20" height="1.08"/><rect y="12.92" width="20" height="1.08"/></g><rect width="9" height="7.54" fill="#3C3B6E"/></svg>',
+      };
+
+      // ---------- Mapa dibujado (sin datos reales) ----------
+      function mapa(o = {}) {
+        const calle = (d, w) => `<path d="${d}" stroke="#d6dade" stroke-width="${w + 3}" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#fff" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+        // Cuadrícula de hexágonos que se tocan sin montarse (como el mapa de demanda de Dasher).
+        const hex = (c, f, fuerte) => {
+          const r = 30, dx = Math.sqrt(3) * r, x = 52 + c * dx + (f % 2 ? dx / 2 : 0), y = 150 + f * 1.5 * r;
+          const pts = [0, 1, 2, 3, 4, 5].map((k) => { const a = (Math.PI / 3) * k + Math.PI / 6; return (x + (r - 1) * Math.cos(a)).toFixed(1) + ',' + (y + (r - 1) * Math.sin(a)).toFixed(1); }).join(' ');
+          return `<polygon points="${pts}" fill="rgba(242,13,32,${fuerte ? '.20' : '.09'})" stroke="#fff" stroke-width="2"/>`;
+        };
+        const color = o.petroleo ? '#1F4D69' : '#101010';
+        let s = `<svg viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect width="360" height="700" fill="#eceef1"/>
+          <rect x="18" y="400" width="130" height="96" rx="8" fill="#dbe8d9"/>
+          <rect x="230" y="40" width="110" height="70" rx="8" fill="#dbe8d9"/>
+          <path d="M260 700 C 280 600, 330 560, 360 540 L360 700 Z" fill="#d3e3ee"/>
+          ${[90, 230, 370, 520, 640].map((y) => calle(`M-10 ${y} H370`, 7)).join('')}
+          ${[60, 170, 290].map((x) => calle(`M${x} -10 V710`, 7)).join('')}
+          ${calle('M-10 600 L370 150', 12)}
+          ${calle('M-10 300 C 120 280, 200 330, 370 300', 10)}`;
+        if (o.demanda) s += [[1, 0, 0], [2, 0, 1], [3, 0, 0], [0, 1, 0], [1, 1, 1], [2, 1, 1], [3, 1, 0], [1, 2, 0], [2, 2, 1], [4, 3, 0]].map(([c, f, k]) => hex(c, f, k)).join('');
+        if (o.ruta) s += `<path d="${o.ruta}" stroke="${color}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+        if (o.recoger) s += `<circle cx="${o.recoger[0]}" cy="${o.recoger[1]}" r="10" fill="${color}"/><circle cx="${o.recoger[0]}" cy="${o.recoger[1]}" r="4" fill="#fff"/>`;
+        if (o.destino) s += `<rect x="${o.destino[0] - 10}" y="${o.destino[1] - 10}" width="20" height="20" rx="3" fill="${color}"/><rect x="${o.destino[0] - 4}" y="${o.destino[1] - 4}" width="8" height="8" fill="#fff"/>`;
+        const yo = o.yo || [180, 330];
+        s += `<circle cx="${yo[0]}" cy="${yo[1]}" r="22" fill="rgba(16,16,16,.12)"/><circle cx="${yo[0]}" cy="${yo[1]}" r="14" fill="#101010" stroke="#fff" stroke-width="3"/><path d="M${yo[0]} ${yo[1] - 7} l5 12 -5 -3 -5 3z" fill="#fff"/>`;
+        return `<div class="mapa">${s}</svg></div>`;
+      }
+
+      // ---------- Datos de cada servicio (ejemplos neutros) ----------
+      function datosTipo(t) {
+        return {
+          viaje: {
+            etiqueta: `${I('car')} ${L('Viaje · Carro', 'Ride · Car')}`, cls: '', monto: 7.2,
+            nota: L('Pago con tarjeta en la app', 'Paid by card in the app'),
+            d: [1.2, 2.9, 12], quien: 'Ana M.', cal: '4.9',
+            de: L('Plaza Central', 'Central Plaza'), a: L('Avenida Principal 120', '120 Main Street'),
+            aceptar: L('Aceptar viaje', 'Accept ride'),
+          },
+          envio: {
+            etiqueta: `${I('box')} ${L('Envío · de A a B', 'Delivery · A to B')}`, cls: 'petroleo', monto: 6.5,
+            nota: L('Paquete pequeño, hasta 5 kg', 'Small package, up to 11 lb'),
+            d: [0.8, 3.6, 14], quien: 'Carlos R.', cal: '4.8',
+            de: L('Calle Norte 45, local 2', '45 North Street, Suite 2'), a: L('Calle del Parque 8, apto. 3B', '8 Park Avenue, Apt 3B'),
+            aceptar: L('Aceptar envío', 'Accept delivery'),
+          },
+          comida: {
+            etiqueta: `${I('bag')} ${L('Comida', 'Food')}`, cls: '', monto: 5.8,
+            nota: L('Incluye $2.00 de propina', 'Includes $2.00 tip'),
+            d: [0.6, 2.1, 11], quien: 'Luis P.', cal: '5.0',
+            de: L('Pizzería del Centro', 'Downtown Pizzeria'), a: L('Calle Sur 30, casa 4', '30 South Street'),
+            aceptar: L('Aceptar pedido', 'Accept order'),
+          },
+          fijo: {
+            etiqueta: `${I('repeat')} ${L('Cliente fijo', 'Regular rider')}`, cls: 'fijo', monto: 7.2,
+            nota: L('Por viaje · lunes a viernes, 7:00 a. m.', 'Per ride · Monday to Friday, 7:00 AM'),
+            d: [1.0, 3.1, 13], quien: 'Ana M.', cal: '4.9',
+            de: L('Plaza Central', 'Central Plaza'), a: L('Avenida Principal 120', '120 Main Street'),
+            aceptar: L('Aceptar viajes fijos', 'Accept regular rides'),
+          },
+        }[t];
+      }
+
+      // ---------- Piezas ----------
+      function barra(actual) {
+        const n = S.avisosLeidos ? 0 : 3;
+        const b = (id, ico, txt) => `<button data-ir="${id}" aria-current="${actual === id}">${I(ico)}${txt}${id === 'avisos' && n ? `<span class="insignia">${n}</span>` : ''}</button>`;
+        return `<nav class="tabs" aria-label="${L('Navegación', 'Navigation')}">${b('inicio', 'home', L('Inicio', 'Home'))}${b('ganancias', 'chart', L('Ganancias', 'Earnings'))}${b('avisos', 'bell', L('Avisos', 'Inbox'))}${b('cuenta', 'user', L('Cuenta', 'Account'))}</nav>`;
+      }
+      const flotante = () => `<div class="flotante">
+          <button class="boton-red" data-modal="seguridad" aria-label="${L('Seguridad', 'Safety')}">${I('shield')}</button>
+          <button class="pildora-ganancias" data-ir="ganancias">${din(42.8)} <small>${L('hoy', 'today')}</small></button>
+          <button class="boton-red" data-modal="destino" aria-label="${L('Modo destino', 'Destination mode')}">${I('flag')}</button>
+        </div>`;
+      const deslizar = (texto, accion, cls = '') => `<div class="deslizar ${cls}" data-deslizar="${accion}"><div class="txt">${texto}</div><div class="perilla" role="button" tabindex="0" aria-label="${texto}">${I('arrow')}</div></div>`;
+
+      // ---------- Pantallas ----------
+      const V = {};
+
+      V.inicio = () => {
+        const incompleto = S.registro === 'incompleto';
+        let hoja;
+        if (incompleto) {
+          hoja = `<div class="estado"><span class="punto"></span>${L('Todavía no puedes conectarte', 'You can’t go online yet')}</div>
+            <p class="sub">${L('Termina tus papeles y te avisamos en cuanto tu cuenta quede activa.', 'Finish your documents and we’ll let you know as soon as your account is active.')}</p>
+            <button class="btn" disabled>${L('Conectarse', 'Go online')}</button>`;
+        } else if (!S.conectado) {
+          hoja = `<div class="estado"><span class="punto"></span>${L('Estás desconectado', 'You’re offline')}</div>
+            <p class="sub">${L('En tu zona llega una oferta cada 1 a 3 minutos. Las zonas marcadas tienen más pedidos ahora.', 'Offers in your area arrive every 1–3 minutes. Shaded areas are busier right now.')}</p>
+            <button class="btn rojo" data-act="conectar">${L('Conectarse', 'Go online')}</button>`;
+        } else {
+          hoja = `<div class="estado"><span class="punto vivo"></span>${L('Conectado · buscando ofertas', 'Online · finding offers')}</div>
+            <div class="buscando"></div>
+            <p class="sub">${L('Es más probable recibir ofertas cerca de las zonas marcadas.', 'You’re more likely to get offers near the shaded areas.')}</p>
+            <div class="fila-chips">
+              <button class="chip" data-modal="destino">${I('flag')}${L('Modo destino', 'Destination')}</button>
+              <button class="chip" data-modal="servicios">${I('sliders')}${L('Qué ofertas recibo', 'Offers I get')}</button>
+            </div>
+            <button class="btn borde" data-act="desconectar">${L('Desconectarse', 'Go offline')}</button>`;
+        }
+        const activar = incompleto
+          ? `<button class="activar" data-ir="papeles">
+              <span class="arriba"><b>${L('Activa tu cuenta', 'Activate your account')}</b><span class="cuenta">${L('4 de 6 listos', '4 of 6 done')}</span></span>
+              <span class="progreso"><i style="width:66%"></i></span>
+              <small><span>${L('Te faltan: seguro y cuenta para cobrar', 'Still needed: insurance and payout account')}</span>${I('chev', 'style="width:18px;height:18px"')}</small>
+            </button>`
+          : '';
+        return `<div class="app con-barra">${mapa({ demanda: !incompleto })}${flotante()}${activar}<div class="hoja">${hoja}</div>${barra('inicio')}</div>`;
+      };
+
+      V.oferta = () => {
+        const d = datosTipo(S.tipo);
+        const pet = S.tipo === 'envio';
+        const extraFijo = S.tipo === 'fijo'
+          ? `<div class="linea-info">${I('star')}${L('Ana te eligió como su conductor de confianza', 'Ana picked you as her trusted driver')}</div>
+             <div class="linea-info">${I('clock')}${L('Empieza el lunes · puedes dejarlo cuando quieras', 'Starts Monday · you can stop anytime')}</div>`
+          : '';
+        const extraComida = S.tipo === 'comida' ? `<div class="linea-info">${I('bag')}${L('1 pedido · lleva tu bolsa térmica', '1 order · bring your insulated bag')}</div>` : '';
+        return `<div class="app">${mapa({ ruta: 'M180 330 L120 300 L60 300 L60 90 L170 90', recoger: [120, 300], destino: [170, 90], petroleo: pet })}
+          <div class="velo"></div>
+          <div class="hoja oferta">
+            <div class="cab"><span class="etiqueta ${d.cls}">${d.etiqueta}</span><span class="reloj" id="reloj">30 s</span></div>
+            <div class="cuenta-atras"><i></i></div>
+            <div class="monto">${din(d.monto)}</div>
+            <div class="monto-nota">${d.nota}</div>
+            <div class="datos3">
+              <div><b>${dist(d.d[0])}</b><span>${L('hasta recoger', 'to pickup')}</span></div>
+              <div><b>${dist(d.d[1])}</b><span>${L('de recorrido', 'trip')}</span></div>
+              <div><b>${d.d[2]} min</b><span>${L('en total', 'total')}</span></div>
+            </div>
+            <div class="ruta">
+              <div class="marca"><i></i><em></em><i class="fin"></i></div>
+              <div><div class="t">${L('Recoger en', 'Pick up at')}</div><div class="v">${d.de}</div><div class="t">${L('Llevar a', 'Drop off at')}</div><div class="v" style="margin-bottom:0">${d.a}</div></div>
+            </div>
+            ${extraComida}${extraFijo}
+            <div class="linea-info">${I('user')}${d.quien} · ${d.cal} ★</div>
+            <button class="btn ${pet ? 'petroleo' : 'negro'}" data-act="aceptar">${d.aceptar}</button>
+            <button class="rechazar" data-act="rechazar">${I('x', 'style="width:18px;height:18px"')}${L('Rechazar', 'Decline')}</button>
+          </div></div>`;
+      };
+
+      V.viaje = () => {
+        const d = datosTipo(S.tipo);
+        const pet = S.tipo === 'envio';
+        const comida = S.tipo === 'comida';
+        const nombre = d.quien.split(' ')[0];
+        const p = S.paso;
+        const pasos = `<div class="pasos">${[0, 1, 2].map((k) => `<i class="${k < p ? 'hecho' : k === p ? 'ahora' : ''}"></i>`).join('')}</div>`;
+        const acciones = `<div class="acciones">
+            <button data-modal="navegar">${I('nav')}${L('Navegar', 'Navigate')}</button>
+            <button data-modal="contacto">${I('phone')}${L('Llamar', 'Call')}</button>
+            <button data-modal="contacto">${I('chat')}${L('Mensaje', 'Message')}</button>
+          </div>`;
+        let cuerpo = '';
+        let rutaMapa;
+        if (p === 0) {
+          rutaMapa = { ruta: 'M180 330 L120 300', recoger: [120, 300], yo: [180, 330], petroleo: pet };
+          const titulo = comida ? L(`Ve a ${d.de}`, `Head to ${d.de}`) : pet ? L('Ve a recoger el paquete', 'Head to the pickup') : L(`Ve a recoger a ${nombre}`, `Pick up ${nombre}`);
+          cuerpo = `${pasos}<div class="titulo-paso">${titulo}</div>
+            <p class="sub">${d.de} · 4 min · ${dist(d.d[0])}</p>${acciones}
+            <button class="btn ${pet ? 'petroleo' : 'negro'}" data-act="siguiente">${L('Llegué', 'I’ve arrived')}</button>`;
+        } else if (p === 1) {
+          rutaMapa = { recoger: [120, 300], yo: [124, 306], petroleo: pet };
+          if (comida) {
+            cuerpo = `${pasos}<div class="titulo-paso">${L('Recoge el pedido', 'Pick up the order')}</div>
+              <p class="sub">${L('Pídelo con este número:', 'Ask for it with this number:')} <b style="color:#101010;font-size:16px">4F2</b></p>
+              <div class="tarjeta"><div class="t">${L('Revisa que esté todo', 'Check everything is there')}</div>
+                <ul class="lista-check"><li><span class="caja-check ok">${I('check')}</span>${L('2 pizzas medianas', '2 medium pizzas')}</li><li><span class="caja-check ok">${I('check')}</span>${L('1 bebida grande', '1 large drink')}</li></ul></div>
+              ${deslizar(L('Desliza al tener el pedido', 'Slide once you have it'), 'siguiente')}`;
+          } else if (pet) {
+            cuerpo = `${pasos}<div class="titulo-paso">${L('Escanea el paquete', 'Scan the package')}</div>
+              <p class="sub">${L('Remitente: Carlos R. · 1 paquete', 'Sender: Carlos R. · 1 package')}</p>
+              <div class="tarjeta"><ul class="lista-check" style="margin:0"><li><span class="caja-check ok">${I('check')}</span>${L('Paquete 1 de 1 escaneado', 'Package 1 of 1 scanned')}</li></ul></div>
+              ${deslizar(L('Desliza al recoger', 'Slide to confirm pickup'), 'siguiente', 'petroleo')}`;
+          } else {
+            cuerpo = `${pasos}<div class="titulo-paso">${L(`Esperando a ${nombre}`, `Waiting for ${nombre}`)}</div>
+              <span class="espera">${I('clock', 'style="width:16px;height:16px"')}${L('Espera sin costo: 4:52', 'Free wait time: 4:52')}</span>
+              <p class="sub">${L('Pídele su código de 4 cifras y escríbelo:', 'Ask for the 4-digit code and enter it:')}</p>
+              <div class="codigo"><span>7</span><span>3</span><span>1</span><span>8</span></div>
+              ${acciones}
+              ${deslizar(L('Desliza para iniciar el viaje', 'Slide to start trip'), 'siguiente')}`;
+          }
+        } else {
+          rutaMapa = { ruta: 'M60 230 L60 90 L170 90', destino: [170, 90], yo: [60, 230], petroleo: pet };
+          const titulo = comida || pet ? L(`Entrega a ${nombre}`, `Deliver to ${nombre}`) : L(`Lleva a ${nombre} a su destino`, `Take ${nombre} to the destination`);
+          let fin;
+          if (comida || pet) {
+            const dejado = [['mano', L('En sus manos', 'Handed over')], ['puerta', L('En la puerta', 'At the door')], ['recepcion', L('Recepción', 'Front desk')]];
+            fin = `<div class="tarjeta"><div class="t">${L('Instrucciones del cliente', 'Customer instructions')}</div><div style="font-size:14px;margin-top:4px">${L('Dejar en la puerta y tocar el timbre.', 'Leave at the door and ring the bell.')}</div></div>
+              <div class="etq">${L('¿Dónde lo dejaste?', 'Where did you leave it?')}</div>
+              <div class="opciones">${dejado.map(([k, v]) => `<button data-dejado="${k}" aria-pressed="${S.dejado === k}">${v}</button>`).join('')}</div>
+              ${S.foto
+                ? `<div class="foto lista">${fotoPuerta()}</div>
+                   <button class="btn texto" data-act="foto-no">${I('camera', 'style="width:18px;height:18px"')}${L('Volver a tomar la foto', 'Retake photo')}</button>
+                   ${deslizar(L('Desliza para completar', 'Slide to complete'), 'terminar', pet ? 'petroleo' : '')}`
+                : `<button class="foto" data-act="foto">${I('camera')}${L('Tomar la foto de la entrega', 'Take the delivery photo')}</button>`}`;
+          } else {
+            fin = `${acciones}${deslizar(L('Desliza para terminar el viaje', 'Slide to complete trip'), 'terminar')}`;
+          }
+          cuerpo = `${pasos}<div class="titulo-paso">${titulo}</div><p class="sub">${d.a} · 9 min · ${dist(d.d[1])}</p>${fin}`;
+        }
+        const top = `<div class="flotante"><button class="boton-red" data-modal="seguridad" aria-label="${L('Seguridad', 'Safety')}">${I('shield')}</button>
+          <span class="etiqueta ${d.cls}" style="margin:0 auto;${pet ? '' : 'background:#fff'}">${d.etiqueta}</span>
+          <button class="boton-red" data-modal="navegar" aria-label="${L('Navegar', 'Navigate')}">${I('nav')}</button></div>`;
+        return `<div class="app">${mapa(rutaMapa)}${top}<div class="hoja">${cuerpo}</div></div>`;
+      };
+
+      function fotoPuerta() {
+        return `<svg viewBox="0 0 300 112" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><rect width="300" height="112" fill="#d9dde2"/><rect x="118" y="14" width="64" height="98" fill="#a9b0b8"/><circle cx="170" cy="66" r="3" fill="#6b727a"/><rect x="132" y="84" width="36" height="26" rx="3" fill="#8a6a45"/><rect x="0" y="104" width="300" height="8" fill="#bfc4ca"/></svg>`;
+      }
+
+      V.fin = () => {
+        const d = datosTipo(S.tipo);
+        const comision = +(d.monto * 0.12).toFixed(2);
+        const propina = S.tipo === 'comida' ? 2 : 0;
+        const tarifa = +(d.monto - propina + comision).toFixed(2);
+        const entrega = S.tipo === 'comida' || S.tipo === 'envio';
+        const nombre = d.quien.split(' ')[0];
+        return `<div class="app"><div class="cuerpo sin-barra" style="background:#fff">
+          <div style="padding:34px 18px 18px">
+            <div class="listo-ico">${I('check')}</div>
+            <div class="centro"><h1 style="font-size:21px">${entrega ? L('Entrega completada', 'Delivery complete') : L('Viaje terminado', 'Trip complete')}</h1>
+            <p class="sub" style="margin-top:4px">${L('Ganaste', 'You earned')}</p>
+            <div class="grande verde">${din(d.monto)}</div></div>
+            <div class="bloque desglose">
+              <div><span>${L('Tarifa', 'Fare')}</span><span>${din(tarifa)}</span></div>
+              ${propina ? `<div><span>${L('Propina', 'Tip')}</span><span>${din(propina)}</span></div>` : ''}
+              <div><span>${L('Comisión de Divoox (de tu saldo)', 'Divoox fee (from your balance)')}</span><span>−${din(comision)}</span></div>
+              <div class="total"><span>${L('Para ti', 'Your earnings')}</span><span style="color:#0d7a3a">${din(d.monto)}</span></div>
+            </div>
+            <div class="centro" style="margin-top:18px"><b style="font-family:Poppins">${L(`¿Cómo te fue con ${nombre}?`, `How was ${nombre}?`)}</b>
+              <div class="estrellas">${[1, 2, 3, 4, 5].map((k) => `<button data-estrella="${k}" class="${k <= S.estrellas ? 'on' : ''}" aria-label="${k}">${I('star')}</button>`).join('')}</div></div>
+            <button class="btn negro" data-act="listo">${L('Listo, seguir conectado', 'Done, stay online')}</button>
+          </div></div></div>`;
+      };
+
+      V.ganancias = () => {
+        const g = S.pestanaGan === 'ganancias';
+        const dias = L('L M M J V S D', 'M T W T F S S').split(' ');
+        const alt = [55, 80, 40, 95, 70, 30, 62];
+        const contenido = g
+          ? `<div class="bloque">
+              <div class="semana"><button aria-label="${L('Semana anterior', 'Previous week')}">${I('back', 'style="width:18px;height:18px"')}</button><span>${L('Esta semana', 'This week')}</span><button aria-label="${L('Semana siguiente', 'Next week')}">${I('chev', 'style="width:18px;height:18px"')}</button></div>
+              <div class="centro"><div class="grande verde">${din(286.4)}</div></div>
+              <div class="barras">${alt.map((h, k) => `<div><i class="${k === 6 ? 'hoy' : ''}" style="height:${h}%"></i><span>${dias[k]}</span></div>`).join('')}</div>
+              <div class="tres"><div><b>38</b><span>${L('viajes y entregas', 'trips & deliveries')}</span></div><div><b>21 h 40 m</b><span>${L('conectado', 'online')}</span></div><div><b>${din(41.3)}</b><span>${L('propinas', 'tips')}</span></div></div>
+            </div>
+            <div class="bloque"><div class="t">${L('Hoy', 'Today')}</div>
+              <div class="fila"><span class="ico">${I('car')}</span><span class="txt"><b>${L('Viaje · Carro', 'Ride · Car')}</b><small>${hora(2, 40, true)}</small></span><span class="val verde">+${din(7.2)}</span></div>
+              <div class="fila"><span class="ico">${I('bag')}</span><span class="txt"><b>${L('Comida', 'Food')}</b><small>${hora(1, 15, true)}</small></span><span class="val verde">+${din(5.8)}</span></div>
+              <div class="fila"><span class="ico" style="color:#1F4D69">${I('box')}</span><span class="txt"><b>${L('Envío', 'Delivery')}</b><small>${hora(11, 50, false)}</small></span><span class="val verde">+${din(6.5)}</span></div>
+            </div>`
+          : `<div class="bloque"><div class="t">${L('Disponible para retirar', 'Available to cash out')}</div>
+              <div class="grande verde">${din(86.4)}</div>
+              <div class="dos-btn"><button class="btn negro">${L('Retirar', 'Cash out')}</button><button class="btn borde">${L('Cuenta de cobro', 'Payout account')}</button></div>
+              <p class="sub" style="margin-top:10px">${L('El pago semanal sale los lunes.', 'Weekly payout is sent on Mondays.')}</p></div>
+            <div class="bloque"><div class="t">${L('Saldo para comisiones', 'Fee balance')}</div>
+              <div class="grande">${din(12)}</div>
+              <p class="sub">${L('De aquí se descuenta la comisión de cada viaje. Te avisamos antes de que se acabe.', 'Each trip’s fee comes out of this balance. We’ll let you know before it runs low.')}</p>
+              <button class="btn borde">${I('plus')}${L('Recargar saldo', 'Add funds')}</button></div>
+            <div class="bloque"><div class="t">${L('Movimientos', 'Activity')}</div>
+              <div class="fila"><span class="ico">${I('car')}</span><span class="txt"><b>${L('Viaje', 'Ride')}</b><small>${L('Hoy', 'Today')}</small></span><span class="val verde">+${din(7.2)}</span></div>
+              <div class="fila"><span class="ico">${I('wallet')}</span><span class="txt"><b>${L('Comisión', 'Fee')}</b><small>${L('Hoy', 'Today')}</small></span><span class="val gris">−${din(0.86)}</span></div>
+              <div class="fila"><span class="ico">${I('upload')}</span><span class="txt"><b>${L('Retiro a tu cuenta', 'Cash out to your account')}</b><small>${L('Lunes', 'Monday')}</small></span><span class="val gris">−${din(50)}</span></div>
+            </div>`;
+        return `<div class="app"><div class="cuerpo"><div class="cabecera"><h1>${L('Ganancias', 'Earnings')}</h1></div>
+          <div class="seccion"><div class="seg"><button data-gan="ganancias" aria-pressed="${g}">${L('Ganancias', 'Earnings')}</button><button data-gan="billetera" aria-pressed="${!g}">${L('Billetera', 'Wallet')}</button></div>${contenido}</div><div style="height:16px"></div></div>${barra('ganancias')}</div>`;
+      };
+
+      V.avisos = () => {
+        const nuevo = S.avisosRecien;
+        const it = (ico, cls, t, p, h, nuevoIt, ir) => `<button class="aviso ${nuevoIt ? '' : 'leido'}" ${ir ? `data-ir="${ir}"` : ''}><span class="ico ${cls}">${I(ico)}</span><span class="txt"><b>${t}</b><p>${p}</p><small>${h}</small></span>${nuevoIt ? '<span class="bolita"></span>' : ''}</button>`;
+        return `<div class="app"><div class="cuerpo"><div class="cabecera"><h1>${L('Avisos', 'Inbox')}</h1></div>
+          ${nuevo ? `<div class="separador">${L('Nuevos', 'New')}</div>` : ''}
+          ${it('doc', 'ambar', L('Tu licencia vence en 15 días', 'Your license expires in 15 days'), L('Sube la nueva para seguir recibiendo ofertas.', 'Upload the new one to keep getting offers.'), L('Hace 1 h', '1 h ago'), nuevo, 'papeles')}
+          ${it('wallet', 'verde', L('Pago semanal enviado', 'Weekly payout sent'), L(`Te enviamos ${din(142.3)} a tu cuenta de cobro.`, `We sent ${din(142.3)} to your payout account.`), L('Hace 3 h', '3 h ago'), nuevo, 'ganancias')}
+          ${it('chart', '', L('Más pedidos de 6 a 9 p. m.', 'Busier from 6 to 9 PM'), L('Conéctate en ese horario para recibir más ofertas.', 'Go online then to get more offers.'), L('Hoy', 'Today'), nuevo, 'inicio')}
+          <div class="separador">${L('Anteriores', 'Earlier')}</div>
+          ${it('star', 'verde', L('Recibiste 5 estrellas', 'You got 5 stars'), L('«Muy amable y puntual.»', '“Very kind and on time.”'), L('Ayer', 'Yesterday'), false)}
+          ${it('check', 'verde', L('Seguro aprobado', 'Insurance approved'), L('Tu póliza quedó revisada y vigente.', 'Your policy was reviewed and is valid.'), L('Lunes', 'Monday'), false)}
+          </div>${barra('avisos')}</div>`;
+      };
+
+      V.cuenta = () => {
+        const incompleto = S.registro === 'incompleto';
+        const fila = (ico, t, s, der, ir, modal) => `<button class="fila" ${ir ? `data-ir="${ir}"` : ''} ${modal ? `data-modal="${modal}"` : ''}><span class="ico">${I(ico)}</span><span class="txt"><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${der || I('chev', 'style="width:18px;height:18px;color:#9a9ea5"')}</button>`;
+        return `<div class="app"><div class="cuerpo">
+          <div class="perfil-cab"><span class="avatar">${I('user')}</span><div><h1>Ana M.</h1>
+            <div class="meta"><span><b>4.9</b> ★</span><span>${L('Nivel', 'Level')} <b>${L('Plata', 'Silver')}</b></span><span><b>96 %</b> ${L('aceptadas', 'accepted')}</span></div></div></div>
+          <div class="seccion">
+            <div class="lista">
+              ${fila('doc', L('Papeles', 'Documents'), incompleto ? L('2 por completar', '2 to complete') : L('Licencia vence en 15 días', 'License expires in 15 days'), incompleto ? `<span class="estado-p ambar">${L('Faltan 2', '2 missing')}</span>` : `<span class="estado-p ambar">${L('1 vence pronto', '1 expiring')}</span>`, 'papeles')}
+              ${fila('car', L('Vehículo', 'Vehicle'), L('Sedán compacto · gris', 'Compact sedan · gray'), '', 'vehiculo')}
+              ${fila('sliders', L('Qué ofertas recibo', 'Offers I get'), L('Carro, comida y envíos', 'Car, food and deliveries'), '', '', 'servicios')}
+            </div>
+            <div class="lista">
+              ${fila('shield', L('Seguridad', 'Safety'), L('Contactos de confianza y emergencias', 'Trusted contacts and emergencies'), '', '', 'seguridad')}
+              ${fila('help', L('Ayuda', 'Help'), L('Habla con el equipo de soporte', 'Talk to our support team'), '')}
+              ${fila('globe', L('Idioma', 'Language'), '', `<span style="display:inline-flex;gap:6px;align-items:center;font-weight:700;font-size:13px">${banderas[S.lang === 'en' ? 'us' : 'es']} ${S.lang.toUpperCase()}</span>`, '', 'idioma')}
+            </div>
+            <div class="lista">${fila('logout', L('Cerrar sesión', 'Sign out'), '', ' ')}</div>
+          </div>
+          <div class="nota-pie">Divoox Driver · ${L('borrador de diseño', 'design draft')}</div>
+        </div>${barra('cuenta')}</div>`;
+      };
+
+      V.papeles = () => {
+        const inc = S.registro === 'incompleto';
+        const est = (k) => ({ ok: `<span class="estado-p ok">${L('Aprobado', 'Approved')}</span>`, ambar: `<span class="estado-p ambar">${L('Vence pronto', 'Expires soon')}</span>`, gris: `<span class="estado-p gris">${L('En revisión', 'In review')}</span>`, falta: `<span class="estado-p falta">${L('Subir', 'Upload')}</span>` })[k];
+        const filas = [
+          ['user', L('Foto de identidad', 'Identity photo'), L('Tu cara, de frente', 'Your face, front on'), 'ok'],
+          ['doc', L('Licencia de conducir', 'Driver’s license'), inc ? '' : L('Vence en 15 días', 'Expires in 15 days'), inc ? 'ok' : 'ambar'],
+          ['car', L('Registro del vehículo', 'Vehicle registration'), '', 'ok'],
+          ['lock', L('Antecedentes', 'Background check'), inc ? L('Tarda de 1 a 3 días', 'Takes 1–3 days') : '', inc ? 'gris' : 'ok'],
+          ['shield', L('Seguro del vehículo', 'Vehicle insurance'), '', inc ? 'falta' : 'ok'],
+          ['wallet', L('Cuenta para cobrar', 'Payout account'), '', inc ? 'falta' : 'ok'],
+        ];
+        const listos = filas.filter((f) => f[3] !== 'falta').length;
+        return `<div class="app"><div class="cuerpo sin-barra">
+          <div class="cabecera"><button class="volver" data-act="atras" aria-label="${L('Volver', 'Back')}">${I('back')}</button><h1>${L('Papeles', 'Documents')}</h1></div>
+          <div class="seccion">
+            <div class="bloque"><div class="t">${inc ? L('Para activar tu cuenta', 'To activate your account') : L('Tu cuenta está activa', 'Your account is active')}</div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px"><b style="font-family:Poppins;font-size:17px">${L(`${listos} de 6 listos`, `${listos} of 6 done`)}</b><span style="font-size:12.5px;color:#0d7a3a;font-weight:700">${Math.round((listos / 6) * 100)} %</span></div>
+              <span class="progreso"><i style="width:${(listos / 6) * 100}%"></i></span>
+              <p class="sub" style="margin:0">${inc ? L('Sube lo que falta. Revisamos cada papel en menos de un día.', 'Upload what’s missing. We review each document within a day.') : L('Te avisamos antes de que algo venza.', 'We’ll remind you before anything expires.')}</p></div>
+            <div class="lista">${filas.map(([ic, t, s, e]) => `<button class="fila" ${e === 'falta' || e === 'ambar' ? `data-modal="subir" data-papel="${t}"` : ''}><span class="ico">${I(ic)}</span><span class="txt"><b>${t}</b>${s ? `<small>${s}</small>` : ''}</span>${est(e)}</button>`).join('')}</div>
+          </div><div style="height:20px"></div></div></div>`;
+      };
+
+      V.vehiculo = () => `<div class="app"><div class="cuerpo sin-barra">
+          <div class="cabecera"><button class="volver" data-act="atras" aria-label="${L('Volver', 'Back')}">${I('back')}</button><h1>${L('Vehículo', 'Vehicle')}</h1></div>
+          <div class="seccion">
+            <div class="bloque">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="width:48px;height:48px;border-radius:12px;background:#f6f6f6;display:grid;place-items:center;flex:none">${I('car')}</span>
+                <div style="flex:1;min-width:0"><b style="font-family:Poppins;font-size:16px">${L('Sedán compacto', 'Compact sedan')}</b><div class="sub" style="margin:2px 0 0">${L('Gris · 2022 · placa ABC 123', 'Gray · 2022 · plate ABC 123')}</div></div>
+                <div class="menu-puntos" id="puntos"><button class="boton-red" style="box-shadow:none" data-act="puntos" aria-label="${L('Más opciones', 'More options')}">${I('dots')}</button>
+                  <div class="pop"><button>${I('edit', 'style="width:18px;height:18px"')}${L('Editar datos', 'Edit details')}</button><button class="borrar">${I('trash', 'style="width:18px;height:18px"')}${L('Quitar vehículo', 'Remove vehicle')}</button></div></div>
+              </div>
+              <div class="fila-chips"><span class="chip">${I('check')}${L('Carro', 'Car')}</span><span class="chip">${I('check')}${L('Comida', 'Food')}</span><span class="chip">${I('check')}${L('Envíos', 'Deliveries')}</span></div>
+              <p class="sub" style="margin-top:12px">${L('Categorías aprobadas: Económico y Confort.', 'Approved categories: Economy and Comfort.')}</p>
+            </div>
+            <div class="bloque"><div class="t">${L('Fotos del vehículo', 'Vehicle photos')}</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">${[L('Frente', 'Front'), L('Atrás', 'Back'), L('Lado', 'Side'), L('Adentro', 'Inside')].map((x) => `<div style="aspect-ratio:1;border-radius:10px;background:#e9ecef;display:grid;place-items:end center;font-size:11px;color:#666B73;padding-bottom:6px">${x}</div>`).join('')}</div>
+              <div style="margin-top:10px"><span class="estado-p ok">${L('Aprobadas', 'Approved')}</span></div></div>
+            <button class="btn borde">${I('plus')}${L('Agregar otro vehículo', 'Add another vehicle')}</button>
+          </div><div style="height:20px"></div></div></div>`;
+
+      // ---------- Hojas emergentes ----------
+      const M = {
+        seguridad: () => `<h2 style="font-size:19px">${L('Seguridad', 'Safety')}</h2>
+          <p class="sub">${L('Si algo pasa durante un viaje, estamos contigo.', 'If something happens during a trip, we’re here.')}</p>
+          <div style="margin-top:6px"><button class="opcion-app">${I('pin')}${L('Compartir mi ubicación con un contacto', 'Share my location with a contact')}</button>
+          <button class="opcion-app">${I('chat')}${L('Reportar un problema de seguridad', 'Report a safety issue')}</button></div>
+          ${deslizar(L('Desliza para emergencias', 'Slide for emergency help'), 'cerrar', 'sos')}
+          <button class="btn texto" data-act="cerrar">${L('Cerrar', 'Close')}</button>`,
+        navegar: () => `<h2 style="font-size:19px">${L('¿Con qué app quieres navegar?', 'Which app do you want to navigate with?')}</h2>
+          <div style="margin-top:6px"><button class="opcion-app" data-act="cerrar">${I('nav')}Google Maps</button>
+          <button class="opcion-app" data-act="cerrar">${I('nav')}Waze</button>
+          <button class="opcion-app" data-act="cerrar">${I('nav')}Apple Maps</button></div>
+          <p class="sub">${L('La guardamos para la próxima vez.', 'We’ll remember it for next time.')}</p>`,
+        contacto: () => `<h2 style="font-size:19px">${L('Contactar', 'Contact')}</h2>
+          <p class="sub">${L('La llamada y los mensajes pasan por Divoox: nadie ve el número del otro.', 'Calls and messages go through Divoox: nobody sees the other’s number.')}</p>
+          <button class="btn negro" data-act="cerrar">${I('phone')}${L('Llamar', 'Call')}</button>
+          <button class="btn borde" data-act="cerrar">${I('chat')}${L('Escribir un mensaje', 'Send a message')}</button>`,
+        destino: () => `<h2 style="font-size:19px">${L('Modo destino', 'Destination mode')}</h2>
+          <p class="sub">${L('Pon a dónde vas y solo te llegan ofertas que te acercan. Hasta dos veces al día.', 'Set where you’re headed and only get offers that take you closer. Up to twice a day.')}</p>
+          <div class="tarjeta" style="display:flex;gap:10px;align-items:center;border-color:#c9ccd1">${I('pin')}<span style="color:#9a9ea5">${L('Escribe una dirección', 'Enter an address')}</span></div>
+          <button class="btn negro" data-act="cerrar">${L('Ir hacia allá', 'Head there')}</button>`,
+        servicios: () => {
+          const s = (k, ico, t) => `<div class="fila"><span class="ico">${I(ico)}</span><span class="txt"><b>${t}</b></span><button class="interruptor" role="switch" aria-checked="${k === 'efectivo' ? S.efectivo : S.servicios[k]}" data-serv="${k}" aria-label="${t}"></button></div>`;
+          return `<h2 style="font-size:19px">${L('Qué ofertas recibo', 'Offers I get')}</h2>
+            <div class="lista" style="border:0;padding:0">${s('carro', 'car', L('Viajes en carro', 'Car rides'))}${s('moto', 'moto', L('Viajes en moto', 'Motorcycle rides'))}${s('comida', 'bag', L('Comida', 'Food'))}${s('envios', 'box', L('Envíos', 'Deliveries'))}${s('efectivo', 'wallet', L('Aceptar efectivo', 'Accept cash'))}</div>
+            <p class="sub">${L('Solo ves los servicios que tu vehículo tiene aprobados.', 'You only see services approved for your vehicle.')}</p>
+            <button class="btn negro" data-act="cerrar">${L('Guardar', 'Save')}</button>`;
+        },
+        subir: () => `<h2 style="font-size:19px">${S.papel || L('Seguro del vehículo', 'Vehicle insurance')}</h2>
+          <p class="sub">${L('Que se lean bien el nombre, la placa y la fecha de vencimiento.', 'Make sure the name, plate and expiration date are readable.')}</p>
+          <button class="btn negro" data-act="cerrar">${I('camera')}${L('Tomar foto', 'Take photo')}</button>
+          <button class="btn borde" data-act="cerrar">${I('upload')}${L('Subir desde archivos', 'Upload from files')}</button>`,
+        idioma: () => `<h2 style="font-size:19px">${L('Cambiar idioma', 'Change language')}</h2>
+          <div style="margin-top:6px">
+          <label class="opcion-app" style="cursor:pointer"><input type="radio" name="lang2" value="en" ${S.lang === 'en' ? 'checked' : ''} style="accent-color:#e77600;width:18px;height:18px;margin:0"/> ${banderas.us} English - EN</label>
+          <label class="opcion-app" style="cursor:pointer;border-top:1px solid #eef0f2"><input type="radio" name="lang2" value="es" ${S.lang === 'es' ? 'checked' : ''} style="accent-color:#e77600;width:18px;height:18px;margin:0"/> ${banderas.es} español - ES</label></div>`,
+      };
+
+      // ---------- Lista de pantallas del borrador ----------
+      const LISTA = [
+        ['g', 'Inicio'],
+        ['inicio-off', 'Desconectado', () => { S.registro = 'activo'; S.conectado = false; ir('inicio'); }],
+        ['inicio-reg', 'Registro sin terminar (barra de activación)', () => { S.registro = 'incompleto'; S.conectado = false; ir('inicio'); }],
+        ['inicio-on', 'Conectado, buscando ofertas', () => { S.registro = 'activo'; S.conectado = true; ir('inicio'); }],
+        ['g', 'La oferta que llega'],
+        ['of-viaje', 'Viaje en carro', () => oferta('viaje')],
+        ['of-envio', 'Envío (azul de logística)', () => oferta('envio')],
+        ['of-comida', 'Comida', () => oferta('comida')],
+        ['of-fijo', 'Cliente fijo', () => oferta('fijo')],
+        ['g', 'Viaje en curso'],
+        ['v0', 'Ir a recoger', () => viaje(0)],
+        ['v1', 'Llegué (código o recoger)', () => viaje(1)],
+        ['v2', 'En camino y terminar deslizando', () => viaje(2)],
+        ['v3', 'Terminado: lo que ganaste', () => { S.conectado = true; ir('fin'); }],
+        ['g', 'Lo demás'],
+        ['gan', 'Ganancias', () => { S.pestanaGan = 'ganancias'; ir('ganancias'); }],
+        ['bil', 'Billetera', () => { S.pestanaGan = 'billetera'; ir('ganancias'); }],
+        ['avi', 'Campana (avisos)', () => { S.avisosLeidos = false; ir('avisos'); }],
+        ['cue', 'Cuenta', () => ir('cuenta')],
+        ['pap', 'Papeles', () => ir('papeles')],
+        ['veh', 'Vehículo', () => ir('vehiculo')],
+        ['seg', 'Seguridad', () => { S.registro = 'activo'; S.conectado = false; ir('inicio'); abrir('seguridad'); }],
+      ];
+      function oferta(t) { S.tipo = t; S.registro = 'activo'; S.conectado = true; ir('oferta'); }
+      function viaje(p) { S.paso = p; S.foto = false; S.registro = 'activo'; S.conectado = true; ir('viaje'); }
+
+      const NOTAS = {
+        inicio: () => S.registro === 'incompleto'
+          ? ['Registro sin terminar', 'Una barra arriba dice cuántos pasos van y qué falta, con la barra en verde. Un toque y estás en tus papeles. El botón de conectarse queda apagado y dice por qué.', ['Uber Driver', 'DoorDash Dasher']]
+          : S.conectado
+            ? ['Conectado', 'Punto verde que late y una línea que se mueve: se ve que está buscando. Debajo, modo destino y qué ofertas recibe, en dos botones pequeños, sin ocupar media pantalla como hoy. A los 3 segundos llega una oferta de ejemplo.', ['DoorDash Dasher', 'Uber Driver']]
+            : ['Inicio', 'El mapa ocupa toda la pantalla. Arriba, lo ganado hoy (un toque lleva a Ganancias), el escudo de seguridad y el modo destino. Abajo, un solo botón grande: Conectarse. Las zonas con más pedidos se ven marcadas y se dice cada cuánto llegan ofertas.', ['Uber Driver', 'DoorDash Dasher']],
+        oferta: () => ['La oferta', 'Primero lo que gana, grande y en verde. Luego qué tan lejos, cuánto dura y de dónde a dónde. Aceptar es un solo botón; rechazar va pequeño debajo. La barra de arriba muestra el tiempo que queda. Envíos sale en azul petróleo; cliente fijo dice el horario y que lo eligieron.', ['Uber Driver', 'DoorDash Dasher', 'Amazon Flex']],
+        viaje: () => ['Viaje en curso', 'Tres rayitas arriba dicen en qué paso va. Cada paso tiene una sola acción grande. Iniciar y terminar se hacen deslizando para no tocarlos por error. En comida y envíos se elige dónde se dejó y se toma la foto antes de completar. Navegar pregunta con qué app.', ['Uber Driver', 'Amazon Flex', 'DoorDash Dasher']],
+        fin: () => ['Terminado', 'Lo que ganó en verde, el desglose con la comisión que sale del saldo prepago y las estrellas para el cliente. Un toque y sigue conectado.', ['Uber Driver', 'DoorDash Dasher']],
+        ganancias: () => S.pestanaGan === 'ganancias'
+          ? ['Ganancias', 'La semana con barras por día, el total arriba y lo de hoy en una lista. Billetera está en la misma pantalla, en la otra pestaña.', ['Uber Driver', 'DoorDash Dasher']]
+          : ['Billetera', 'Dos saldos separados y claros: lo que puede retirar y el saldo de donde se descuentan las comisiones, con su botón de recargar.', ['Uber Driver', 'Amazon Flex']],
+        avisos: () => ['Campana', 'El número rojo de la barra se va a cero en cuanto se abre esta pantalla. Lo nuevo va arriba con su punto; lo leído queda más apagado. Cada aviso lleva con un toque a donde se resuelve.', ['Uber Driver (bandeja)', 'Regla de la campana']],
+        cuenta: () => ['Cuenta', 'Foto, calificación, nivel y aceptación arriba. Debajo, papeles con su estado, vehículo, qué ofertas recibe, seguridad, ayuda e idioma con el selector de banderas.', ['DoorDash Dasher', 'Uber Driver']],
+        papeles: () => ['Papeles', 'Barra verde con cuántos van. Cada papel dice su estado: aprobado en verde, vence pronto en ámbar, en revisión en gris y «Subir» cuando falta. Al tocar lo que falta salen «Tomar foto» y «Subir desde archivos».', ['Uber Driver', 'DoorDash Dasher']],
+        vehiculo: () => ['Vehículo', 'El vehículo con sus servicios y categorías aprobadas y sus fotos. Quitarlo está escondido en los tres puntos.', ['Uber Driver']],
+      };
+
+      // ---------- Motor ----------
+      const pila = [];
+      function ir(p) {
+        if (S.pantalla !== p && ['papeles', 'vehiculo'].includes(p)) pila.push(S.pantalla === 'papeles' || S.pantalla === 'vehiculo' ? 'cuenta' : S.pantalla);
+        S.pantalla = p;
+        S.modal = null;
+        if (p === 'avisos') { S.avisosRecien = !S.avisosLeidos; S.avisosLeidos = true; }
+        pintar();
+      }
+      function abrir(m) { S.modal = m; pintar(); }
+
+      function pintar() {
+        clearTimeout(temporizador);
+        clearInterval(reloj);
+        const el = document.getElementById('pantalla');
+        let html = V[S.pantalla]();
+        if (S.modal) html += `<div class="hoja-modal"><div class="velo" data-act="cerrar"></div><div class="hoja">${M[S.modal]()}</div></div>`;
+        el.innerHTML = html;
+        document.documentElement.lang = S.lang;
+        const act = clave();
+        let num = 0;
+        document.getElementById('mapa').innerHTML = LISTA.map((x, k) => (x[0] === 'g' ? `<div class="grupo">${x[1]}</div>` : `<button data-lista="${k}" aria-current="${x[0] === act}"><span class="n">${++num}</span>${x[1]}</button>`)).join('');
+        const n = (NOTAS[S.pantalla] || NOTAS.inicio)();
+        const titulo = S.modal === 'seguridad' ? 'Seguridad' : n[0];
+        const texto = S.modal === 'seguridad' ? 'Un toque en el escudo, desde el inicio o en pleno viaje. Compartir la ubicación, reportar y llamar a emergencias deslizando, para no hacerlo sin querer.' : n[1];
+        const refs = S.modal === 'seguridad' ? ['DoorDash Dasher (SafeDash)', 'Uber Driver'] : n[2];
+        document.getElementById('nota').innerHTML = `<h3>${titulo}</h3><p style="color:#33363b;font-size:13.5px;line-height:1.5;margin:0 0 10px">${texto}</p><div style="font-size:12px;color:#666B73;font-weight:600;margin-bottom:4px">De dónde sale</div>${refs.map((r) => `<span class="ref">${r}</span>`).join('')}`;
+        if (S.pantalla === 'inicio' && S.conectado && S.registro === 'activo' && !S.modal) temporizador = setTimeout(() => ir('oferta'), 3000);
+        if (S.pantalla === 'oferta') {
+          let s = 30;
+          reloj = setInterval(() => { s = Math.max(0, s - 1); const r = document.getElementById('reloj'); if (r) r.textContent = s + ' s'; if (!s) clearInterval(reloj); }, 1000);
+        }
+        idiomaArriba();
+      }
+      function clave() {
+        const p = S.pantalla;
+        if (p === 'inicio') return S.modal === 'seguridad' ? 'seg' : S.registro === 'incompleto' ? 'inicio-reg' : S.conectado ? 'inicio-on' : 'inicio-off';
+        if (p === 'oferta') return 'of-' + S.tipo;
+        if (p === 'viaje') return 'v' + S.paso;
+        if (p === 'fin') return 'v3';
+        if (p === 'ganancias') return S.pestanaGan === 'ganancias' ? 'gan' : 'bil';
+        return { avisos: 'avi', cuenta: 'cue', papeles: 'pap', vehiculo: 'veh' }[p];
+      }
+      function avanzarDeslizar(a) {
+        if (a === 'siguiente') { S.paso++; pintar(); }
+        else if (a === 'terminar') ir('fin');
+        else { S.modal = null; pintar(); }
+      }
+
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('#idioma')) return;
+        const t = e.target.closest('button, [data-act]');
+        if (!t) return;
+        const d = t.dataset;
+        if (d.lista) { LISTA[+d.lista][2](); return; }
+        if (d.ir) { ir(d.ir); return; }
+        if (d.modal) { S.papel = d.papel || null; abrir(d.modal); return; }
+        if (d.gan) { S.pestanaGan = d.gan; pintar(); return; }
+        if (d.dejado) { S.dejado = d.dejado; pintar(); return; }
+        if (d.estrella) { S.estrellas = +d.estrella; pintar(); return; }
+        if (d.serv) { if (d.serv === 'efectivo') S.efectivo = !S.efectivo; else S.servicios[d.serv] = !S.servicios[d.serv]; pintar(); return; }
+        switch (d.act) {
+          case 'conectar': S.conectado = true; pintar(); break;
+          case 'desconectar': S.conectado = false; pintar(); break;
+          case 'aceptar': S.paso = 0; S.foto = false; ir('viaje'); break;
+          case 'rechazar': S.conectado = true; ir('inicio'); break;
+          case 'siguiente': S.paso++; pintar(); break;
+          case 'foto': S.foto = true; pintar(); break;
+          case 'foto-no': S.foto = false; pintar(); break;
+          case 'listo': S.conectado = true; ir('inicio'); break;
+          case 'cerrar': S.modal = null; pintar(); break;
+          case 'atras': { const v = pila.pop() || 'cuenta'; S.pantalla = v; S.modal = null; pintar(); break; }
+          case 'puntos': document.getElementById('puntos').classList.toggle('abierto'); break;
+        }
+      });
+      document.addEventListener('change', (e) => {
+        if (e.target.name === 'lang' || e.target.name === 'lang2') {
+          S.lang = e.target.value;
+          S.modal = null;
+          document.getElementById('idioma').classList.remove('abierto');
+          document.getElementById('btn-idioma').setAttribute('aria-expanded', 'false');
+          pintar();
+        }
+      });
+
+      // Deslizador: arrastrar la perilla hasta el final.
+      document.addEventListener('pointerdown', (e) => {
+        const per = e.target.closest('.perilla');
+        if (!per) return;
+        e.preventDefault();
+        const caja = per.parentElement;
+        const max = caja.clientWidth - per.clientWidth - 10;
+        const x0 = e.clientX;
+        per.classList.add('arrastra');
+        try { per.setPointerCapture(e.pointerId); } catch (_) { /* sin captura */ }
+        const mover = (ev) => { per.style.left = 5 + Math.max(0, Math.min(max, ev.clientX - x0)) + 'px'; };
+        const soltar = (ev) => {
+          per.classList.remove('arrastra');
+          per.removeEventListener('pointermove', mover);
+          per.removeEventListener('pointerup', soltar);
+          per.removeEventListener('pointercancel', soltar);
+          if (ev.clientX - x0 > max * 0.85) {
+            per.style.left = 5 + max + 'px';
+            setTimeout(() => avanzarDeslizar(caja.dataset.deslizar), 180);
+          } else per.style.left = '5px';
+        };
+        per.addEventListener('pointermove', mover);
+        per.addEventListener('pointerup', soltar);
+        per.addEventListener('pointercancel', soltar);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { document.getElementById('idioma').classList.remove('abierto'); document.getElementById('btn-idioma').setAttribute('aria-expanded', 'false'); }
+        const per = e.target.closest && e.target.closest('.perilla');
+        if (per && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); avanzarDeslizar(per.parentElement.dataset.deslizar); }
+      });
+
+      // Selector de idioma estilo Amazon (arriba del borrador).
+      function idiomaArriba() {
+        const b = document.getElementById('btn-idioma');
+        b.innerHTML = `<span class="bandera">${banderas[S.lang === 'en' ? 'us' : 'es']}</span>${S.lang.toUpperCase()} ▾`;
+        document.getElementById('tit-idioma').textContent = S.lang === 'en' ? 'Change language' : 'Cambiar idioma';
+        document.querySelectorAll('.caja-idioma .bandera').forEach((x) => (x.innerHTML = banderas[x.dataset.b]));
+        document.querySelectorAll('input[name=lang]').forEach((x) => (x.checked = x.value === S.lang));
+      }
+      document.getElementById('btn-idioma').addEventListener('click', (e) => {
+        const c = document.getElementById('idioma');
+        c.classList.toggle('abierto');
+        e.currentTarget.setAttribute('aria-expanded', String(c.classList.contains('abierto')));
+      });
+      document.addEventListener('click', (e) => { if (!e.target.closest('#idioma')) document.getElementById('idioma').classList.remove('abierto'); });
+
+      pintar();
+    </script>
+  </body>
+</html>
