@@ -6,7 +6,7 @@ import { sqlLocal, sqlLocalTexto } from './sqlLocal';
 
 /**
  * C-CORREGIR-CORREO (20 nov 2026, pedido de Richard; todos los países): en la ficha del cliente, el
- * correo dice «Rebotó» y, en sus tres puntos, «Corregir correo» lo cambia (con «¿Quisiste decir…?»)
+ * correo dice «El correo rebotó» y, en sus tres puntos, «Corregir correo» lo cambia (con «¿Quisiste decir…?»)
  * y manda la confirmación; la línea de tiempo lo anota. Con CAPTURAS=1 guarda las capturas de la
  * ayuda interna «?» en la carpeta privada (nunca en Docs públicos).
  */
@@ -63,7 +63,9 @@ for (const idioma of ['es', 'en'] as const)
       en ? 'Mike Johnson' : 'Andrés Pérez',
       { timeout: 30_000 },
     );
-    await expect(p.getByTestId('estado-correo')).toContainText(en ? 'Bounced' : 'Rebotó');
+    await expect(p.getByTestId('estado-correo')).toContainText(
+      en ? 'The email bounced' : 'El correo rebotó',
+    );
     await p.getByRole('button', { name: en ? 'Fix email' : 'Corregir correo' }).click();
     if (CAPTURAS)
       await p
