@@ -281,3 +281,22 @@ describe('C-POLITICA-VERDAD-IA: la política dice lo que la app hace con las fot
     );
   });
 });
+
+// C-PRIVACIDAD-EVENTOS-DRIVER (24 nov 2026): Driver manda eventos de uso (cámara abierta, foto
+// tomada, subida fallida) ligados a la cuenta; Play exige declararlos y la política tiene que decirlo.
+describe('eventos de uso de Driver para soporte y diagnóstico', () => {
+  it('la política lo dice en español y en inglés', () => {
+    const es = PRIVACIDAD.es.secciones.flatMap((s) => s.parrafos).join(' ');
+    const en = PRIVACIDAD.en.secciones.flatMap((s) => s.parrafos).join(' ');
+    expect(es).toMatch(/Uso de Divoox Driver para soporte y diagnóstico/);
+    expect(es).toMatch(
+      /abriste el asistente o la cámara.*tomaste una foto.*no se pudo tomar o subir/,
+    );
+    expect(es).toMatch(/ligados a tu cuenta/);
+    expect(en).toMatch(/Use of Divoox Driver for support and diagnostics/);
+    expect(en).toMatch(
+      /opened the assistant or the camera.*took a photo.*could not be taken or uploaded/,
+    );
+    expect(en).toMatch(/linked to your account/);
+  });
+});
