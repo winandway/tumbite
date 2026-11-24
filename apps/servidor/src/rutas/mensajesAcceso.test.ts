@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { mundo } from '../pruebas/ayuda';
 import {
   MAX_FALLOS_CUENTA,
+  MAX_SIN_CUENTA_RED,
   TOPE_INTENTOS_DIA,
   anotarIntento,
   reiniciarTopeIntentos,
@@ -415,11 +416,11 @@ describe('C-LIMITES-SIN-ESCUDO: sin Turnstile, los límites frenan entrar, crear
     const p = await preparar();
     const ip = '10.252.1.1';
     await p.m.DB.prepare(
-      "INSERT INTO intentos_limite (llave, cuenta, desde) VALUES (?, 39, datetime('now'))",
+      "INSERT INTO intentos_limite (llave, cuenta, desde) VALUES (?, ?, datetime('now'))",
     )
-      .bind(`red:sin_cuenta:${ip}`)
+      .bind(`red:sin_cuenta:${ip}`, MAX_SIN_CUENTA_RED - 1)
       .run();
-    expect((await p.entrar('nadie-40@ejemplo.com', CLAVE, misma(ip))).datos.codigo).toBe(
+    expect((await p.entrar('nadie-ultimo@ejemplo.com', CLAVE, misma(ip))).datos.codigo).toBe(
       'correo_sin_cuenta',
     );
     const r = await p.entrar(p.correo, CLAVE, misma(ip));

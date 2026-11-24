@@ -90,7 +90,7 @@ export const MENSAJE_RED_PAUSADA =
   'Hubo demasiados intentos con correos sin cuenta desde esta conexión. Espera una hora o escríbenos a soporte.';
 export const LIMITES_CORREO = { registro: 10, recuperar: 5 } as const;
 export const MINUTOS_LIMITE_CORREO = 15;
-export const MAX_SIN_CUENTA_RED = 40;
+export const MAX_SIN_CUENTA_RED = 100;
 export const MINUTOS_PAUSA_RED = 60;
 
 async function cuentaDe(db: D1Database, llave: string, minutos: number): Promise<number> {
