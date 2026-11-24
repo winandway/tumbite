@@ -35,7 +35,7 @@ const T = {
   es: {
     titulo: 'Moto · Abrir y aprobar',
     intro:
-      'Aquí se prepara Divoox Moto en cada país: se abre la ciudad, se revisan los papeles de los conductores y sus motos, y se habilita a cada conductor. Las tarifas y las emergencias siguen en Moto · Viajes.',
+      'Aquí se prepara Divoox Moto en cada país: se abre la ciudad, la compuerta del país y la tasa de referencia. Lo de cada conductor (papeles, moto, habilitación) se decide en Verificaciones. Las tarifas y las emergencias siguen en Moto · Viajes.',
     // 1. Abrir en una ciudad
     abrir: 'Abrir un servicio de viajes en una ciudad',
     abrirAyuda:
@@ -182,6 +182,8 @@ const T = {
     identidad: 'Identidad',
     identidadAyuda: 'La identidad se aprueba en Verificaciones.',
     irVerificaciones: 'Ir a Verificaciones',
+    seMudo:
+      'La revisión de papeles, motos y carros se mudó a Verificaciones: ahí está todo lo de cada conductor, con su barra de activación.',
     estadosIdentidad: {
       sin_enviar: 'Todavía no la envió',
       pendiente: 'Por revisar',
@@ -230,7 +232,7 @@ const T = {
     noHabilitado: 'Todavía no se puede habilitar. Le falta:',
     hecho: 'Listo.',
     // 5. Motos
-    motos: 'Motos y carros por revisar',
+    motos: 'Papeles, motos y carros',
     sinMotos: 'No hay motos ni carros esperando revisión.',
     tiposVehiculo: { moto: 'Moto', carro: 'Carro' } as Record<string, string>,
     plazas: (n: number) => `${n} plazas`,
@@ -283,7 +285,7 @@ const T = {
   en: {
     titulo: 'Moto · Launch and approve',
     intro:
-      'This is where Divoox Moto is prepared in each country: open the city, review drivers’ documents and motorbikes, and approve each driver. Pricing and emergencies stay in Moto · Rides.',
+      'This is where Divoox Moto is prepared in each country: open the city, the country gate and the reference rate. Everything about each driver (documents, motorbike, service approval) is decided in Verifications. Pricing and emergencies stay in Moto · Rides.',
     abrir: 'Open a ride service in a city',
     abrirAyuda:
       'For any country: creates the city (or updates it), sets its pricing and turns the service on there. In production, the country has to be open first (below). To cover a whole state, draw the area afterwards in that city’s Coverage areas.',
@@ -424,6 +426,8 @@ const T = {
     identidad: 'Identity',
     identidadAyuda: 'Identity is approved in Verifications.',
     irVerificaciones: 'Go to Verifications',
+    seMudo:
+      'Reviewing documents, motorbikes and cars moved to Verifications: everything about each driver is there, with their activation bar.',
     estadosIdentidad: {
       sin_enviar: 'Not sent yet',
       pendiente: 'To review',
@@ -470,7 +474,7 @@ const T = {
     vehiculoActivo: 'Active vehicle',
     noHabilitado: 'Can’t approve yet. Missing:',
     hecho: 'Done.',
-    motos: 'Motorbikes and cars to review',
+    motos: 'Documents, motorbikes and cars',
     sinMotos: 'No motorbikes or cars waiting for review.',
     tiposVehiculo: { moto: 'Moto', carro: 'Car' } as Record<string, string>,
     plazas: (n: number) => `${n} seats`,
@@ -522,7 +526,9 @@ const T = {
   },
 };
 
-type Textos = (typeof T)['es'];
+export type Textos = (typeof T)['es'];
+/** C-VERIFICACION-UNICA: los textos de la revisión, para la pieza de Verificaciones. */
+export const T_MOTO = T;
 const enPalabras = (mapa: Record<string, string>, clave: string | null | undefined) =>
   new Map(Object.entries(mapa)).get(clave ?? '') ?? clave ?? '';
 const mensaje = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
@@ -999,7 +1005,7 @@ function CompuertaPais({ t, idioma }: { t: Textos; idioma: Idioma }) {
 
 // ---------------------------------------------------------------- 3. papeles del conductor
 
-type Papel = {
+export type Papel = {
   id: string;
   conductorId: string;
   conductor: string;
@@ -1072,7 +1078,7 @@ function Rechazo({
   );
 }
 
-function FilaPapel({
+export function FilaPapel({
   d,
   idioma,
   t,
@@ -1083,7 +1089,7 @@ function FilaPapel({
   idioma: Idioma;
   t: Textos;
   alCambiar: () => void;
-  verConductor: (id: string) => void;
+  verConductor?: (id: string) => void;
 }) {
   const [vence, setVence] = useState(d.venceEn?.slice(0, 10) ?? '');
   const [rechazando, setRechazando] = useState(false);
@@ -1127,13 +1133,15 @@ function FilaPapel({
         >
           {t.verArchivo}
         </a>
-        <button
-          type="button"
-          className="boton secundario"
-          onClick={() => verConductor(d.conductorId)}
-        >
-          {t.verConductor}
-        </button>
+        {verConductor ? (
+          <button
+            type="button"
+            className="boton secundario"
+            onClick={() => verConductor(d.conductorId)}
+          >
+            {t.verConductor}
+          </button>
+        ) : null}
       </div>
       {d.estado !== 'aprobado' ? (
         <div className="fila-botones">
@@ -1183,69 +1191,6 @@ function FilaPapel({
         </p>
       ) : null}
     </li>
-  );
-}
-
-function Papeles({
-  idioma,
-  t,
-  verConductor,
-}: {
-  idioma: Idioma;
-  t: Textos;
-  verConductor: (id: string) => void;
-}) {
-  const [estado, setEstado] = useState<'pendiente' | 'aprobado' | 'rechazado'>('pendiente');
-  const [lista, setLista] = useState<Papel[] | null>(null);
-  const [error, setError] = useState('');
-  const cargar = useCallback(() => {
-    pedir<{ documentos: Papel[] }>('GET', `/datos/admin/papeles-conductor?estado=${estado}`)
-      .then((r) => setLista(r.documentos))
-      .catch((x: unknown) => setError(mensaje(x)));
-  }, [estado]);
-  useEffect(cargar, [cargar]);
-  return (
-    <>
-      <h2>{t.papeles}</h2>
-      <div className="super-filtros" role="tablist">
-        {(
-          [
-            ['pendiente', t.pendientes],
-            ['aprobado', t.aprobados],
-            ['rechazado', t.rechazados],
-          ] as const
-        ).map(([v, texto]) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={estado === v}
-            className={estado === v ? 'activa' : undefined}
-            onClick={() => setEstado(v)}
-          >
-            {texto}
-          </button>
-        ))}
-      </div>
-      {error ? (
-        <p className="error-general" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {lista && lista.length === 0 ? <p className="pista">{t.sinPapeles}</p> : null}
-      <ul className="lista">
-        {(lista ?? []).map((d) => (
-          <FilaPapel
-            key={`${d.id}-${d.estado}`}
-            d={d}
-            idioma={idioma}
-            t={t}
-            alCambiar={cargar}
-            verConductor={verConductor}
-          />
-        ))}
-      </ul>
-    </>
   );
 }
 
@@ -1608,18 +1553,22 @@ function CategoriaCarro({
   );
 }
 
-function Conductor({
+export function Conductor({
   id,
   base,
   idioma,
   t,
   alCerrar,
+  alCambiar,
 }: {
   id: string;
   base: string;
   idioma: Idioma;
   t: Textos;
-  alCerrar: () => void;
+  /** Sin él, no hay botón de cerrar (la pieza vive dentro de la ficha). */
+  alCerrar?: () => void;
+  /** Algo se decidió (la barra de activación se recalcula). */
+  alCambiar?: () => void;
 }) {
   const [d, setD] = useState<DetalleConductor | null>(null);
   const [error, setError] = useState('');
@@ -1627,7 +1576,8 @@ function Conductor({
   const [faltan, setFaltan] = useState<string[]>([]);
   const cargar = useCallback(() => {
     pedir<DetalleConductor>('GET', `/datos/admin/conductores/${id}/pasajeros`)
-      .then(setD)
+      // Una respuesta incompleta nunca tumba la ficha donde vive esta pieza (Verificaciones).
+      .then((x) => (Array.isArray(x?.servicios) && x.ciudad ? setD(x) : setD(null)))
       .catch((x: unknown) => setError(mensaje(x)));
   }, [id]);
   useEffect(cargar, [cargar]);
@@ -1640,6 +1590,7 @@ function Conductor({
       await pedir(metodo, ruta, cuerpo);
       setOk(exito);
       cargar();
+      alCambiar?.();
     } catch (x) {
       const lista =
         x instanceof ErrorApi && Array.isArray(x.datos?.requisitosFaltantes)
@@ -1692,9 +1643,11 @@ function Conductor({
         <h2>
           {t.conductor}: {d?.nombre ?? '…'} <EtiquetaPrueba si={d?.esPrueba} idioma={idioma} />
         </h2>
-        <button type="button" className="boton secundario" onClick={alCerrar}>
-          {t.cerrarConductor}
-        </button>
+        {alCerrar ? (
+          <button type="button" className="boton secundario" onClick={alCerrar}>
+            {t.cerrarConductor}
+          </button>
+        ) : null}
       </div>
       {d ? (
         <>
@@ -1880,7 +1833,7 @@ function Conductor({
 
 // ---------------------------------------------------------------- 5. motos por revisar
 
-type Moto = {
+export type Moto = {
   id: string;
   conductor: string;
   conductor_id?: string;
@@ -1900,7 +1853,7 @@ type Moto = {
   seguroEnPlazo?: { venceEn: string | null } | null;
 };
 
-function FilaMoto({
+export function FilaMoto({
   m,
   idioma,
   t,
@@ -1911,7 +1864,7 @@ function FilaMoto({
   idioma: Idioma;
   t: Textos;
   alCambiar: () => void;
-  verConductor: (id: string) => void;
+  verConductor?: (id: string) => void;
 }) {
   const [vences, setVences] = useState<Map<string, string>>(
     () => new Map(m.documentos.map((d) => [d.id, d.venceEn?.slice(0, 10) ?? ''])),
@@ -1953,7 +1906,7 @@ function FilaMoto({
           {m.placa_estado ? ` (${m.placa_estado})` : ''}
         </span>
       </div>
-      {m.conductor_id ? (
+      {m.conductor_id && verConductor ? (
         <button
           type="button"
           className="boton secundario"
@@ -2091,53 +2044,15 @@ function FilaMoto({
   );
 }
 
-function Motos({
-  idioma,
-  t,
-  verConductor,
-}: {
-  idioma: Idioma;
-  t: Textos;
-  verConductor: (id: string) => void;
-}) {
-  const [lista, setLista] = useState<Moto[] | null>(null);
-  const [error, setError] = useState('');
-  const cargar = useCallback(() => {
-    pedir<{ vehiculos: Moto[] }>('GET', '/datos/admin/vehiculos?estado=en_revision')
-      .then((r) => setLista(r.vehiculos.filter((v) => v.tipo === 'moto' || v.tipo === 'carro')))
-      .catch((x: unknown) => setError(mensaje(x)));
-  }, []);
-  useEffect(cargar, [cargar]);
-  return (
-    <>
-      <h2>{t.motos}</h2>
-      {error ? (
-        <p className="error-general" role="alert">
-          {error}
-        </p>
-      ) : null}
-      {lista && lista.length === 0 ? <p className="pista">{t.sinMotos}</p> : null}
-      <ul className="lista">
-        {(lista ?? []).map((m) => (
-          <FilaMoto
-            key={`${m.id}-${m.estado}-${m.documentos.map((d) => d.estado).join('')}`}
-            m={m}
-            idioma={idioma}
-            t={t}
-            alCambiar={cargar}
-            verConductor={verConductor}
-          />
-        ))}
-      </ul>
-    </>
-  );
-}
-
 // ---------------------------------------------------------------- la sección
 
+/**
+ * C-VERIFICACION-UNICA (23 nov 2026): aquí quedan abrir ciudades, la compuerta del país y la tasa. La
+ * revisión de papeles, motos y carros y lo que le falta a cada conductor se mudó a Verificaciones (un
+ * solo lugar para decidir todo de un conductor): aquí solo queda el enlace, sin botones repetidos.
+ */
 export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
-  const [conductor, setConductor] = useState<string | null>(null);
   return (
     <section className="super" data-testid="super-moto">
       <h1>{t.titulo}</h1>
@@ -2145,18 +2060,12 @@ export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
       <AbrirCiudad idioma={idioma} t={t} />
       <CompuertaPais t={t} idioma={idioma} />
       <TasaReferencia idioma={idioma} t={t} />
-      {conductor ? (
-        <Conductor
-          key={conductor}
-          id={conductor}
-          base={base}
-          idioma={idioma}
-          t={t}
-          alCerrar={() => setConductor(null)}
-        />
-      ) : null}
-      <Papeles idioma={idioma} t={t} verConductor={setConductor} />
-      <Motos idioma={idioma} t={t} verConductor={setConductor} />
+      <div className="tarjeta-form" data-testid="revision-se-mudo">
+        <h2>{t.motos}</h2>
+        <p className="pista">
+          {t.seMudo} <Enlace a={`${base}/verifications`}>{t.irVerificaciones}</Enlace>
+        </p>
+      </div>
     </section>
   );
 }

@@ -332,144 +332,37 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     );
   });
 
-  it('aprobar un papel manda el PUT; rechazar está en los tres puntos y exige motivo', async () => {
-    const llamadas: Llamada[] = [];
-    servidor(llamadas);
-    render(<SuperMoto base="/panel/control-x" idioma="es" />);
-    const fila = await screen.findByTestId('papel-doc1');
-    expect(within(fila).getByText('Licencia de moto')).toBeTruthy();
-    expect(within(fila).getByRole('link', { name: 'Ver el archivo' }).getAttribute('href')).toBe(
-      '/datos/admin/papeles-conductor/doc1/archivo',
-    );
-    await userEvent.click(within(fila).getByRole('button', { name: 'Aprobar' }));
-    await waitFor(() => {
-      const put = llamadas.find((l) => l.metodo === 'PUT');
-      expect(put?.url).toMatch(/\/datos\/admin\/papeles-conductor\/doc1$/);
-      expect(put?.cuerpo).toEqual({ estado: 'aprobado' });
-    });
-
-    // Rechazar no está a la vista: vive en los tres puntos.
-    const fila2 = await screen.findByTestId('papel-doc1');
-    expect(within(fila2).queryByRole('button', { name: 'Rechazar' })).toBeNull();
-    await userEvent.click(within(fila2).getByRole('button', { name: 'Más opciones del papel' }));
-    await userEvent.click(within(fila2).getByRole('menuitem', { name: 'Rechazar' }));
-    const confirmar = within(fila2).getByRole('button', { name: 'Confirmar el rechazo' });
-    expect((confirmar as HTMLButtonElement).disabled).toBe(true);
-    await userEvent.type(
-      within(fila2).getByLabelText('Motivo del rechazo (la persona lo ve para corregir)'),
-      'La foto se ve borrosa',
-    );
-    await userEvent.click(confirmar);
-    await waitFor(() =>
-      expect(llamadas.filter((l) => l.metodo === 'PUT').at(-1)?.cuerpo).toEqual({
-        estado: 'rechazado',
-        motivo: 'La foto se ve borrosa',
-      }),
-    );
-  });
-
-  it('el conductor muestra lo que le falta en palabras y el 409 de habilitar se explica', async () => {
-    const llamadas: Llamada[] = [];
-    servidor(llamadas, { habilitar409: true });
-    render(<SuperMoto base="/panel/control-x" idioma="es" />);
-    const fila = await screen.findByTestId('papel-doc1');
-    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
-    const detalle = await screen.findByTestId('detalle-conductor');
-    expect(await within(detalle).findByText('Identidad verificada')).toBeTruthy();
-    expect(within(detalle).getByText('Casco para el pasajero')).toBeTruthy();
-    expect(
-      within(detalle).getByRole('link', { name: 'Ir a Verificaciones' }).getAttribute('href'),
-    ).toBe('/panel/control-x/verifications');
-    await userEvent.click(
-      within(detalle).getByRole('button', { name: 'Aprobar el casco del pasajero' }),
-    );
-    await waitFor(() =>
-      expect(llamadas.find((l) => l.url.endsWith('/casco_pasajero'))?.cuerpo).toEqual({
-        estado: 'aprobado',
-        vehiculoId: 'v1',
-      }),
-    );
-    await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Moto' }));
-    const alerta = await within(detalle).findByRole('alert');
-    expect(within(alerta).getByText('Licencia de moto')).toBeTruthy();
-  });
-
-  it('C-CARRO-PANEL: la cola muestra carros con sus papeles e inspección y se habilita para Carro', async () => {
+  it('C-VERIFICACION-UNICA: Moto ya no revisa papeles ni vehículos; deja el enlace a Verificaciones', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas, {
       vehiculos: [
         {
-          id: 'car1',
-          conductor: 'Taxista Uno',
+          id: 'm1',
+          conductor: 'Conductor Uno',
           conductor_id: 'c1',
-          tipo: 'carro',
-          marca: 'Toyota',
-          modelo: 'Corolla',
-          anio: 2018,
-          color: 'Gris',
+          tipo: 'moto',
+          marca: 'Motos Divoox',
+          modelo: 'M150',
+          anio: 2023,
+          color: 'Negro',
           placa: 'AB123CD',
           placa_estado: 'VE',
-          plazas: 6,
           estado: 'en_revision',
-          documentos: [{ id: 'dI', tipo: 'inspeccion', estado: 'pendiente', venceEn: null }],
-        },
-      ],
-      servicios: [
-        {
-          servicioId: 'carro',
-          habilitacion: null,
-          requisitosFaltantes: ['licencia', 'inspeccion_vehiculo'],
-          puedeActivar: false,
-          motivo: '',
+          documentos: [{ id: 'd1', tipo: 'registro', estado: 'pendiente', venceEn: null }],
         },
       ],
     });
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
-    expect(await screen.findByText('Motos y carros por revisar')).toBeTruthy();
-    const fila = await screen.findByTestId('moto-car1');
-    expect(within(fila).getByText(/Carro · 6 plazas/)).toBeTruthy();
-    expect(within(fila).getByText('Revisión del vehículo (inspección)')).toBeTruthy();
-    await userEvent.click(within(fila).getByRole('button', { name: 'Aprobar el carro' }));
-    await waitFor(() =>
-      expect(llamadas.find((l) => l.url.endsWith('/admin/vehiculos/car1'))?.cuerpo).toEqual({
-        estado: 'aprobado',
-      }),
-    );
-    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
-    const detalle = await screen.findByTestId('detalle-conductor');
-    expect(await within(detalle).findByText('Licencia de conducir')).toBeTruthy();
-    expect(within(detalle).getByText('Revisión del vehículo')).toBeTruthy();
-    await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Carro' }));
-    await waitFor(() =>
-      expect(
-        llamadas.find((l) => l.metodo === 'PUT' && l.url.endsWith('/habilitaciones/c1/carro')),
-      ).toBeTruthy(),
-    );
-  });
-
-  it('C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad del conductor con motivo', async () => {
-    const llamadas: Llamada[] = [];
-    servidor(llamadas);
-    render(<SuperMoto base="/panel/control-x" idioma="es" />);
-    const fila = await screen.findByTestId('papel-doc1');
-    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
-    // C-CAMBIAR-CIUDAD-ADMIN: la misma pieza que la ficha del repartidor (lista del servidor).
-    const form = await screen.findByTestId('cambiar-ciudad-repartidor');
-    await waitFor(() =>
-      expect(within(form).getByRole('option', { name: /Maracaibo/ })).toBeTruthy(),
-    );
-    await userEvent.selectOptions(within(form).getByLabelText('Ciudad nueva'), 'VE-MCB-CENTRO');
-    await userEvent.type(within(form).getByLabelText(/Motivo/), 'Se mudó');
-    await userEvent.click(within(form).getByRole('button', { name: 'Revisar el cambio' }));
-    await userEvent.click(within(form).getByRole('button', { name: 'Sí, cambiar la ciudad' }));
-    await waitFor(() =>
-      expect(llamadas.find((l) => l.url.endsWith('/admin/conductores/c1/ciudad'))).toEqual({
-        url: expect.stringContaining('/datos/admin/conductores/c1/ciudad'),
-        metodo: 'PUT',
-        cuerpo: { zonaId: 'VE-MCB-CENTRO', motivo: 'Se mudó' },
-      }),
-    );
-    expect(await screen.findByText(/Listo\. Su código nuevo es/)).toBeTruthy();
+    const caja = await screen.findByTestId('revision-se-mudo');
+    expect(
+      within(caja).getByRole('link', { name: 'Ir a Verificaciones' }).getAttribute('href'),
+    ).toBe('/panel/control-x/verifications');
+    await screen.findByText('Abrir un servicio de viajes en una ciudad');
+    expect(screen.queryByTestId('moto-m1')).toBeNull();
+    expect(screen.queryByTestId('papel-doc1')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Aprobar/ })).toBeNull();
+    expect(llamadas.some((l) => l.url.includes('/admin/vehiculos?'))).toBe(false);
+    expect(llamadas.some((l) => l.url.includes('/admin/papeles-conductor?'))).toBe(false);
   });
 
   it('C-TASA-MODOS: muestra la tasa en uso y su fuente aunque nadie la haya escrito, y guarda el modo', async () => {
@@ -520,31 +413,4 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
   });
 
   // C-CUENTA-PRUEBA: el botón de aprobar antecedentes sale solo en una cuenta de prueba.
-  it('solo en una cuenta de prueba sale «Aprobar antecedentes (cuenta de prueba)» y aprueba los dos', async () => {
-    for (const esPrueba of [false, true]) {
-      const llamadas: Llamada[] = [];
-      servidor(llamadas, { esPrueba });
-      const { unmount } = render(<SuperMoto base="/panel/control-x" idioma="es" />);
-      const fila = await screen.findByTestId('papel-doc1');
-      await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
-      const detalle = await screen.findByTestId('detalle-conductor');
-      await within(detalle).findByText('Identidad verificada');
-      const boton = within(detalle).queryByTestId('aprobar-antecedentes-prueba');
-      if (!esPrueba) {
-        expect(boton).toBeNull();
-        unmount();
-        continue;
-      }
-      expect(within(detalle).getByTestId('etiqueta-prueba').textContent).toBe('Prueba');
-      await userEvent.click(boton!);
-      await waitFor(() =>
-        expect(
-          llamadas
-            .filter((l) => l.metodo === 'PUT')
-            .map((l) => l.url.replace(/.*cumplimientos\/c1\//, '')),
-        ).toEqual(['antecedentes_pasajeros', 'historial_manejo']),
-      );
-      unmount();
-    }
-  });
 });

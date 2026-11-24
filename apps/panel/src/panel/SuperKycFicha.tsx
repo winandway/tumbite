@@ -27,9 +27,30 @@ import { type DatosDeclarados, type LecturaIa, compararDatos } from './kycCompar
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { miniaturaWebp } from './SubirFoto';
 import { PapelesConductor } from './SuperPapeles';
+import { RevisionConductor } from './RevisionConductor';
+
+/**
+ * C-VERIFICACION-UNICA: aprobar la identidad desde «Aprobar todo lo que está en verde» o desde la lista
+ * (la persona decide; la miniatura que verá el pasajero se guarda igual que al aprobar a mano).
+ */
+export async function aprobarIdentidad(id: string) {
+  await pedir('PATCH', `/datos/admin/kyc/${id}`, { estado: 'aprobado', motivo: '' });
+  await guardarMiniatura(id);
+}
+
+/** La identidad está «en verde»: todas sus comprobaciones automáticas bien y la cara igual. */
+export const identidadEnVerde = (
+  estado: string,
+  comprobaciones: readonly { tono: string }[] | undefined,
+  cara: { tono: string } | null | undefined,
+) =>
+  estado === 'pendiente' &&
+  (comprobaciones ?? []).length > 0 &&
+  (comprobaciones ?? []).every((c) => c.tono === 'hecho') &&
+  cara?.tono === 'hecho';
 
 /** Reduce la selfie aprobada a una miniatura y la guarda; si no se puede, el pasajero no ve foto. */
-async function guardarMiniatura(id: string) {
+export async function guardarMiniatura(id: string) {
   try {
     const r = await fetch(`/datos/admin/kyc/${id}/foto/selfie`, { credentials: 'same-origin' });
     if (!r.ok) return;
@@ -503,6 +524,7 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
           onSubmit={(e) => e.preventDefault()}
           noValidate
           data-testid="kyc-decision"
+          id="kyc-decision"
         >
           <h2>{t.decision}</h2>
           <AvisoBorrador
@@ -593,6 +615,22 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
       {/* Las fotos grandes ya están arriba: aquí la tarjeta «Papeles» va en miniatura (plazo, licencia,
           seguro y «Pedir de nuevo» una sola foto). */}
       {p.rol === 'repartidor' ? <PapelesConductor id={id} idioma={idioma} /> : null}
+      {/* C-VERIFICACION-UNICA: todo lo demás que se decide de él (vehículo, papeles, servicios) y su
+          barra de activación, aquí mismo: la misma pieza que en su ficha. */}
+      {p.rol === 'repartidor' ? (
+        <RevisionConductor
+          id={id}
+          base={base}
+          idioma={idioma}
+          identidad={{
+            enVerde: identidadEnVerde(d.kyc.estado, d.comprobaciones, d.cara),
+            aprobar: async () => {
+              await aprobarIdentidad(id);
+              cargar();
+            },
+          }}
+        />
+      ) : null}
       {d.antecedentes ? (
         <p>
           <strong>{t.antecedentes}:</strong>{' '}

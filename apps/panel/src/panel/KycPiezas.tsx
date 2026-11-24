@@ -58,6 +58,28 @@ export const T_VERIFICACIONES = {
     error: 'No pudimos cargar las verificaciones. Revisa tu conexión.',
     reintentar: 'Reintentar',
     verMas: 'Ver más',
+    // C-VERIFICACION-UNICA: un pendiente por conductor, lo que espera de él y aprobar en verde.
+    porDecidir: 'Por decidir',
+    decidir: { identidad: 'Identidad', vehiculo: 'Vehículo', papeles: 'Papeles' } as Record<
+      string,
+      string
+    >,
+    orden: 'Orden',
+    ordenLlegada: 'Por llegada',
+    ordenCerca: 'Más cerca de activarse',
+    elegir: (n: string) => `Elegir a ${n} para aprobar en verde`,
+    enVerde: 'En verde',
+    aprobarVerdes: (n: number) =>
+      n === 1 ? 'Aprobar 1 identidad en verde' : `Aprobar ${n} identidades en verde`,
+    aprobarVerdesAyuda:
+      'Solo se pueden elegir las identidades con todas sus comprobaciones en verde y nada más por decidir. Un vehículo o un papel se revisan en la ficha de la persona.',
+    confirmarVerdes: (n: number) =>
+      n === 1
+        ? '¿Aprobar la identidad de 1 conductor? Miraste sus fotos y decides tú.'
+        : `¿Aprobar la identidad de ${n} conductores? Miraste sus fotos y decides tú.`,
+    verdesHechas: (n: number) =>
+      n === 1 ? 'Aprobaste 1 identidad.' : `Aprobaste ${n} identidades.`,
+    verdesFallo: (n: number, e: string) => `Aprobaste ${n}; la siguiente no se pudo: ${e}`,
     revisar: 'Revisar',
     ficha: 'Ficha completa',
     verFoto: (n: string) => `Ver la foto de ${n} en grande`,
@@ -161,6 +183,27 @@ export const T_VERIFICACIONES = {
     error: 'We couldn’t load the verifications. Check your connection.',
     reintentar: 'Try again',
     verMas: 'Show more',
+    porDecidir: 'To decide',
+    decidir: { identidad: 'Identity', vehiculo: 'Vehicle', papeles: 'Documents' } as Record<
+      string,
+      string
+    >,
+    orden: 'Order',
+    ordenLlegada: 'By arrival',
+    ordenCerca: 'Closest to activation',
+    elegir: (n: string) => `Select ${n} to approve in green`,
+    enVerde: 'In green',
+    aprobarVerdes: (n: number) =>
+      n === 1 ? 'Approve 1 identity in green' : `Approve ${n} identities in green`,
+    aprobarVerdesAyuda:
+      'You can only select identities with every check in green and nothing else to decide. A vehicle or a document is reviewed in the person’s file.',
+    confirmarVerdes: (n: number) =>
+      n === 1
+        ? 'Approve the identity of 1 driver? You looked at their photos and you decide.'
+        : `Approve the identity of ${n} drivers? You looked at their photos and you decide.`,
+    verdesHechas: (n: number) =>
+      n === 1 ? 'You approved 1 identity.' : `You approved ${n} identities.`,
+    verdesFallo: (n: number, e: string) => `You approved ${n}; the next one failed: ${e}`,
     revisar: 'Review',
     ficha: 'Full profile',
     verFoto: (n: string) => `See ${n}’s photo full size`,

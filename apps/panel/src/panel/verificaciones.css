@@ -256,3 +256,59 @@
     flex: 1 1 100%;
   }
 }
+
+/* ───────── C-BARRA-ACTIVACION y C-VERIFICACION-UNICA (23 nov 2026) ───────── */
+.kyc-elegir {
+  width: 20px;
+  height: 20px;
+  margin: 0 4px 0 0;
+  flex: 0 0 auto;
+  align-self: center;
+}
+.kyc-verdes {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.barra-activacion h2 {
+  margin-top: 0;
+}
+.barra-activacion-progreso {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--pd-borde, #e2e5ea);
+  overflow: hidden;
+}
+.barra-activacion-progreso > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  /* El éxito va en verde (regla de Richard): el mismo verde de las insignias «hecho». */
+  background: var(--pd-hecho-punto, #1f9d55);
+  transition: width 0.3s ease;
+}
+.barra-frase {
+  margin: 8px 0;
+}
+.barra-pasos {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: grid;
+  gap: 6px;
+}
+.barra-pasos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--pd-borde, #e2e5ea);
+}
+.barra-pasos li:last-child {
+  border-bottom: 0;
+}
+.barra-quien {
+  font-size: 0.875rem;
+  color: var(--pd-suave, #666b73);
+}

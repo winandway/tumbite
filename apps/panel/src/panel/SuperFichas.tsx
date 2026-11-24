@@ -30,6 +30,7 @@ import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { AvisoNoElegibles } from './AvisoNoElegibles';
 import { usePreferencias } from './usePreferencias';
 import { FiltroPapeles, InsigniaPapeles, PapelesConductor } from './SuperPapeles';
+import { RevisionConductor } from './RevisionConductor';
 
 /**
  * Superadmin a escala: ciudades → repartidores / clientes / restaurantes de cada ciudad, con
@@ -58,6 +59,9 @@ const T = {
     licencia: 'Licencia',
     antecedentes: 'Antecedentes',
     papeles: 'Papeles',
+    activacion: 'Activación',
+    listo: 'Listo para recibir carreras',
+    todaviaNo: 'Todavía no',
     estadoDoc: {
       vigente: 'Vigente',
       vencido: 'Vencido',
@@ -201,6 +205,9 @@ const T = {
     licencia: 'License',
     antecedentes: 'Background',
     papeles: 'Documents',
+    activacion: 'Activation',
+    listo: 'Ready to receive trips',
+    todaviaNo: 'Not yet',
     estadoDoc: {
       vigente: 'Valid',
       vencido: 'Expired',
@@ -689,6 +696,8 @@ type FilaRep = {
   /** C-PLAZO-PAPELES: estado de sus papeles y días que le quedan (null = sin plazo o ya cerrado). */
   papeles?: string;
   diasPlazo?: number | null;
+  /** C-BARRA-ACTIVACION: el reparto lo tomaría con solo conectarse (misma vista del reparto). */
+  listo?: boolean;
 };
 
 export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idioma }) {
@@ -742,6 +751,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                 <th>{t.seguro}</th>
                 <th>{t.antecedentes}</th>
                 <th>{t.papeles}</th>
+                <th>{t.activacion}</th>
                 <th>{t.entregas}</th>
               </tr>
             </thead>
@@ -774,6 +784,11 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                       dias={r.diasPlazo ?? null}
                       idioma={idioma}
                     />
+                  </td>
+                  <td>
+                    <Insignia tono={r.listo ? 'hecho' : 'apagado'}>
+                      {r.listo ? t.listo : t.todaviaNo}
+                    </Insignia>
                   </td>
                   <td>{r.entregas}</td>
                 </tr>
@@ -1036,6 +1051,8 @@ export function SuperRepartidor({
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <PapelesConductor id={id} idioma={idioma} />
+      {/* C-VERIFICACION-UNICA: la misma pieza que en Verificaciones (barra, vehículo, papeles). */}
+      <RevisionConductor id={id} base={base} idioma={idioma} />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.entregas}</span>
