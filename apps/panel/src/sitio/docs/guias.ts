@@ -3436,8 +3436,8 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-repartidor-registro-es.webp',
-            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
-            pie: 'Creas tu cuenta en la app con tu nombre, correo, celular y una contraseña.',
+            alt: 'Primer paso de «Crear cuenta» en Divoox Driver: la barra verde «Paso 1 de 5», «¿Cómo te llamas?» y los botones «Atrás» y «Siguiente».',
+            pie: 'Creas tu cuenta en la app paso a paso: tu nombre, tu correo, tu celular y una contraseña.',
           },
           {
             src: '/docs/recorrido-conectar-desconectado-es.webp',
@@ -5221,16 +5221,32 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien conduce o reparte se registra en la app Divoox Driver.',
           'Tu cuenta es una sola. Si ya eres conductor y quieres pedir, entra a la app de Divoox con tu mismo correo y tu misma contraseña: la app te ofrece «Activar mi cuenta de cliente». Si ya pides y quieres conducir, entra a Divoox Driver igual y toca «Empezar mi registro de conductor». Lo explicamos en «Una cuenta para todo».',
-          'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito.',
+          'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. En la app de Divoox y en Divoox Driver vas paso a paso, una pregunta por pantalla, como en las apps grandes: «¿Cómo te llamas?», «¿Cuál es tu correo?», «¿Cuál es tu celular?», «Crea tu contraseña» y «Último paso». Arriba ves cuántos pasos te faltan en una barra verde, y abajo tienes «Atrás» y «Siguiente».',
+          'Si algo falta o está mal, el paso no avanza: la casilla se marca en rojo con lo que pasa a su lado, y junto al botón te decimos qué revisar. Si se te cierra la pantalla a mitad de camino, al volver estás en el mismo paso y con todo lo que habías escrito (menos la contraseña, que por tu seguridad nunca se guarda).',
           'Nada se envía solo. Al tocar «Continuar» ves «Revisa tus datos»: tu correo arriba y en grande, porque ahí te mandamos el enlace para activar tu cuenta, y debajo tus demás datos, cada uno con «Editar». Si el correo parece mal escrito (por ejemplo «gmial.com»), te sugerimos el correcto y lo cambias con un toque. Tu cuenta se crea solo cuando tocas «Crear mi cuenta». Si te equivocas en algo, tocas «Editar» (o «Editar datos») y vuelves al formulario con todo lo que escribiste, sin empezar de cero.',
-          'Mientras ves «Revisa tus datos», tu cuenta todavía no existe: la pantalla te lo dice arriba. Si sales ahí, no se creó nada. Y si al tocar «Continuar» alguna casilla está mal, junto al botón te decimos cuál («Revisa lo marcado en rojo: Celular»), para que no tengas que buscarla.',
+          'Mientras ves «Revisa tus datos», tu cuenta todavía no existe: la pantalla te lo dice arriba. Si sales ahí, no se creó nada. Y si al tocar «Siguiente» o «Continuar» alguna casilla está mal, junto al botón te decimos cuál («Revisa lo marcado en rojo: Celular»), para que no tengas que buscarla.',
           'Al entrar, si algo falla te decimos exactamente qué pasó. «No hay ninguna cuenta con ese correo» quiere decir que con ese correo no se ha creado ninguna cuenta: revisa que esté bien escrito o toca «Crear cuenta» y el correo ya va puesto. «La contraseña no es correcta» quiere decir que la cuenta existe pero la contraseña no: toca «¿Olvidaste tu contraseña?». Por tu seguridad, después de varios intentos con la contraseña equivocada pausamos la entrada a esa cuenta por 15 minutos.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-registro-es.webp',
-            alt: 'Pantalla «Crear cuenta» de la app de Divoox con nombre y apellido, correo, celular, fecha de cumpleaños y contraseña.',
-            pie: 'Te registras con tu nombre, tu correo, tu celular y una contraseña.',
+            alt: 'Primer paso de «Crear cuenta» en la app de Divoox: la barra verde «Paso 1 de 5», la pregunta «¿Cómo te llamas?», el nombre escrito, el cumpleaños y los botones «Atrás» y «Siguiente».',
+            pie: 'Te registras paso a paso: primero tu nombre.',
+          },
+          {
+            src: '/docs/recorrido-pasos-registro-cliente-error-es.webp',
+            alt: 'El primer paso sin nombre: la casilla en rojo con «Escribe tu nombre.» y, junto al botón «Siguiente», «Revisa lo marcado en rojo: Nombre.».',
+            pie: 'Si falta algo, el paso no avanza y te decimos qué revisar.',
+          },
+          {
+            src: '/docs/recorrido-pasos-registro-cliente-3-es.webp',
+            alt: 'El paso «¿Cuál es tu celular?» con el país del celular, el número y la casilla para recibir mensajes de texto.',
+            pie: 'Una pregunta por pantalla; la barra verde te dice cuánto falta.',
+          },
+          {
+            src: '/docs/recorrido-pasos-registro-cliente-5-es.webp',
+            alt: 'El «Último paso» con el código de invitación opcional, la casilla de los términos marcada y el botón «Continuar».',
+            pie: 'En el último paso aceptas los términos y sigues a revisar tus datos.',
           },
           {
             src: '/docs/recorrido-restaurante-registro-es.webp',
@@ -5239,8 +5255,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-repartidor-registro-es.webp',
-            alt: 'Pantalla «Crear cuenta» de la app de repartidores de Divoox con nombre y apellido, correo, celular y contraseña.',
-            pie: 'Quien reparte se registra en la app Divoox Driver.',
+            alt: 'Primer paso de «Crear cuenta» en Divoox Driver: la barra verde «Paso 1 de 5», «¿Cómo te llamas?» y los botones «Atrás» y «Siguiente».',
+            pie: 'Quien conduce se registra igual, paso a paso, en la app Divoox Driver.',
           },
           {
             src: '/docs/recorrido-registro-revisa-tus-datos-es.webp',
@@ -8978,8 +8994,8 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-repartidor-registro-en.webp',
-            alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
-            pie: 'You create your account in the app with your name, email, phone, and a password.',
+            alt: 'First step of “Create account” in Divoox Driver: the green “Step 1 of 5” bar, “What’s your name?”, and the “Back” and “Next” buttons.',
+            pie: 'You create your account in the app step by step: your name, email, phone, and a password.',
           },
           {
             src: '/docs/recorrido-conectar-desconectado-en.webp',
@@ -10755,16 +10771,32 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
           'You have just one account. If you already drive and want to order, sign in to the Divoox app with the same email and password: the app offers “Activate my customer account.” If you already order and want to drive, sign in to Divoox Driver the same way and tap “Start my driver sign-up.” We explain it in “One account for everything.”',
-          'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back.',
+          'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. In the Divoox app and in Divoox Driver you go step by step, one question per screen, like in the big apps: “What’s your name?”, “What’s your email?”, “What’s your mobile number?”, “Create your password,” and “Last step.” A green bar at the top shows how many steps are left, and “Back” and “Next” are at the bottom.',
+          'If something is missing or wrong, the step doesn’t move on: the field turns red with what happened right next to it, and next to the button we tell you what to check. If the screen closes halfway, when you come back you’re on the same step with everything you typed (except your password, which we never save, for your security).',
           'Nothing is sent on its own. When you tap “Continue,” you see “Review your details”: your email at the top in large type, because that’s where we send the link to activate your account, and your other details below, each with “Edit.” If your email looks misspelled (for example, “gmial.com”), we suggest the right one and you fix it with one tap. Your account is created only when you tap “Create my account.” If something is wrong, tap “Edit” (or “Edit details”) and you’re back on the form with everything you typed, so you don’t start over.',
-          'While you see “Review your details,” your account doesn’t exist yet: the screen says so at the top. If you leave there, nothing was created. And if a field is wrong when you tap “Continue,” we tell you which one right next to the button (“Check what’s marked in red: Mobile phone”), so you don’t have to hunt for it.',
+          'While you see “Review your details,” your account doesn’t exist yet: the screen says so at the top. If you leave there, nothing was created. And if a field is wrong when you tap “Next” or “Continue,” we tell you which one right next to the button (“Check what’s marked in red: Mobile phone”), so you don’t have to hunt for it.',
           'When you sign in, if something goes wrong we tell you exactly what happened. “There’s no account with that email” means no account was ever created with that email: check the spelling or tap “Create account,” and your email is already filled in. “That password isn’t correct” means the account exists but the password doesn’t match: tap “Forgot your password?” For your security, after several tries with the wrong password we pause sign-in to that account for 15 minutes.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-cliente-registro-en.webp',
-            alt: '“Create account” screen in the Divoox app with full name, email, mobile phone, birthday, and password.',
-            pie: 'You sign up with your name, email, phone, and a password.',
+            alt: 'First step of “Create account” in the Divoox app: the green “Step 1 of 5” bar, the question “What’s your name?”, the name typed in, the birthday, and the “Back” and “Next” buttons.',
+            pie: 'You sign up step by step, starting with your name.',
+          },
+          {
+            src: '/docs/recorrido-pasos-registro-cliente-error-en.webp',
+            alt: 'The first step without a name: the field in red with “Enter your name.” and, next to the “Next” button, “Check what’s marked in red: Name.”',
+            pie: 'If something is missing, the step doesn’t move on and we tell you what to check.',
+          },
+          {
+            src: '/docs/recorrido-pasos-registro-cliente-3-en.webp',
+            alt: 'The “What’s your mobile number?” step with the phone’s country, the number, and the box to get text messages.',
+            pie: 'One question per screen; the green bar shows how much is left.',
+          },
+          {
+            src: '/docs/recorrido-pasos-registro-cliente-5-en.webp',
+            alt: 'The “Last step” with the optional invite code, the terms box checked, and the “Continue” button.',
+            pie: 'On the last step you accept the terms and go on to review your details.',
           },
           {
             src: '/docs/recorrido-restaurante-registro-en.webp',
@@ -10773,8 +10805,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-repartidor-registro-en.webp',
-            alt: '“Create account” screen in the Divoox driver app with full name, email, mobile phone, and password.',
-            pie: 'Drivers sign up in the Divoox Driver app.',
+            alt: 'First step of “Create account” in Divoox Driver: the green “Step 1 of 5” bar, “What’s your name?”, and the “Back” and “Next” buttons.',
+            pie: 'Drivers sign up the same way, step by step, in the Divoox Driver app.',
           },
           {
             src: '/docs/recorrido-registro-revisa-tus-datos-en.webp',

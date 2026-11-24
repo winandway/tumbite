@@ -21,9 +21,14 @@ import {
   CODIGO_PAPEL_POR_ACTIVAR,
   resumenFallos,
   textoAccionAcceso,
+  llaveBorrador,
+  pasoDeCasilla,
+  pasoVigente,
   type CasillaRegistro,
   type FalloCasilla,
+  type PasoDeFormulario,
 } from '@tumbite/compartido';
+import { FormularioPorPasos, type PasoVisible } from './FormularioPorPasos';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { usePasoRegistro } from './rastroRegistro';
@@ -55,6 +60,8 @@ const INICIAL = {
   invitacion: '',
   // C-TELEFONO-E164: el país del celular (arranca en el país desde donde se abre la app).
   paisTelefono: '',
+  // C-FORMULARIO-POR-PASOS: el paso del registro en el que iba (vuelve al reabrir).
+  pasoRegistro: '',
 };
 
 /**
@@ -173,6 +180,33 @@ export function Acceso({
   }, [paisSugerido]);
   const r = textosRevisar(idioma);
   const registro = modo === 'registro' && rolRegistro;
+  // C-FORMULARIO-POR-PASOS: la app de clientes y Driver crean la cuenta paso a paso. Divoox
+  // Restaurants (caso abierto con Apple) sigue con su formulario de siempre, sin ningún cambio.
+  const porPasos = rolRegistro === 'cliente' || rolRegistro === 'repartidor';
+  const pasoReg = pasoVigente(PASOS_REGISTRO, v.pasoRegistro);
+  // C-FORMULARIO-POR-PASOS: si dejó la cuenta a medio crear, al volver a abrir la app sigue en ese
+  // paso (como Uber), no en «Entrar». Arriba tiene «Ya tengo una cuenta» y «Empezar de nuevo».
+  useEffect(() => {
+    if (!porPasos || modoInicial === 'registro') return;
+    let vivo = true;
+    void Promise.resolve(almacenTelefono.leer(llaveBorrador('app-registro')))
+      .then((guardado) => {
+        if (!vivo || !guardado) return;
+        const datos = JSON.parse(guardado) as { pasoRegistro?: unknown };
+        if (typeof datos.pasoRegistro === 'string' && datos.pasoRegistro) setModo('registro');
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+    // Solo al abrir la pantalla.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const irAlPaso = (clave: string) => {
+    setFallos([]);
+    setError(null);
+    b.cambiar('pasoRegistro', clave);
+  };
   // Las casillas del registro, en el orden de la pantalla (también el de «Revisa tus datos»).
   const casillasRegistro: CasillaRegistro[] = [
     'nombre',
@@ -223,8 +257,12 @@ export function Acceso({
   function alFallar(x: unknown) {
     if (modo === 'entrar' && x instanceof ErrorApi && x.estado === 401 && Platform.OS !== 'web')
       setPista(pistaDeEntrada(URL_SERVIDOR, v.correo));
-    if (x instanceof ErrorApi && x.campo && casillasVisibles.includes(x.campo))
+    if (x instanceof ErrorApi && x.campo && casillasVisibles.includes(x.campo)) {
       setPaso('formulario');
+      // C-FORMULARIO-POR-PASOS: al paso donde está la casilla que dijo el servidor.
+      const alli = pasoDeCasilla(PASOS_REGISTRO, x.campo);
+      if (porPasos && alli) b.cambiar('pasoRegistro', alli);
+    }
     if (modo === 'registro' && x instanceof ErrorApi && x.sinConexion)
       avisarIntento('revisar', 'sin_conexion');
     setError(
@@ -317,6 +355,9 @@ export function Acceso({
     setFallos(malos);
     if (malos.length) {
       avisarIntento('formulario', 'validacion', malos.map((m) => m.campo).join(','));
+      // C-FORMULARIO-POR-PASOS: una casilla de un paso anterior quedó mal: se vuelve a ese paso.
+      const alli = pasoDeCasilla(PASOS_REGISTRO, malos[0]?.campo);
+      if (porPasos && alli) b.cambiar('pasoRegistro', alli);
       return;
     }
     if (!acepto) {
@@ -328,11 +369,34 @@ export function Acceso({
     setPaso('revisar');
   }
 
+  /**
+   * C-FORMULARIO-POR-PASOS: «Siguiente» de un paso del registro. Valida solo las casillas de ese
+   * paso; el error va al lado de cada una y, junto al botón, por qué no avanza.
+   */
+  function validarPaso(clave: string): boolean {
+    setError(null);
+    Keyboard.dismiss();
+    const delPaso = PASOS_REGISTRO.find((p) => p.clave === clave)?.casillas ?? [];
+    const malos = validarRegistro(
+      v,
+      idioma,
+      casillasRegistro.filter((c) => delPaso.includes(c)),
+    );
+    setFallos(malos);
+    if (malos.length) {
+      avisarIntento('formulario', 'validacion', malos.map((m) => m.campo).join(','));
+      return false;
+    }
+    return true;
+  }
+
   /** «Editar» en la revisión: de vuelta al formulario, con lo escrito y esa casilla abierta. */
   function editar(campo: CasillaRegistro | null) {
     setError(null);
     setEnfocar(campo);
     setPaso('formulario');
+    // C-FORMULARIO-POR-PASOS: al paso de esa casilla («Editar datos», al primero).
+    if (porPasos) b.cambiar('pasoRegistro', pasoDeCasilla(PASOS_REGISTRO, campo) ?? 'nombre');
   }
 
   /**
@@ -431,7 +495,218 @@ export function Acceso({
         <Turnstile sitio={turnstileSitio} idioma={idioma} />
       </RevisaTusDatos>,
     );
-  return marco(
+  // ── Las casillas, una vez: el registro por pasos y el formulario de siempre usan las mismas. ──
+  const campoNombre = registro ? (
+    <Campo
+      etiqueta={t.nombre}
+      value={v.nombre}
+      onChangeText={(x) => cambiar('nombre', x)}
+      autoComplete="name"
+      textContentType="name"
+      autoCapitalize="words"
+      autoFocus={enfocar === 'nombre'}
+      placeholder={t.nombre}
+      error={errorDe('nombre')}
+    />
+  ) : null;
+  const campoCorreo = (
+    <>
+      <Campo
+        etiqueta={t.correo}
+        value={v.correo}
+        onChangeText={(x) => cambiar('correo', x)}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        autoComplete="email"
+        autoFocus={Boolean(registro) && enfocar === 'correo'}
+        placeholder={correoEjemplo(idioma)}
+        error={errorDe('correo')}
+      />
+      {registro ? (
+        <SugerenciaCorreo correo={v.correo} idioma={idioma} aceptar={(x) => cambiar('correo', x)} />
+      ) : null}
+    </>
+  );
+  const campoCelular = registro ? (
+    <>
+      <SelectorPaisTelefono
+        pais={v.paisTelefono || null}
+        alCambiar={(x) => cambiar('paisTelefono', x)}
+        idioma={idioma}
+      />
+      <Campo
+        etiqueta={t.telefono}
+        value={v.telefono}
+        // Solo números (y el + del país): las letras no entran.
+        onChangeText={(x) => cambiar('telefono', soloNumerosTelefono(x))}
+        keyboardType="phone-pad"
+        autoComplete="tel"
+        textContentType="telephoneNumber"
+        autoFocus={enfocar === 'telefono'}
+        // Cómo se escribe un celular en ese país (ejemplo imposible a propósito).
+        placeholder={datosPais(v.paisTelefono)?.ejemploCelular ?? t.telefono}
+        error={errorDe('telefono')}
+      />
+    </>
+  ) : null;
+  const campoInvitacion = registro ? (
+    <Campo
+      etiqueta={t.invitacion}
+      value={v.invitacion}
+      onChangeText={(x) => cambiar('invitacion', x.toUpperCase())}
+      autoCapitalize="characters"
+      autoCorrect={false}
+      autoFocus={enfocar === 'invitacion'}
+      placeholder={t.invitacionAyuda}
+      testID="registro-invitacion"
+      error={errorDe('invitacion')}
+    />
+  ) : null;
+  const campoCumple =
+    registro && pideCumple ? (
+      // C-FECHA-MODERNA: opcional de verdad; vacía o a medias no impide crear la cuenta.
+      <CampoFecha
+        etiqueta={t.cumple}
+        valor={v.fechaNacimiento}
+        cambiar={(x) => cambiar('fechaNacimiento', x)}
+        idioma={idioma}
+        sinFuturo
+        // Al completar el año se guarda el teclado numérico: los términos y el botón quedan a la vista.
+        alCompletar={() => Keyboard.dismiss()}
+        error={errorDe('fechaNacimiento')}
+        testID="registro-cumple"
+      />
+    ) : null;
+  const campoClave = (
+    <CampoClave
+      etiqueta={t.clave}
+      valor={v.clave}
+      cambiar={(x) => cambiar('clave', x)}
+      nueva={Boolean(registro)}
+      // C-REVISA-TUS-DATOS: al crear la cuenta, la tecla del teclado solo lo guarda; nada se
+      // manda solo. Al entrar sí entra, como en cualquier app.
+      alEnviar={registro ? () => Keyboard.dismiss() : () => void entrarConCuenta()}
+      error={errorDe('clave')}
+    />
+  );
+  const terminos = registro ? (
+    // Aceptación con casilla antes de crear la cuenta (Apple y Google la revisan).
+    // Solo el cuadrito es la casilla: el texto lleva enlaces y un toque ahí abre la página.
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+      <Pressable
+        onPress={() => {
+          setAcepto(!acepto);
+          setError((x) => (x?.mensaje === t.faltaAceptar ? null : x));
+        }}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: acepto }}
+        accessibilityLabel={`${t.aceptas} ${t.terminos} ${t.yLa} ${t.privacidad}`}
+        hitSlop={10}
+        testID="registro-acepto"
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 4,
+          borderWidth: 2,
+          borderColor: acepto ? C.primario : '#6B7078',
+          backgroundColor: acepto ? C.primario : '#FFFFFF',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 1,
+        }}
+      >
+        {acepto ? (
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>✓</Text>
+        ) : null}
+      </Pressable>
+      <Text style={{ color: '#666B73', fontSize: 13, flex: 1 }}>
+        {t.aceptas}{' '}
+        <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
+          {t.terminos}
+        </Text>
+        {rolRegistro === 'repartidor' || rolRegistro === 'restaurante' ? (
+          <>
+            ,{' '}
+            <Text
+              style={e.enlaceLinea}
+              onPress={() =>
+                abrir(rolRegistro === 'repartidor' ? '/driver-terms' : '/restaurant-terms')
+              }
+              accessibilityRole="link"
+            >
+              {rolRegistro === 'repartidor' ? t.terminosRepartidores : t.terminosRestaurantes}
+            </Text>
+          </>
+        ) : null}{' '}
+        {t.yLa}{' '}
+        <Text style={e.enlaceLinea} onPress={() => abrir('/privacy')} accessibilityRole="link">
+          {t.privacidad}
+        </Text>
+        .
+      </Text>
+    </View>
+  ) : null;
+  const casillaSms = registro ? (
+    <CasillaSms idioma={idioma} marcada={v.sms} cambiar={(x) => b.cambiar('sms', x)} />
+  ) : null;
+  // C-MENSAJES-ACCESO: el error dice qué pasó y este botón, qué hacer.
+  const botonAccion =
+    accion && (accion !== 'crear' || rolRegistro) ? (
+      <Boton
+        testID={`accion-${accion}`}
+        secundario
+        texto={textoAccionAcceso(accion, idioma)}
+        alTocar={hacerAccion}
+      />
+    ) : null;
+  const avisoPista = pista ? (
+    <Text
+      testID="pista-entrada"
+      accessibilityRole="alert"
+      style={{ color: '#7A4B00', fontSize: 14, marginBottom: 10 }}
+    >
+      {pista === 'appDePruebas' ? t.pistaAppDePruebas : t.pistaAppReal}
+    </Text>
+  ) : null;
+  const enlaceCambiarModo = rolRegistro ? (
+    <Text
+      testID={modo === 'entrar' ? 'ir-a-crear-cuenta' : 'ya-tengo-cuenta'}
+      style={e.enlace}
+      onPress={() => {
+        setError(null);
+        setFallos([]);
+        setPaso('formulario');
+        setModo(modo === 'entrar' ? 'registro' : 'entrar');
+      }}
+      accessibilityRole="button"
+    >
+      {modo === 'entrar'
+        ? rolRegistro === 'restaurante'
+          ? t.crearCuentaRestaurante
+          : t.noTengo
+        : t.yaTengo}
+    </Text>
+  ) : null;
+  const pie = (
+    <>
+      {enlaceCambiarModo}
+      {/* C-AYUDA-A-LA-VISTA: soporte sin tener que iniciar sesión, en entrar y en crear cuenta. */}
+      <Text
+        testID="acceso-ayuda"
+        style={e.enlace}
+        onPress={() => abrir('/support')}
+        accessibilityRole="link"
+      >
+        {t.necesitasAyuda}
+      </Text>
+      {seguirMirando ? (
+        <Text style={e.enlace} onPress={seguirMirando} accessibilityRole="button">
+          {t.seguirMirando}
+        </Text>
+      ) : null}
+    </>
+  );
+  const encabezado = (
     <>
       {/* Con portada propia (Driver), el título de «Crear cuenta» o «Entrar» va aquí. */}
       {portada && rolRegistro ? (
@@ -484,92 +759,95 @@ export function Acceso({
             : `Te invitamos a ser el líder de la línea «${invitacionLider.linea}» en ${invitacionLider.ciudad}. Crea tu cuenta${invitacionLider.correo ? ' con este correo' : ''} y la línea queda a tu nombre sola.`}
         </Text>
       ) : null}
-      {registro && (
-        <Campo
-          etiqueta={t.nombre}
-          value={v.nombre}
-          onChangeText={(x) => cambiar('nombre', x)}
-          autoComplete="name"
-          textContentType="name"
-          autoCapitalize="words"
-          autoFocus={enfocar === 'nombre'}
-          placeholder={t.nombre}
-          error={errorDe('nombre')}
-        />
-      )}
-      <Campo
-        etiqueta={t.correo}
-        value={v.correo}
-        onChangeText={(x) => cambiar('correo', x)}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        autoComplete="email"
-        autoFocus={Boolean(registro) && enfocar === 'correo'}
-        placeholder={correoEjemplo(idioma)}
-        error={errorDe('correo')}
-      />
-      {registro ? (
-        <SugerenciaCorreo correo={v.correo} idioma={idioma} aceptar={(x) => cambiar('correo', x)} />
-      ) : null}
-      {registro && (
-        <SelectorPaisTelefono
-          pais={v.paisTelefono || null}
-          alCambiar={(x) => cambiar('paisTelefono', x)}
+    </>
+  );
+
+  // C-FORMULARIO-POR-PASOS: crear la cuenta en la app de clientes y en Driver, un paso por pantalla.
+  if (registro && porPasos) {
+    const tp = enIdioma(TEXTOS_PASOS_REGISTRO, idioma);
+    const pasos: PasoVisible[] = [
+      {
+        clave: 'nombre',
+        casillas: ['nombre', 'fechaNacimiento'],
+        titulo: tp.nombre,
+        contenido: (
+          <>
+            {campoNombre}
+            {campoCumple}
+          </>
+        ),
+      },
+      {
+        clave: 'correo',
+        casillas: ['correo'],
+        titulo: tp.correo,
+        ayuda: tp.correoAyuda,
+        contenido: campoCorreo,
+      },
+      {
+        clave: 'celular',
+        casillas: ['telefono'],
+        titulo: tp.celular,
+        ayuda: tp.celularAyuda,
+        contenido: (
+          <>
+            {campoCelular}
+            {casillaSms}
+          </>
+        ),
+      },
+      {
+        clave: 'clave',
+        casillas: ['clave'],
+        titulo: tp.clave,
+        ayuda: tp.claveAyuda,
+        contenido: campoClave,
+      },
+      {
+        clave: 'final',
+        casillas: ['invitacion'],
+        titulo: tp.final,
+        ayuda: tp.finalAyuda,
+        contenido: (
+          <>
+            {campoInvitacion}
+            {terminos}
+          </>
+        ),
+      },
+    ];
+    return marco(
+      <>
+        {encabezado}
+        <FormularioPorPasos
+          pasos={pasos}
+          paso={pasoReg}
+          alCambiarPaso={irAlPaso}
+          alSiguiente={validarPaso}
+          alTerminar={continuar}
+          alSalir={aEntrar}
+          textoTerminar={r.continuar}
+          testIDTerminar="registro-continuar"
+          porQue={fallos.length ? resumenFallos(fallos, idioma) : mensajeGeneral}
+          testIDPorQue={fallos.length ? 'registro-revisar-casillas' : 'acceso-error'}
           idioma={idioma}
+          testID="registro-por-pasos"
         />
-      )}
-      {registro && (
-        <Campo
-          etiqueta={t.telefono}
-          value={v.telefono}
-          // Solo números (y el + del país): las letras no entran.
-          onChangeText={(x) => cambiar('telefono', soloNumerosTelefono(x))}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-          textContentType="telephoneNumber"
-          autoFocus={enfocar === 'telefono'}
-          // Cómo se escribe un celular en ese país (ejemplo imposible a propósito).
-          placeholder={datosPais(v.paisTelefono)?.ejemploCelular ?? t.telefono}
-          error={errorDe('telefono')}
-        />
-      )}
-      {registro && (
-        <Campo
-          etiqueta={t.invitacion}
-          value={v.invitacion}
-          onChangeText={(x) => cambiar('invitacion', x.toUpperCase())}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          autoFocus={enfocar === 'invitacion'}
-          placeholder={t.invitacionAyuda}
-          testID="registro-invitacion"
-          error={errorDe('invitacion')}
-        />
-      )}
-      {registro && pideCumple && (
-        // C-FECHA-MODERNA: opcional de verdad; vacía o a medias no impide crear la cuenta.
-        <CampoFecha
-          etiqueta={t.cumple}
-          valor={v.fechaNacimiento}
-          cambiar={(x) => cambiar('fechaNacimiento', x)}
-          idioma={idioma}
-          sinFuturo
-          // Al completar el año se guarda el teclado numérico: los términos y el botón quedan a la vista.
-          alCompletar={() => Keyboard.dismiss()}
-          error={errorDe('fechaNacimiento')}
-          testID="registro-cumple"
-        />
-      )}
-      <CampoClave
-        etiqueta={t.clave}
-        valor={v.clave}
-        cambiar={(x) => cambiar('clave', x)}
-        nueva={Boolean(registro)}
-        // C-REVISA-TUS-DATOS: al crear la cuenta, la tecla del teclado solo lo guarda; nada se
-        // manda solo. Al entrar sí entra, como en cualquier app.
-        alEnviar={registro ? () => Keyboard.dismiss() : () => void entrarConCuenta()}
-        error={errorDe('clave')}
-      />
+        {botonAccion}
+        {pie}
+      </>,
+    );
+  }
+
+  return marco(
+    <>
+      {encabezado}
+      {campoNombre}
+      {campoCorreo}
+      {campoCelular}
+      {campoInvitacion}
+      {campoCumple}
+      {campoClave}
       {/* En el registro, el escudo va en «Revisa tus datos», donde se crea la cuenta. */}
       {registro ? null : <Turnstile sitio={turnstileSitio} idioma={idioma} />}
       {/* C-REGISTRO-ERRORES: un error sin casilla en pantalla sale aquí; nunca queda escondido. */}
@@ -582,62 +860,8 @@ export function Acceso({
           {mensajeGeneral}
         </Text>
       ) : null}
-      {registro ? (
-        // Aceptación con casilla antes de crear la cuenta (Apple y Google la revisan).
-        // Solo el cuadrito es la casilla: el texto lleva enlaces y un toque ahí abre la página.
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
-          <Pressable
-            onPress={() => setAcepto(!acepto)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: acepto }}
-            accessibilityLabel={`${t.aceptas} ${t.terminos} ${t.yLa} ${t.privacidad}`}
-            hitSlop={10}
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: 4,
-              borderWidth: 2,
-              borderColor: acepto ? C.primario : '#6B7078',
-              backgroundColor: acepto ? C.primario : '#FFFFFF',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: 1,
-            }}
-          >
-            {acepto ? (
-              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>✓</Text>
-            ) : null}
-          </Pressable>
-          <Text style={{ color: '#666B73', fontSize: 13, flex: 1 }}>
-            {t.aceptas}{' '}
-            <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
-              {t.terminos}
-            </Text>
-            {rolRegistro === 'repartidor' || rolRegistro === 'restaurante' ? (
-              <>
-                ,{' '}
-                <Text
-                  style={e.enlaceLinea}
-                  onPress={() =>
-                    abrir(rolRegistro === 'repartidor' ? '/driver-terms' : '/restaurant-terms')
-                  }
-                  accessibilityRole="link"
-                >
-                  {rolRegistro === 'repartidor' ? t.terminosRepartidores : t.terminosRestaurantes}
-                </Text>
-              </>
-            ) : null}{' '}
-            {t.yLa}{' '}
-            <Text style={e.enlaceLinea} onPress={() => abrir('/privacy')} accessibilityRole="link">
-              {t.privacidad}
-            </Text>
-            .
-          </Text>
-        </View>
-      ) : null}
-      {registro ? (
-        <CasillaSms idioma={idioma} marcada={v.sms} cambiar={(x) => b.cambiar('sms', x)} />
-      ) : null}
+      {terminos}
+      {casillaSms}
       {/* C-SIN-EXITO-FALSO: junto al botón, qué casillas faltan (el error de cada una va a su lado). */}
       {registro && fallos.length ? (
         <Text
@@ -648,24 +872,8 @@ export function Acceso({
           {resumenFallos(fallos, idioma)}
         </Text>
       ) : null}
-      {/* C-MENSAJES-ACCESO: el error dice qué pasó y este botón, qué hacer. */}
-      {accion && (accion !== 'crear' || rolRegistro) ? (
-        <Boton
-          testID={`accion-${accion}`}
-          secundario
-          texto={textoAccionAcceso(accion, idioma)}
-          alTocar={hacerAccion}
-        />
-      ) : null}
-      {pista ? (
-        <Text
-          testID="pista-entrada"
-          accessibilityRole="alert"
-          style={{ color: '#7A4B00', fontSize: 14, marginBottom: 10 }}
-        >
-          {pista === 'appDePruebas' ? t.pistaAppDePruebas : t.pistaAppReal}
-        </Text>
-      ) : null}
+      {botonAccion}
+      {avisoPista}
       {porActivar && papelApp ? (
         <ActivarPapel
           papel={papelApp}
@@ -699,39 +907,42 @@ export function Acceso({
           {t.olvide}
         </Text>
       ) : null}
-      {rolRegistro ? (
-        <Text
-          testID={modo === 'entrar' ? 'ir-a-crear-cuenta' : 'ya-tengo-cuenta'}
-          style={e.enlace}
-          onPress={() => {
-            setError(null);
-            setFallos([]);
-            setPaso('formulario');
-            setModo(modo === 'entrar' ? 'registro' : 'entrar');
-          }}
-          accessibilityRole="button"
-        >
-          {modo === 'entrar'
-            ? rolRegistro === 'restaurante'
-              ? t.crearCuentaRestaurante
-              : t.noTengo
-            : t.yaTengo}
-        </Text>
-      ) : null}
-      {/* C-AYUDA-A-LA-VISTA: soporte sin tener que iniciar sesión, en entrar y en crear cuenta. */}
-      <Text
-        testID="acceso-ayuda"
-        style={e.enlace}
-        onPress={() => abrir('/support')}
-        accessibilityRole="link"
-      >
-        {t.necesitasAyuda}
-      </Text>
-      {seguirMirando ? (
-        <Text style={e.enlace} onPress={seguirMirando} accessibilityRole="button">
-          {t.seguirMirando}
-        </Text>
-      ) : null}
+      {pie}
     </>,
   );
 }
+
+/** C-FORMULARIO-POR-PASOS: los pasos del registro (cliente y Driver), en orden. */
+const PASOS_REGISTRO: readonly PasoDeFormulario[] = [
+  { clave: 'nombre', casillas: ['nombre', 'fechaNacimiento'] },
+  { clave: 'correo', casillas: ['correo'] },
+  { clave: 'celular', casillas: ['telefono'] },
+  { clave: 'clave', casillas: ['clave'] },
+  { clave: 'final', casillas: ['invitacion'] },
+];
+
+/** C-FORMULARIO-POR-PASOS: el título y la ayuda de cada paso del registro (cliente y Driver). */
+const TEXTOS_PASOS_REGISTRO = {
+  es: {
+    nombre: '¿Cómo te llamas?',
+    correo: '¿Cuál es tu correo?',
+    correoAyuda: 'Ahí te mandamos el enlace para activar tu cuenta.',
+    celular: '¿Cuál es tu celular?',
+    celularAyuda: 'Lo usamos para avisarte y para confirmar que eres tú.',
+    clave: 'Crea tu contraseña',
+    claveAyuda: 'Al menos 8 caracteres. Toca el ojito para verla.',
+    final: 'Último paso',
+    finalAyuda: 'Si alguien te invitó, escribe su código. Después revisas tus datos.',
+  },
+  en: {
+    nombre: 'What’s your name?',
+    correo: 'What’s your email?',
+    correoAyuda: 'We’ll send the link to activate your account there.',
+    celular: 'What’s your mobile number?',
+    celularAyuda: 'We use it to keep you posted and to confirm it’s you.',
+    clave: 'Create your password',
+    claveAyuda: 'At least 8 characters. Tap the eye to see it.',
+    final: 'Last step',
+    finalAyuda: 'If someone invited you, enter their code. Then you’ll review your details.',
+  },
+};

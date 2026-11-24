@@ -2,6 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from '@playwright/test';
 import { sqlLocal } from './sqlLocal';
+import { aceptarTerminos } from './registroPorPasos';
 
 /**
  * Pantallas de antes de iniciar sesión (19 nov 2026, órdenes de Richard) — todos los países.
@@ -94,10 +95,7 @@ for (const idioma of ['es', 'en'] as const) {
       await p
         .getByPlaceholder(en ? 'Full name' : 'Nombre y apellido')
         .fill(en ? 'Sam Taylor' : 'Ana García');
-      await p
-        .getByPlaceholder(en ? 'email@example.com' : 'correo@ejemplo.com')
-        .fill(en ? 'email@example.com' : 'correo@ejemplo.com');
-      await p.getByPlaceholder(en ? 'Mobile phone' : 'Celular', { exact: true }).fill('3055550113');
+      // C-FORMULARIO-POR-PASOS: el nombre y el cumpleaños van juntos en el primer paso.
       await p.screenshot({ path: join(DOCS, `cliente-registro-${idioma}.png`) });
     }
     // Borrar hacia atrás se come la barra sin trabarse.
@@ -165,7 +163,7 @@ for (const idioma of ['es', 'en'] as const) {
       await visible.fill(correo);
       await casillaCelular.fill(celular);
     }
-    await p.getByRole('checkbox').first().click();
+    await aceptarTerminos(p); // acepta los términos (último paso)
     // C-REVISA-TUS-DATOS: nada se manda solo; primero «Revisa tus datos», con el correo en grande.
     await p.getByTestId('registro-continuar').click();
     await expect(p.getByTestId('revisar-correo')).toHaveText(correo);

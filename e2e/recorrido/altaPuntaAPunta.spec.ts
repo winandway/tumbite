@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { devices, expect, test } from './fixtures';
 import { celularDePrueba } from './celularDePrueba';
 import { TEXTOS } from './textos';
+import { aceptarTerminos, enPaso } from './registroPorPasos';
 
 /**
  * C-ALTA-PUNTA-A-PUNTA (24 nov 2026, Gerencia: «la zona de Tucaní dejó de registrar gente»). El alta de
@@ -41,18 +42,19 @@ test('alta de conductor de punta a punta: de cero a una cuenta que entra (es)', 
   const p = await ctx.newPage();
   await p.goto('/driver/');
   await p.getByText(L.appCrear).click();
-  await p.getByLabel(L.correo).fill(correo);
-  await p.getByLabel(L.celular).fill(celularDePrueba());
-  await p.getByLabel(L.clave, { exact: true }).fill(clave);
-  await p.getByRole('checkbox').first().click(); // acepta los términos
 
-  // 2) Sin nombre: el aviso sale junto al botón y no se pasa a revisar.
-  await p.getByTestId('registro-continuar').click();
+  // 2) C-FORMULARIO-POR-PASOS: sin nombre, el primer paso no avanza y el aviso sale junto al botón.
+  await expect(p.getByTestId('registro-por-pasos')).toBeVisible();
+  await p.getByTestId('pasos-siguiente').click();
   await expect(p.getByTestId('registro-revisar-casillas')).toContainText('Nombre');
-  await expect(p.getByTestId('revisa-tus-datos')).toHaveCount(0);
+  await expect(p.getByLabel(L.correo)).toHaveCount(0);
 
-  // 3) Con todo bien: «Revisa tus datos» dice que la cuenta todavía no existe.
+  // 3) Paso a paso, y «Revisa tus datos» dice que la cuenta todavía no existe.
   await p.getByLabel(L.nombreCompleto).fill('Conductor Alta');
+  await (await enPaso(p, p.getByLabel(L.correo))).fill(correo);
+  await (await enPaso(p, p.getByLabel(L.celular))).fill(celularDePrueba());
+  await (await enPaso(p, p.getByLabel(L.clave, { exact: true }))).fill(clave);
+  await aceptarTerminos(p);
   await p.getByTestId('registro-continuar').click();
   await expect(p.getByTestId('revisa-tus-datos')).toContainText('todavía no está creada');
 
