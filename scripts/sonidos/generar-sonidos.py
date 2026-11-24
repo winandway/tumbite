@@ -12,6 +12,8 @@ obra nuestra y se puede volver a generar idéntico:
 - dinero.wav              (las tres)  recarga, cobro y saldo: dos destellos agudos y cortos.
 - panico.wav              (las tres)  pánico: sirena de dos tonos con golpes, 20 s, fuerte.
 - pedido_nuevo_largo.wav  (Restaurants) pedido nuevo con la app cerrada: timbre en ráfagas, 25 s.
+- panico_bucle.wav        (panel)     la misma sirena, dos golpes (2,8 s), para repetir en bucle en la
+                                      web sin pesar (el panel no admite archivos de más de 400 KB).
 
 Formato: WAV PCM 16 bits mono (44,1 kHz los cortos, 22,05 kHz los largos para que pesen poco).
 iPhone acepta hasta 30 s por aviso; los largos quedan por debajo.
@@ -75,9 +77,8 @@ def dinero():
     return s, tasa
 
 
-def panico():
+def panico(dur=20.0):
     tasa = 22050
-    dur = 20.0
     n = int(dur * tasa)
     s = []
     fase = 0.0
@@ -111,7 +112,8 @@ def pedido_nuevo_largo():
 SALIDAS = {
     'llego.wav': (llego, ['apps/cliente']),
     'dinero.wav': (dinero, ['apps/cliente', 'apps/repartidor', 'apps/restaurante']),
-    'panico.wav': (panico, ['apps/cliente', 'apps/repartidor', 'apps/restaurante', 'apps/panel/public']),
+    'panico.wav': (panico, ['apps/cliente', 'apps/repartidor', 'apps/restaurante']),
+    'panico_bucle.wav': (lambda: panico(2.8), ['apps/panel/public']),
     'pedido_nuevo_largo.wav': (pedido_nuevo_largo, ['apps/restaurante']),
 }
 

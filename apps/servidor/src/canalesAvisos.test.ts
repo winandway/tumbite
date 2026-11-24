@@ -150,6 +150,6 @@ describe('C-SONIDOS-PROPIOS · los sonidos', () => {
     expect(guion).toContain('por síntesis pura');
     for (const s of ['llego.wav', 'dinero.wav', 'panico.wav', 'pedido_nuevo_largo.wav'])
       expect(guion).toContain(`'${s}'`);
-    expect(existsSync(join(raiz, 'apps', 'panel', 'public', 'panico.wav'))).toBe(true);
+    expect(existsSync(join(raiz, 'apps', 'panel', 'public', 'panico_bucle.wav'))).toBe(true);
   });
 });

@@ -73,7 +73,7 @@ export function AlarmaPanico({ idioma, base }: { idioma: 'es' | 'en'; base: stri
       sirena.current?.pause();
       return;
     }
-    sirena.current ??= new Audio('/panico.wav');
+    sirena.current ??= new Audio('/panico_bucle.wav');
     sirena.current.loop = true;
     void sirena.current.play().catch((e: unknown) => console.warn('pánico del panel: sonido', e));
     return () => sirena.current?.pause();
