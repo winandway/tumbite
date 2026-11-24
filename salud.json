@@ -11,7 +11,9 @@
     "webhookStripeConectadas": "ok",
     "turnstile": "pendiente",
     "correo": "ok",
+    "correoRebotes": "ok",
     "avisosCelular": "ok",
+    "avisosGuardados": "ok",
     "avisosWeb": "ok",
     "tasaBcv": "ok",
     "sms": "ok",
@@ -23,6 +25,7 @@
     "agentes": "ok",
     "connect": "ok",
     "servicios": "ok",
+    "aprobadosNoElegibles": "ok",
     "tarifas": "ok",
     "viajes": "ok",
     "comidaPaises": "ok",
@@ -47,5 +50,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-24T00:38:09.043462+00:00"
+  "medido": "2026-11-24T09:33:37.717052+00:00"
 }
