@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-23T13:20:00Z",
+  "actualizado": "2026-11-24T01:30:00Z",
   "version": "fe71f3f",
-  "ahora": "21 nov: Google Play aprobó y publicó Divoox Driver, la app de clientes y Restaurants. Cerramos la deuda que dejó ese envío: borrar la cuenta ahora se comprueba contra toda la base (y limpia también lo escrito a soporte, la placa y los datos de la línea), el sitio pesa veinte megas menos y la ayuda interna ya enseña cómo invitar al líder de una línea. La próxima versión de Driver y de clientes está lista, sin compilar: se compila una sola vez con lo que salga de la prueba en vivo de esta semana.",
+  "ahora": "23 nov, noche: el registro de conductores quedó destrabado desde el servidor, sin versión nueva de la app. La cédula de Venezuela ya no se pide por detrás, la póliza entra en los treinta días, lo que el conductor sube llega solo a revisión, la moto aprobada queda activa sola y el primer conductor de Tucaní ya puede recibir carreras. El chat de soporte de la web deja escribir de una vez. Antes, el mismo día, salió el modelo de comida de Venezuela.",
   "proximo": [
     {
       "quien": "ia",
@@ -529,6 +529,26 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-23",
+      "titulo": "El chat de soporte de la web deja escribir de una vez",
+      "texto": "En la web ya no hay una pantalla de permiso antes del primer mensaje: se escribe directo y debajo queda una línea pequeña de privacidad, con la opción de pedir que atienda una persona. En las apps de celular no cambió nada."
+    },
+    {
+      "fecha": "2026-11-23",
+      "titulo": "La moto aprobada queda activa sola",
+      "texto": "Cuando el equipo aprueba el vehículo de un conductor, queda en uso y con su servicio encendido sin que él tenga que tocar nada. El primer conductor de Tucaní quedó listo para recibir carreras así."
+    },
+    {
+      "fecha": "2026-11-23",
+      "titulo": "Lo que el conductor sube llega solo a revisión",
+      "texto": "Ya no hace falta tocar «Enviar»: en cuanto sube la última foto exigida, la identidad o la moto pasan solas a revisión. Las cuentas que ya tenían todo subido se enviaron solas. En el panel se ve la foto de la cara aunque todavía no esté aprobada."
+    },
+    {
+      "fecha": "2026-11-23",
+      "titulo": "Menos frenos para empezar en Venezuela",
+      "texto": "La cédula se fotografía solo por delante, porque por detrás no trae datos, y la póliza de la moto entra en el plazo de treinta días. Además, un conductor que prueba la app de clientes ya no pierde su sesión de Driver."
+    },
     {
       "fecha": "2026-11-23",
       "titulo": "Quién paga la comisión en los viajes: conductor, cliente o mitad",
