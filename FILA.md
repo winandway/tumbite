@@ -12,6 +12,13 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Formularios por pasos y desbordes a 360 px (24 nov 2026, orden de Richard) — todos los países · rama `fase-formularios-pasos`, sin subir
+
+- [x] [para: desarrollador] Pieza única `FormularioPorPasos` y crear la cuenta por pasos en la app de clientes y en Driver; Envíos A → B y el registro de la empresa de Flex por pasos; candados C-FORMULARIO-POR-PASOS y C-DESBORDES-360 (rojo visto); Docs es/en con capturas nuevas.
+- [ ] [para: revisor-calidad] Revisar la rama `fase-formularios-pasos` (C-FORMULARIO-POR-PASOS, C-DESBORDES-360) antes de publicar. Al publicar: compilar clientes y Driver (Restaurants no cambia); subir las capturas grandes con `node scripts/docs/subir-capturas-grandes.mjs`.
+- [ ] [para: desarrollador] «Viaje fijo» (`apps/cliente/src/viajes/FormularioViajeFijo.tsx`) por pasos al crearlo (al editarlo, todo junto, como Uber), con `FormularioPorPasos` y su paso en `sinDesbordes`. Todos los países.
+- [ ] [para: desarrollador] Pasar `sinDesbordes` (`e2e/recorrido/desbordes.ts`) por las demás pantallas de las apps a 360 px (inicio, carrito, viaje, Driver), arreglando lo que salga. Todos los países.
+
 ## Ensayo general del 24 nov 2026 (sitio de pruebas) — todos los países · rama `fase-ensayo-24nov`, sin subir
 
 - [ ] [para: revisor-calidad] Revisar la rama `fase-ensayo-24nov` una vez: servidor (C-BARRA-SALDO, C-VERIFICACIONES-EN-VIVO-VEHICULO, C-CAMPANA-RECARGA-UNA-VEZ) y panel (C-FICHA-SE-REFRESCA-AL-DECIDIR, C-CARA-EN-NEGRO) salen sin compilar; apps (C-OFERTA-SUENA-EN-SEGUNDO-PLANO con su alarma, C-ZONA-TRAS-PERMISO en Driver; C-QUIEN-PAGA-EN-TODAS-LAS-PANTALLAS en clientes; C-ARRANQUE-CON-MARCA en las tres) necesitan versión nueva. Informe en ~/Documents/Entregas/Divoox/ensayo-general-24nov/INFORME.md. Todos los países.

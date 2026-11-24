@@ -5,6 +5,7 @@ export * from './esquemas';
 export * from './appDeCuenta';
 export * from './api';
 export * from './borrador';
+export * from './formularioPorPasos';
 export * from './catalogo';
 export * from './bolsillos';
 export * from './niveles';

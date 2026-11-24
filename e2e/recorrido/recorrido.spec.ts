@@ -7,6 +7,7 @@ import { type BrowserContext, type Locator, type Page, devices, expect, test } f
 import { TEXTOS } from './textos';
 import { cruzarPuertaCelular } from './puertaCelular';
 import { sqlLocal } from './sqlLocal';
+import { aceptarTerminos, enPaso } from './registroPorPasos';
 
 /**
  * C-CONTADORES-DE-TAREA (23 nov 2026): con pedidos por aceptar, el ítem «Pedidos» del menú del
@@ -319,11 +320,15 @@ for (const idioma of ['en', 'es'] as const) {
     const panel = await panelCtx.newPage();
     await panel.goto('/panel');
     await panel.getByText(L.panelCrear).click();
-    await panel.getByLabel(L.tuNombre).fill(idioma === 'en' ? 'Marco Rossi' : 'Marco Rossi');
-    await panel.getByLabel(L.correo).fill(correo('restaurante'));
+    await (
+      await enPaso(panel, panel.getByLabel(L.tuNombre))
+    ).fill(idioma === 'en' ? 'Marco Rossi' : 'Marco Rossi');
+    await (await enPaso(panel, panel.getByLabel(L.correo))).fill(correo('restaurante'));
     // Un número por idioma: el mismo teléfono no abre dos cuentas (C-IDENTIDAD-UNICA).
-    await panel.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550100' : '3055550110'));
-    await panel.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+    await (
+      await enPaso(panel, panel.getByLabel(L.celular))
+    ).fill(tel(idioma === 'en' ? '3055550100' : '3055550110'));
+    await (await enPaso(panel, panel.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
     await foto(panel, 'restaurante-registro');
     await panel.getByRole('checkbox').first().check(); // acepta los términos
     // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
@@ -332,12 +337,18 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByTestId('crear-mi-cuenta').click();
 
     await panel.getByRole('link', { name: L.miRestaurante, exact: true }).click();
-    await panel.getByLabel(L.nombreRest).fill(restaurante);
-    await panel.getByLabel(L.tipo).fill('Pizza');
-    await panel.getByLabel(L.telRest).fill('3055550101');
-    await panel.getByLabel(L.direccion, { exact: true }).fill('100 SE 2nd St, Miami, FL 33131');
-    await panel.getByLabel(L.descEs).fill('Pizza al horno de leña y masa madre.');
-    await panel.getByLabel(L.descEn).fill('Wood-fired pizza on a sourdough crust.');
+    await (await enPaso(panel, panel.getByLabel(L.nombreRest))).fill(restaurante);
+    await (await enPaso(panel, panel.getByLabel(L.tipo))).fill('Pizza');
+    await (await enPaso(panel, panel.getByLabel(L.telRest))).fill('3055550101');
+    await (
+      await enPaso(panel, panel.getByLabel(L.direccion, { exact: true }))
+    ).fill('100 SE 2nd St, Miami, FL 33131');
+    await (
+      await enPaso(panel, panel.getByLabel(L.descEs))
+    ).fill('Pizza al horno de leña y masa madre.');
+    await (
+      await enPaso(panel, panel.getByLabel(L.descEn))
+    ).fill('Wood-fired pizza on a sourdough crust.');
     await panel.getByRole('button', { name: L.ubicacion }).click();
     await panel.getByRole('button', { name: L.guardar, exact: true }).click();
     await expect(panel.getByText(/Under review|En revisión/)).toBeVisible();
@@ -352,8 +363,8 @@ for (const idioma of ['en', 'es'] as const) {
     // 1b. El horario: abierto todo el día, todos los días (el recorrido corre a cualquier hora).
     const horario = panel.locator('form.horarios');
     await horario.getByRole('button', { name: L.turno }).nth(1).click(); // lunes
-    await horario.getByLabel(L.abre).fill('00:00');
-    await horario.getByLabel(L.cierra).fill('23:59');
+    await (await enPaso(horario, horario.getByLabel(L.abre))).fill('00:00');
+    await (await enPaso(horario, horario.getByLabel(L.cierra))).fill('23:59');
     await horario.getByRole('button', { name: L.copiarLunes }).click();
     await expect(horario.getByLabel(L.abre)).toHaveCount(7);
     await foto(panel, 'restaurante-horarios');
@@ -368,11 +379,11 @@ for (const idioma of ['en', 'es'] as const) {
       ['Nudos de ajo', 'Garlic knots', 'Entradas', 'Starters', '3.00'],
     ]) {
       await panel.getByRole('button', { name: L.agregarPlato }).click();
-      await panel.getByLabel(L.nombreEs).fill(es!);
-      await panel.getByLabel(L.nombreEn).fill(en!);
-      await panel.getByLabel(L.catEs).fill(catEs!);
-      await panel.getByLabel(L.catEn).fill(catEn!);
-      await panel.getByLabel(L.precio).fill(precio!);
+      await (await enPaso(panel, panel.getByLabel(L.nombreEs))).fill(es!);
+      await (await enPaso(panel, panel.getByLabel(L.nombreEn))).fill(en!);
+      await (await enPaso(panel, panel.getByLabel(L.catEs))).fill(catEs!);
+      await (await enPaso(panel, panel.getByLabel(L.catEn))).fill(catEn!);
+      await (await enPaso(panel, panel.getByLabel(L.precio))).fill(precio!);
       await panel.getByRole('button', { name: L.guardarPlato }).click();
       await expect(panel.getByText(idioma === 'en' ? en! : es!).first()).toBeVisible();
     }
@@ -385,8 +396,8 @@ for (const idioma of ['en', 'es'] as const) {
     await filaPizza.getByRole('button', { name: L.masOpciones }).click();
     await panel.getByRole('menuitem', { name: L.editar }).click();
     await panel.getByRole('button', { name: L.nuevoGrupo, exact: true }).click();
-    await panel.getByLabel(L.nombreGrupoEs).fill('Tamaño');
-    await panel.getByLabel(L.nombreGrupoEn).fill('Size');
+    await (await enPaso(panel, panel.getByLabel(L.nombreGrupoEs))).fill('Tamaño');
+    await (await enPaso(panel, panel.getByLabel(L.nombreGrupoEn))).fill('Size');
     await panel.getByLabel(L.opcionEs).first().fill('Mediana');
     await panel.getByLabel(L.opcionEn).first().fill('Medium');
     await panel.getByRole('button', { name: L.nuevaOpcion, exact: true }).click();
@@ -567,12 +578,15 @@ for (const idioma of ['en', 'es'] as const) {
     const rep = await repCtx.newPage();
     await rep.goto('/driver/');
     await rep.getByText(L.appCrear).click();
-    await rep.getByLabel(L.nombreCompleto).fill('Luis Pérez');
-    await rep.getByLabel(L.correo).fill(correo('repartidor'));
-    await rep.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550102' : '3055550112'));
-    await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+    await (await enPaso(rep, rep.getByLabel(L.nombreCompleto))).fill('Luis Pérez');
+    // C-FORMULARIO-POR-PASOS: la foto del registro, en su primer paso.
     await fotoAqui(rep, 'repartidor-registro');
-    await rep.getByRole('checkbox').first().click(); // acepta los términos
+    await (await enPaso(rep, rep.getByLabel(L.correo))).fill(correo('repartidor'));
+    await (
+      await enPaso(rep, rep.getByLabel(L.celular))
+    ).fill(tel(idioma === 'en' ? '3055550102' : '3055550112'));
+    await (await enPaso(rep, rep.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
+    await aceptarTerminos(rep); // acepta los términos (último paso)
     // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
     await rep.getByTestId('registro-continuar').click();
     await rep.getByTestId('crear-mi-cuenta').click();
@@ -624,9 +638,8 @@ for (const idioma of ['en', 'es'] as const) {
     );
     await cli.goto('/app/');
     await cli.getByText(L.appCrear).click();
-    await cli.getByLabel(L.nombreCompleto).fill('Ana García');
-    await cli.getByLabel(L.correo).fill(correo('cliente'));
-    await cli.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550103' : '3055550113'));
+    await (await enPaso(cli, cli.getByLabel(L.nombreCompleto))).fill('Ana García');
+    // C-FORMULARIO-POR-PASOS: el cumpleaños va en el primer paso, con el nombre.
     // Cumple hoy: así, después de su primer pedido, le toca el regalo de cumpleaños.
     // C-FECHA-MODERNA: se teclean solo números, en el orden que enseña la casilla (el del país del
     // navegador); las barras salen solas.
@@ -639,9 +652,13 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cumple).toHaveValue(
       mesPrimero ? `${mesHoy}/${diaHoy}/1995` : `${diaHoy}/${mesHoy}/1995`,
     );
-    await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
-    await cli.getByRole('checkbox').first().click(); // acepta los términos
+    await (await enPaso(cli, cli.getByLabel(L.correo))).fill(correo('cliente'));
+    await (
+      await enPaso(cli, cli.getByLabel(L.celular))
+    ).fill(tel(idioma === 'en' ? '3055550103' : '3055550113'));
+    await (await enPaso(cli, cli.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
+    await aceptarTerminos(cli); // acepta los términos (último paso)
     // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
     await cli.getByTestId('registro-continuar').click();
     await cli.getByTestId('crear-mi-cuenta').click();
@@ -818,7 +835,9 @@ for (const idioma of ['en', 'es'] as const) {
       } else {
         // El borrador del carrito recuerda la última elección: se vuelve a «En la puerta».
         await cli.getByRole('radio', { name: L.enPuerta }).click();
-        await cli.getByLabel(L.direccionCampo).fill('200 S Biscayne Blvd, Apt 12');
+        await (
+          await enPaso(cli, cli.getByLabel(L.direccionCampo))
+        ).fill('200 S Biscayne Blvd, Apt 12');
       }
       if (fotoCarrito) {
         await mapaListo(cli);
@@ -897,8 +916,8 @@ for (const idioma of ['en', 'es'] as const) {
         await p.goto('/restaurant/');
         await expect(p.getByLabel(L.correo)).toBeVisible({ timeout: 20_000 });
         await foto(p, 'restapp-entrar');
-        await p.getByLabel(L.correo).fill(correo('restaurante'));
-        await p.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+        await (await enPaso(p, p.getByLabel(L.correo))).fill(correo('restaurante'));
+        await (await enPaso(p, p.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
         await p.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
         await expect(
           p.getByText(`#${cobro.pedidoId.slice(0, 4).toUpperCase()}`).first(),
@@ -1041,7 +1060,9 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(panel, 'restaurante-confirmar-recogida');
     // El repartidor escribe el número de la pantalla (en el celular lo escanea): con el código
     // verificado y la foto ya tomada, el pedido sale solo, sin que el restaurante toque nada.
-    await rep.getByLabel(L.escribirCodigo).fill(cobro.pedidoId.slice(0, 4).toUpperCase());
+    await (
+      await enPaso(rep, rep.getByLabel(L.escribirCodigo))
+    ).fill(cobro.pedidoId.slice(0, 4).toUpperCase());
     await rep.getByRole('button', { name: L.verificar }).click();
     await expect
       .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado, {
@@ -1119,14 +1140,14 @@ for (const idioma of ['en', 'es'] as const) {
     // El chat del pedido: el cliente escribe, el repartidor lo lee (sin números de teléfono).
     const textoChat =
       idioma === 'en' ? 'Ring the bell twice, please' : 'Toca el timbre dos veces, por favor';
-    await cli.getByLabel(L.chatEscribe).fill(textoChat);
+    await (await enPaso(cli, cli.getByLabel(L.chatEscribe))).fill(textoChat);
     await cli.getByRole('button', { name: L.chatEnviar }).click();
     await expect(cli.getByText(textoChat)).toBeVisible({ timeout: 20_000 });
     await cli.getByText(textoChat).scrollIntoViewIfNeeded();
     await foto(cli, 'cliente-chat');
     await expect(rep.getByText(textoChat)).toBeVisible({ timeout: 20_000 });
     const respuesta = idioma === 'en' ? 'On my way, 3 minutes' : 'Voy en camino, 3 minutos';
-    await rep.getByLabel(L.chatEscribe).fill(respuesta);
+    await (await enPaso(rep, rep.getByLabel(L.chatEscribe))).fill(respuesta);
     await rep.getByRole('button', { name: L.chatEnviar }).click();
     await expect(cli.getByText(respuesta)).toBeVisible({ timeout: 20_000 });
 
@@ -1487,7 +1508,7 @@ for (const idioma of ['en', 'es'] as const) {
 
     // 12. Regalo de cumpleaños: el restaurante aparta el 20 % y regala los nudos de ajo.
     await panel.getByRole('link', { name: L.regalos, exact: true }).click();
-    await panel.getByLabel(L.porcentajeRegalos).fill('20');
+    await (await enPaso(panel, panel.getByLabel(L.porcentajeRegalos))).fill('20');
     const elegir = panel.getByLabel(L.platoRegalo).first();
     const valor = await elegir.locator('option', { hasText: plato.nudos }).getAttribute('value');
     await elegir.selectOption(valor ?? '');
@@ -1593,7 +1614,7 @@ for (const idioma of ['en', 'es'] as const) {
     const olvidado = await pedirYPagar([plato.pizza]);
     // Antes de que el restaurante lo acepte, el cliente cambia la dirección de entrega.
     await cli.goto(`/app/order/${olvidado.pedidoId}`);
-    await cli.getByLabel(L.nuevaDireccion).fill('350 NE 2nd Ave, Miami');
+    await (await enPaso(cli, cli.getByLabel(L.nuevaDireccion))).fill('350 NE 2nd Ave, Miami');
     await cli.getByRole('button', { name: L.aplicarDireccion }).click();
     await expect(cli.getByText(L.direccionCambiada)).toBeVisible({ timeout: 20_000 });
     await foto(cli, 'cliente-cambiar-direccion');
@@ -1639,7 +1660,7 @@ for (const idioma of ['en', 'es'] as const) {
     const pinRecogida = String(
       sql(`SELECT pin FROM pines_entrega WHERE pedido_id = '${recogida.pedidoId}'`)[0]?.pin ?? '',
     );
-    await panel.getByLabel(L.pinCliente).fill(pinRecogida);
+    await (await enPaso(panel, panel.getByLabel(L.pinCliente))).fill(pinRecogida);
     await panel.getByRole('button', { name: L.entregadoLocal }).click();
     await expect
       .poll(() => sql(`SELECT estado FROM pedidos WHERE id = '${recogida.pedidoId}'`)[0]?.estado, {
@@ -1878,7 +1899,9 @@ for (const idioma of ['en', 'es'] as const) {
           .click();
         await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
         await cli.getByRole('radio', { name: L.enPuerta }).click();
-        await cli.getByLabel(L.direccionCampo).fill('200 S Biscayne Blvd, Apt 12');
+        await (
+          await enPaso(cli, cli.getByLabel(L.direccionCampo))
+        ).fill('200 S Biscayne Blvd, Apt 12');
         await cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ }).click();
         const [resp] = await Promise.all([
           cli.waitForResponse(
@@ -1922,8 +1945,8 @@ for (const idioma of ['en', 'es'] as const) {
         const rappCtx = await nuevoContexto('celular');
         const rapp = await rappCtx.newPage();
         await rapp.goto('/restaurant/');
-        await rapp.getByLabel(L.correo).fill(correo('restaurante'));
-        await rapp.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+        await (await enPaso(rapp, rapp.getByLabel(L.correo))).fill(correo('restaurante'));
+        await (await enPaso(rapp, rapp.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
         await rapp.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
         const filaDirecta = rapp.getByRole('button', {
           name: `#${directo.pedidoId.slice(0, 4).toUpperCase()}`,
@@ -2302,8 +2325,8 @@ for (const idioma of ['en', 'es'] as const) {
         const supCtx = await nuevoContexto('computadora');
         const sup = await supCtx.newPage();
         await sup.goto('/panel');
-        await sup.getByLabel(L.correo).fill(DATOS.correoEquipo);
-        await sup.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
+        await (await enPaso(sup, sup.getByLabel(L.correo))).fill(DATOS.correoEquipo);
+        await (await enPaso(sup, sup.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
         await sup.getByRole('button', { name: idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
         // Ya dentro: se espera a que se vaya el formulario, no a que la red quede quieta (el panel
         // consulta cada pocos segundos y una sola respuesta perdida colgaba la corrida 15 minutos).

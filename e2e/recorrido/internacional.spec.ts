@@ -7,6 +7,7 @@ import { TEXTOS } from './textos';
 import { sqlLocalTexto } from './sqlLocal';
 import { celularDePrueba } from './celularDePrueba';
 import { cruzarPuertaCelular } from './puertaCelular';
+import { aceptarTerminos, enPaso } from './registroPorPasos';
 
 /**
  * C-RECORRIDO-INTERNACIONAL (19 oct 2026): el cobro en mano en PESOS y en BOLÍVARES, de punta a
@@ -325,12 +326,12 @@ for (const P of PAISES) {
       const rep = await repCtx.newPage();
       await rep.goto('/driver/');
       await rep.getByText(L.appCrear).click();
-      await rep.getByLabel(L.nombreCompleto).fill('Repartidor Prueba');
-      await rep.getByLabel(L.correo).fill(correo('repartidor'));
+      await (await enPaso(rep, rep.getByLabel(L.nombreCompleto))).fill('Repartidor Prueba');
+      await (await enPaso(rep, rep.getByLabel(L.correo))).fill(correo('repartidor'));
       // Un teléfono por cuenta y por corrida (C-IDENTIDAD-UNICA).
-      await rep.getByLabel(L.celular).fill(celularDePrueba());
-      await rep.getByLabel(L.clave, { exact: true }).fill(clave);
-      await rep.getByRole('checkbox').first().click(); // acepta los términos
+      await (await enPaso(rep, rep.getByLabel(L.celular))).fill(celularDePrueba());
+      await (await enPaso(rep, rep.getByLabel(L.clave, { exact: true }))).fill(clave);
+      await aceptarTerminos(rep); // acepta los términos (último paso)
       // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
       await rep.getByTestId('registro-continuar').click();
       await rep.getByTestId('crear-mi-cuenta').click();
@@ -421,11 +422,11 @@ for (const P of PAISES) {
       const cli = await cliCtx.newPage();
       await cli.goto('/app/');
       await cli.getByText(L.appCrear).click();
-      await cli.getByLabel(L.nombreCompleto).fill('Cliente Prueba');
-      await cli.getByLabel(L.correo).fill(correo('cliente'));
-      await cli.getByLabel(L.celular).fill(celularDePrueba());
-      await cli.getByLabel(L.clave, { exact: true }).fill(clave);
-      await cli.getByRole('checkbox').first().click(); // acepta los términos
+      await (await enPaso(cli, cli.getByLabel(L.nombreCompleto))).fill('Cliente Prueba');
+      await (await enPaso(cli, cli.getByLabel(L.correo))).fill(correo('cliente'));
+      await (await enPaso(cli, cli.getByLabel(L.celular))).fill(celularDePrueba());
+      await (await enPaso(cli, cli.getByLabel(L.clave, { exact: true }))).fill(clave);
+      await aceptarTerminos(cli); // acepta los términos (último paso)
       // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
       await cli.getByTestId('registro-continuar').click();
       await cli.getByTestId('crear-mi-cuenta').click();
@@ -447,7 +448,9 @@ for (const P of PAISES) {
         .click();
       await cli.getByRole('button', { name: L.verCarrito }).filter({ visible: true }).click();
       await cli.getByRole('radio', { name: L.enPuerta }).click();
-      await cli.getByLabel(L.direccionCampo).fill('Calle de prueba 200, apto 3');
+      await (
+        await enPaso(cli, cli.getByLabel(L.direccionCampo))
+      ).fill('Calle de prueba 200, apto 3');
       // La tarjeta solo cobra en dólares: en esta moneda no se ofrece.
       await expect(cli.getByRole('radio', { name: /^(Card|Tarjeta)$/ })).toHaveCount(0);
       await cli.getByRole('radio', { name: /^(Cash on delivery|Efectivo al recibir)$/ }).click();
@@ -745,8 +748,8 @@ for (const P of PAISES) {
       await supCtx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), P.idioma);
       const sup = await supCtx.newPage();
       await sup.goto('/panel');
-      await sup.getByLabel(L.correo).fill(DATOS.correoEquipo);
-      await sup.getByLabel(L.clave, { exact: true }).fill(clave);
+      await (await enPaso(sup, sup.getByLabel(L.correo))).fill(DATOS.correoEquipo);
+      await (await enPaso(sup, sup.getByLabel(L.clave, { exact: true }))).fill(clave);
       await sup.getByRole('button', { name: P.idioma === 'en' ? 'Sign in' : 'Entrar' }).click();
       // Se espera a que se vaya el formulario, no a la red quieta (el panel consulta sin parar).
       await expect(sup.getByLabel(L.clave, { exact: true })).toBeHidden({ timeout: 30_000 });

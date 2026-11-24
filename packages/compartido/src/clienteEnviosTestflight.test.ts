@@ -18,9 +18,12 @@ function archivos(dir: string): string[] {
 describe('Envíos y la app del cliente, como los vio Richard en TestFlight', () => {
   const pedir = leer('apps', 'cliente', 'src', 'viajes', 'PedirMoto.tsx');
   it('«Enviar» avisa junto al botón qué falta (casilla de prohibidos, datos de quien recibe)', () => {
-    expect(pedir).toContain('if (!v.sinProhibidos) return setError(t.faltaProhibidos);');
+    // C-FORMULARIO-POR-PASOS (24 nov 2026): el aviso va al lado de la casilla y, junto al botón,
+    // por qué no avanza (`porQue` de BotonesDePasos, encima de «Siguiente» o del botón de pedir).
+    expect(pedir).toContain("if (!v.sinProhibidos) f.set('sinProhibidos', t.faltaProhibidos);");
+    expect(pedir).toMatch(/<BotonesDePasos[\s\S]{0,120}porQue=\{porQue \|\| null\}/);
     expect(pedir).toMatch(
-      /\{error \? \([\s\S]{0,200}\{error\}[\s\S]{0,120}<BotonGrande\s+texto=\{textoBoton\}/,
+      /\{error \? \([\s\S]{0,200}\{error\}[\s\S]{0,1500}<BotonGrande\s+texto=\{textoBoton\}/,
     );
     expect(pedir).toContain('accessibilityRole="checkbox"');
   });
