@@ -18,6 +18,13 @@ if (pista === 'production') {
   console.error('Producción se sube con publicar-google-play.mjs, no con este guion.');
   process.exit(1);
 }
+// Novedades opcionales (24 nov 2026): NOVEDADES_JSON='{"es-419":"…","en-US":"…"}' las pone en la versión.
+const novedades = process.env.NOVEDADES_JSON
+  ? Object.entries(JSON.parse(process.env.NOVEDADES_JSON)).map(([language, text]) => ({
+      language,
+      text: String(text),
+    }))
+  : undefined;
 // C-FRANJA-SOLO-EN-PRUEBAS: tampoco la prueba interna recibe un archivo que pinte la franja.
 exigirSinFranja(paquete, aab);
 const { pedir, editar } = await googlePlay(paquete);
@@ -34,8 +41,13 @@ await editar(async (id) => {
               name: `${nombre} (${subido.versionCode})`,
               status: 'completed',
               versionCodes: [String(subido.versionCode)],
+              ...(novedades ? { releaseNotes: novedades } : {}),
             }
-          : { status: 'draft', versionCodes: [String(subido.versionCode)] },
+          : {
+              status: 'draft',
+              versionCodes: [String(subido.versionCode)],
+              ...(novedades ? { releaseNotes: novedades } : {}),
+            },
       ],
     },
   });
