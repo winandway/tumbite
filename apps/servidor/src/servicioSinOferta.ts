@@ -82,3 +82,31 @@ export async function hayQuienLoTome(db: D1Database, zonaId: string, servicioId:
       .first(),
   );
 }
+
+/**
+ * C-SERVICIO-SIN-OFERTA, Comida y tiendas al cliente (24 nov 2026, ensayo general en Tucaní) — todos
+ * los países. Comida en una zona sin restaurantes llevaba a «No restaurants in your area yet. Coming
+ * soon!». Cada servicio de comercios se ofrece solo donde hay al menos uno aprobado de su tipo (el
+ * mismo `tipo_comercio` que usa el catálogo).
+ */
+export const COMERCIOS_DE_SERVICIO: ReadonlyMap<string, readonly string[]> = new Map([
+  ['comida', ['restaurante']],
+  ['mercado', ['mercado', 'conveniencia']],
+  ['farmacia', ['farmacia']],
+  ['licores', ['licores']],
+]);
+
+/** ¿Hay en la zona algún comercio aprobado de ese servicio? Una lectura por el índice de la zona. */
+export async function hayComerciosEnZona(db: D1Database, zonaId: string, servicioId: string) {
+  const tipos = COMERCIOS_DE_SERVICIO.get(servicioId);
+  if (!tipos) return true;
+  return Boolean(
+    await db
+      .prepare(
+        `SELECT 1 FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado'
+            AND tipo_comercio IN (${tipos.map(() => '?').join(', ')}) LIMIT 1`,
+      )
+      .bind(zonaId, ...tipos)
+      .first(),
+  );
+}

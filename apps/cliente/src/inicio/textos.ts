@@ -183,7 +183,7 @@ const es = {
   abierto: 'Abierto',
   cerrado: 'Cerrado',
   sinUbicacion: 'Activa la ubicación para ver los más cercanos.',
-  sinRestaurantes: 'Todavía no hay restaurantes en tu zona. ¡Muy pronto!',
+  sinRestaurantes: 'Todavía no hay restaurantes en tu zona.',
   reintentar: 'Intentar de nuevo',
   nav: {
     inicio: 'Inicio',
@@ -412,7 +412,7 @@ const en: typeof es = {
   abierto: 'Open',
   cerrado: 'Closed',
   sinUbicacion: 'Turn on location to see the closest ones.',
-  sinRestaurantes: 'No restaurants in your area yet. Coming soon!',
+  sinRestaurantes: 'No restaurants in your area yet.',
   reintentar: 'Try again',
   nav: {
     inicio: 'Home',

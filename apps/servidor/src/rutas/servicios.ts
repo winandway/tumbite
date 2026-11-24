@@ -1,4 +1,9 @@
-import { SERVICIOS_CON_CONDUCTOR, hayQuienLoTome } from '../servicioSinOferta';
+import {
+  COMERCIOS_DE_SERVICIO,
+  SERVICIOS_CON_CONDUCTOR,
+  hayComerciosEnZona,
+  hayQuienLoTome,
+} from '../servicioSinOferta';
 import { avisarSiQuedoActivo } from '../activacion';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { cuantosHay } from '../canarioLecturas';
@@ -243,21 +248,22 @@ export async function serviciosPublicosEnZona(db: Db, zonaId: string | null): Pr
 }
 
 /**
- * C-SERVICIO-SIN-OFERTA (lado del cliente): de los servicios abiertos AL PÚBLICO en la zona que
- * necesitan un conductor (`SERVICIOS_CON_CONDUCTOR`), los que nadie de la zona tomaría. El piloto y
+ * C-SERVICIO-SIN-OFERTA (lado del cliente): de los servicios abiertos AL PÚBLICO en la zona, los que
+ * necesitan un conductor y nadie de la zona tomaría (`SERVICIOS_CON_CONDUCTOR`), y Comida y tiendas
+ * sin un comercio aprobado de su tipo (`COMERCIOS_DE_SERVICIO`). El piloto y
  * lo encendido solo para pruebas no se tocan. Una lectura por servicio abierto, y solo si lo está.
  */
 async function sinQuienLoTome(db: Db, zonaId: string | null, filas: Servicio[], ahora: string) {
   const fuera = new Set<string>();
   if (!zonaId) return fuera;
-  for (const s of filas)
-    if (
-      SERVICIOS_CON_CONDUCTOR.has(s.id) &&
-      s.zona_estado === 'disponible' &&
-      estadoEfectivo(s, ahora) === 'disponible' &&
-      !(await hayQuienLoTome(db, zonaId, s.id))
-    )
+  for (const s of filas) {
+    if (s.zona_estado !== 'disponible' || estadoEfectivo(s, ahora) !== 'disponible') continue;
+    if (SERVICIOS_CON_CONDUCTOR.has(s.id) && !(await hayQuienLoTome(db, zonaId, s.id)))
       fuera.add(s.id);
+    // Comida y tiendas: solo donde hay un comercio aprobado de su tipo.
+    else if (COMERCIOS_DE_SERVICIO.has(s.id) && !(await hayComerciosEnZona(db, zonaId, s.id)))
+      fuera.add(s.id);
+  }
   return fuera;
 }
 const ACCION = new Map([

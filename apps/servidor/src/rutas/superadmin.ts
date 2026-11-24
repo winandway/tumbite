@@ -53,6 +53,8 @@ const POR_PAGINA = 50;
 // y se corrige solo si quedó con el país equivocado. La lógica vive en cuentaPais.ts.
 export { asegurarCodigoRepartidor, codigoCiudad } from '../cuentaPais';
 import { asegurarCodigoRepartidor, codigoCiudad, zonaRealDe, zonaRealSql } from '../cuentaPais';
+import { saldoLibro } from '../internacional/libro';
+import { paisDelRepartidor } from './internacional';
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 /** «vigente», «vencido», «por vencer» (30 días) o «sin datos». */
@@ -546,7 +548,42 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
     )
     .bind(id)
     .all<{ moneda: string | null; entregas: number; ganado: number; propinas: number }>();
+  // C-FICHA-TODOS-LOS-SERVICIOS (24 nov 2026): los viajes terminados (Moto, Carro, Envíos…) también
+  // cuentan, por moneda: lo que le quedó al conductor es el total del viaje menos lo que se le cobró de
+  // su reserva (comisión y tarifa de servicio). Por el índice de operaciones del conductor.
+  const { results: porMonedaViajes } = await db
+    .prepare(
+      `SELECT COALESCE(q.moneda, 'USD') AS moneda, COUNT(*) AS viajes,
+              COALESCE(SUM(COALESCE(v.total_final_centavos, q.total, 0)), 0) AS total,
+              COALESCE(SUM((SELECT -l.monto FROM libro l
+                             WHERE l.referencia = 'reserva_viaje:' || o.id || ':' || o.conductor_id || ':cobrada:reservado')), 0) AS cobrado
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+        WHERE o.conductor_id = ? AND v.estado = 'terminado'
+        GROUP BY 1`,
+    )
+    .bind(id)
+    .all<{ moneda: string; viajes: number; total: number; cobrado: number }>();
+  for (const v of porMonedaViajes) {
+    const ganadoViajes = Math.max(0, Number(v.total) - Number(v.cobrado));
+    const fila = porMoneda.find((x) => (x.moneda ?? 'USD') === v.moneda);
+    if (fila) {
+      fila.entregas = Number(fila.entregas) + Number(v.viajes);
+      fila.ganado = Number(fila.ganado) + ganadoViajes;
+    } else
+      porMoneda.push({
+        moneda: v.moneda,
+        entregas: Number(v.viajes),
+        ganado: ganadoViajes,
+        propinas: 0,
+      });
+  }
   const enDolares = porMoneda.find((x) => (x.moneda ?? 'USD') === 'USD');
+  // Su saldo prepago (el bolsillo «prepago» del libro, en la moneda de su país).
+  const prepago = await (async () => {
+    const { pais, moneda } = await paisDelRepartidor(db, id);
+    return { monto: await saldoLibro(db, id, 'prepago', pais, moneda), moneda };
+  })();
   const saldo = await db
     .prepare('SELECT COALESCE(SUM(monto),0) AS s FROM movimientos WHERE usuario_id = ?')
     .bind(id)
@@ -554,7 +591,13 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
   const cal = await db
     .prepare(
       // F18: sin las notas que el cliente marcó como culpa del restaurante.
-      'SELECT AVG(c.estrellas_repartidor) AS p, COUNT(c.estrellas_repartidor) AS n FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id WHERE p.repartidor_id = ? AND COALESCE(c.culpa_restaurante, 0) = 0',
+      // C-FICHA-TODOS-LOS-SERVICIOS: más las estrellas que le dieron los pasajeros en sus viajes.
+      `SELECT AVG(e) AS p, COUNT(e) AS n FROM (
+         SELECT c.estrellas_repartidor AS e FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id
+          WHERE p.repartidor_id = ?1 AND COALESCE(c.culpa_restaurante, 0) = 0 AND c.estrellas_repartidor IS NOT NULL
+         UNION ALL
+         SELECT k.estrellas FROM operaciones o JOIN calificaciones_viaje k ON k.operacion_id = o.id AND k.de = 'pasajero'
+          WHERE o.conductor_id = ?1)`,
     )
     .bind(id)
     .first<{ p: number | null; n: number }>();
@@ -668,6 +711,8 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       })),
       // Saldo de la billetera de Stripe (solo pedidos con tarjeta: dólares).
       saldo: Number(saldo?.s ?? 0),
+      // C-FICHA-TODOS-LOS-SERVICIOS: su saldo prepago, con el que paga las comisiones.
+      saldoPrepago: prepago,
       calificacion: cal?.p == null ? null : Math.round(cal.p * 10) / 10,
       calificaciones: Number(cal?.n ?? 0),
       historial: entregas,
