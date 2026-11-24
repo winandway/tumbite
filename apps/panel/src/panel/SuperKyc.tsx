@@ -18,7 +18,7 @@ import {
   deTabla,
   enlaceFicha,
 } from './KycPiezas';
-import { RevisarKyc } from './SuperKycFicha';
+import { RevisarKyc, guardarMiniatura } from './SuperKycFicha';
 import { usePreferencias } from './usePreferencias';
 import './verificaciones.css';
 
@@ -117,6 +117,21 @@ export function SuperKyc({
   return <Bandeja base={base} idioma={idioma} />;
 }
 
+/**
+ * C-FOTO-CONDUCTOR-SE-VE (24 nov 2026) — todos los países. Las verificaciones aprobadas sin miniatura
+ * (la foto que ve el pasajero) se reparan solas desde el navegador del equipo: el servidor da como
+ * mucho diez por vuelta y cada una se hace y se sube una vez. Si el navegador no sabe hacer WebP o
+ * falla una, se deja para la próxima vez sin estorbar la bandeja.
+ */
+export async function repararMiniaturas(): Promise<number> {
+  const r = await pedir<{ ids: string[] }>('GET', '/datos/admin/kyc/miniaturas-faltantes').catch(
+    () => null,
+  );
+  let hechas = 0;
+  for (const id of Array.isArray(r?.ids) ? r.ids : []) if (await guardarMiniatura(id)) hechas++;
+  return hechas;
+}
+
 function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T_VERIFICACIONES, idioma);
   const pref = usePreferencias('verificaciones', {
@@ -143,6 +158,12 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
     const reloj = setTimeout(() => setQ(texto.trim()), ESPERA_BUSQUEDA_MS);
     return () => clearTimeout(reloj);
   }, [texto]);
+
+  // C-FOTO-CONDUCTOR-SE-VE: al abrir Verificaciones, el panel repara la foto que ve el pasajero de
+  // los aprobados sin miniatura (un Worker no reduce fotos). Una escritura por conductor, una vez.
+  useEffect(() => {
+    void repararMiniaturas();
+  }, []);
 
   useEffect(() => {
     pedir<{ ciudades: Ciudad[] }>('GET', '/datos/admin/horario/ciudades')
