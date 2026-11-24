@@ -387,6 +387,15 @@ describe('C-VERIFICACION-UNICA: todo lo de un conductor se decide en una sola pi
     );
   });
 
+  it('en la ficha del conductor no repite «Cambiar ciudad» (ya está en sus tres puntos)', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<RevisionConductor id="c1" base="/panel/control-x" idioma="es" enFicha />);
+    await screen.findByTestId('papel-doc1');
+    await screen.findByTestId('detalle-conductor');
+    expect(screen.queryByTestId('cambiar-ciudad-repartidor')).toBeNull();
+  });
+
   it('C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad del conductor con motivo', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);

@@ -1052,7 +1052,7 @@ export function SuperRepartidor({
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <PapelesConductor id={id} idioma={idioma} />
       {/* C-VERIFICACION-UNICA: la misma pieza que en Verificaciones (barra, vehículo, papeles). */}
-      <RevisionConductor id={id} base={base} idioma={idioma} />
+      <RevisionConductor id={id} base={base} idioma={idioma} enFicha />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.entregas}</span>

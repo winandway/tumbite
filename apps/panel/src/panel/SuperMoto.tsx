@@ -1560,6 +1560,7 @@ export function Conductor({
   t,
   alCerrar,
   alCambiar,
+  conCambiarCiudad = true,
 }: {
   id: string;
   base: string;
@@ -1569,6 +1570,8 @@ export function Conductor({
   alCerrar?: () => void;
   /** Algo se decidió (la barra de activación se recalcula). */
   alCambiar?: () => void;
+  /** En la ficha del conductor «Cambiar ciudad» ya está en sus tres puntos: no se repite. */
+  conCambiarCiudad?: boolean;
 }) {
   const [d, setD] = useState<DetalleConductor | null>(null);
   const [error, setError] = useState('');
@@ -1710,15 +1713,17 @@ export function Conductor({
             ))}
           </ul>
           {/* C-CAMBIAR-CIUDAD-ADMIN: la misma pieza que la ficha del repartidor. */}
-          <CambiarCiudadConductor
-            id={id}
-            idioma={idioma}
-            alCerrar={() => undefined}
-            alCambiar={(texto) => {
-              setOk(texto);
-              cargar();
-            }}
-          />
+          {conCambiarCiudad ? (
+            <CambiarCiudadConductor
+              id={id}
+              idioma={idioma}
+              alCerrar={() => undefined}
+              alCambiar={(texto) => {
+                setOk(texto);
+                cargar();
+              }}
+            />
+          ) : null}
           {moto ? bloqueServicio(moto, t.habilitacion, t.nadaFalta) : null}
           {carro ? bloqueServicio(carro, t.habilitacionCarro, t.nadaFaltaCarro) : null}
           <div className="fila-botones">
