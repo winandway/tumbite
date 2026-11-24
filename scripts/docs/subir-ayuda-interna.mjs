@@ -9,7 +9,7 @@
 /* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion local sobre la carpeta privada y dos sitios fijos */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AYUDA_PRIVADA, CAPTURAS_PRIVADAS } from './ayudaPrivada.mjs';
 
@@ -83,6 +83,18 @@ for (const [, antes, despues] of guias.matchAll(
   /archivo: `([a-z0-9-]*)\$\{idioma\}([a-z0-9-]*\.webp)`/g,
 ))
   for (const idioma of ['es', 'en']) archivos.add(`${antes}${idioma}${despues}`);
+// C-AYUDA-INTERNA (23 nov 2026): las guías que viven en su propio archivo de la carpeta (papeles.ts,
+// activacion.ts…) nombran sus capturas con `cap('nombre', 'es', …)` y su prefijo en
+// archivo: `prefijo-${nombre}-${idioma}.webp`. Antes solo se leía guias.ts y esas no se pedían ni subían.
+const carpetaAyuda = join(raiz, 'apps', 'servidor', 'src', 'ayudaInterna');
+for (const f of readdirSync(carpetaAyuda)) {
+  if (!f.endsWith('.ts') || f.endsWith('.test.ts') || f === 'guias.ts') continue;
+  const texto = readFileSync(join(carpetaAyuda, f), 'utf8');
+  const prefijo = /archivo: `([a-z0-9-]+)-\$\{nombre\}-\$\{idioma\}\.webp`/.exec(texto)?.[1];
+  if (!prefijo) continue;
+  for (const [, nombre, idioma] of texto.matchAll(/\bcap\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+    archivos.add(`${prefijo}-${nombre}-${idioma}.webp`);
+}
 const faltan = [...archivos].filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {
   console.error(
