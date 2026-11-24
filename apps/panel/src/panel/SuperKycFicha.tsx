@@ -26,6 +26,7 @@ import {
 import { type DatosDeclarados, type LecturaIa, compararDatos } from './kycComparar';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { miniaturaWebp } from './SubirFoto';
+import { caraEnNegro } from './fotoEnNegro';
 import { PapelesConductor } from './SuperPapeles';
 import { RevisionConductor } from './RevisionConductor';
 
@@ -34,6 +35,8 @@ import { RevisionConductor } from './RevisionConductor';
  * (la persona decide; la miniatura que verá el pasajero se guarda igual que al aprobar a mano).
  */
 export async function aprobarIdentidad(id: string) {
+  // C-CARA-EN-NEGRO: una cara en negro no se aprueba (el pasajero vería un círculo negro).
+  if (await caraEnNegro(id)) throw new Error(T.es.caraNegra);
   await pedir('PATCH', `/datos/admin/kyc/${id}`, { estado: 'aprobado', motivo: '' });
   await guardarMiniatura(id);
 }
@@ -135,6 +138,8 @@ const T = {
     confirmarRechazo: 'Rechazar con este motivo',
     cancelar: 'Cancelar',
     faltaMotivo: 'Escribe o elige el motivo: le llega a la persona para que lo corrija.',
+    caraNegra:
+      'La foto de la cara salió en negro: así la vería el pasajero. No se puede aprobar; pídela de nuevo con «Pedir de nuevo».',
     estados: {
       pendiente: 'Pendiente',
       aprobado: 'Aprobada',
@@ -218,6 +223,8 @@ const T = {
     confirmarRechazo: 'Reject with this reason',
     cancelar: 'Cancel',
     faltaMotivo: 'Write or pick the reason: the person receives it so they can fix it.',
+    caraNegra:
+      'The face photo came out black: that’s how the rider would see it. It can’t be approved; ask for it again with “Ask again”.',
     estados: {
       pendiente: 'Pending',
       aprobado: 'Approved',
@@ -326,6 +333,11 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
     const motivo = b.valores.motivo.trim();
     if (estado === 'rechazado' && !motivo) {
       setError(t.faltaMotivo);
+      return;
+    }
+    // C-CARA-EN-NEGRO: una cara en negro no se aprueba; se pide de nuevo.
+    if (estado === 'aprobado' && (await caraEnNegro(id))) {
+      setError(t.caraNegra);
       return;
     }
     try {
