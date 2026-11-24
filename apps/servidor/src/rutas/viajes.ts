@@ -17,6 +17,7 @@ import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
 import { notificar } from '../notificaciones';
 import { abrirIncidencia } from '../internacional/bandeja';
+import { type PasoPasajero, avisarPasoViaje } from '../avisosViaje';
 import {
   calificarViaje,
   esquemaCalificacionViaje,
@@ -412,6 +413,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   if (r.resultado === 'tomada' || r.resultado === 'ya_es_tuya') {
     // C-VIAJES-FIJOS: el responsable del menor sabe quién va por él.
     if (r.resultado === 'tomada') await avisarResponsableMenor(c.env, base(c), id, 'aceptado');
+    // C-AVISOS-VIAJE: el pasajero sabe que su conductor va por él (nombre, vehículo y placa).
+    if (r.resultado === 'tomada') await avisarPasoViaje(c.env, base(c), id, 'aceptado');
     // C-BS-EN-MANO: un viaje cotizado sin tasa la fija al tener conductor (los dos ven la misma).
     if (r.resultado === 'tomada') await fijarTasaViaje(base(c), id);
     return c.json({ ok: true, operacionId: r.operacionId, version: r.version });
@@ -448,6 +451,8 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
   const { motivo } = await leerCuerpo(c, z.object({ motivo: z.string().max(200).default('') }));
   const ok = await liberarViaje(base(c), { operacionId: id, conductorId: u.id, motivo, clave });
   if (ok) {
+    // C-AVISOS-VIAJE: «Tu conductor canceló, buscamos otro».
+    await avisarPasoViaje(c.env, base(c), id, 'liberado');
     await devolverReservaViaje(base(c), id, u.id, 'soltado');
     await soltarRegaloConductor(base(c), id, u.id);
   }
@@ -471,6 +476,14 @@ const MOMENTO_MENOR = new Map<string, MomentoMenor>([
   ['iniciar', 'recogido'],
   ['terminar', 'dejado'],
   ['no-se-presento', 'no_se_presento'],
+]);
+
+/** C-AVISOS-VIAJE: el aviso al pasajero de cada paso del conductor (candado en avisosViaje.test.ts). */
+const AVISO_DEL_PASO = new Map<string, PasoPasajero>([
+  ['llegue', 'llego'],
+  ['iniciar', 'en_curso'],
+  ['terminar', 'terminado'],
+  ['no-se-presento', 'no_show'],
 ]);
 
 const PASOS = new Map([
@@ -589,6 +602,9 @@ viajes.post(
     // C-VIAJES-FIJOS: cada paso del viaje de un menor le llega a su responsable (nunca frena).
     const momento = MOMENTO_MENOR.get(nombre);
     if (momento) await avisarResponsableMenor(c.env, db, id, momento);
+    // C-AVISOS-VIAJE: el pasajero recibe el paso (una vez: solo cuando el viaje de verdad cambió).
+    const avisoPaso = AVISO_DEL_PASO.get(nombre);
+    if (avisoPaso) await avisarPasoViaje(c.env, db, id, avisoPaso);
     // C-VIAJE-SEGURIDAD-2: al empezar, los contactos de confianza reciben el viaje (nunca frena).
     if (nombre === 'iniciar')
       await avisarContactos(c, id).catch((e: unknown) =>

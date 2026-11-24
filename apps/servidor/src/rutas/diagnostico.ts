@@ -1658,6 +1658,7 @@ diagnostico.post('/interno/diagnostico/f3/aceptar', async (c) => {
       clave: z.string().min(1).max(80),
     }),
   );
+  // C-AVISOS-VIAJE: sin aviso — operaciones temporales del diagnóstico (zz-f3), sin pasajero real.
   const r = await aceptarOperacion(base(c), {
     operacionId: a.operacion,
     conductorId: a.conductor,
@@ -1720,6 +1721,7 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
   // Soltar y volver a buscar, en el motor real.
   const una = asign.results[0];
   if (una) {
+    // C-AVISOS-VIAJE: sin aviso — operación temporal del diagnóstico, sin pasajero real.
     const libre = await liberarViaje(db, {
       operacionId: una.operacion_id,
       conductorId: una.conductor_id,

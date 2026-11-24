@@ -309,6 +309,8 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
       // C-PROGRAMADO-CANCELAR-PRIMERO: primero se cancela el viaje (así ningún conductor lo acepta
       // en ese instante) y DESPUÉS se suelta la retención; al revés, un conductor podía quedar con
       // un viaje «asignado» sin dinero retenido.
+      // C-AVISOS-VIAJE: sin aviso — este caso ya avisa al pasajero con AVISO.fallido («No pudimos
+      // iniciar tu viaje programado»), más abajo.
       for (const desde of ['pago_pendiente', 'buscando'] as const)
         await cambiarEstadoViaje(db, {
           operacionId: f.id,

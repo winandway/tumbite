@@ -1,4 +1,5 @@
 import { frenarSinCelularConfirmado } from '../telefonoVuelta';
+import { avisarPasoViaje } from '../avisosViaje';
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
 import { UMBRALES_VIAJE_REAL } from '../viajeReal';
@@ -1443,6 +1444,10 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
     motivo: 'cancelado_por_pasajero',
   });
   if (!ok) throw new ErrorDatos('El viaje cambió. Actualiza la pantalla.', undefined, 409);
+  // C-AVISOS-VIAJE: si ya tenía conductor, él sabe que quedó libre (con la app cerrada también).
+  // Mientras buscaba, la oferta se retira sola en su pantalla: no se le manda nada más.
+  if (f.estado === 'asignado' || f.estado === 'conductor_llego')
+    await avisarPasoViaje(c.env, db, id, 'cancelado_pasajero');
   await devolverReservasViaje(db, id, 'cancelado_por_pasajero');
   // C-CUPON-DIVOOX: el regalo apartado vuelve al presupuesto del cupón.
   await liberarRegalo(db, id, 'cancelado_por_pasajero');

@@ -1,4 +1,5 @@
 import { cuantosHay } from './canarioLecturas';
+import { avisarPasoViaje } from './avisosViaje';
 import { liberarRegalo } from './regalosDivoox';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
@@ -638,6 +639,8 @@ export async function repartirOperaciones(
     });
     if (ok) {
       liberados++;
+      // C-AVISOS-VIAJE: el pasajero sabe que le buscamos otro conductor.
+      await avisarPasoViaje(env, db, s.operacion_id, 'sin_senal');
       // M7: lo que había apartado vuelve a su prepago (el viaje no lo hizo).
       await devolverReservaViaje(db, s.operacion_id, s.conductor_id, 'sin_senal');
     }
@@ -677,6 +680,8 @@ export async function repartirOperaciones(
         console.error('viajes: anular cobro sin conductor', v.id, e),
       );
       if (env && v.programado_para) await avisarProgramadoSinConductor(env, db, v.id, v.cliente_id);
+      // C-AVISOS-VIAJE: el viaje inmediato también avisa (el programado ya tiene el suyo).
+      else await avisarPasoViaje(env, db, v.id, 'sin_conductor');
     }
   // C-VIAJE-TARJETA: un pago que nunca se autorizó (la persona cerró la hoja de pago) no deja el
   // viaje colgado: a los 20 minutos se cancela y se anula el intento.
@@ -696,6 +701,8 @@ export async function repartirOperaciones(
         actorId: null,
         clave: `sin-pago:${v.id}`,
         motivo: 'sin_pago',
+        // C-AVISOS-VIAJE: sin aviso — el pago nunca se autorizó (la persona cerró la hoja de pago);
+        // no hubo viaje que contar.
       })
     )
       await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>

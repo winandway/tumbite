@@ -1546,6 +1546,8 @@ pedidos.post('/stripe/aviso', async (c) => {
           actorId: null,
           clave: `autorizado:${op}`,
           motivo: 'pago_autorizado',
+          // C-AVISOS-VIAJE: sin aviso — la tarjeta quedó autorizada y el viaje empieza a buscar;
+          // el pasajero lo está viendo en la app y su próximo aviso es «Tu conductor aceptó».
         }))
       )
         await repartirOperaciones(c.env, db).catch((e: unknown) =>
