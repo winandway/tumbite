@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
+import { conductorDeMoto } from '../pruebas/conductorMoto';
 import { saludTarifas } from './servicios';
 
 /**
@@ -46,6 +47,8 @@ describe('C-SERVICIO-SIN-TARIFA: sin tarifa en la ciudad, el servicio no se ofre
       },
       admin.token,
     );
+    // C-SERVICIO-SIN-OFERTA: además de la tarifa, alguien en la zona que lo tome.
+    await conductorDeMoto(m, MIAMI, 'US-FL-MIAMI', 'envios');
     expect(await estadoEnvios(m)).toMatchObject({ estado: 'disponible', accion: 'abrir' });
   });
 

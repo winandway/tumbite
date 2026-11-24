@@ -27,6 +27,10 @@ import { INDICES_BUSCADOR } from './buscadorSql';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
 import {
+  SQL_CANDIDATOS_SERVICIOS_VEHICULO,
+  repararServiciosVehiculo,
+} from './reparacionServiciosVehiculo';
+import {
   DISPARADORES_RASTRO,
   FUENTES_PASO,
   VERSION_RELLENO,
@@ -750,6 +754,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         SQL_CANDIDATOS_LLEGA_SOLO,
         String(repararVehiculoActivo),
         SQL_CANDIDATOS_VEHICULO_ACTIVO,
+        String(repararServiciosVehiculo),
+        SQL_CANDIDATOS_SERVICIOS_VEHICULO,
         DISPARADORES_RASTRO,
         String(asegurarRastro),
         FUENTES_PASO,
@@ -853,6 +859,11 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-VEHICULO-ACTIVO-SOLO: una sola vez, el único vehículo aprobado queda activo.
   await repararVehiculoActivo(db).catch((e: unknown) =>
     console.error('esquema: la reparación «vehículo activo» falló', e),
+  );
+  // C-SERVICIOS-DEL-VEHICULO: una sola vez, Envíos encendido a quien su vehículo ya se lo permite.
+  // Después de la anterior: usa el vehículo que esa dejó en uso.
+  await repararServiciosVehiculo(db).catch((e: unknown) =>
+    console.error('esquema: la reparación «servicios del vehículo» falló', e),
   );
 }
 

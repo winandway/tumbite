@@ -416,7 +416,8 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // +2 (23 nov 2026, C-LLEGA-SOLO-A-REVISION): dos filas más en `config` (la marca de la reparación
       // y a quién envió), que la ruta recorre.
       // +1 (23 nov 2026, C-VEHICULO-ACTIVO-SOLO): la fila de su reparación en `config`.
-      ['f1', 518 + 2 * objetosEsquema],
+      // +1 (23 nov 2026, C-SERVICIOS-DEL-VEHICULO): la fila de su reparación en `config`.
+      ['f1', 519 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
       // +11 (22 nov 2026, C-RASTRO): cada vehículo nuevo deja el paso «vehículo» del registro (una lectura).

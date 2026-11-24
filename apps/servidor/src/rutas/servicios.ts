@@ -1,3 +1,4 @@
+import { SERVICIOS_CON_CONDUCTOR, hayQuienLoTome } from '../servicioSinOferta';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { cuantosHay } from '../canarioLecturas';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
@@ -231,11 +232,32 @@ export async function estadoServicioEnZona(
 export async function serviciosPublicosEnZona(db: Db, zonaId: string | null): Promise<Set<string>> {
   if (!zonaId) return new Set();
   const ahora = ahoraSql();
+  const filas = await catalogo(db, zonaId);
+  const sinQuien = await sinQuienLoTome(db, zonaId, filas, ahora);
   return new Set(
-    (await catalogo(db, zonaId))
-      .filter((s) => estadoEfectivo(s, ahora) === 'disponible')
+    filas
+      .filter((s) => estadoEfectivo(s, ahora) === 'disponible' && !sinQuien.has(s.id))
       .map((s) => s.id),
   );
+}
+
+/**
+ * C-SERVICIO-SIN-OFERTA (lado del cliente): de los servicios abiertos AL PÚBLICO en la zona que
+ * necesitan un conductor (`SERVICIOS_CON_CONDUCTOR`), los que nadie de la zona tomaría. El piloto y
+ * lo encendido solo para pruebas no se tocan. Una lectura por servicio abierto, y solo si lo está.
+ */
+async function sinQuienLoTome(db: Db, zonaId: string | null, filas: Servicio[], ahora: string) {
+  const fuera = new Set<string>();
+  if (!zonaId) return fuera;
+  for (const s of filas)
+    if (
+      SERVICIOS_CON_CONDUCTOR.has(s.id) &&
+      s.zona_estado === 'disponible' &&
+      estadoEfectivo(s, ahora) === 'disponible' &&
+      !(await hayQuienLoTome(db, zonaId, s.id))
+    )
+      fuera.add(s.id);
+  return fuera;
 }
 const ACCION = new Map([
   ['disponible', 'abrir'],
@@ -277,8 +299,13 @@ servicios.get('/servicios', async (c) => {
   const ahora = ahoraSql();
   const participante = u ? await esParticipante(db, u.id) : false;
   const prueba = u ? await esCuentaPrueba(db, u.id) : false;
-  const lista = (await catalogo(db, zona?.id ?? null)).map((s) => {
+  const filas = await catalogo(db, zona?.id ?? null);
+  const sinQuien = await sinQuienLoTome(db, zona?.id ?? null, filas, ahora);
+  const lista = filas.map((s) => {
     let estado: string = estadoEfectivo(s, ahora, participante, prueba);
+    // C-SERVICIO-SIN-OFERTA: abierto en la zona, pero nadie lo toma: no se ofrece (la app de la
+    // tienda pinta la baldosa con la hoja «aún no hay» y no deja pedir).
+    if (estado === 'disponible' && sinQuien.has(s.id)) estado = 'no_disponible_zona';
     let accion = ACCION.get(estado) ?? 'muy_pronto';
     if (estado === 'disponible' && version < versionNum(s.version_min_cliente))
       accion = 'actualizar_app';
@@ -1148,22 +1175,53 @@ export async function activarVehiculoAprobadoSolo(
     .bind(vehiculoId)
     .first<{ tipo: string }>();
   const servicio = SERVICIO_PASAJEROS_DE.get(v?.tipo ?? '') ?? null;
-  if (!servicio) return { activo: true, servicio: null };
-  const ya = await db
-    .prepare('SELECT 1 FROM preferencias_servicio WHERE conductor_id = ? AND servicio_id = ?')
-    .bind(conductorId, servicio)
-    .first();
-  if (ya) return { activo: true, servicio: null };
-  const estado = await estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER);
-  if (!estado.servicios.find((s) => s.servicioId === servicio)?.puedeActivar)
-    return { activo: true, servicio: null };
-  await db
+  const encendidos = await encenderServiciosDelVehiculo(db, conductorId, [
+    ...(servicio ? [servicio] : []),
+    ...SERVICIOS_SIN_SEGUNDO_REGISTRO,
+  ]);
+  return { activo: true, servicio: servicio && encendidos.includes(servicio) ? servicio : null };
+}
+
+/**
+ * C-SERVICIOS-DEL-VEHICULO (23 nov 2026, Tucaní) — todos los países. Los servicios que el vehículo
+ * en uso ya permite sin un segundo registro: hoy Envíos (con Moto o Carro, según su vehículo). Un
+ * conductor de Tucaní con la moto aprobada no recibió un envío porque solo tenía encendido «moto».
+ */
+export const SERVICIOS_SIN_SEGUNDO_REGISTRO = ['envios'] as const;
+
+/**
+ * Deja encendidos (preferencia activa) los `candidatos` que el conductor puede activar YA con la
+ * misma regla de Driver (`puedeActivar`: servicio abierto en su zona, habilitación o plazo, vehículo
+ * compatible y requisitos de su país). Solo CREA la fila si no existe: quien lo apagó a propósito
+ * sigue apagado. Devuelve los que encendió. Lecturas por índice; una escritura por servicio nuevo.
+ */
+export async function encenderServiciosDelVehiculo(
+  db: Db,
+  conductorId: string,
+  candidatos: readonly string[],
+): Promise<string[]> {
+  if (!candidatos.length) return [];
+  const { results: ya } = await db
     .prepare(
-      'INSERT OR IGNORE INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, ?, 1)',
+      `SELECT servicio_id FROM preferencias_servicio WHERE conductor_id = ? AND servicio_id IN (${candidatos.map(() => '?').join(', ')})`,
     )
-    .bind(conductorId, servicio)
-    .run();
-  return { activo: true, servicio };
+    .bind(conductorId, ...candidatos)
+    .all<{ servicio_id: string }>();
+  const tiene = new Set(ya.map((f) => f.servicio_id));
+  const faltan = candidatos.filter((x) => !tiene.has(x));
+  if (!faltan.length) return [];
+  const estado = await estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER);
+  const encender = faltan.filter(
+    (x) => estado.servicios.find((s) => s.servicioId === x)?.puedeActivar,
+  );
+  for (const x of encender)
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, ?, 1)',
+      )
+      .bind(conductorId, x)
+      .run();
+  return encender;
 }
 
 servicios.put('/conductor/vehiculo-activo', async (c) => {
@@ -1700,6 +1758,14 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
     d.estado === 'aprobado'
       ? await activarVehiculoAprobadoSolo(db, antes.conductor_id, id)
       : { activo: false, servicio: null };
+  // C-SERVICIOS-DEL-VEHICULO: aunque ya estuviera en uso (por ejemplo, en su plazo de papeles), lo
+  // que su vehículo aprobado permite sin otro registro queda encendido.
+  if (d.estado === 'aprobado')
+    await encenderServiciosDelVehiculo(
+      db,
+      antes.conductor_id,
+      SERVICIOS_SIN_SEGUNDO_REGISTRO,
+    ).catch((e: unknown) => console.error('vehículos: encender los servicios del vehículo', e));
   return c.json({ estado: d.estado, categoria, activo: activo.activo });
 });
 
