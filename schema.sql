@@ -65,6 +65,23 @@ CREATE TABLE IF NOT EXISTS suscripciones_web (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS suscripciones_web_usuario ON suscripciones_web(usuario_id);
+-- C-AVISOS-GUARDADOS (24 nov 2026, Richard; todos los países): cada aviso que sale al teléfono de una
+-- persona queda guardado con su hora, en los dos idiomas, para su campana («después de una carrera
+-- completa decía "No tienes avisos"»). UNA fila por aviso y persona (no por aparato); mirar no escribe.
+-- `id` crece con el tiempo: la limpieza diaria borra lo de más de 30 días por el id, sin otro índice.
+-- Sin clave foránea a propósito (cada una le cobra lecturas a todo borrado); la borra borrarCuenta.
+CREATE TABLE IF NOT EXISTS avisos_enviados (
+  id INTEGER PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT '',
+  titulo_es TEXT NOT NULL,
+  cuerpo_es TEXT NOT NULL,
+  titulo_en TEXT NOT NULL,
+  cuerpo_en TEXT NOT NULL,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS avisos_enviados_usuario ON avisos_enviados(usuario_id, creado_en);
 
 CREATE TABLE IF NOT EXISTS sesiones (
   id TEXT PRIMARY KEY,
@@ -1682,6 +1699,31 @@ CREATE TABLE IF NOT EXISTS preferencias_internas (
   valor_json TEXT NOT NULL DEFAULT '{}',
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (usuario_id, pantalla)
+) WITHOUT ROWID;
+
+-- C-CAMPANA-SE-VACIA (23 nov 2026, Richard): hasta cuándo vio cada persona cada campana (la del
+-- superadmin, la del restaurante, la de cada empresa de Flex, la del cliente y la del conductor). UNA
+-- fila por persona y campana, WITHOUT ROWID: abrir la campana escribe UNA fila como mucho (y nada si
+-- no había nada nuevo); mirar la página no escribe. Se borra con la cuenta (borrarCuenta). Sin
+-- clave foránea a propósito: cada una hacia `usuarios` le cobra lecturas a TODO borrado de cuenta.
+CREATE TABLE IF NOT EXISTS campana_vista (
+  usuario_id TEXT NOT NULL,
+  campana TEXT NOT NULL,
+  visto_hasta TEXT NOT NULL,
+  PRIMARY KEY (usuario_id, campana)
+) WITHOUT ROWID;
+
+-- C-VERIFICACIONES-EN-VIVO (23 nov 2026, Richard): el correo al equipo cuando una persona queda lista
+-- para revisar. UNA fila por persona: el envío que ya se avisó (`enviado_en` de su verificación, así no
+-- se manda otro por la misma) y cómo salió (a cuántos, si salió y por qué no). Antes un correo que no
+-- salía no dejaba rastro. Sin clave foránea a propósito (C-CAMPANA-SE-VACIA); la borra borrarCuenta.
+CREATE TABLE IF NOT EXISTS avisos_verificacion (
+  usuario_id TEXT PRIMARY KEY,
+  enviado_en TEXT NOT NULL,
+  destinos INTEGER NOT NULL DEFAULT 0,
+  ok INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT NOT NULL DEFAULT '',
+  avisado_en TEXT NOT NULL DEFAULT (datetime('now'))
 ) WITHOUT ROWID;
 
 -- C-AVISOS-EQUIPO (29 oct 2026): qué avisos por correo quiere cada cuenta del equipo, por tipo.
@@ -4972,6 +5014,9 @@ CREATE TABLE IF NOT EXISTS correos_rebotados (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS correos_rebotados_creado ON correos_rebotados(creado_en);
+-- C-CORREO-REBOTES-CANARIO: cuántos enlaces de confirmación salieron en 24 h (el denominador de la tasa
+-- de rebote del canario). Una escritura de índice por enlace; nada por mirar.
+CREATE INDEX IF NOT EXISTS confirmaciones_creada ON confirmaciones(creada_en);
 
 -- C-PLAZO-PAPELES (19 nov 2026, decisión de Richard; por país, por configuración): el plazo de cada
 -- conductor para subir sus papeles. Sin fila = sin plazo (los que ya existían conservan su estado).
