@@ -181,8 +181,17 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    expect(PRIVACIDAD.es.actualizado).toContain('23 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 23, 2026');
+    // C-CUENTA-UNICA (24 nov 2026): «una cuenta, varios papeles».
+    expect(PRIVACIDAD.es.actualizado).toContain('24 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 24, 2026');
+  });
+  it('C-CUENTA-UNICA: la política explica una cuenta con varios papeles, tratados por separado', () => {
+    expect(texto(PRIVACIDAD.es)).toMatch(
+      /Una cuenta, varios papeles.*Los datos de cada papel se tratan por separado.*nunca se mezclan.*sus propios términos/,
+    );
+    expect(texto(PRIVACIDAD.en)).toMatch(
+      /One account, several roles.*data of each role is handled separately.*never mixed.*its own terms/,
+    );
   });
   it('C-TELEFONO-AL-REGISTRARSE: dice que el código al crear la cuenta es obligatorio y quién lo lleva', () => {
     expect(texto(PRIVACIDAD.en)).toContain(

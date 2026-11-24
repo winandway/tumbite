@@ -1126,7 +1126,19 @@ cuentas.get('/papeles', async (c) => {
     negociosDe(db, persona.id),
   ]);
   return c.json({
-    persona: { id: persona.id, nombre: persona.nombre, correo: persona.correo },
+    persona: {
+      id: persona.id,
+      nombre: persona.nombre,
+      correo: persona.correo,
+      // Para llenar la ficha del restaurante nuevo con lo ya conocido.
+      telefono:
+        (
+          await db
+            .prepare('SELECT telefono FROM usuarios WHERE id = ?')
+            .bind(persona.id)
+            .first<{ telefono: string | null }>()
+        )?.telefono ?? null,
+    },
     papeles,
     negocios,
     actuaComo: sesion.persona ? sesion.id : null,
