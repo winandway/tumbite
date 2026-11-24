@@ -147,7 +147,9 @@ const T = {
     seguroTumbite: 'Con el seguro de Divoox',
     ubicacion: 'Última ubicación',
     verMapa: 'Ver en el mapa',
-    entregas: 'Entregas',
+    entregas: 'Viajes y entregas',
+    saldoPrepago: 'Saldo prepago',
+    datosReparto: 'Datos de reparto declarados',
     ganado: 'Ganado',
     propinas: 'Propinas',
     saldo: 'Saldo',
@@ -292,7 +294,9 @@ const T = {
     seguroTumbite: 'With Divoox insurance',
     ubicacion: 'Last location',
     verMapa: 'See on map',
-    entregas: 'Deliveries',
+    entregas: 'Rides and deliveries',
+    saldoPrepago: 'Prepaid balance',
+    datosReparto: 'Declared delivery details',
     ganado: 'Earned',
     propinas: 'Tips',
     saldo: 'Balance',
@@ -918,6 +922,8 @@ type Repartidor = {
   /** C-MONEDA-RECORRIDO: lo ganado por moneda (nunca se suman monedas distintas). */
   porMoneda?: { moneda: string; entregas: number; ganado: number; propinas: number }[];
   saldo: number;
+  /** C-FICHA-TODOS-LOS-SERVICIOS: su saldo prepago (libro), en la moneda de su país. */
+  saldoPrepago?: { monto: number; moneda: string };
   calificacion: number | null;
   calificaciones: number;
   /** C-ELOGIOS-MOTIVOS: conteo de elogios y de motivos de las malas notas. */
@@ -1066,10 +1072,19 @@ export function SuperRepartidor({
           <span>{t.propinas}</span>
           <strong>{propinas}</strong>
         </li>
-        <li className="super-tarjeta">
-          <span>{t.saldo}</span>
-          <strong>{formatearMonto(r.saldo, 'USD', idioma)}</strong>
-        </li>
+        {r.saldoPrepago ? (
+          <li className="super-tarjeta" data-testid="ficha-saldo-prepago">
+            <span>{t.saldoPrepago}</span>
+            <strong>{formatearMonto(r.saldoPrepago.monto, r.saldoPrepago.moneda, idioma)}</strong>
+          </li>
+        ) : null}
+        {/* La billetera de Stripe (pedidos con tarjeta, en dólares): solo si tiene algo. */}
+        {!r.saldoPrepago || r.saldo !== 0 ? (
+          <li className="super-tarjeta">
+            <span>{t.saldo}</span>
+            <strong>{formatearMonto(r.saldo, 'USD', idioma)}</strong>
+          </li>
+        ) : null}
         <li className="super-tarjeta">
           <span>{t.calificacion}</span>
           <strong>{r.calificacion ?? '—'}</strong>
@@ -1167,46 +1182,59 @@ export function SuperRepartidor({
             )}
           </div>
         ) : null}
-        <div className="tarjeta-form">
-          <h2>{t.vehiculo}</h2>
-          <dl className="super-dl">
-            <dt>{t.tipo}</dt>
-            <dd>{t.vehiculos[d.vehiculoTipo] ?? d.vehiculoTipo}</dd>
-            <dt>{t.marcaModelo}</dt>
-            <dd>{[d.marca, d.modelo].filter(Boolean).join(' ') || '—'}</dd>
-            <dt>{t.anio}</dt>
-            <dd>{d.anio ?? '—'}</dd>
-            <dt>{t.color}</dt>
-            <dd>{d.color || '—'}</dd>
-            <dt>{t.placa}</dt>
-            <dd>{d.placa || '—'}</dd>
-          </dl>
-        </div>
-        <div className="tarjeta-form">
-          <h2>
-            {t.licencia}{' '}
-            <Insignia estado={d.estadoLicencia}>{t.estadoDoc[d.estadoLicencia]}</Insignia>
-          </h2>
-          <dl className="super-dl">
-            <dt>{t.licenciaNum}</dt>
-            <dd>
-              {d.licenciaNumero || '—'} {d.licenciaEstado}
-            </dd>
-            <dt>{t.vence}</dt>
-            <dd>{d.licenciaVence ?? '—'}</dd>
-          </dl>
-          <h2>
-            {t.seguro} <Insignia estado={d.estadoSeguro}>{t.estadoDoc[d.estadoSeguro]}</Insignia>
-          </h2>
-          <dl className="super-dl">
-            <dt>{t.aseguradora}</dt>
-            <dd>{d.seguroTumbite ? t.seguroTumbite : d.seguroAseguradora || '—'}</dd>
-            <dt>{t.poliza}</dt>
-            <dd>{d.seguroPoliza || '—'}</dd>
-            <dt>{t.vence}</dt>
-            <dd>{d.seguroVence ?? '—'}</dd>
-          </dl>
-        </div>
+        {/* C-FICHA-UN-BLOQUE (24 nov 2026): un solo bloque de vehículos. Los datos de reparto viejos
+            (comida, sin tabla de vehículos) salen solo si existen y no hay vehículos registrados. */}
+        {!r.vehiculos?.length && (d.marca || d.modelo || d.placa) ? (
+          <div className="tarjeta-form" data-testid="ficha-datos-reparto">
+            <h2>{t.datosReparto}</h2>
+            <dl className="super-dl">
+              <dt>{t.tipo}</dt>
+              <dd>{t.vehiculos[d.vehiculoTipo] ?? d.vehiculoTipo}</dd>
+              <dt>{t.marcaModelo}</dt>
+              <dd>{[d.marca, d.modelo].filter(Boolean).join(' ') || '—'}</dd>
+              <dt>{t.anio}</dt>
+              <dd>{d.anio ?? '—'}</dd>
+              <dt>{t.color}</dt>
+              <dd>{d.color || '—'}</dd>
+              <dt>{t.placa}</dt>
+              <dd>{d.placa || '—'}</dd>
+            </dl>
+          </div>
+        ) : null}
+        {/* C-FICHA-UN-BLOQUE: la licencia y el seguro viejos (datos de reparto) solo si existen; los
+            papeles de verdad van en «Papeles» y en la Verificación única. */}
+        {d.licenciaNumero ||
+        d.licenciaVence ||
+        d.seguroPoliza ||
+        d.seguroAseguradora ||
+        d.seguroVence ||
+        d.seguroTumbite ? (
+          <div className="tarjeta-form">
+            <h2>
+              {t.licencia}{' '}
+              <Insignia estado={d.estadoLicencia}>{t.estadoDoc[d.estadoLicencia]}</Insignia>
+            </h2>
+            <dl className="super-dl">
+              <dt>{t.licenciaNum}</dt>
+              <dd>
+                {d.licenciaNumero || '—'} {d.licenciaEstado}
+              </dd>
+              <dt>{t.vence}</dt>
+              <dd>{d.licenciaVence ?? '—'}</dd>
+            </dl>
+            <h2>
+              {t.seguro} <Insignia estado={d.estadoSeguro}>{t.estadoDoc[d.estadoSeguro]}</Insignia>
+            </h2>
+            <dl className="super-dl">
+              <dt>{t.aseguradora}</dt>
+              <dd>{d.seguroTumbite ? t.seguroTumbite : d.seguroAseguradora || '—'}</dd>
+              <dt>{t.poliza}</dt>
+              <dd>{d.seguroPoliza || '—'}</dd>
+              <dt>{t.vence}</dt>
+              <dd>{d.seguroVence ?? '—'}</dd>
+            </dl>
+          </div>
+        ) : null}
         <div className="tarjeta-form">
           <h2>{t.revisar}</h2>
           <p>

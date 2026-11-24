@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOTO_PRUEBA, mundo } from '../pruebas/ayuda';
+import { FOTO_PRUEBA, RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 
 /**
  * Multiservicio, Fase 1: catálogo, vehículos, habilitaciones y preferencias. Candados
@@ -13,6 +13,15 @@ async function escenario() {
   return { m, admin, rep };
 }
 const MIAMI = { lat: 25.7617, lng: -80.1918 };
+
+/** C-SERVICIO-SIN-OFERTA: Comida se ofrece al cliente solo donde hay un restaurante aprobado. */
+async function conRestaurante(m: ReturnType<typeof mundo>, zona = 'US-FL-MIAMI') {
+  const dueno = await m.cuenta('restaurante', 'Dueña de ejemplo');
+  const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
+  await m.DB.prepare("UPDATE restaurantes SET estado = 'aprobado', zona_id = ? WHERE id = ?")
+    .bind(zona, r.datos.restaurante.id)
+    .run();
+}
 
 /** Sube un documento (bytes crudos) como lo haría la app. */
 async function subirDoc(
@@ -78,6 +87,7 @@ async function vehiculoAprobado(
 describe('catálogo de servicios (GET /datos/servicios)', () => {
   it('Comida se abre en Miami; Moto, Carro y los demás salen «muy pronto»', async () => {
     const { m } = await escenario();
+    await conRestaurante(m);
     const r = await m.llamar('GET', `/datos/servicios?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);
     expect(r.estado).toBe(200);
     expect(r.datos.zona.id).toBe('US-FL-MIAMI');
@@ -102,6 +112,7 @@ describe('catálogo de servicios (GET /datos/servicios)', () => {
 
   it('una app más vieja que la mínima del servicio recibe «actualizar_app»', async () => {
     const { m, admin } = await escenario();
+    await conRestaurante(m);
     await m.llamar(
       'PUT',
       '/datos/admin/servicios/comida',
@@ -552,8 +563,14 @@ describe('ciudades nuevas', () => {
     ).toBe(200);
     expect(await estado('comida')).toBe('disponible');
     expect(await estado('moto')).toBe('proximamente');
-    const r = await m.llamar('GET', `/datos/servicios?lat=${zona.lat}&lng=${zona.lng}`);
-    expect(r.datos.servicios.find((s: { id: string }) => s.id === 'comida').accion).toBe('abrir');
+    const comida = async () =>
+      (
+        await m.llamar('GET', `/datos/servicios?lat=${zona.lat}&lng=${zona.lng}`)
+      ).datos.servicios.find((s: { id: string }) => s.id === 'comida').accion;
+    // C-SERVICIO-SIN-OFERTA: al cliente se le abre con su primer restaurante aprobado.
+    expect(await comida()).toBe('no_disponible_zona');
+    await conRestaurante(m, zona.id);
+    expect(await comida()).toBe('abrir');
   });
 
   it('si el equipo pausó Comida en una ciudad, volver a prenderla no la abre sola', async () => {

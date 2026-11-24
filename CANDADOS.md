@@ -2,6 +2,14 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-SERVICIO-SIN-OFERTA (Comida y tiendas al cliente), C-FICHA-TODOS-LOS-SERVICIOS y C-FICHA-UN-BLOQUE (24 nov 2026, ensayo general y Gerencia) — todos los países
+
+- **Comida y tiendas al cliente (`apps/servidor/src/servicioSinOferta.ts` → `COMERCIOS_DE_SERVICIO`, `hayComerciosEnZona`; usado por `sinQuienLoTome` en `rutas/servicios.ts`):** Comida, Mercado, Farmacia y Licores abiertos al público en la zona salen `no_disponible_zona` si no hay ni un comercio `aprobado` de su `tipo_comercio` (restaurante; mercado o conveniencia; farmacia; licores). La app de clientes 0.1.60 ya abre la hoja «aún no hay» y su portada no pinta el catálogo ni «No restaurants in your area yet. Coming soon!» (solo lo hace con Comida disponible). Piloto y pruebas no se tocan. El texto de la app quedó sin «¡Muy pronto! / Coming soon!» para la próxima versión.
+- **Ficha del conductor (`GET /admin/repartidores/:id` en `rutas/superadmin.ts`):** «Viajes y entregas» y «Ganado» suman los viajes terminados por moneda (total del viaje menos lo cobrado de su reserva, referencia `reserva_viaje:<op>:<conductor>:cobrada:reservado`), por el índice `operaciones_conductor`; `saldoPrepago` es el bolsillo `prepago` del libro en la moneda de su país; la calificación junta comida y `calificaciones_viaje` de pasajeros. El saldo de Stripe sale solo si no hay prepago o si tiene algo.
+- **Un solo bloque (`SuperFichas.tsx`):** el bloque viejo «Vehículo» ya no sale; los datos de reparto viejos solo si existen y no hay vehículos registrados («Datos de reparto declarados»); la licencia y el seguro viejos solo si tienen datos. Dentro de la ficha, la Verificación única no repite «Cambiar ciudad» (`enFicha`).
+- **Cómo se comprueba:** `rutas/comidaSinRestaurantes.test.ts` (3, en ROJO sin el arreglo), `rutas/fichaConductorTodo.test.ts` (en ROJO: Entregas 0), `SuperFichas.test.tsx` («un solo bloque…»), `RevisionConductor.test.tsx` («no repite Cambiar ciudad», en ROJO). `servicios.test.ts` pone un restaurante aprobado donde espera Comida abierta.
+- **Qué NO tocar:** no ofrecer Comida por la sola apertura de la zona; no volver a sumar solo comida en la ficha; no mezclar monedas.
+
 ## C-SERVICIOS-DEL-VEHICULO y C-SERVICIO-SIN-OFERTA (lado del cliente) · Envíos se enciende solo con el vehículo aprobado y no se le ofrece al cliente donde nadie lo toma (23 nov 2026, Richard probando en Tucaní) — todos los países
 
 - **Qué pasó (producción, solo lectura):** un envío en VE-MER-TUCANI quedó «buscando» con cero ofertas. El único conductor (moto aprobada, en plazo, identidad aprobada, conectado) solo tenía la preferencia «moto» (la puso C-VEHICULO-ACTIVO-SOLO); sin la fila de «envios» la vista `conductores_elegibles` no lo tomaba. Y la app de clientes ofrecía Envíos en esa zona igual.
