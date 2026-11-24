@@ -181,6 +181,16 @@ for (const idioma of ['es', 'en'] as const) {
       .getByText(idioma === 'es' ? 'Perfil' : 'Profile', { exact: true })
       .last()
       .click();
+    // Tramo 1 del registro (C-QUE-TE-FALTA): con el registro sin terminar, lo de después va plegado en
+    // «Más opciones».
+    const mas = pr.getByText(idioma === 'es' ? 'Más opciones' : 'More options', { exact: true });
+    if (
+      await mas
+        .waitFor({ timeout: 10_000 })
+        .then(() => true)
+        .catch(() => false)
+    )
+      await mas.click();
     await pr
       .getByText(idioma === 'es' ? 'Mi equipo e invitaciones' : 'My team and invitations')
       .first()

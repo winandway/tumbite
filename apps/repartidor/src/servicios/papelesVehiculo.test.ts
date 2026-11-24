@@ -33,6 +33,15 @@ describe('C-PAPEL-DICE-LA-VERDAD', () => {
       ).texto,
     ).toBe('Uploaded. Your car goes to review on its own once the rest is uploaded');
   });
+  it('con el vehículo ya aprobado, un papel nuevo subido está en revisión (no «pasa sola a revisión»)', () => {
+    const d = detallePapelVehiculo(
+      { docEstado: 'pendiente', vehiculoEstado: 'aprobado', vehiculoTipo: 'moto' },
+      'es',
+    );
+    expect(d.texto).toBe('En revisión · suele tardar 1 día');
+    expect(d.pildora).toBeNull();
+    expect(d.sinEnviar).toBe(false);
+  });
   it('dice exactamente qué falta para poder enviarla (placa, registro, seguro)', () => {
     const v = { tipo: 'moto', placa: '', documentos: [{ tipo: 'registro', estado: 'pendiente' }] };
     expect(faltaParaEnviar(v, true, 'es')).toEqual(['la placa', 'la póliza de seguro']);
