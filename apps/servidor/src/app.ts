@@ -65,6 +65,7 @@ import { turnos } from './rutas/turnos';
 import { grupos } from './rutas/grupos';
 import { pedidoCompartido } from './rutas/pedidoCompartido';
 import { seguridadRepartidor } from './rutas/seguridadRepartidor';
+import { saludPanicoZonas } from './panicoZona';
 import { apiPos } from './rutas/apiPos';
 import { gerente } from './rutas/gerente';
 import { tickets } from './rutas/tickets';
@@ -477,6 +478,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {
       console.error('salud: viajes', e);
+      return 'error' as const;
+    });
+  // C-PANICO-CENTRAL: una zona activa sin responsable de pánico con teléfono, en rojo.
+  if (c.env.DB)
+    piezas.panicoZonas = await saludPanicoZonas(c.env.DB).catch((e: unknown) => {
+      console.error('salud: responsables de pánico', e);
       return 'error' as const;
     });
   // C-COMIDA-VENEZUELA: ciudad con Comida encendida fuera de EE. UU. en otra moneda que su país.

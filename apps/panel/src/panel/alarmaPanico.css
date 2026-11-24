@@ -1,0 +1,28 @@
+/* C-PANICO-PANEL: franja roja fija arriba mientras haya un pánico sin atender (rojo = problema). */
+.alarma-panico {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #c20a1a;
+  color: #ffffff;
+  border-bottom: 1px solid #2a2a2a;
+  font-family: Poppins, system-ui, sans-serif;
+}
+.alarma-panico strong {
+  flex: 1 1 240px;
+  font-size: 16px;
+}
+.alarma-panico .boton {
+  background: #ffffff;
+  color: #101010;
+}
+.alarma-panico .boton.secundario {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}

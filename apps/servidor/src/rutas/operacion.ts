@@ -1,3 +1,6 @@
+import { insistirPanicos } from '../panicoZona';
+import { revisarSaldoBajo } from '../saldoBajo';
+import { avisarPasoComida } from '../avisosComida';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { LIMPIEZA_AVISOS_ENVIADOS } from '../avisosGuardados';
 import {
@@ -304,8 +307,8 @@ export async function soltarPedido(
   pedidoId: string,
   repartidorId: string,
   motivo = '',
-) {
-  await db.batch([
+): Promise<boolean> {
+  const hechos = await db.batch([
     // Para su tasa de finalización (C-REPARTIDOR-GRANDES): aceptó y no entregó.
     db
       .prepare(
@@ -338,6 +341,8 @@ export async function soltarPedido(
   // pérdida pendiente de decisión y el siguiente repartidor registra su propio pago.
   if (await registrarPerdidaComida(db, pedidoId, `soltado: ${motivo}`.slice(0, 80)))
     await db.prepare('DELETE FROM pagos_local WHERE pedido_id = ?').bind(pedidoId).run();
+  // C-AVISOS-COMIDA: si de verdad se le quitó (y no lo había soltado ya otra vuelta), para avisarle una vez.
+  return Number(hechos[1]?.meta.changes ?? 0) > 0;
 }
 
 /** Un pedido confirmado por el restaurante (o verificado con código y fotografiado) sale en camino. */
@@ -513,12 +518,22 @@ async function hitosDeUno(
     return r.meta.changes > 0;
   };
   if (p.estado !== 'en_camino') {
-    if (
-      p.rest_lat != null &&
-      p.rest_lng != null &&
-      metrosEntre(donde, { lat: p.rest_lat, lng: p.rest_lng }) <= RADIO_LLEGADA_M
+    if (p.rest_lat == null || p.rest_lng == null) return;
+    const aLocal = metrosEntre(donde, { lat: p.rest_lat, lng: p.rest_lng });
+    // C-AVISOS-COMIDA: el restaurante sabe, con la app cerrada, que el conductor está a 5 minutos y
+    // que llegó (antes solo sonaba con la app abierta). Una vez por pedido: la marca de siempre.
+    if (aLocal <= RADIO_LLEGADA_M) {
+      if (await marcar('llego_restaurante')) await avisarPasoComida(env, db, p.id, 'rest_llego');
+    } else if (
+      minutosDeViaje(aLocal / 1000) <= 5 &&
+      (
+        await db
+          .prepare('INSERT OR IGNORE INTO avisos_pedido (pedido_id, aviso) VALUES (?, ?)')
+          .bind(p.id, 'rest_llega_5')
+          .run()
+      ).meta.changes > 0
     )
-      await marcar('llego_restaurante');
+      await avisarPasoComida(env, db, p.id, 'rest_llega_5');
     return;
   }
   if (p.lat == null || p.lng == null) return;
@@ -995,6 +1010,8 @@ operacion.post('/restaurante/pedidos/:id/rechazar', async (c) => {
   });
   if (!ok) throw new ErrorDatos('Este pedido ya no se puede rechazar.', undefined, 409);
   await anotarEvento(base(c), c.req.param('id'), 'rechazado_por_restaurante');
+  // C-AVISOS-COMIDA: el cliente sabe que el restaurante no pudo y qué pasa con su dinero.
+  await avisarPasoComida(c.env, base(c), c.req.param('id'), 'cancelado_restaurante');
   // El repartidor que ya iba hacia el local se entera en el momento (C-REPARTIDOR-GRANDES).
   await avisarAlRepartidor(c.env, base(c), c.req.param('id'), (i, f) =>
     AVISOS.repCancelado(i, f.restaurante),
@@ -2560,16 +2577,29 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
   try {
     await tomarRegaloConductor(db, id, u.id, await aparatoDe(c));
   } catch (e) {
+    // C-AVISOS-COMIDA: sin aviso — el conductor lo ve en la respuesta de su propio «aceptar».
     await soltarPedido(db, id, u.id, 'regalo de Divoox: no puede tomarlo');
     throw e;
   }
+  let apartado: Awaited<ReturnType<typeof reservarAlAceptar>>;
   try {
-    await reservarAlAceptar(db, id, u.id);
+    apartado = await reservarAlAceptar(db, id, u.id);
   } catch (e) {
+    // C-AVISOS-COMIDA: sin aviso — el conductor lo ve en la respuesta de su propio «aceptar».
     await soltarPedido(db, id, u.id, 'sin saldo para la comisión');
     await soltarRegaloConductor(db, id, u.id);
     throw e;
   }
+  // C-SALDO-BAJO: si con esta comisión le queda poco saldo, se le avisa una vez.
+  if (apartado)
+    await revisarSaldoBajo(c.env, db, {
+      quien: 'conductor',
+      cuentaId: u.id,
+      usuarioId: u.id,
+      pais: apartado.pais,
+      moneda: apartado.moneda,
+      porOperacion: apartado.monto,
+    });
   // C-COMIDA-PAGO-RESTAURANTE: con el conductor asegurado, el cliente ya puede pagarle la comida al
   // restaurante. Si esto se corta, el vigilante del reloj lo pide en la vuelta siguiente.
   await pedirPagoComida(c.env, db, id).catch(async (e: unknown) => {
@@ -2750,10 +2780,12 @@ operacion.post('/repartidor/pedidos/:id/foto-recogida', async (c) => {
     );
   await guardarEvidencia(db, foto, id, 'recogida', metros, false);
   // La foto en el restaurante prueba que llegó (por si el GPS no alcanzó a marcarlo antes).
-  await db
+  const llego = await db
     .prepare("INSERT OR IGNORE INTO hitos_pedido (pedido_id, hito) VALUES (?, 'llego_restaurante')")
     .bind(id)
     .run();
+  // C-AVISOS-COMIDA: si el GPS no lo había marcado, el restaurante se entera ahora (una vez).
+  if (llego.meta.changes > 0) await avisarPasoComida(c.env, db, id, 'rest_llego');
   await anotarEvento(db, id, 'foto_recogida');
   const verificado = await db
     .prepare("SELECT 1 FROM hitos_pedido WHERE pedido_id = ? AND hito = 'verificado'")
@@ -3378,6 +3410,14 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   { nombre: 'codigos_respaldo', critica: false, correr: (env, db) => respaldosPendientes(env, db) },
   { nombre: 'dinamica', critica: false, correr: (_env, db) => recalcularDinamica(db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
+  // C-PANICO-INSISTE: el pánico sin abrir ni atender se repite a los 2, 4 y 6 minutos. Mirar no
+  // escribe; como mucho tres marcas por pánico en toda su vida.
+  {
+    nombre: 'panico',
+    critica: false,
+    escriturasEsperadas: 60,
+    correr: (env, db) => insistirPanicos(env, db),
+  },
   // C-COMIDA-PAGO-RESTAURANTE: los tiempos del pago directo al restaurante (sin conductor, pago
   // vencido, restaurante que no responde). Mirar no escribe; como mucho 50 pagos por vuelta.
   {
@@ -3573,6 +3613,8 @@ operacion.post('/pedidos/:id/cancelar', async (c) => {
       409,
     );
   await anotarEvento(db, id, 'cancelado_por_cliente');
+  // C-AVISOS-COMIDA: el restaurante deja de prepararlo (antes no se enteraba con la app cerrada).
+  await avisarPasoComida(c.env, db, id, 'cancelado_cliente');
   return c.json({ ok: true });
 });
 
@@ -4024,6 +4066,7 @@ operacion.post('/repartidor/pedidos/:id/soltar', async (c) => {
       undefined,
       409,
     );
+  // C-AVISOS-COMIDA: sin aviso — lo soltó el mismo conductor.
   await soltarPedido(db, id, u.id, motivo);
   await anotarEvento(db, id, 'repartidor_solto', motivo);
   return c.json({ ok: true });

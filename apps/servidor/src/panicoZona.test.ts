@@ -189,3 +189,253 @@ describe('C-PANICO-ZONA · el pánico avisa al responsable de la zona', () => {
     expect(sms).toHaveLength(0);
   });
 });
+
+/**
+ * C-PANICO-INSISTE, C-PANICO-CENTRAL y C-PANICO-PANEL (24 nov 2026) — todos los países. El pánico
+ * suena con su canal propio, insiste hasta que alguien lo abre o lo atiende, el de un VIAJE también
+ * va por SMS al equipo, y si la zona no tiene responsable cae en el equipo central (y el canario lo
+ * marca en rojo).
+ */
+function capturarTodo() {
+  const sms: { para: string; texto: string }[] = [];
+  const expo: { to: string; channelId: string; sound: string; title: string }[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (String(url).includes('api.twilio.com')) {
+      const b = new URLSearchParams(String(init?.body));
+      sms.push({ para: b.get('To') ?? '', texto: b.get('Body') ?? '' });
+      return new Response(JSON.stringify({ sid: `SM${sms.length}` }), { status: 200 });
+    }
+    if (String(url).includes('exp.host')) {
+      const lote = JSON.parse(String(init?.body)) as typeof expo;
+      expo.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }), {
+        status: 200,
+      });
+    }
+    return new Response('{}', { status: 200 });
+  });
+  return { sms, expo };
+}
+
+async function equipoConTelefono(m: ReturnType<typeof mundo>) {
+  const admin = await m.cuenta('admin', 'Soporte Divoox');
+  await m.DB.prepare(
+    "UPDATE usuarios SET correo = 'dueno@ejemplo.com', telefono = '+13055550111' WHERE id = ?",
+  )
+    .bind(admin.id)
+    .run();
+  return admin;
+}
+
+async function telefonoConCanales(m: ReturnType<typeof mundo>, usuarioId: string, token: string) {
+  await m.DB.prepare(
+    "INSERT INTO dispositivos (token, usuario_id, plataforma, capacidades) VALUES (?, ?, 'android', ?)",
+  )
+    .bind(token, usuarioId, 'ofertas-bucle,canal-panico,canal-dinero')
+    .run();
+}
+
+async function viajeConEmergencia(m: ReturnType<typeof mundo>, admin: { token: string }) {
+  for (const ruta of ['/datos/admin/servicios/moto', `/datos/admin/servicios/moto/zonas/${ZONA}`])
+    await m.llamar('PUT', ruta, { estado: 'disponible' }, admin.token);
+  await m.llamar(
+    'POST',
+    '/datos/admin/viajes/tarifas',
+    {
+      servicio: 'moto',
+      zona: ZONA,
+      tarifa: { base: 150, porKm: 60, porMinuto: 12, minimo: 400 },
+      motivo: 'Tarifa de prueba',
+    },
+    admin.token,
+  );
+  const cliente = await m.cuenta('cliente', 'Pasajero Uno');
+  await conductorDeMoto(m, ORIGEN);
+  const cot = await m.llamar(
+    'POST',
+    '/datos/viajes/cotizar',
+    { servicio: 'moto', origen: ORIGEN, destino: DESTINO },
+    cliente.token,
+  );
+  const id = (
+    await m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: cot.datos.cotizacion.id, metodoPago: 'efectivo' },
+      cliente.token,
+    )
+  ).datos.viaje.id as string;
+  const r = await m.llamar(
+    'POST',
+    `/datos/viajes/${id}/emergencia`,
+    { lat: 25.76, lng: -80.19 },
+    cliente.token,
+  );
+  expect(r.estado).toBeLessThan(300);
+  return { id, cliente };
+}
+
+describe('C-PANICO-CENTRAL · el pánico de un viaje también va por SMS al equipo', () => {
+  it('con responsable: SMS al responsable Y al equipo, sin montos', async () => {
+    const { sms } = capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/zonas/${ZONA}`,
+      { responsableNombre: 'Responsable Zona', responsableTelefono: RESPONSABLE },
+      admin.token,
+    );
+    await viajeConEmergencia(m, admin);
+    expect(sms.filter((s) => s.para === '+584120000000')).toHaveLength(1);
+    const alEquipo = sms.filter((s) => s.para === '+13055550111');
+    expect(alEquipo).toHaveLength(1);
+    expect(alEquipo[0]!.texto).toContain('PÁNICO en un viaje');
+    expect(alEquipo[0]!.texto).toContain('el pasajero Pasajero Uno');
+    expect(alEquipo[0]!.texto).not.toMatch(/\$\d/);
+  });
+
+  it('sin responsable: cae en el equipo central (SMS una vez y aviso al celular con el canal de pánico)', async () => {
+    const { sms, expo } = capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    await telefonoConCanales(m, admin.id, 'ExponentPushToken[equipo-central-1]');
+    const rep = await m.cuenta('repartidor', 'Rita Riesgo');
+    const r = await m.llamar(
+      'POST',
+      '/datos/repartidor/emergencia',
+      { lat: 25.77, lng: -80.19 },
+      rep.token,
+    );
+    expect(r.estado).toBe(201);
+    // El SMS de la emergencia del repartidor ya iba al equipo: no se repite por la caída.
+    expect(sms.filter((s) => s.para === '+13055550111')).toHaveLength(1);
+    const alEquipo = expo.filter((x) => x.to === 'ExponentPushToken[equipo-central-1]');
+    expect(alEquipo).toHaveLength(1);
+    expect(alEquipo[0]!.channelId).toBe('panico');
+    expect(alEquipo[0]!.sound).toBe('panico.wav');
+    expect(alEquipo[0]!.title).toMatch(/^(PÁNICO|PANIC)/);
+  });
+
+  it('el canario marca en rojo una zona activa sin responsable, sin tumbar la salud', async () => {
+    capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    const { saludPanicoZonas } = await import('./panicoZona');
+    expect(await saludPanicoZonas(m.DB)).toBe('error');
+    const { PIEZAS_DE_OPERACION } = await import('./aprobadosNoElegibles');
+    expect(PIEZAS_DE_OPERACION.has('panicoZonas')).toBe(true);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/zonas/${ZONA}`,
+      { responsableNombre: 'Responsable Zona', responsableTelefono: RESPONSABLE },
+      admin.token,
+    );
+    expect(await saludPanicoZonas(m.DB)).toBe('ok');
+  });
+});
+
+describe('C-PANICO-INSISTE · el pánico insiste hasta que alguien lo abre o lo atiende', () => {
+  it('se repite a los 2, 4 y 6 minutos, nunca más, y para al abrirlo', async () => {
+    const { expo } = capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    await m.llamar(
+      'PATCH',
+      `/datos/admin/zonas/${ZONA}`,
+      { responsableNombre: 'Responsable Zona', responsableTelefono: RESPONSABLE },
+      admin.token,
+    );
+    const responsable = await m.cuenta('repartidor', 'Responsable Zona');
+    await m.DB.prepare("UPDATE usuarios SET telefono = '+584120000000' WHERE id = ?")
+      .bind(responsable.id)
+      .run();
+    await telefonoConCanales(m, responsable.id, 'ExponentPushToken[responsable-1]');
+    await viajeConEmergencia(m, admin);
+    const al = () => expo.filter((x) => x.to === 'ExponentPushToken[responsable-1]');
+    expect(al()).toHaveLength(1);
+    expect(al()[0]!.channelId).toBe('panico');
+    const { insistirPanicos } = await import('./panicoZona');
+    const env = { ...TWILIO, DB: m.DB } as unknown as Env;
+    const atrasar = (min: number) =>
+      m.DB.prepare(
+        `UPDATE emergencias_viaje SET creado_en = datetime('now', '-${min} minutes')`,
+      ).run();
+    expect(await insistirPanicos(env, m.DB)).toBe(0); // recién tocado: nada
+    await atrasar(2);
+    expect(await insistirPanicos(env, m.DB)).toBe(1);
+    expect(await insistirPanicos(env, m.DB)).toBe(0); // misma vuelta: no repite
+    expect(al()).toHaveLength(2);
+    expect(al()[1]!.title).toContain('still unanswered');
+    // Lo abre en el teléfono: deja de insistir.
+    const id = (await m.DB.prepare('SELECT id FROM emergencias_viaje').first<{ id: string }>())!.id;
+    expect(
+      (await m.llamar('POST', `/datos/panico/${id}/visto`, {}, responsable.token)).estado,
+    ).toBe(200);
+    await atrasar(5);
+    expect(await insistirPanicos(env, m.DB)).toBe(0);
+    expect(al()).toHaveLength(2);
+  });
+
+  it('marcado atendido en el panel tampoco insiste; con 7 minutos van las tres y ninguna más', async () => {
+    const { expo } = capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    await telefonoConCanales(m, admin.id, 'ExponentPushToken[equipo-central-2]');
+    await viajeConEmergencia(m, admin);
+    const { insistirPanicos } = await import('./panicoZona');
+    const env = { ...TWILIO, DB: m.DB } as unknown as Env;
+    for (const min of [2, 4, 7, 9]) {
+      await m.DB.prepare(
+        `UPDATE emergencias_viaje SET creado_en = datetime('now', '-${min} minutes')`,
+      ).run();
+      await insistirPanicos(env, m.DB);
+    }
+    const al = expo.filter((x) => x.to === 'ExponentPushToken[equipo-central-2]');
+    expect(al).toHaveLength(4); // el primero y tres repeticiones
+    // Uno nuevo, atendido en el panel antes de los 2 minutos: no se repite.
+    await viajeConEmergencia(m, admin);
+    const nuevo = await m.DB.prepare(
+      'SELECT id FROM emergencias_viaje ORDER BY creado_en DESC LIMIT 1',
+    ).first<{ id: string }>();
+    const sinAtender = await m.llamar(
+      'GET',
+      '/datos/admin/panico/sin-atender',
+      undefined,
+      admin.token,
+    );
+    expect(sinAtender.datos.cantidad).toBeGreaterThanOrEqual(1);
+    await m.llamar(
+      'POST',
+      `/datos/admin/viajes/emergencias/${nuevo!.id}/atender`,
+      { nota: 'Llamamos al pasajero' },
+      admin.token,
+    );
+    await m.DB.prepare(
+      "UPDATE emergencias_viaje SET creado_en = datetime('now', '-3 minutes') WHERE id = ?",
+    )
+      .bind(nuevo!.id)
+      .run();
+    const antes = expo.length;
+    await insistirPanicos(env, m.DB);
+    expect(expo.length).toBe(antes);
+  });
+
+  it('el panel del equipo: cuántos pánicos hay sin atender y qué zonas no tienen responsable', async () => {
+    capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const admin = await equipoConTelefono(m);
+    const vacio = await m.llamar('GET', '/datos/admin/panico/sin-atender', undefined, admin.token);
+    expect(vacio.estado, JSON.stringify(vacio.datos)).toBe(200);
+    expect(vacio.datos.cantidad).toBe(0);
+    expect(vacio.datos.zonasSinResponsable.map((z: { id: string }) => z.id)).toContain(ZONA);
+    const rep = await m.cuenta('repartidor', 'Rita Riesgo');
+    await m.llamar('POST', '/datos/repartidor/emergencia', { lat: 25.77, lng: -80.19 }, rep.token);
+    const uno = await m.llamar('GET', '/datos/admin/panico/sin-atender', undefined, admin.token);
+    expect(uno.datos.cantidad).toBe(1);
+    expect(uno.datos.ultimo).toBeTruthy();
+    expect(
+      (await m.llamar('GET', '/datos/admin/panico/sin-atender', undefined, rep.token)).estado,
+    ).toBe(403);
+  });
+});

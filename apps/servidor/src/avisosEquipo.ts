@@ -48,7 +48,16 @@ export async function correosEquipo(env: Env, tipo: TipoAvisoEquipo): Promise<st
  * por SMS a quien recibe ese tipo de aviso y tiene teléfono. El SMS respeta los países encendidos
  * (C-SMS-PAISES) y nunca frena la operación: si no sale, el correo ya salió.
  */
-export async function smsEquipo(env: Env, tipo: TipoAvisoEquipo, texto: string): Promise<number> {
+export async function smsEquipo(
+  env: Env,
+  tipo: TipoAvisoEquipo,
+  texto: string,
+  /**
+   * C-PANICO-CENTRAL: el tipo con que queda el SMS. El pánico va como `equipo_panico`: sale a
+   * cualquier país y cuenta en su tope diario propio (C-PANICO-ZONA).
+   */
+  tipoSms: string = `equipo_${tipo}`,
+): Promise<number> {
   if (!env.DB) return 0;
   const correos = await correosEquipo(env, tipo);
   if (!correos.length) return 0;
@@ -66,9 +75,9 @@ export async function smsEquipo(env: Env, tipo: TipoAvisoEquipo, texto: string):
       await enviarSms(env, env.DB, {
         usuarioId: f.id,
         pedidoId: null,
-        tipo: `equipo_${tipo}`,
+        tipo: tipoSms,
         telefono: f.telefono,
-        texto: texto.slice(0, 300),
+        texto: texto.slice(0, tipoSms === `equipo_${tipo}` ? 300 : 480),
       })
     )
       enviados++;

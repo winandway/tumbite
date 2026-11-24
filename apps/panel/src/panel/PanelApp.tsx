@@ -90,6 +90,7 @@ import { SuperCamila } from './SuperCamila';
 import { SuperRezagados } from './SuperRezagados';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
+import { AlarmaPanico } from './AlarmaPanico';
 import { SuperViajesFijos } from './SuperViajesFijos';
 import { SuperViaje } from './SuperViaje';
 import { SuperEmbudo } from './SuperEmbudo';
@@ -583,6 +584,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
             <ConAvisosEnVivo
               activo={Boolean(esAdmin && baseAdmin && baseAdmin !== '/panel')}
               idioma={idioma}
+              base={baseAdmin}
             >
               {/* C-AYUDA-AQUI: los «?» de cada parte solo existen bajo la dirección secreta. */}
               <BaseAyudaInterna.Provider
@@ -617,14 +619,18 @@ export function PanelApp({ ruta }: { ruta: string }) {
 function ConAvisosEnVivo({
   activo,
   idioma,
+  base,
   children,
 }: {
   activo: boolean;
   idioma: 'es' | 'en';
+  base?: string | null;
   children: React.ReactNode;
 }) {
   return activo ? (
     <ProveedorAvisosEnVivo activo idioma={idioma}>
+      {/* C-PANICO-PANEL: un pánico sin atender suena y se ve en rojo aunque la pestaña esté detrás. */}
+      {base ? <AlarmaPanico idioma={idioma} base={base} /> : null}
       {children}
     </ProveedorAvisosEnVivo>
   ) : (

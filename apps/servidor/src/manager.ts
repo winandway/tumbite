@@ -1,3 +1,4 @@
+import { avisarPasoComida } from './avisosComida';
 import { avisarGruposVencidos } from './rutas/grupos';
 import { actualizarTurnos } from './rutas/turnos';
 import { correosEquipo } from './avisosEquipo';
@@ -305,6 +306,7 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
     const corto = p.id.slice(0, 6).toUpperCase();
     try {
       if (p.minutos >= REGLAS.cancelar) {
+        // C-AVISOS-COMIDA: avisa abajo (canceladoAlCliente y canceladoAlRestaurante).
         if (await cancelarConReembolso(env, db, p.id, { desde: ['pagado'], actorId: null })) {
           await anotarEvento(db, p.id, 'cancelado_sin_respuesta', `${p.minutos} min`);
           resumen.cancelados++;
@@ -321,6 +323,9 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
         resumen.recordatorios++;
         await notificar(env, db, p.dueno_id, (i) => ({
           ...TEXTOS.recordatorio(i, corto, p.minutos),
+          // C-PEDIDO-NUEVO-INSISTE: el recordatorio suena como la alarma del pedido nuevo.
+          sonido: 'alarma.wav',
+          canal: 'pedido_nuevo',
           datos: { pedidoId: p.id },
         }));
       }
@@ -361,7 +366,9 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
     .bind(`-${REGLAS.repartidorPerdido} minutes`, ...(pedidoId ? [pedidoId] : []))
     .all<{ id: string; repartidor: string; restaurante: string }>();
   for (const p of perdidos) {
-    await soltarPedido(db, p.id, p.repartidor, 'perdido');
+    // C-AVISOS-COMIDA: el conductor sabe por qué se le quitó (antes solo se enteraba el equipo).
+    if (await soltarPedido(db, p.id, p.repartidor, 'perdido'))
+      await avisarPasoComida(env, db, p.id, 'soltado_sin_senal', p.repartidor);
     await anotarEvento(db, p.id, 'repartidor_perdido', `${REGLAS.repartidorPerdido} min sin señal`);
     resumen.perdidos++;
     const corto = p.id.slice(0, 6).toUpperCase();

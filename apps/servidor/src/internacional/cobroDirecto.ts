@@ -245,7 +245,7 @@ export async function reservarAlAceptar(db: D1Database, pedidoId: string, repart
       undefined,
       409,
     );
-  if (p.comision <= 0) return;
+  if (p.comision <= 0) return null;
   const ok = await reservarComision(db, {
     pedidoId,
     repartidorId,
@@ -259,6 +259,8 @@ export async function reservarAlAceptar(db: D1Database, pedidoId: string, repart
       undefined,
       409,
     );
+  // C-SALDO-BAJO: lo apartado, para mirar si le queda poco saldo.
+  return { pais: p.pais, moneda: p.moneda, monto: p.comision };
 }
 
 /**

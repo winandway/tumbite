@@ -73,6 +73,8 @@ const T = {
     comisionPais: 'Comisión por pedido (%; vacío = la del plan)',
     cargoFijo: 'Cargo fijo por pedido',
     topeEfectivo: 'Tope de efectivo sin conciliar (vacío = sin tope)',
+    saldoBajo:
+      'Avisar «te queda poco saldo» con estas carreras o pedidos (0 = solo al quedar en cero)',
     propinas: 'Propinas sugeridas en el carrito, en % separadas por comas (vacío = 0, 15, 20, 25)',
     guardarPais: 'Guardar país',
     comisionesCobradas: 'Comisiones cobradas',
@@ -193,6 +195,8 @@ const T = {
     comisionPais: 'Fee per order (%; empty = the plan’s)',
     cargoFijo: 'Fixed charge per order',
     topeEfectivo: 'Unsettled cash cap (empty = no cap)',
+    saldoBajo:
+      'Send “your balance is low” at this many trips or orders left (0 = only when it hits zero)',
     propinas: 'Suggested tips in the cart, in % separated by commas (empty = 0, 15, 20, 25)',
     guardarPais: 'Save country',
     comisionesCobradas: 'Fees collected',
@@ -329,6 +333,8 @@ type ConfigPais = {
   topes: TopesPais | null;
   /** C-COMIDA-VENEZUELA: propinas sugeridas en el carrito, en puntos base (null = las de siempre). */
   propinasPb?: number[] | null;
+  /** C-SALDO-BAJO: con cuántas carreras o pedidos de saldo se avisa (sin escribir = 3). */
+  avisoSaldoBajo?: number;
 };
 type Punto = {
   id: string;
@@ -836,6 +842,19 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                 })
               }
               aria-label={t.topeEfectivo}
+            />
+          </label>
+          <label className="campo campo-num">
+            <span>{t.saldoBajo}</span>
+            <input
+              inputMode="numeric"
+              data-testid="aviso-saldo-bajo"
+              value={String(pais.avisoSaldoBajo ?? 3)}
+              onChange={(ev) => {
+                const n = Number(ev.target.value.replace(/\D/g, '') || '0');
+                setPais({ ...pais, avisoSaldoBajo: Math.min(50, n) });
+              }}
+              aria-label={t.saldoBajo}
             />
           </label>
           <label className="campo">

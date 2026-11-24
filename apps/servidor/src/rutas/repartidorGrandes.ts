@@ -1,3 +1,4 @@
+import { avisarPasoComida } from '../avisosComida';
 import { CONCEPTOS_RECARGA } from '../avisoSaldo';
 import { Hono } from 'hono';
 import { historialParaRepartidor, leerAvisosGuardados } from '../avisosGuardados';
@@ -618,7 +619,7 @@ repartidorGrandes.post('/repartidor/pedidos/:id/llegue', async (c) => {
     throw new ErrorDatos('El restaurante no tiene ubicación en el mapa.', undefined, 409);
   const metros = Math.round(metrosEntre(d, { lat: p.lat, lng: p.lng }));
   if (metros > RADIO_LLEGADA_M) return c.json({ llegue: false, metros, radio: RADIO_LLEGADA_M });
-  await db.batch([
+  const [llego] = await db.batch([
     db
       .prepare(
         "INSERT OR IGNORE INTO hitos_pedido (pedido_id, hito, valor) VALUES (?, 'llego_restaurante', ?)",
@@ -630,6 +631,9 @@ repartidorGrandes.post('/repartidor/pedidos/:id/llegue', async (c) => {
       )
       .bind(d.lat, d.lng, u.id),
   ]);
+  // C-AVISOS-COMIDA: el restaurante sabe que el conductor llegó (una vez: la marca de siempre).
+  if (Number(llego?.meta.changes ?? 0) > 0)
+    await avisarPasoComida(c.env, db, c.req.param('id'), 'rest_llego');
   return c.json({ llegue: true, metros, radio: RADIO_LLEGADA_M });
 });
 

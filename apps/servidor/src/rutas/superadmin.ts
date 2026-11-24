@@ -1,3 +1,4 @@
+import { avisarPasoComida } from '../avisosComida';
 import { rutaSinIds } from '../errores';
 import { type ClaveFalta, type Falta, queTeFalta } from '../queTeFalta';
 import { aptosDeVarios } from '../activacion';
@@ -1153,6 +1154,8 @@ superadmin.post('/admin/pedidos/:id/cancelar', async (c) => {
   });
   if (!ok) throw new ErrorDatos('Este pedido ya no se puede cancelar.', undefined, 409);
   await anotarEvento(db, id, 'cancelado_por_soporte', motivo);
+  // C-AVISOS-COMIDA: cliente, restaurante y conductor se enteran (antes, nadie).
+  await avisarPasoComida(c.env, db, id, 'cancelado_soporte');
   return c.json({ ok: true });
 });
 
@@ -1173,7 +1176,9 @@ superadmin.post('/admin/pedidos/:id/soltar-repartidor', async (c) => {
     .first<{ repartidor_id: string | null; estado: string }>();
   if (!f?.repartidor_id)
     throw new ErrorDatos('Este pedido no tiene repartidor asignado o ya salió.', undefined, 409);
-  await soltarPedido(db, id, f.repartidor_id, `soporte: ${motivo}`);
+  // C-AVISOS-COMIDA: el conductor sabe que soporte le quitó el pedido.
+  if (await soltarPedido(db, id, f.repartidor_id, `soporte: ${motivo}`))
+    await avisarPasoComida(c.env, db, id, 'soltado_soporte', f.repartidor_id);
   await anotarEvento(db, id, 'repartidor_quitado_por_soporte', motivo);
   return c.json({ ok: true });
 });

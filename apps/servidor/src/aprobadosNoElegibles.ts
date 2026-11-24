@@ -124,7 +124,12 @@ export async function aprobadosNoElegibles(
 }
 
 /** Piezas de la salud que se ven en rojo y avisan, pero no ponen el sitio en 503. */
-export const PIEZAS_DE_OPERACION: ReadonlySet<string> = new Set(['aprobadosNoElegibles']);
+// C-PANICO-CENTRAL: una zona sin responsable de pánico es de operación: se ve en rojo y avisa, sin
+// tumbar la salud del sitio.
+export const PIEZAS_DE_OPERACION: ReadonlySet<string> = new Set([
+  'aprobadosNoElegibles',
+  'panicoZonas',
+]);
 
 /** El canario se llama a menudo: el resultado se guarda en memoria unos minutos (sin escribir nada). */
 const MS_MEMORIA = 5 * 60_000;
