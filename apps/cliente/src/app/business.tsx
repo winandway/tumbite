@@ -11,7 +11,10 @@ import {
   PAISES_FLEX,
   cuerposRegistro,
   faltaEnRegistro,
+  numeroFiscalValido,
+  pasoVigente,
   useBorrador,
+  type PasoDeFormulario,
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -19,6 +22,7 @@ import {
   C,
   Campo,
   CampoDireccion,
+  FormularioPorPasos,
   URL_SERVIDOR,
   alSalirTelefono,
   almacenTelefono,
@@ -74,6 +78,13 @@ const T = {
     elegirCentro: 'Elige la dirección del centro de la lista, para guardar su punto exacto.',
     abrirPanel: 'Abrir el panel de mi empresa',
     misEmpresas: 'Tus empresas',
+    // C-FORMULARIO-POR-PASOS: el registro de la empresa en tres pasos.
+    pasoEmpresa: 'Tu empresa',
+    pasoLegal: 'Datos legales',
+    pasoLegalAyuda: 'Como aparecen en los papeles de la empresa.',
+    completa: 'Completa esta casilla.',
+    marcaCasilla: 'Marca la casilla para crear tu empresa.',
+    revisa: 'Para seguir, revisa lo marcado en rojo.',
   },
   en: {
     titulo: 'Divoox Flex',
@@ -111,6 +122,12 @@ const T = {
     elegirCentro: 'Pick the hub address from the list so we save its exact location.',
     abrirPanel: 'Open my company dashboard',
     misEmpresas: 'Your companies',
+    pasoEmpresa: 'Your company',
+    pasoLegal: 'Legal details',
+    pasoLegalAyuda: 'As they appear on the company’s documents.',
+    completa: 'Fill in this field.',
+    marcaCasilla: 'Check the box to create your company.',
+    revisa: 'To continue, check what’s marked in red.',
   },
 };
 
@@ -129,7 +146,16 @@ const INICIAL = {
   centroLng: '',
   ciudad: '',
   acepto: false,
+  // C-FORMULARIO-POR-PASOS: el paso en el que iba (vuelve al reabrir).
+  pasoRegistro: '',
 };
+
+/** C-FORMULARIO-POR-PASOS: los pasos del registro de la empresa, en orden. */
+const PASOS: readonly PasoDeFormulario[] = [
+  { clave: 'empresa', casillas: ['nombre', 'razonSocial'] },
+  { clave: 'legal', casillas: ['numeroFiscal', 'direccionFiscal', 'representante', 'telefono'] },
+  { clave: 'centro', casillas: ['centroNombre', 'centroDireccion', 'ciudad', 'acepto'] },
+];
 
 const clave = () => `empresa-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -149,6 +175,47 @@ function PantallaEmpresas() {
     alSalir: alSalirTelefono,
   });
   const v = b.valores;
+  // C-FORMULARIO-POR-PASOS: el error de cada casilla, a su lado; junto al botón, por qué no avanza.
+  const [fallos, setFallos] = useState<Map<string, string>>(new Map());
+  const [porQue, setPorQue] = useState('');
+  const paso = pasoVigente(PASOS, v.pasoRegistro);
+  type Casilla = Exclude<keyof typeof INICIAL, 'acepto' | 'pasoRegistro'>;
+  const poner = (campo: Casilla, x: string) => {
+    b.cambiar(campo, x);
+    setFallos((f) => {
+      if (!f.has(campo)) return f;
+      const n = new Map(f);
+      n.delete(campo);
+      if (!n.size) setPorQue('');
+      return n;
+    });
+  };
+  /** Valida las casillas de un paso; el error va al lado de cada una. */
+  function validarPaso(clave: string): boolean {
+    const f = new Map<string, string>();
+    const casillas = PASOS.find((p) => p.clave === clave)?.casillas ?? [];
+    for (const c of casillas) {
+      if (c === 'acepto') continue;
+      const valor = new Map(Object.entries(v)).get(c);
+      if (typeof valor === 'string' && !valor.trim()) f.set(c, t.completa);
+    }
+    if (casillas.includes('numeroFiscal') && v.numeroFiscal.trim()) {
+      if (!numeroFiscalValido(v.pais, v.numeroFiscal))
+        f.set('numeroFiscal', t.fiscalMal(fiscal.nombre, fiscal.ejemplo));
+    }
+    if (casillas.includes('centroDireccion') && v.centroDireccion.trim() && !v.centroLat)
+      f.set('centroDireccion', t.elegirCentro);
+    setFallos(f);
+    const sinMarcar = casillas.includes('acepto') && !v.acepto;
+    setPorQue(f.size ? t.revisa : sinMarcar ? t.marcaCasilla : '');
+    return !f.size && !sinMarcar;
+  }
+  const irAlPaso = (clave: string) => {
+    setFallos(new Map());
+    setPorQue('');
+    setError('');
+    b.cambiar('pasoRegistro', clave);
+  };
   const pais = PAISES.find((p) => p.id === v.pais) ?? PAISES[0];
   const fiscal = numeroFiscalDe(v.pais);
   const volver = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -177,6 +244,11 @@ function PantallaEmpresas() {
     setError('');
     // C-FLEX-REGISTRO-UNICO: la misma validación que el registro de la web.
     const falta = faltaEnRegistro(v, v.acepto);
+    // C-FORMULARIO-POR-PASOS: algo de un paso anterior quedó mal: se vuelve a ese paso.
+    if (falta) {
+      const malo = PASOS.find((p) => !validarPaso(p.clave));
+      if (malo) return b.cambiar('pasoRegistro', malo.clave);
+    }
     if (falta)
       return setError(
         falta.motivo === 'fiscal'
@@ -310,132 +382,198 @@ function PantallaEmpresas() {
               idioma={idioma}
               empezar={() => void b.empezarDeNuevo()}
             />
-            <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario }}>
-              {t.datosEmpresa}
-            </Text>
-            <Text style={{ fontWeight: '600', color: C.secundario, marginTop: 8 }}>{t.pais}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 6 }}>
-              {PAISES.map((p) => (
-                <Pildora
-                  key={p.id}
-                  texto={idioma === 'en' ? p.en : p.es}
-                  activa={v.pais === p.id}
-                  rol="radio"
-                  alTocar={() => {
-                    b.cambiar('pais', p.id);
-                    b.cambiar('moneda', p.monedas[0]);
-                  }}
-                />
-              ))}
-            </View>
-            {pais.monedas.length > 1 ? (
-              <>
-                <Text style={{ fontWeight: '600', color: C.secundario }}>{t.moneda}</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginVertical: 6 }}>
-                  {pais.monedas.map((m) => (
-                    <Pildora
-                      key={m}
-                      texto={m}
-                      activa={v.moneda === m}
-                      rol="radio"
-                      alTocar={() => b.cambiar('moneda', m)}
-                    />
-                  ))}
-                </View>
-              </>
-            ) : null}
-            <Campo
-              etiqueta={t.nombre}
-              value={v.nombre}
-              onChangeText={(x) => b.cambiar('nombre', x)}
-            />
-            <Campo
-              etiqueta={t.razon}
-              value={v.razonSocial}
-              onChangeText={(x) => b.cambiar('razonSocial', x)}
-            />
-            <Campo
-              etiqueta={t.fiscal(fiscal.nombre)}
-              value={v.numeroFiscal}
-              placeholder={fiscal.ejemplo}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              onChangeText={(x) => b.cambiar('numeroFiscal', x)}
-            />
-            <CampoDireccion
-              etiqueta={t.direccionFiscal}
-              valor={v.direccionFiscal}
-              cambiar={(x) => b.cambiar('direccionFiscal', x)}
-              alElegir={(d) => b.cambiar('direccionFiscal', d.direccion)}
-              pais={v.pais}
-              testID="empresa-direccion-fiscal"
-            />
-            <Campo
-              etiqueta={t.representante}
-              value={v.representante}
-              autoComplete="name"
-              onChangeText={(x) => b.cambiar('representante', x)}
-            />
-            <Campo
-              etiqueta={t.telefono}
-              value={v.telefono}
-              keyboardType="phone-pad"
-              onChangeText={(x) => b.cambiar('telefono', x)}
-            />
-            <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario, marginTop: 12 }}>
-              {t.centro}
-            </Text>
-            <Text style={{ color: '#666B73', marginBottom: 6 }}>{t.centroAyuda}</Text>
-            <Campo
-              etiqueta={t.centroNombre}
-              value={v.centroNombre}
-              onChangeText={(x) => b.cambiar('centroNombre', x)}
-            />
-            <CampoDireccion
-              etiqueta={t.centroDireccion}
-              valor={v.centroDireccion}
-              cambiar={(x) => {
-                b.cambiar('centroDireccion', x);
-                b.cambiar('centroLat', '');
-                b.cambiar('centroLng', '');
-              }}
-              alElegir={(d) => {
-                b.cambiar('centroDireccion', d.direccion);
-                b.cambiar('centroLat', String(d.punto.lat));
-                b.cambiar('centroLng', String(d.punto.lng));
-              }}
-              pais={v.pais}
-              testID="empresa-centro"
-            />
-            <Campo
-              etiqueta={t.ciudad}
-              value={v.ciudad}
-              onChangeText={(x) => b.cambiar('ciudad', x)}
-            />
-            <Pressable
-              onPress={() => b.cambiar('acepto', !v.acepto)}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: v.acepto }}
-              style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 }}
-            >
-              <View
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  borderWidth: 2,
-                  borderColor: v.acepto ? C.exito : '#6B7078',
-                  backgroundColor: v.acepto ? C.exito : '#fff',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {v.acepto ? <Text style={{ color: '#fff', fontWeight: '700' }}>✓</Text> : null}
-              </View>
-              <Text style={{ flex: 1, color: C.secundario }}>{t.acepto}</Text>
-            </Pressable>
             {avisoError}
-            <Boton texto={t.crear} logistica cargando={trabajando} alTocar={() => void crear()} />
+            <FormularioPorPasos
+              idioma={idioma}
+              paso={paso}
+              alCambiarPaso={irAlPaso}
+              alSiguiente={validarPaso}
+              alTerminar={() => void crear()}
+              alSalir={() => setVista('info')}
+              textoTerminar={t.crear}
+              testIDTerminar="empresa-crear"
+              porQue={porQue || null}
+              cargando={trabajando}
+              testID="empresa-por-pasos"
+              logistica
+              pasos={[
+                {
+                  clave: 'empresa',
+                  casillas: PASOS[0]?.casillas ?? [],
+                  titulo: t.pasoEmpresa,
+                  contenido: (
+                    <>
+                      <Text style={{ fontWeight: '600', color: C.secundario }}>{t.pais}</Text>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          gap: 8,
+                          marginVertical: 6,
+                        }}
+                      >
+                        {PAISES.map((p) => (
+                          <Pildora
+                            key={p.id}
+                            texto={idioma === 'en' ? p.en : p.es}
+                            activa={v.pais === p.id}
+                            rol="radio"
+                            alTocar={() => {
+                              b.cambiar('pais', p.id);
+                              b.cambiar('moneda', p.monedas[0]);
+                            }}
+                          />
+                        ))}
+                      </View>
+                      {pais.monedas.length > 1 ? (
+                        <>
+                          <Text style={{ fontWeight: '600', color: C.secundario }}>{t.moneda}</Text>
+                          <View style={{ flexDirection: 'row', gap: 8, marginVertical: 6 }}>
+                            {pais.monedas.map((m) => (
+                              <Pildora
+                                key={m}
+                                texto={m}
+                                activa={v.moneda === m}
+                                rol="radio"
+                                alTocar={() => b.cambiar('moneda', m)}
+                              />
+                            ))}
+                          </View>
+                        </>
+                      ) : null}
+                      <Campo
+                        etiqueta={t.nombre}
+                        value={v.nombre}
+                        onChangeText={(x) => poner('nombre', x)}
+                        placeholder={t.nombre}
+                        error={fallos.get('nombre')}
+                      />
+                      <Campo
+                        etiqueta={t.razon}
+                        value={v.razonSocial}
+                        onChangeText={(x) => poner('razonSocial', x)}
+                        error={fallos.get('razonSocial')}
+                      />
+                    </>
+                  ),
+                },
+                {
+                  clave: 'legal',
+                  casillas: PASOS[1]?.casillas ?? [],
+                  titulo: t.pasoLegal,
+                  ayuda: t.pasoLegalAyuda,
+                  contenido: (
+                    <>
+                      <Campo
+                        etiqueta={t.fiscal(fiscal.nombre)}
+                        value={v.numeroFiscal}
+                        placeholder={fiscal.ejemplo}
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                        onChangeText={(x) => poner('numeroFiscal', x)}
+                        error={fallos.get('numeroFiscal')}
+                      />
+                      <CampoDireccion
+                        etiqueta={t.direccionFiscal}
+                        valor={v.direccionFiscal}
+                        cambiar={(x) => poner('direccionFiscal', x)}
+                        alElegir={(d) => poner('direccionFiscal', d.direccion)}
+                        pais={v.pais}
+                        error={fallos.get('direccionFiscal')}
+                        testID="empresa-direccion-fiscal"
+                      />
+                      <Campo
+                        etiqueta={t.representante}
+                        value={v.representante}
+                        autoComplete="name"
+                        placeholder={idioma === 'en' ? 'First and last name' : 'Nombre y apellido'}
+                        onChangeText={(x) => poner('representante', x)}
+                        error={fallos.get('representante')}
+                      />
+                      <Campo
+                        etiqueta={t.telefono}
+                        value={v.telefono}
+                        keyboardType="phone-pad"
+                        placeholder={idioma === 'en' ? 'Phone number' : 'Número de teléfono'}
+                        onChangeText={(x) => poner('telefono', x)}
+                        error={fallos.get('telefono')}
+                      />
+                    </>
+                  ),
+                },
+                {
+                  clave: 'centro',
+                  casillas: PASOS[2]?.casillas ?? [],
+                  titulo: t.centro,
+                  ayuda: t.centroAyuda,
+                  contenido: (
+                    <>
+                      <Campo
+                        etiqueta={t.centroNombre}
+                        value={v.centroNombre}
+                        onChangeText={(x) => poner('centroNombre', x)}
+                        error={fallos.get('centroNombre')}
+                      />
+                      <CampoDireccion
+                        etiqueta={t.centroDireccion}
+                        valor={v.centroDireccion}
+                        cambiar={(x) => {
+                          poner('centroDireccion', x);
+                          b.cambiar('centroLat', '');
+                          b.cambiar('centroLng', '');
+                        }}
+                        alElegir={(d) => {
+                          poner('centroDireccion', d.direccion);
+                          b.cambiar('centroLat', String(d.punto.lat));
+                          b.cambiar('centroLng', String(d.punto.lng));
+                        }}
+                        pais={v.pais}
+                        error={fallos.get('centroDireccion')}
+                        testID="empresa-centro"
+                      />
+                      <Campo
+                        etiqueta={t.ciudad}
+                        value={v.ciudad}
+                        onChangeText={(x) => poner('ciudad', x)}
+                        error={fallos.get('ciudad')}
+                      />
+                      <Pressable
+                        onPress={() => {
+                          b.cambiar('acepto', !v.acepto);
+                          setPorQue('');
+                        }}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: v.acepto }}
+                        style={{
+                          flexDirection: 'row',
+                          gap: 10,
+                          alignItems: 'center',
+                          paddingVertical: 8,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 6,
+                            borderWidth: 2,
+                            borderColor: v.acepto ? C.exito : '#6B7078',
+                            backgroundColor: v.acepto ? C.exito : '#fff',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {v.acepto ? (
+                            <Text style={{ color: '#fff', fontWeight: '700' }}>✓</Text>
+                          ) : null}
+                        </View>
+                        <Text style={{ flex: 1, color: C.secundario }}>{t.acepto}</Text>
+                      </Pressable>
+                    </>
+                  ),
+                },
+              ]}
+            />
           </View>
         )}
       </ScrollView>

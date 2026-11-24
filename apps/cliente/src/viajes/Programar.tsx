@@ -256,11 +256,18 @@ export function Segmentos<K extends string>({
               paddingHorizontal: 6,
             }}
           >
+            {/* C-DESBORDES-360: a 360 px «Multipaquete (Flex)» no cabe en un renglón; baja entero al
+                segundo (nunca cortado con «…» ni partido a la mitad de una palabra). */}
             <Text
-              numberOfLines={1}
+              numberOfLines={2}
               adjustsFontSizeToFit
               minimumFontScale={0.8}
-              style={{ fontWeight: '700', fontSize: 16, color: si ? '#FFFFFF' : '#666B73' }}
+              style={{
+                fontWeight: '700',
+                fontSize: 16,
+                textAlign: 'center',
+                color: si ? '#FFFFFF' : '#666B73',
+              }}
             >
               {o.texto}
             </Text>

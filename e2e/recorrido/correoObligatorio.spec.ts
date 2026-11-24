@@ -4,6 +4,7 @@ import { devices, expect, test, type Page } from './fixtures';
 import { sqlLocal } from './sqlLocal';
 import { cruzarPuertaCelular } from './puertaCelular';
 import { TEXTOS } from './textos';
+import { aceptarTerminos, enPaso } from './registroPorPasos';
 
 /**
  * C-CORREO-NO-FRENA (23 nov 2026, decisión de Richard: el correo en segundo plano), C-CORREO-FRANJA,
@@ -46,10 +47,10 @@ const idDe = (correo: string) =>
 async function crearCuenta(p: Page, idioma: 'en' | 'es', correo: string) {
   const L = TEXTOS[idioma];
   await p.getByText(L.appCrear).click();
-  await p.getByLabel(L.nombreCompleto).fill('Ana García');
-  await p.getByLabel(L.correo).fill(correo);
-  await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
-  await p.getByRole('checkbox').first().click();
+  await (await enPaso(p, p.getByLabel(L.nombreCompleto))).fill('Ana García');
+  await (await enPaso(p, p.getByLabel(L.correo))).fill(correo);
+  await (await enPaso(p, p.getByLabel(L.clave, { exact: true }))).fill(DATOS!.clave);
+  await aceptarTerminos(p); // acepta los términos (último paso)
   // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
   await p.getByTestId('registro-continuar').click();
   await p.getByTestId('crear-mi-cuenta').click();
@@ -225,11 +226,11 @@ for (const idioma of ['en', 'es'] as const) {
     const p = await ctx.newPage();
     await p.goto('/driver/');
     await p.getByText(L.appCrear).click();
-    await p.getByLabel(L.nombreCompleto).fill('Luis Pérez');
-    await p.getByLabel(L.correo).fill(correo);
-    await p.getByLabel(L.celular).fill(celular().slice(2));
-    await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
-    await p.getByRole('checkbox').first().click();
+    await (await enPaso(p, p.getByLabel(L.nombreCompleto))).fill('Luis Pérez');
+    await (await enPaso(p, p.getByLabel(L.correo))).fill(correo);
+    await (await enPaso(p, p.getByLabel(L.celular))).fill(celular().slice(2));
+    await (await enPaso(p, p.getByLabel(L.clave, { exact: true }))).fill(DATOS!.clave);
+    await aceptarTerminos(p); // acepta los términos (último paso)
     await p.getByTestId('registro-continuar').click();
     await p.getByTestId('crear-mi-cuenta').click();
     await p.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });

@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Browser, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
+import { aceptarTerminos, enPaso } from '../recorrido/registroPorPasos';
 
 /**
  * Hito 1 en el SITIO DE PRUEBAS (C-CATALOGO-ESTABLE y C-SESION-CON-LIMITE), con la app real del
@@ -48,11 +49,13 @@ async function registrar(p: Page, idioma: 'en' | 'es') {
   const L = TXT[idioma];
   await p.goto('/app/');
   await p.getByText(L.crear).click();
-  await p.getByLabel(L.nombre).fill('Prueba Hito');
-  await p.getByLabel(L.correo).fill(`cliente.${idioma}${Date.now().toString(36)}@hito1.test`);
-  await p.getByLabel(L.celular).fill('3055550199');
-  await p.getByLabel(L.clave, { exact: true }).fill(CLAVE);
-  await p.getByRole('checkbox').first().click(); // acepta los términos
+  await (await enPaso(p, p.getByLabel(L.nombre))).fill('Prueba Hito');
+  await (
+    await enPaso(p, p.getByLabel(L.correo))
+  ).fill(`cliente.${idioma}${Date.now().toString(36)}@hito1.test`);
+  await (await enPaso(p, p.getByLabel(L.celular))).fill('3055550199');
+  await (await enPaso(p, p.getByLabel(L.clave, { exact: true }))).fill(CLAVE);
+  await aceptarTerminos(p); // acepta los términos (último paso)
   // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».
   await p.getByTestId('registro-continuar').click();
   await p.getByTestId('crear-mi-cuenta').click();
