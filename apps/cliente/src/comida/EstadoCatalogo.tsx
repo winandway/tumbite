@@ -17,7 +17,7 @@ type Cobertura = {
  */
 const TEXTOS = {
   es: {
-    zonaVacia: 'Todavía no hay restaurantes en tu zona. ¡Muy pronto!',
+    zonaVacia: 'Todavía no hay restaurantes en tu zona.',
     fueraDeZona: 'Todavía no llegamos a tu zona. Pronto estaremos en más ciudades.',
     error: 'No pudimos cargar los restaurantes. Revisa tu conexión.',
     noSeActualizo: 'No pudimos actualizar la lista. Te mostramos la última que cargó.',
@@ -27,7 +27,7 @@ const TEXTOS = {
     pausada: 'El servicio en tu zona está en pausa por ahora.',
   },
   en: {
-    zonaVacia: 'No restaurants in your area yet. Coming soon!',
+    zonaVacia: 'No restaurants in your area yet.',
     fueraDeZona: 'We’re not in your area yet. We’re coming to more cities soon.',
     error: 'We couldn’t load the restaurants. Check your connection.',
     noSeActualizo: 'We couldn’t refresh the list. Showing the last one that loaded.',

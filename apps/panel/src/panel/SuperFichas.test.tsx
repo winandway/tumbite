@@ -177,6 +177,80 @@ describe('superadmin: ciudades, repartidores, clientes y restaurantes', () => {
     await waitFor(() => expect(llamadas.filter((l) => l.metodo === 'PATCH')).toHaveLength(2));
   });
 
+  it('C-FICHA-TODOS-LOS-SERVICIOS: un solo bloque de vehículos y el saldo prepago a la vista', async () => {
+    servidor(() => ({
+      repartidor: {
+        kyc: {
+          usuarioId: REP_ID,
+          estado: 'aprobado',
+          enviadoEn: '2026-11-20 10:00:00',
+          revisadoEn: '2026-11-20 12:00:00',
+        },
+        id: REP_ID,
+        codigo: 'VE-TUC-000001',
+        nombre: 'Conductor de Ejemplo',
+        correo: 'c•••@ejemplo.com',
+        telefono: '',
+        fechaNacimiento: null,
+        alta: '2026-11-20 10:00:00',
+        ciudad: 'Ciudad de ejemplo',
+        tipo: 'independiente',
+        conectado: false,
+        puntos: 0,
+        ubicacion: null,
+        vehiculos: [
+          {
+            id: 'v1',
+            tipo: 'moto',
+            marca: 'Motos Divoox',
+            modelo: 'M150',
+            anio: 2023,
+            color: 'Negro',
+            placa: 'AB1C23D',
+            estado: 'aprobado',
+            motivo: '',
+            activo: true,
+          },
+        ],
+        datos: {
+          vehiculoTipo: 'moto',
+          marca: '',
+          modelo: '',
+          anio: null,
+          color: '',
+          placa: '',
+          licenciaNumero: '',
+          licenciaEstado: '',
+          licenciaVence: null,
+          seguroAseguradora: '',
+          seguroPoliza: '',
+          seguroVence: null,
+          seguroTumbite: false,
+          antecedentes: 'pendiente',
+          estadoLicencia: 'sin_datos',
+          estadoSeguro: 'sin_datos',
+        },
+        entregas: 1,
+        ganado: 90,
+        propinas: 0,
+        porMoneda: [{ moneda: 'USD', entregas: 1, ganado: 90, propinas: 0 }],
+        saldo: 0,
+        saldoPrepago: { monto: 490, moneda: 'USD' },
+        calificacion: 5,
+        calificaciones: 1,
+        historial: [],
+        quejas: [],
+      },
+    }));
+    render(<SuperRepartidor base="/panel/control-x" id={REP_ID} idioma="es" />);
+    expect(await screen.findByText('Conductor de Ejemplo')).toBeInTheDocument();
+    expect(screen.getByText('Viajes y entregas')).toBeInTheDocument();
+    expect(screen.getByTestId('ficha-saldo-prepago')).toHaveTextContent(/4[.,]90/);
+    expect(screen.getByTestId('ficha-vehiculos')).toBeInTheDocument();
+    expect(screen.queryByTestId('ficha-datos-reparto')).toBeNull();
+    expect(screen.queryByText('Licencia')).toBeNull();
+  });
+
   it('busca clientes y abre su ficha con sus compras', async () => {
     servidor((url) => {
       if (url.includes('/admin/ciudades')) return CIUDADES;

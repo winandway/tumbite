@@ -75,7 +75,7 @@ export const internacional = new Hono<{ Bindings: Env; Variables: Variables }>()
 
 const PAIS = z.string().regex(/^[A-Z]{2}$/);
 
-async function paisDelRepartidor(db: D1Database, repartidorId: string) {
+export async function paisDelRepartidor(db: D1Database, repartidorId: string) {
   // C-PAPELES-CONDUCTOR: antes de conectarse, la ciudad que eligió el conductor (usuarios.zona_id).
   const d = await db
     .prepare(
