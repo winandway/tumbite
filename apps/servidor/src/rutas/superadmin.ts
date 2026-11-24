@@ -1,5 +1,6 @@
 import { rutaSinIds } from '../errores';
 import { type ClaveFalta, type Falta, queTeFalta } from '../queTeFalta';
+import { aptosDeVarios } from '../activacion';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
@@ -429,9 +430,16 @@ superadmin.get('/admin/repartidores', async (c) => {
     .all<Record<string, unknown>>();
   const hayMas = results.length > POR_PAGINA;
   const pagina = results.slice(0, POR_PAGINA);
+  // C-BARRA-ACTIVACION: «listo para recibir carreras» con la MISMA vista del reparto, una sola lectura
+  // por página (nunca una por fila).
+  const listos = await aptosDeVarios(
+    db,
+    pagina.map((r) => String(r.id)),
+  );
   return c.json({
     repartidores: pagina.map((r) => ({
       id: String(r.id),
+      listo: listos.has(String(r.id)),
       codigo: r.codigo ? String(r.codigo) : '',
       nombre: String(r.nombre),
       correo: String(r.correo),

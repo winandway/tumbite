@@ -18,7 +18,7 @@ import {
   deTabla,
   enlaceFicha,
 } from './KycPiezas';
-import { RevisarKyc } from './SuperKycFicha';
+import { RevisarKyc, aprobarIdentidad } from './SuperKycFicha';
 import { usePreferencias } from './usePreferencias';
 import { ControlesAvisos } from './avisosEnVivo';
 import { EVENTO_CAMBIO } from './sonarEvento';
@@ -73,6 +73,9 @@ type Solicitud = {
   fotosSubidas?: number;
   /** C-LLEGA-SOLO-A-REVISION: lo que le falta («Sin enviar»), con la misma lista del servidor. */
   falta?: string[];
+  /** C-VERIFICACION-UNICA: lo que espera una decisión de esa persona y si está toda en verde. */
+  porDecidir?: string[];
+  enVerde?: boolean;
 };
 type Respuesta = {
   solicitudes: Solicitud[];
@@ -128,7 +131,12 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
     estado: 'pendiente',
     zona: '',
     cuentas: 'reales',
+    orden: 'llegada',
   });
+  const orden = pref.valores.orden === 'cerca' ? 'cerca' : 'llegada';
+  const [elegidos, setElegidos] = useState<Set<string>>(new Set());
+  const [aprobando, setAprobando] = useState(false);
+  const [avisoVerde, setAvisoVerde] = useState<{ ok: boolean; texto: string } | null>(null);
   const estado = leerEstado(pref.valores.estado);
   const zona = pref.valores.zona ?? '';
   const cuentas = pref.valores.cuentas || 'reales';
@@ -158,12 +166,13 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
   const parametros = useCallback(
     (despues?: string) => {
       const p = new URLSearchParams({ estado, cuentas });
+      if (estado === 'pendiente' && orden === 'cerca') p.set('orden', 'cerca');
       if (zona) p.set('zona', zona);
       if (q) p.set('q', q);
       if (despues) p.set('despues', despues);
       return p.toString();
     },
-    [estado, cuentas, zona, q],
+    [estado, cuentas, zona, q, orden],
   );
 
   const consulta = parametros();
@@ -252,6 +261,32 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
   };
   const totales = new Map(Object.entries(r?.totales ?? {}));
   const lista = r?.solicitudes ?? [];
+  const verdes = lista.filter((s) => s.enVerde && elegidos.has(s.id));
+  // C-VERIFICACION-UNICA: aprobar varias identidades en verde sin entrar una por una (decide una
+  // persona, con su confirmación; la IA nunca aprueba). Lo que falla se dice y lo demás queda.
+  async function aprobarVerdes() {
+    if (!verdes.length || aprobando) return;
+    if (!window.confirm(t.confirmarVerdes(verdes.length))) return;
+    setAprobando(true);
+    setAvisoVerde(null);
+    let hechas = 0;
+    try {
+      for (const s of verdes) {
+        await aprobarIdentidad(s.id);
+        hechas += 1;
+      }
+      setAvisoVerde({ ok: true, texto: t.verdesHechas(hechas) });
+    } catch (x) {
+      setAvisoVerde({
+        ok: false,
+        texto: t.verdesFallo(hechas, x instanceof Error ? x.message : String(x)),
+      });
+    } finally {
+      setAprobando(false);
+      setElegidos(new Set());
+      setVuelta((v) => v + 1);
+    }
+  }
   const otras = ESTADOS.filter((e) => e !== estado && (totales.get(e) ?? 0) > 0);
 
   return (
@@ -309,6 +344,38 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
           idioma={idioma}
         />
       </div>
+      {estado === 'pendiente' ? (
+        <div className="fila-botones kyc-verdes">
+          <label>
+            {t.orden}{' '}
+            <select
+              value={orden}
+              onChange={(e) => pref.cambiar('orden', e.target.value)}
+              data-testid="orden-bandeja"
+            >
+              <option value="llegada">{t.ordenLlegada}</option>
+              <option value="cerca">{t.ordenCerca}</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            className="boton exito chico"
+            disabled={!verdes.length || aprobando}
+            onClick={() => void aprobarVerdes()}
+            data-testid="aprobar-verdes"
+          >
+            {t.aprobarVerdes(verdes.length)}
+          </button>
+        </div>
+      ) : null}
+      {estado === 'pendiente' && lista.some((s) => s.enVerde) ? (
+        <p className="pista">{t.aprobarVerdesAyuda}</p>
+      ) : null}
+      {avisoVerde ? (
+        <p className={avisoVerde.ok ? 'texto-exito' : 'error-general'} role="status">
+          {avisoVerde.texto}
+        </p>
+      ) : null}
       <AvisoFiltrosGuardados
         visible={pref.guardados}
         idioma={idioma}
@@ -362,6 +429,23 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
               className={nuevas.has(s.id) ? 'kyc-fila kyc-fila-nueva' : 'kyc-fila'}
               data-testid="kyc-fila"
             >
+              {estado === 'pendiente' && s.enVerde ? (
+                <input
+                  type="checkbox"
+                  className="kyc-elegir"
+                  checked={elegidos.has(s.id)}
+                  aria-label={t.elegir(s.nombre)}
+                  onChange={(e) => {
+                    const marcado = e.target.checked;
+                    setElegidos((antes) => {
+                      const nuevo = new Set(antes);
+                      if (marcado) nuevo.add(s.id);
+                      else nuevo.delete(s.id);
+                      return nuevo;
+                    });
+                  }}
+                />
+              ) : null}
               {src ? (
                 <button
                   type="button"
@@ -409,6 +493,22 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                   cara={s.cara ?? null}
                   idioma={idioma}
                 />
+                {estado === 'pendiente' && s.porDecidir?.length ? (
+                  <ul className="kyc-comprobaciones" aria-label={t.porDecidir}>
+                    {s.porDecidir.map((x) => (
+                      <li key={x}>
+                        <Insignia tono="pendiente">
+                          {t.porDecidir}: {enPalabras(t.decidir, x)}
+                        </Insignia>
+                      </li>
+                    ))}
+                    {s.enVerde ? (
+                      <li>
+                        <Insignia tono="hecho">{t.enVerde}</Insignia>
+                      </li>
+                    ) : null}
+                  </ul>
+                ) : null}
                 {sinEnviar ? (
                   <ul className="kyc-comprobaciones">
                     {s.falta?.length ? (
@@ -442,7 +542,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                   <Insignia tono="apagado" testId="kyc-registro">
                     {t.registro(horas)}
                   </Insignia>
-                ) : s.estado === 'pendiente' ? (
+                ) : s.estado === 'pendiente' || estado === 'pendiente' ? (
                   <Insignia
                     tono={horas >= HORAS_URGENTE ? 'problema' : 'pendiente'}
                     testId="kyc-espera"

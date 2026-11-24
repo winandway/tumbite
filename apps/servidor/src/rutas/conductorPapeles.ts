@@ -1,3 +1,4 @@
+import { avisarSiQuedoActivo } from '../activacion';
 import { ZONA_CONDUCTOR_SQL, zonaRealSql } from '../cuentaPais';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -522,6 +523,7 @@ conductorPapeles.get('/admin/papeles-conductor', async (c) => {
     .enum(['pendiente', 'aprobado', 'rechazado'])
     .catch('pendiente')
     .parse(c.req.query('estado') ?? 'pendiente');
+  const conductor = (c.req.query('conductor') ?? '').slice(0, 64);
   // C-PERMISOS-FINOS: los papeles de los conductores de su alcance.
   const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'd.conductor_id');
   const { results } = await base(c)
@@ -531,9 +533,10 @@ conductorPapeles.get('/admin/papeles-conductor', async (c) => {
               (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL}) AS pais
          FROM conductor_documentos d JOIN usuarios u ON u.id = d.conductor_id
          LEFT JOIN repartidores r ON r.usuario_id = d.conductor_id
-        WHERE d.estado = ?${alc.sql} ORDER BY d.creado_en LIMIT 100`,
+        WHERE d.estado = ? AND (? = '' OR d.conductor_id = ?)${alc.sql} ORDER BY d.creado_en LIMIT 100`,
     )
-    .bind(estado, ...alc.valores)
+    // C-VERIFICACION-UNICA: con `conductor`, solo los de esa persona (su ficha en Verificaciones).
+    .bind(estado, conductor, conductor, ...alc.valores)
     .all();
   return c.json({ documentos: results });
 });
@@ -660,5 +663,7 @@ conductorPapeles.put('/admin/papeles-conductor/:id', async (c) => {
       decision: d.estado,
       por: admin.id,
     });
+  // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
+  if (d.estado === 'aprobado') await avisarSiQuedoActivo(c.env, db, doc.conductor_id);
   return c.json({ estado: d.estado, requisitos });
 });

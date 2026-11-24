@@ -221,6 +221,59 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja', () => {
  * sus fotos tiene su pestaña con contador; su fila dice hace cuánto se registró y qué le falta, y
  * lleva a su ficha completa (no hay fotos que revisar).
  */
+describe('C-VERIFICACION-UNICA · un pendiente por conductor', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('dice qué espera de cada uno; solo lo que está en verde se elige y se aprueba junto, con confirmación', async () => {
+    const llamadas = bandeja(
+      [
+        fila({ id: 'a', nombre: 'Ana Verde', porDecidir: ['identidad'], enVerde: true }),
+        fila({
+          id: 'b',
+          nombre: 'Beto Moto',
+          estado: 'aprobado',
+          porDecidir: ['vehiculo'],
+          enVerde: false,
+        }),
+      ],
+      { pendiente: 2 },
+    );
+    vi.stubGlobal('confirm', () => true);
+    render(<SuperKyc base={BASE} idioma="es" id={null} />);
+    const filas = await screen.findAllByTestId('kyc-fila');
+    expect(within(filas[1]!).getByText('Por decidir: Vehículo')).toBeInTheDocument();
+    // En «Pendientes», quien solo espera su moto dice cuánto lleva esperando, no «aprobada».
+    expect(within(filas[1]!).getByTestId('kyc-espera')).toBeInTheDocument();
+    expect(within(filas[1]!).queryByRole('checkbox')).toBeNull();
+    const boton = screen.getByTestId('aprobar-verdes');
+    expect(boton).toBeDisabled();
+    await userEvent.click(within(filas[0]!).getByRole('checkbox', { name: /Ana Verde/ }));
+    expect(boton).toHaveTextContent('Aprobar 1 identidad en verde');
+    await userEvent.click(boton);
+    await waitFor(() =>
+      expect(llamadas.filter((l) => l.metodo === 'PATCH').map((l) => [l.url, l.cuerpo])).toEqual([
+        ['/datos/admin/kyc/a', { estado: 'aprobado', motivo: '' }],
+      ]),
+    );
+    expect(await screen.findByText('Aprobaste 1 identidad.')).toBeInTheDocument();
+  });
+
+  it('«Más cerca de activarse» pide ese orden al servidor y se recuerda', async () => {
+    const llamadas = bandeja();
+    render(<SuperKyc base={BASE} idioma="es" id={null} />);
+    await screen.findAllByTestId('kyc-fila');
+    await userEvent.selectOptions(screen.getByTestId('orden-bandeja'), 'cerca');
+    await waitFor(() =>
+      expect(
+        llamadas.some(
+          (l) => l.url.startsWith('/datos/admin/kyc?') && l.url.includes('orden=cerca'),
+        ),
+      ).toBe(true),
+    );
+  });
+});
+
 describe('C-VERIFICACIONES-SIN-ENVIAR · la pestaña', () => {
   const sinEnviar = (x: Record<string, unknown> = {}) =>
     fila({
@@ -400,6 +453,17 @@ describe('C-VERIFICACIONES-BANDEJA · la ficha de una persona', () => {
     return servidor((url, init) => {
       if (init?.method === 'PATCH') return { ok: true };
       if (url === `/datos/admin/kyc/${ID}`) return detalle();
+      // C-VERIFICACION-UNICA: la barra de activación que va en la misma ficha.
+      if (url.endsWith('/activacion'))
+        return {
+          pasos: [],
+          listo: false,
+          recibiendo: false,
+          servicios: [],
+          siguiente: null,
+          hechos: 0,
+          total: 0,
+        };
       return {};
     });
   }

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../env';
 import { zonaRealSql } from '../cuentaPais';
+import { POR_DECIDIR_SQL } from './kycBandeja';
 import { type Variables, base, exigir } from '../sesion';
 import {
   accesoDe,
@@ -168,6 +169,8 @@ export type PendienteMenu = {
   /** Cuántas de esas pasaron su límite (lo que vuelve rojo el punto); se dice en el texto. */
   urgentes?: number;
 };
+// C-VERIFICACION-UNICA: «Verificaciones» cuenta conductores con algo por decidir (identidad, vehículo
+// o un papel), con la MISMA condición que la pestaña Pendientes; baja al decidirlo.
 const REAL = (col: string) => `${col} NOT IN (SELECT id FROM usuarios WHERE es_prueba = 1)`;
 /** Horas que una verificación enviada puede esperar antes de volverse urgente. */
 export const HORAS_VERIFICACION_URGENTE = 24;
@@ -189,8 +192,8 @@ export async function pendientesDelMenu(
            WHERE cc.estado = 'abierto' AND (cp.usuario_id IS NULL OR ${REAL('cp.usuario_id')})) AS camila,
         (SELECT COUNT(*) FROM reportes_contenido rc WHERE rc.estado = 'abierto') AS moderacion,
         (SELECT COUNT(*) FROM aprobaciones_dinero a WHERE a.estado = 'pendiente') AS aprobaciones,
-        (SELECT COUNT(*) FROM kyc k WHERE k.estado = 'pendiente' AND ${REAL('k.usuario_id')}${conductor.sql}) AS verificaciones,
-        (SELECT COUNT(*) FROM kyc k WHERE k.estado = 'pendiente' AND ${REAL('k.usuario_id')}${conductor.sql}
+        (SELECT COUNT(*) FROM kyc k WHERE ${POR_DECIDIR_SQL()} AND ${REAL('k.usuario_id')}${conductor.sql}) AS verificaciones,
+        (SELECT COUNT(*) FROM kyc k WHERE ${POR_DECIDIR_SQL()} AND ${REAL('k.usuario_id')}${conductor.sql}
            AND k.enviado_en <= datetime('now', '-${HORAS_VERIFICACION_URGENTE} hours')) AS verificaciones_viejas,
         (SELECT COUNT(*) FROM restaurantes r WHERE r.estado = 'pendiente' AND ${REAL('r.dueno_id')}${restaurante.sql}) AS restaurantes,
         (SELECT COUNT(*) FROM solicitudes_linea s WHERE s.estado = 'pendiente') AS lineas,

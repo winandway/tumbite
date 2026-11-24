@@ -234,11 +234,37 @@ export function primeraFalta(
   faltas: readonly FaltaServidor[] | null | undefined,
   idioma: Idioma,
 ): { aviso: AvisoFalta; falta: FaltaServidor; despues: number } | null {
+  // C-SOLO-EFECTIVO: el pago móvil es opcional («recibe más carreras»): no cuenta como paso que
+  // falta para empezar; lo avisa su propia franja fija (`franjaSoloEfectivo`).
   const lista = (faltas ?? [])
+    .filter((f) => f.clave !== 'sin_pago_movil')
     .map((f) => ({ f, aviso: avisoDeFalta(f, idioma) }))
     .filter((x): x is { f: FaltaServidor; aviso: AvisoFalta } => x.aviso !== null);
   const p = lista[0];
   return p ? { aviso: p.aviso, falta: p.f, despues: lista.length - 1 } : null;
+}
+
+/**
+ * C-SOLO-EFECTIVO (23 nov 2026, Richard: «un anuncio que le diga: solo podrás recibir carreras en
+ * efectivo, no has agregado los datos del pago móvil») — países con pago a celular (Venezuela, Perú).
+ * Una franja fija en el inicio de Driver, no una ventana: sale mientras el servidor diga que le falta
+ * su cuenta de pago a celular, y desaparece sola al cargarla. El servidor solo manda esta falta donde
+ * rige el pago directo, así que en Estados Unidos nunca sale.
+ */
+export function franjaSoloEfectivo(
+  faltas: readonly FaltaServidor[] | null | undefined,
+  idioma: Idioma,
+): { falta: FaltaServidor; texto: string; boton: string } | null {
+  const falta = (faltas ?? []).find((f) => f.clave === 'sin_pago_movil');
+  if (!falta) return null;
+  const en = idioma === 'en';
+  return {
+    falta,
+    texto: en
+      ? 'You only get cash trips. Add your mobile payment account to get more.'
+      : 'Solo recibes carreras en efectivo. Agrega tu pago móvil para recibir más.',
+    boton: en ? 'Add my mobile payment' : 'Agregar mi pago móvil',
+  };
 }
 
 /** Un vehículo ya guardado, como lo devuelve `GET /datos/conductor/vehiculos`. */

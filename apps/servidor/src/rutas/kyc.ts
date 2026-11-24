@@ -1,3 +1,4 @@
+import { avisarSiQuedoActivo } from '../activacion';
 import {
   CLAVE_PAISES,
   canalesPara,
@@ -491,6 +492,7 @@ kyc.get('/admin/kyc', async (c) => {
   const zona = c.req.query('zona') ?? '';
   const filtros = {
     estado: leerEstadoBandeja(c.req.query('estado')),
+    orden: c.req.query('orden') === 'cerca' ? ('cerca' as const) : ('llegada' as const),
     zona: /^[A-Za-z0-9_-]{1,40}$/.test(zona) ? zona : '',
     cuentas: c.req.query('cuentas'),
     q: c.req.query('q') ?? '',
@@ -1159,5 +1161,7 @@ kyc.patch('/admin/kyc/:id', async (c) => {
       decision: d.estado,
       por: admin.id,
     });
+  // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
+  if (u.rol === 'repartidor' && d.estado === 'aprobado') await avisarSiQuedoActivo(c.env, db, id);
   return c.json({ ok: true });
 });

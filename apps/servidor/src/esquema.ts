@@ -375,6 +375,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-CIUDAD-CONDUCTOR (13 nov 2026): cuándo eligió el conductor su ciudad por última vez (una vez
   // cada 24 horas y dentro de su país; sin valor, todavía no la eligió).
   ['repartidores', 'ciudad_elegida_en', 'TEXT'],
+  // C-BARRA-ACTIVACION (23 nov 2026): cuándo se le avisó «Ya puedes recibir carreras» (una vez en la vida).
+  ['repartidores', 'activacion_avisada_en', 'TEXT'],
   // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
   ['viajes_pago_movil', 'corregido_en', 'TEXT'],
   // C-VIAJE-PROGRAMADO (14 nov 2026): la hora reservada del viaje (sin valor, es para ya) y cuántos

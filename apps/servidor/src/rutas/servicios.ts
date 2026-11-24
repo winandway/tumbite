@@ -1,4 +1,5 @@
 import { SERVICIOS_CON_CONDUCTOR, hayQuienLoTome } from '../servicioSinOferta';
+import { avisarSiQuedoActivo } from '../activacion';
 import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
 import { cuantosHay } from '../canarioLecturas';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
@@ -1586,6 +1587,7 @@ servicios.get('/admin/vehiculos', async (c) => {
     ])
     .catch('en_revision')
     .parse(c.req.query('estado') ?? 'en_revision');
+  const conductor = (c.req.query('conductor') ?? '').slice(0, 64);
   const db = base(c);
   // C-PERMISOS-FINOS: los vehículos de los conductores de su alcance.
   const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'v.conductor_id');
@@ -1596,9 +1598,10 @@ servicios.get('/admin/vehiculos', async (c) => {
               (SELECT z.pais FROM repartidores r JOIN zonas z ON z.id = r.zona_id
                 WHERE r.usuario_id = v.conductor_id) AS pais
          FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
-        WHERE v.estado = ?${alc.sql} ORDER BY v.actualizado_en LIMIT 100`,
+        WHERE v.estado = ? AND (? = '' OR v.conductor_id = ?)${alc.sql} ORDER BY v.actualizado_en LIMIT 100`,
     )
-    .bind(estado, ...alc.valores)
+    // C-VERIFICACION-UNICA: con `conductor`, solo los de esa persona (su ficha en Verificaciones).
+    .bind(estado, conductor, conductor, ...alc.valores)
     .all<{ id: string; conductor_id: string }>();
   const ids = results.map((v) => v.id);
   // C-SEGURO-EN-PLAZO: a quién le corre la póliza dentro de su plazo (una lectura por lote).
@@ -1704,6 +1707,8 @@ servicios.put('/admin/vehiculos/:id/documentos/:doc', async (c) => {
       decision: d.estado,
       por: admin.id,
     });
+  // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
+  if (d.estado === 'aprobado') await avisarSiQuedoActivo(c.env, db, antes.conductor_id);
   return c.json({ estado: d.estado });
 });
 
@@ -1766,6 +1771,8 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
       antes.conductor_id,
       SERVICIOS_SIN_SEGUNDO_REGISTRO,
     ).catch((e: unknown) => console.error('vehículos: encender los servicios del vehículo', e));
+  // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
+  if (d.estado === 'aprobado') await avisarSiQuedoActivo(c.env, db, antes.conductor_id);
   return c.json({ estado: d.estado, categoria, activo: activo.activo });
 });
 
@@ -1864,6 +1871,8 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     antes,
     despues,
   );
+  // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
+  if (d.estado === 'aprobada') await avisarSiQuedoActivo(c.env, db, conductor);
   return c.json({ habilitacion: despues });
 });
 

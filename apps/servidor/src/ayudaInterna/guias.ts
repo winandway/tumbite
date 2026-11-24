@@ -14,6 +14,7 @@
  * la guía de la autorización vencida lleva en español las de Miami (El Vigía no cobra con tarjeta).
  */
 import { plazoPapeles } from './papeles';
+import { verificacionUnica } from './activacion';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -3292,6 +3293,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(cambiarCiudad),
         de(corregirCorreo),
         de(plazoPapeles),
+        de(verificacionUnica),
       ],
     },
     {

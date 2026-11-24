@@ -67,7 +67,12 @@ export async function queTeFalta(
   db: D1Database,
   id: string,
   env?: Env,
-): Promise<{ recibeViajes: boolean; faltas: Falta[] }> {
+): Promise<{
+  recibeViajes: boolean;
+  faltas: Falta[];
+  /** El vehículo que se mira (el activo o el mejor que tenga): lo usa la barra de activación. */
+  vehiculo: { id: string; tipo: string; estado: string } | null;
+}> {
   // La cuenta nueva de un país con plazo nace con él (una sola escritura en su vida, como al leer
   // «Tus papeles»): sin esto, la primera lectura no sabía que la cara era lo que faltaba.
   if (env) await empezarPlazo(env, db, id, 'registro');
@@ -223,5 +228,9 @@ export async function queTeFalta(
     poner({ clave: 'desconectado', quien: 'conductor' });
 
   // «Recibe viajes» = la misma regla del reparto (C-EN-LINEA-DE-VERDAD); la ubicación vieja va aparte.
-  return { recibeViajes: Boolean(f && Number(f.elegible)) && !soloComidaVacia, faltas };
+  return {
+    recibeViajes: Boolean(f && Number(f.elegible)) && !soloComidaVacia,
+    faltas,
+    vehiculo: elegido ? { id: elegido.id, tipo: elegido.tipo, estado: elegido.estado } : null,
+  };
 }

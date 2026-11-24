@@ -192,6 +192,8 @@ export function condicionBusqueda(
 
 export type FiltrosBandeja = {
   estado: EstadoBandeja;
+  /** C-VERIFICACION-UNICA: «cerca» = primero quien está más cerca de activarse (solo Pendientes). */
+  orden?: 'llegada' | 'cerca';
   zona: string;
   cuentas: string | undefined;
   q: string;
@@ -240,13 +242,34 @@ export function leerCursor(despues: string): { fecha: string; id: string } | nul
     : { fecha: despues.slice(0, i), id: despues.slice(i + 1) };
 }
 
+/**
+ * C-VERIFICACION-UNICA (23 nov 2026, Richard: «pensaba que aceptando el KYC ya estaba aceptando todo y
+ * no sabía que la moto se aceptaba por separado») — todos los países. Verificaciones es UN pendiente
+ * por CONDUCTOR: está en «Pendientes» si algo suyo espera una decisión del equipo (su identidad, su
+ * vehículo en revisión o un papel suyo, como la licencia), no solo su identidad. La misma condición
+ * cuenta el número del menú y baja al decidirlo.
+ */
+export const VEHICULO_POR_DECIDIR = (col: string) =>
+  `EXISTS (SELECT 1 FROM vehiculos vr WHERE vr.conductor_id = ${col} AND vr.estado = 'en_revision')`;
+export const PAPEL_POR_DECIDIR = (col: string) =>
+  `EXISTS (SELECT 1 FROM conductor_documentos cd WHERE cd.conductor_id = ${col} AND cd.estado = 'pendiente')`;
+export const POR_DECIDIR_SQL = (kyc = 'k') =>
+  `(${kyc}.estado = 'pendiente' OR ${VEHICULO_POR_DECIDIR(`${kyc}.usuario_id`)} OR ${PAPEL_POR_DECIDIR(`${kyc}.usuario_id`)})`;
+/** «Más cerca de activarse»: cuántas cosas le faltan (identidad, vehículo aprobado, papeles). */
+const LEJANIA_SQL = `((k.estado != 'aprobado')
+  + (NOT EXISTS (SELECT 1 FROM vehiculos va WHERE va.conductor_id = k.usuario_id AND va.estado IN ('aprobado', 'en_revision')))
+  + (NOT EXISTS (SELECT 1 FROM vehiculos vx WHERE vx.conductor_id = k.usuario_id AND vx.estado = 'aprobado'))
+  + ${PAPEL_POR_DECIDIR('k.usuario_id')})`;
+
 /** La consulta de UNA página de la bandeja. */
 export function consultaPagina(f: FiltrosBandeja, despues: string) {
   const comun = condicionesBandeja(f);
-  const donde = ['k.estado = ?', ...comun.sql];
-  const valores: unknown[] = [f.estado, ...comun.valores];
-  const cursor = leerCursor(despues);
   const pendientes = f.estado === 'pendiente';
+  const donde = [pendientes ? POR_DECIDIR_SQL() : 'k.estado = ?', ...comun.sql];
+  const valores: unknown[] = [...(pendientes ? [] : [f.estado]), ...comun.valores];
+  // «Más cerca de activarse» ordena de otra forma: una sola página, sin cursor.
+  const cerca = pendientes && f.orden === 'cerca';
+  const cursor = cerca ? null : leerCursor(despues);
   if (cursor) {
     if (pendientes) {
       donde.push('(k.enviado_en > ? OR (k.enviado_en = ? AND k.usuario_id > ?))');
@@ -255,9 +278,11 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
     }
     valores.push(cursor.fecha, cursor.fecha, cursor.id);
   }
-  const orden = pendientes
-    ? 'k.enviado_en, k.usuario_id'
-    : `${FECHA_ORDEN} DESC, k.usuario_id DESC`;
+  const orden = cerca
+    ? `${LEJANIA_SQL}, k.enviado_en, k.usuario_id`
+    : pendientes
+      ? 'k.enviado_en, k.usuario_id'
+      : `${FECHA_ORDEN} DESC, k.usuario_id DESC`;
   const sql = `SELECT k.usuario_id AS id, k.estado, k.doc_tipo AS docTipo, k.enviado_en AS enviado,
       k.revisado_en AS revisado, k.motivo, k.local_distancia_m AS distancia, k.proxima_revision AS proxima,
       k.doc_frente IS NOT NULL AS con_doc_frente, k.doc_reverso IS NOT NULL AS con_doc_reverso,
@@ -267,6 +292,7 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
       d.codigo, rs.id AS restaurante_id, rs.nombre AS restaurante, ${ZONA_BANDEJA_SQL} AS zona_id, z.nombre AS zona_nombre,
       z.pais AS pais, (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg_pais,
       vc.resultado AS cara,
+      ${VEHICULO_POR_DECIDIR('k.usuario_id')} AS por_vehiculo, ${PAPEL_POR_DECIDIR('k.usuario_id')} AS por_papeles,
       (SELECT json_group_array(json_object('paso', f.paso, 'clave', f.clave, 'estado', f.estado,
                 'color', f.ia_color, 'clase', f.ia_clase, 'lectura', f.ia_json))
          FROM verificacion_fotos f
@@ -275,7 +301,7 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
     ${DESDE_BANDEJA}
     LEFT JOIN verificacion_caras vc ON vc.conductor_id = k.usuario_id
     WHERE ${donde.join(' AND ')}
-    ORDER BY ${orden} LIMIT ${POR_PAGINA_BANDEJA + 1}`;
+    ORDER BY ${orden} LIMIT ${cerca ? POR_PAGINA_BANDEJA : POR_PAGINA_BANDEJA + 1}`;
   return {
     sql,
     valores,
@@ -287,10 +313,15 @@ export function consultaPagina(f: FiltrosBandeja, despues: string) {
 export function consultaTotales(f: Omit<FiltrosBandeja, 'estado'>) {
   const comun = condicionesBandeja(f);
   return {
+    // «Pendientes» cuenta conductores con ALGO por decidir (C-VERIFICACION-UNICA), como la página.
     sql: `SELECT k.estado, COUNT(*) AS n ${DESDE_BANDEJA}
-      WHERE k.estado IN ('pendiente', 'aprobado', 'rechazado')${comun.sql.map((s) => ` AND ${s}`).join('')}
-      GROUP BY k.estado`,
-    valores: comun.valores,
+      WHERE k.estado IN ('aprobado', 'rechazado')${comun.sql.map((s) => ` AND ${s}`).join('')}
+      GROUP BY k.estado
+      UNION ALL
+      SELECT 'pendiente' AS estado, COUNT(*) AS n ${DESDE_BANDEJA}
+      WHERE ${POR_DECIDIR_SQL()}${comun.sql.map((s) => ` AND ${s}`).join('')}
+      HAVING COUNT(*) > 0`,
+    valores: [...comun.valores, ...comun.valores],
   };
 }
 
@@ -477,6 +508,8 @@ export type FilaBandeja = {
   zona_nombre: string | null;
   cara: string | null;
   fotos: string | null;
+  por_vehiculo?: number;
+  por_papeles?: number;
   /** C-DOCUMENTO-SIN-REVERSO: el país de la zona y su configuración (de ahí, si pide el reverso). */
   pais?: string | null;
   cfg_pais?: string | null;
@@ -538,5 +571,32 @@ export function filaDeBandeja(r: FilaBandeja, distanciaMaxima: number) {
       Number(r.con_miniatura) === 1 ? 'mini' : Number(r.con_selfie) === 1 ? 'selfie' : null,
     comprobaciones,
     cara: resumenCara(r.cara),
+    ...porDecidirDe(r, comprobaciones, resumenCara(r.cara)),
   };
+}
+
+/**
+ * C-VERIFICACION-UNICA: lo que espera una decisión de ese conductor y si está «en verde» (se puede
+ * aprobar desde la lista sin entrar): solo su identidad por decidir, con TODAS sus comprobaciones
+ * automáticas en verde y la cara igual a la del documento. Un vehículo o un papel no tienen
+ * comprobación automática: esos los mira una persona en su ficha. La IA nunca aprueba.
+ */
+function porDecidirDe(
+  r: FilaBandeja,
+  comprobaciones: { tono: string }[],
+  cara: { tono: string } | null,
+): { porDecidir: string[]; enVerde: boolean } {
+  const porDecidir = [
+    ...(r.estado === 'pendiente' ? ['identidad'] : []),
+    ...(Number(r.por_vehiculo) === 1 ? ['vehiculo'] : []),
+    ...(Number(r.por_papeles) === 1 ? ['papeles'] : []),
+  ];
+  const enVerde =
+    porDecidir.length === 1 &&
+    porDecidir[0] === 'identidad' &&
+    r.rol === 'repartidor' &&
+    comprobaciones.length > 0 &&
+    comprobaciones.every((c) => c.tono === 'hecho') &&
+    cara?.tono === 'hecho';
+  return { porDecidir, enVerde };
 }
