@@ -12,6 +12,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Ensayo general del 24 nov 2026 (sitio de pruebas) — todos los países · rama `fase-ensayo-24nov`, sin subir
+
+- [ ] [para: revisor-calidad] Revisar la rama `fase-ensayo-24nov` una vez: servidor (C-BARRA-SALDO, C-VERIFICACIONES-EN-VIVO-VEHICULO, C-CAMPANA-RECARGA-UNA-VEZ) y panel (C-FICHA-SE-REFRESCA-AL-DECIDIR) salen sin compilar; apps (C-OFERTA-SUENA-EN-SEGUNDO-PLANO, C-ZONA-TRAS-PERMISO en Driver; C-QUIEN-PAGA-EN-TODAS-LAS-PANTALLAS en clientes) necesitan versión nueva. Informe en ~/Documents/Entregas/Divoox/ensayo-general-24nov/INFORME.md. Todos los países.
+- [ ] [para: desarrollador] Con la Driver nueva: repetir en un Android real la oferta con la app detrás y con la pantalla apagada (cliente fijo y normal) y anotar si suena. Todos los países.
+- [ ] [para: desarrollador] Anotados del ensayo, sin arreglar: Inicio «1 paso» frente a Perfil «2 pasos»; «Moto/Carro · En revisión del equipo» sin vehículo; Ganancias no se refresca tras recargar; código de país y fecha de cumpleaños en formato de EE. UU. con el teléfono en Venezuela; el inicio de clientes no usa la ubicación actual (sin dirección, Envíos dice «aún no hay»); «Mis pedidos» abre vacío hasta tocar «Viajes»; el envío cancelado muestra su PIN; «Pedir otra vez» de un envío no vuelve a llenar el paquete; foto de control pedida justo al aprobar; alarma de oferta por volumen multimedia. Todos los países.
+
 ## Avisos de la primera carrera real (24 nov 2026) — todos los países · rama `fase-avisos-apps`, sin subir
 
 - [ ] [para: revisor-calidad] Revisar la rama `fase-avisos-apps` una vez: C-OFERTA-EN-CUALQUIER-PANTALLA y C-AVISOS-PRIMER-PLANO (apps), C-CLIENTE-FIJO-ROTULO (servidor y Driver), C-AVISOS-GUARDADOS (servidor y clientes). Servidor primero (47d34c8, b4acec9); apps y Docs con la compilación (45eb32b, f31427d, 129bad9, 7b72c5d). Todos los países.
