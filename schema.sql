@@ -4547,6 +4547,25 @@ CREATE TABLE IF NOT EXISTS embudo_anonimo (
   personas INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (dia, app, plataforma, pais, paso)
 ) WITHOUT ROWID;
+-- C-INTENTOS-ACCESO (24 nov 2026, Richard) — todos los países. Los intentos de crear cuenta, entrar y
+-- recuperar la contraseña que NO terminaron bien (los buenos ya quedan en rastro_cuenta): correo
+-- escrito, paso, código del error, app y red aproximada. Sin IP ni contraseña. Una fila por intento
+-- fallido, con tope diario; se guardan 30 días. Solo lo ve el equipo en el panel.
+CREATE TABLE IF NOT EXISTS intentos_acceso (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  accion TEXT NOT NULL,
+  paso TEXT,
+  correo TEXT,
+  codigo TEXT NOT NULL,
+  detalle TEXT,
+  app TEXT,
+  version TEXT,
+  plataforma TEXT,
+  pais_red TEXT,
+  ciudad_red TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS intentos_acceso_fecha ON intentos_acceso(creado_en);
 -- C-BANNERS (17 nov 2026, Richard) — todos los países. El administrador de banners del inicio de la app:
 -- dos lugares (cabecera y promociones), sin límite de banners. Nada sale al público sin «Aprobar y
 -- publicar» (estado publicado). Destino al tocar, ciudades y países, fechas, peso y orden. La app los
