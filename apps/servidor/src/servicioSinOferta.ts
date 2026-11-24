@@ -1,4 +1,5 @@
 import type { Env } from './env';
+import { sqlAptos } from './aprobadosNoElegibles';
 import { notificar } from './notificaciones';
 
 /**
@@ -55,4 +56,29 @@ export async function avisarComidaAbierta(env: Env, db: D1Database, zonaId: stri
     console.error('comida abierta', String(e));
     return 0;
   }
+}
+
+/**
+ * C-SERVICIO-SIN-OFERTA, lado del cliente (23 nov 2026, Tucaní) — todos los países. Los servicios
+ * que el cliente solo puede pedir si en la zona hay quien los tome: Envíos estaba abierto y con tarifa
+ * en Tucaní, nadie lo tomaba y la app de clientes lo ofrecía igual (el pedido quedaba «buscando»).
+ */
+export const SERVICIOS_CON_CONDUCTOR = new Set(['envios']);
+
+/**
+ * ¿Hay en la zona al menos un conductor que el reparto tomaría para ese servicio con solo abrir
+ * Driver? Es la MISMA vista `conductores_elegibles` sin «conectado» (`sqlAptos`), nunca una regla
+ * aparte. Solo lee: los conductores de esa zona por su índice, una consulta.
+ */
+export async function hayQuienLoTome(db: D1Database, zonaId: string, servicioId: string) {
+  const aptos = sqlAptos(undefined, 'dz');
+  return Boolean(
+    await db
+      .prepare(
+        `WITH dz AS (SELECT usuario_id AS id FROM repartidores WHERE zona_id = ?)
+         SELECT 1 FROM (${aptos}) a WHERE a.servicio_id = ? LIMIT 1`,
+      )
+      .bind(zonaId, servicioId)
+      .first(),
+  );
 }
