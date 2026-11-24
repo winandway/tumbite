@@ -5,12 +5,19 @@ import type { Idioma } from '@tumbite/compartido';
 import { URL_SERVIDOR } from './sesion';
 
 let paseActual: string | null = null;
+const oyentes = new Set<() => void>();
 
 /** El pase vigente del escudo anti-robots; la API lo manda en `cf-turnstile-response`. */
 export const paseTurnstile = () => paseActual;
-/** Después de un 403 del servidor: el pase ya no sirve y el widget pide otro. */
+/**
+ * C-MENSAJES-ACCESO (24 nov 2026): el pase de Cloudflare sirve UNA sola vez. Se olvida después de
+ * cada envío (entrar o crear la cuenta, salga bien o mal) y el escudo pide otro EN ESE MOMENTO. Antes
+ * solo se olvidaba tras un 403 y el escudo tardaba hasta un minuto en volver: el segundo intento
+ * llevaba un pase gastado y salía «No pudimos confirmar que eres una persona».
+ */
 export const olvidarPaseTurnstile = () => {
   paseActual = null;
+  for (const o of oyentes) o();
 };
 
 /**
@@ -21,11 +28,17 @@ export const olvidarPaseTurnstile = () => {
 export function Turnstile({ sitio, idioma }: { sitio: string; idioma: Idioma }) {
   const [version, setVersion] = useState(0);
   useEffect(() => {
-    // Si alguien olvidó el pase (403), se vuelve a cargar el widget.
+    // Pase olvidado (usado o rechazado): el escudo se vuelve a cargar de una vez.
+    const otra = () => setVersion((v) => v + 1);
+    oyentes.add(otra);
+    // Y si el pase vence sin usarse, cada minuto se pide otro.
     const t = setInterval(() => {
-      if (!paseActual) setVersion((v) => v + 1);
+      if (!paseActual) otra();
     }, 60_000);
-    return () => clearInterval(t);
+    return () => {
+      oyentes.delete(otra);
+      clearInterval(t);
+    };
   }, []);
   if (!sitio) return null;
   const url = `${URL_SERVIDOR}/turnstile.html?sitio=${encodeURIComponent(sitio)}&idioma=${idioma}`;

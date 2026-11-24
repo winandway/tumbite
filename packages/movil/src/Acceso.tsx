@@ -1,5 +1,5 @@
 import { abrirPagina } from './PaginaEnApp';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Text } from './diseno';
 import { BackHandler, Keyboard, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,9 @@ import {
   useBorrador,
   pistaDeEntrada,
   validarRegistro,
+  accionDeError,
+  resumenFallos,
+  textoAccionAcceso,
   type CasillaRegistro,
   type FalloCasilla,
 } from '@tumbite/compartido';
@@ -102,7 +105,12 @@ export function Acceso({
     sensibles: ['clave'],
     alSalir: alSalirTelefono,
   });
-  const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
+  const [error, setError] = useState<{ mensaje: string; campo?: string; codigo?: unknown } | null>(
+    null,
+  );
+  // C-MENSAJES-ACCESO: el correo que se lleva al cambiar de «Entrar» a «Crear cuenta» (o al revés)
+  // desde el botón que acompaña al error. Cada modo tiene su borrador; el correo no se pierde.
+  const correoQueSigue = useRef('');
   // C-REVISA-TUS-DATOS: al crear la cuenta hay dos pasos, el formulario y «Revisa tus datos». La
   // cuenta solo se crea desde el segundo, con el toque en «Crear mi cuenta».
   const [paso, setPaso] = useState<'formulario' | 'revisar'>('formulario');
@@ -176,17 +184,64 @@ export function Acceso({
     ...(registro && pideCumple ? ['fechaNacimiento'] : []),
   ];
 
+  // C-MENSAJES-ACCESO: con el correo puesto al pasar de un modo al otro (si ese borrador no tenía uno).
+  useEffect(() => {
+    const correo = correoQueSigue.current;
+    if (!correo) return;
+    correoQueSigue.current = '';
+    if (!v.correo) b.cambiar('correo', correo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cambiar de modo
+  }, [modo]);
+
+  /**
+   * C-INTENTOS-ACCESO: lo que falla en el teléfono y nunca llega a ser un alta queda anotado para el
+   * equipo. Nunca frena ni muestra nada; sin señal se reintenta una vez un poco después.
+   */
+  function avisarIntento(
+    paso: 'formulario' | 'revisar',
+    codigo: 'validacion' | 'sin_aceptar' | 'sin_conexion',
+    detalle = '',
+  ) {
+    const cuerpo = {
+      accion: 'registro',
+      paso,
+      codigo,
+      ...(detalle ? { detalle: detalle.slice(0, 100) } : {}),
+      ...(pareceCorreo(v.correo) ? { correo: correoLimpio(v.correo) } : {}),
+    };
+    const mandar = () => api.pedir('POST', '/datos/cuentas/intento', cuerpo);
+    mandar().catch(() => setTimeout(() => void mandar().catch(() => undefined), 20_000));
+  }
+
   /** Algo salió mal en el servidor: lo escrito se queda; si es de una casilla, se ve a su lado. */
   function alFallar(x: unknown) {
-    // Un 403 del escudo anti-robots: el pase ya no sirve, se pide otro.
-    if (x instanceof ErrorApi && x.estado === 403) olvidarPaseTurnstile();
     if (modo === 'entrar' && x instanceof ErrorApi && x.estado === 401 && Platform.OS !== 'web')
       setPista(pistaDeEntrada(URL_SERVIDOR, v.correo));
     if (x instanceof ErrorApi && x.campo && casillasVisibles.includes(x.campo))
       setPaso('formulario');
+    if (modo === 'registro' && x instanceof ErrorApi && x.sinConexion)
+      avisarIntento('revisar', 'sin_conexion');
     setError(
-      x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
+      x instanceof ErrorApi
+        ? { mensaje: x.message, campo: x.campo, codigo: x.datos?.codigo }
+        : { mensaje: String(x) },
     );
+  }
+
+  /** El botón que acompaña al error (C-MENSAJES-ACCESO): crear cuenta, recuperar o entrar. */
+  const accion = accionDeError(error?.codigo, modo);
+  function hacerAccion() {
+    if (accion === 'olvide') {
+      abrirPagina(`${URL_SERVIDOR}/forgot-password`);
+      return;
+    }
+    if ((accion === 'crear' && !rolRegistro) || !accion) return;
+    correoQueSigue.current = correoLimpio(v.correo);
+    setError(null);
+    setFallos([]);
+    setPista(null);
+    setPaso('formulario');
+    setModo(accion === 'crear' ? 'registro' : 'entrar');
   }
 
   async function entrarConCuenta() {
@@ -208,6 +263,8 @@ export function Acceso({
     } catch (x) {
       alFallar(x);
     } finally {
+      // C-MENSAJES-ACCESO: el pase del escudo sirve una sola vez; el escudo pide otro ya.
+      olvidarPaseTurnstile();
       setEnviando(false);
     }
   }
@@ -221,9 +278,13 @@ export function Acceso({
     Keyboard.dismiss();
     const malos = validarRegistro(v, idioma, casillasRegistro);
     setFallos(malos);
-    if (malos.length) return;
+    if (malos.length) {
+      avisarIntento('formulario', 'validacion', malos.map((m) => m.campo).join(','));
+      return;
+    }
     if (!acepto) {
       setError({ mensaje: t.faltaAceptar });
+      avisarIntento('formulario', 'sin_aceptar');
       return;
     }
     setEnfocar(null);
@@ -271,6 +332,7 @@ export function Acceso({
     } catch (x) {
       alFallar(x);
     } finally {
+      olvidarPaseTurnstile();
       setEnviando(false);
     }
   }
@@ -537,6 +599,25 @@ export function Acceso({
       ) : null}
       {registro ? (
         <CasillaSms idioma={idioma} marcada={v.sms} cambiar={(x) => b.cambiar('sms', x)} />
+      ) : null}
+      {/* C-SIN-EXITO-FALSO: junto al botón, qué casillas faltan (el error de cada una va a su lado). */}
+      {registro && fallos.length ? (
+        <Text
+          style={[e.error, { marginBottom: 8 }]}
+          accessibilityRole="alert"
+          testID="registro-revisar-casillas"
+        >
+          {resumenFallos(fallos, idioma)}
+        </Text>
+      ) : null}
+      {/* C-MENSAJES-ACCESO: el error dice qué pasó y este botón, qué hacer. */}
+      {accion && (accion !== 'crear' || rolRegistro) ? (
+        <Boton
+          testID={`accion-${accion}`}
+          secundario
+          texto={textoAccionAcceso(accion, idioma)}
+          alTocar={hacerAccion}
+        />
       ) : null}
       {pista ? (
         <Text
