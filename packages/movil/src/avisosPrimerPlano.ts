@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { comoMostrarEnPrimerPlano } from './avisosPrimerPlanoRegla';
 
 /**
@@ -32,8 +32,11 @@ export function useAvisosPrimerPlano(app: 'repartidor' | 'cliente', alOferta?: (
         if (!vivo) return;
         Notifications.setNotificationHandler({
           handleNotification: async (n) =>
-            comoMostrarEnPrimerPlano(n.request.content.data as Record<string, unknown>)
-              .comportamiento,
+            // C-OFERTA-SUENA-EN-SEGUNDO-PLANO: detrás, la oferta suena como cualquier aviso.
+            comoMostrarEnPrimerPlano(
+              n.request.content.data as Record<string, unknown>,
+              AppState.currentState === 'active',
+            ).comportamiento,
         });
         const sub = Notifications.addNotificationReceivedListener((n) => {
           const r = comoMostrarEnPrimerPlano(n.request.content.data as Record<string, unknown>);

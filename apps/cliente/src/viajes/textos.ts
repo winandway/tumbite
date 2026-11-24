@@ -539,6 +539,7 @@ export const TEXTOS_MIS_VIAJES = {
     calculando: 'Calculando el precio de ahora…',
     notaPrecio: 'Calculamos el precio otra vez ahora mismo; es el que pagas.',
     notaPrecioAntes: (antes: string) => `La vez pasada fueron ${antes}.`,
+    incluyeTarifa: (monto: string) => `Incluye ${monto} de tarifa de servicio de Divoox.`,
     notaPagoCambio: (metodo: string) =>
       `Tu forma de pago anterior ya no está en esta ciudad: pagarás con ${metodo}.`,
     pedirAhora: 'Sí, pedir ahora',
@@ -636,6 +637,7 @@ export const TEXTOS_MIS_VIAJES = {
     calculando: 'Getting today’s price…',
     notaPrecio: 'We just recalculated the price; this is what you’ll pay.',
     notaPrecioAntes: (antes: string) => `Last time it was ${antes}.`,
+    incluyeTarifa: (monto: string) => `Includes a ${monto} Divoox service fee.`,
     notaPagoCambio: (metodo: string) =>
       `Your previous payment method isn’t available in this city: you’ll pay with ${metodo}.`,
     pedirAhora: 'Yes, request now',

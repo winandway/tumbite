@@ -63,6 +63,8 @@ export function cuerpoCotizarMismaRuta(v: ViajeHistorial) {
     origen: { lat: origen.lat, lng: origen.lng, direccion: v.origen },
     paradas: paradas.map((p) => ({ lat: p.lat, lng: p.lng, direccion: p.direccion })),
     destino: { lat: destino.lat, lng: destino.lng, direccion: v.destino },
+    // C-QUIEN-PAGA-EN-TODAS-LAS-PANTALLAS: esta pantalla muestra la tarifa de servicio (como Pedir viaje).
+    tarifaServicio: true,
   };
 }
 
@@ -107,6 +109,7 @@ export function resumenConfirmacion(v: ViajeHistorial, cot: CotizacionViaje) {
     moneda: cot.moneda,
     minutos: Math.max(1, Math.round(cot.duracionS / 60)),
     precioAntes: v.total != null && v.total !== cot.total ? v.total : null,
+    tarifaServicio: cot.tarifaServicio ?? 0,
   };
 }
 

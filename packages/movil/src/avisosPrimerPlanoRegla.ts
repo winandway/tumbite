@@ -13,18 +13,27 @@ export type ComportamientoAviso = {
   shouldSetBadge: boolean;
 };
 
-export function comoMostrarEnPrimerPlano(datos: Record<string, unknown> | null | undefined): {
+/**
+ * `alFrente`: si la app está a la vista cuando llega. Detrás (proceso vivo), la alarma de la hoja no
+ * suena: todo aviso, la oferta también, sale arriba con el sonido de su canal
+ * (C-OFERTA-SUENA-EN-SEGUNDO-PLANO).
+ */
+export function comoMostrarEnPrimerPlano(
+  datos: Record<string, unknown> | null | undefined,
+  alFrente = true,
+): {
   esOferta: boolean;
   comportamiento: ComportamientoAviso;
 } {
   const tipo = typeof datos?.tipo === 'string' ? datos.tipo : '';
   const esOferta = OFERTAS_CON_HOJA.has(tipo);
+  const callado = esOferta && alFrente;
   return {
     esOferta,
     comportamiento: {
-      shouldShowBanner: !esOferta,
+      shouldShowBanner: !callado,
       shouldShowList: true,
-      shouldPlaySound: !esOferta,
+      shouldPlaySound: !callado,
       shouldSetBadge: false,
     },
   };

@@ -190,6 +190,8 @@ export function FormularioViajeFijo({
           categoria: v.servicio === 'carro' ? v.categoria || 'estandar' : 'estandar',
           origen: { lat: Number(v.origenLat), lng: Number(v.origenLng), direccion: v.origen },
           destino: { lat: Number(v.destinoLat), lng: Number(v.destinoLng), direccion: v.destino },
+          // C-QUIEN-PAGA-EN-TODAS-LAS-PANTALLAS: la tarifa de servicio se muestra aquí abajo.
+          tarifaServicio: true,
         })
         .then((x) => {
           if (!vivo) return;
@@ -428,6 +430,9 @@ export function FormularioViajeFijo({
             </View>
             <Text style={[LETRA.pequeno, { color: col.textoSuave }]}>
               {t.precioHoy}: {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)} ·{' '}
+              {(cotizacion.tarifaServicio ?? 0) > 0
+                ? `${t.incluyeTarifa(formatearMonto(cotizacion.tarifaServicio ?? 0, cotizacion.moneda, idioma))} `
+                : ''}
               {t.precioAyuda}
             </Text>
           </>

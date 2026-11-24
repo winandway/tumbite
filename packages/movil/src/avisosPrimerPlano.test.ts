@@ -35,6 +35,22 @@ describe('avisos con la app abierta', () => {
     }
   });
 
+  // C-OFERTA-SUENA-EN-SEGUNDO-PLANO (ensayo general, 24 nov 2026): con Driver en segundo plano (el
+  // proceso vivo), la oferta de un cliente fijo llegó a la bandeja en SILENCIO (Android la marcó
+  // SILENT, sin aviso arriba) y la alarma de la hoja no puede sonar con la app detrás: el minuto
+  // exclusivo se perdía (el fallo que vio Richard en la primera carrera real). Fuera del primer plano,
+  // TODO aviso —la oferta también— sale arriba y con el sonido de su canal.
+  it('con la app en segundo plano, la oferta sale arriba y SUENA', () => {
+    for (const tipo of ['oferta_operacion', 'oferta_pedido', 'viaje_cancelado']) {
+      const r = comoMostrarEnPrimerPlano({ tipo }, false);
+      expect(r.comportamiento.shouldShowBanner).toBe(true);
+      expect(r.comportamiento.shouldPlaySound).toBe(true);
+    }
+    // Y la pieza le pregunta al sistema si la app está al frente en el momento en que llega.
+    const s = readFileSync(join(__dirname, 'avisosPrimerPlano.ts'), 'utf8');
+    expect(s).toMatch(/AppState\.currentState === 'active'/);
+  });
+
   it('la ruta de Flex (sin hoja con alarma propia) y los avisos de oferta retirada sí suenan', () => {
     for (const tipo of ['oferta', 'oferta_retirada', 'oferta_vencida']) {
       const r = comoMostrarEnPrimerPlano({ tipo });

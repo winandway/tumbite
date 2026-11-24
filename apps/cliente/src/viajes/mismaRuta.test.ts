@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CotizacionViaje } from '@tumbite/compartido';
 import {
@@ -47,6 +48,24 @@ const cotizacion = (x: Partial<CotizacionViaje> = {}): CotizacionViaje => ({
   ...x,
 });
 
+// C-QUIEN-PAGA-EN-TODAS-LAS-PANTALLAS (ensayo general, 24 nov 2026, El Vigía): «Pedir la misma ruta»
+// y los viajes fijos cotizaban SIN avisar que muestran la tarifa de servicio: el servidor caía en
+// «paga el conductor». El mismo viaje costaba $1.10 al pedirlo nuevo y $1.00 al repetirlo, y la
+// comisión pasaba del pasajero al conductor. Las tres pantallas cotizan igual y muestran la tarifa.
+describe('C-QUIEN-PAGA-EN-TODAS-LAS-PANTALLAS', () => {
+  it('repetir y viajes fijos cotizan mostrando la tarifa, y la confirmación la dice', async () => {
+    expect(cuerpoCotizarMismaRuta({ ...VIAJE, servicio: 'moto' })?.tarifaServicio).toBe(true);
+    expect(resumenConfirmacion(VIAJE, cotizacion({ tarifaServicio: 10 })).tarifaServicio).toBe(10);
+    const { readFileSync } = await import('node:fs');
+    const fijo = readFileSync(join(__dirname, 'FormularioViajeFijo.tsx'), 'utf8');
+    expect(fijo).toMatch(/'\/datos\/viajes\/cotizar', \{[\s\S]{0,700}tarifaServicio: true/);
+    expect(fijo).toContain('t.incluyeTarifa(');
+    expect(readFileSync(join(__dirname, 'ConfirmarMismaRuta.tsx'), 'utf8')).toContain(
+      'misma-ruta-tarifa',
+    );
+  });
+});
+
 describe('C-MISMA-RUTA: repetir un viaje', () => {
   it('cotiza con el mismo origen, paradas en orden, destino, servicio y categoría', () => {
     expect(cuerpoCotizarMismaRuta(VIAJE)).toEqual({
@@ -55,6 +74,7 @@ describe('C-MISMA-RUTA: repetir un viaje', () => {
       origen: { lat: 42.48, lng: -83.47, direccion: 'Punto de recogida' },
       paradas: [{ lat: 42.5, lng: -83.45, direccion: 'Parada intermedia' }],
       destino: { lat: 42.52, lng: -83.4, direccion: 'Destino del viaje' },
+      tarifaServicio: true,
     });
     // Moto no tiene categorías; un envío o un viaje sin puntos no se repite.
     expect(cuerpoCotizarMismaRuta({ ...VIAJE, servicio: 'moto' })?.categoria).toBe('estandar');

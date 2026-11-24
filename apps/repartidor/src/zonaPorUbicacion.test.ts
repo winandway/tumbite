@@ -22,4 +22,12 @@ describe('Driver manda su primera ubicación para fijar la ciudad', () => {
     const bloque = s.slice(s.indexOf("'/datos/conductor/zona-por-ubicacion', aqui)"));
     expect(bloque.slice(0, 400)).toMatch(/if \(r\.cambio\) \{[^}]*void recargarPapeles\(\);/);
   });
+
+  // C-ZONA-TRAS-PERMISO (ensayo general, 24 nov 2026): conductor nuevo en El Vigía quedó en «Miami»
+  // tras registrarse: la lectura de la ubicación corrió antes del sí del teléfono y no se repitió.
+  it('la primera ubicación se vuelve a leer al cerrar «Otorga permisos» y al volver la app al frente', () => {
+    const s = readFileSync(join(import.meta.dirname, 'Inicio.tsx'), 'utf8');
+    expect(s).toMatch(/\[estado\?\.conectado, aqui, permisosPorExplicar, vueltaUbicacion\]/);
+    expect(s).toMatch(/if \(e === 'active'\) setVueltaUbicacion\(/);
+  });
 });

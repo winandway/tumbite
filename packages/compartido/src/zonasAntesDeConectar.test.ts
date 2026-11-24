@@ -16,7 +16,8 @@ describe('Driver: zonas con más pedidos antes de conectarse', () => {
   it('desconectado, lee la ubicación una vez (sin volver a pedir el permiso) y pide las zonas', () => {
     const bloque = inicio.slice(inicio.indexOf('C-ZONAS-ANTES-DE-CONECTAR'));
     expect(bloque.length).toBeGreaterThan(30);
-    expect(bloque).toContain('if (estado?.conectado || aqui) return;');
+    // C-ZONA-TRAS-PERMISO: además espera a que se cierre «Otorga permisos».
+    expect(bloque).toContain('if (estado?.conectado || aqui || permisosPorExplicar) return;');
     expect(bloque).toContain('getForegroundPermissionsAsync');
     expect(bloque.indexOf('getForegroundPermissionsAsync')).toBeLessThan(
       bloque.indexOf('ubicacionConLimite()'),

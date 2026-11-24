@@ -116,6 +116,7 @@ export const TEXTOS_FIJOS = {
     pagoSinRuta: 'Elige de dónde sale y a dónde va para ver las formas de pago de tu ciudad.',
     precioHoy: 'Precio de hoy',
     precioAyuda: 'Cada salida se reserva con el precio de ese día.',
+    incluyeTarifa: (monto: string) => `Incluye ${monto} de tarifa de servicio de Divoox.`,
     categoria: 'Tipo de carro',
     conductorFijo: 'Conductor',
     conductorFijoAyuda:
@@ -269,6 +270,7 @@ export const TEXTOS_FIJOS = {
     pagoSinRuta: 'Choose the pickup and drop-off to see the payment methods in your city.',
     precioHoy: 'Today’s price',
     precioAyuda: 'Each trip is booked at that day’s price.',
+    incluyeTarifa: (monto: string) => `Includes a ${monto} Divoox service fee.`,
     categoria: 'Car type',
     conductorFijo: 'Driver',
     conductorFijoAyuda:

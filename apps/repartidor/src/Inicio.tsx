@@ -615,7 +615,13 @@ export function Inicio() {
   // C-UNIDAD-ELEGIDA: millas o kilómetros, lo que el repartidor eligió (vale para toda la app).
   const unidadDistancia = useUnidadDistancia();
   useKeepAwake();
-  const { api, idioma, cambiarIdioma: cambiarIdiomaSesion, usuario } = useSesion();
+  const {
+    api,
+    idioma,
+    cambiarIdioma: cambiarIdiomaSesion,
+    usuario,
+    permisosPorExplicar,
+  } = useSesion();
   // C-ELEGIR-MAPAS: «Cómo llegar» deja elegir la app de mapas, igual que en Flex.
   const abrirMapa = (lat: number | null, lng: number | null, direccion: string) =>
     comoLlegar({ lat, lng, direccion }, idioma);
@@ -1099,8 +1105,19 @@ export function Inicio() {
   // C-ZONAS-ANTES-DE-CONECTAR: desconectado también se ve el mapa de zonas con más pedidos (como
   // Dasher): es cuando el repartidor decide adónde ir. Se lee la ubicación UNA vez y solo si ya dio
   // el permiso (aquí nunca se le vuelve a pedir).
+  // C-ZONA-TRAS-PERMISO (ensayo general, 24 nov 2026): el Inicio se monta DEBAJO de «Otorga
+  // permisos»; esta lectura corría antes del sí del teléfono, salía sin permiso y no volvía a correr:
+  // el conductor nuevo quedaba en Miami (papeles de EE. UU.) hasta cerrar la app. Se repite al
+  // cerrarse esa pantalla y cada vez que la app vuelve al frente (p. ej. desde Ajustes).
+  const [vueltaUbicacion, setVueltaUbicacion] = useState(0);
   useEffect(() => {
-    if (estado?.conectado || aqui) return;
+    const sub = AppState.addEventListener('change', (e) => {
+      if (e === 'active') setVueltaUbicacion((v) => v + 1);
+    });
+    return () => sub.remove();
+  }, []);
+  useEffect(() => {
+    if (estado?.conectado || aqui || permisosPorExplicar) return;
     let vivo = true;
     void (async () => {
       const permiso = await Location.getForegroundPermissionsAsync().catch(() => null);
@@ -1111,7 +1128,7 @@ export function Inicio() {
     return () => {
       vivo = false;
     };
-  }, [estado?.conectado, aqui]);
+  }, [estado?.conectado, aqui, permisosPorExplicar, vueltaUbicacion]);
 
   // En camino: la ubicación se revisa cada 5 segundos para saber si ya llegó a la puerta.
   const enCamino = estado?.activo?.estado === 'en_camino';

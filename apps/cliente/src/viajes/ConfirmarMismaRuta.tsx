@@ -293,6 +293,11 @@ function Contenido({
             {r.precioAntes != null ? ` ${t.notaPrecioAntes(monto(r.precioAntes))}` : ''}
           </Text>
         ) : null}
+        {r && r.tarifaServicio > 0 ? (
+          <Text style={[LETRA.secundario, { color: col.textoSuave }]} testID="misma-ruta-tarifa">
+            {t.incluyeTarifa(monto(r.tarifaServicio))}
+          </Text>
+        ) : null}
         {pago?.cambioPago ? (
           <Text style={[LETRA.secundario, { color: col.texto }]}>
             {t.notaPagoCambio(
