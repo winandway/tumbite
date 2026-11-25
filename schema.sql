@@ -1432,7 +1432,7 @@ END;
 CREATE TABLE IF NOT EXISTS conductor_documentos (
   id TEXT PRIMARY KEY,
   conductor_id TEXT NOT NULL REFERENCES usuarios(id),
-  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales', 'licencia_conducir', 'certificado_medico')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales', 'licencia_conducir')),
   clave TEXT NOT NULL,
   vence_en TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reemplazado')),
@@ -3173,6 +3173,7 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   premium_pb INTEGER,
   -- C-VIAJE-PARADAS (14 nov 2026): espera gratis en cada parada intermedia.
   espera_parada_gratis_s INTEGER NOT NULL DEFAULT 120,
+  km_maximo INTEGER,
   de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
   motivo TEXT NOT NULL DEFAULT '',
