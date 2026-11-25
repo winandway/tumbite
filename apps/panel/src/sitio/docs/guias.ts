@@ -2148,7 +2148,7 @@ const es: SeccionDocs[] = [
           'Si eres restaurante o repartidor en Estados Unidos, tus pagos los hace Stripe Connect, la plataforma de pagos de muchas apps grandes. Conectas tu cuenta bancaria una sola vez y Stripe te deposita.',
         explicacion: [
           'Quién te paga: Stripe Connect. Divoox anota en tu saldo cada venta o cada entrega con su propina, y Stripe envía ese dinero a tu banco. Tus datos bancarios los escribes en Stripe: Divoox nunca los ve.',
-          'Cómo conectas tu banco: repartidores, en Divoox Driver → «Mi billetera» → «Conectar mi cuenta bancaria»; restaurantes, en el panel → «Beneficios». El formulario seguro de Stripe se abre dentro de Divoox, sin salir a otra página: te pide tus datos y los de tu cuenta, y verifica tu identidad. Se hace una sola vez.',
+          'Cómo conectas tu banco: repartidores, en Divoox Driver → «Ganancias» → «Billetera» → «Conectar mi cuenta bancaria»; restaurantes, en el panel → «Beneficios». El formulario seguro de Stripe se abre dentro de Divoox, sin salir a otra página: te pide tus datos y los de tu cuenta, y verifica tu identidad. Se hace una sola vez.',
           'Qué cuenta sirve: una cuenta bancaria de Estados Unidos, corriente o de ahorros, a tu nombre. Si eres un restaurante, la cuenta de tu negocio, a nombre de la empresa que registraste.',
           'Cuándo te llega: el primer pago suele tardar entre 7 y 14 días desde tu primer cobro, porque Stripe revisa la cuenta nueva. Después, cada retiro llega normalmente en 2 o 3 días hábiles. Tu banco puede tardar un poco más en mostrarlo.',
           'Si un pago no llega o el banco lo rechaza, la app te avisa y te dice qué corregir (ver «Si un abono a tu banco falla»). Si algo no cuadra, escríbenos desde «Tengo un problema» y te responde una persona.',
@@ -2157,7 +2157,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/recorrido-repartidor-billetera-es.webp',
             alt: 'Billetera de la app Divoox Driver con el saldo disponible, lo ganado, las propinas y cada movimiento con su pedido.',
-            pie: 'Repartidores: tu saldo y cada movimiento, en «Mi billetera».',
+            pie: 'Repartidores: tu saldo y cada movimiento, en «Ganancias» → «Billetera».',
           },
           {
             src: '/docs/recorrido-repartidor-retiro-es.webp',
@@ -2176,7 +2176,7 @@ const es: SeccionDocs[] = [
           '¿Qué cuenta bancaria necesito?',
         ],
         pasos: [
-          'Repartidores: Divoox Driver → «Mi billetera» → «Conectar mi cuenta bancaria». Restaurantes: panel → «Beneficios».',
+          'Repartidores: Divoox Driver → «Ganancias» → «Billetera» → «Conectar mi cuenta bancaria». Restaurantes: panel → «Beneficios».',
           'Completa tus datos y los de tu cuenta en Stripe (una sola vez).',
           'Retira tu saldo: el primer pago tarda de 7 a 14 días; los siguientes, unos 2 o 3 días hábiles.',
         ],
@@ -2909,7 +2909,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Con tu código o tu enlace invitas a otros conductores. Cuando tu invitado completa sus primeras carreras, ganas saldo. Si eres líder de una línea, tu equipo queda unido a ti y ves cuántos están registrados, aprobados y activos.',
         explicacion: [
-          'Abre Perfil → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp.',
+          'Abre Cuenta → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp.',
           'Tu invitado abre el enlace, baja Divoox Driver y escribe tu código en «Código de invitación» al crear su cuenta. Si se le olvidó, lo escribe después en «Mi equipo e invitaciones» → «¿Te invitaron?», antes de su primera carrera.',
           'Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones.',
           'Tu invitado recibe el regalo de arranque de su ciudad, si está encendido.',
@@ -2934,7 +2934,7 @@ const es: SeccionDocs[] = [
           '¿Cómo veo a los conductores de mi equipo?',
         ],
         pasos: [
-          'Abre Perfil → «Mi equipo e invitaciones».',
+          'Abre Cuenta → «Mi equipo e invitaciones».',
           'Toca «Compartir mi enlace» o muestra tu QR.',
           'Tu invitado escribe tu código al crear su cuenta.',
           'Cuando complete sus carreras, el saldo entra solo.',
@@ -3462,7 +3462,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Descarga la app de Divoox para repartidores y crea tu cuenta.',
-          'En Perfil → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.',
+          'En Cuenta → «Mis datos y vehículo» → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.',
           'Conecta tu banco desde tu billetera con «Conectar mi cuenta bancaria» (Stripe, una sola vez) para poder retirar tus ganancias.',
           'Cuando quieras trabajar, desliza «Desliza para conectarte» de izquierda a derecha hasta el final. Un toque no te conecta (así no te conectas sin querer con el celular en el bolsillo); si sueltas a medio camino, vuelve al inicio. La app usa tu ubicación solo mientras estás conectado.',
           'No hay horarios ni mínimos: te conectas y desconectas cuando quieras.',
@@ -3484,12 +3484,12 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/recorrido-repartidor-verificacion-es.webp',
             alt: 'Pantalla «Verifica tu identidad» de la app de repartidores, con el tipo de documento y los botones «Tomar foto» para el frente, el reverso y la cara.',
-            pie: 'Está en el menú, en «Mis datos y vehículo».',
+            pie: 'Está en «Cuenta», en «Mis datos y vehículo».',
           },
         ],
         preguntas: ['¿Cómo verifico mi identidad?'],
         pasos: [
-          'Abre la app de repartidores, toca el menú de arriba a la izquierda y entra a «Mis datos y vehículo».',
+          'Abre la app de repartidores, toca «Cuenta» en la barra de abajo y entra a «Mis datos y vehículo».',
           'En «Verifica tu identidad», elige tu documento: licencia de conducir, identificación oficial o pasaporte.',
           'Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). En Venezuela la cédula se fotografía solo por delante, porque por detrás no tiene datos; la licencia sí lleva frente y reverso. Que se lean bien los datos, sin reflejos.',
           'Toma la foto de tu cara: de frente, con buena luz, sin gorra ni lentes oscuros.',
@@ -3524,7 +3524,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Abre la app de repartidores y desliza «Desliza para conectarte» hasta el final.',
-          'Si la app te dice que falta algo, entra al menú, a «Mis datos y vehículo», y completa lo que te pide: tu verificación, tu vehículo, tu licencia o tu seguro.',
+          'Si la app te dice que falta algo, entra a «Cuenta», a «Mis datos y vehículo», y completa lo que te pide: tu verificación, tu vehículo, tu licencia o tu seguro.',
           'Cuando el equipo lo apruebe, vuelve a conectarte: las ofertas de Comida te llegan como siempre.',
           'Si tu cuenta está en pausa, escríbenos desde Ayuda y lo revisamos contigo.',
         ],
@@ -3569,7 +3569,7 @@ const es: SeccionDocs[] = [
         id: 'ratings',
         titulo: 'Mis calificaciones: lo que ven los clientes de ti',
         resumen:
-          'En Perfil → «Mis calificaciones» ves tu calificación de clientes, tu tasa de aceptación, de finalización y de puntualidad, y cuántas entregas llevas. Con la referencia de las grandes apps al lado.',
+          'En Cuenta → «Mis calificaciones» ves tu calificación de clientes, tu tasa de aceptación, de finalización y de puntualidad, y cuántas entregas llevas. Con la referencia de las grandes apps al lado.',
         explicacion: [
           'Calificación de clientes: el promedio de estrellas de tus últimas 100 entregas calificadas. Si el cliente no califica, no afecta. Las grandes apps piden 4,2 o más.',
           'Tasa de aceptación: de las últimas 100 ofertas, cuántas aceptaste. Dejar vencer una cuenta como rechazo. No tiene mínimo: cuenta para tu nivel.',
@@ -3634,6 +3634,67 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'driver-home-screen',
+        titulo: 'La pantalla de Divoox Driver: el mapa, la hoja de abajo y las cuatro pestañas',
+        resumen:
+          'Divoox Driver se ve como las apps de conductores más grandes: el mapa ocupa toda la pantalla, lo importante va en una hoja blanca abajo y todo lo demás está a un toque en la barra de abajo.',
+        explicacion: [
+          'Arriba del mapa tienes tres cosas: el escudo a la izquierda (para una emergencia), lo que ganaste hoy en el centro (un toque te lleva a Ganancias) y la bandera del modo destino a la derecha, para recibir solo ofertas que te acercan a donde vas.',
+          'Mientras te falta algo del registro, sobre el mapa aparece «Activa tu cuenta», con una barra verde que dice cuánto llevas y qué te falta. Un toque te lleva a tus papeles.',
+          'En la hoja de abajo ves tu estado: «Desconectado» con un punto gris, o «Conectado a» tus servicios con un punto verde que late y una línea que se mueve mientras buscamos ofertas. Ahí mismo te conectas deslizando, ves tus servicios y el resumen de hoy.',
+          'Cuando llega una oferta, se abre una hoja con el servicio arriba (los envíos van en azul petróleo), el tiempo que te queda, lo que ganas en verde, la distancia hasta recoger, el recorrido, los minutos y la ruta de recoger a llevar. Aceptas con un toque; «Rechazar» va debajo.',
+          'Con un trabajo en curso, una barra de tres pasos te dice dónde vas: ir a recoger, recoger y llevar. Al llegar, si hace falta un código, arriba sale «Pídele el código al pasajero» con la casilla lista; y los mensajes nuevos salen arriba con su número rojo. Llegar, iniciar y terminar se hacen deslizando, nunca con un toque suelto.',
+          'Abajo hay cuatro pestañas: Inicio, Ganancias (con Ganancias y Billetera), Avisos (con el número de lo que no has visto) y Cuenta, donde están tus papeles, tus datos y tu vehículo, tus entregas, tus turnos, tus clientes fijos, emergencias, ayuda, el idioma y cerrar sesión.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-rediseno-inicio-es.webp',
+            alt: 'Inicio de Divoox Driver con el mapa entero, el escudo, lo ganado hoy, la bandera del modo destino, la barra «Activa tu cuenta» y la hoja blanca abajo.',
+            pie: 'El mapa entero y lo importante en la hoja de abajo.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-conectado-es.webp',
+            alt: 'Divoox Driver conectado: punto verde, línea que busca ofertas y la tarjeta del servicio conectado.',
+            pie: 'Conectado: el punto verde late mientras buscamos ofertas.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-oferta-es.webp',
+            alt: 'Oferta en Divoox Driver con la etiqueta del servicio, el tiempo, lo que ganas en verde, tres datos y la ruta.',
+            pie: 'La oferta: lo que ganas primero y la ruta completa.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-recoger-es.webp',
+            alt: 'Trabajo en curso en Divoox Driver con la barra de tres pasos y el título «Ve a recoger».',
+            pie: 'La barra de tres pasos dice en qué parte del trabajo vas.',
+          },
+          {
+            src: '/docs/recorrido-driver-codigo-a-la-vista-es.webp',
+            alt: 'Divoox Driver al llegar: el aviso grande «Pídele el código al pasajero» con la casilla de cuatro números arriba, visible con el teclado abierto.',
+            pie: 'Al llegar, el código se pide arriba, sin bajar.',
+          },
+          {
+            src: '/docs/recorrido-driver-chat-sin-leer-es.webp',
+            alt: 'Viaje en Divoox Driver con la tarjeta de mensajes arriba: el último mensaje del pasajero y un número rojo con los que no has leído.',
+            pie: 'Los mensajes nuevos salen arriba, con su número rojo.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-cuenta-es.webp',
+            alt: 'Pestaña Cuenta de Divoox Driver con el nombre, el nivel y las filas de papeles, datos y vehículo, entregas, turnos, emergencias, ayuda e idioma.',
+            pie: 'Todo lo de tu cuenta, a uno o dos toques.',
+          },
+        ],
+        preguntas: [
+          '¿Dónde está el menú de Divoox Driver?',
+          '¿Dónde veo lo que gané hoy?',
+          '¿Dónde cambio el idioma en Divoox Driver?',
+        ],
+        pasos: [
+          'Abre Divoox Driver: el inicio es el mapa con la hoja de abajo.',
+          'Desliza para conectarte y espera la oferta en la hoja.',
+          'Usa la barra de abajo para ir a Ganancias, Avisos o Cuenta.',
+        ],
+      },
+      {
         id: 'alerts-and-pause',
         titulo: 'La campana y la pausa: tus avisos y cuándo no recibir ofertas',
         resumen:
@@ -3658,7 +3719,7 @@ const es: SeccionDocs[] = [
           '¿Qué hay en la campana de la app de repartidores?',
         ],
         pasos: [
-          'Toca la campana arriba a la derecha para ver tus avisos.',
+          'Toca «Avisos» en la barra de abajo para ver tus avisos: el número se va a cero al abrirla.',
           'En el inicio, conectado y sin pedido, toca «Pausar ofertas» cuando necesites un descanso.',
           'Desliza «Desliza para reanudar ofertas» hasta el final para volver a recibir.',
         ],
@@ -3736,7 +3797,7 @@ const es: SeccionDocs[] = [
         ],
         preguntas: ['¿Cómo retiro mis ganancias?', '¿Me quedo con toda la propina?'],
         pasos: [
-          'Abre el menú de arriba a la izquierda y toca «Mi billetera», o toca «Ver mi billetera» en la pantalla de inicio.',
+          'Toca «Ganancias» en la barra de abajo y elige «Billetera», o toca «Ver mi billetera» en la pantalla de inicio.',
           'La primera vez, toca «Conectar mi cuenta bancaria» y completa tus datos en Stripe. Se hace una sola vez.',
           'Retira cuando quieras, desde un dólar. El dinero llega a tu banco por Stripe.',
           'Si un movimiento no cuadra, toca «Tengo un problema» y te contesta una persona.',
@@ -3793,7 +3854,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/camila-permiso-driver-es.webp',
             alt: 'El chat «Habla con soporte» de Divoox Driver con el mismo aviso de permiso y sus dos botones.',
-            pie: 'En Divoox Driver el aviso es el mismo. Puedes cambiar tu respuesta después en Perfil.',
+            pie: 'En Divoox Driver el aviso es el mismo. Puedes cambiar tu respuesta después en Cuenta → «Mis datos y vehículo».',
           },
           {
             src: '/docs/camila-driver-chat-es.webp',
@@ -4082,20 +4143,20 @@ const es: SeccionDocs[] = [
         resumen:
           'Después de entregar, puedes calificar al cliente con estrellas y, si algo salió mal, decir qué pasó.',
         explicacion: [
-          'En «Pedidos» aparecen tus entregas de hoy que todavía no calificaste. Tocas las estrellas y, si son 3 o menos, eliges qué pasó: no salió a recibir, dirección equivocada, mal trato o te hizo esperar.',
+          'En «Cuenta» → «Mis entregas» aparecen tus entregas de hoy que todavía no calificaste. Tocas las estrellas y, si son 3 o menos, eliges qué pasó: no salió a recibir, dirección equivocada, mal trato o te hizo esperar.',
           'Es opcional. Solo lo ve nuestro equipo de soporte, para cuidar a los repartidores; el cliente no ve tu nota y nadie se bloquea por una calificación.',
           'Cada entrega se califica una sola vez, el mismo día.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-driver-calificar-cliente-es.webp',
-            alt: 'La pestaña Pedidos de Divoox Driver con «Califica a tus clientes de hoy»: el nombre de pila y el número del pedido, con las estrellas para calificar.',
-            pie: 'En «Pedidos» calificas, si quieres, a quien recibió tus entregas de hoy.',
+            alt: '«Mis entregas» de Divoox Driver con «Califica a tus clientes de hoy»: el nombre de pila y el número del pedido, con las estrellas para calificar.',
+            pie: 'En «Mis entregas» calificas, si quieres, a quien recibió tus entregas de hoy.',
           },
         ],
         preguntas: ['¿Puedo calificar a un cliente?', '¿El cliente ve mi calificación?'],
         pasos: [
-          'Abre «Pedidos».',
+          'Toca «Cuenta» abajo y abre «Mis entregas».',
           'Toca las estrellas de la entrega.',
           'Si hace falta, elige qué pasó y envía.',
         ],
@@ -5315,7 +5376,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/mapa-ajuste-conductor-es.webp',
             alt: 'El perfil de Divoox Driver con la tarjeta «Colores del mapa» y sus tres opciones.',
-            pie: 'En Divoox Driver el ajuste está en la pestaña «Perfil».',
+            pie: 'En Divoox Driver el ajuste está en «Cuenta» → «Mis datos y vehículo».',
           },
         ],
         preguntas: [
@@ -5324,7 +5385,7 @@ const es: SeccionDocs[] = [
           '¿Cómo pongo el mapa en modo noche?',
         ],
         pasos: [
-          'Abre tu cuenta: en la app de Divoox, la pestaña «Mi cuenta»; en Divoox Driver, la pestaña «Perfil».',
+          'Abre tu cuenta: en la app de Divoox, la pestaña «Mi cuenta»; en Divoox Driver, la pestaña «Cuenta» y luego «Mis datos y vehículo».',
           'Busca la tarjeta «Colores del mapa».',
           'Toca «Automático» para que cambie solo según la hora, «Claro» para dejarlo siempre de día u «Oscuro» para dejarlo siempre de noche.',
           'Listo: todos los mapas cambian al momento y tu elección queda guardada en ese teléfono o navegador.',
@@ -5600,8 +5661,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-version-driver-es.webp',
-            alt: 'Final del «Perfil» en Divoox Driver, con la línea gris «Versión … · commit» debajo de «Tu cuenta».',
-            pie: 'Repartidores: al final de «Perfil».',
+            alt: 'Final de «Mis datos y vehículo» en Divoox Driver, con la línea gris «Versión … · commit» debajo de «Tu cuenta».',
+            pie: 'Repartidores: en «Cuenta» → «Mis datos y vehículo», al final.',
           },
           {
             src: '/docs/recorrido-version-restaurante-app-es.webp',
@@ -7708,7 +7769,7 @@ const en: SeccionDocs[] = [
           'If you’re a restaurant or a driver in the United States, your payouts are made by Stripe Connect, the payments platform behind many large apps. You connect your bank account once and Stripe deposits to it.',
         explicacion: [
           'Who pays you: Stripe Connect. Divoox records every sale or every delivery with its tip in your balance, and Stripe sends that money to your bank. You enter your bank details at Stripe: Divoox never sees them.',
-          'How you connect your bank: drivers, in Divoox Driver → “My wallet” → “Connect my bank account”; restaurants, in the panel → “Earnings.” Stripe’s secure form opens inside Divoox, without leaving for another page: it asks for your details and your account’s, and verifies your identity. You do it only once.',
+          'How you connect your bank: drivers, in Divoox Driver → “Earnings” → “Wallet” → “Connect my bank account”; restaurants, in the panel → “Earnings.” Stripe’s secure form opens inside Divoox, without leaving for another page: it asks for your details and your account’s, and verifies your identity. You do it only once.',
           'Which account works: a U.S. bank account, checking or savings, in your name. If you’re a restaurant, your business account, in the name of the company you registered.',
           'When it arrives: your first payout usually takes 7 to 14 days from your first charge, because Stripe reviews new accounts. After that, each withdrawal normally arrives in 2 to 3 business days. Your bank may take a little longer to show it.',
           'If a payout doesn’t arrive or the bank rejects it, the app tells you and what to fix (see “If a payout to your bank fails”). If something doesn’t add up, write to us from “I have a problem” and a person replies.',
@@ -7736,7 +7797,7 @@ const en: SeccionDocs[] = [
           'Which bank account do I need?',
         ],
         pasos: [
-          'Drivers: Divoox Driver → “My wallet” → “Connect my bank account.” Restaurants: panel → “Earnings.”',
+          'Drivers: Divoox Driver → “Earnings” → “Wallet” → “Connect my bank account.” Restaurants: panel → “Earnings.”',
           'Complete your details and your account’s at Stripe (only once).',
           'Withdraw your balance: the first payout takes 7 to 14 days; after that, about 2 to 3 business days.',
         ],
@@ -7969,7 +8030,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'From your phone: open the Divoox Restaurants app, tap “Create a restaurant account” and sign up with your email. Then tap “Complete my restaurant.” From a computer: go to divoox.com, tap “Dashboard,” and create your account there.',
-          'Under Profile → “Start delivering” you see the four steps and which one is missing: your details and vehicle, your ID and photo, the background check, and your payout account. Each step opens with a tap.',
+          'Under Account → “My details and vehicle” → “Start delivering” you see the four steps and which one is missing: your details and vehicle, your ID and photo, the background check, and your payout account. Each step opens with a tap.',
           'In “My restaurant,” fill in the name, cuisine, phone, and address. Use “Use this computer’s location” if you’re at the restaurant.',
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
           'Save. Your restaurant is “under review”: our team approves it and emails you.',
@@ -8471,7 +8532,7 @@ const en: SeccionDocs[] = [
         resumen:
           'With your code or link you invite other drivers. When your invitee completes their first trips, you earn balance. If you lead a group, your team stays linked to you and you see how many are signed up, approved and active.',
         explicacion: [
-          'Open Profile → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button.',
+          'Open Account → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button.',
           'Your invitee opens the link, gets Divoox Driver and enters your code in “Invitation code” when creating their account. If they forgot, they enter it later in “My team and invitations” → “Were you invited?”, before their first trip.',
           'You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions.',
           'Your invitee gets their city’s starter gift, if it’s on.',
@@ -8496,7 +8557,7 @@ const en: SeccionDocs[] = [
           'How do I see the drivers on my team?',
         ],
         pasos: [
-          'Open Profile → “My team and invitations.”',
+          'Open Account → “My team and invitations.”',
           'Tap “Share my link” or show your QR.',
           'Your invitee enters your code when creating their account.',
           'When they complete their trips, the balance goes in on its own.',
@@ -9041,12 +9102,12 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/recorrido-repartidor-verificacion-en.webp',
             alt: '“Verify your identity” screen in the driver app, with the document type and “Take photo” buttons for the front, the back, and your face.',
-            pie: 'You’ll find it in the menu, under “My details and vehicle.”',
+            pie: 'You’ll find it under “Account,” in “My details and vehicle.”',
           },
         ],
         preguntas: ['How do I verify my identity?'],
         pasos: [
-          'Open the driver app, tap the menu at the top left, and go to “My details and vehicle.”',
+          'Open the driver app, tap “Account” in the bottom bar, and go to “My details and vehicle.”',
           'Under “Verify your identity,” choose your document: driver’s license, government ID, or passport.',
           'Take the photo of the front and the back (a passport only needs the front). If your country’s ID card has no details on the back, the app only asks for the front; the driver’s license still needs both sides. Make sure the details are readable, with no glare.',
           'Take the photo of your face: straight on, in good light, no cap or sunglasses.',
@@ -9081,7 +9142,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'Open the driver app and slide “Slide to go online” all the way.',
-          'If the app says something is missing, open the menu, go to “My details and vehicle,” and complete what it asks for: your verification, your vehicle, your license, or your insurance.',
+          'If the app says something is missing, go to “Account,” then “My details and vehicle,” and complete what it asks for: your verification, your vehicle, your license, or your insurance.',
           'Once our team approves it, go online again: Food offers come in as usual.',
           'If your account is paused, write to us from Help and we’ll review it with you.',
         ],
@@ -9127,7 +9188,7 @@ const en: SeccionDocs[] = [
         id: 'ratings',
         titulo: 'My ratings: what customers see about you',
         resumen:
-          'Under Profile → “My ratings” you see your customer rating, your acceptance, completion, and on-time rates, and how many deliveries you have. With the big apps’ reference next to each.',
+          'Under Account → “My ratings” you see your customer rating, your acceptance, completion, and on-time rates, and how many deliveries you have. With the big apps’ reference next to each.',
         explicacion: [
           'Customer rating: the average stars from your last 100 rated deliveries. If the customer doesn’t rate, it doesn’t count. The big apps ask for 4.2 or higher.',
           'Acceptance rate: out of the last 100 offers, how many you accepted. Letting one expire counts as a decline. No minimum: it counts toward your level.',
@@ -9192,6 +9253,67 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'driver-home-screen',
+        titulo: 'The Divoox Driver screen: the map, the bottom sheet and the four tabs',
+        resumen:
+          'Divoox Driver looks like the biggest driver apps: the map fills the screen, what matters sits in a white sheet at the bottom, and everything else is one tap away in the bottom bar.',
+        explicacion: [
+          'Above the map you have three things: the safety shield on the left, what you earned today in the middle (one tap takes you to Earnings) and the destination-mode flag on the right, to get only offers that take you closer to where you’re headed.',
+          'While something from your sign-up is still missing, “Activate your account” shows on the map, with a green bar for how far along you are and what’s left. One tap takes you to your documents.',
+          'The bottom sheet shows your status: “Offline” with a gray dot, or “Online for” your services with a pulsing green dot and a moving line while we look for offers. That’s where you go online by sliding, see your services and today’s summary.',
+          'When an offer comes in, a sheet opens with the service at the top (deliveries in petrol blue), the time left, what you earn in green, the distance to pickup, the trip, the minutes and the route from pickup to drop-off. You accept with one tap; “Decline” sits below.',
+          'During the trip, a three-step bar shows where you are: head to pickup, pick up and drop off. At pickup, if a code is needed, “Ask your rider for their code” shows at the top with the box ready; and new messages show at the top with their red number. Arriving, starting and finishing are done by sliding, never by a stray tap.',
+          'At the bottom there are four tabs: Home, Earnings (with Earnings and Wallet), Inbox (with the number of things you haven’t seen) and Account, with your documents, your details and vehicle, your deliveries, your shifts, your regular riders, safety, help, language and sign out.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-rediseno-inicio-en.webp',
+            alt: 'Divoox Driver home with the full map, the shield, today’s earnings, the destination flag, the “Activate your account” bar and the white sheet at the bottom.',
+            pie: 'The full map, with what matters in the bottom sheet.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-conectado-en.webp',
+            alt: 'Divoox Driver online: green dot, the line looking for offers and the connected service card.',
+            pie: 'Online: the green dot pulses while we look for offers.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-oferta-en.webp',
+            alt: 'Ride offer in Divoox Driver with the service label, the time left, earnings in green, three numbers and the route.',
+            pie: 'The offer: what you earn first, and the whole route.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-recoger-en.webp',
+            alt: 'Trip in progress in Divoox Driver with the three-step bar and the “Go pick up” title.',
+            pie: 'The three-step bar tells you which part of the trip you’re on.',
+          },
+          {
+            src: '/docs/recorrido-driver-codigo-a-la-vista-en.webp',
+            alt: 'Divoox Driver at pickup: the large “Ask your rider for their code” notice with the four-digit box at the top, visible with the keyboard open.',
+            pie: 'At pickup, the code is asked at the top, no scrolling.',
+          },
+          {
+            src: '/docs/recorrido-driver-chat-sin-leer-en.webp',
+            alt: 'Trip in Divoox Driver with the messages card at the top: the rider’s latest message and a red number with the ones you haven’t read.',
+            pie: 'New messages show at the top, with their red number.',
+          },
+          {
+            src: '/docs/recorrido-driver-rediseno-cuenta-en.webp',
+            alt: 'Divoox Driver Account tab with the name, level and rows for documents, details and vehicle, deliveries, shifts, safety, help and language.',
+            pie: 'Everything about your account, one or two taps away.',
+          },
+        ],
+        preguntas: [
+          'Where is the menu in Divoox Driver?',
+          'Where do I see what I earned today?',
+          'How do I change the language in Divoox Driver?',
+        ],
+        pasos: [
+          'Open Divoox Driver: home is the map with the bottom sheet.',
+          'Slide to go online and wait for the offer in the sheet.',
+          'Use the bottom bar to go to Earnings, Inbox or Account.',
+        ],
+      },
+      {
         id: 'alerts-and-pause',
         titulo: 'The bell and pause: your notifications and when not to receive offers',
         resumen:
@@ -9216,7 +9338,7 @@ const en: SeccionDocs[] = [
           'What’s in the bell of the driver app?',
         ],
         pasos: [
-          'Tap the bell at the top right to see your notifications.',
+          'Tap “Inbox” in the bottom bar to see your notifications: the number goes back to zero when you open it.',
           'On the home screen, online with no order, tap “Pause offers” when you need a break.',
           'Slide “Slide to resume offers” all the way to receive again.',
         ],
@@ -9294,7 +9416,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['How do I cash out my earnings?', 'Do I keep the whole tip?'],
         pasos: [
-          'Open the menu at the top left and tap “My wallet,” or tap “See my wallet” on the home screen.',
+          'Tap “Earnings” in the bottom bar and choose “Wallet,” or tap “See my wallet” on the home screen.',
           'The first time, tap “Connect my bank account” and fill in your details in Stripe. You only do this once.',
           'Cash out whenever you want, from one dollar. The money reaches your bank through Stripe.',
           'If a movement doesn’t look right, tap “I have a problem” and a real person will answer.',
@@ -9351,7 +9473,7 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/camila-permiso-driver-en.webp',
             alt: 'The “Talk to support” chat in Divoox Driver with the same permission notice and its two buttons.',
-            pie: 'In Divoox Driver the notice is the same. You can change your answer later under Profile.',
+            pie: 'In Divoox Driver the notice is the same. You can change your answer later under Account → “My details and vehicle.”',
           },
           {
             src: '/docs/camila-driver-chat-en.webp',
@@ -9636,7 +9758,7 @@ const en: SeccionDocs[] = [
         resumen:
           'After delivering, you can rate the customer with stars and, if something went wrong, say what happened.',
         explicacion: [
-          'Under “Orders” you see today’s deliveries you haven’t rated yet. Tap the stars and, if it’s 3 or fewer, pick what happened: didn’t come out, wrong address, rude or made you wait.',
+          'Under “Account” → “My deliveries” you see today’s deliveries you haven’t rated yet. Tap the stars and, if it’s 3 or fewer, pick what happened: didn’t come out, wrong address, rude or made you wait.',
           'It’s optional. Only our support team sees it, to look after drivers; the customer doesn’t see your rating and nobody is blocked over one rating.',
           'Each delivery can be rated once, on the same day.',
         ],
@@ -9644,12 +9766,12 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/recorrido-driver-calificar-cliente-en.webp',
             alt: 'The Orders tab in Divoox Driver with “Rate today’s customers”: the first name and the order number, with the stars to rate.',
-            pie: 'In “Orders” you can rate the people who received today’s deliveries, if you want.',
+            pie: 'In “My deliveries” you can rate the people who received today’s deliveries, if you want.',
           },
         ],
         preguntas: ['Can I rate a customer?', 'Does the customer see my rating?'],
         pasos: [
-          'Open “Orders”.',
+          'Tap “Account” at the bottom and open “My deliveries”.',
           'Tap the stars for the delivery.',
           'If needed, pick what happened and send.',
         ],
@@ -10865,7 +10987,7 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/mapa-ajuste-conductor-en.webp',
             alt: 'The Divoox Driver profile screen with the “Map colors” card and its three options.',
-            pie: 'In Divoox Driver, the setting is on the “Profile” tab.',
+            pie: 'In Divoox Driver, the setting is under “Account” → “My details and vehicle.”',
           },
         ],
         preguntas: [
@@ -10874,7 +10996,7 @@ const en: SeccionDocs[] = [
           'How do I turn on night mode for the map?',
         ],
         pasos: [
-          'Open your account: in the Divoox app, the “My account” tab; in Divoox Driver, the “Profile” tab.',
+          'Open your account: in the Divoox app, the “My account” tab; in Divoox Driver, the “Account” tab and then “My details and vehicle.”',
           'Find the “Map colors” card.',
           'Tap “Automatic” to let it switch by time of day, “Light” to keep it on day, or “Dark” to keep it on night.',
           'Done: every map changes right away, and your choice is saved on that phone or browser.',
@@ -11150,8 +11272,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-version-driver-en.webp',
-            alt: 'Bottom of “Profile” in Divoox Driver, with the gray “Version … · commit” line below “Your account.”',
-            pie: 'Drivers: at the bottom of “Profile.”',
+            alt: 'Bottom of “My details and vehicle” in Divoox Driver, with the gray “Version … · commit” line below “Your account.”',
+            pie: 'Drivers: under “Account” → “My details and vehicle,” at the bottom.',
           },
           {
             src: '/docs/recorrido-version-restaurante-app-en.webp',

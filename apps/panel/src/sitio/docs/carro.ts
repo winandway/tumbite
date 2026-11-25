@@ -27,6 +27,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Carro Comfort o Carro Premium.',
         'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
         'Cuando un conductor acepta, ves su nombre, su foto (si la tiene), el carro con su color y sus plazas, la placa y en cuántos minutos llega. Para empezar el viaje le dices tu código de cuatro números: así sabes que te subes con la persona correcta.',
+        'Arriba del viaje ves el último mensaje de tu conductor y un número rojo con los que no has leído. Tócalo para abrir el chat; el número vuelve a cero. Si te llega el aviso de un mensaje, al tocarlo se abre el viaje con el chat abierto.',
         'Si pides desde una dirección guardada que tiene fotos de la entrada, tu conductor las ve mientras va a recogerte y reconoce tu casa a la primera. Solo la ve tu conductor, y solo mientras va hacia ti: deja de verla en cuanto te recoge. Si esa dirección todavía no tiene fotos, la app te invita a agregar una; es opcional. Si pides desde una esquina o un punto suelto del mapa, no hay foto.',
       ],
       capturas: [
@@ -277,7 +278,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'Registra tu carro con sus plazas, sube los papeles del carro y los tuyos, y sigue la aprobación desde la app.',
       explicacion: [
-        'Para llevar pasajeros en tu carro abres «Divoox Carro» en el Perfil de la app Divoox Driver. Ahí ves tu ciudad, registras el carro y subes lo que pide tu país.',
+        'Para llevar pasajeros en tu carro abres «Divoox Carro» en Cuenta → «Mis datos y vehículo» de la app Divoox Driver. Ahí ves tu ciudad, registras el carro y subes lo que pide tu país.',
         'Del carro anotas la marca, el modelo, el año, el color, la placa y las plazas: cuatro para Carro o seis para Carro XL. Después subes sus papeles (el título o carnet de circulación, la póliza del carro y la que cubre a los pasajeros) y sus fotos.',
         'Tus papeles personales dependen del país; por ejemplo, la licencia de conducir. La app te dice uno por uno lo que te falta.',
         'Nuestro equipo revisa todo. Mientras tanto ves «Te falta» con lo pendiente; cuando te aprueban, la app te dice «Ya recibes viajes de Carro».',
@@ -308,7 +309,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         '¿Cómo sé si ya me aprobaron para Carro?',
       ],
       pasos: [
-        'En Divoox Driver, toca «Perfil» y abre «Divoox Carro».',
+        'En Divoox Driver, toca «Cuenta», entra a «Mis datos y vehículo» y abre «Divoox Carro».',
         'Comprueba tu ciudad.',
         'Escribe los datos de tu carro, elige sus plazas y toca «Guardar mi carro».',
         'Sube los papeles y las fotos del carro, y tus papeles personales, y envíalos a revisión.',
@@ -323,7 +324,8 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Acepta la oferta, busca al pasajero, empieza con su código y cobra al terminar según la forma de pago.',
       explicacion: [
         'Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino.',
-        'Al llegar a la recogida deslizas la barra «Desliza al llegar». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero.',
+        'Al llegar a la recogida deslizas la barra «Desliza al llegar». Arriba aparece el aviso «Pídele el código al pasajero» con la casilla lista para escribir: el viaje empieza solo con el código de cuatro números que te dice el pasajero. Si te equivocas, el aviso te dice cuántos intentos te quedan.',
+        'Los mensajes del pasajero salen arriba del viaje, con un número rojo hasta que abres el chat.',
         'Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar.',
         'En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias.',
       ],
@@ -471,6 +473,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'There are two sizes. Car fits up to four riders with carry-on bags. Car XL fits up to six, for groups or more luggage.',
         'The price is fixed: you see it before you request and traffic doesn’t change it. In the United States it’s in US dollars. In countries where people also think in a local currency, the app shows the equivalent next to it, for reference only.',
         'When a driver accepts, you see their name, their photo (if they have one), the car with its color and seats, the license plate, and how many minutes away they are. To start the ride you tell them your four-digit code, so you know you’re getting in with the right person.',
+        'At the top of the ride you see your driver’s latest message and a red number with the ones you haven’t read. Tap it to open the chat; the number goes back to zero. If you get a message notification, tapping it opens the ride with the chat open.',
         'If you request from a saved address that has entrance photos, your driver sees them while heading to pick you up and recognizes your place on the first try. Only your driver sees it, and only while on the way to you: they stop seeing it as soon as they pick you up. If that address has no photos yet, the app invites you to add one; it’s optional. If you request from a corner or a loose spot on the map, there’s no photo.',
       ],
       capturas: [
@@ -721,7 +724,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'Register your car with its seats, upload the car’s documents and your own, and track your approval in the app.',
       explicacion: [
-        'To give rides in your car, open “Divoox Car” in Profile in the Divoox Driver app. There you see your city, register the car, and upload what your country requires.',
+        'To give rides in your car, open “Divoox Car” under Account → “My details and vehicle” in the Divoox Driver app. There you see your city, register the car, and upload what your country requires.',
         'For the car you enter the make, model, year, color, license plate, and seats: four for Car or six for Car XL. Then you upload its documents (title or registration card, the car’s insurance policy, and the one that covers riders) and its photos.',
         'Your personal documents depend on the country; for example, your driver’s license. The app tells you, one by one, what’s missing.',
         'Our team reviews everything. Meanwhile you see “Still needed” with what’s pending; once you’re approved, the app says “You’re receiving Car rides.”',
@@ -752,7 +755,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'How do I know I’m approved for Car?',
       ],
       pasos: [
-        'In Divoox Driver, tap “Profile” and open “Divoox Car.”',
+        'In Divoox Driver, tap “Account,” go to “My details and vehicle” and open “Divoox Car.”',
         'Check your city.',
         'Enter your car’s details, choose its seats, and tap “Save my car.”',
         'Upload the car’s documents and photos and your personal documents, and send them for review.',
@@ -767,7 +770,8 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'Accept the offer, pick up the rider, start with their code, and collect at the end based on the payment method.',
       explicacion: [
         'Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination.',
-        'When you reach the pickup, slide the bar “Slide when you arrive.” The ride starts only when you enter the four-digit code the rider gives you.',
+        'When you reach the pickup, slide the bar “Slide when you arrive.” The notice “Ask your rider for their code” shows at the top with the box ready to type: the ride starts only with the four-digit code the rider gives you. If you get it wrong, the notice tells you how many attempts you have left.',
+        'The rider’s messages show at the top of the ride, with a red number until you open the chat.',
         'During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived.',
         'In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings.',
       ],

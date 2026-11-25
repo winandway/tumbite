@@ -768,7 +768,8 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "preguntas": [
    "¿Cómo comparto mi viaje?",
    "¿Qué son los contactos de confianza?",
-   "¿Qué hago si me siento inseguro en un viaje?"
+   "¿Qué hago si me siento inseguro en un viaje?",
+   "¿Es seguro viajar en moto con Divoox?"
   ],
   "pasos": [
    "Antes de pedir, agrega tus contactos de confianza en la pantalla de Moto y elige cuándo compartir.",
@@ -797,7 +798,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Toca «Pedir Carro». Cuando el conductor acepte, verás sus datos y su ubicación en el mapa.",
    "Al subirte, comprueba la placa y dile al conductor tu código de cuatro números."
   ],
-  "cuerpo": "Divoox Carro es el taxi de Divoox: un conductor verificado te lleva en su carro de un punto a otro de la ciudad. Está disponible en las ciudades donde Divoox Carro esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo. Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Carro Comfort o Carro Premium. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Cuando un conductor acepta, ves su nombre, su foto (si la tiene), el carro con su color y sus plazas, la placa y en cuántos minutos llega. Para empezar el viaje le dices tu código de cuatro números: así sabes que te subes con la persona correcta. Si pides desde una dirección guardada que tiene fotos de la entrada, tu conductor las ve mientras va a recogerte y reconoce tu casa a la primera. Solo la ve tu conductor, y solo mientras va hacia ti: deja de verla en cuanto te recoge. Si esa dirección todavía no tiene fotos, la app te invita a agregar una; es opcional. Si pides desde una esquina o un punto suelto del mapa, no hay foto."
+  "cuerpo": "Divoox Carro es el taxi de Divoox: un conductor verificado te lleva en su carro de un punto a otro de la ciudad. Está disponible en las ciudades donde Divoox Carro esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo. Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Carro Comfort o Carro Premium. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Cuando un conductor acepta, ves su nombre, su foto (si la tiene), el carro con su color y sus plazas, la placa y en cuántos minutos llega. Para empezar el viaje le dices tu código de cuatro números: así sabes que te subes con la persona correcta. Arriba del viaje ves el último mensaje de tu conductor y un número rojo con los que no has leído. Tócalo para abrir el chat; el número vuelve a cero. Si te llega el aviso de un mensaje, al tocarlo se abre el viaje con el chat abierto. Si pides desde una dirección guardada que tiene fotos de la entrada, tu conductor las ve mientras va a recogerte y reconoce tu casa a la primera. Solo la ve tu conductor, y solo mientras va hacia ti: deja de verla en cuanto…"
  },
  {
   "idioma": "es",
@@ -1174,12 +1175,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo veo a los conductores de mi equipo?"
   ],
   "pasos": [
-   "Abre Perfil → «Mi equipo e invitaciones».",
+   "Abre Cuenta → «Mi equipo e invitaciones».",
    "Toca «Compartir mi enlace» o muestra tu QR.",
    "Tu invitado escribe tu código al crear su cuenta.",
    "Cuando complete sus carreras, el saldo entra solo."
   ],
-  "cuerpo": "Abre Perfil → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp. Tu invitado abre el enlace, baja Divoox Driver y escribe tu código en «Código de invitación» al crear su cuenta. Si se le olvidó, lo escribe después en «Mi equipo e invitaciones» → «¿Te invitaron?», antes de su primera carrera. Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones. Tu invitado recibe el regalo de arranque de su ciudad, si está encendido. Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes. Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan. Y cada miembro ve ahí, arriba, a qué equipo pertenece y quién es su líder."
+  "cuerpo": "Abre Cuenta → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp. Tu invitado abre el enlace, baja Divoox Driver y escribe tu código en «Código de invitación» al crear su cuenta. Si se le olvidó, lo escribe después en «Mi equipo e invitaciones» → «¿Te invitaron?», antes de su primera carrera. Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones. Tu invitado recibe el regalo de arranque de su ciudad, si está encendido. Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes. Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan. Y cada miembro ve ahí, arriba, a qué equipo pertenece y quién es su líder."
  },
  {
   "idioma": "es",
@@ -1407,7 +1408,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Descarga la app de Divoox para repartidores y crea tu cuenta.",
-   "En Perfil → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.",
+   "En Cuenta → «Mis datos y vehículo» → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.",
    "Conecta tu banco desde tu billetera con «Conectar mi cuenta bancaria» (Stripe, una sola vez) para poder retirar tus ganancias.",
    "Cuando quieras trabajar, desliza «Desliza para conectarte» de izquierda a derecha hasta el final. Un toque no te conecta (así no te conectas sin querer con el celular en el bolsillo); si sueltas a medio camino, vuelve al inicio. La app usa tu ubicación solo mientras estás conectado.",
    "No hay horarios ni mínimos: te conectas y desconectas cuando quieras."
@@ -1423,7 +1424,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo verifico mi identidad?"
   ],
   "pasos": [
-   "Abre la app de repartidores, toca el menú de arriba a la izquierda y entra a «Mis datos y vehículo».",
+   "Abre la app de repartidores, toca «Cuenta» en la barra de abajo y entra a «Mis datos y vehículo».",
    "En «Verifica tu identidad», elige tu documento: licencia de conducir, identificación oficial o pasaporte.",
    "Toma la foto del frente y la del reverso (el pasaporte solo lleva el frente). En Venezuela la cédula se fotografía solo por delante, porque por detrás no tiene datos; la licencia sí lleva frente y reverso. Que se lean bien los datos, sin reflejos.",
    "Toma la foto de tu cara: de frente, con buena luz, sin gorra ni lentes oscuros.",
@@ -1442,7 +1443,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Abre la app de repartidores y desliza «Desliza para conectarte» hasta el final.",
-   "Si la app te dice que falta algo, entra al menú, a «Mis datos y vehículo», y completa lo que te pide: tu verificación, tu vehículo, tu licencia o tu seguro.",
+   "Si la app te dice que falta algo, entra a «Cuenta», a «Mis datos y vehículo», y completa lo que te pide: tu verificación, tu vehículo, tu licencia o tu seguro.",
    "Cuando el equipo lo apruebe, vuelve a conectarte: las ofertas de Comida te llegan como siempre.",
    "Si tu cuenta está en pausa, escríbenos desde Ayuda y lo revisamos contigo."
   ],
@@ -1471,7 +1472,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "drivers/ratings",
   "titulo": "Mis calificaciones: lo que ven los clientes de ti",
-  "resumen": "En Perfil → «Mis calificaciones» ves tu calificación de clientes, tu tasa de aceptación, de finalización y de puntualidad, y cuántas entregas llevas. Con la referencia de las grandes apps al lado.",
+  "resumen": "En Cuenta → «Mis calificaciones» ves tu calificación de clientes, tu tasa de aceptación, de finalización y de puntualidad, y cuántas entregas llevas. Con la referencia de las grandes apps al lado.",
   "preguntas": [
    "¿Dónde veo mi calificación como repartidor?",
    "¿Rechazar ofertas afecta mi calificación?",
@@ -1503,6 +1504,23 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "drivers/driver-home-screen",
+  "titulo": "La pantalla de Divoox Driver: el mapa, la hoja de abajo y las cuatro pestañas",
+  "resumen": "Divoox Driver se ve como las apps de conductores más grandes: el mapa ocupa toda la pantalla, lo importante va en una hoja blanca abajo y todo lo demás está a un toque en la barra de abajo.",
+  "preguntas": [
+   "¿Dónde está el menú de Divoox Driver?",
+   "¿Dónde veo lo que gané hoy?",
+   "¿Dónde cambio el idioma en Divoox Driver?"
+  ],
+  "pasos": [
+   "Abre Divoox Driver: el inicio es el mapa con la hoja de abajo.",
+   "Desliza para conectarte y espera la oferta en la hoja.",
+   "Usa la barra de abajo para ir a Ganancias, Avisos o Cuenta."
+  ],
+  "cuerpo": "Arriba del mapa tienes tres cosas: el escudo a la izquierda (para una emergencia), lo que ganaste hoy en el centro (un toque te lleva a Ganancias) y la bandera del modo destino a la derecha, para recibir solo ofertas que te acercan a donde vas. Mientras te falta algo del registro, sobre el mapa aparece «Activa tu cuenta», con una barra verde que dice cuánto llevas y qué te falta. Un toque te lleva a tus papeles. En la hoja de abajo ves tu estado: «Desconectado» con un punto gris, o «Conectado a» tus servicios con un punto verde que late y una línea que se mueve mientras buscamos ofertas. Ahí mismo te conectas deslizando, ves tus servicios y el resumen de hoy. Cuando llega una oferta, se abre una hoja con el servicio arriba (los envíos van en azul petróleo), el tiempo que te queda, lo que ganas en verde, la distancia hasta recoger, el recorrido, los minutos y la ruta de recoger a llevar. Aceptas con un toque; «Rechazar» va debajo. Con un trabajo en curso, una barra de tres pasos te dice dónde vas: ir a recoger, recoger y llevar. Al llegar, si hace falta un código, arriba sale «Pídele el código al pasajero» con la casilla lista; y los mensajes nuevos salen arriba con su número rojo. Llegar, iniciar y terminar se hacen deslizando, nunca con un toque suelto. Abajo hay cuatro pestañas: Inicio, Ganancias (con Ganancias y Billetera), Avisos (con el número de lo que no has visto) y Cuenta, donde están tus papeles, tus datos y tu vehículo, tus entregas, tus turnos, tus clientes fijos, emergencias, ayuda, el idioma y cerrar sesión."
+ },
+ {
+  "idioma": "es",
   "ruta": "drivers/alerts-and-pause",
   "titulo": "La campana y la pausa: tus avisos y cuándo no recibir ofertas",
   "resumen": "La campana te muestra los avisos reales de tus últimos siete días: pedido listo, cancelaciones, cambios de dirección, propinas, foto de control. Y con «Pausar ofertas» sigues conectado sin que te lleguen ofertas.",
@@ -1512,7 +1530,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Qué hay en la campana de la app de repartidores?"
   ],
   "pasos": [
-   "Toca la campana arriba a la derecha para ver tus avisos.",
+   "Toca «Avisos» en la barra de abajo para ver tus avisos: el número se va a cero al abrirla.",
    "En el inicio, conectado y sin pedido, toca «Pausar ofertas» cuando necesites un descanso.",
    "Desliza «Desliza para reanudar ofertas» hasta el final para volver a recibir."
   ],
@@ -1562,7 +1580,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Me quedo con toda la propina?"
   ],
   "pasos": [
-   "Abre el menú de arriba a la izquierda y toca «Mi billetera», o toca «Ver mi billetera» en la pantalla de inicio.",
+   "Toca «Ganancias» en la barra de abajo y elige «Billetera», o toca «Ver mi billetera» en la pantalla de inicio.",
    "La primera vez, toca «Conectar mi cuenta bancaria» y completa tus datos en Stripe. Se hace una sola vez.",
    "Retira cuando quieras, desde un dólar. El dinero llega a tu banco por Stripe.",
    "Si un movimiento no cuadra, toca «Tengo un problema» y te contesta una persona."
@@ -1657,7 +1675,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cuánto tarda la aprobación?"
   ],
   "pasos": [
-   "En la app Divoox Driver, entra a Perfil y toca «Divoox Moto».",
+   "En la app Divoox Driver, entra a Cuenta → «Mis datos y vehículo» y toca «Divoox Moto».",
    "Revisa tu ciudad y cámbiala si hace falta (después de elegirla, puedes cambiarla una vez cada 24 horas dentro de tu país).",
    "Escribe la marca, el modelo, el año, el color y la placa de tu moto, y toca «Guardar mi moto».",
    "Sube cada papel de la moto: toca «Subir» y elige «Tomar foto» o «Subir desde archivos».",
@@ -1711,13 +1729,13 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo sé si ya me aprobaron para Carro?"
   ],
   "pasos": [
-   "En Divoox Driver, toca «Perfil» y abre «Divoox Carro».",
+   "En Divoox Driver, toca «Cuenta», entra a «Mis datos y vehículo» y abre «Divoox Carro».",
    "Comprueba tu ciudad.",
    "Escribe los datos de tu carro, elige sus plazas y toca «Guardar mi carro».",
    "Sube los papeles y las fotos del carro, y tus papeles personales, y envíalos a revisión.",
    "Revisa «Te falta» hasta que diga «Ya recibes viajes de Carro»."
   ],
-  "cuerpo": "Para llevar pasajeros en tu carro abres «Divoox Carro» en el Perfil de la app Divoox Driver. Ahí ves tu ciudad, registras el carro y subes lo que pide tu país. Del carro anotas la marca, el modelo, el año, el color, la placa y las plazas: cuatro para Carro o seis para Carro XL. Después subes sus papeles (el título o carnet de circulación, la póliza del carro y la que cubre a los pasajeros) y sus fotos. Tus papeles personales dependen del país; por ejemplo, la licencia de conducir. La app te dice uno por uno lo que te falta. Nuestro equipo revisa todo. Mientras tanto ves «Te falta» con lo pendiente; cuando te aprueban, la app te dice «Ya recibes viajes de Carro»."
+  "cuerpo": "Para llevar pasajeros en tu carro abres «Divoox Carro» en Cuenta → «Mis datos y vehículo» de la app Divoox Driver. Ahí ves tu ciudad, registras el carro y subes lo que pide tu país. Del carro anotas la marca, el modelo, el año, el color, la placa y las plazas: cuatro para Carro o seis para Carro XL. Después subes sus papeles (el título o carnet de circulación, la póliza del carro y la que cubre a los pasajeros) y sus fotos. Tus papeles personales dependen del país; por ejemplo, la licencia de conducir. La app te dice uno por uno lo que te falta. Nuestro equipo revisa todo. Mientras tanto ves «Te falta» con lo pendiente; cuando te aprueban, la app te dice «Ya recibes viajes de Carro»."
  },
  {
   "idioma": "es",
@@ -1736,7 +1754,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Pídele al pasajero su código, escríbelo y desliza la barra «Desliza para iniciar el viaje».",
    "Si paga por pago móvil, confirma si te llegó. Al llegar al destino, desliza «Desliza para terminar el viaje» y, si es en efectivo, cobra lo que te dice la app."
   ],
-  "cuerpo": "Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino. Al llegar a la recogida deslizas la barra «Desliza al llegar». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero. Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar. En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias."
+  "cuerpo": "Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino. Al llegar a la recogida deslizas la barra «Desliza al llegar». Arriba aparece el aviso «Pídele el código al pasajero» con la casilla lista para escribir: el viaje empieza solo con el código de cuatro números que te dice el pasajero. Si te equivocas, el aviso te dice cuántos intentos te quedan. Los mensajes del pasajero salen arriba del viaje, con un número rojo hasta que abres el chat. Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar. En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias."
  },
  {
   "idioma": "es",
@@ -2035,13 +2053,13 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Por qué me sale «Nuevo en Divoox»?"
   ],
   "pasos": [
-   "Abre Divoox Driver y toca Perfil.",
+   "Abre Divoox Driver y toca Cuenta.",
    "Toca «Así te ven los pasajeros».",
    "Toca «Completar mi perfil».",
    "Marca los idiomas que hablas y escribe un dato corto si quieres.",
    "Toca «Guardar mi perfil»."
   ],
-  "cuerpo": "Cuando te asignan un viaje, el pasajero ve quién va a recogerlo: tu foto, tu nombre de pila, tu vehículo con la placa y un resumen de tu trayectoria. Eso le da tranquilidad, y a ti te ayuda a recibir mejores calificaciones. En Divoox Driver, entra a Perfil y toca «Así te ven los pasajeros»: ves tu perfil exactamente como lo verá el pasajero. Ahí aparece tu foto verificada con un aro verde, tu nombre de pila (nunca tu apellido), tu vehículo y tu placa. Si todavía eres nuevo, el pasajero ve «Nuevo en Divoox»: tus viajes, tu calificación y el tiempo que llevas aparecen cuando ya tienes trayectoria. Los sellos «Identidad verificada» y «Vehículo verificado» solo se le muestran al pasajero si de verdad lo están. A ti te salen los dos para que veas cuál te falta. Toca «Completar mi perfil» para marcar los idiomas que hablas (español, inglés o portugués, uno o varios) y escribir, si quieres, algo corto para tus pasajeros, hasta 120 letras. Es opcional. Si el dato tiene palabras que no se permiten, la app te lo dice y lo escribes de otra forma. Si se te cierra la app a mitad, al volver está todo lo que habías escrito. Al guardar, tu perfil se actualiza y así te verán los pasajeros desde tu próximo viaje. Tu privacidad no cambia: los pasajeros nunca ven tu apellido, tu teléfono ni tu correo."
+  "cuerpo": "Cuando te asignan un viaje, el pasajero ve quién va a recogerlo: tu foto, tu nombre de pila, tu vehículo con la placa y un resumen de tu trayectoria. Eso le da tranquilidad, y a ti te ayuda a recibir mejores calificaciones. En Divoox Driver, entra a Cuenta y toca «Así te ven los pasajeros»: ves tu perfil exactamente como lo verá el pasajero. Ahí aparece tu foto verificada con un aro verde, tu nombre de pila (nunca tu apellido), tu vehículo y tu placa. Si todavía eres nuevo, el pasajero ve «Nuevo en Divoox»: tus viajes, tu calificación y el tiempo que llevas aparecen cuando ya tienes trayectoria. Los sellos «Identidad verificada» y «Vehículo verificado» solo se le muestran al pasajero si de verdad lo están. A ti te salen los dos para que veas cuál te falta. Toca «Completar mi perfil» para marcar los idiomas que hablas (español, inglés o portugués, uno o varios) y escribir, si quieres, algo corto para tus pasajeros, hasta 120 letras. Es opcional. Si el dato tiene palabras que no se permiten, la app te lo dice y lo escribes de otra forma. Si se te cierra la app a mitad, al volver está todo lo que habías escrito. Al guardar, tu perfil se actualiza y así te verán los pasajeros desde tu próximo viaje. Tu privacidad no cambia: los pasajeros nunca ven tu apellido, tu teléfono ni tu correo."
  },
  {
   "idioma": "es",
@@ -2199,11 +2217,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿El cliente ve mi calificación?"
   ],
   "pasos": [
-   "Abre «Pedidos».",
+   "Toca «Cuenta» abajo y abre «Mis entregas».",
    "Toca las estrellas de la entrega.",
    "Si hace falta, elige qué pasó y envía."
   ],
-  "cuerpo": "En «Pedidos» aparecen tus entregas de hoy que todavía no calificaste. Tocas las estrellas y, si son 3 o menos, eliges qué pasó: no salió a recibir, dirección equivocada, mal trato o te hizo esperar. Es opcional. Solo lo ve nuestro equipo de soporte, para cuidar a los repartidores; el cliente no ve tu nota y nadie se bloquea por una calificación. Cada entrega se califica una sola vez, el mismo día."
+  "cuerpo": "En «Cuenta» → «Mis entregas» aparecen tus entregas de hoy que todavía no calificaste. Tocas las estrellas y, si son 3 o menos, eliges qué pasó: no salió a recibir, dirección equivocada, mal trato o te hizo esperar. Es opcional. Solo lo ve nuestro equipo de soporte, para cuidar a los repartidores; el cliente no ve tu nota y nadie se bloquea por una calificación. Cada entrega se califica una sola vez, el mismo día."
  },
  {
   "idioma": "es",
@@ -2491,7 +2509,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo pongo el mapa en modo noche?"
   ],
   "pasos": [
-   "Abre tu cuenta: en la app de Divoox, la pestaña «Mi cuenta»; en Divoox Driver, la pestaña «Perfil».",
+   "Abre tu cuenta: en la app de Divoox, la pestaña «Mi cuenta»; en Divoox Driver, la pestaña «Cuenta» y luego «Mis datos y vehículo».",
    "Busca la tarjeta «Colores del mapa».",
    "Toca «Automático» para que cambie solo según la hora, «Claro» para dejarlo siempre de día u «Oscuro» para dejarlo siempre de noche.",
    "Listo: todos los mapas cambian al momento y tu elección queda guardada en ese teléfono o navegador.",
@@ -3464,7 +3482,8 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "preguntas": [
    "How do I share my ride?",
    "What are trusted contacts?",
-   "What should I do if I feel unsafe on a ride?"
+   "What should I do if I feel unsafe on a ride?",
+   "Is it safe to ride a motorbike with Divoox?"
   ],
   "pasos": [
    "Before you request, add your trusted contacts on the Moto screen and choose when to share.",
@@ -3493,7 +3512,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Tap “Request Car.” When the driver accepts, you’ll see their details and location on the map.",
    "When you get in, check the plate and tell the driver your four-digit code."
   ],
-  "cuerpo": "Divoox Car is the Divoox taxi: a verified driver takes you in their car from one place to another in the city. It’s available in cities where Divoox Car is open; if it isn’t open in yours yet, the app won’t let you request it. There are two sizes. Car fits up to four riders with carry-on bags. Car XL fits up to six, for groups or more luggage. The price is fixed: you see it before you request and traffic doesn’t change it. In the United States it’s in US dollars. In countries where people also think in a local currency, the app shows the equivalent next to it, for reference only. When a driver accepts, you see their name, their photo (if they have one), the car with its color and seats, the license plate, and how many minutes away they are. To start the ride you tell them your four-digit code, so you know you’re getting in with the right person. If you request from a saved address that has entrance photos, your driver sees them while heading to pick you up and recognizes your place on the first try. Only your driver sees it, and only while on the way to you: they stop seeing it as soon as they pick you up. If that address has no photos yet, the app invites you to add one; it’s optional. If you request from a corner or a loose spot on the map, there’s no photo."
+  "cuerpo": "Divoox Car is the Divoox taxi: a verified driver takes you in their car from one place to another in the city. It’s available in cities where Divoox Car is open; if it isn’t open in yours yet, the app won’t let you request it. There are two sizes. Car fits up to four riders with carry-on bags. Car XL fits up to six, for groups or more luggage. The price is fixed: you see it before you request and traffic doesn’t change it. In the United States it’s in US dollars. In countries where people also think in a local currency, the app shows the equivalent next to it, for reference only. When a driver accepts, you see their name, their photo (if they have one), the car with its color and seats, the license plate, and how many minutes away they are. To start the ride you tell them your four-digit code, so you know you’re getting in with the right person. At the top of the ride you see your driver’s latest message and a red number with the ones you haven’t read. Tap it to open the chat; the number goes back to zero. If you get a message notification, tapping it opens the ride with the chat open. If you request from a saved address that has entrance photos, your driver sees them while heading to pick you up and recognizes your place on the first try. Only your driver sees it, and only while on the way to you: they stop seeing it as soon as they pick you up. If that address has no photos yet, the app invites you to add one; it’s optional. If you request from a corner or a loose spot on the map, there’s no photo."
  },
  {
   "idioma": "en",
@@ -3866,12 +3885,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I see the drivers on my team?"
   ],
   "pasos": [
-   "Open Profile → “My team and invitations.”",
+   "Open Account → “My team and invitations.”",
    "Tap “Share my link” or show your QR.",
    "Your invitee enters your code when creating their account.",
    "When they complete their trips, the balance goes in on its own."
   ],
-  "cuerpo": "Open Profile → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button. Your invitee opens the link, gets Divoox Driver and enters your code in “Invitation code” when creating their account. If they forgot, they enter it later in “My team and invitations” → “Were you invited?”, before their first trip. You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions. Your invitee gets their city’s starter gift, if it’s on. Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person. Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done. Each member sees there, at the top, which team they’re on and who their leader is."
+  "cuerpo": "Open Account → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button. Your invitee opens the link, gets Divoox Driver and enters your code in “Invitation code” when creating their account. If they forgot, they enter it later in “My team and invitations” → “Were you invited?”, before their first trip. You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions. Your invitee gets their city’s starter gift, if it’s on. Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person. Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done. Each member sees there, at the top, which team they’re on and who their leader is."
  },
  {
   "idioma": "en",
@@ -4114,7 +4133,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I verify my identity?"
   ],
   "pasos": [
-   "Open the driver app, tap the menu at the top left, and go to “My details and vehicle.”",
+   "Open the driver app, tap “Account” in the bottom bar, and go to “My details and vehicle.”",
    "Under “Verify your identity,” choose your document: driver’s license, government ID, or passport.",
    "Take the photo of the front and the back (a passport only needs the front). If your country’s ID card has no details on the back, the app only asks for the front; the driver’s license still needs both sides. Make sure the details are readable, with no glare.",
    "Take the photo of your face: straight on, in good light, no cap or sunglasses.",
@@ -4133,7 +4152,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Open the driver app and slide “Slide to go online” all the way.",
-   "If the app says something is missing, open the menu, go to “My details and vehicle,” and complete what it asks for: your verification, your vehicle, your license, or your insurance.",
+   "If the app says something is missing, go to “Account,” then “My details and vehicle,” and complete what it asks for: your verification, your vehicle, your license, or your insurance.",
    "Once our team approves it, go online again: Food offers come in as usual.",
    "If your account is paused, write to us from Help and we’ll review it with you."
   ],
@@ -4162,7 +4181,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "en",
   "ruta": "drivers/ratings",
   "titulo": "My ratings: what customers see about you",
-  "resumen": "Under Profile → “My ratings” you see your customer rating, your acceptance, completion, and on-time rates, and how many deliveries you have. With the big apps’ reference next to each.",
+  "resumen": "Under Account → “My ratings” you see your customer rating, your acceptance, completion, and on-time rates, and how many deliveries you have. With the big apps’ reference next to each.",
   "preguntas": [
    "Where do I see my rating as a driver?",
    "Does declining offers affect my rating?",
@@ -4194,6 +4213,23 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "en",
+  "ruta": "drivers/driver-home-screen",
+  "titulo": "The Divoox Driver screen: the map, the bottom sheet and the four tabs",
+  "resumen": "Divoox Driver looks like the biggest driver apps: the map fills the screen, what matters sits in a white sheet at the bottom, and everything else is one tap away in the bottom bar.",
+  "preguntas": [
+   "Where is the menu in Divoox Driver?",
+   "Where do I see what I earned today?",
+   "How do I change the language in Divoox Driver?"
+  ],
+  "pasos": [
+   "Open Divoox Driver: home is the map with the bottom sheet.",
+   "Slide to go online and wait for the offer in the sheet.",
+   "Use the bottom bar to go to Earnings, Inbox or Account."
+  ],
+  "cuerpo": "Above the map you have three things: the safety shield on the left, what you earned today in the middle (one tap takes you to Earnings) and the destination-mode flag on the right, to get only offers that take you closer to where you’re headed. While something from your sign-up is still missing, “Activate your account” shows on the map, with a green bar for how far along you are and what’s left. One tap takes you to your documents. The bottom sheet shows your status: “Offline” with a gray dot, or “Online for” your services with a pulsing green dot and a moving line while we look for offers. That’s where you go online by sliding, see your services and today’s summary. When an offer comes in, a sheet opens with the service at the top (deliveries in petrol blue), the time left, what you earn in green, the distance to pickup, the trip, the minutes and the route from pickup to drop-off. You accept with one tap; “Decline” sits below. During the trip, a three-step bar shows where you are: head to pickup, pick up and drop off. At pickup, if a code is needed, “Ask your rider for their code” shows at the top with the box ready; and new messages show at the top with their red number. Arriving, starting and finishing are done by sliding, never by a stray tap. At the bottom there are four tabs: Home, Earnings (with Earnings and Wallet), Inbox (with the number of things you haven’t seen) and Account, with your documents, your details and vehicle, your deliveries, your shifts, your regular riders, safety, help, language and sign out."
+ },
+ {
+  "idioma": "en",
   "ruta": "drivers/alerts-and-pause",
   "titulo": "The bell and pause: your notifications and when not to receive offers",
   "resumen": "The bell shows your real notifications from the last seven days: order ready, cancellations, address changes, tips, check-in photo. And with “Pause offers” you stay online without receiving offers.",
@@ -4203,7 +4239,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "What’s in the bell of the driver app?"
   ],
   "pasos": [
-   "Tap the bell at the top right to see your notifications.",
+   "Tap “Inbox” in the bottom bar to see your notifications: the number goes back to zero when you open it.",
    "On the home screen, online with no order, tap “Pause offers” when you need a break.",
    "Slide “Slide to resume offers” all the way to receive again."
   ],
@@ -4253,7 +4289,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Do I keep the whole tip?"
   ],
   "pasos": [
-   "Open the menu at the top left and tap “My wallet,” or tap “See my wallet” on the home screen.",
+   "Tap “Earnings” in the bottom bar and choose “Wallet,” or tap “See my wallet” on the home screen.",
    "The first time, tap “Connect my bank account” and fill in your details in Stripe. You only do this once.",
    "Cash out whenever you want, from one dollar. The money reaches your bank through Stripe.",
    "If a movement doesn’t look right, tap “I have a problem” and a real person will answer."
@@ -4348,7 +4384,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How long does approval take?"
   ],
   "pasos": [
-   "In the Divoox Driver app, go to Profile and tap “Divoox Moto.”",
+   "In the Divoox Driver app, go to Account → “My details and vehicle” and tap “Divoox Moto.”",
    "Check your city and change it if needed (once chosen, you can change it once every 24 hours within your country).",
    "Enter your motorcycle’s make, model, year, color, and license plate, and tap “Save my motorcycle.”",
    "Upload each motorcycle document: tap “Upload” and choose “Take photo” or “Upload from files.”",
@@ -4402,13 +4438,13 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I know I’m approved for Car?"
   ],
   "pasos": [
-   "In Divoox Driver, tap “Profile” and open “Divoox Car.”",
+   "In Divoox Driver, tap “Account,” go to “My details and vehicle” and open “Divoox Car.”",
    "Check your city.",
    "Enter your car’s details, choose its seats, and tap “Save my car.”",
    "Upload the car’s documents and photos and your personal documents, and send them for review.",
    "Check the list of what’s still needed until it says you’re receiving Car rides."
   ],
-  "cuerpo": "To give rides in your car, open “Divoox Car” in Profile in the Divoox Driver app. There you see your city, register the car, and upload what your country requires. For the car you enter the make, model, year, color, license plate, and seats: four for Car or six for Car XL. Then you upload its documents (title or registration card, the car’s insurance policy, and the one that covers riders) and its photos. Your personal documents depend on the country; for example, your driver’s license. The app tells you, one by one, what’s missing. Our team reviews everything. Meanwhile you see “Still needed” with what’s pending; once you’re approved, the app says “You’re receiving Car rides.”"
+  "cuerpo": "To give rides in your car, open “Divoox Car” under Account → “My details and vehicle” in the Divoox Driver app. There you see your city, register the car, and upload what your country requires. For the car you enter the make, model, year, color, license plate, and seats: four for Car or six for Car XL. Then you upload its documents (title or registration card, the car’s insurance policy, and the one that covers riders) and its photos. Your personal documents depend on the country; for example, your driver’s license. The app tells you, one by one, what’s missing. Our team reviews everything. Meanwhile you see “Still needed” with what’s pending; once you’re approved, the app says “You’re receiving Car rides.”"
  },
  {
   "idioma": "en",
@@ -4427,7 +4463,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Ask the rider for their code, enter it, and slide the bar “Slide to start the ride.”",
    "At the destination, slide “Slide to end the ride” and, if it’s cash, collect what the app tells you."
   ],
-  "cuerpo": "Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination. When you reach the pickup, slide the bar “Slide when you arrive.” The ride starts only when you enter the four-digit code the rider gives you. During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived. In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings."
+  "cuerpo": "Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination. When you reach the pickup, slide the bar “Slide when you arrive.” The notice “Ask your rider for their code” shows at the top with the box ready to type: the ride starts only with the four-digit code the rider gives you. If you get it wrong, the notice tells you how many attempts you have left. The rider’s messages show at the top of the ride, with a red number until you open the chat. During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived. In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings."
  },
  {
   "idioma": "en",
@@ -4723,13 +4759,13 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Why does it say “New to Divoox”?"
   ],
   "pasos": [
-   "Open Divoox Driver and tap Profile.",
+   "Open Divoox Driver and tap Account.",
    "Tap “How riders see you.”",
    "Tap “Complete my profile.”",
    "Pick the languages you speak and write something short if you like.",
    "Tap “Save my profile.”"
   ],
-  "cuerpo": "When you’re assigned a trip, the rider sees who is coming to pick them up: your photo, your first name, your vehicle with the license plate, and a summary of your track record. It gives them peace of mind, and it helps you earn better ratings. In Divoox Driver, go to Profile and tap “How riders see you”: you see your profile exactly as the rider will. It shows your verified photo with a green ring, your first name (never your last name), your vehicle, and your plate. If you’re still new, riders see “New to Divoox”: your trips, your rating, and your time with Divoox show up once you have a track record. The “Identity verified” and “Vehicle verified” badges only show to riders if you really are verified. You see both, so you know which one is missing. Tap “Complete my profile” to pick the languages you speak (Spanish, English, or Portuguese, one or several) and, if you like, write something short for your riders, up to 120 characters. It’s optional. If it includes words that aren’t allowed, the app tells you and you write it another way. If the app closes halfway, everything you typed is still there when you come back. When you save, your profile updates and riders see it starting with your next trip. Your privacy doesn’t change: riders never see your last name, your phone number, or your email."
+  "cuerpo": "When you’re assigned a trip, the rider sees who is coming to pick them up: your photo, your first name, your vehicle with the license plate, and a summary of your track record. It gives them peace of mind, and it helps you earn better ratings. In Divoox Driver, go to Account and tap “How riders see you”: you see your profile exactly as the rider will. It shows your verified photo with a green ring, your first name (never your last name), your vehicle, and your plate. If you’re still new, riders see “New to Divoox”: your trips, your rating, and your time with Divoox show up once you have a track record. The “Identity verified” and “Vehicle verified” badges only show to riders if you really are verified. You see both, so you know which one is missing. Tap “Complete my profile” to pick the languages you speak (Spanish, English, or Portuguese, one or several) and, if you like, write something short for your riders, up to 120 characters. It’s optional. If it includes words that aren’t allowed, the app tells you and you write it another way. If the app closes halfway, everything you typed is still there when you come back. When you save, your profile updates and riders see it starting with your next trip. Your privacy doesn’t change: riders never see your last name, your phone number, or your email."
  },
  {
   "idioma": "en",
@@ -4886,11 +4922,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Does the customer see my rating?"
   ],
   "pasos": [
-   "Open “Orders”.",
+   "Tap “Account” at the bottom and open “My deliveries”.",
    "Tap the stars for the delivery.",
    "If needed, pick what happened and send."
   ],
-  "cuerpo": "Under “Orders” you see today’s deliveries you haven’t rated yet. Tap the stars and, if it’s 3 or fewer, pick what happened: didn’t come out, wrong address, rude or made you wait. It’s optional. Only our support team sees it, to look after drivers; the customer doesn’t see your rating and nobody is blocked over one rating. Each delivery can be rated once, on the same day."
+  "cuerpo": "Under “Account” → “My deliveries” you see today’s deliveries you haven’t rated yet. Tap the stars and, if it’s 3 or fewer, pick what happened: didn’t come out, wrong address, rude or made you wait. It’s optional. Only our support team sees it, to look after drivers; the customer doesn’t see your rating and nobody is blocked over one rating. Each delivery can be rated once, on the same day."
  },
  {
   "idioma": "en",
@@ -5178,7 +5214,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I turn on night mode for the map?"
   ],
   "pasos": [
-   "Open your account: in the Divoox app, the “My account” tab; in Divoox Driver, the “Profile” tab.",
+   "Open your account: in the Divoox app, the “My account” tab; in Divoox Driver, the “Account” tab and then “My details and vehicle.”",
    "Find the “Map colors” card.",
    "Tap “Automatic” to let it switch by time of day, “Light” to keep it on day, or “Dark” to keep it on night.",
    "Done: every map changes right away, and your choice is saved on that phone or browser.",

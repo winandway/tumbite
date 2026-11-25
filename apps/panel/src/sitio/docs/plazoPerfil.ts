@@ -82,7 +82,7 @@ export const GUIAS_PLAZO_PERFIL: Record<Idioma, PorSeccion> = {
           'Ve cómo te ven los pasajeros en su viaje y complétalo con los idiomas que hablas y un dato tuyo.',
         explicacion: [
           'Cuando te asignan un viaje, el pasajero ve quién va a recogerlo: tu foto, tu nombre de pila, tu vehículo con la placa y un resumen de tu trayectoria. Eso le da tranquilidad, y a ti te ayuda a recibir mejores calificaciones.',
-          'En Divoox Driver, entra a Perfil y toca «Así te ven los pasajeros»: ves tu perfil exactamente como lo verá el pasajero.',
+          'En Divoox Driver, entra a Cuenta y toca «Así te ven los pasajeros»: ves tu perfil exactamente como lo verá el pasajero.',
           'Ahí aparece tu foto verificada con un aro verde, tu nombre de pila (nunca tu apellido), tu vehículo y tu placa. Si todavía eres nuevo, el pasajero ve «Nuevo en Divoox»: tus viajes, tu calificación y el tiempo que llevas aparecen cuando ya tienes trayectoria.',
           'Los sellos «Identidad verificada» y «Vehículo verificado» solo se le muestran al pasajero si de verdad lo están. A ti te salen los dos para que veas cuál te falta.',
           'Toca «Completar mi perfil» para marcar los idiomas que hablas (español, inglés o portugués, uno o varios) y escribir, si quieres, algo corto para tus pasajeros, hasta 120 letras. Es opcional. Si el dato tiene palabras que no se permiten, la app te lo dice y lo escribes de otra forma.',
@@ -116,7 +116,7 @@ export const GUIAS_PLAZO_PERFIL: Record<Idioma, PorSeccion> = {
           '¿Por qué me sale «Nuevo en Divoox»?',
         ],
         pasos: [
-          'Abre Divoox Driver y toca Perfil.',
+          'Abre Divoox Driver y toca Cuenta.',
           'Toca «Así te ven los pasajeros».',
           'Toca «Completar mi perfil».',
           'Marca los idiomas que hablas y escribe un dato corto si quieres.',
@@ -228,7 +228,7 @@ export const GUIAS_PLAZO_PERFIL: Record<Idioma, PorSeccion> = {
           'See how riders see you during their trip and complete it with the languages you speak and something about you.',
         explicacion: [
           'When you’re assigned a trip, the rider sees who is coming to pick them up: your photo, your first name, your vehicle with the license plate, and a summary of your track record. It gives them peace of mind, and it helps you earn better ratings.',
-          'In Divoox Driver, go to Profile and tap “How riders see you”: you see your profile exactly as the rider will.',
+          'In Divoox Driver, go to Account and tap “How riders see you”: you see your profile exactly as the rider will.',
           'It shows your verified photo with a green ring, your first name (never your last name), your vehicle, and your plate. If you’re still new, riders see “New to Divoox”: your trips, your rating, and your time with Divoox show up once you have a track record.',
           'The “Identity verified” and “Vehicle verified” badges only show to riders if you really are verified. You see both, so you know which one is missing.',
           'Tap “Complete my profile” to pick the languages you speak (Spanish, English, or Portuguese, one or several) and, if you like, write something short for your riders, up to 120 characters. It’s optional. If it includes words that aren’t allowed, the app tells you and you write it another way.',
@@ -262,7 +262,7 @@ export const GUIAS_PLAZO_PERFIL: Record<Idioma, PorSeccion> = {
           'Why does it say “New to Divoox”?',
         ],
         pasos: [
-          'Open Divoox Driver and tap Profile.',
+          'Open Divoox Driver and tap Account.',
           'Tap “How riders see you.”',
           'Tap “Complete my profile.”',
           'Pick the languages you speak and write something short if you like.',

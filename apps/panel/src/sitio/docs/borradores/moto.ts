@@ -79,6 +79,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           '¿Cómo comparto mi viaje?',
           '¿Qué son los contactos de confianza?',
           '¿Qué hago si me siento inseguro en un viaje?',
+          '¿Es seguro viajar en moto con Divoox?',
         ],
         pasos: [
           'Antes de pedir, agrega tus contactos de confianza en la pantalla de Moto y elige cuándo compartir.',
@@ -129,7 +130,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           '¿Cuánto tarda la aprobación?',
         ],
         pasos: [
-          'En la app Divoox Driver, entra a Perfil y toca «Divoox Moto».',
+          'En la app Divoox Driver, entra a Cuenta → «Mis datos y vehículo» y toca «Divoox Moto».',
           'Revisa tu ciudad y cámbiala si hace falta (después de elegirla, puedes cambiarla una vez cada 24 horas dentro de tu país).',
           'Escribe la marca, el modelo, el año, el color y la placa de tu moto, y toca «Guardar mi moto».',
           'Sube cada papel de la moto: toca «Subir» y elige «Tomar foto» o «Subir desde archivos».',
@@ -243,6 +244,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'How do I share my ride?',
           'What are trusted contacts?',
           'What should I do if I feel unsafe on a ride?',
+          'Is it safe to ride a motorbike with Divoox?',
         ],
         pasos: [
           'Before you request, add your trusted contacts on the Moto screen and choose when to share.',
@@ -294,7 +296,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'How long does approval take?',
         ],
         pasos: [
-          'In the Divoox Driver app, go to Profile and tap “Divoox Moto.”',
+          'In the Divoox Driver app, go to Account → “My details and vehicle” and tap “Divoox Moto.”',
           'Check your city and change it if needed (once chosen, you can change it once every 24 hours within your country).',
           'Enter your motorcycle’s make, model, year, color, and license plate, and tap “Save my motorcycle.”',
           'Upload each motorcycle document: tap “Upload” and choose “Take photo” or “Upload from files.”',

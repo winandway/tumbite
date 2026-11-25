@@ -89,7 +89,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'En «Perfil» tienes todo ordenado en dos secciones que se abren y se cierran: «Mi vehículo», con una tarjeta por cada vehículo y sus papeles (aprobado, pendiente o rechazado), y «Documentos», con los papeles de tu perfil y en qué servicios sirve cada uno.',
           'Cuando todo está aprobado, el servicio aparece en tu inicio con «Desliza → para conectar».',
           'Cuando aprobamos tu moto o tu carro y no tienes otro vehículo en uso, queda en uso solo, y su servicio de viajes (Moto o Carro) queda listo: abres Divoox Driver y deslizas para conectarte. Si no quieres recibir ese servicio, lo apagas en su tarjeta.',
-          'Si tienes moto y carro, trabajas con uno a la vez, como en las apps de viajes más grandes. Cuando un servicio funciona con tu otro vehículo, su tarjeta lo dice («Usa tu Toyota Corolla»): tócala y toca «Usar mi Toyota Corolla». También puedes cambiarlo en Perfil → «Mi vehículo» → abre el vehículo → «Usar este vehículo». El que estás usando dice «En uso». El vehículo se cambia desconectado: desliza «Desliza para desconectarte» primero.',
+          'Si tienes moto y carro, trabajas con uno a la vez, como en las apps de viajes más grandes. Cuando un servicio funciona con tu otro vehículo, su tarjeta lo dice («Usa tu Toyota Corolla»): tócala y toca «Usar mi Toyota Corolla». También puedes cambiarlo en Cuenta → «Mis datos y vehículo» → «Mi vehículo» → abre el vehículo → «Usar este vehículo». El que estás usando dice «En uso». El vehículo se cambia desconectado: desliza «Desliza para desconectarte» primero.',
         ],
         capturas: [
           foto(
@@ -218,7 +218,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'Under “Profile,” everything is organized in two sections that open and close: “My vehicle,” with a card for each vehicle and its documents (approved, pending or rejected), and “Documents,” with your profile documents and which services each one counts for.',
           'Once everything is approved, the service shows up on your home screen with “Slide → to go online.”',
           'When we approve your moto or car and you aren’t using another vehicle, it’s set as in use on its own, and its ride service (Moto or Car) is ready: open Divoox Driver and slide to go online. If you don’t want that service, turn it off on its card.',
-          'If you have a moto and a car, you work with one at a time, just like the biggest ride apps. When a service works with your other vehicle, its card says so (“Use your Toyota Corolla”): tap it and tap “Use my Toyota Corolla.” You can also switch in Profile → “My vehicle” → open the vehicle → “Use this vehicle.” The one you’re using says “In use.” You switch vehicles while offline: slide “Slide to go offline” first.',
+          'If you have a moto and a car, you work with one at a time, just like the biggest ride apps. When a service works with your other vehicle, its card says so (“Use your Toyota Corolla”): tap it and tap “Use my Toyota Corolla.” You can also switch in Account → “My details and vehicle” → “My vehicle” → open the vehicle → “Use this vehicle.” The one you’re using says “In use.” You switch vehicles while offline: slide “Slide to go offline” first.',
         ],
         capturas: [
           foto(
