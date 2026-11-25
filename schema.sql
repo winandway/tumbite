@@ -271,6 +271,9 @@ CREATE TABLE IF NOT EXISTS avisos_stripe (
   estado TEXT NOT NULL DEFAULT 'hecho' CHECK (estado IN ('procesando', 'hecho'))
 );
 
+-- C-REGRESO-PASAJERO (25 nov 2026): `zona_base_id` es su ciudad base (a la que vuelve). Se llena sola
+-- al conectarse la primera vez (o al elegir su ciudad) y el equipo la cambia desde su ficha. En
+-- bases viejas llega con COLUMNAS (esquema.ts).
 CREATE TABLE IF NOT EXISTS repartidores (
   usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
   tipo TEXT NOT NULL DEFAULT 'independiente' CHECK (tipo IN ('independiente', 'empleado')),
@@ -283,7 +286,8 @@ CREATE TABLE IF NOT EXISTS repartidores (
   geohash TEXT,
   -- Pausa (18 oct 2026, C-REPARTIDOR-GRANDES): conectado pero sin recibir ofertas, como en Dasher.
   pausado INTEGER NOT NULL DEFAULT 0,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  zona_base_id TEXT
 );
 
 -- Pedidos que un repartidor aceptó y no entregó (soltó o se perdió), para su tasa de finalización
@@ -3866,6 +3870,9 @@ CREATE INDEX IF NOT EXISTS pedidos_promocion_promo ON pedidos_promocion(promocio
 
 -- C-MODO-DESTINO (BRE-6, 2 nov 2026, como «Driver Destinations» de Uber): el destino del repartidor
 -- (solo recibe ofertas que lo acercan) y cuántas veces lo encendió cada día de su ciudad.
+-- C-REGRESO-PASAJERO (25 nov 2026): `tipo` es «destino» (lo de siempre) o «regreso» a su ciudad base.
+-- Una sola fila por conductor: encender uno apaga el otro. `uso_contado`: el uso del regreso ya se
+-- contó (se cuenta al aceptar el primer viaje, no al encender). Llegan con COLUMNAS en bases viejas.
 CREATE TABLE IF NOT EXISTS modo_destino (
   repartidor_id TEXT PRIMARY KEY REFERENCES usuarios(id),
   direccion TEXT NOT NULL,
@@ -3874,13 +3881,35 @@ CREATE TABLE IF NOT EXISTS modo_destino (
   activo INTEGER NOT NULL DEFAULT 1,
   encendido_en TEXT NOT NULL DEFAULT (datetime('now')),
   apagado_en TEXT,
-  motivo TEXT
+  motivo TEXT,
+  tipo TEXT NOT NULL DEFAULT 'destino',
+  uso_contado INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS usos_modo_destino (
   repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
   dia TEXT NOT NULL,
   usos INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (repartidor_id, dia)
+);
+-- C-REGRESO-PASAJERO (25 nov 2026): los usos del regreso por día de su ciudad (aparte de los del modo
+-- destino: no se gastan entre sí). Tope 2, contado al aceptar el primer viaje de cada regreso.
+-- Sin claves foráneas a usuarios: borrar una cuenta no paga búsquedas de más (C-LECTURAS-VUELTA-RUTAS);
+-- borrarCuenta.ts limpia los usos y la auditoría guarda quién cambió los números.
+CREATE TABLE IF NOT EXISTS usos_regreso (
+  repartidor_id TEXT NOT NULL,
+  dia TEXT NOT NULL,
+  usos INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (repartidor_id, dia)
+);
+-- Los números del regreso por país (sin fila, los de siempre: 25 km, 45°, 5 km, +3 km).
+CREATE TABLE IF NOT EXISTS ajustes_regreso_pais (
+  pais TEXT PRIMARY KEY,
+  km_minimo REAL NOT NULL,
+  angulo_maximo REAL NOT NULL,
+  acerca_minimo_km REAL NOT NULL,
+  extra_recogida_km REAL NOT NULL,
+  actualizado_por TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- C-PLUS (R-T3, 1 nov 2026, como DashPass): la suscripción del cliente. Se cobra con una
