@@ -12,6 +12,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Regreso con pasajero (encargo de Richard, 25 nov 2026) — todos los países · rama `fase-regreso-pasajero`, sin subir
+
+- [x] [para: desarrollador] «Voy de regreso a <ciudad base>» de punta a punta según `docs/investigaciones-rea/2026-11-25-regreso-con-pasajero.md`: ciudad base, filtro por rumbo y prioridad en el despacho, dos usos al día contados al aceptar, se apaga al llegar, a las 6 horas o al desconectarse; panel (ciudad base en la ficha, números por país); Driver; Docs es/en con capturas del recorrido. Candado C-REGRESO-PASAJERO visto en rojo regla por regla. Y dos pruebas que fallaban a ratos (C-BANNER-AZAR-COMPROBABLE, C-PAYOUT-SIN-MEDIANOCHE).
+- [ ] [para: revisor-calidad] Revisar la rama `fase-regreso-pasajero` una vez (C-REGRESO-PASAJERO, C-BANNER-AZAR-COMPROBABLE, C-PAYOUT-SIN-MEDIANOCHE). Servidor y panel salen al publicar (columnas nuevas en COLUMNAS: mirar el canario del sitio de pruebas después de subir); Driver necesita compilarse (Android e iPhone). Al publicar: `node scripts/docs/subir-capturas-grandes.mjs`.
+- [ ] [para: investigador] Cruzar la ficha del regreso con los estudios de Richard si los amplía (la ficha no los consultó: el tema no está en sus capítulos de comida) y anotar Cabify [NV].
+
 ## Rediseño de Divoox Driver (borrador aprobado por Richard, 24 nov 2026) — todos los países · rama `fase-rediseno-driver`, sin subir
 
 - [x] [para: desarrollador] Construir en Driver el borrador aprobado con piezas únicas (`packages/movil/src/driverKit.tsx`): inicio con el mapa entero y la hoja abajo, escudo, lo ganado hoy, modo destino y barra de activación; barra de cuatro lugares (Avisos con su número, que va a cero); ofertas de viaje, envío y comida con etiqueta, reloj, tres datos y ruta; barra de tres pasos del viaje y de la comida; cierre con el círculo verde; Ganancias | Billetera; Avisos; Cuenta con idioma estilo Amazon; «Desliza para emergencias». Candados C-REDISENO-DRIVER y C-DESBORDES-360 (360, 430 y tableta) vistos en rojo; Docs es/en.

@@ -70,6 +70,11 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/conductores/:id/activacion': 'repartidores.ver',
   'PUT /admin/conductores/:id/ciudad': 'repartidores.gestionar',
   'GET /admin/conductores/:id/ciudades-destino': 'repartidores.ver',
+  // C-REGRESO-PASAJERO (25 nov 2026): la ciudad base del conductor y los números del regreso por país.
+  'GET /admin/conductores/:id/ciudad-base': 'repartidores.ver',
+  'PUT /admin/conductores/:id/ciudad-base': 'repartidores.gestionar',
+  'GET /admin/regreso/ajustes': 'viajes.ver',
+  'PUT /admin/regreso/ajustes': 'config.editar',
   // ─── Clientes
   'GET /admin/clientes': 'clientes.ver',
   'GET /admin/clientes/:id': 'clientes.ver',
@@ -538,6 +543,10 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/conductores/:id/activacion': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),
   'GET /admin/conductores/:id/ciudades-destino': ficha('repartidor'),
+  'GET /admin/conductores/:id/ciudad-base': ficha('repartidor'),
+  'PUT /admin/conductores/:id/ciudad-base': ficha('repartidor'),
+  'GET /admin/regreso/ajustes': CONFIG,
+  'PUT /admin/regreso/ajustes': CONFIG,
   'GET /admin/clientes': CONSULTA,
   'GET /admin/clientes/:id': ficha('cliente'),
   'GET /admin/clientes/:id/actividad': ficha('cliente'),

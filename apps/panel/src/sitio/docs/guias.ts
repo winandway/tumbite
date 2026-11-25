@@ -3147,6 +3147,50 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'heading-home',
+        titulo: 'Voy de regreso: vuelve a tu ciudad con pasajero',
+        resumen:
+          'Después de un viaje largo que te deja lejos de tu ciudad, toca «Voy de regreso a tu ciudad» y Divoox Driver te ofrece primero los viajes que van hacia allá. Así no vuelves vacío. Lo que ganas por viaje no cambia.',
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-regreso-tarjeta-es.webp',
+            alt: 'Inicio de Divoox Driver con la tarjeta «Regreso a tu ciudad»: a qué distancia estás de tu ciudad, el botón «Voy de regreso a» tu ciudad y los usos que te quedan hoy.',
+            pie: 'Lejos de tu ciudad, aparece la tarjeta. Un toque y listo.',
+          },
+          {
+            src: '/docs/recorrido-driver-regreso-encendido-es.webp',
+            alt: 'La tarjeta encendida dice «Vas de regreso a» tu ciudad, explica que solo te llegan viajes hacia allá, la hora a la que se apaga como tarde y el botón «Apagar».',
+            pie: 'Encendido, solo te llegan viajes hacia tu ciudad. Lo apagas cuando quieras.',
+          },
+          {
+            src: '/docs/recorrido-driver-regreso-oferta-es.webp',
+            alt: 'Una oferta de viaje en Divoox Driver mientras vas de regreso: lo que ganas, la distancia a la recogida y la ruta del pasajero, que va en el sentido de tu ciudad.',
+            pie: 'El pasajero que va en tu sentido te llega primero.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo vuelvo a mi ciudad con un pasajero después de un viaje largo?',
+          '¿Qué es «Voy de regreso»?',
+          '¿Cuántas veces al día puedo usar «Voy de regreso»?',
+          '¿Gano menos si voy de regreso?',
+          '¿Cuál es mi ciudad base y cómo la cambio?',
+        ],
+        pasos: [
+          'Termina tu viaje. Si te dejó lejos de tu ciudad, en Inicio aparece la tarjeta «Regreso a tu ciudad».',
+          'Toca «Voy de regreso a» tu ciudad.',
+          'Desde ese momento solo te llegan viajes y envíos que salen de cerca de donde estás y van hacia tu ciudad. Y si un pasajero pide en ese sentido, te llega primero a ti.',
+          'Acepta la oferta como siempre. Al llegar a tu ciudad, el regreso se apaga solo. Si cambias de plan, toca «Apagar».',
+        ],
+        explicacion: [
+          'Tu ciudad base es la ciudad donde trabajas: la que elegiste al registrarte o donde te conectaste la primera vez. Si te mudaste, escríbele a soporte y la cambiamos.',
+          'Lo puedes usar dos veces al día. Encenderlo no gasta nada: el uso se cuenta cuando aceptas el primer viaje de ese regreso. El contador vuelve a cero a medianoche, hora de tu ciudad.',
+          'Se apaga solo cuando llegas a tu ciudad, cuando te desconectas o, como tarde, a las seis horas de encenderlo. La tarjeta te dice a qué hora.',
+          'Lo que ganas por viaje es el mismo de siempre: el regreso solo cambia qué viajes te llegan, no el precio ni la comisión.',
+          'Con el regreso encendido puedes recibir menos viajes, porque solo te llegan los que van hacia tu ciudad. Es para Moto, Carro y Envíos; los pedidos de comida no cambian.',
+          'Si en vez de tu ciudad quieres ir a otra dirección, usa el modo destino.',
+        ],
+      },
+      {
         id: 'my-route-packages',
         titulo: 'Mi ruta: repartir paquetes de empresas con Divoox Driver',
         resumen:
@@ -8768,6 +8812,50 @@ const en: SeccionDocs[] = [
           'You can turn it on twice a day. The count resets at midnight, your city’s time, and the card shows how many uses you have left.',
           'Each time you turn it on counts as one use, even if you turn it off before arriving.',
           'With the mode on you may get fewer offers, especially when few orders are headed your way.',
+        ],
+      },
+      {
+        id: 'heading-home',
+        titulo: 'Heading home: get back to your city with a rider',
+        resumen:
+          'After a long trip that leaves you far from your city, tap “Heading home to your city” and Divoox Driver offers you trips going that way first. You don’t drive back empty. What you earn per trip doesn’t change.',
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-regreso-tarjeta-en.webp',
+            alt: 'Divoox Driver Home with the “Back to your city” card: how far you are from your city, the “Heading home to” your city button, and the uses you have left today.',
+            pie: 'Far from your city, the card shows up. One tap and you’re set.',
+          },
+          {
+            src: '/docs/recorrido-driver-regreso-encendido-en.webp',
+            alt: 'The card turned on says “Heading home to” your city, explains you only get trips going there, shows the latest time it turns off, and has the “Turn off” button.',
+            pie: 'When it’s on, you only get trips toward your city. Turn it off anytime.',
+          },
+          {
+            src: '/docs/recorrido-driver-regreso-oferta-en.webp',
+            alt: 'A trip offer in Divoox Driver while heading home: what you earn, the distance to pickup, and the rider’s route, which goes toward your city.',
+            pie: 'Riders going your way reach you first.',
+          },
+        ],
+        preguntas: [
+          'How do I get back to my city with a rider after a long trip?',
+          'What is “Heading home”?',
+          'How many times a day can I use “Heading home”?',
+          'Do I earn less when I’m heading home?',
+          'What is my home city and how do I change it?',
+        ],
+        pasos: [
+          'Finish your trip. If it left you far from your city, the “Back to your city” card shows up on Home.',
+          'Tap “Heading home to” your city.',
+          'From then on you only get trips and deliveries that start near you and head toward your city. And when a rider requests one going that way, it reaches you first.',
+          'Accept the offer as usual. When you get to your city, Heading home turns off on its own. If your plans change, tap “Turn off.”',
+        ],
+        explicacion: [
+          'Your home city is the city where you drive: the one you picked when you signed up, or where you first went online. If you moved, contact support and we’ll change it.',
+          'You can use it twice a day. Turning it on costs nothing: a use counts when you accept the first trip of that ride home. The count resets at midnight, your city’s time.',
+          'It turns off on its own when you reach your city, when you go offline, or six hours after you turned it on at the latest. The card shows you the time.',
+          'What you earn per trip is the same as always: Heading home only changes which trips you get, not the price or the fee.',
+          'With Heading home on you may get fewer trips, since you only get the ones going toward your city. It’s for Moto, Car and Deliveries; food orders don’t change.',
+          'If you want to go to another address instead of your city, use destination mode.',
         ],
       },
       {

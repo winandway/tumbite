@@ -23,7 +23,7 @@ import {
 import { aparatoDe } from './regalosDivoox';
 import { TAREA_REFERIDOS } from '../programaReferidos';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
-import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
+import { apagarRegresoAlDesconectar, destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
 import { evaluarDestacado } from './repartidorGrandes';
 import { correosEquipo } from '../avisosEquipo';
@@ -1751,7 +1751,12 @@ export async function conectarRepartidor(
   const aqui = await cobertura(db, d.lat, d.lng);
   await db
     .prepare(
-      "UPDATE repartidores SET conectado = ?, lat = COALESCE(?, lat), lng = COALESCE(?, lng), zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = COALESCE(?, geohash), ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      // C-REGRESO-PASAJERO: la ciudad base se llena sola la primera vez, en la misma escritura: la
+      // ciudad que eligió (su cuenta) o, si no eligió, la ciudad donde se conecta. Nunca la de por
+      // defecto (Miami) de la fila.
+      `UPDATE repartidores SET conectado = ?1, lat = COALESCE(?2, lat), lng = COALESCE(?3, lng), zona_id = COALESCE(?4, zona_id), area_id = COALESCE(?5, area_id), geohash = COALESCE(?6, geohash), ubicacion_en = datetime('now'),
+         zona_base_id = COALESCE(zona_base_id, (SELECT u.zona_id FROM usuarios u WHERE u.id = ?7), ?4)
+       WHERE usuario_id = ?7`,
     )
     .bind(
       d.conectado ? 1 : 0,
@@ -1773,6 +1778,8 @@ export async function conectarRepartidor(
   // conectarte en esta zona» de Dasher): queda conectado en su ciudad de siempre, sin ofertas aquí.
   if (d.conectado)
     await db.prepare('UPDATE repartidores SET pausado = 0 WHERE usuario_id = ?').bind(u.id).run();
+  // C-REGRESO-PASAJERO: al desconectarse, el regreso se apaga (como el modo destino de Uber).
+  else await apagarRegresoAlDesconectar(db, u.id);
   // C-REPARTIDOR-DESTACADO: al conectarse se revisa si sigue cumpliendo (no frena la conexión).
   if (d.conectado)
     await evaluarDestacado(db, u.id).catch((e: unknown) =>

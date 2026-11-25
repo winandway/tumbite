@@ -83,6 +83,7 @@ import { InvitacionesFlota } from './InvitacionesFlota';
 import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
 import { ModoPago } from './piezas/ModoPago';
 import { ModoDestino } from './piezas/ModoDestino';
+import { RegresoACasa } from './piezas/RegresoACasa';
 import { DeslizarParaCompletar } from './piezas/DeslizarParaCompletar';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
@@ -4166,6 +4167,8 @@ export function Inicio() {
               secundario
             />
           ) : null}
+          {/* C-REGRESO-PASAJERO: tras un viaje largo, «Voy de regreso a <ciudad base>». */}
+          {estado?.conectado && !activo && !estado.ocupadoEn ? <RegresoACasa /> : null}
           {estado?.reputacion ? (
             <View style={e.tarjeta} testID="nivel-reputacion">
               <Text style={{ fontWeight: '800' }}>

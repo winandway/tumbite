@@ -11,6 +11,7 @@ import {
 import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
 import { InterruptoresViaje } from './InterruptoresViaje';
+import { RegresoAjustes } from './RegresoAjustes';
 import { DinamicaCiudad, vecesDe } from './DinamicaCiudad';
 import { Enlace } from '../Enlace';
 import { Hora } from './horario';
@@ -571,6 +572,8 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
         monedaDe={(zona) => datos?.tarifas.find((x) => x.zona === zona)?.moneda ?? 'USD'}
       />
       <InterruptoresViaje idioma={idioma} />
+      {/* C-REGRESO-PASAJERO: los números del regreso a la ciudad base, por país. */}
+      <RegresoAjustes idioma={idioma} />
     </section>
   );
 }

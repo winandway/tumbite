@@ -216,7 +216,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "zona_id",
     "geohash",
     "pausado",
-    "creado_en"
+    "creado_en",
+    "zona_base_id"
   ],
   "abandonos_repartidor": [
     "pedido_id",
@@ -2471,12 +2472,28 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "activo",
     "encendido_en",
     "apagado_en",
-    "motivo"
+    "motivo",
+    "tipo",
+    "uso_contado"
   ],
   "usos_modo_destino": [
     "repartidor_id",
     "dia",
     "usos"
+  ],
+  "usos_regreso": [
+    "repartidor_id",
+    "dia",
+    "usos"
+  ],
+  "ajustes_regreso_pais": [
+    "pais",
+    "km_minimo",
+    "angulo_maximo",
+    "acerca_minimo_km",
+    "extra_recogida_km",
+    "actualizado_por",
+    "actualizado_en"
   ],
   "suscripciones_plus": [
     "usuario_id",

@@ -8,13 +8,15 @@ import {
   PLAZAS_XL,
   type TamanoPaquete,
   acercaAlDestino,
+  elegirConRegreso,
+  rumboHaciaCasa,
   distanciaKm,
   cuentasQueReciben,
   esPagoACelular,
   formatearMonto,
   vehiculoLlevaPaquete,
 } from '@tumbite/compartido';
-import { destinosActivos } from './modoDestino';
+import { type DestinoActivo, destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { SQL_TARIFA_SERVICIO } from './finanzas/quienPaga';
 import { soltarCobroViaje } from './viajesCobro';
@@ -752,7 +754,10 @@ export async function repartirOperaciones(
     : new Map<string, Set<string>>();
   // C-MODO-DESTINO (BRE-R2): el modo destino vale para todos los servicios, no solo comida: quien
   // lo tiene encendido solo recibe viajes y envíos cuyo destino lo acerca al suyo.
-  const destinos = buscando.length ? await destinosActivos(db) : new Map();
+  // C-REGRESO-PASAJERO: en la MISMA consulta, los regresos vigentes con los números de su país.
+  const destinos = buscando.length
+    ? await destinosActivos(db, true)
+    : new Map<string, DestinoActivo>();
   for (const op of buscando) {
     // C-CONDUCTOR-CONFIANZA: primero, y solo a él, el conductor de confianza del cliente.
     const confianza = op.conductor_preferido_id
@@ -832,7 +837,21 @@ export async function repartirOperaciones(
           candidatos.map((c) => c.vehiculoId),
         )
       : null;
-    const elegido = candidatos.find((c) => {
+    const destinoViaje =
+      op.destino_lat != null && op.destino_lng != null
+        ? { lat: Number(op.destino_lat), lng: Number(op.destino_lng) }
+        : null;
+    const recogida = { lat: Number(op.origen_lat), lng: Number(op.origen_lng) };
+    // C-REGRESO-PASAJERO: ¿este viaje lo lleva de regreso a su ciudad base? (rumbo y acercamiento).
+    const vaDeRegreso = (c: { conductorId: string; lat: number; lng: number }) => {
+      const d = destinos.get(c.conductorId);
+      return (
+        d?.tipo === 'regreso' &&
+        destinoViaje != null &&
+        rumboHaciaCasa(c, recogida, destinoViaje, d, d.ajustes)
+      );
+    };
+    const aptos = candidatos.filter((c) => {
       if (yaOfrecidos.has(c.conductorId)) return false;
       if (conMenores && !conMenores.has(c.vehiculoId)) return false;
       if (bloqueadas.get(op.cliente_id)?.has(c.conductorId)) return false;
@@ -844,12 +863,17 @@ export async function repartirOperaciones(
       if (conPagoMovil && !conPagoMovil.has(c.conductorId)) return false;
       const destino = destinos.get(c.conductorId);
       if (!destino) return true;
-      return (
-        op.destino_lat != null &&
-        op.destino_lng != null &&
-        acercaAlDestino(c, { lat: Number(op.destino_lat), lng: Number(op.destino_lng) }, destino)
-      );
+      // C-REGRESO-PASAJERO: con el regreso encendido, solo viajes que lo llevan hacia su ciudad.
+      if (destino.tipo === 'regreso') return vaDeRegreso(c);
+      return destinoViaje != null && acercaAlDestino(c, destinoViaje, destino);
     });
+    // C-REGRESO-PASAJERO: el que va de regreso pasa adelante si su recogida está a no más de la del
+    // más cercano + 3 km (los números de su país); si no, manda el orden de siempre.
+    const elegido = elegirConRegreso(
+      aptos,
+      vaDeRegreso,
+      (c) => destinos.get(c.conductorId)?.ajustes.extraRecogidaKm ?? 0,
+    );
     if (!elegido) continue;
     // La condición repite la regla de «libre» en la MISMA sentencia: si entre la consulta y aquí
     // el conductor tomó otra cosa, la oferta no se crea.

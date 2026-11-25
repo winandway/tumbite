@@ -389,6 +389,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'ciudad_elegida_en', 'TEXT'],
   // C-BARRA-ACTIVACION (23 nov 2026): cuándo se le avisó «Ya puedes recibir carreras» (una vez en la vida).
   ['repartidores', 'activacion_avisada_en', 'TEXT'],
+  // C-REGRESO-PASAJERO (25 nov 2026): la ciudad base del conductor y el tipo de la fila del modo
+  // destino («destino» o «regreso») con su marca de uso contado.
+  ['repartidores', 'zona_base_id', 'TEXT'],
+  ['modo_destino', 'tipo', "TEXT NOT NULL DEFAULT 'destino'"],
+  ['modo_destino', 'uso_contado', 'INTEGER NOT NULL DEFAULT 0'],
   // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
   ['viajes_pago_movil', 'corregido_en', 'TEXT'],
   // C-VIAJE-PROGRAMADO (14 nov 2026): la hora reservada del viaje (sin valor, es para ya) y cuántos

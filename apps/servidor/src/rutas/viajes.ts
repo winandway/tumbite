@@ -91,6 +91,7 @@ const MINUTOS_UBICACION_LLEGADA = 2;
  * una respuesta perdida no repiten nada.
  */
 import { cargoParadasDe, paradaSinCerrar, paradasDe } from './paradasViaje';
+import { contarUsoRegreso } from '../modoDestino';
 
 export const viajes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -438,6 +439,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
     if (r.resultado === 'tomada') await avisarPasoViaje(c.env, base(c), id, 'aceptado');
     // C-BS-EN-MANO: un viaje cotizado sin tasa la fija al tener conductor (los dos ven la misma).
     if (r.resultado === 'tomada') await fijarTasaViaje(base(c), id);
+    // C-REGRESO-PASAJERO: si iba de regreso, el uso del día se cuenta ahora (al aceptar).
+    if (r.resultado === 'tomada') await contarUsoRegreso(base(c), u.id);
     return c.json({ ok: true, operacionId: r.operacionId, version: r.version });
   }
   // No se lo quedó: lo apartado vuelve al prepago.

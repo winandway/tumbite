@@ -14,6 +14,24 @@ import { MENSAJES_EN_PAGO_COMIDA } from './mensajesEnPagoComida';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-REGRESO-PASAJERO (25 nov 2026): «Voy de regreso a mi ciudad».
+  [
+    'Todavía no tienes una ciudad base. Conéctate una vez en tu ciudad o pídesela a soporte.',
+    'You don’t have a home city yet. Go online once in your city or ask support to set it.',
+  ],
+  [
+    'Termina tu viaje en curso antes de encender el regreso.',
+    'Finish your current trip before turning on Heading home.',
+  ],
+  [
+    'Estás cerca de tu ciudad base. El regreso se enciende después de un viaje largo, lejos de ella.',
+    'You’re close to your home city. Heading home turns on after a long trip, far from it.',
+  ],
+  [
+    'Ya usaste el regreso dos veces hoy. Vuelve a estar disponible mañana.',
+    'You’ve used Heading home twice today. It’ll be available again tomorrow.',
+  ],
+  ['Ese país no tiene ciudades.', 'That country has no cities.'],
   // C-QUIEN-PAGA-VIAJES
   ['Esa ciudad no es de ese país.', 'That city is not in that country.'],
   ['Elige quién paga en todo el país.', 'Choose who pays across the whole country.'],

@@ -222,8 +222,10 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
     db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(zona.id, u.id),
     db
       .prepare(
-        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en) VALUES (?, ?, datetime('now'))
-         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, ciudad_elegida_en = excluded.ciudad_elegida_en`,
+        // C-REGRESO-PASAJERO: la ciudad que elige es también su ciudad base (a la que vuelve).
+        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en, zona_base_id) VALUES (?1, ?2, datetime('now'), ?2)
+         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, ciudad_elegida_en = excluded.ciudad_elegida_en,
+           zona_base_id = excluded.zona_base_id`,
       )
       .bind(u.id, zona.id),
   ]);
@@ -435,7 +437,8 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
       db.prepare(ALTA_REPARTIDOR).bind(id),
       db
         .prepare(
-          `UPDATE repartidores SET zona_id = ?1, codigo = ?2, area_id = NULL, ciudad_elegida_en = datetime('now')
+          `UPDATE repartidores SET zona_id = ?1, codigo = ?2, area_id = NULL, ciudad_elegida_en = datetime('now'),
+            zona_base_id = ?1
           WHERE usuario_id = ?3 AND conectado = 0
             AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?3)`,
         )

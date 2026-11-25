@@ -351,6 +351,8 @@ export async function borrarCuenta(
     // invitó a quién quedan por id, sin nombre, para el antifraude de los premios.
     db.prepare('DELETE FROM codigos_referido WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM usos_modo_destino WHERE repartidor_id = ?').bind(u.id),
+    // C-REGRESO-PASAJERO: sus usos del regreso por día.
+    db.prepare('DELETE FROM usos_regreso WHERE repartidor_id = ?').bind(u.id),
     db.prepare("UPDATE cuentas_cobro_historial SET cambio = '' WHERE usuario_id = ?").bind(u.id),
     db
       .prepare(

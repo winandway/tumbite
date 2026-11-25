@@ -26,6 +26,7 @@ import {
   HistorialCorreo,
 } from './CorregirCorreo';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
+import { CiudadBaseConductor } from './CiudadBaseConductor';
 import { EnviarMensaje } from './EnviarMensaje';
 import { usePermisos } from './permisosPanel';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
@@ -354,6 +355,7 @@ const T_SUSPENDER = {
     mas: 'Más acciones de la cuenta',
     borrarCuenta: 'Borrar la cuenta',
     cambiarCiudad: 'Cambiar ciudad',
+    ciudadBase: 'Ciudad base',
     enviarMensaje: 'Enviar mensaje',
     confirmarBorrar:
       'Se borran sus datos personales (igual que cuando la persona la borra desde la app) y no se puede deshacer. Escribe BORRAR para confirmar:',
@@ -373,6 +375,7 @@ const T_SUSPENDER = {
     mas: 'More account actions',
     borrarCuenta: 'Delete the account',
     cambiarCiudad: 'Change city',
+    ciudadBase: 'Home city',
     enviarMensaje: 'Send message',
     confirmarBorrar:
       'Their personal data is deleted (the same as when the person deletes it from the app) and this can’t be undone. Type DELETE to confirm:',
@@ -408,6 +411,8 @@ function BotonSuspender({
   const t = enIdioma(T_SUSPENDER, idioma);
   const [error, setError] = useState('');
   const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
+  // C-REGRESO-PASAJERO: la ciudad base (a la que vuelve con «Voy de regreso»).
+  const [cambiandoBase, setCambiandoBase] = useState(false);
   const [escribiendo, setEscribiendo] = useState(false);
   // C-CUENTA-UNICA-SUSPENSION: suspender abre el formulario que pide el por qué.
   const [suspendiendo, setSuspendiendo] = useState(false);
@@ -477,7 +482,10 @@ function BotonSuspender({
               ? [{ texto: t.enviarMensaje, alTocar: () => setEscribiendo(true) }]
               : []),
             ...(ciudad !== undefined
-              ? [{ texto: t.cambiarCiudad, alTocar: () => setCambiandoCiudad(true) }]
+              ? [
+                  { texto: t.cambiarCiudad, alTocar: () => setCambiandoCiudad(true) },
+                  { texto: t.ciudadBase, alTocar: () => setCambiandoBase(true) },
+                ]
               : []),
             opcionMarcarPrueba(id, esPrueba === true, idioma, recargar, setError),
             { texto: t.borrarCuenta, peligro: true, alTocar: () => void borrar() },
@@ -510,6 +518,17 @@ function BotonSuspender({
           idioma={idioma}
           alCerrar={() => setEscribiendo(false)}
           alEnviar={() => alMensaje?.()}
+        />
+      ) : null}
+      {cambiandoBase && ciudad !== undefined ? (
+        <CiudadBaseConductor
+          id={id}
+          idioma={idioma}
+          alCerrar={() => setCambiandoBase(false)}
+          alCambiar={(texto) => {
+            setCambiandoBase(false);
+            setAviso(texto);
+          }}
         />
       ) : null}
       {cambiandoCiudad && ciudad !== undefined ? (

@@ -32,6 +32,8 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   // Configuración, catálogo, contadores o registros técnicos
   agentes_ciudad: 'sin_persona',
   ajustes_viaje_zona: 'sin_persona',
+  // C-REGRESO-PASAJERO: los números del regreso por país.
+  ajustes_regreso_pais: 'sin_persona',
   alertas_canario: 'sin_persona',
   // C-RASTRO: contadores por día, app, país y paso; sin persona.
   embudo_anonimo: 'sin_persona',
