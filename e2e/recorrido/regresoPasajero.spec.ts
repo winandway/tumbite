@@ -45,8 +45,10 @@ test.afterAll(() => {
   sql(`UPDATE servicios SET estado = 'proximamente' WHERE id = 'carro'`);
   sql(`DELETE FROM servicios_implementados WHERE servicio_id = 'carro'`);
   sql(`UPDATE modo_destino SET activo = 0 WHERE tipo = 'regreso'`);
-  sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id LIKE 'US-TX-REGRESO-%'`);
-  sql(`UPDATE zonas SET activa = 0 WHERE id LIKE 'US-TX-REGRESO-%'`);
+  sql(
+    `UPDATE repartidores SET conectado = 0 WHERE zona_id LIKE 'US-TX-REGRESO-%' AND conectado = 1`,
+  );
+  sql(`UPDATE zonas SET activa = 0 WHERE id LIKE 'US-TX-REGRESO-%' AND activa = 1`);
 });
 
 async function foto(p: Page, nombre: string, idioma: 'es' | 'en') {
@@ -78,8 +80,10 @@ for (const idioma of ['es', 'en'] as const)
          VALUES ('${base.id}', '${base.nombre}', 'US', 'USD', 'America/Chicago', ${ORIGEN.lat + 0.54}, ${ORIGEN.lng}, 20, 0)`);
     // Las ciudades de corridas anteriores (el otro idioma, o el mismo spec repetido) se apagan con sus
     // conductores: están en el mismo punto y si no, el viaje caía en ellas.
-    sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id LIKE 'US-TX-REGRESO-%'`);
-    sql(`UPDATE zonas SET activa = 0 WHERE id LIKE 'US-TX-REGRESO-%'`);
+    sql(
+      `UPDATE repartidores SET conectado = 0 WHERE zona_id LIKE 'US-TX-REGRESO-%' AND conectado = 1`,
+    );
+    sql(`UPDATE zonas SET activa = 0 WHERE id LIKE 'US-TX-REGRESO-%' AND activa = 1`);
     // La ciudad del spec (donde termina el viaje largo): solo sus conductores y su viaje.
     const zona = `US-TX-REGRESO-${id}`.toUpperCase();
     sql(`INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
