@@ -188,6 +188,9 @@ export function PedirMoto({
     setCotizacion(null);
   };
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
+  // C-PRECIO-ZONA: el trayecto (clave de la ruta) para el que el pasajero eligió ida y vuelta. Si
+  // cambia la recogida, el destino o las paradas, vuelve solo a «Solo ida».
+  const [idaVueltaEn, setIdaVueltaEn] = useState('');
   const [error, setError] = useState('');
   // C-SERVICIO-SIN-TARIFA: la ruta para la que el servidor dijo «no está / no tiene precio aquí».
   const [sinServicioEn, setSinServicioEn] = useState('');
@@ -268,8 +271,11 @@ export function PedirMoto({
 
   const claveRutaRef = useRef('');
   const cotizar = useCallback(
-    async (otraCategoria?: CategoriaViaje) => {
+    async (otraCategoria?: CategoriaViaje, conVuelta?: boolean) => {
       setError('');
+      const vuelta =
+        (conVuelta ?? (idaVueltaEn !== '' && idaVueltaEn === claveRutaRef.current)) &&
+        servicio !== 'envios';
       if (!recogida) return setError(t.faltaOrigen);
       if (!destino || v.destino.trim().length < 3) return setError(t.faltaDestino);
       const intermedias = servicio === 'envios' ? [] : paradasListas(paradas);
@@ -295,14 +301,18 @@ export function PedirMoto({
             },
             // C-QUIEN-PAGA-VIAJES: esta app muestra la tarifa de servicio de Divoox en su línea.
             tarifaServicio: true,
+            ...(vuelta ? { idaVuelta: true } : {}),
           },
         );
         setCotizacion(r.cotizacion);
+        setIdaVueltaEn(r.cotizacion.idaVuelta === true ? claveRutaRef.current : '');
       } catch (x) {
         setCotizacion(null);
         // Una categoría recuperada del borrador que esta ciudad no ofrece vuelve al carro de siempre.
         if (x instanceof ErrorApi && x.campo === 'categoria') cambiar('categoria', 'estandar');
         if (x instanceof ErrorApi && x.campo === 'servicio') setSinServicioEn(claveRutaRef.current);
+        // C-PRECIO-ZONA: este trayecto ya no tiene ida y vuelta: vuelve a solo ida.
+        if (x instanceof ErrorApi && x.campo === 'idaVuelta') setIdaVueltaEn('');
         setError(x instanceof ErrorApi ? x.message : String(x));
       } finally {
         setTrabajando(false);
@@ -322,6 +332,7 @@ export function PedirMoto({
       categoria,
       paradas,
       cambiar,
+      idaVueltaEn,
     ],
   );
 
@@ -927,7 +938,11 @@ export function PedirMoto({
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ flex: 1, color: '#666B73', fontWeight: '700' }}>
-                {cotizacion.dePrueba ? t.precioPrueba : t.precioFijo}
+                {cotizacion.dePrueba
+                  ? t.precioPrueba
+                  : cotizacion.precioZona
+                    ? t.precioZona
+                    : t.precioFijo}
               </Text>
               <View style={{ alignItems: 'flex-end' }}>
                 {/* C-CUPON-DIVOOX: con regalo y pago en mano, el precio de siempre tachado. */}
@@ -949,6 +964,62 @@ export function PedirMoto({
                 </Text>
               </View>
             </View>
+            {/* C-PRECIO-ZONA: el precio fijo de la zona, dicho con su lugar, y la ida y vuelta. */}
+            {cotizacion.precioZona ? (
+              <Text testID="moto-precio-zona" style={{ color: '#666B73', fontSize: 13 }}>
+                {cotizacion.dePrueba ? `${t.precioZona} · ` : ''}
+                {t.precioZonaAyuda.replace('{lugar}', cotizacion.lugarZona ?? '')}
+              </Text>
+            ) : null}
+            {cotizacion.ofertaIdaVuelta || cotizacion.idaVuelta ? (
+              <View
+                testID="moto-ida-vuelta"
+                accessibilityRole="radiogroup"
+                style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}
+              >
+                {[false, true].map((conVuelta) => {
+                  const elegida = (cotizacion.idaVuelta === true) === conVuelta;
+                  return (
+                    <Pressable
+                      key={String(conVuelta)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: elegida }}
+                      testID={conVuelta ? 'moto-ida-vuelta-si' : 'moto-ida-vuelta-no'}
+                      disabled={trabajando}
+                      onPress={() => {
+                        if (elegida) return;
+                        void cotizar(undefined, conVuelta);
+                      }}
+                      style={{
+                        flex: 1,
+                        borderWidth: elegida ? 2 : 1,
+                        borderColor: elegida ? C.secundario : '#D9DBDF',
+                        borderRadius: 12,
+                        padding: 10,
+                      }}
+                    >
+                      <Text style={{ color: C.secundario, fontWeight: '700' }}>
+                        {conVuelta ? t.idaVuelta : t.soloIda}
+                      </Text>
+                      {conVuelta && cotizacion.ofertaIdaVuelta ? (
+                        <Text style={{ color: '#666B73' }}>
+                          {formatearMonto(
+                            cotizacion.ofertaIdaVuelta.total,
+                            cotizacion.moneda,
+                            idioma,
+                          )}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+            {cotizacion.idaVuelta ? (
+              <Text testID="moto-ida-vuelta-ayuda" style={{ color: '#666B73', fontSize: 13 }}>
+                {t.idaVueltaAyuda}
+              </Text>
+            ) : null}
             {/* C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, aparte y a la vista, ANTES de
                 pedir: el viaje, la tarifa y (arriba) el total. Nunca escondida dentro del precio. */}
             {(cotizacion.tarifaServicio ?? 0) > 0 ? (

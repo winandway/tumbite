@@ -14,6 +14,8 @@ function servidor(zonas: { id: string; nombre: string }[]) {
       return new Response(
         JSON.stringify({ cantidad: 0, ultimo: null, zonasSinResponsable: zonas }),
       );
+    if (u.includes('/datos/admin/viajes/precios-zona'))
+      return new Response(JSON.stringify({ rutas: [] }));
     if (u.includes('/datos/admin/viajes/ajustes'))
       return new Response(JSON.stringify({ ajustes: [] }));
     if (u.includes('/datos/admin/viajes'))

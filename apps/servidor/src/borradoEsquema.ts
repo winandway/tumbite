@@ -97,6 +97,8 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   servicios_zona: 'sin_persona',
   simulador_sesiones: 'sin_persona',
   tareas_programadas: 'sin_persona',
+  // C-PRECIO-ZONA: precios fijos de la zona (configuración de la ciudad, la escribe el equipo).
+  rutas_precio_zona: 'sin_persona',
   tarifas_viaje: 'sin_persona',
   tasas_cambio: 'sin_persona',
   tasas_modo: 'sin_persona',

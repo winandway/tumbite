@@ -105,6 +105,8 @@ export type ViajeConductor = {
   referencia?: Referencia | null;
   /** C-BS-EN-MANO: lo que cobra en mano en dólares y en bolívares con la tasa fijada del viaje. */
   en_mano?: Monto | null;
+  /** C-PRECIO-ZONA: 1 = el viaje va con precio de la zona (no se saltan paradas). */
+  precio_zona?: number;
   /** C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado y su espera. */
   paradas?: {
     orden: number;
@@ -937,21 +939,31 @@ export function ViajeActivo({
               confirmar={t.confirmarLlegueParada}
               alConfirmar={() => paso(`paradas/${parada.orden}/llegue`)}
             />
-            <Pressable
-              onPress={() => {
-                if (!saltar) return setSaltar(true);
-                setSaltar(false);
-                void paso(`paradas/${parada.orden}/saltar`);
-              }}
-              accessibilityRole="button"
-              testID="viaje-parada-saltar"
-            >
+            {/* C-PRECIO-ZONA: con precio de la zona no se salta la parada (la vuelta de un ida y vuelta). */}
+            {viaje.precio_zona ? (
               <Text
-                style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}
+                testID="viaje-parada-sin-cambios"
+                style={{ textAlign: 'center', color: '#666B73', fontSize: 13, padding: 8 }}
               >
-                {saltar ? t.saltarConfirmar : t.saltarParada}
+                {t.sinCambiosParadas}
               </Text>
-            </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  if (!saltar) return setSaltar(true);
+                  setSaltar(false);
+                  void paso(`paradas/${parada.orden}/saltar`);
+                }}
+                accessibilityRole="button"
+                testID="viaje-parada-saltar"
+              >
+                <Text
+                  style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}
+                >
+                  {saltar ? t.saltarConfirmar : t.saltarParada}
+                </Text>
+              </Pressable>
+            )}
           </>
         ) : null}
         {parada && enParada ? (

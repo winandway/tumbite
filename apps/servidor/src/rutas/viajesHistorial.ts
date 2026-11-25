@@ -330,6 +330,8 @@ function recibo(f: FilaRecibo) {
     // C-PRECIO-CON-REGALO: lo que pagó Divoox (el recibo dice lo que se pagó de verdad).
     regalo: regaloPasajero(f),
     desglose: desgloseDe(f.desglose_json),
+    // C-PRECIO-ZONA: el viaje fue con el precio fijo de la zona («Precio de la zona»).
+    precioZona: desgloseDe(f.desglose_json).precioZona != null,
     // C-BS-EN-MANO: lo pagado en mano en bolívares, con la tasa y la fecha usadas.
     enManoLocal: enManoLocalDe(f),
     propina: f.propina ?? 0,

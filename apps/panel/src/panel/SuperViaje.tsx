@@ -50,6 +50,9 @@ const T = {
     sinIntentos: 'sin intentos fallidos',
     importe: 'Importe',
     cotizado: 'Cotizado',
+    // C-PRECIO-ZONA: el viaje fue con el precio fijo de la zona.
+    precioZona: 'Precio de la zona',
+    calculado: 'por km habría sido',
     final: 'Cobrado',
     metodo: 'Forma de pago',
     metodos: {
@@ -125,6 +128,8 @@ const T = {
     sinIntentos: 'no failed attempts',
     importe: 'Amount',
     cotizado: 'Quoted',
+    precioZona: 'Local fixed price',
+    calculado: 'by distance it would have been',
     final: 'Charged',
     metodo: 'Payment method',
     metodos: {
@@ -199,7 +204,14 @@ type Viaje = {
   conductor: { id: string; nombre: string | null; codigo: string | null } | null;
   vehiculo: { tipo: string | null; descripcion: string; placa: string | null } | null;
   pin: { requerido: boolean; usado: boolean; intentosFallidos: number };
-  importe: { cotizado: number | null; final: number | null; moneda: string; metodo: string };
+  importe: {
+    cotizado: number | null;
+    final: number | null;
+    moneda: string;
+    metodo: string;
+    precioZona?: number;
+    calculado?: number;
+  };
   distancia: { cotizadaM: number | null; realM: number | null };
   envio: {
     descripcion: string;
@@ -372,6 +384,15 @@ export function SuperViaje({ base, id, idioma }: { base: string; id: string; idi
             <dd>
               {t.cotizado} {dinero(v.importe.cotizado)}
               {v.importe.final != null ? ` · ${t.final} ${dinero(v.importe.final)}` : ''}
+              {v.importe.precioZona != null ? (
+                <span data-testid="ficha-precio-zona">
+                  {' · '}
+                  {t.precioZona}
+                  {v.importe.calculado != null
+                    ? ` (${t.calculado} ${dinero(v.importe.calculado)})`
+                    : ''}
+                </span>
+              ) : null}
             </dd>
             <dt>{t.metodo}</dt>
             <dd>{metodos.get(v.importe.metodo) ?? v.importe.metodo}</dd>

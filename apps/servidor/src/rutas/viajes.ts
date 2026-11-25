@@ -178,6 +178,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
               v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng, q.total, v.ref_tasa, v.ref_fecha,
+              json_extract(q.desglose_json, '$.precioZona') AS precio_zona,
+              json_extract(q.desglose_json, '$.idaVuelta') AS ida_vuelta,
               CASE WHEN v.conductor_preferido_id = f.conductor_id
                    THEN (SELECT c.nombre FROM usuarios c WHERE c.id = o.cliente_id) END AS cliente_nombre,
               ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
@@ -257,6 +259,10 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         // viaje, si lleva tarifa dinámica (ya incluida en lo que gana) y por dónde para.
         categoria: String(f.categoria ?? 'estandar'),
         multiplicadorPb: Number(f.multiplicador_pb ?? 10_000),
+        // C-PRECIO-ZONA: el viaje va con el precio fijo de la zona (ya es lo que gana) y si es de ida
+        // y vuelta (la vuelta es la parada y termina donde empezó).
+        precioZona: f.precio_zona != null,
+        idaVuelta: f.ida_vuelta != null,
         paradas: leerParadas(f.paradas_json == null ? null : String(f.paradas_json)).map(
           (p) => p.direccion,
         ),
@@ -299,6 +305,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
               e.tamano AS paquete_tamano, v.menor_nombre, v.rutina_id IS NOT NULL AS viaje_fijo,
               v.ref_tasa, v.ref_fecha,
+              -- C-PRECIO-ZONA: con precio de la zona no se saltan paradas (la app esconde el botón).
+              json_extract(q.desglose_json, '$.precioZona') IS NOT NULL AS precio_zona,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id

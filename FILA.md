@@ -27,6 +27,10 @@
 - [ ] [para: revisor-calidad] Revisar la rama `trabajo-papeles-por-pais` (C-PAPELES-POR-PAIS segunda parte, C-GUIONES-REINTENTAN-RED) antes de publicar. Servidor y panel salen solos al publicar; Driver necesita compilarse para pintar los nombres del servidor. Al publicar: tomar en el sitio de pruebas las capturas de la ayuda interna (papeles-lista-pais-es y -en, Ajustes de Venezuela y de Estados Unidos) y subirlas con scripts/docs/subir-ayuda-interna.mjs.
 - [ ] [para: tiendas-lanzamientos] Compilar Driver con el cambio de nombres de papeles (`AltaPasajeros.tsx`) en la próxima versión del día. No encender la lista de Venezuela hasta que esa versión esté en las tiendas. Venezuela.
 
+## Precios fijos de la zona (24 nov 2026, encargo de Richard) — todos los países · rama `fase-precio-zona`, sin subir
+
+- [ ] [para: revisor-calidad] Revisar la rama fase-precio-zona (C-PRECIO-ZONA, todos los países): tabla rutas_precio_zona, columna tarifas_viaje.umbral_precio_zona_pb (en COLUMNAS), cotización con el menor y umbral, ida y vuelta como parada, panel «Precios de la zona», Docs es/en con capturas reales. Al publicar: subir las capturas grandes (`node scripts/docs/subir-capturas-grandes.mjs`) y compilar clientes y Driver para la etiqueta y la ida y vuelta.
+
 ## Formularios por pasos y desbordes a 360 px (24 nov 2026, orden de Richard) — todos los países · rama `fase-formularios-pasos`, sin subir
 
 - [x] [para: desarrollador] Pieza única `FormularioPorPasos` y crear la cuenta por pasos en la app de clientes y en Driver; Envíos A → B y el registro de la empresa de Flex por pasos; candados C-FORMULARIO-POR-PASOS y C-DESBORDES-360 (rojo visto); Docs es/en con capturas nuevas.

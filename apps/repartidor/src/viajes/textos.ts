@@ -12,6 +12,10 @@ export const TEXTOS_VIAJE = {
       } as Record<string, string>,
       dinamica: 'Tarifa dinámica',
       dinamicaAyuda: 'Ya está incluida en lo que ganas.',
+      // C-PRECIO-ZONA
+      precioZona: 'Precio de la zona',
+      precioZonaAyuda: 'El precio fijo que se cobra en la zona para este trayecto.',
+      idaVuelta: 'Ida y vuelta: esperas en el destino y vuelves al punto de recogida.',
       conParadas: (n: number) => (n === 1 ? 'Con 1 parada' : `Con ${n} paradas`),
       // C-VIAJE-PROGRAMADO: la oferta de una reserva dice para cuándo.
       programado: 'Viaje programado para',
@@ -94,6 +98,8 @@ export const TEXTOS_VIAJE = {
       confirmarLlegueParada: { pregunta: '¿Llegaste a la parada?', si: 'Llegué', no: 'Cancelar' },
       confirmarSeguir: { pregunta: '¿Seguir el viaje?', si: 'Seguir', no: 'Cancelar' },
       saltarParada: 'Saltar parada',
+      // C-PRECIO-ZONA: en un viaje con precio de la zona no se saltan paradas.
+      sinCambiosParadas: 'Viaje con precio de la zona: no admite cambios de paradas.',
       saltarConfirmar: 'Si tu pasajero ya no va a parar, toca de nuevo para saltarla',
       esperaParada: 'Espera gratis en la parada',
       esperaParadaTerminada: 'La espera gratis terminó: ya se cobra la espera',
@@ -179,6 +185,9 @@ export const TEXTOS_VIAJE = {
       } as Record<string, string>,
       dinamica: 'Dynamic pricing',
       dinamicaAyuda: 'Already included in what you earn.',
+      precioZona: 'Local fixed price',
+      precioZonaAyuda: 'The usual fixed price in this area for this trip.',
+      idaVuelta: 'Round trip: you wait at the drop-off and come back to the pickup spot.',
       conParadas: (n: number) => (n === 1 ? 'With 1 stop' : `With ${n} stops`),
       programado: 'Scheduled ride for',
       ganas: 'You earn',
@@ -258,6 +267,7 @@ export const TEXTOS_VIAJE = {
       confirmarLlegueParada: { pregunta: 'Are you at the stop?', si: 'I’m here', no: 'Cancel' },
       confirmarSeguir: { pregunta: 'Continue the ride?', si: 'Continue', no: 'Cancel' },
       saltarParada: 'Skip stop',
+      sinCambiosParadas: 'Ride with a local fixed price: stops can’t be changed.',
       saltarConfirmar: 'If your rider no longer wants to stop, tap again to skip it',
       esperaParada: 'Free wait at the stop',
       esperaParadaTerminada: 'Free wait is over: wait time is now charged',

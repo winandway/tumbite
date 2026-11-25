@@ -15,6 +15,7 @@ import { DinamicaCiudad, vecesDe } from './DinamicaCiudad';
 import { Enlace } from '../Enlace';
 import { Hora } from './horario';
 import { PestanasViajes } from './SuperViajesFijos';
+import { PreciosZona } from './PreciosZona';
 
 const T = {
   es: {
@@ -63,6 +64,9 @@ const T = {
     // C-DESTINO-EN-EL-PAIS: el destino puede estar en cualquier punto del país.
     kmMaximo:
       'Distancia máxima de un viaje, en km (vacío = 1500; el destino puede estar en todo el país)',
+    // C-PRECIO-ZONA: diferencia mínima para que el precio de la zona reemplace al calculado.
+    umbralZona:
+      'Precios de la zona: se usan si son al menos este % más baratos que el calculado (vacío = 10)',
     xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
     comfort: 'Carro Comfort: veces el precio del carro (vacío = sin Comfort; 1,3 = un 30 % más)',
@@ -123,6 +127,8 @@ const T = {
     valorMaximo: 'Delivery: maximum declared value of a package (empty = 100)',
     kmMaximo:
       'Maximum trip distance, in km (empty = 1500; the drop-off can be anywhere in the country)',
+    umbralZona:
+      'Local fixed prices: used when at least this % cheaper than the distance-based price (empty = 10)',
     xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
     comfort: 'Car Comfort: times the car price (empty = no Comfort; 1.3 = 30% more)',
@@ -210,6 +216,7 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
       esperaParada: '2',
       valorMaximo: '',
       kmMaximo: '',
+      umbralZona: '',
       motivo: '',
     },
     almacen: almacenNavegador,
@@ -279,6 +286,9 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
     if (v.valorMaximo.trim()) tarifa.valorMaximo = textoAMonto(v.valorMaximo, m);
     // C-DESTINO-EN-EL-PAIS: tope de seguridad de km de esta ciudad y servicio (vacío = el alto).
     if (Math.round(veces(v.kmMaximo)) >= 5) tarifa.kmMaximo = Math.round(veces(v.kmMaximo));
+    // C-PRECIO-ZONA: el umbral de los precios de la zona, en por ciento (vacío = 10 %).
+    if (v.umbralZona.trim() && veces(v.umbralZona) >= 0 && veces(v.umbralZona) <= 90)
+      tarifa.umbralPrecioZonaPb = Math.round(veces(v.umbralZona) * 100);
     try {
       await api.pedir('POST', '/datos/admin/viajes/tarifas', {
         servicio: v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto',
@@ -540,6 +550,15 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
           />
         </label>
         <label className="campo">
+          <span>{t.umbralZona}</span>
+          <input
+            inputMode="decimal"
+            data-testid="tarifa-umbral-zona"
+            value={b.valores.umbralZona}
+            onChange={(e) => b.cambiar('umbralZona', e.target.value)}
+          />
+        </label>
+        <label className="campo">
           <span>{t.motivo}</span>
           <input value={b.valores.motivo} onChange={(e) => b.cambiar('motivo', e.target.value)} />
         </label>
@@ -547,6 +566,10 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
           {t.guardar}
         </button>
       </form>
+      <PreciosZona
+        idioma={idioma}
+        monedaDe={(zona) => datos?.tarifas.find((x) => x.zona === zona)?.moneda ?? 'USD'}
+      />
       <InterruptoresViaje idioma={idioma} />
     </section>
   );

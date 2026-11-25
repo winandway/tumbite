@@ -1843,6 +1843,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'One of those shipments doesn’t exist in your company.',
   ],
   ['Esa ruta no existe.', 'That route doesn’t exist.'],
+  [
+    'Este viaje tiene precio de la zona: no admite cambios de paradas. Si necesitas otra cosa, pide otro viaje.',
+    'This ride has a local fixed price: its stops can’t be changed. If you need something else, request another ride.',
+  ],
   ['Solo se edita una ruta en borrador.', 'Only a draft route can be edited.'],
   [
     'Hay referencias externas repetidas dentro del mismo lote.',
@@ -2375,6 +2379,14 @@ export const MENSAJES_EN = new Map<string, string>([
   [
     'El destino tiene que estar en el mismo país del viaje.',
     'The destination has to be in the same country as the pickup.',
+  ],
+  // C-PRECIO-ZONA (24 nov 2026): precios fijos de la zona e ida y vuelta.
+  ['Este trayecto no tiene precio de ida y vuelta.', 'This trip doesn’t have a round-trip price.'],
+  ['Esa ruta no existe.', 'That route doesn’t exist.'],
+  ['Un envío no tiene precio de ida y vuelta.', 'A delivery can’t have a round-trip price.'],
+  [
+    'El precio de ida y vuelta no puede ser menor que el de ida.',
+    'The round-trip price can’t be lower than the one-way price.',
   ],
   [
     'Una parada tiene que estar en el mismo país del viaje.',
