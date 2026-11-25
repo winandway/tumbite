@@ -439,7 +439,7 @@ export async function panicosSinAtender(db: D1Database) {
 /**
  * C-PANICO-SOLO-REALES (25 nov 2026, Gerencia) — todos los países. El canario y la tarjeta roja solo
  * cuentan una zona abierta que tiene al menos un conductor REAL que puede trabajar: cuenta que no es
- * de prueba (`es_prueba = 0`), que no es nuestra (Soporte: correo de windoce.com o divoox.com) y con
+ * de prueba (`es_prueba = 0`), que no es nuestra (correo de windoce.com o «Soporte» en el nombre) y con
  * un vehículo aprobado o un plazo de papeles vigente. Fuera siempre la zona de revisión de las
  * tiendas (`VE-ZZ-REVIEW`, la usa el revisor de Apple). Una zona sin nadie que la recorra (Miami
  * antes del lanzamiento, Novi de pruebas) no pone la alarma en rojo; el día que llega un conductor
@@ -456,7 +456,7 @@ const SQL_ZONAS_CON_CONDUCTORES_REALES = `
             WHERE r.zona_id = z.id
               AND u.es_prueba = 0
               AND lower(u.correo) NOT LIKE '%@windoce.com'
-              AND lower(u.correo) NOT LIKE '%@divoox.com'
+              AND lower(u.nombre) NOT LIKE '%soporte%'
               AND (EXISTS (SELECT 1 FROM vehiculos v
                             WHERE v.conductor_id = r.usuario_id AND v.estado = 'aprobado')
                    OR EXISTS (SELECT 1 FROM plazo_papeles pp

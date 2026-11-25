@@ -574,6 +574,9 @@ describe('C-PANICO-SOLO-REALES · la alarma de pánico cuenta solo zonas con con
       nuestra.id,
     );
     expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+    const revisor = await conductorDeMoto(m, ORIGEN);
+    await q(m, "UPDATE usuarios SET nombre = 'Soporte Revisión Driver' WHERE id = ?", revisor.id);
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
   });
 
   it('un conductor real sin vehículo aprobado ni plazo vigente tampoco cuenta; con plazo vigente, sí', async () => {
