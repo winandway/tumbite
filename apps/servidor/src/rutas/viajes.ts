@@ -1,4 +1,5 @@
 import { revisarSaldoBajo } from '../saldoBajo';
+import { guardarError } from '../errores';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { resumenChatViaje } from './chatViaje';
@@ -440,7 +441,13 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
     // C-BS-EN-MANO: un viaje cotizado sin tasa la fija al tener conductor (los dos ven la misma).
     if (r.resultado === 'tomada') await fijarTasaViaje(base(c), id);
     // C-REGRESO-PASAJERO: si iba de regreso, el uso del día se cuenta ahora (al aceptar).
-    if (r.resultado === 'tomada') await contarUsoRegreso(base(c), u.id);
+    // Un fallo del contador nunca tumba la aceptación: queda en el registro de errores.
+    if (r.resultado === 'tomada')
+      await contarUsoRegreso(base(c), u.id).catch((e: unknown) =>
+        guardarError(base(c), 'POST', '/viajes · contar-uso-regreso', e, u.id).catch((x: unknown) =>
+          console.error('regreso: no se pudo guardar el error del contador', x),
+        ),
+      );
     return c.json({ ok: true, operacionId: r.operacionId, version: r.version });
   }
   // No se lo quedó: lo apartado vuelve al prepago.

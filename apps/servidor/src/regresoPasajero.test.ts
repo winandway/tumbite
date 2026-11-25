@@ -272,6 +272,21 @@ describe('regreso con pasajero: usos del día (C-REGRESO-PASAJERO)', () => {
     expect(tercero.datos.error).toMatch(/dos veces|twice/);
   });
 
+  it('5. si el contador de usos falla, el conductor igual acepta el viaje y el fallo queda registrado', async () => {
+    const e = await escena();
+    const c = await e.conductor(alSur(0.5));
+    expect((await e.regreso(c.token)).estado).toBe(200);
+    const viaje = await e.pedirViaje(HACIA_CASA);
+    await repartirOperaciones(undefined, e.m.DB);
+    // El contador escribe en usos_regreso: sin esa tabla, falla a propósito.
+    await e.m.DB.prepare('DROP TABLE usos_regreso').run();
+    expect(await c.paso(viaje, 'aceptar')).toBe(200);
+    const err = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM errores_servidor WHERE ruta LIKE '%contar-uso-regreso%'",
+    ).first<{ n: number }>();
+    expect(err?.n).toBe(1);
+  });
+
   it('5. dos aceptaciones a la vez no pasan de dos; el contador es aparte del modo destino', async () => {
     const e = await escena();
     const c = await e.conductor(alSur(0.5));
