@@ -22,6 +22,18 @@ describe('C-CELULAR-DE-GUION', () => {
     }
   });
 
+  it('C-CELULAR-CON-PAIS: lleva su «+1» escrito y existe sea cual sea el país de la conexión', () => {
+    for (let i = 0; i < 2000; i++) {
+      const n = celularDePrueba();
+      expect(n.startsWith('+1'), n).toBe(true);
+      for (const pais of ['VE', 'CO', 'PE', 'US']) {
+        // El «+» manda sobre el país de la conexión: se lee como de Estados Unidos.
+        const r = leerTelefono(n, pais, { soloCelular: true });
+        expect(r.ok, `${n} desde ${pais}`).toBe(true);
+      }
+    }
+  });
+
   it('no se repiten a cada rato: cinco mil seguidos dan casi cinco mil distintos', () => {
     const vistos = new Set(Array.from({ length: 5000 }, () => celularDePrueba()));
     expect(vistos.size).toBeGreaterThan(4900);

@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CELULAR-CON-PAIS · El celular de los guiones lleva su «+1» escrito (25 nov 2026) — todos los países · pruebas
+
+- **Qué se veía:** nueve pruebas del sitio de pruebas en rojo de golpe («That number doesn’t exist in that country» y formularios de crear cuenta que no avanzaban) sin que el código hubiera cambiado.
+- **Causa:** `e2e/recorrido/celularDePrueba.ts` daba diez cifras sin código de país; el registro las lee con el país de la conexión (`paisParaTelefono`), y cuando la conexión sale por Venezuela, Colombia o Perú parte de esos números no existe ahí (medido: 48, 36 y 60 rechazos de 120).
+- **Qué se hizo:** el celular de guion sale con «+1». El «+» manda sobre el país de la conexión (0 rechazos de 120 desde cualquier país). La validación NO se relajó.
+- **Cómo se comprueba:** `packages/compartido/src/candadoCelularDeGuion.test.ts`, C-CELULAR-CON-PAIS, visto en ROJO sin el «+1».
+
 ## C-EDAD-POR-PAIS, C-FECHA-GUARDADA y C-CRUCES-DOCUMENTO · La edad por país y servicio, de la fecha guardada; lo leído del documento en la cuenta; lo que no cuadra en ámbar (Richard, 25 nov 2026) — todos los países · servidor, panel y texto de Driver
 
 - **Qué se rompía:** a un conductor de Venezuela nacido en 1974, «Habilitar para Moto» le decía «Le falta: Tener 21 años o más». La edad era un requisito que alguien tenía que aprobar a mano, con un 21 fijo, y la fecha de nacimiento no estaba en su cuenta.

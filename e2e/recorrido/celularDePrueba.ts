@@ -24,5 +24,8 @@ export function celularDePrueba(): string {
   // Central 520–599 sin la 555 (reservada en parte para ficción, no hace falta rozarla).
   let central = 520 + randomInt(80);
   if (central === 555) central = 556;
-  return `${area}${central}${cifras(4)}`;
+  // C-CELULAR-CON-PAIS (25 nov 2026): con su «+1» escrito. Sin él, el registro lo leía con el país de la
+  // conexión, y cuando la máquina de la nube no salía por Estados Unidos contestaba «ese número no
+  // existe en ese país» (nueve pruebas del sitio de pruebas en rojo sin que el código hubiera cambiado).
+  return `+1${area}${central}${cifras(4)}`;
 }
