@@ -108,6 +108,7 @@ import {
 import {
   type Muestra,
   OPCIONES_COCINA_OCUPADA,
+  PRECISION_MAXIMA_M,
   PEDIDOS_PARA_PROMEDIO,
   RADIO_LLEGADA_M,
   RECHAZOS_PARA_ABRIR,
@@ -421,6 +422,23 @@ async function salirEnCamino(env: Env, db: D1Database, id: string, actorId: stri
 }
 
 /**
+ * C-GPS-MUESTRA-FILTRADA (regla «cada escritura tiene presupuesto»): una lectura no se guarda entre
+ * las recientes si la última guardada tiene menos de MUESTRA_MIN_S segundos y está a menos de
+ * MOVIDO_MIN_M metros. Excepción: si la precisión cambia de lado (precisa ↔ imprecisa), se guarda,
+ * porque cambia lo que decide la llegada confiable. El salto imposible se revisa antes, contra la
+ * última guardada, así que no se pierde.
+ */
+export const MUESTRA_MIN_S = 10;
+
+export function hayQueGuardarMuestra(anterior: Muestra | null, nueva: Muestra): boolean {
+  if (!anterior) return true;
+  if (nueva.en - anterior.en >= MUESTRA_MIN_S * 1000) return true;
+  if (metrosEntre(anterior, nueva) >= MOVIDO_MIN_M) return true;
+  const imprecisa = (m: Muestra) => (m.precisionM ?? 0) > PRECISION_MAXIMA_M;
+  return imprecisa(anterior) !== imprecisa(nueva);
+}
+
+/**
  * Con cada ubicación del repartidor, el servidor marca los hitos de su pedido activo: llegó al
  * restaurante (200 m), «casi llega» (500 m de la casa, se avisa al cliente) y llegó a la puerta.
  * Lo marca la ubicación, no un botón: nadie puede decir «llegué» desde otro lado.
@@ -457,6 +475,10 @@ async function guardarMuestra(
     en: Date.now(),
   };
   if (saltoImposible(previas[0] ?? null, nueva)) return { muestras: previas, salto: true };
+  // C-GPS-MUESTRA-FILTRADA: casi en el mismo sitio y pocos segundos después no se escribe; la
+  // lectura sí cuenta en memoria para los hitos de esta llamada.
+  if (!hayQueGuardarMuestra(previas[0] ?? null, nueva))
+    return { muestras: [nueva, ...previas], salto: false };
   await db.batch([
     db
       .prepare(
