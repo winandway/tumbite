@@ -38,7 +38,8 @@ function servidor(respuestas: (number | Error)[]) {
   };
   return { pedir, veces: () => n, dormir: async () => {} };
 }
-const deRed = () => Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } });
+const deRed = (code = 'ECONNRESET') =>
+  Object.assign(new TypeError('fetch failed'), { cause: { code } });
 
 describe('C-GUIONES-REINTENTAN-RED', () => {
   it('repite ante la red y ante 502, 503 y 504; nunca ante un 4xx', async () => {
@@ -74,8 +75,19 @@ describe('C-GUIONES-REINTENTAN-RED', () => {
     const b = servidor([deRed(), deRed(), deRed(), 200]);
     await expect(m.pedirConReintento('https://x/datos', {}, b)).rejects.toThrow('fetch failed');
     expect(b.veces()).toBe(m.REINTENTOS_RED);
+    // Una escritura cortada a mitad de camino pudo llegar: no se repite (no se duplica).
     const c = servidor([deRed(), 200]);
-    expect((await m.pedirConReintento('https://x/datos', { method: 'POST' }, c)).status).toBe(200);
+    await expect(m.pedirConReintento('https://x/datos', { method: 'POST' }, c)).rejects.toThrow(
+      'fetch failed',
+    );
+    expect(c.veces()).toBe(1);
+    // Si la conexión ni se abrió, el servidor no recibió nada: la escritura sí se repite.
+    const e = servidor([deRed('ECONNREFUSED'), 200]);
+    expect((await m.pedirConReintento('https://x/datos', { method: 'POST' }, e)).status).toBe(200);
+    expect(e.veces()).toBe(2);
+    // Una lectura cortada sí se repite.
+    const f = servidor([deRed(), 200]);
+    expect((await m.pedirConReintento('https://x/datos', {}, f)).status).toBe(200);
     // Un error que no es de la red (un fallo del guion) no se repite.
     const d = servidor([new Error('dato mal'), 200]);
     await expect(m.pedirConReintento('https://x/datos', {}, d)).rejects.toThrow('dato mal');

@@ -30,6 +30,15 @@ export function hayQueReintentar({
   return !(estado === 504 && ESCRIBEN.has(String(metodo).toUpperCase()));
 }
 
+/**
+ * ¿La conexión ni siquiera se abrió? Entonces el servidor no recibió nada y repetir una escritura
+ * no puede duplicarla. Un corte a mitad de camino (ECONNRESET, ETIMEDOUT) sí pudo llegar.
+ */
+export function noLlegoAlServidor(e) {
+  const codigo = e instanceof Error && e.cause && typeof e.cause === 'object' ? e.cause.code : '';
+  return /^(ECONNREFUSED|ENOTFOUND|EAI_AGAIN)$/.test(String(codigo ?? ''));
+}
+
 /** ¿Este error es de la red (sin respuesta) y no del guion? */
 export function esErrorDeRed(e) {
   if (!(e instanceof Error)) return false;
@@ -58,7 +67,13 @@ export async function pedirConReintento(url, opciones = {}, ajustes = {}) {
     try {
       r = await pedir(url, opciones);
     } catch (e) {
-      if (!esErrorDeRed(e) || !hayQueReintentar({ metodo, estado: null, intento, intentos }))
+      // Una escritura solo se repite si la conexión no llegó a abrirse (no hay riesgo de duplicarla).
+      const escribe = ESCRIBEN.has(String(metodo).toUpperCase());
+      if (
+        !esErrorDeRed(e) ||
+        (escribe && !noLlegoAlServidor(e)) ||
+        !hayQueReintentar({ metodo, estado: null, intento, intentos })
+      )
         throw e;
       console.warn(`guion: ${metodo} ${url} sin respuesta (${e.message}); intento ${intento + 1}`);
       await dormir(esperaMs * intento);
