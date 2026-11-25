@@ -79,6 +79,7 @@
   <url><loc>https://divoox.com/docs/ordering/ride-notifications</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/customer-notifications</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-service-fee</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/local-fixed-price</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-same-route</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/trusted-driver</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/regular-rides</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
@@ -153,6 +154,7 @@
   <url><loc>https://divoox.com/docs/drivers/offers</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/ratings</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/earnings-breakdown</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/driver-home-screen</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/alerts-and-pause</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/arrived-not-ready-and-help</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/levels</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
@@ -370,6 +372,7 @@
   <url><loc>https://divoox.com/es/docs/ordering/ride-notifications</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/customer-notifications</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-service-fee</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/local-fixed-price</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-same-route</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/trusted-driver</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/regular-rides</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
@@ -444,6 +447,7 @@
   <url><loc>https://divoox.com/es/docs/drivers/offers</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/ratings</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/earnings-breakdown</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/driver-home-screen</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/alerts-and-pause</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/arrived-not-ready-and-help</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/levels</loc><lastmod>2026-11-25</lastmod><priority>0.7</priority></url>
