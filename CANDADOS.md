@@ -2,6 +2,12 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-MENU-UNA-CONFIGURACION · Una sola «Configuración» en el menú del equipo (25 nov 2026) — todos los países · panel
+
+- **Qué se veía:** el menú del superadmin mostraba «Configuración» dos veces: la del sistema (en «Sistema y configuración») y la de la propia cuenta (grupo «Ajustes»).
+- **Qué se hizo:** `apps/panel/src/panel/armazon/menus.ts` (`gruposAdmin`): sin grupo «Ajustes»; la cuenta propia es «Mi cuenta» / «My account», última del grupo «Sistema y configuración»; «Cerrar sesión» sigue debajo de todo. La ayuda interna de papeles por país dice el camino nuevo (Sistema y configuración → Configuración → país), es/en.
+- **Cómo se comprueba:** `apps/panel/src/panel/armazon/menuPorUso.test.ts`, C-MENU-UNA-CONFIGURACION, vista en ROJO con el menú viejo.
+
 ## C-VERIFICACIONES-VEHICULOS · Verificaciones verifica TODO: pestaña «Vehículos» y el número del menú por persona (Richard, 25 nov 2026) — todos los países · servidor y panel
 
 - **Qué se rompía:** en Verificaciones solo había identidad (Pendientes, Aprobadas, Rechazadas, Sin enviar). Los vehículos de un conductor sin verificación de identidad empezada no salían en ningún lado ni contaban en el menú, y no se veían sus fotos sin entrar persona por persona.

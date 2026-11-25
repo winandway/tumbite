@@ -15,7 +15,7 @@ import { MenuTresPuntos } from './MenuTresPuntos';
 import './superPapeles.css';
 
 /**
- * C-PAPELES-POR-PAIS (24 nov 2026) — todos los países por configuración. En Ajustes → país, junto al
+ * C-PAPELES-POR-PAIS (24 nov 2026) — todos los países por configuración. En Sistema y configuración → Configuración → país, junto al
  * plazo de papeles: qué papeles se le piden al conductor, su nombre en español e inglés, si vencen, si
  * llevan foto y si frenan las carreras o solo se piden. «Frena» no se elige: lo dice el reparto (lo
  * pone el servidor al guardar). Nace APAGADA: apagada, el conductor ve lo de siempre. Guarda lo

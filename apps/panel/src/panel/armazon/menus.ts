@@ -341,16 +341,26 @@ export function gruposAdmin(
   ruta: string,
   conCiudadDePruebas: boolean,
 ): GrupoMenu[] {
-  return [
-    ...armar(
-      ORDEN_MENU_ADMIN(titulosGrupo(idioma)),
-      t.menuAdmin,
-      raiz,
-      ruta,
-      (clave) => clave === 'test-city' && !conCiudadDePruebas,
-    ),
-    ajustes(t, idioma, ruta),
-  ];
+  const grupos = armar(
+    ORDEN_MENU_ADMIN(titulosGrupo(idioma)),
+    t.menuAdmin,
+    raiz,
+    ruta,
+    (clave) => clave === 'test-city' && !conCiudadDePruebas,
+  );
+  // C-MENU-UNA-CONFIGURACION (25 nov 2026, Gerencia): una sola «Configuración» (la del sistema, dentro de
+  // «Sistema y configuración»). Los ajustes de la propia cuenta van al final de ese mismo grupo como
+  // «Mi cuenta», sin un grupo «Ajustes» aparte; «Cerrar sesión» queda debajo de todo el menú.
+  const miCuenta: ItemMenu = {
+    clave: 'settings',
+    texto: idioma === 'en' ? 'My account' : 'Mi cuenta',
+    a: '/panel/settings',
+    activo: ruta === '/panel/settings',
+  };
+  const ultimo = grupos[grupos.length - 1];
+  if (ultimo && ultimo.titulo === titulosGrupo(idioma).configuracion)
+    return [...grupos.slice(0, -1), { ...ultimo, items: [...ultimo.items, miCuenta] }];
+  return [...grupos, { titulo: titulosGrupo(idioma).configuracion, items: [miCuenta] }];
 }
 
 /** Menú del restaurante: el día a día, su negocio, su dinero y lo que le trae más ventas. */

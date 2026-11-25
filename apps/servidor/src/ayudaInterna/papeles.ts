@@ -74,7 +74,7 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
       'Si todo está bien: aprueba la identidad ahí mismo, y la licencia y el seguro en su sección de siempre.',
       'Al aprobar la moto o el carro de alguien que no tiene otro vehículo en uso, queda en uso solo y su servicio de viajes queda elegido si ya lo puede hacer: no hace falta que él toque «Usar este vehículo».',
       'La moto o el carro dentro del plazo: en Verificaciones, en «Vehículo por revisar» de su ficha, puede llegar sin póliza. Si dice «Póliza: pendiente, dentro del plazo de papeles (vence el …)», aprueba el registro y el vehículo; la póliza llega dentro del plazo. Si el plazo vence sin la póliza aprobada, el conductor no se conecta con ese vehículo.',
-      'Para cambiar la política de un país: Ajustes → elige el país → «Plazo de papeles del conductor» → cambia y toca «Guardar el plazo de papeles». Queda en el historial de cambios con tu nombre.',
+      'Para cambiar la política de un país: Sistema y configuración → Configuración → elige el país → «Plazo de papeles del conductor» → cambia y toca «Guardar el plazo de papeles». Queda en el historial de cambios con tu nombre.',
     ],
     nota: 'Durante el plazo hay conductores trabajando sin licencia ni seguro verificados por el equipo. Es una decisión de la empresa para arrancar; por eso conviene revisar pronto lo que llega y seguir de cerca a los que están por vencer.',
   },
@@ -141,7 +141,7 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
       'If everything is fine: approve the identity right there, and the license and insurance in their usual section.',
       'When you approve the motorbike or car of someone who isn’t using another vehicle, it’s set as in use on its own and its ride service is selected if they can already do it: they don’t need to tap “Use this vehicle.”',
       'A motorbike or car within the grace period: in Verifications, under “Vehicle to review” in their file, it may arrive without a policy. If it says “Insurance policy: pending, within the documents grace period (ends …),” approve the registration and the vehicle; the policy comes within the grace period. If the period ends without an approved policy, the driver can’t go online with that vehicle.',
-      'To change a country’s policy: Settings → pick the country → “Driver documents grace period” → change it and tap “Save the documents grace period.” It’s recorded in the change history with your name.',
+      'To change a country’s policy: System and settings → Configuration → pick the country → “Driver documents grace period” → change it and tap “Save the documents grace period.” It’s recorded in the change history with your name.',
     ],
     nota: 'During the grace period, drivers work without a license or insurance verified by the team. It’s a company decision to get started; that’s why it helps to review what comes in quickly and keep a close eye on those ending soon.',
   },
@@ -149,7 +149,7 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
 
 /**
  * C-PAPELES-POR-PAIS (24 nov 2026) — todos los países por configuración. La guía interna de la lista
- * de papeles por país (Ajustes → país). Solo para el equipo: nunca en Docs públicos.
+ * de papeles por país (Sistema y configuración → Configuración → país). Solo para el equipo: nunca en Docs públicos.
  */
 export const papelesDelPais: Record<IdiomaAyuda, GuiaAyuda> = {
   es: {
@@ -158,7 +158,7 @@ export const papelesDelPais: Record<IdiomaAyuda, GuiaAyuda> = {
     resumen:
       'En Ajustes, cada país tiene su lista de papeles: qué se le pide al conductor, cómo se llama cada papel en español y en inglés, si vence, si lleva foto y si frena las carreras o solo se pide. Viene apagada: apagada, el conductor ve los papeles de siempre.',
     explicacion: [
-      'La lista está en Ajustes → elige el país → «Papeles que se le piden al conductor en este país», debajo del plazo de papeles.',
+      'La lista está en Sistema y configuración → Configuración → elige el país → «Papeles que se le piden al conductor en este país», debajo del plazo de papeles.',
       'Cada papel dice si es del conductor (licencia, certificado médico) o del vehículo (título o carnet de circulación, póliza, fotos), para qué servicio se pide (Moto, Carro o los dos), su nombre en los dos idiomas, si vence y si lleva foto.',
       '«Frena las carreras» o «Solo se pide» no lo eliges tú: lo dice el reparto. Los papeles que hoy frenan (el registro, la póliza y la póliza de pasajeros del vehículo, la inspección en Carro y la licencia) siguen frenando. Los nuevos, como el certificado médico o la foto con la placa, solo se piden: el conductor los sube y el equipo los revisa, pero no le quitan carreras.',
       'Una lista encendida no puede dejar fuera un papel que frena: el conductor no tendría dónde subirlo. Si falta, al guardar sale el aviso con el papel exacto.',
@@ -175,7 +175,7 @@ export const papelesDelPais: Record<IdiomaAyuda, GuiaAyuda> = {
       ),
     ],
     pasos: [
-      'Ajustes → elige el país → baja hasta «Papeles que se le piden al conductor en este país».',
+      'Sistema y configuración → Configuración → elige el país → baja hasta «Papeles que se le piden al conductor en este país».',
       'Revisa cada papel: para qué servicio, nombre en español y en inglés, si vence y si lleva foto.',
       'Para agregar uno: elige el papel en «Agregar papel» y toca «Agregar papel». Para quitarlo: los tres puntos de ese papel → «Quitar de la lista».',
       'Marca «Encender la lista de este país» cuando la versión de Driver que muestra estos nombres ya esté en las tiendas.',
@@ -189,7 +189,7 @@ export const papelesDelPais: Record<IdiomaAyuda, GuiaAyuda> = {
     resumen:
       'In Settings, each country has its own documents list: what drivers are asked for, what each document is called in Spanish and English, whether it expires, whether it needs a photo, and whether it blocks trips or is requested only. It starts off: while off, drivers see the usual documents.',
     explicacion: [
-      'The list is in Settings → pick the country → “Documents drivers are asked for in this country,” below the documents grace period.',
+      'The list is in System and settings → Configuration → pick the country → “Documents drivers are asked for in this country,” below the documents grace period.',
       'Each document says whether it belongs to the driver (license, medical certificate) or to the vehicle (title or registration card, insurance policy, photos), which service it is for (Moto, Car or both), its name in both languages, whether it expires and whether it needs a photo.',
       '“Blocks trips” or “Requested only” is not up to you: dispatch decides it. Documents that block today (the vehicle registration, insurance and rider insurance, the inspection for Car, and the license) keep blocking. New ones, like the medical certificate or the photo with the plate, are requested only: the driver uploads them and the team reviews them, but they never take trips away.',
       'A list that is on cannot leave out a document that blocks: the driver would have nowhere to upload it. If one is missing, saving shows a notice naming it.',
@@ -206,7 +206,7 @@ export const papelesDelPais: Record<IdiomaAyuda, GuiaAyuda> = {
       ),
     ],
     pasos: [
-      'Settings → pick the country → scroll to “Documents drivers are asked for in this country.”',
+      'System and settings → Configuration → pick the country → scroll to “Documents drivers are asked for in this country.”',
       'Check each document: which service, name in Spanish and in English, whether it expires and whether it needs a photo.',
       'To add one: pick it in “Add document” and tap “Add document.” To remove it: that document’s three dots → “Remove from the list.”',
       'Check “Turn on this country’s list” once the Driver version that shows these names is in the stores.',

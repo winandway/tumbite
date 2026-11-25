@@ -27,7 +27,6 @@ describe('C-MENU-POR-USO: el menú del panel va por uso', () => {
       'Servicios',
       'Ventas y marketing',
       'Sistema y configuración',
-      'Ajustes',
     ]);
     const operacion = grupos[0]?.items.map((i) => i.clave) ?? [];
     for (const diario of ['orders', 'tickets', 'camila']) expect(operacion).toContain(diario);
@@ -41,12 +40,30 @@ describe('C-MENU-POR-USO: el menú del panel va por uso', () => {
 
   it('«Países y servicios» se llama por lo que hace, nunca como si aprobara algo', () => {
     for (const idioma of ['es', 'en'] as const) {
-      const config = menu(idioma).at(-2)?.items ?? [];
+      const config = menu(idioma).at(-1)?.items ?? [];
       const paises = config.find((i) => i.clave === 'moto');
       expect(paises?.texto).toBe(idioma === 'es' ? 'Países y servicios' : 'Countries and services');
       // Solo «Para aprobar» habla de aprobar en la configuración: es la bandeja de la segunda firma.
       for (const i of config.filter((x) => x.clave !== 'approvals'))
         expect(i.texto).not.toMatch(/aprob|approv/i);
+    }
+  });
+
+  it('C-MENU-UNA-CONFIGURACION: una sola «Configuración», y la cuenta propia como «Mi cuenta» al final', () => {
+    for (const idioma of ['es', 'en'] as const) {
+      const grupos = menu(idioma);
+      const textos = grupos.flatMap((g) => g.items.map((i) => i.texto));
+      const nombre = idioma === 'es' ? 'Configuración' : 'Configuration';
+      expect(textos.filter((x) => x === nombre)).toHaveLength(1);
+      const ultimo = grupos[grupos.length - 1]!;
+      expect(ultimo.titulo).toBe(
+        idioma === 'es' ? 'Sistema y configuración' : 'System and settings',
+      );
+      expect(ultimo.items[ultimo.items.length - 1]).toMatchObject({
+        clave: 'settings',
+        texto: idioma === 'es' ? 'Mi cuenta' : 'My account',
+        a: '/panel/settings',
+      });
     }
   });
 });
