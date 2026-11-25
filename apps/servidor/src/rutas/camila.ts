@@ -513,7 +513,7 @@ camila.get('/admin/camila/hilos/:persona', async (c) => {
   const [mensajes, casos] = await Promise.all([
     db
       .prepare(
-        `SELECT m.id, m.canal, m.autor, m.texto, m.creado_en, u.nombre AS autor_nombre,
+        `SELECT m.id, m.canal, m.autor, m.texto, m.creado_en, replace(u.nombre, 'Tumbite', 'Divoox') AS autor_nombre,
            (SELECT a.id FROM camila_adjuntos a WHERE a.mensaje_id = m.id LIMIT 1) AS adjunto FROM camila_mensajes m
            LEFT JOIN usuarios u ON u.id = m.autor_id WHERE m.persona_id = ? ORDER BY m.creado_en, m.rowid LIMIT 300`,
       )

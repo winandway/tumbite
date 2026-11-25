@@ -231,7 +231,77 @@
 }
 
 /* ───────── Celular (375 px) ───────── */
+/* C-VERIFICACIONES-VEHICULOS: la pestaña «Vehículos» (conductor, fotos en miniatura y decidir ahí). */
+.kyc-vehiculo {
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 12px;
+  box-shadow: var(--pd-sombra, 0 1px 2px rgb(16 16 16 / 5%));
+  display: grid;
+  gap: 10px;
+}
+.kyc-vehiculo-cabeza {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 14px;
+  align-items: start;
+}
+.kyc-vehiculo-cabeza .kyc-fila-nombre,
+.kyc-vehiculo-cabeza .kyc-fila-datos {
+  grid-column: 1;
+  margin: 0;
+}
+.kyc-vehiculo-cabeza .kyc-fila-lado {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.kyc-vehiculo > .lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kyc-vehiculo > .lista > .tarjeta-form {
+  margin: 0;
+  box-shadow: none;
+}
+.vehiculo-fotos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.vehiculo-fotos li {
+  display: grid;
+  gap: 4px;
+  width: 104px;
+  font-size: 12px;
+  color: var(--pd-texto-suave, #666b73);
+}
+.vehiculo-fotos img {
+  width: 104px;
+  height: 78px;
+  object-fit: cover;
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 8px;
+  background: var(--pd-fondo, #f4f5f7);
+  display: block;
+  cursor: zoom-in;
+}
+.kyc-sub {
+  margin-top: 4px;
+}
+
 @media (max-width: 640px) {
+  .kyc-vehiculo-cabeza {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kyc-vehiculo-cabeza .kyc-fila-lado {
+    grid-column: 1;
+    grid-row: auto;
+  }
   .kyc-fila {
     grid-template-columns: 48px minmax(0, 1fr);
     gap: 10px;

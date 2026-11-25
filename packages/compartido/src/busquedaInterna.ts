@@ -269,6 +269,8 @@ export const CLAVES_PREFERENCIAS = [
   'aparato',
   // C-ZONA-MUNICIPIO: la clave del municipio («alberto-adriani»), nunca el nombre con espacios.
   'municipio',
+  // C-VERIFICACIONES-VEHICULOS: la lista de la pestaña «Vehículos» («en_revision» o «registrado»).
+  'lista',
 ] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;

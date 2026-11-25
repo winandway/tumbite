@@ -5,6 +5,7 @@ import {
   servicioDePedido,
   tiemposPedido,
   tiemposViaje,
+  nombreConMarca,
 } from '@tumbite/compartido';
 import { DIAS_FOTOS } from './conciliacion';
 import { MINUTOS_SIN_CONDUCTOR } from './operaciones';
@@ -26,6 +27,8 @@ import { ErrorDatos } from './validar';
 
 type Fila = Record<string, unknown>;
 const texto = (v: unknown): string | null => (v == null || v === '' ? null : String(v));
+/** C-NOMBRE-CON-MARCA: el nombre de quien actuó, con la marca de hoy. */
+const quienEs = (v: unknown) => nombreConMarca(texto(v));
 const numero = (v: unknown): number | null =>
   v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v);
 const punto = (lat: unknown, lng: unknown) => {
@@ -242,7 +245,7 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
   const ultimoEstado = (estado: string) => [...estados].reverse().find((e) => e.estado === estado);
   const quienConfirma = (estado: string) => {
     const e = ultimoEstado(estado);
-    return e ? { nombre: texto(e.quien), rol: rolDe(e) } : null;
+    return e ? { nombre: quienEs(e.quien), rol: rolDe(e) } : null;
   };
   const clienteNombre =
     p.cliente == null || Number(p.cliente_activo ?? 1) === 0 ? null : String(p.cliente);
@@ -287,7 +290,7 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
       tipo: 'estado' as const,
       evento: String(e.estado),
       fecha: String(e.creado_en),
-      quien: rolDe(e) === 'cliente' ? clienteNombre : texto(e.quien),
+      quien: rolDe(e) === 'cliente' ? clienteNombre : quienEs(e.quien),
       rol: rolDe(e),
       detalle: null,
       capa: 'principal' as const,
@@ -474,7 +477,9 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
           ? {
               tipo: 'cancelado' as const,
               en: texto(p.cancelado_en) ?? texto(cancelador?.creado_en),
-              por: cancelador ? { nombre: texto(cancelador.quien), rol: rolDe(cancelador) } : null,
+              por: cancelador
+                ? { nombre: quienEs(cancelador.quien), rol: rolDe(cancelador) }
+                : null,
               motivo:
                 manager
                   .map((m) => String(m.evento))
@@ -619,7 +624,11 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
     ahora,
   );
   const quienEvento = (e: Fila) =>
-    e.actor_rol === 'cliente' ? pasajeroNombre : e.actor_rol === 'sistema' ? null : texto(e.quien);
+    e.actor_rol === 'cliente'
+      ? pasajeroNombre
+      : e.actor_rol === 'sistema'
+        ? null
+        : quienEs(e.quien);
   const pasos: PasoSuelto[] = [
     {
       tipo: 'estado',
@@ -658,7 +667,7 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
       tipo: 'emergencia' as const,
       evento: 'emergencia',
       fecha: String(e.creado_en),
-      quien: e.rol === 'pasajero' ? pasajeroNombre : texto(e.quien),
+      quien: e.rol === 'pasajero' ? pasajeroNombre : quienEs(e.quien),
       rol: e.rol === 'pasajero' ? 'cliente' : 'conductor',
       detalle: null,
       capa: 'principal' as const,
@@ -763,7 +772,7 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
       rol: String(e.rol),
       creadoEn: String(e.creado_en),
       atendidaEn: texto(e.atendida_en),
-      atendidaPor: texto(e.atendida_por),
+      atendidaPor: quienEs(e.atendida_por),
       nota: String(e.nota ?? ''),
     })),
     tiempos,

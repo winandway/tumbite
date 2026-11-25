@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../env';
 import { zonaRealSql } from '../cuentaPais';
-import { POR_DECIDIR_SQL } from './kycBandeja';
 import { type Variables, base, exigir } from '../sesion';
 import {
   accesoDe,
@@ -172,13 +171,24 @@ export type PendienteMenu = {
 // C-VERIFICACION-UNICA: «Verificaciones» cuenta conductores con algo por decidir (identidad, vehículo
 // o un papel), con la MISMA condición que la pestaña Pendientes; baja al decidirlo.
 const REAL = (col: string) => `${col} NOT IN (SELECT id FROM usuarios WHERE es_prueba = 1)`;
+/**
+ * Las personas con algo por decidir y desde cuándo espera lo más viejo: su identidad enviada, un
+ * vehículo en revisión o un papel suyo pendiente. Cada parte va por su índice de estado.
+ */
+export const POR_DECIDIR_PERSONAS = `SELECT id, MIN(desde) AS desde FROM (
+    SELECT usuario_id AS id, enviado_en AS desde FROM kyc WHERE estado = 'pendiente'
+    UNION ALL SELECT conductor_id, actualizado_en FROM vehiculos WHERE estado = 'en_revision'
+    UNION ALL SELECT conductor_id, creado_en FROM conductor_documentos WHERE estado = 'pendiente'
+  ) GROUP BY id`;
 /** Horas que una verificación enviada puede esperar antes de volverse urgente. */
 export const HORAS_VERIFICACION_URGENTE = 24;
 export async function pendientesDelMenu(
   db: D1Database,
   acceso: Parameters<typeof alcanceObjetoSql>[0],
 ): Promise<PendienteMenu[]> {
-  const conductor = alcanceObjetoSql(acceso, 'repartidor', 'k.usuario_id');
+  // C-VERIFICACIONES-VEHICULOS: un pendiente por PERSONA con algo por decidir (su identidad, un vehículo
+  // en revisión o un papel), tenga o no su verificación de identidad empezada. Baja al decidirlo.
+  const conductor = alcanceObjetoSql(acceso, 'repartidor', 'p.id');
   const conductorD = alcanceObjetoSql(acceso, 'repartidor', 'u.id');
   const ticket = alcanceObjetoSql(acceso, 'ticket', 't.id');
   const restaurante = alcanceObjetoSql(acceso, 'restaurante', 'r.id');
@@ -192,9 +202,9 @@ export async function pendientesDelMenu(
            WHERE cc.estado = 'abierto' AND (cp.usuario_id IS NULL OR ${REAL('cp.usuario_id')})) AS camila,
         (SELECT COUNT(*) FROM reportes_contenido rc WHERE rc.estado = 'abierto') AS moderacion,
         (SELECT COUNT(*) FROM aprobaciones_dinero a WHERE a.estado = 'pendiente') AS aprobaciones,
-        (SELECT COUNT(*) FROM kyc k WHERE ${POR_DECIDIR_SQL()} AND ${REAL('k.usuario_id')}${conductor.sql}) AS verificaciones,
-        (SELECT COUNT(*) FROM kyc k WHERE ${POR_DECIDIR_SQL()} AND ${REAL('k.usuario_id')}${conductor.sql}
-           AND k.enviado_en <= datetime('now', '-${HORAS_VERIFICACION_URGENTE} hours')) AS verificaciones_viejas,
+        (SELECT COUNT(*) FROM (${POR_DECIDIR_PERSONAS}) p WHERE ${REAL('p.id')}${conductor.sql}) AS verificaciones,
+        (SELECT COUNT(*) FROM (${POR_DECIDIR_PERSONAS}) p WHERE ${REAL('p.id')}${conductor.sql}
+           AND p.desde <= datetime('now', '-${HORAS_VERIFICACION_URGENTE} hours')) AS verificaciones_viejas,
         (SELECT COUNT(*) FROM restaurantes r WHERE r.estado = 'pendiente' AND ${REAL('r.dueno_id')}${restaurante.sql}) AS restaurantes,
         (SELECT COUNT(*) FROM solicitudes_linea s WHERE s.estado = 'pendiente') AS lineas,
         (SELECT COUNT(*) FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id

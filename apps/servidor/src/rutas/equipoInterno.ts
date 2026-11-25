@@ -359,7 +359,7 @@ equipoInterno.get('/admin/equipo/miembros/:id', async (c) => {
     db
       .prepare(
         `SELECT a.id, a.accion, a.antes_json AS antes, a.despues_json AS despues, a.creado_en AS creadoEn,
-                u.nombre AS actor
+                replace(u.nombre, 'Tumbite', 'Divoox') AS actor
            FROM auditoria_admin a LEFT JOIN usuarios u ON u.id = a.actor_id
           WHERE a.objeto = ? ORDER BY a.id DESC LIMIT 50`,
       )

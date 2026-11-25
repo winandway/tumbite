@@ -13,6 +13,7 @@ import {
   FlaskConical,
   Gift,
   GalleryHorizontal,
+  Globe,
   HandCoins,
   Handshake,
   Hourglass,
@@ -95,7 +96,8 @@ export const ICONOS_MENU = {
   'signup-reminders': BellRing,
   approvals: ClipboardCheck,
   rides: Navigation,
-  moto: Bike,
+  // C-MENU-POR-USO: abre y cierra países y servicios (antes «Moto · Abrir y aprobar»).
+  moto: Globe,
   drivers: IdCard,
   zones: IconoMapa,
   waitlist: Hourglass,
@@ -221,6 +223,7 @@ const TITULOS = {
     servicios: 'Servicios',
     territorio: 'Territorio',
     sistema: 'Sistema',
+    configuracion: 'Sistema y configuración',
     negocio: 'Mi negocio',
     crecer: 'Ventas y marketing',
     ajustes: 'Ajustes',
@@ -233,6 +236,7 @@ const TITULOS = {
     servicios: 'Services',
     territorio: 'Territory',
     sistema: 'System',
+    configuracion: 'System and settings',
     negocio: 'My business',
     crecer: 'Sales and marketing',
     ajustes: 'Settings',
@@ -283,7 +287,53 @@ const ajustes = (t: Textos, idioma: Idioma, ruta: string): GrupoMenu => ({
   ],
 });
 
-/** Menú del superadmin: lo de cada día arriba, las personas, el dinero, los servicios y el territorio. */
+/**
+ * Menú del superadmin. C-MENU-POR-USO (25 nov 2026, Richard: «todo lo que se usa del día a día debe
+ * estar allí… todo lo que sea configuración, metido en configuración… Verificaciones debería estar
+ * abajo de Resumen porque es el botón que uno más usa»). Tres partes, en este orden:
+ * 1. OPERACIÓN, lo del día por frecuencia de uso: Resumen y justo debajo Verificaciones.
+ * 2. PERSONAS, y después el dinero, los servicios y el marketing.
+ * 3. Al final SISTEMA Y CONFIGURACIÓN: lo que se toca cada mes o casi nunca (países y servicios,
+ *    ciudades, zonas, franquicias, ajustes, equipo) y «Para aprobar» (la segunda firma del dinero,
+ *    con su número solo cuando hay algo esperando).
+ */
+export const ORDEN_MENU_ADMIN = (g: ReturnType<typeof titulosGrupo>): [string, string[]][] => [
+  [
+    g.operacion,
+    [
+      'inicio',
+      'verifications',
+      'orders',
+      'tickets',
+      'camila',
+      'rides',
+      'moderation',
+      'signup-reminders',
+    ],
+  ],
+  [g.personas, ['drivers', 'customers', 'restaurants', 'lines', 'signups']],
+  [
+    g.dinero,
+    [
+      'money',
+      'cash',
+      'driver-balance',
+      'agents',
+      'referrals',
+      'gift-codes',
+      'flexfinance',
+      'reports',
+    ],
+  ],
+  [g.servicios, ['rewards', 'pilot', 'test-city']],
+  [g.crecer, ['banners']],
+  // C-HORARIO-EMPLEADO / C-PERMISOS-FINOS: Configuración (horario, límites) y «Equipo interno».
+  [
+    g.configuracion,
+    ['configuration', 'moto', 'cities', 'zones', 'franchises', 'waitlist', 'team', 'approvals'],
+  ],
+];
+
 export function gruposAdmin(
   t: Textos,
   idioma: Idioma,
@@ -291,44 +341,9 @@ export function gruposAdmin(
   ruta: string,
   conCiudadDePruebas: boolean,
 ): GrupoMenu[] {
-  const g = titulosGrupo(idioma);
   return [
     ...armar(
-      [
-        [
-          g.operacion,
-          [
-            'inicio',
-            'orders',
-            'tickets',
-            'camila',
-            'signup-reminders',
-            'moderation',
-            'approvals',
-            'verifications',
-          ],
-        ],
-        [g.personas, ['customers', 'restaurants', 'drivers', 'lines', 'signups']],
-        [
-          g.dinero,
-          [
-            'money',
-            'cash',
-            'driver-balance',
-            'agents',
-            'referrals',
-            'gift-codes',
-            'flexfinance',
-            'reports',
-          ],
-        ],
-        [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
-        [g.crecer, ['banners']],
-        [g.territorio, ['franchises', 'cities', 'zones', 'waitlist']],
-        // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; luego «Equipo interno»).
-        // C-PERMISOS-FINOS: «Equipo interno» cuelga de Configuración.
-        [g.sistema, ['configuration', 'team']],
-      ],
+      ORDEN_MENU_ADMIN(titulosGrupo(idioma)),
       t.menuAdmin,
       raiz,
       ruta,

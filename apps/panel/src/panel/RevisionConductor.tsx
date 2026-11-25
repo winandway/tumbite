@@ -4,6 +4,7 @@ import { Enlace } from '../Enlace';
 import { pedir } from './api';
 import { Insignia } from './diseno/Insignia';
 import { Conductor, FilaMoto, FilaPapel, type Moto, type Papel, T_MOTO } from './SuperMoto';
+import { avisarDecision } from './sonarEvento';
 import './verificaciones.css';
 
 /**
@@ -88,6 +89,13 @@ export const T_ACTIVACION = {
     } as Record<string, string>,
     opcional: 'Opcional',
     noFrena: 'No lo frena',
+    // C-BARRA-VEHICULO-COHERENTE: qué falta, en palabras, en los pasos del vehículo.
+    falta: {
+      sin_vehiculo: 'todavía no registra ninguno',
+      sin_placa: 'falta la placa',
+      vehiculo_sin_enviar: 'lo registró, falta enviarlo a revisión',
+      vehiculo_sin_activar: 'aprobado, falta elegirlo para trabajar',
+    } as Record<string, string>,
     faltaSubir: 'falta subir',
     enRevision: 'en revisión',
     hacerlo: 'Hacerlo aquí',
@@ -146,6 +154,12 @@ export const T_ACTIVACION = {
     } as Record<string, string>,
     opcional: 'Optional',
     noFrena: 'Doesn’t block',
+    falta: {
+      sin_vehiculo: 'none registered yet',
+      sin_placa: 'plate missing',
+      vehiculo_sin_enviar: 'registered, not sent for review yet',
+      vehiculo_sin_activar: 'approved, not chosen to work with yet',
+    } as Record<string, string>,
     faltaSubir: 'not uploaded',
     enRevision: 'under review',
     hacerlo: 'Do it here',
@@ -280,6 +294,9 @@ export function BarraActivacion({
               {p.estado !== 'hecho' ? (
                 <span className="barra-quien">
                   {de(t.quien, p.quien)}
+                  {p.falta && new Map(Object.entries(t.falta)).has(p.falta)
+                    ? ` · ${de(t.falta, p.falta)}`
+                    : ''}
                   {p.opcional ? ` · ${p.clave === 'pago_movil' ? t.opcional : t.noFrena}` : ''}
                   {p.motivo ? ` · ${p.motivo}` : ''}
                   {p.papelesPais?.length
@@ -341,6 +358,8 @@ export function RevisionConductor({
   const [ocupado, setOcupado] = useState(false);
   const cambio = useCallback(() => {
     setVuelta((v) => v + 1);
+    // C-VERIFICACIONES-VEHICULOS: el número del menú baja enseguida al decidir.
+    avisarDecision();
     alCambiar?.();
   }, [alCambiar]);
   useEffect(() => {

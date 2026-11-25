@@ -14,7 +14,7 @@
  * la guía de la autorización vencida lleva en español las de Miami (El Vigía no cobra con tarjeta).
  */
 import { papelesDelPais, plazoPapeles } from './papeles';
-import { verificacionUnica } from './activacion';
+import { menuPorUso, verificacionUnica } from './activacion';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -2916,9 +2916,9 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
       'Qué es distinto en Perú y en qué orden se enciende: la ciudad en soles, el pago en mano con Yape o Plin, la comisión del saldo, la recarga con tarjeta y el punto de venta del líder.',
     explicacion: [
       'Perú es su propio sistema. Todo va en soles. El pasajero paga en mano: efectivo, Yape o Plin. No hay tarjeta para el pasajero ni doble moneda.',
-      'En producción Perú nace cerrado. Hay tres llaves y las tres hacen falta: la compuerta del país en «Moto · Abrir y aprobar» (pide la solicitud de marca del país y tu contraseña), la comisión del saldo aprobada en Flex · Dinero, Políticas, y la ciudad abierta. Ninguna se enciende sin la orden de Richard.',
+      'En producción Perú nace cerrado. Hay tres llaves y las tres hacen falta: la compuerta del país en «Países y servicios» (pide la solicitud de marca del país y tu contraseña), la comisión del saldo aprobada en Flex · Dinero, Políticas, y la ciudad abierta. Ninguna se enciende sin la orden de Richard.',
       'La comisión de Perú es del 8 %: Richard aprobó la cifra el 19 de noviembre de 2026. Falta la revisión legal del abogado peruano. Mientras esa revisión no esté aprobada, ningún viaje de Perú descuenta saldo y la recarga con tarjeta no se puede encender.',
-      'La ciudad se abre en «Moto · Abrir y aprobar», «Abrir un servicio de viajes en una ciudad». Una ciudad de Perú nace sola en soles, con hora de Lima y la tarifa de mercado. Se abre una vez para Moto y otra para Carro.',
+      'La ciudad se abre en «Países y servicios», «Abrir un servicio de viajes en una ciudad». Una ciudad de Perú nace sola en soles, con hora de Lima y la tarifa de mercado. Se abre una vez para Moto y otra para Carro.',
       'El conductor carga su número de Yape o de Plin en su app. Entra en uso a las 24 horas, o antes si lo confirmas tú. Yape y Plin se reciben entre sí: con uno de los dos le llegan los viajes de ambos. Sin número solo recibe viajes en efectivo.',
       'Si el conductor toca «No me llegó», el caso cae en la bandeja de soporte del dinero, en soles, con el viaje y el monto.',
       'Recarga con tarjeta: en Dinero, país PE, se enciende «Recargas con tarjeta» y se escribe la «Recarga mínima con tarjeta». El procesador cobra una parte fija por cada cobro, así que una recarga chica pierde mucho: por eso el mínimo propio (propuesto: 30 soles).',
@@ -2938,7 +2938,7 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
       capPeru(
         'super-compuerta',
         'es',
-        'La pantalla Moto · Abrir y aprobar con la tarjeta de Perú y su estado en producción.',
+        'La pantalla Países y servicios con la tarjeta de Perú y su estado en producción.',
         'La compuerta de producción de Perú.',
       ),
     ],
@@ -2950,7 +2950,7 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
     ],
     pasos: [
       'Confirma con Richard la orden de abrir y la comisión aprobada.',
-      'En «Moto · Abrir y aprobar», abre la compuerta de Perú con la solicitud de marca y tu contraseña.',
+      'En «Países y servicios», abre la compuerta de Perú con la solicitud de marca y tu contraseña.',
       'En la misma pantalla, abre el servicio en la ciudad (Moto y después Carro).',
       'En Dinero, país PE, enciende las recargas y escribe la recarga mínima con tarjeta.',
       'Crea el punto de venta del líder y cárgale fondo.',
@@ -2965,9 +2965,9 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
       'What is different in Peru and the order to turn it on: the city in soles, in-hand payment with Yape or Plin, the balance commission, card top-ups and the city lead’s point of sale.',
     explicacion: [
       'Peru is its own system. Everything is in soles. Riders pay in hand: cash, Yape or Plin. There is no rider card payment and no dual currency.',
-      'In production Peru starts closed. There are three keys and all three are needed: the country gate in “Moto · Open and approve” (it asks for the country’s trademark filing and your password), the balance commission approved in Flex · Money, Policies, and the city opened. None is turned on without Richard’s order.',
+      'In production Peru starts closed. There are three keys and all three are needed: the country gate in “Countries and services” (it asks for the country’s trademark filing and your password), the balance commission approved in Flex · Money, Policies, and the city opened. None is turned on without Richard’s order.',
       'Peru’s commission is 8%: Richard approved the figure on November 19, 2026. The legal review by the Peruvian lawyer is still pending. Until that review is approved, no ride in Peru deducts balance and card top-ups cannot be turned on.',
-      'The city is opened in “Moto · Open and approve,” “Open a ride service in a city.” A city in Peru is created in soles, on Lima time, with the market fare. Open it once for Moto and once for Car.',
+      'The city is opened in “Countries and services,” “Open a ride service in a city.” A city in Peru is created in soles, on Lima time, with the market fare. Open it once for Moto and once for Car.',
       'Drivers add their Yape or Plin number in their app. It goes live after 24 hours, or sooner if you confirm it. Yape and Plin receive from each other: with either one they get rides paid with both. With no number they only get cash rides.',
       'If a driver taps “It didn’t arrive,” the case lands in the money support inbox, in soles, with the ride and the amount.',
       'Card top-ups: in Money, country PE, turn on “Card top-ups” and enter the “Minimum card top-up.” The processor charges a fixed part per charge, so a small top-up loses a lot: that is why it has its own minimum (proposed: 30 soles).',
@@ -2987,7 +2987,7 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
       capPeru(
         'super-compuerta',
         'en',
-        'The Moto · Open and approve screen with the Peru card and its production status.',
+        'The Countries and services screen with the Peru card and its production status.',
         'Peru’s production gate.',
       ),
     ],
@@ -2999,7 +2999,7 @@ const abrirPeru: Record<IdiomaAyuda, Guia> = {
     ],
     pasos: [
       'Confirm with Richard the order to open and the approved commission.',
-      'In “Moto · Open and approve,” open Peru’s gate with the trademark filing and your password.',
+      'In “Countries and services,” open Peru’s gate with the trademark filing and your password.',
       'On the same screen, open the service in the city (Moto, then Car).',
       'In Money, country PE, turn on top-ups and enter the minimum card top-up.',
       'Create the lead’s point of sale and fund it.',
@@ -3504,6 +3504,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       id: 'settings',
       titulo: esp ? 'Configuración y equipo' : 'Settings and team',
       guias: [
+        // C-MENU-POR-USO: cómo está ordenado el menú y dónde quedó cada cosa.
+        de(menuPorUso),
         ...tomar(['time-zone-clock', 'add-team-members-permissions']),
         de(banners),
         de(cuentasPrueba),

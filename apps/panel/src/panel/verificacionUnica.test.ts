@@ -51,7 +51,8 @@ describe('C-VERIFICACION-UNICA: un solo lugar para aprobar lo de un conductor (c
       })
       .map(nombre)
       .sort();
-    expect(donde).toEqual(['RevisionConductor.tsx']);
+    // C-VERIFICACIONES-VEHICULOS: la pestaña «Vehículos» es parte de Verificaciones.
+    expect(donde).toEqual(['RevisionConductor.tsx', 'VerificacionesVehiculos.tsx']);
   });
 
   it('la pieza de Verificaciones es la misma en Verificaciones y en la ficha del conductor', () => {

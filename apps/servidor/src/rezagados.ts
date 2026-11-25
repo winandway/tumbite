@@ -33,7 +33,11 @@ export const PASOS_REZAGADO = [
   'clave',
   'fotos',
   'repetir',
+  // C-DOCUMENTO-VENCIDO-CLARO: el equipo vio su documento vencido y le pidió el vigente.
+  'documento_vigente',
   'vehiculo',
+  // C-VEHICULO-SIN-ENVIAR: registró su vehículo y no lo ha enviado a revisión.
+  'vehiculo_enviar',
   'saldo',
   // C-PAPELES-POR-PAIS: le faltan papeles de su país que «solo se piden» (solo con la lista encendida).
   'papeles',
@@ -97,6 +101,34 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       texto:
         'Hi {nombre}, this is Camila from Divoox. We reviewed your driver sign-up and need you to retake a photo or a document: it was not clear or could not be approved. Open Divoox Driver: at the top you will see which one and why, with the button to take it again.{plazo}\n\nContinue here:\n{enlace}\n\nIf you are not sure which photo it is, reply to this email and I will help.',
       sms: 'Divoox: {nombre}, please retake a photo from your driver sign-up. Open Divoox Driver and check the top of the screen: {enlace_corto} Camila',
+    },
+  },
+  documento_vigente: {
+    es: {
+      asunto: 'Necesitamos tu documento vigente',
+      texto:
+        'Hola, {nombre}. Soy Camila, de Divoox. Revisamos tu registro de conductor y tu documento aparece vencido. Para seguir recibiendo viajes necesitamos la foto de tu documento vigente. Abre Divoox Driver: arriba verás cuál es, con el botón para tomarla.\n\nContinúa aquí:\n{enlace}\n\nSi ya lo renovaste y tienes dudas, respóndeme este correo y te ayudo.',
+      sms: 'Divoox: {nombre}, tu documento aparece vencido. Abre Divoox Driver y toma la foto de tu documento vigente: {enlace_corto} Camila',
+    },
+    en: {
+      asunto: 'We need your current document',
+      texto:
+        'Hi {nombre}, this is Camila from Divoox. We reviewed your driver sign-up and your document shows as expired. To keep getting trips we need a photo of your current document. Open Divoox Driver: at the top you will see which one, with the button to take it.\n\nContinue here:\n{enlace}\n\nIf you already renewed it and have questions, reply to this email and I will help.',
+      sms: 'Divoox: {nombre}, your document shows as expired. Open Divoox Driver and take a photo of your current one: {enlace_corto} Camila',
+    },
+  },
+  vehiculo_enviar: {
+    es: {
+      asunto: 'Envía tu vehículo a revisión en Divoox',
+      texto:
+        'Hola, {nombre}. Soy Camila, de Divoox. Ya registraste tu vehículo, pero todavía no lo has enviado a revisión: mientras no lo envíes, nuestro equipo no puede aprobarlo. Abre Divoox Driver, entra en «Tu vehículo», completa sus fotos y papeles y toca «Enviar a revisión».{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi algo no te deja enviarlo, respóndeme este correo y te ayudo.',
+      sms: 'Divoox: {nombre}, registraste tu vehiculo pero falta enviarlo a revision. Abre Divoox Driver, entra en Tu vehiculo y envialo: {enlace_corto} Camila',
+    },
+    en: {
+      asunto: 'Send your vehicle for review on Divoox',
+      texto:
+        'Hi {nombre}, this is Camila from Divoox. You registered your vehicle, but you have not sent it for review yet: until you do, our team cannot approve it. Open Divoox Driver, go to “Your vehicle”, complete its photos and documents and tap “Send for review”.{plazo}\n\nContinue here:\n{enlace}\n\nIf something is stopping you, reply to this email and I will help.',
+      sms: 'Divoox: {nombre}, you registered your vehicle but did not send it for review. Open Divoox Driver, go to Your vehicle and send it: {enlace_corto} Camila',
     },
   },
   vehiculo: {
@@ -207,6 +239,26 @@ const AVISO: Record<PasoRezagado, Record<Idioma, { titulo: string; cuerpo: strin
       cuerpo: 'Open the app: the top of the screen shows which one and why.',
     },
   },
+  documento_vigente: {
+    es: {
+      titulo: 'Tu documento aparece vencido',
+      cuerpo: 'Abre la app y toma la foto de tu documento vigente.',
+    },
+    en: {
+      titulo: 'Your document shows as expired',
+      cuerpo: 'Open the app and take a photo of your current document.',
+    },
+  },
+  vehiculo_enviar: {
+    es: {
+      titulo: 'Envía tu vehículo a revisión',
+      cuerpo: 'Entra en «Tu vehículo» y toca «Enviar a revisión».',
+    },
+    en: {
+      titulo: 'Send your vehicle for review',
+      cuerpo: 'Go to “Your vehicle” and tap “Send for review”.',
+    },
+  },
   saldo: {
     es: {
       titulo: 'Te falta saldo para recibir viajes',
@@ -273,7 +325,9 @@ const porPaso = z.object({
   clave: plantillasPaso.optional(),
   fotos: plantillasPaso.optional(),
   repetir: plantillasPaso.optional(),
+  documento_vigente: plantillasPaso.optional(),
   vehiculo: plantillasPaso.optional(),
+  vehiculo_enviar: plantillasPaso.optional(),
   saldo: plantillasPaso.optional(),
   papeles: plantillasPaso.optional(),
   servicio: plantillasPaso.optional(),
@@ -459,6 +513,8 @@ export function pasoPendiente(d: {
   repetir?: boolean;
   /** C-VIGILANTE-REGISTROS: falló varias veces la contraseña y no ha vuelto a entrar desde entonces. */
   clave?: boolean;
+  /** C-DOCUMENTO-VENCIDO-CLARO: lo pedido de nuevo es su documento, porque venció. */
+  documentoVencido?: boolean;
 }): PasoRezagado | null {
   // Quien no puede entrar no puede dar ningún otro paso: esto va primero, para pasajeros y conductores.
   if (d.clave) return 'clave';
@@ -466,7 +522,7 @@ export function pasoPendiente(d: {
   if (d.rol !== 'repartidor') return correo;
   const aprobado = d.pasos.has('aprobado');
   // Una foto o un papel pedido de nuevo frena aunque ya estuviera aprobado (licencia vencida, foto oscura).
-  if (d.repetir) return 'repetir';
+  if (d.repetir) return d.documentoVencido ? 'documento_vigente' : 'repetir';
   if (!aprobado && FOTOS.some((p) => !d.pasos.has(p))) return 'fotos';
   if (!d.pasos.has('vehiculo')) return 'vehiculo';
   if (aprobado && !d.pasos.has('conectado')) return 'servicio';
@@ -486,6 +542,8 @@ export const RAREZAS_EQUIPO = [
   'zona',
   'requisitos',
   'zona_ajena',
+  // C-DOCUMENTO-VENCIDO-CLARO: aprobado, pero la fecha leída en su documento ya pasó.
+  'documento_vencido',
 ] as const;
 export type RarezaEquipo = (typeof RAREZAS_EQUIPO)[number];
 const ES_RAREZA_EQUIPO = new Set<string>(RAREZAS_EQUIPO);
@@ -498,9 +556,22 @@ const ES_RAREZA_EQUIPO = new Set<string>(RAREZAS_EQUIPO);
 export function lecturaDeBarra(b: {
   listo: boolean;
   siguiente: { clave: ClavePaso; quien: string; estado: string } | null;
-  pasos?: readonly { clave: ClavePaso; quien: string; estado: string }[];
+  pasos?: readonly { clave: ClavePaso; quien: string; estado: string; falta?: string }[];
 }): { paso: PasoRezagado | null; equipo: RarezaEquipo | null } {
   const s = b.siguiente;
+  // C-VEHICULO-SIN-ENVIAR: registró su vehículo y no lo ha mandado a revisión. Se le recuerda aunque
+  // ya trabaje con él en su plazo, y aunque al equipo le toque otra cosa (son cosas distintas).
+  const sinEnviar = b.pasos?.some((p) => p.falta === 'vehiculo_sin_enviar' && p.estado !== 'hecho');
+  if (sinEnviar)
+    return {
+      paso: 'vehiculo_enviar',
+      equipo:
+        !b.listo && s?.quien === 'equipo'
+          ? ES_RAREZA_EQUIPO.has(s.clave)
+            ? (s.clave as RarezaEquipo)
+            : 'requisitos'
+          : null,
+    };
   // C-PAPELES-POR-PAIS: lo de su país que «solo se pide» y no subió. No lo frena (va después de todo
   // lo que sí lo frena); si ya lo subió, lo revisa el equipo en Verificaciones (sin aviso aparte).
   const papeles = b.pasos?.some(
@@ -520,6 +591,31 @@ export function lecturaDeBarra(b: {
   if ((s.clave === 'identidad' || s.clave === 'vehiculo_aprobado') && s.estado === 'problema')
     return { paso: 'repetir', equipo: null };
   return papeles;
+}
+
+/**
+ * C-DOCUMENTO-VENCIDO-CLARO: ¿la fecha que se leyó en el documento ya pasó? Lee «2025-03-14»,
+ * «14/03/2025» y «03/14/2025». Si el día y el mes se pueden confundir, solo cuenta como vencido si
+ * las dos lecturas ya pasaron (nunca se le pide un documento por un error de formato). Pieza pura.
+ */
+export function vencidoDeVerdad(texto: string | null | undefined, ahora = new Date()): boolean {
+  const limpio = (texto ?? '').trim();
+  if (!limpio) return false;
+  const hoy = ahora.toISOString().slice(0, 10);
+  const fecha = (a: number, m: number, d: number) =>
+    m >= 1 && m <= 12 && d >= 1 && d <= 31 && a >= 1950 && a <= 2100
+      ? `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+      : null;
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(limpio);
+  if (iso) {
+    const f = fecha(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+    return f !== null && f < hoy;
+  }
+  const dmy = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(limpio);
+  if (!dmy) return false;
+  const [x, y, a] = [Number(dmy[1]), Number(dmy[2]), Number(dmy[3])];
+  const lecturas = [fecha(a, y, x), fecha(a, x, y)].filter((f): f is string => f !== null);
+  return lecturas.length > 0 && lecturas.every((f) => f < hoy);
 }
 
 /** Cuántas barras de activación mira una vuelta como mucho (cada una son unas pocas lecturas). */
@@ -584,6 +680,16 @@ const SQL_CANDIDATOS = (zonas: string[]) => `
          (EXISTS (SELECT 1 FROM verificacion_fotos vf WHERE vf.conductor_id = u.id AND vf.estado = 'repetir')
            OR EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = u.id AND k.estado = 'rechazado')) AS repetir,
          (SELECT rc.pais_red FROM rastro_cuenta rc WHERE rc.usuario_id = u.id AND rc.tipo = 'alta' LIMIT 1) AS pais_alta,
+         -- C-DOCUMENTO-VENCIDO-CLARO: lo pedido de nuevo es un documento que se leyó vencido, y la
+         -- fecha leída de un documento vigente ya aprobado que parece vencido.
+         EXISTS (SELECT 1 FROM verificacion_fotos vv WHERE vv.conductor_id = u.id AND vv.estado = 'repetir'
+                  AND vv.paso IN ('doc_frente', 'licencia_frente')
+                  AND json_extract(vv.ia_json, '$.vencido') = 'si') AS doc_vencido_pedido,
+         (SELECT json_extract(vd.ia_json, '$.vence') FROM verificacion_fotos vd
+           WHERE vd.conductor_id = u.id AND vd.estado = 'vigente' AND vd.paso IN ('doc_frente', 'licencia_frente')
+             AND json_extract(vd.ia_json, '$.vencido') = 'si'
+             AND EXISTS (SELECT 1 FROM kyc ka WHERE ka.usuario_id = u.id AND ka.estado = 'aprobado')
+           LIMIT 1) AS doc_vence,
          z.pais AS zona_pais,
          (SELECT MAX(rc.creado_en) FROM rastro_cuenta rc WHERE rc.usuario_id = u.id AND rc.tipo = 'entrada') AS ultima_entrada
     FROM usuarios u
@@ -614,6 +720,8 @@ type FilaCandidato = {
   baja: number;
   repetir: number;
   pais_alta: string | null;
+  doc_vencido_pedido: number;
+  doc_vence: string | null;
   zona_pais: string | null;
   ultima_entrada: string | null;
 };
@@ -718,6 +826,7 @@ async function revisarCuentas(
       enLinea: Boolean(f.en_linea),
       repetir: Boolean(f.repetir),
       clave,
+      documentoVencido: Boolean(f.doc_vencido_pedido),
     });
     let equipo: RarezaEquipo | null = null;
     let barraLeida = false;
@@ -735,8 +844,11 @@ async function revisarCuentas(
       // C-PAPELES-POR-PAIS: los papeles que solo se piden no tapan «conéctate» ni «tu línea».
       if (l.paso === 'papeles') {
         if (paso === null || paso === 'correo') paso = 'papeles';
-      } else if (l.paso) paso = l.paso;
-      else if (l.equipo) {
+      } else if (l.paso) {
+        paso = l.paso;
+        // C-VEHICULO-SIN-ENVIAR: lo suyo y lo del equipo pueden ir a la vez.
+        if (l.equipo) equipo = l.equipo;
+      } else if (l.equipo) {
         equipo = l.equipo;
         if (paso === 'servicio') paso = null;
       }
@@ -744,13 +856,22 @@ async function revisarCuentas(
     const zonaAjena = Boolean(
       f.rol === 'repartidor' && f.pais_alta && f.zona_pais && f.pais_alta !== f.zona_pais,
     );
+    // C-DOCUMENTO-VENCIDO-CLARO: la fecha leída ya pasó y nadie le pidió el vigente todavía. Lo decide
+    // una persona (en la campana y en la ficha, con «Pedir el documento vigente»): la lectura puede fallar.
+    const docVencido =
+      f.rol === 'repartidor' && !f.doc_vencido_pedido && vencidoDeVerdad(f.doc_vence, ahora);
     if (f.rol === 'repartidor')
       evaluados.push({
         id: f.id,
         barra: barraLeida,
         zona: true,
-        motivos: [...(equipo ? [equipo] : []), ...(zonaAjena ? ['zona_ajena' as const] : [])],
+        motivos: [
+          ...(equipo ? [equipo] : []),
+          ...(zonaAjena ? ['zona_ajena' as const] : []),
+          ...(docVencido ? ['documento_vencido' as const] : []),
+        ],
       });
+    if (!equipo && docVencido) equipo = 'documento_vencido';
     if (!equipo && zonaAjena) equipo = 'zona_ajena';
     if (paso || equipo)
       pendientes.push({
@@ -1137,7 +1258,8 @@ async function avisarAlEquipo(
        SELECT m.id FROM ev JOIN rezagados_mensajes m ON m.usuario_id = ev.id
         WHERE m.canal = 'equipo' AND m.estado = 'enviado'
           AND m.paso NOT IN (SELECT value FROM json_each(ev.motivos))
-          AND ((m.paso = 'zona_ajena' AND ev.zona) OR (m.paso <> 'zona_ajena' AND ev.barra))
+          AND ((m.paso IN ('zona_ajena', 'documento_vencido') AND ev.zona)
+            OR (m.paso NOT IN ('zona_ajena', 'documento_vencido') AND ev.barra))
         ORDER BY m.creado_en LIMIT ${LOTE_EQUIPO}`,
     )
     .bind(JSON.stringify(mirados))

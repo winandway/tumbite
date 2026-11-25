@@ -181,9 +181,9 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    // C-CUENTA-UNICA (24 nov 2026): «una cuenta, varios papeles».
-    expect(PRIVACIDAD.es.actualizado).toContain('24 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 24, 2026');
+    // C-PRIVACIDAD-REGRESO (25 nov 2026): la ciudad base y «Voy de regreso».
+    expect(PRIVACIDAD.es.actualizado).toContain('25 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 25, 2026');
   });
   it('C-CUENTA-UNICA: la política explica una cuenta con varios papeles, tratados por separado', () => {
     expect(texto(PRIVACIDAD.es)).toMatch(
@@ -346,5 +346,24 @@ describe('C-BORRAR-CUENTA-PAPELES', () => {
     expect(es).toContain('dueño de un restaurante activo');
     expect(en).toContain('removes all your roles');
     expect(en).toContain('own an active restaurant');
+  });
+});
+
+/**
+ * C-PRIVACIDAD-REGRESO (25 nov 2026, Gerencia): la política nombra la ciudad base del conductor y
+ * «Voy de regreso»: qué se guarda, para qué y que se borra con la cuenta, con la fecha al día.
+ */
+describe('C-PRIVACIDAD-REGRESO: ciudad base y regreso en la política', () => {
+  it('lo cuenta en los dos idiomas, con su borrado y la fecha al día', () => {
+    const es = texto(PRIVACIDAD.es);
+    const en = texto(PRIVACIDAD.en);
+    expect(es).toMatch(/ciudad base/);
+    expect(es).toMatch(/«Voy de regreso»/);
+    expect(es).toMatch(/regreso a tu ciudad base/);
+    expect(en).toMatch(/home city/);
+    expect(en).toMatch(/“Heading home”/);
+    expect(en).toMatch(/heading-home setting/);
+    expect(PRIVACIDAD.es.actualizado).toBe('Actualizado: 25 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toBe('Last updated: November 25, 2026');
   });
 });

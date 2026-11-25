@@ -138,7 +138,13 @@ describe('C-PAPELES-POR-PAIS: la lista de papeles por país', () => {
     // El reparto no se tocó: lo mismo listo, lo mismo lo que lo frena.
     expect(b.listo).toBe(antes.listo);
     expect(b.siguiente?.clave).toBe(antes.siguiente?.clave);
-    expect(lecturaDeBarra({ ...b, listo: true, siguiente: null }).paso).toBe('papeles');
+    // C-VEHICULO-SIN-ENVIAR: su moto sigue sin enviar a revisión: eso se le recuerda primero; con la
+    // moto ya enviada, lo que queda son los papeles de su país.
+    expect(lecturaDeBarra({ ...b, listo: true, siguiente: null }).paso).toBe('vehiculo_enviar');
+    const conMotoEnviada = b.pasos.filter((p) => p.falta !== 'vehiculo_sin_enviar');
+    expect(lecturaDeBarra({ ...b, listo: true, siguiente: null, pasos: conMotoEnviada }).paso).toBe(
+      'papeles',
+    );
     // Subidos los dos, ya no le toca a él: los revisa el equipo en Verificaciones.
     await subirA(s.e, '/datos/conductor/papeles?tipo=certificado_medico', s.rep.token);
     await subirA(
@@ -148,7 +154,8 @@ describe('C-PAPELES-POR-PAIS: la lista de papeles por país', () => {
     );
     const b2 = await barraActivacion(s.e.m.DB, s.rep.id);
     expect(b2.pasos.find((p) => p.clave === 'papeles_pais')).toMatchObject({ quien: 'equipo' });
-    expect(lecturaDeBarra({ ...b2, listo: true, siguiente: null }).paso).toBe(null);
+    const pasos2 = b2.pasos.filter((p) => p.falta !== 'vehiculo_sin_enviar');
+    expect(lecturaDeBarra({ ...b2, listo: true, siguiente: null, pasos: pasos2 }).paso).toBe(null);
   });
 
   it('el plazo con papeles «solo se piden» por subir: se recuerda y al vencer se cierra sin pausar', async () => {

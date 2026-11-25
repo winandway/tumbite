@@ -357,7 +357,7 @@ export async function cargasDeConductor(db: D1Database, conductorId: string) {
       // C-AGENTE-DIVOOX: el saldo comprado a un Agente Divoox sale en la misma lista (tipo «agente»).
       // Una app anterior, que no conoce ese tipo, muestra el motivo tal cual.
       `SELECT * FROM (
-         SELECT c.id, c.monto, c.moneda, c.tipo, c.motivo, c.comprobante, c.creado_en, a.nombre AS autor
+         SELECT c.id, c.monto, c.moneda, c.tipo, c.motivo, c.comprobante, c.creado_en, replace(a.nombre, 'Tumbite', 'Divoox') AS autor
            FROM cargas_saldo_conductor c LEFT JOIN usuarios a ON a.id = c.autor_id
           WHERE c.conductor_id = ?1
          UNION ALL

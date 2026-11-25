@@ -2,6 +2,49 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-VERIFICACIONES-VEHICULOS · Verificaciones verifica TODO: pestaña «Vehículos» y el número del menú por persona (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se rompía:** en Verificaciones solo había identidad (Pendientes, Aprobadas, Rechazadas, Sin enviar). Los vehículos de un conductor sin verificación de identidad empezada no salían en ningún lado ni contaban en el menú, y no se veían sus fotos sin entrar persona por persona.
+- **Qué se hizo:** `GET /datos/admin/vehiculos` (ruta de siempre, `apps/servidor/src/rutas/servicios.ts`) acepta `cuentas`, `zona` y `q` (nombre sin acentos, ID, placa, marca o modelo) y devuelve `totales` (en_revision, registrado) con los mismos filtros. Panel: quinta pestaña «Vehículos» en `SuperKyc.tsx` con la pieza `VerificacionesVehiculos.tsx`: «Esperan revisión» (conductor, ID, ciudad, placa, fotos y papeles en miniatura, aprobar/rechazar ahí mismo con `FilaMoto`, las rutas de siempre con su auditoría) y «Sin enviar» (los registrados que no mandaron el vehículo; sin botón de aprobar; Camila se lo recuerda). «Revisar todo del conductor» abre `verifications/<conductor>` (identidad + vehículo + papeles + casco + edad). El número del menú (`pendientesDelMenu`, `rutas/tableroPanel.ts`) cuenta PERSONAS con algo por decidir (`POR_DECIDIR_PERSONAS`: kyc pendiente, vehículo en revisión o papel pendiente, por sus índices de estado), tenga o no fila de kyc. Al decidir, `avisarDecision()` (`sonarEvento.ts`) relee el menú y la pestaña enseguida (también desde `RevisionConductor`). La preferencia de la lista se guarda con la clave `lista`.
+- **Cómo se comprueba:** `apps/servidor/src/verificacionesVehiculos.test.ts` (cuenta en el menú sin kyc, se busca por placa y nombre, baja al aprobar; «sin enviar» sale con su total y no cuenta como tarea) y `apps/panel/src/panel/VerificacionesVehiculos.test.tsx` (pestaña con su número, fila con fotos y placa, aprobar manda el PUT, el número baja y se avisa a la página; «Sin enviar» sin botón y con el recordatorio). **Vistas en ROJO** el 25 nov sin los cambios de `servicios.ts`/`tableroPanel.ts` y sin la pestaña. Recorrido local: `CANAL=chrome node scripts/recorrido/capturas-verificaciones-todo.mjs` aprueba la moto en la pestaña (es y en), exige que el número baje («Vehículos (1)» → «(0)»), sin errores de consola y sin desborde a 375 px.
+- **Qué NO tocar:** no crear rutas nuevas de aprobar (el candado C-VERIFICACION-UNICA permite `FilaMoto` solo en `RevisionConductor.tsx` y `VerificacionesVehiculos.tsx`, ambas dentro de Verificaciones); no escribir por mirar la pestaña.
+
+## C-MENU-POR-USO · El menú del panel va por uso (Richard, 25 nov 2026) — todos los países · panel
+
+- **Qué se rompía:** «Moto · Abrir y aprobar» (abre países) estaba a mano y Richard lo tocó pensando que aprobaba una moto; «Para aprobar» (segunda firma, casi sin uso) estaba arriba de Verificaciones.
+- **Qué se hizo:** `ORDEN_MENU_ADMIN` en `apps/panel/src/panel/armazon/menus.ts`: Operación (Resumen, Verificaciones, Pedidos en curso, Tickets, Camila, Viajes, Reportes, Recordatorios), Personas, Dinero, Servicios, Ventas y marketing, y al final «Sistema y configuración» (Configuración, Países y servicios, Ciudades, Zonas, Franquicias, Lista de espera, Equipo interno, Para aprobar). «Moto · Abrir y aprobar» se llama «Países y servicios» (ícono de globo; la URL `/moto` no cambia). «Límite por moneda» salió de «Para aprobar» a Configuración (`LimitesPorMoneda` en `SuperAprobaciones.tsx`, misma ruta, con borrador propio); «Para aprobar» dice dónde quedó. Palabras del buscador de secciones al día. Regla escrita en el CLAUDE.md del proyecto.
+- **Cómo se comprueba:** `apps/panel/src/panel/armazon/menuPorUso.test.ts` (Verificaciones justo debajo de Resumen; grupos en orden; países, segunda firma y configuración al final; ningún botón de configuración habla de aprobar salvo «Para aprobar»), **visto en ROJO** con el menú viejo. `SuperAprobaciones.test.tsx`: los límites se guardan desde Configuración.
+- **Qué NO tocar:** no volver a poner configuración en Operación; el uso real todavía no se mide (anotado en FILA.md).
+
+## C-BARRA-VEHICULO-COHERENTE · La barra de activación y el vehículo dicen lo mismo (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se rompía:** un conductor con su moto registrada en uso (en su plazo) y sin enviar veía «Vehículo registrado con su placa: le toca al conductor» en gris y «Vehículo aprobado» y «Vehículo en uso» en verde: un paso sin falta se daba por hecho.
+- **Causa y arreglo:** `barraActivacion` (`apps/servidor/src/activacion.ts`): «vehiculo_aprobado» es verde solo si el vehículo está `aprobado`, y «vehiculo_activo» solo si es el activo (`queTeFalta` devuelve `vehiculo.activo`). `vehiculo_sin_enviar` pasa al paso «Vehículo aprobado», le toca al conductor (registrado con placa = «registrado» en verde). El panel dice la falta en palabras («lo registró, falta enviarlo a revisión», `RevisionConductor.tsx`).
+- **Cómo se comprueba:** `apps/servidor/src/barraVehiculoCoherente.test.ts` (sin vehículo nada en verde; registrado en uso sin enviar: registrado y en uso verdes, aprobado pendiente del conductor) y la prueba de la barra en `VerificacionesVehiculos.test.tsx`. **Vistas en ROJO** con la barra vieja.
+
+## C-FOTO-DICE-LA-VERDAD · La ficha enseña la foto real o dice «aprobado sin foto» (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se rompía:** «Licencia: Aprobado» con las fotos «Todavía no la tomó» y el registro «Foto de la licencia: hecho». Lo verdadero: la licencia llegó por «Tus papeles» (`conductor_documentos`), no por el asistente de fotos, y la tarjeta solo miraba `verificacion_fotos`.
+- **Qué se hizo:** `GET /datos/admin/verificacion/:id` (`rutas/verificacionConductor.ts`) agrega a cada paso sin foto del asistente `otraFoto` (verificación de identidad, «Tus papeles» o papeles del vehículo, por sus rutas privadas del equipo), `enUnaFoto` (reverso de la licencia que llegó en una sola foto) y `aprobadoSinFoto`. La tarjeta (`SuperPapeles.tsx`) enseña esa foto con su origen o «Aprobado sin foto guardada: pídesela de nuevo» con «Pedir de nuevo». Nunca «Aprobado» con «Todavía no la tomó».
+- **Cómo se comprueba:** `apps/servidor/src/fotoDiceLaVerdad.test.ts` y el bloque de papeles de `VerificacionesVehiculos.test.tsx`. **Vistos en ROJO** sin el arreglo.
+
+## C-NOMBRE-CON-MARCA · El equipo firma «Soporte Divoox», nunca «Soporte Tumbite» (Richard, 25 nov 2026) — todos los países · servidor
+
+- **Causa:** la cuenta del equipo creada antes del cambio de marca se llama «Soporte Tumbite» en la base; la línea de tiempo enseñaba el nombre tal cual. No se renombra la cuenta en producción (sin escribir a mano).
+- **Qué se hizo:** `nombreConMarca()` en `packages/compartido/src/marca.ts`, usado en la línea de tiempo de la cuenta (`rastro.ts`), el historial de correo (`rutas/superadmin.ts`) y la ficha de pedidos y viajes (`fichaOperacion.ts`); en SQL, `replace(nombre, 'Tumbite', 'Divoox')` en Camila, equipo interno, piloto, saldo de conductores y casos de dinero.
+- **Cómo se comprueba:** `apps/servidor/src/nombreConMarca.test.ts`, **visto en ROJO** sin el cambio en `rastro.ts`.
+
+## C-DOCUMENTO-VENCIDO-CLARO y C-VEHICULO-SIN-ENVIAR · Camila pide el documento vigente y recuerda enviar el vehículo (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se hizo:** en la tarjeta de papeles, un documento aprobado que parece vencido sale arriba en rojo con la fecha leída y «Pedir el documento vigente» (motivo ya escrito; usa `pedir-foto`). El vigilante (`rezagados.ts`): si la fecha leída ya pasó de verdad (`vencidoDeVerdad`: ISO o día/mes; si se confunden, solo si las dos lecturas pasaron) va a la campana del equipo (`documento_vencido`, una persona decide); cuando el equipo lo pide, Camila le escribe con su plantilla propia (`documento_vigente`). Con el vehículo registrado y sin enviar, Camila le recuerda enviarlo (`vehiculo_enviar`), aunque ya trabaje con él en su plazo; lo del equipo puede ir a la vez. Plantillas y avisos es/en, textos del panel al día.
+- **Cómo se comprueba:** `apps/servidor/src/camilaVehiculoYDocumento.test.ts` (5 pruebas, **vistas en ROJO** sin el cambio en `rezagados.ts`); `papelesPais.test.ts` ajustado: con la moto sin enviar se recuerda primero enviarla.
+- **Qué NO tocar:** nunca pedirle el documento al conductor solo porque la IA lo leyó vencido: primero la campana y una persona.
+
+## C-PRIVACIDAD-REGRESO · La política nombra la ciudad base y «Voy de regreso» (auditor de tiendas, 25 nov 2026) — todos los países · web
+
+- **Qué se hizo:** sección 4 (Ubicación) de `PRIVACIDAD` es/en (`apps/panel/src/sitio/legales.ts`): qué se guarda (ciudad base, si el regreso está encendido, cuándo, usos por día), para qué, que no se guarda el recorrido y que se borra con la cuenta; la lista de borrado lo nombra; fecha al 25 nov.
+- **Cómo se comprueba:** `apps/panel/src/sitio/legales.test.tsx`, bloque C-PRIVACIDAD-REGRESO, **visto en ROJO** con el texto viejo.
+
 ## C-REGRESO-PASAJERO · «Voy de regreso a mi ciudad»: el conductor vuelve con pasajero tras un viaje largo (Richard, 25 nov 2026) — todos los países · servidor (sale al publicar), panel y necesita app nueva de Driver (Android e iPhone)
 
 - **Por qué:** con C-DESTINO-EN-EL-PAIS un viaje puede dejar al conductor a decenas de kilómetros de su ciudad y volvía vacío. Ficha: `docs/investigaciones-rea/2026-11-25-regreso-con-pasajero.md` (Uber Driver Destinations: dos usos al día, el uso empieza con el viaje [DOC]; Lyft y DiDi filtran por ruta [DOC]; los números son nuestros [INF]).

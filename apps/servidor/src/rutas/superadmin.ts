@@ -18,6 +18,7 @@ import { z } from 'zod';
 import {
   correoCanonico,
   diasRestantes,
+  nombreConMarca,
   resumenEtiquetas,
   telefonoCanonico,
   telefonoParaMostrar,
@@ -1365,7 +1366,7 @@ export async function historialCorreoDe(db: D1Database, usuarioId: string) {
   return results.map((f) => ({
     accion: f.accion,
     fecha: f.fecha,
-    quien: f.quien ?? '—',
+    quien: nombreConMarca(f.quien) ?? '—',
     antes: String(leer(f.antes).correo ?? ''),
     despues: String(leer(f.despues).correo ?? ''),
     enviado: leer(f.despues).enviado !== false,

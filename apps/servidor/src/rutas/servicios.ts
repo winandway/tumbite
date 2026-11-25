@@ -27,7 +27,7 @@ import { esParticipante } from './piloto';
 import { esCuentaPrueba } from './cuentaPrueba';
 import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import type { Entorno } from '@tumbite/compartido';
+import { type Entorno, textoPlano } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { exigirComisionEnMoneda } from '../finanzas/conductor';
@@ -50,6 +50,7 @@ import {
   paisAbiertoPara,
 } from '../pasajerosPais';
 import { accesoDe, alcanceObjetoSql, alcanceHabilitacionSql } from '../accesoInterno';
+import { sqlPlano } from '../buscadorSql';
 
 const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
 
@@ -1630,21 +1631,66 @@ servicios.get('/admin/vehiculos', async (c) => {
     .catch('en_revision')
     .parse(c.req.query('estado') ?? 'en_revision');
   const conductor = (c.req.query('conductor') ?? '').slice(0, 64);
+  // C-VERIFICACIONES-VEHICULOS (25 nov 2026, Richard: «Verificaciones verifica TODO») — todos los
+  // países. La pestaña «Vehículos» de Verificaciones: cuentas reales o de prueba, ciudad y buscador
+  // (nombre, ID, placa, marca o modelo, desde la primera letra), con los totales de cada lista.
+  const cuentas = z
+    .enum(['reales', 'prueba', 'todas'])
+    .catch('todas')
+    .parse(c.req.query('cuentas') ?? 'todas');
+  const zona = (c.req.query('zona') ?? '').slice(0, 60);
+  const q = textoPlano((c.req.query('q') ?? '').slice(0, 60)).replace(/^#/, '');
   const db = base(c);
   // C-PERMISOS-FINOS: los vehículos de los conductores de su alcance.
   const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'v.conductor_id');
-  const { results } = await db
-    .prepare(
-      // C-PAPELES-POR-PAIS: el país del conductor, para nombrar sus papeles como se llaman allá.
-      `SELECT v.*, u.nombre AS conductor,
-              (SELECT z.pais FROM repartidores r JOIN zonas z ON z.id = r.zona_id
-                WHERE r.usuario_id = v.conductor_id) AS pais
-         FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
-        WHERE v.estado = ? AND (? = '' OR v.conductor_id = ?)${alc.sql} ORDER BY v.actualizado_en LIMIT 100`,
-    )
-    // C-VERIFICACION-UNICA: con `conductor`, solo los de esa persona (su ficha en Verificaciones).
-    .bind(estado, conductor, conductor, ...alc.valores)
-    .all<{ id: string; conductor_id: string }>();
+  const filtros = `(? = '' OR v.conductor_id = ?)
+          AND (? = 'todas' OR COALESCE(u.es_prueba, 0) = (? = 'prueba'))
+          AND (? = '' OR EXISTS (SELECT 1 FROM repartidores rz WHERE rz.usuario_id = v.conductor_id AND rz.zona_id = ?))
+          AND (? = '' OR ${sqlPlano('u.nombre')} LIKE '%' || ? || '%' OR lower(v.placa) LIKE '%' || ? || '%'
+               OR ${sqlPlano("v.marca || ' ' || v.modelo")} LIKE '%' || ? || '%'
+               OR EXISTS (SELECT 1 FROM repartidores rc WHERE rc.usuario_id = v.conductor_id AND lower(rc.codigo) LIKE '%' || ? || '%'))${alc.sql}`;
+  const valores = [
+    conductor,
+    conductor,
+    cuentas,
+    cuentas,
+    zona,
+    zona,
+    q,
+    q,
+    q,
+    q,
+    q,
+    ...alc.valores,
+  ];
+  const [{ results }, totales] = await Promise.all([
+    db
+      .prepare(
+        // C-PAPELES-POR-PAIS: el país del conductor, para nombrar sus papeles como se llaman allá.
+        `SELECT v.*, u.nombre AS conductor, COALESCE(u.es_prueba, 0) AS es_prueba,
+                (SELECT d.codigo FROM repartidores d WHERE d.usuario_id = v.conductor_id) AS codigo,
+                (SELECT z.nombre FROM repartidores r JOIN zonas z ON z.id = r.zona_id
+                  WHERE r.usuario_id = v.conductor_id) AS zona,
+                (SELECT z.pais FROM repartidores r JOIN zonas z ON z.id = r.zona_id
+                  WHERE r.usuario_id = v.conductor_id) AS pais
+           FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
+          WHERE v.estado = ? AND ${filtros} ORDER BY v.actualizado_en LIMIT 100`,
+      )
+      // C-VERIFICACION-UNICA: con `conductor`, solo los de esa persona (su ficha en Verificaciones).
+      .bind(estado, ...valores)
+      .all<{ id: string; conductor_id: string }>(),
+    // Los totales de las dos listas de la pestaña (lo que espera revisión y lo que quedó sin enviar).
+    conductor
+      ? null
+      : db
+          .prepare(
+            `SELECT SUM(v.estado = 'en_revision') AS en_revision, SUM(v.estado = 'registrado') AS registrado
+               FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
+              WHERE v.estado IN ('en_revision', 'registrado') AND ${filtros}`,
+          )
+          .bind(...valores)
+          .first<{ en_revision: number | null; registrado: number | null }>(),
+  ]);
   const ids = results.map((v) => v.id);
   // C-SEGURO-EN-PLAZO: a quién le corre la póliza dentro de su plazo (una lectura por lote).
   const gracias = await graciasDe(db, [...new Set(results.map((v) => v.conductor_id))]);
@@ -1669,6 +1715,12 @@ servicios.get('/admin/vehiculos', async (c) => {
         seguroEnPlazo: seguroEnPlazo(g) ? { venceEn: g?.venceEn ?? null } : null,
       };
     }),
+    totales: totales
+      ? {
+          en_revision: Number(totales.en_revision ?? 0),
+          registrado: Number(totales.registrado ?? 0),
+        }
+      : null,
   });
 });
 

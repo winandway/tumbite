@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SuperAprobaciones, textoPendiente } from './SuperAprobaciones';
+import { LimitesPorMoneda, SuperAprobaciones, textoPendiente } from './SuperAprobaciones';
 
 // C-CONTROL-DUAL en el panel: la bandeja «Para aprobar» y el aviso de la segunda firma.
 const PENDIENTE = {
@@ -52,7 +52,7 @@ describe('C-CONTROL-DUAL en el panel', () => {
     localStorage.clear();
   });
 
-  it('aprueba lo de otra persona con la contraseña y guarda los límites', async () => {
+  it('aprueba lo de otra persona con la contraseña; los límites viven en Configuración', async () => {
     const llamadas = servidor({
       pendientes: [PENDIENTE],
       recientes: [{ ...PENDIENTE, id: 'a0', estado: 'fallida', error: 'sin saldo' }],
@@ -67,8 +67,15 @@ describe('C-CONTROL-DUAL en el panel', () => {
       clave: 'clave-segura-1',
     });
     expect(await screen.findByText('Aprobado: el movimiento ya se hizo.')).toBeTruthy();
+    // C-MENU-POR-USO: «Para aprobar» ya no edita límites; dice dónde están.
+    expect(screen.queryByRole('button', { name: 'Guardar límites' })).toBeNull();
+    expect(screen.getByTestId('limites-en-configuracion').textContent).toMatch(/Configuración/);
+  });
 
-    const usd = screen.getByLabelText('USD');
+  it('C-MENU-POR-USO: el límite por moneda se guarda desde Configuración', async () => {
+    const llamadas = servidor({});
+    render(<LimitesPorMoneda idioma="es" miId="yo" />);
+    const usd = await screen.findByLabelText('USD');
     await userEvent.clear(usd);
     await userEvent.type(usd, '250');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar límites' }));

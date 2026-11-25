@@ -3,6 +3,15 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## EL MENÚ DEL PANEL VA POR USO: LO DIARIO ARRIBA, LA CONFIGURACIÓN ADENTRO (REGLA PRINCIPAL, Richard, 25 nov 2026)
+
+> Sus palabras: _«todo lo que se usa del día a día debe estar allí… todo lo que sea configuración, metido en configuración… verificación debería estar abajo de resumen porque es el botón que uno más usa. Dale prioridad a lo que tiene prioridad»_.
+
+- El menú del superadmin (y de todo panel) va en este orden: OPERACIÓN (lo del día, por frecuencia: Resumen y justo debajo Verificaciones, luego Pedidos en curso, Tickets, Camila…), PERSONAS, y lo demás; al final, SISTEMA Y CONFIGURACIÓN con lo que se toca cada mes o casi nunca (Configuración, Países y servicios, Ciudades, Zonas, Franquicias, Equipo interno, Para aprobar).
+- Lo que es configuración (abrir países, compuertas, límites por moneda, tarifas por país) va dentro de Configuración, nunca suelto en el menú del día. Ningún botón de configuración se llama como una tarea diaria («Moto · Abrir y aprobar» pasó a «Países y servicios»).
+- El orden vive en una sola pieza (`ORDEN_MENU_ADMIN` en `apps/panel/src/panel/armazon/menus.ts`) con su candado C-MENU-POR-USO. Una pantalla nueva entra en su grupo por cuánto se usa.
+- Medir el uso real: hoy no hay forma de contar qué pantallas se abren sin escribir en la base por mirar (YaDominios Cloud no trae Analytics Engine); el orden sale del encargo de Richard y queda anotado en FILA.md hasta poder medirlo.
+
 ## NADIE DICE «ASISTENTE VIRTUAL» SI NO SE LO PREGUNTAN (REGLA PRINCIPAL, Richard, 18 nov 2026)
 
 > Sus palabras: _«cuando dice que es asistente virtual, hasta ahí llegó todo… no quieren que les atienda una máquina… No usar la palabra asistente virtual. Ponga una regla a nivel en todo Divoox. Nosotros no estamos mintiendo: si una persona le pregunta, le dice que sí. Pero si nadie le está preguntando, ¿para qué tiene que decirlo?»_.

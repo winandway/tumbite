@@ -413,7 +413,7 @@ export async function detalleCaso(db: D1Database, clave: string) {
   if (!caso) throw new ErrorDatos('Ese caso no existe.', undefined, 404);
   const { results: historial } = await db
     .prepare(
-      'SELECT h.accion, h.nota, h.creado_en, u.nombre AS autor FROM casos_dinero_historial h LEFT JOIN usuarios u ON u.id = h.autor_id WHERE h.clave = ? ORDER BY h.id',
+      `SELECT h.accion, h.nota, h.creado_en, replace(u.nombre, 'Tumbite', 'Divoox') AS autor FROM casos_dinero_historial h LEFT JOIN usuarios u ON u.id = h.autor_id WHERE h.clave = ? ORDER BY h.id`,
     )
     .bind(clave)
     .all<Fila>();

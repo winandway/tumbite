@@ -1,3 +1,14 @@
+/**
+ * C-NOMBRE-CON-MARCA (25 nov 2026, Richard: la línea de tiempo de un conductor firmaba «por Soporte
+ * Tumbite») — todos los países. Tumbite es el nombre interno; lo que se ve dice Divoox. Las cuentas
+ * del equipo creadas antes del cambio de marca conservan el nombre viejo en la base: todo nombre del
+ * equipo que se enseña pasa por aquí (la línea de tiempo, el historial y las respuestas).
+ */
+export function nombreConMarca<T extends string | null | undefined>(nombre: T): T {
+  if (typeof nombre !== 'string') return nombre;
+  return nombre.replace(/tumbite/gi, (m) => (m === m.toUpperCase() ? 'DIVOOX' : 'Divoox')) as T;
+}
+
 /** Identidad de la marca. Un solo lugar para el nombre y los colores. */
 export const MARCA = {
   nombre: 'Divoox',

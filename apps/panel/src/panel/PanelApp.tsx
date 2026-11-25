@@ -190,10 +190,12 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   // C-VIAJES-FIJOS: la pestaña «Viajes fijos» del monitoreo de viajes.
   if (sub === '/rides/fixed') return <SuperViajesFijos base={base} idioma={idioma} />;
   // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; «Equipo interno» se suma aquí).
-  if (sub === '/configuration') return <SuperConfiguracion idioma={idioma} base={base} />;
+  if (sub === '/configuration')
+    return <SuperConfiguracion idioma={idioma} base={base} miId={usuario.id} />;
   if (sub === '/moto') return <SuperMoto base={base} idioma={idioma} />;
   if (sub === '/team') return <SuperEquipo base={base} idioma={idioma} miId={usuario.id} />;
-  if (sub === '/approvals') return <SuperAprobaciones idioma={idioma} miId={usuario.id} />;
+  if (sub === '/approvals')
+    return <SuperAprobaciones idioma={idioma} miId={usuario.id} base={base} />;
   if (sub === '/pilot') return <SuperPiloto idioma={idioma} />;
   // C-CIUDAD-PRUEBAS: solo en el sitio de pruebas y en local (en producción no existe).
   if (sub === '/test-city' && !enProduccion()) return <SuperCiudad idioma={idioma} />;

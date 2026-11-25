@@ -32,7 +32,7 @@ piloto.get('/admin/piloto', async (c) => {
     .all();
   const { results: eventos } = await db
     .prepare(
-      `SELECT e.id, e.usuario_id AS usuarioId, u.nombre, e.accion, e.nota, a.nombre AS autor, e.creado_en AS creadoEn
+      `SELECT e.id, e.usuario_id AS usuarioId, u.nombre, e.accion, e.nota, replace(a.nombre, 'Tumbite', 'Divoox') AS autor, e.creado_en AS creadoEn
          FROM piloto_eventos e
          LEFT JOIN usuarios u ON u.id = e.usuario_id
          LEFT JOIN usuarios a ON a.id = e.autor_id

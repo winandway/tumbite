@@ -33,9 +33,9 @@ import { AyudaAqui } from './AyudaAqui';
  */
 const T = {
   es: {
-    titulo: 'Moto · Abrir y aprobar',
+    titulo: 'Países y servicios',
     intro:
-      'Aquí se prepara Divoox Moto en cada país: se abre la ciudad, la compuerta del país y la tasa de referencia. Lo de cada conductor (papeles, moto, habilitación) se decide en Verificaciones. Las tarifas y las emergencias siguen en Moto · Viajes.',
+      'Configuración: aquí se abre un servicio de viajes en una ciudad, la compuerta de cada país y la tasa de referencia. No se aprueba a ningún conductor ni ninguna moto: eso se decide en Verificaciones. Las tarifas y las emergencias siguen en «Viajes · Emergencias y tarifas».',
     // 1. Abrir en una ciudad
     abrir: 'Abrir un servicio de viajes en una ciudad',
     abrirAyuda:
@@ -60,7 +60,7 @@ const T = {
       'El cliente paga solo la comida (directo al restaurante) y el envío (al conductor): sin tarifa de servicio ni cargo por pedido pequeño. La comisión de Divoox la paga el restaurante de su saldo; se fija en Dinero, «Comida: quién paga qué».',
     tarifaEscribe: 'Tarifa de esta ciudad (en la moneda de los viajes)',
     tarifaEscribeAyuda:
-      'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
+      'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en «Viajes · Emergencias y tarifas».',
     usarCaracas: 'Usar Caracas de pruebas',
     usarElVigia: 'Usar El Vigía',
     codigo: 'Código de la ciudad',
@@ -86,7 +86,7 @@ const T = {
     } as Record<string, string>,
     tarifaTitulo: 'Tarifa que se va a cobrar (mercado de Venezuela)',
     tarifaAyuda:
-      'Es la tarifa de mercado de Venezuela, en dólares. Se puede cambiar después en Moto · Viajes.',
+      'Es la tarifa de mercado de Venezuela, en dólares. Se puede cambiar después en «Viajes · Emergencias y tarifas».',
     base: 'Banderazo',
     porKm: 'Por kilómetro',
     porMinuto: 'Por minuto',
@@ -288,9 +288,9 @@ const T = {
       `Póliza: pendiente, dentro del plazo de papeles${vence ? ` (vence el ${vence})` : ''}. Se puede aprobar el vehículo con el registro; al vencer el plazo, sin la póliza aprobada no se conecta.`,
   },
   en: {
-    titulo: 'Moto · Launch and approve',
+    titulo: 'Countries and services',
     intro:
-      'This is where Divoox Moto is prepared in each country: open the city, the country gate and the reference rate. Everything about each driver (documents, motorbike, service approval) is decided in Verifications. Pricing and emergencies stay in Moto · Rides.',
+      'Settings: this is where a ride service is opened in a city, along with each country gate and the reference rate. No driver or motorbike is approved here: that is decided in Verifications. Pricing and emergencies stay in “Rides · Emergencies and fares”.',
     abrir: 'Open a ride service in a city',
     abrirAyuda:
       'For any country: creates the city (or updates it), sets its pricing and turns the service on there. In production, the country has to be open first (below). To cover a whole state, draw the area afterwards in that city’s Coverage areas.',
@@ -312,7 +312,7 @@ const T = {
       'The customer pays only for the food (directly to the restaurant) and the delivery (to the driver): no service fee and no small-order fee. The restaurant pays the Divoox fee from its balance; it is set in Money, “Food: who pays what.”',
     tarifaEscribe: 'Pricing for this city (in the ride currency)',
     tarifaEscribeAyuda:
-      'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
+      'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in “Rides · Emergencies and fares”.',
     usarCaracas: 'Use Caracas test city',
     usarElVigia: 'Use El Vigía',
     codigo: 'City code',
@@ -338,7 +338,7 @@ const T = {
     } as Record<string, string>,
     tarifaTitulo: 'Pricing that will be charged (Venezuela market)',
     tarifaAyuda:
-      'This is the Venezuela market pricing, in dollars. You can change it later in Moto · Rides.',
+      'This is the Venezuela market pricing, in dollars. You can change it later in “Rides · Emergencies and fares”.',
     base: 'Base fare',
     porKm: 'Per kilometer',
     porMinuto: 'Per minute',

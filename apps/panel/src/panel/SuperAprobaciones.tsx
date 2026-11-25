@@ -15,6 +15,7 @@ import { Campo, CampoClave } from './CampoClave';
 import { pedir } from './api';
 import { detalleEnPalabras } from './detalleConciliacion';
 import { AyudaAqui } from './AyudaAqui';
+import { Enlace } from '../Enlace';
 
 /**
  * C-CONTROL-DUAL (SIG-4, 2 nov 2026): la bandeja «Para aprobar». El dinero hecho a mano por encima
@@ -44,6 +45,9 @@ const T = {
     sinOtra:
       'No hay otra cuenta con perfil Total o Finanzas: nadie más puede aprobar lo que tú pidas. Asigna ese perfil a otra persona en «Equipo interno».',
     limites: 'Límite por moneda',
+    // C-MENU-POR-USO: los límites son configuración: viven en Configuración.
+    limitesEnConfiguracion: 'El límite de cada moneda se cambia en Configuración.',
+    irConfiguracion: 'Ir a Configuración',
     limitesAyuda:
       'Por encima de este monto, el movimiento a mano espera la segunda firma; se suma lo que la misma persona movió en 24 horas. En cero, todo la pide. Bajarlo es inmediato; subirlo lo aprueba otra cuenta Total.',
     guardar: 'Guardar límites',
@@ -90,6 +94,8 @@ const T = {
     sinOtra:
       'There’s no other account with a Full or Finance profile: nobody else can approve what you request. Give that profile to someone else in «Internal team».',
     limites: 'Limit per currency',
+    limitesEnConfiguracion: 'The limit for each currency is changed in Settings.',
+    irConfiguracion: 'Go to Settings',
     limitesAyuda:
       'Above this amount, a manual money movement waits for the second signature; what the same person moved in 24 hours adds up. At zero, everything needs it. Lowering it is immediate; raising it is approved by another Full account.',
     guardar: 'Save limits',
@@ -174,7 +180,87 @@ type Bandeja = {
   aprobadoresAparte: number;
 };
 
-export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: string }) {
+/**
+ * C-MENU-POR-USO (25 nov 2026, Richard: «Límite por moneda… va en Configuración»). El límite de cada
+ * moneda para el control dual, ahora dentro de Configuración. Subirlo lo firma otra cuenta Total (sale
+ * en «Para aprobar»); bajarlo es inmediato. Es la misma ruta de siempre, con su auditoría.
+ */
+export function LimitesPorMoneda({ idioma, miId }: { idioma: Idioma; miId: string }) {
+  const t = enIdioma(T, idioma);
+  const [d, setD] = useState<Bandeja | null>(null);
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+  const b = useBorrador({
+    formulario: 'limites-por-moneda',
+    cuenta: miId,
+    inicial: { limites: '{}' },
+    almacen: almacenNavegador,
+  });
+  const limites = JSON.parse(b.valores.limites || '{}') as Record<string, string>;
+  const cargar = useCallback(() => {
+    pedir<Bandeja>('GET', '/datos/admin/aprobaciones-dinero')
+      .then(setD)
+      .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+  }, []);
+  useEffect(cargar, [cargar]);
+  if (!d) return error ? <p role="alert">{error}</p> : null;
+  const limite = (moneda: string) =>
+    new Map(Object.entries(limites)).get(moneda) ??
+    montoATexto(new Map(Object.entries(d.umbrales)).get(moneda) ?? 0, moneda);
+  const guardar = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setOk('');
+    const umbrales = Object.fromEntries(
+      Object.keys(d.umbrales).map((m) => [m, textoAMonto(limite(m), m)]),
+    );
+    pedir('PUT', '/datos/admin/aprobaciones-dinero/umbrales', { umbrales })
+      .then(async (r) => {
+        await b.limpiar();
+        // SIG-4x: si alguno sube, queda esperando la firma de otra cuenta Total (202).
+        setOk(textoPendiente(r, idioma) ?? t.guardado);
+        cargar();
+      })
+      .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
+  };
+  return (
+    <section className="tarjeta-form" aria-labelledby="limites-titulo" data-testid="limites-moneda">
+      <h2 id="limites-titulo">
+        {t.limites}
+        <AyudaAqui guia="two-person-approval" idioma={idioma} />
+      </h2>
+      <p className="suave">{t.limitesAyuda}</p>
+      <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+      <form onSubmit={guardar}>
+        {Object.keys(d.umbrales).map((m) => (
+          <Campo
+            key={m}
+            etiqueta={m}
+            valor={limite(m)}
+            cambiar={(v) => b.cambiar('limites', JSON.stringify({ ...limites, [m]: v }))}
+          />
+        ))}
+        {d.miPerfil === 'total' && (
+          <button type="submit" className="boton">
+            {t.guardar}
+          </button>
+        )}
+      </form>
+      {error && <p role="alert">{error}</p>}
+      {ok && <p role="status">{ok}</p>}
+    </section>
+  );
+}
+
+export function SuperAprobaciones({
+  idioma,
+  miId,
+  base = '',
+}: {
+  idioma: Idioma;
+  miId: string;
+  base?: string;
+}) {
   const t = enIdioma(T, idioma);
   const [d, setD] = useState<Bandeja | null>(null);
   const [error, setError] = useState('');
@@ -182,11 +268,10 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
   const b = useBorrador({
     formulario: 'super-aprobaciones',
     cuenta: miId,
-    inicial: { clave: '', nota: '', limites: '{}' },
+    inicial: { clave: '', nota: '' },
     almacen: almacenNavegador,
     sensibles: ['clave'],
   });
-  const limites = JSON.parse(b.valores.limites || '{}') as Record<string, string>;
   const cargar = useCallback(() => {
     pedir<Bandeja>('GET', '/datos/admin/aprobaciones-dinero')
       .then(setD)
@@ -196,9 +281,6 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
   if (!d) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const tipo = (s: Solicitud) => new Map(Object.entries(t.tipos)).get(s.tipo) ?? s.tipo;
   const estado = (e: string) => new Map(Object.entries(t.estados)).get(e) ?? e;
-  const limite = (moneda: string) =>
-    new Map(Object.entries(limites)).get(moneda) ??
-    montoATexto(new Map(Object.entries(d.umbrales)).get(moneda) ?? 0, moneda);
 
   async function hacer(fn: () => Promise<string | void>, exito: string) {
     setError('');
@@ -225,18 +307,6 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
       });
       b.cambiar('nota', '');
     }, t.rechazada);
-  const guardarLimites = (e: React.FormEvent) => {
-    e.preventDefault();
-    void hacer(async () => {
-      const umbrales = Object.fromEntries(
-        Object.keys(d.umbrales).map((m) => [m, textoAMonto(limite(m), m)]),
-      );
-      const r = await pedir('PUT', '/datos/admin/aprobaciones-dinero/umbrales', { umbrales });
-      await b.limpiar();
-      // SIG-4x: si alguno sube, queda esperando la firma de otra cuenta Total (202).
-      return textoPendiente(r, idioma) ?? undefined;
-    }, t.guardado);
-  };
 
   return (
     <section className="super">
@@ -323,23 +393,10 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
         </>
       )}
 
-      <h2>{t.limites}</h2>
-      <p className="suave">{t.limitesAyuda}</p>
-      <form className="tarjeta-form" onSubmit={guardarLimites}>
-        {Object.keys(d.umbrales).map((m) => (
-          <Campo
-            key={m}
-            etiqueta={m}
-            valor={limite(m)}
-            cambiar={(v) => b.cambiar('limites', JSON.stringify({ ...limites, [m]: v }))}
-          />
-        ))}
-        {d.miPerfil === 'total' && (
-          <button type="submit" className="boton">
-            {t.guardar}
-          </button>
-        )}
-      </form>
+      <p className="suave" data-testid="limites-en-configuracion">
+        {t.limitesEnConfiguracion}{' '}
+        {base ? <Enlace a={`${base}/configuration`}>{t.irConfiguracion}</Enlace> : null}
+      </p>
 
       {d.recientes.length > 0 && (
         <>

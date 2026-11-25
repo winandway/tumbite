@@ -99,3 +99,11 @@ export function entornoNavegador(): Entorno {
  */
 export const EVENTO_CAMBIO = 'divoox:cambio-verificaciones';
 export type DetalleCambio = { nueva: boolean };
+
+/**
+ * C-VERIFICACIONES-VEHICULOS: al decidir algo (aprobar o rechazar) se avisa a la página para que los
+ * números del menú y la bandeja se vuelvan a leer enseguida (el número baja al hacer la tarea).
+ */
+export function avisarDecision() {
+  window.dispatchEvent(new CustomEvent<DetalleCambio>(EVENTO_CAMBIO, { detail: { nueva: false } }));
+}

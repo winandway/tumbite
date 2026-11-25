@@ -13,6 +13,7 @@ import { useAjustesHorario, useHora } from './horario';
 import { Enlace } from '../Enlace';
 import { usePermisos } from './permisosPanel';
 import { AyudaAqui } from './AyudaAqui';
+import { LimitesPorMoneda } from './SuperAprobaciones';
 
 const T = {
   es: {
@@ -100,7 +101,15 @@ const ZONAS_COMUNES = [
  * las ciudades activas con la hora de allá ahora mismo. Se guarda por empleado
  * (`preferencias_internas`, pantalla «horario»). Aquí se sumará «Equipo interno».
  */
-export function SuperConfiguracion({ idioma, base = '' }: { idioma: Idioma; base?: string }) {
+export function SuperConfiguracion({
+  idioma,
+  base = '',
+  miId = '',
+}: {
+  idioma: Idioma;
+  base?: string;
+  miId?: string;
+}) {
   const { puedeVer } = usePermisos();
   const t = enIdioma(T, idioma);
   const { ajustes, cambiar, restablecer, guardados } = useAjustesHorario();
@@ -139,6 +148,10 @@ export function SuperConfiguracion({ idioma, base = '' }: { idioma: Idioma; base
             {t.abrirEquipo}
           </Enlace>
         </section>
+      ) : null}
+      {/* C-MENU-POR-USO: el límite por moneda del control dual es configuración (antes en «Para aprobar»). */}
+      {base && miId && puedeVer('dinero.ver') ? (
+        <LimitesPorMoneda idioma={idioma} miId={miId} />
       ) : null}
       <section className="tarjeta-form configuracion-horario" aria-labelledby="horario-titulo">
         <h2 id="horario-titulo">

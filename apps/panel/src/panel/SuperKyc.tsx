@@ -22,6 +22,7 @@ import { RevisarKyc, aprobarIdentidad, guardarMiniatura } from './SuperKycFicha'
 import { usePreferencias } from './usePreferencias';
 import { ControlesAvisos } from './avisosEnVivo';
 import { EVENTO_CAMBIO } from './sonarEvento';
+import { T_VEHICULOS, VerificacionesVehiculos, useTotalVehiculos } from './VerificacionesVehiculos';
 import './verificaciones.css';
 
 /** Las iniciales de un nombre («María José Pérez» → «MP»), para el círculo sin foto. */
@@ -89,8 +90,11 @@ const ESTADOS = ['pendiente', 'aprobado', 'rechazado', 'sin_enviar'] as const;
 /** El contador de «Sin enviar» se detiene en 100 en el servidor: se muestra «99+». */
 const TOPE_SIN_ENVIAR = 100;
 type Estado = (typeof ESTADOS)[number];
-const leerEstado = (v: string | undefined): Estado =>
-  (ESTADOS as readonly string[]).includes(v ?? '') ? (v as Estado) : 'pendiente';
+/** C-VERIFICACIONES-VEHICULOS: la quinta pestaña, los vehículos (otra fuente que las de identidad). */
+const PESTANAS = [...ESTADOS, 'vehiculos'] as const;
+type Pestana = (typeof PESTANAS)[number];
+const leerEstado = (v: string | undefined): Pestana =>
+  (PESTANAS as readonly string[]).includes(v ?? '') ? (v as Pestana) : 'pendiente';
 
 /** El nombre con lo que coincidió con la búsqueda resaltado. */
 function Resaltado({ texto, q }: { texto: string; q: string }) {
@@ -147,12 +151,17 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
     zona: '',
     cuentas: 'reales',
     orden: 'llegada',
+    lista: 'en_revision',
   });
   const orden = pref.valores.orden === 'cerca' ? 'cerca' : 'llegada';
   const [elegidos, setElegidos] = useState<Set<string>>(new Set());
   const [aprobando, setAprobando] = useState(false);
   const [avisoVerde, setAvisoVerde] = useState<{ ok: boolean; texto: string } | null>(null);
-  const estado = leerEstado(pref.valores.estado);
+  const pestana = leerEstado(pref.valores.estado);
+  const enVehiculos = pestana === 'vehiculos';
+  // En «Vehículos» la consulta de identidad sigue trayendo los totales de las otras pestañas.
+  const estado: Estado = enVehiculos ? 'pendiente' : pestana;
+  const tv = enIdioma(T_VEHICULOS, idioma);
   const zona = pref.valores.zona ?? '';
   const cuentas = pref.valores.cuentas || 'reales';
   const [texto, setTexto] = useState('');
@@ -309,6 +318,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
     }
   }
   const otras = ESTADOS.filter((e) => e !== estado && (totales.get(e) ?? 0) > 0);
+  const totalVehiculos = useTotalVehiculos(cuentas, zona, vuelta);
 
   return (
     <section className="super kyc-bandeja-pantalla">
@@ -325,17 +335,28 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
             key={e}
             type="button"
             role="tab"
-            aria-selected={estado === e}
-            className={estado === e ? 'activa' : undefined}
+            aria-selected={pestana === e}
+            className={pestana === e ? 'activa' : undefined}
             onClick={() => pref.cambiar('estado', e)}
           >
             {nombreDe(e)}
             {totales.has(e) ? ` (${cuantas(e)})` : ''}
           </button>
         ))}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={enVehiculos}
+          className={enVehiculos ? 'activa' : undefined}
+          onClick={() => pref.cambiar('estado', 'vehiculos')}
+          data-testid="pestana-vehiculos"
+        >
+          {tv.pestana}
+          {totalVehiculos !== null ? ` (${totalVehiculos})` : ''}
+        </button>
       </div>
 
-      {estado === 'sin_enviar' ? <p className="suave">{t.sinEnviarDetalle}</p> : null}
+      {pestana === 'sin_enviar' ? <p className="suave">{t.sinEnviarDetalle}</p> : null}
 
       <div className="super-busqueda kyc-busqueda" role="search">
         <input
@@ -365,7 +386,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
           idioma={idioma}
         />
       </div>
-      {estado === 'pendiente' ? (
+      {pestana === 'pendiente' ? (
         <div className="fila-botones kyc-verdes">
           <label>
             {t.orden}{' '}
@@ -389,7 +410,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
           </button>
         </div>
       ) : null}
-      {estado === 'pendiente' && lista.some((s) => s.enVerde) ? (
+      {pestana === 'pendiente' && lista.some((s) => s.enVerde) ? (
         <p className="pista">{t.aprobarVerdesAyuda}</p>
       ) : null}
       {avisoVerde ? (
@@ -403,7 +424,19 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
         restablecer={pref.restablecer}
       />
 
-      {error ? (
+      {enVehiculos ? (
+        <VerificacionesVehiculos
+          base={base}
+          idioma={idioma}
+          q={q}
+          zona={zona}
+          cuentas={cuentas}
+          lista={pref.valores.lista ?? 'en_revision'}
+          cambiarLista={(l) => pref.cambiar('lista', l)}
+          alCambiar={() => setVuelta((v) => v + 1)}
+        />
+      ) : null}
+      {!enVehiculos && error ? (
         <p className="error-general" role="alert">
           {t.error}{' '}
           <button type="button" className="enlace" onClick={() => setVuelta((v) => v + 1)}>
@@ -411,13 +444,13 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
           </button>
         </p>
       ) : null}
-      {!r && cargando ? <p role="status">{t.cargando}</p> : null}
-      {r && q ? (
+      {!enVehiculos && !r && cargando ? <p role="status">{t.cargando}</p> : null}
+      {!enVehiculos && r && q ? (
         <p className="suave" role="status" aria-live="polite">
           {t.resultados(lista.length, Boolean(r.siguiente))}
         </p>
       ) : null}
-      {r && lista.length === 0 ? (
+      {!enVehiculos && r && lista.length === 0 ? (
         <div className="kyc-vacio">
           <p>{q ? t.sinResultados : deTabla(t.vacio, estado)}</p>
           {otras.map((e) => (
@@ -431,8 +464,8 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
         </div>
       ) : null}
 
-      <ul className="kyc-lista" data-testid="kyc-lista">
-        {lista.map((s) => {
+      <ul className="kyc-lista" data-testid="kyc-lista" hidden={enVehiculos}>
+        {(enVehiculos ? [] : lista).map((s) => {
           const ficha = enlaceFicha(base, s);
           const sinEnviar = s.estado === 'sin_enviar';
           const horas = horasDesde(sinEnviar ? (s.creado ?? '') : s.enviado);
@@ -597,7 +630,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
           );
         })}
       </ul>
-      {r?.siguiente ? (
+      {!enVehiculos && r?.siguiente ? (
         <button type="button" className="boton secundario" onClick={verMas}>
           {t.verMas}
         </button>

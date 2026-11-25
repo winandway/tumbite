@@ -1,5 +1,6 @@
 import {
   PASOS_ANONIMOS,
+  nombreConMarca,
   pasoQueNoFrena,
   pasosDe,
   type AppRastro,
@@ -478,7 +479,8 @@ export async function lineaDeCuenta(db: D1Database, usuarioId: string) {
     enlace: string | null = null,
   ) => {
     const f = t(fecha);
-    if (f) linea.push({ fecha: f, tipo, evento, detalle, quien: t(quien), enlace });
+    // C-NOMBRE-CON-MARCA: el equipo firma con la marca de hoy (nunca «Soporte Tumbite»).
+    if (f) linea.push({ fecha: f, tipo, evento, detalle, quien: nombreConMarca(t(quien)), enlace });
   };
   // El origen viaja en partes («app|versión|plataforma|lugar|red») y el panel lo dice en su idioma.
   const origen = (r: Record<string, string | number | null>) =>

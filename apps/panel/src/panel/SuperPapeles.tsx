@@ -74,6 +74,19 @@ const T = {
     } as Record<string, string>,
     comprobaciones: 'Comprobaciones',
     sinFoto: 'Todavía no la tomó',
+    // C-FOTO-DICE-LA-VERDAD: la foto que llegó por otro camino que el asistente.
+    origen: {
+      identidad: 'Llegó con su verificación de identidad',
+      papeles: 'Llegó por «Tus papeles»',
+      vehiculo: 'Llegó con los papeles de su vehículo',
+    } as Record<string, string>,
+    enUnaFoto: 'Va en la misma foto del frente (llegó por «Tus papeles»)',
+    aprobadoSinFoto: 'Aprobado sin foto guardada: pídesela de nuevo',
+    // C-DOCUMENTO-VENCIDO-CLARO: aprobado, pero la foto parece vencida.
+    vencidoAprobado: (que: string) =>
+      `${que}: parece vencido y su verificación está aprobada. Mira la fecha en la foto y, si de verdad venció, pídele el documento vigente.`,
+    pedirVigente: 'Pedir el documento vigente',
+    motivoVigente: 'Tu documento está vencido. Toma la foto de tu documento vigente.',
     seVe: 'Se ve',
     confianza: 'confianza',
     legible: 'Se lee',
@@ -198,6 +211,17 @@ const T = {
     } as Record<string, string>,
     comprobaciones: 'Checks',
     sinFoto: 'Not taken yet',
+    origen: {
+      identidad: 'Came with their identity verification',
+      papeles: 'Came through “Your documents”',
+      vehiculo: 'Came with their vehicle documents',
+    } as Record<string, string>,
+    enUnaFoto: 'It is in the same photo as the front (came through “Your documents”)',
+    aprobadoSinFoto: 'Approved with no saved photo: ask for it again',
+    vencidoAprobado: (que: string) =>
+      `${que}: looks expired and their verification is approved. Check the date on the photo and, if it really expired, ask them for the current document.`,
+    pedirVigente: 'Ask for the current document',
+    motivoVigente: 'Your document has expired. Take a photo of your current document.',
     seVe: 'It shows',
     confianza: 'confidence',
     legible: 'Readable',
@@ -349,6 +373,10 @@ type Lectura = {
 type FotoEquipo = {
   paso: PasoVerificacion;
   papel: string;
+  /** C-FOTO-DICE-LA-VERDAD: sin foto del asistente, la que llegó por otro camino. */
+  otraFoto?: { url: string; origen: string };
+  enUnaFoto?: boolean;
+  aprobadoSinFoto?: boolean;
   foto: {
     id: string;
     estado: 'vigente' | 'repetir';
@@ -388,19 +416,25 @@ function PedirFoto({
   paso,
   idioma,
   listo,
+  boton,
+  motivoInicial = '',
 }: {
   id: string;
   paso: PasoVerificacion;
   idioma: Idioma;
   listo: () => void;
+  /** El texto del botón (por defecto, «Pedir de nuevo»). */
+  boton?: string;
+  /** El motivo que ya viene escrito (se puede cambiar antes de enviar). */
+  motivoInicial?: string;
 }) {
   const t = enIdioma(T, idioma);
   const [abierto, setAbierto] = useState(false);
   const [error, setError] = useState('');
   const b = useBorrador({
-    formulario: `pedir-foto-${paso}`,
+    formulario: `pedir-foto-${paso}${motivoInicial ? '-vigente' : ''}`,
     cuenta: id,
-    inicial: { motivo: '' },
+    inicial: { motivo: motivoInicial },
     almacen: almacenNavegador,
   });
   async function enviar() {
@@ -426,9 +460,9 @@ function PedirFoto({
         type="button"
         className="enlace"
         onClick={() => setAbierto(true)}
-        data-testid={`pedir-${paso}`}
+        data-testid={`pedir-${paso}${motivoInicial ? '-vigente' : ''}`}
       >
-        {t.pedirDeNuevo}
+        {boton ?? t.pedirDeNuevo}
       </button>
     );
   return (
@@ -512,8 +546,23 @@ export function PapelesConductor({
   }
   if (!v) return error ? null : <p role="status">…</p>;
   const conFoto = v.fotos.filter((f) => f.foto);
+  const deOtroCamino = v.fotos.filter((f) => !f.foto && (f.otraFoto || f.aprobadoSinFoto));
+  // C-DOCUMENTO-VENCIDO-CLARO: lo que parece vencido en un papel ya aprobado, arriba y en rojo.
+  const aprobadoDe = new Map(v.papeles.map((p) => [p.papel, p.estado === 'aprobado']));
+  const vencidas = v.fotos.filter(
+    (f) =>
+      f.foto?.estado === 'vigente' &&
+      f.foto.lectura?.vencido === 'si' &&
+      aprobadoDe.get(f.papel) === true,
+  );
   // Sin plazo y sin ninguna foto del asistente no hay nada que enseñar (conductores de siempre).
-  if (v.plazo.estado === 'sin_plazo' && conFoto.length === 0 && !completa) return null;
+  if (
+    v.plazo.estado === 'sin_plazo' &&
+    conFoto.length === 0 &&
+    deOtroCamino.length === 0 &&
+    !completa
+  )
+    return null;
   const colores = [
     ...conFoto.map((f) => f.foto?.color ?? 'sin_ia'),
     ...(v.caras ? [v.caras.color] : []),
@@ -544,7 +593,31 @@ export function PapelesConductor({
           </li>
         ))}
       </ul>
-      {conFoto.length > 0 ? (
+      {vencidas.map((f) => {
+        const nombre = textosDePaso(f.paso, v.pais, idioma === 'en').nombre;
+        return (
+          <div
+            key={`vencida-${f.paso}`}
+            className="error-general papeles-vencido-aprobado"
+            role="alert"
+            data-testid={`vencido-aprobado-${f.paso}`}
+          >
+            <p>
+              <strong>{t.vencidoAprobado(nombre)}</strong>
+              {f.foto?.lectura?.vence ? ` (${t.venceDoc}: ${f.foto.lectura.vence})` : ''}
+            </p>
+            <PedirFoto
+              id={id}
+              paso={f.paso}
+              idioma={idioma}
+              listo={cargar}
+              boton={t.pedirVigente}
+              motivoInicial={t.motivoVigente}
+            />
+          </div>
+        );
+      })}
+      {conFoto.length > 0 || deOtroCamino.length > 0 ? (
         <>
           <h3>{t.comprobaciones}</h3>
           {todoVerde ? <p className="exito-general">{t.todoVerde}</p> : null}
@@ -553,13 +626,41 @@ export function PapelesConductor({
             {v.fotos.map((f) => {
               const nombre = textosDePaso(f.paso, v.pais, idioma === 'en').nombre;
               const foto = f.foto;
+              if (!foto && f.otraFoto)
+                return (
+                  <figure key={f.paso} className="papeles-foto" data-testid={`otra-foto-${f.paso}`}>
+                    <a href={f.otraFoto.url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        className={f.paso === 'cara' ? 'redonda' : undefined}
+                        src={f.otraFoto.url}
+                        alt={nombre}
+                        loading="lazy"
+                      />
+                    </a>
+                    <figcaption>
+                      <strong>{nombre}</strong>
+                      <span className="suave">{de(t.origen, f.otraFoto.origen)}</span>
+                    </figcaption>
+                  </figure>
+                );
               if (!foto)
                 return (
-                  <figure key={f.paso} className="papeles-foto papeles-foto-vacia">
+                  <figure
+                    key={f.paso}
+                    className="papeles-foto papeles-foto-vacia"
+                    data-testid={`sin-foto-${f.paso}`}
+                  >
                     <div className={`papeles-horma ${f.paso === 'cara' ? 'redonda' : ''}`} />
                     <figcaption>
                       <strong>{nombre}</strong>
-                      <span className="suave">{t.sinFoto}</span>
+                      {f.aprobadoSinFoto ? (
+                        <>
+                          <span className="doc-vencido">{t.aprobadoSinFoto}</span>
+                          <PedirFoto id={id} paso={f.paso} idioma={idioma} listo={cargar} />
+                        </>
+                      ) : (
+                        <span className="suave">{f.enUnaFoto ? t.enUnaFoto : t.sinFoto}</span>
+                      )}
                     </figcaption>
                   </figure>
                 );

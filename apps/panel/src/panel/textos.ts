@@ -83,7 +83,8 @@ const es = {
     lines: 'Líneas de taxi y mototaxi',
     approvals: 'Para aprobar',
     rides: 'Viajes · Emergencias y tarifas',
-    moto: 'Moto · Abrir y aprobar',
+    // C-MENU-POR-USO: abre y cierra países y servicios; nunca aprueba conductores ni motos.
+    moto: 'Países y servicios',
     drivers: 'Repartidores',
     zones: 'Zonas',
     waitlist: 'Lista de espera',
@@ -187,7 +188,7 @@ const en: T = {
     lines: 'Taxi and mototaxi lines',
     approvals: 'Approvals',
     rides: 'Rides · Emergencies and fares',
-    moto: 'Moto · Launch and approve',
+    moto: 'Countries and services',
     drivers: 'Drivers',
     zones: 'Zones',
     waitlist: 'Waitlist',

@@ -12,10 +12,17 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Verificaciones con TODO y el menú por uso (encargo de Richard por Gerencia, 25 nov 2026) — todos los países · rama `fase-verificaciones-todo`, sin subir
+
+- [x] [para: desarrollador] Pestaña «Vehículos» en Verificaciones (esperan revisión y sin enviar, aprobar ahí mismo, número del menú por persona), Camila recuerda enviar el vehículo, menú por uso («Países y servicios» y «Para aprobar» al final, límites por moneda en Configuración), barra del vehículo coherente, foto real de la licencia, «Soporte Divoox» en la línea de tiempo, documento vencido claro y pedido por Camila, privacidad con ciudad base y regreso. Candados vistos en rojo.
+- [ ] [para: revisor-calidad] Revisar la rama `fase-verificaciones-todo` una vez antes de publicar.
+- [ ] [para: desarrollador] Al publicar: subir las capturas privadas nuevas de la ayuda interna (`activacion-vehiculos-{es,en}.webp`, `menu-por-uso-{es,en}.webp`) con `node scripts/docs/subir-ayuda-interna.mjs`.
+- [ ] [para: desarrollador] Medir el uso real del menú sin escribir en la base por mirar (por ejemplo, contar acciones de `auditoria_admin` por sección, solo lectura) y reordenar Operación con esos datos.
+
 ## Regreso con pasajero (encargo de Richard, 25 nov 2026) — todos los países · rama `fase-regreso-pasajero`, sin subir
 
 - [x] [para: desarrollador] «Voy de regreso a <ciudad base>» de punta a punta según `docs/investigaciones-rea/2026-11-25-regreso-con-pasajero.md`: ciudad base, filtro por rumbo y prioridad en el despacho, dos usos al día contados al aceptar, se apaga al llegar, a las 6 horas o al desconectarse; panel (ciudad base en la ficha, números por país); Driver; Docs es/en con capturas del recorrido. Candado C-REGRESO-PASAJERO visto en rojo regla por regla. Y dos pruebas que fallaban a ratos (C-BANNER-AZAR-COMPROBABLE, C-PAYOUT-SIN-MEDIANOCHE).
-- [ ] [para: desarrollador] Política de privacidad (es/en, `apps/panel/src/sitio/legales.ts`): nombrar la «ciudad base» del conductor y el «regreso» (qué se guarda, para qué y que se borra con la cuenta), con su candado y la fecha de la página al día (dictamen vigésimo tercero del auditor de tiendas, 25 nov). Todos los países.
+- [x] [para: desarrollador] Política de privacidad (es/en, `apps/panel/src/sitio/legales.ts`): nombrar la «ciudad base» del conductor y el «regreso» (qué se guarda, para qué y que se borra con la cuenta), con su candado y la fecha de la página al día (dictamen vigésimo tercero del auditor de tiendas, 25 nov). Todos los países.
 - [x] [para: revisor-calidad] Revisar la rama `fase-regreso-pasajero` una vez (APTO 25 nov; en vivo 32e0d01; capturas grandes subidas; Driver 0.1.77 enviado a Google).
 - [ ] [para: investigador] Cruzar la ficha del regreso con los estudios de Richard si los amplía (la ficha no los consultó: el tema no está en sus capítulos de comida) y anotar Cabify [NV].
 

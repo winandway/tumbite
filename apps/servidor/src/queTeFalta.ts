@@ -71,7 +71,7 @@ export async function queTeFalta(
   recibeViajes: boolean;
   faltas: Falta[];
   /** El vehículo que se mira (el activo o el mejor que tenga): lo usa la barra de activación. */
-  vehiculo: { id: string; tipo: string; estado: string } | null;
+  vehiculo: { id: string; tipo: string; estado: string; activo: boolean } | null;
 }> {
   // La cuenta nueva de un país con plazo nace con él (una sola escritura en su vida, como al leer
   // «Tus papeles»): sin esto, la primera lectura no sabía que la cara era lo que faltaba.
@@ -232,6 +232,8 @@ export async function queTeFalta(
   return {
     recibeViajes: Boolean(f && Number(f.elegible) && Number(f.ubicacion)) && !soloComidaVacia,
     faltas,
-    vehiculo: elegido ? { id: elegido.id, tipo: elegido.tipo, estado: elegido.estado } : null,
+    vehiculo: elegido
+      ? { id: elegido.id, tipo: elegido.tipo, estado: elegido.estado, activo: elegido === activo }
+      : null,
   };
 }

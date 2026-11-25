@@ -1001,7 +1001,7 @@ verificacionConductor.get('/admin/verificacion/:id', async (c) => {
     .bind(id)
     .first<{ nombre: string }>();
   if (!persona) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
-  const [g, e, caras] = await Promise.all([
+  const [g, e, caras, otras] = await Promise.all([
     graciaDe(db, id),
     estadoVerificacion(db, id),
     db
@@ -1010,7 +1010,9 @@ verificacionConductor.get('/admin/verificacion/:id', async (c) => {
       )
       .bind(id)
       .first(),
+    fotosDeOtrosCaminos(db, id),
   ]);
+  const papelDe = new Map(e.papeles.map((p) => [p.papel, p.estado]));
   return c.json({
     nombre: persona.nombre,
     pais: g.pais,
@@ -1023,6 +1025,7 @@ verificacionConductor.get('/admin/verificacion/:id', async (c) => {
     caras: caras ?? null,
     fotos: e.pasos.map((paso) => {
       const f = e.fotos.get(paso);
+      const otra = f ? {} : otraFotoDe(paso, e.tipoLicencia, otras, e.vehiculo?.id ?? null, id);
       const lectura = leerJson(f?.ia_json);
       return {
         paso,
@@ -1041,10 +1044,104 @@ verificacionConductor.get('/admin/verificacion/:id', async (c) => {
               creadoEn: f.creado_en,
             }
           : null,
+        // C-FOTO-DICE-LA-VERDAD: sin foto del asistente, la que llegó por otro camino (la verificación
+        // de identidad o «Tus papeles»). Y si su papel está aprobado sin ninguna foto, se dice.
+        ...otra,
+        aprobadoSinFoto:
+          !f && !otra.otraFoto && !otra.enUnaFoto && papelDe.get(papelDePaso(paso)) === 'aprobado',
       };
     }),
   });
 });
+
+/**
+ * C-FOTO-DICE-LA-VERDAD (25 nov 2026, Richard: «Licencia: Aprobado» con las fotos «Todavía no la
+ * tomó» y el registro «Foto de la licencia: hecho») — todos los países. La licencia, el documento y
+ * el seguro pueden haber llegado por otro camino que el asistente de fotos: la verificación de
+ * identidad (`kyc`), «Tus papeles» (`conductor_documentos`) o los papeles del vehículo. Solo lee.
+ */
+async function fotosDeOtrosCaminos(db: D1Database, id: string) {
+  const [k, papeles, seguro] = await db.batch([
+    db
+      .prepare(
+        `SELECT doc_tipo, doc_frente IS NOT NULL AS frente, doc_reverso IS NOT NULL AS reverso,
+                selfie IS NOT NULL AS cara FROM kyc WHERE usuario_id = ?`,
+      )
+      .bind(id),
+    db
+      .prepare(
+        `SELECT id, tipo FROM conductor_documentos WHERE conductor_id = ?
+            AND tipo IN ('licencia_moto', 'licencia_conducir') AND estado != 'reemplazado'
+          ORDER BY creado_en DESC LIMIT 4`,
+      )
+      .bind(id),
+    db
+      .prepare(
+        `SELECT d.id, d.vehiculo_id AS vehiculo FROM vehiculo_documentos d JOIN vehiculos v ON v.id = d.vehiculo_id
+          WHERE v.conductor_id = ? AND d.tipo = 'seguro' AND d.estado != 'reemplazado'
+          ORDER BY d.creado_en DESC LIMIT 4`,
+      )
+      .bind(id),
+  ]);
+  const kyc = k?.results.at(0) as
+    { doc_tipo: string; frente: number; reverso: number; cara: number } | undefined;
+  return {
+    kyc: kyc ?? null,
+    papeles: (papeles?.results ?? []) as { id: string; tipo: string }[],
+    seguros: (seguro?.results ?? []) as { id: string; vehiculo: string }[],
+  };
+}
+
+type OtraFoto = { url: string; origen: 'identidad' | 'papeles' | 'vehiculo' };
+
+export function otraFotoDe(
+  paso: PasoVerificacion,
+  tipoLicencia: string,
+  o: Awaited<ReturnType<typeof fotosDeOtrosCaminos>>,
+  vehiculoId: string | null,
+  id: string,
+): { otraFoto?: OtraFoto; enUnaFoto?: boolean } {
+  const kyc = (pieza: string): OtraFoto => ({
+    url: `/datos/admin/kyc/${encodeURIComponent(id)}/foto/${pieza}`,
+    origen: 'identidad',
+  });
+  const lic = o.papeles.find((p) => p.tipo === tipoLicencia) ?? null;
+  const esLicencia = o.kyc?.doc_tipo === 'licencia';
+  switch (paso) {
+    case 'cara':
+      return Number(o.kyc?.cara) ? { otraFoto: kyc('selfie') } : {};
+    case 'doc_frente':
+      return Number(o.kyc?.frente) ? { otraFoto: kyc('doc_frente') } : {};
+    case 'doc_reverso':
+      return Number(o.kyc?.reverso) ? { otraFoto: kyc('doc_reverso') } : {};
+    case 'licencia_frente':
+      if (lic)
+        return {
+          otraFoto: {
+            url: `/datos/admin/papeles-conductor/${encodeURIComponent(lic.id)}/archivo`,
+            origen: 'papeles',
+          },
+        };
+      return esLicencia && Number(o.kyc?.frente) ? { otraFoto: kyc('doc_frente') } : {};
+    case 'licencia_reverso':
+      // «Tus papeles» recibe la licencia en UNA foto: el reverso no falta, va en esa misma.
+      if (lic) return { enUnaFoto: true };
+      return esLicencia && Number(o.kyc?.reverso) ? { otraFoto: kyc('doc_reverso') } : {};
+    case 'seguro': {
+      const s = o.seguros.find((x) => !vehiculoId || x.vehiculo === vehiculoId) ?? null;
+      return s
+        ? {
+            otraFoto: {
+              url: `/datos/admin/vehiculos/${encodeURIComponent(s.vehiculo)}/documentos/${encodeURIComponent(s.id)}/archivo`,
+              origen: 'vehiculo',
+            },
+          }
+        : {};
+    }
+    default:
+      return {};
+  }
+}
 
 verificacionConductor.get('/admin/verificacion/:id/foto/:foto', async (c) => {
   exigir(c, 'admin');

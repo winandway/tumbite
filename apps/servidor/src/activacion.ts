@@ -68,7 +68,7 @@ export type Activacion = {
   hechos: number;
   total: number;
   /** El vehículo que se mira (activo o el mejor que tenga). */
-  vehiculo: { id: string; tipo: string; estado: string } | null;
+  vehiculo: { id: string; tipo: string; estado: string; activo?: boolean } | null;
 };
 
 /** El paso de la barra al que corresponde cada falta de «qué te falta». */
@@ -77,7 +77,9 @@ const PASO_DE_TABLA: Record<ClaveFalta, ClavePaso> = {
   cara: 'cara',
   sin_vehiculo: 'vehiculo',
   sin_placa: 'vehiculo',
-  vehiculo_sin_enviar: 'vehiculo',
+  // C-BARRA-VEHICULO-COHERENTE: registrado con su placa pero sin enviar = lo que falta es mandarlo a
+  // revisión (el paso de la aprobación, que le toca a él), no «registrarlo».
+  vehiculo_sin_enviar: 'vehiculo_aprobado',
   vehiculo_rechazado: 'vehiculo_aprobado',
   vehiculo_en_revision: 'vehiculo_aprobado',
   vehiculo_sin_activar: 'vehiculo_activo',
@@ -226,6 +228,29 @@ export async function barraActivacion(db: D1Database, id: string, env?: Env): Pr
       quien: 'equipo',
       opcional: false,
       vehiculoId: q.vehiculo.id,
+    });
+  // C-BARRA-VEHICULO-COHERENTE (25 nov 2026, Richard en la ficha de un conductor de Tucaní: «Vehículo
+  // registrado: le toca al conductor» en gris y «Vehículo aprobado» y «Vehículo en uso» en verde) —
+  // todos los países. «Aprobado» y «en uso» son verdes SOLO si su vehículo lo está de verdad: un paso
+  // sin falta ya no se da por hecho. La barra y los estados del vehículo dicen lo mismo.
+  const v = q.vehiculo;
+  if (v?.estado !== 'aprobado')
+    poner({
+      clave: 'vehiculo_aprobado',
+      estado: v?.estado === 'vencido' ? 'problema' : 'pendiente',
+      quien: v?.estado === 'en_revision' ? 'equipo' : 'conductor',
+      opcional: false,
+      ...(v ? { vehiculoId: v.id } : {}),
+      ...(v?.estado === 'registrado' ? { falta: 'vehiculo_sin_enviar' as const } : {}),
+    });
+  if (!v?.activo)
+    poner({
+      clave: 'vehiculo_activo',
+      estado: 'pendiente',
+      // Aprobado y sin usar lo elige él; si no está aprobado, queda en uso solo al aprobarlo.
+      quien: v?.estado === 'aprobado' ? 'conductor' : 'sistema',
+      opcional: false,
+      ...(v ? { vehiculoId: v.id } : {}),
     });
   // C-PAPELES-POR-PAIS: con la lista de su país encendida, sus papeles que «solo se piden». Nunca frena
   // (el reparto no los mira): es opcional y la frase del final sigue saliendo del reparto.
