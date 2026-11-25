@@ -1843,6 +1843,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'One of those shipments doesn’t exist in your company.',
   ],
   ['Esa ruta no existe.', 'That route doesn’t exist.'],
+  [
+    'Este viaje tiene precio de la zona: no admite cambios de paradas. Si necesitas otra cosa, pide otro viaje.',
+    'This ride has a local fixed price: its stops can’t be changed. If you need something else, request another ride.',
+  ],
   ['Solo se edita una ruta en borrador.', 'Only a draft route can be edited.'],
   [
     'Hay referencias externas repetidas dentro del mismo lote.',

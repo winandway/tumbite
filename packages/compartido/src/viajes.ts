@@ -510,9 +510,8 @@ export type CotizacionViaje = {
   precioCambio?: boolean;
   totalAnterior?: number;
   /** C-CUPON-DIVOOX: el regalo que paga Divoox en este viaje si se paga en mano (o null). */
-  regalo?:
-    | import('./regaloDivoox').RegaloDivoox
-    | null; /** C-PRECIO-ZONA: el precio es el fijo de la zona (etiqueta de ruta), no el calculado. */
+  regalo?: import('./regaloDivoox').RegaloDivoox | null;
+  /** C-PRECIO-ZONA: el precio es el fijo de la zona (etiqueta de ruta), no el calculado. */
   precioZona?: boolean;
   /** C-PRECIO-ZONA: el lugar de destino de la ruta («hasta»), para decirlo en la app. */
   lugarZona?: string;

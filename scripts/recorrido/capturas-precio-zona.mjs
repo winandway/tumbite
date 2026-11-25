@@ -247,15 +247,8 @@ try {
     await caja2.waitFor({ timeout: 60_000 });
     await caja2.scrollIntoViewIfNeeded();
     await espera(800);
-    // En español, con lo que gana arriba; en inglés, solo el recuadro (sin los bolívares).
-    await recorte(
-      d,
-      'oferta',
-      idioma,
-      idioma === 'en' ? caja2 : d.getByTestId('oferta-viaje-ganancia'),
-      caja2,
-      12,
-    );
+    // Solo el recuadro, en los dos idiomas: sin bolívares ni tasa (solo dólares).
+    await recorte(d, 'oferta', idioma, caja2, caja2, 12);
     await paso(viaje.id, 'aceptar');
     await paso(viaje.id, 'llegue');
     const pin = (await pasajero('GET', `/datos/viajes/${viaje.id}`)).viaje.pin;

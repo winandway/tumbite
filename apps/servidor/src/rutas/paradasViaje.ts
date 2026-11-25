@@ -133,6 +133,8 @@ type ViajeParaCambiar = {
   /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio del pasajero y quién paga, guardados al nacer. */
   tarifa_servicio: number;
   quien_paga: string;
+  /** C-PRECIO-ZONA: el viaje nació con el precio fijo de la zona (no NULL = sí). */
+  precio_zona: number | null;
 };
 
 async function viajeParaCambiar(db: D1Database, id: string) {
@@ -142,6 +144,7 @@ async function viajeParaCambiar(db: D1Database, id: string) {
               v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
               q.id AS cot_id, q.total, q.moneda, q.tarifa_json, q.multiplicador_pb, v.ref_tasa, v.ref_fecha,
               ${SQL_TARIFA_SERVICIO} AS tarifa_servicio, ${SQL_QUIEN_PAGA} AS quien_paga,
+              json_extract(q.desglose_json, '$.precioZona') AS precio_zona,
               (SELECT k.autorizado FROM cobros_viaje k WHERE k.operacion_id = o.id) AS autorizado
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -166,6 +169,9 @@ export type CambioParadas = {
   aplicado: boolean;
 };
 
+export const SIN_CAMBIOS_PRECIO_ZONA =
+  'Este viaje tiene precio de la zona: no admite cambios de paradas. Si necesitas otra cosa, pide otro viaje.';
+
 const MOTIVO_TARJETA =
   'Con tarjeta, el precio no puede subir después de pedir el viaje. Agrega tus paradas antes de pedirlo.';
 
@@ -185,6 +191,9 @@ export async function cambiarParadas(
     throw new ErrorDatos('Este viaje ya no admite cambios de paradas.', undefined, 409);
   if (v.servicio_id === 'envios')
     throw new ErrorDatos('Un envío va de un punto a otro, sin paradas.', 'paradas', 422);
+  // C-PRECIO-ZONA: el precio de la zona es de ESE trayecto (y la ida y vuelta, de esa vuelta). No se
+  // recalcula a mitad de viaje: ni el pasajero agrega o quita paradas ni el conductor salta la vuelta.
+  if (v.precio_zona != null) throw new ErrorDatos(SIN_CAMBIOS_PRECIO_ZONA, 'paradas', 409);
   const actuales = await paradasDe(db, v.id);
   const fijas = actuales.filter((p) => p.estado === 'visitada' || p.estado === 'en_parada');
   const maximo = perfilPasajeros(v.pais).carro.paradasMaximas;
