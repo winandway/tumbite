@@ -17,6 +17,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS } from '../docs/ayudaPrivada.mjs';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = 'https://staging.tumbite.com';
 const CLAVE = process.env.CLAVE_DEMO ?? 'Demo2026!';
@@ -32,7 +33,7 @@ for (const d of [CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS, join(ENTREGA, 'es'), jo
   mkdirSync(d, { recursive: true });
 
 async function api(metodo, ruta, cuerpo, token) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

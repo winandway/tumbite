@@ -15,6 +15,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? '').replace(/\/$/, '');
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(URL_PRUEBAS);
@@ -77,7 +78,7 @@ const RECARGA = 300; // centavos de dólar
 const casos = [];
 let n = 0;
 async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',
@@ -94,7 +95,7 @@ async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
   return { estado: r.status, d };
 }
 async function subir(ruta, token) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,

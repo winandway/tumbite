@@ -16,6 +16,7 @@
 /* global window, document -- las funciones que se pasan a la página corren en el navegador */
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
+import { pedirConReintento } from '../staging/pedirConReintento.mjs';
 
 const BASE = (process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com').replace(/\/$/, '');
 if (!/^https:\/\/staging\.tumbite\.com$/.test(BASE)) {
@@ -43,7 +44,7 @@ const FOTO = Buffer.from(
 );
 
 async function api(metodo, ruta, cuerpo, token, tipo) {
-  const r = await fetch(`${BASE}${ruta}`, {
+  const r = await pedirConReintento(`${BASE}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': tipo ?? 'application/json',

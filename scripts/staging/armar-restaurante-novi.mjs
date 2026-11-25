@@ -4,6 +4,7 @@
 // circuito completo gratis con la tarjeta de prueba 4242. Si ya existe, la deja al día.
 // Uso: CLAVE_DEMO=… node scripts/staging/armar-restaurante-novi.mjs
 import { execSync } from 'node:child_process';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = 'https://staging.tumbite.com';
 const CLAVE = process.env.CLAVE_DEMO;
@@ -19,7 +20,7 @@ const LLAVE = execSync(
 const CORREO = 'demo.restaurante.novi@ejemplo.com';
 
 async function api(metodo, ruta, cuerpo, token) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

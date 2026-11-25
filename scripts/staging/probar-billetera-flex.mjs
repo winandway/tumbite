@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { pedirConReintento } from './pedirConReintento.mjs';
 // Divoox Flex · Fase 4: recarga de PUNTA A PUNTA en el SITIO DE PRUEBAS con Stripe en MODO PRUEBA.
 // 1) el superadmin de pruebas enciende las recargas de EE. UU. (solo staging);
 // 2) una empresa de prueba («zz-…») abre una recarga de 10 dólares con su clave de idempotencia;
@@ -24,7 +25,7 @@ const need = (k) => {
 };
 
 async function entrar(correo, clave) {
-  const r = await fetch(`${URL_PRUEBAS}/datos/cuentas/entrar`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}/datos/cuentas/entrar`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ correo, clave }),
@@ -34,7 +35,7 @@ async function entrar(correo, clave) {
   return d.token;
 }
 async function api(metodo, ruta, cuerpo, token, extra = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

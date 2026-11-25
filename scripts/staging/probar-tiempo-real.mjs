@@ -2,6 +2,7 @@
 // para pruebas. Corre desde GitHub (workflow tiempo-real-staging) con secretos que nadie ve.
 // Variables: URL_PRUEBAS, TIEMPO_REAL_URL, RELOJ_SECRETO, AVISOS_LLAVE_ID, AVISOS_SECRETO.
 import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const { URL_PRUEBAS, TIEMPO_REAL_URL, RELOJ_SECRETO, AVISOS_LLAVE_ID, AVISOS_SECRETO } =
   process.env;
@@ -27,7 +28,7 @@ const caso = (nombre, ok, detalle = '') => {
 };
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 const diag = async (cuerpo) => {
-  const r = await fetch(`${URL_PRUEBAS}/datos/interno/diagnostico/vivo`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}/datos/interno/diagnostico/vivo`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-reloj-secreto': RELOJ_SECRETO },
     body: JSON.stringify(cuerpo),
@@ -36,7 +37,7 @@ const diag = async (cuerpo) => {
   return r.json();
 };
 const pase = async (token, cuerpo = {}) => {
-  const r = await fetch(`${URL_PRUEBAS}/datos/tiempo-real/pase`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}/datos/tiempo-real/pase`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
     body: JSON.stringify(cuerpo),
@@ -91,7 +92,7 @@ const firmar = (ruta, cuerpo) => {
 const avisar = async (avisos, firmado = true) => {
   const ruta = '/v1/interno/zona/US-FL-MIAMI/avisar';
   const cuerpo = JSON.stringify({ avisos });
-  const r = await fetch(new URL(ruta, TIEMPO_REAL_URL), {
+  const r = await pedirConReintento(new URL(ruta, TIEMPO_REAL_URL), {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...(firmado ? firmar(ruta, cuerpo) : {}) },
     body: cuerpo,

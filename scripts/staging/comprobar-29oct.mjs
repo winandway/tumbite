@@ -1,3 +1,4 @@
+import { pedirConReintento } from './pedirConReintento.mjs';
 // Comprueba en el sitio de pruebas lo publicado el 29 oct 2026, solo por la API y sin pagar nada.
 // Uso: CLAVE_DEMO=… node scripts/staging/comprobar-29oct.mjs
 const URL = process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com';
@@ -5,7 +6,7 @@ const CLAVE = process.env.CLAVE_DEMO;
 if (!CLAVE) throw new Error('Falta CLAVE_DEMO (la de las cuentas demo de pruebas).');
 let fallos = 0;
 async function api(metodo, ruta, cuerpo, token) {
-  const r = await fetch(URL + ruta, {
+  const r = await pedirConReintento(URL + ruta, {
     method: metodo,
     headers: {
       'content-type': 'application/json',
@@ -45,9 +46,12 @@ ver('mis avisos', av.estado === 200 && av.datos.avisos?.length === 4);
 const hoy = new Date().toISOString().slice(0, 10);
 const inf = await api('GET', `/datos/admin/informes?desde=2026-10-01&hasta=${hoy}`, undefined, sop);
 ver('informes', inf.estado === 200, `${inf.datos.filas?.length} filas`);
-const csv = await fetch(`${URL}/datos/admin/informes?desde=2026-10-01&hasta=${hoy}&formato=csv`, {
-  headers: { authorization: `Bearer ${sop}` },
-});
+const csv = await pedirConReintento(
+  `${URL}/datos/admin/informes?desde=2026-10-01&hasta=${hoy}&formato=csv`,
+  {
+    headers: { authorization: `Bearer ${sop}` },
+  },
+);
 ver('informe en CSV', csv.ok && (csv.headers.get('content-type') ?? '').includes('text/csv'));
 const pl = await api('GET', '/datos/admin/tickets/plantillas', undefined, sop);
 ver('respuestas guardadas', pl.estado === 200 && Array.isArray(pl.datos.plantillas));
