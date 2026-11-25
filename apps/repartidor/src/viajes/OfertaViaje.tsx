@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import {
   type Idioma,
   type MontoEnMano as Monto,
@@ -7,7 +7,21 @@ import {
   formatearMonto,
   textoMultiplicador,
 } from '@tumbite/compartido';
-import { Boton, C, HojaOferta, MontoEnMano, Text } from '@tumbite/movil';
+import {
+  BotonDriver,
+  C,
+  CuentaAtrasDriver,
+  DK,
+  DatosTresDriver,
+  EtiquetaServicioDriver,
+  HojaOferta,
+  LineaInfoDriver,
+  MontoEnMano,
+  RechazarDriver,
+  RelojOfertaDriver,
+  RutaDriver,
+  Text,
+} from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { Mapa } from '../piezas/Mapa';
 import { rotuloClienteFijo, textoOfertaConfianza } from './agendaFijos';
@@ -134,43 +148,42 @@ export function OfertaViajeModal({
               {rotulo}
             </Text>
           ) : null}
+          {/* C-REDISENO-DRIVER: la etiqueta del servicio (envíos en azul petróleo), el reloj y la
+              barra que se vacía; en los últimos 10 s, en rojo. */}
           <View
-            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 10,
+            }}
           >
-            <Text style={{ color: C.primario, fontWeight: '800', fontSize: 16 }}>
-              {oferta.servicioId === 'carro'
-                ? (new Map(Object.entries(textos.oferta.tituloCategoria)).get(
-                    oferta.categoria ?? 'estandar',
-                  ) ?? t.tituloCarro)
-                : t.titulo}
-            </Text>
-            <View
-              accessibilityRole="timer"
-              accessibilityLabel={`${quedan} ${t.segundos}`}
-              style={{
-                backgroundColor: quedan <= 10 ? C.primario : '#F6F6F6',
-                borderRadius: 999,
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-              }}
-            >
-              <Text style={{ fontWeight: '800', color: quedan <= 10 ? '#fff' : C.secundario }}>
-                {quedan}
-                {t.segundos}
-              </Text>
-            </View>
-          </View>
-          <View
-            style={{ height: 4, borderRadius: 2, backgroundColor: '#E6E7EA', overflow: 'hidden' }}
-          >
-            <View
-              style={{
-                width: `${Math.min(100, Math.round((quedan / total) * 100))}%`,
-                height: 4,
-                backgroundColor: quedan <= 10 ? C.primario : '#B9BFC9',
-              }}
+            <EtiquetaServicioDriver
+              tipo={
+                oferta.servicioId === 'envios'
+                  ? 'envio'
+                  : rotulo || oferta.viajeFijo
+                    ? 'fijo'
+                    : 'viaje'
+              }
+              icono={
+                oferta.servicioId === 'moto'
+                  ? 'bicycle-outline'
+                  : oferta.servicioId === 'envios'
+                    ? 'cube-outline'
+                    : undefined
+              }
+              texto={
+                oferta.servicioId === 'carro'
+                  ? (new Map(Object.entries(textos.oferta.tituloCategoria)).get(
+                      oferta.categoria ?? 'estandar',
+                    ) ?? t.tituloCarro)
+                  : t.titulo
+              }
             />
+            <RelojOfertaDriver quedan={quedan} segundos={t.segundos} />
           </View>
+          <CuentaAtrasDriver quedan={quedan} total={total} />
           {/* C-PRECIO-PROTAGONISTA: lo que gana, grande, en negrita y en verde, arriba de todo. */}
           <MontoEnMano
             testID="oferta-viaje-ganancia"
@@ -234,12 +247,13 @@ export function OfertaViajeModal({
       }
       abajo={
         <>
-          <Boton texto={t.aceptar} alTocar={aceptar} exito />
-          <Pressable onPress={rechazar} accessibilityRole="button" accessibilityLabel={t.rechazar}>
-            <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
-              {t.rechazar}
-            </Text>
-          </Pressable>
+          <BotonDriver
+            texto={t.aceptar}
+            alTocar={aceptar}
+            variante={oferta.servicioId === 'envios' ? 'petroleo' : 'negro'}
+            testID="oferta-aceptar"
+          />
+          <RechazarDriver texto={t.rechazar} alTocar={rechazar} testID="oferta-rechazar" />
           <Text style={{ color: '#6B7078', fontSize: 12, textAlign: 'center' }}>
             {t.sinCastigo}
           </Text>
@@ -326,57 +340,43 @@ export function OfertaViajeModal({
           />
         </View>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-        {oferta.recogidaM != null ? (
-          <Dato valor={distancia(oferta.recogidaM, idioma)} nombre={t.recogida} />
-        ) : null}
-        {oferta.viajeM != null ? (
-          <Dato valor={distancia(oferta.viajeM, idioma)} nombre={t.viaje} />
-        ) : null}
-        {oferta.viajeS != null ? (
-          <Dato valor={`${Math.max(1, Math.round(oferta.viajeS / 60))}`} nombre={t.minutos} />
-        ) : null}
-      </View>
-      <View style={{ marginTop: 6 }}>
-        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
-          {oferta.origen}
-        </Text>
-      </View>
-      {oferta.paradas?.length ? (
-        // C-VIAJE-PARADAS: por dónde para el viaje antes del destino.
-        <View testID="oferta-viaje-paradas">
-          <Text style={{ color: '#666B73', fontSize: 12 }}>
-            {textos.oferta.conParadas(oferta.paradas.length)}
-          </Text>
-          {oferta.paradas.map((d, i) => (
-            <Text key={i} style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
-              {i + 1}. {d}
+      {/* C-REDISENO-DRIVER: tres datos en cajitas y la ruta recoger → paradas → llevar. */}
+      <DatosTresDriver
+        datos={[
+          ...(oferta.recogidaM != null
+            ? [{ valor: distancia(oferta.recogidaM, idioma), nombre: t.recogida }]
+            : []),
+          ...(oferta.viajeM != null
+            ? [{ valor: distancia(oferta.viajeM, idioma), nombre: t.viaje }]
+            : []),
+          ...(oferta.viajeS != null
+            ? [{ valor: `${Math.max(1, Math.round(oferta.viajeS / 60))}`, nombre: t.minutos }]
+            : []),
+        ]}
+      />
+      <View testID="oferta-viaje-paradas-y-ruta">
+        {oferta.paradas?.length ? (
+          // C-VIAJE-PARADAS: por dónde para el viaje antes del destino.
+          <View testID="oferta-viaje-paradas" style={{ marginBottom: 4 }}>
+            <Text style={{ color: DK.gris, fontSize: 12 }}>
+              {textos.oferta.conParadas(oferta.paradas.length)}
             </Text>
-          ))}
-        </View>
-      ) : null}
-      <View>
-        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.llevar}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
-          {oferta.destino}
-        </Text>
+          </View>
+        ) : null}
+        <RutaDriver
+          puntos={[
+            { etiqueta: t.recoger, lugar: oferta.origen },
+            ...(oferta.paradas ?? []).map((d, i) => ({ etiqueta: `${i + 1}.`, lugar: d })),
+            { etiqueta: t.llevar, lugar: oferta.destino },
+          ]}
+        />
       </View>
+      {oferta.metodoPago === 'tarjeta' ? (
+        <LineaInfoDriver
+          icono="card-outline"
+          texto={idioma === 'en' ? 'Paid by card in the app' : 'Pago con tarjeta en la app'}
+        />
+      ) : null}
     </HojaOferta>
   );
 }
-
-const Dato = ({ valor, nombre }: { valor: string; nombre: string }) => (
-  <View
-    style={{
-      flex: 1,
-      backgroundColor: '#F6F6F6',
-      borderRadius: 12,
-      paddingVertical: 8,
-      alignItems: 'center',
-    }}
-  >
-    <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 16 }}>{valor}</Text>
-    <Text style={{ color: '#666B73', fontSize: 12 }}>{nombre}</Text>
-  </View>
-);

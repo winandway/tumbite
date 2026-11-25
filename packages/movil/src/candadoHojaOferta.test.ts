@@ -55,7 +55,10 @@ describe('C-HOJA-OFERTA: la hoja de la oferta nunca se monta sobre la barra de e
       expect(arriba).toContain(`testID="${ganancia}"`);
       expect(arriba).toContain(`testID="${enMano}"`);
       const abajo = s.slice(s.indexOf('abajo={'));
-      expect(abajo).toMatch(/<Boton texto=\{t\.aceptar\}/);
-      expect(abajo).toMatch(/accessibilityLabel=\{t\.rechazar\}/);
+      // C-REDISENO-DRIVER: Aceptar y Rechazar con las piezas del rediseño (o las de siempre).
+      expect(abajo).toMatch(/<Boton texto=\{t\.aceptar\}|<BotonDriver\s+texto=\{t\.aceptar\}/);
+      expect(abajo).toMatch(
+        /accessibilityLabel=\{t\.rechazar\}|<RechazarDriver texto=\{t\.rechazar\}/,
+      );
     });
 });

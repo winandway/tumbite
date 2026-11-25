@@ -1,12 +1,26 @@
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import {
   type Idioma,
   type MontoEnMano as Monto,
   formatearMonto,
   textoDistancia,
 } from '@tumbite/compartido';
-import { Boton, C, HojaOferta, MontoEnMano, Text } from '@tumbite/movil';
+import {
+  BotonDriver,
+  C,
+  CuentaAtrasDriver,
+  DK,
+  DatosTresDriver,
+  EtiquetaServicioDriver,
+  HojaOferta,
+  LineaInfoDriver,
+  MontoEnMano,
+  RechazarDriver,
+  RelojOfertaDriver,
+  RutaDriver,
+  Text,
+} from '@tumbite/movil';
 import { textosGrandes } from './textos';
 import { useAlarmaOferta } from '../sonidoOferta';
 
@@ -105,37 +119,19 @@ export function Oferta({
       alCerrar={rechazar}
       arriba={
         <>
+          {/* C-REDISENO-DRIVER: la etiqueta de Comida, el reloj y la barra que se vacía. */}
           <View
-            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 10,
+            }}
           >
-            <Text style={{ color: C.primario, fontWeight: '800', fontSize: 16 }}>{t.titulo}</Text>
-            <View
-              accessibilityRole="timer"
-              accessibilityLabel={`${quedan} ${t.segundos}`}
-              style={{
-                backgroundColor: quedan <= 10 ? C.primario : '#F6F6F6',
-                borderRadius: 999,
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-              }}
-            >
-              <Text style={{ fontWeight: '800', color: quedan <= 10 ? '#fff' : C.secundario }}>
-                {quedan}
-                {t.segundos}
-              </Text>
-            </View>
+            <EtiquetaServicioDriver tipo="comida" texto={t.titulo} />
+            <RelojOfertaDriver quedan={quedan} segundos={t.segundos} />
           </View>
-          <View
-            style={{ height: 4, borderRadius: 2, backgroundColor: '#E6E7EA', overflow: 'hidden' }}
-          >
-            <View
-              style={{
-                width: `${Math.round((quedan / total) * 100)}%`,
-                height: 4,
-                backgroundColor: quedan <= 10 ? C.primario : '#B9BFC9',
-              }}
-            />
-          </View>
+          <CuentaAtrasDriver quedan={quedan} total={total} />
           {/* C-PRECIO-PROTAGONISTA: lo que gana, grande, en negrita y en verde, arriba de todo. */}
           <MontoEnMano
             testID="oferta-ganancia"
@@ -188,12 +184,13 @@ export function Oferta({
       }
       abajo={
         <>
-          <Boton texto={t.aceptar} alTocar={aceptar} exito />
-          <Pressable onPress={rechazar} accessibilityRole="button" accessibilityLabel={t.rechazar}>
-            <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
-              {t.rechazar}
-            </Text>
-          </Pressable>
+          <BotonDriver
+            texto={t.aceptar}
+            alTocar={aceptar}
+            variante="negro"
+            testID="oferta-aceptar"
+          />
+          <RechazarDriver texto={t.rechazar} alTocar={rechazar} testID="oferta-rechazar" />
           <Text style={{ color: '#6B7078', fontSize: 12, textAlign: 'center' }}>
             {t.vence} {t.sinCastigo}
           </Text>
@@ -211,57 +208,53 @@ export function Oferta({
           {formatearMonto(oferta.bono, oferta.moneda, idioma)}
         </Text>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-        {oferta.distanciaAlLocalKm != null ? (
-          <Dato
-            valor={textoDistancia(oferta.distanciaAlLocalKm, idioma, oferta.pais)}
-            nombre={t.alLocal}
-          />
-        ) : null}
-        {oferta.distanciaTotalKm != null ? (
-          <Dato
-            valor={textoDistancia(oferta.distanciaTotalKm, idioma, oferta.pais)}
-            nombre={t.total}
-          />
-        ) : null}
-        {oferta.minutosEstimados != null ? (
-          <Dato valor={`${oferta.minutosEstimados}`} nombre={t.minutos} />
-        ) : null}
-        {n ? <Dato valor={`${n}`} nombre={n === 1 ? t.articulo : t.articulos} /> : null}
-      </View>
-      <View style={{ marginTop: 6 }}>
-        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>
-          {oferta.restaurante.nombre}
-          {oferta.minutosParaListo
-            ? ` · ${t.listoEn} ${oferta.minutosParaListo} min`
-            : ` · ${t.listoYa}`}
-        </Text>
-        <Text style={{ color: '#666B73' }} numberOfLines={1}>
-          {oferta.restaurante.direccion}
-        </Text>
-      </View>
-      <View>
-        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.entregar}</Text>
-        <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
-          {oferta.direccion}
-        </Text>
-      </View>
+      {/* C-REDISENO-DRIVER: los datos en cajitas y la ruta local → cliente. */}
+      <DatosTresDriver
+        datos={[
+          ...(oferta.distanciaAlLocalKm != null
+            ? [
+                {
+                  valor: textoDistancia(oferta.distanciaAlLocalKm, idioma, oferta.pais),
+                  nombre: t.alLocal,
+                },
+              ]
+            : []),
+          ...(oferta.distanciaTotalKm != null
+            ? [
+                {
+                  valor: textoDistancia(oferta.distanciaTotalKm, idioma, oferta.pais),
+                  nombre: t.total,
+                },
+              ]
+            : []),
+          ...(oferta.minutosEstimados != null
+            ? [{ valor: `${oferta.minutosEstimados}`, nombre: t.minutos }]
+            : []),
+        ]}
+      />
+      <RutaDriver
+        puntos={[
+          {
+            etiqueta: t.recoger,
+            lugar: `${oferta.restaurante.nombre}${
+              oferta.minutosParaListo
+                ? ` · ${t.listoEn} ${oferta.minutosParaListo} min`
+                : ` · ${t.listoYa}`
+            }`,
+          },
+          { etiqueta: t.entregar, lugar: oferta.direccion },
+        ]}
+      />
+      <Text style={{ color: DK.gris, fontSize: 12.5 }} numberOfLines={2}>
+        {oferta.restaurante.direccion}
+      </Text>
+      {n ? (
+        <LineaInfoDriver
+          icono="bag-handle-outline"
+          texto={`${n} ${n === 1 ? t.articulo : t.articulos}`}
+          testID="oferta-articulos"
+        />
+      ) : null}
     </HojaOferta>
   );
 }
-
-const Dato = ({ valor, nombre }: { valor: string; nombre: string }) => (
-  <View
-    style={{
-      flex: 1,
-      backgroundColor: '#F6F6F6',
-      borderRadius: 12,
-      paddingVertical: 8,
-      alignItems: 'center',
-    }}
-  >
-    <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 16 }}>{valor}</Text>
-    <Text style={{ color: '#666B73', fontSize: 11 }}>{nombre}</Text>
-  </View>
-);

@@ -1718,10 +1718,12 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.goto('/driver/');
     await rep.getByText(L.verBilletera).filter({ visible: true }).click();
     await expect(rep.getByText(L.disponible).filter({ visible: true })).toBeVisible();
-    // Ganancias con desglose (base, bonos y propinas) arriba de la billetera.
+    // Ganancias con desglose (base, bonos y propinas): C-REDISENO-DRIVER, en «Ganancias | Billetera».
+    await foto(rep, 'repartidor-billetera');
+    await rep.getByTestId('segmento-ganancias').click();
     await expect(rep.getByTestId('ganancias-desglose')).toBeVisible({ timeout: 20_000 });
     await foto(rep, 'repartidor-ganancias');
-    await foto(rep, 'repartidor-billetera');
+    await rep.getByTestId('segmento-billetera').click();
     // C-ALTA-COBROS-DENTRO (SIG-5): Driver abre «Beneficios» del panel con la sesión iniciada y
     // ahí se conecta el banco con el formulario de Stripe (o, sin él, la página de Stripe).
     const [beneficios] = await Promise.all([
@@ -1779,7 +1781,9 @@ for (const idioma of ['en', 'es'] as const) {
       await expect(rep.getByText(L.retiroEnCamino).filter({ visible: true })).toBeVisible();
       await foto(rep, 'repartidor-retiro');
       // Calificaciones visibles y la campana real (como los grandes, 18 oct).
-      await rep.getByRole('tab', { name: L.perfil }).click();
+      // C-REDISENO-DRIVER: el perfil de antes está en Cuenta › «Vehículo y mis datos».
+      await rep.getByTestId('pestana-cuenta').click();
+      await rep.getByTestId('cuenta-vehiculo').click();
       if (CAPTURAS) {
         await rep.getByText(/^(Documents|Documentos)$/).click();
         const titulo = rep.getByText(/^(Verify your identity|Verifica tu identidad)$/);

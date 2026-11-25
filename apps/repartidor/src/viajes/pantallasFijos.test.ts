@@ -28,10 +28,10 @@ describe('Driver: clientes fijos, oferta y viaje en curso', () => {
     expect(leer('AltaPasajeros.tsx')).toContain('/lleva-menores`');
     expect(leer('AltaPasajeros.tsx')).toContain('vehiculo.llevaMenores === true');
   });
-  it('se llega desde el menú y desde el perfil', () => {
+  it('se llega desde la Cuenta y desde Mis datos (C-REDISENO-DRIVER)', () => {
     const i = readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8');
-    expect(
-      i.match(/setVista\('clientesFijos'\)|\['clientesFijos'/g)?.length,
-    ).toBeGreaterThanOrEqual(2);
+    const cuenta = readFileSync(join(__dirname, '..', 'rediseno', 'CuentaDriver.tsx'), 'utf8');
+    expect(i).toContain("setVista('clientesFijos')");
+    expect(cuenta).toContain("alIr('clientesFijos')");
   });
 });

@@ -9,7 +9,7 @@ import {
   Icono,
   LETRA,
   RADIO,
-  Radar,
+  EstadoConexionDriver,
   TarjetaServicio,
   Text,
   type EstadoServicio,
@@ -58,61 +58,38 @@ export function usePanelServicios(api: Api, cadaMs = 10_000) {
   return { panel, setPanel, cargar };
 }
 
-/** La tarjeta tinta de arriba: radar y «Conectado a N servicios», o «Desconectado». */
+/**
+ * El estado de arriba de la hoja (C-REDISENO-DRIVER): punto verde que late y la línea que barre
+ * («Conectado a N servicios»), o el punto gris («Desconectado»), sin tarjeta negra. `titulo` y
+ * `detalle` lo cambian cuando el registro no está terminado («Todavía no puedes conectarte»).
+ */
 function TarjetaEstado({
   panel,
   idioma,
   pausado,
   textoPausado,
+  titulo,
+  detalle,
 }: {
   panel: Panel;
   idioma: Idioma;
   pausado: boolean;
   textoPausado: string;
+  titulo?: string;
+  detalle?: string;
 }) {
   const t = textosServicios(idioma);
   const conectado = panel.conectadoGeneral && panel.conectados > 0;
   return (
-    <View
-      testID="estado-servicios"
-      accessibilityRole="summary"
-      style={{
-        backgroundColor: COLOR.negro,
-        borderRadius: 20,
-        paddingVertical: 16,
-        paddingHorizontal: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-      }}
-    >
-      {conectado ? (
-        <Radar tamano={56} />
-      ) : (
-        <View
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            borderWidth: 2,
-            borderColor: '#3A3A3F',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Icono nombre="power" tamano={24} color="#A1A1AA" />
-        </View>
-      )}
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text
-          style={{ fontFamily: FUENTE.titulo, fontSize: 18, lineHeight: 24, color: COLOR.blanco }}
-        >
-          {conectado ? t.conectadoA(panel.conectados) : t.desconectadoTitulo}
-        </Text>
-        <Text style={{ fontSize: 14, lineHeight: 20, color: '#C9CACE' }}>
-          {conectado ? (pausado ? textoPausado : t.esperando) : t.desconectadoTexto}
-        </Text>
-      </View>
+    <View testID="estado-servicios" accessibilityRole="summary">
+      <EstadoConexionDriver
+        conectado={conectado}
+        buscando={conectado && !pausado}
+        titulo={conectado ? t.conectadoA(panel.conectados) : (titulo ?? t.desconectadoTitulo)}
+        detalle={
+          conectado ? (pausado ? textoPausado : t.esperando) : (detalle ?? t.desconectadoTexto)
+        }
+      />
     </View>
   );
 }
@@ -146,7 +123,12 @@ export function PanelServiciosInicio({
   arriba,
   motivo,
   motivoServicio,
+  tituloEstado,
+  detalleEstado,
 }: {
+  /** C-REDISENO-DRIVER: el título y el detalle del estado desconectado (registro sin terminar). */
+  tituloEstado?: string;
+  detalleEstado?: string;
   panel: Panel;
   idioma: Idioma;
   /** «Hoy», servicios y tiempo en línea (va entre la tarjeta tinta y la lista). */
@@ -207,6 +189,8 @@ export function PanelServiciosInicio({
             idioma={idioma}
             pausado={pausado}
             textoPausado={textoPausado}
+            titulo={tituloEstado}
+            detalle={detalleEstado}
           />
         )}
         {resumen}

@@ -53,6 +53,95 @@ async function viajeDelChat(db: D1Database, id: string, u: { id: string; rol: st
   return v;
 }
 
+/**
+ * C-CHAT-VIAJE-LLEGA (24 nov 2026, prueba real: el pasajero no vio los mensajes del conductor). Lo que
+ * la ficha del viaje (la que las dos apps ya consultan) dice del chat: cuántos mensajes de la otra
+ * persona no ha visto quien pregunta y el último mensaje (corto, de quién y la hora). Solo lee: la
+ * marca de «visto» la escribe `POST /viajes/:id/mensajes/visto` al abrir el chat, una vez por cambio.
+ */
+export async function resumenChatViaje(
+  db: D1Database,
+  operacionId: string,
+  yoId: string,
+): Promise<{
+  mensajesSinLeer: number;
+  ultimoMensaje: { texto: string; mio: boolean; nombre: string; en: string } | null;
+}> {
+  const v = await db
+    .prepare(
+      `SELECT o.cliente_id, o.conductor_id, v.estado, v.chat_visto_cliente, v.chat_visto_conductor
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id WHERE o.id = ?`,
+    )
+    .bind(operacionId)
+    .first<{
+      cliente_id: string;
+      conductor_id: string | null;
+      estado: string;
+      chat_visto_cliente: number | null;
+      chat_visto_conductor: number | null;
+    }>();
+  if (!v || !v.conductor_id || !ACTIVOS.has(v.estado))
+    return { mensajesSinLeer: 0, ultimoMensaje: null };
+  const soyCliente = yoId === v.cliente_id;
+  if (!soyCliente && yoId !== v.conductor_id) return { mensajesSinLeer: 0, ultimoMensaje: null };
+  const visto = Number((soyCliente ? v.chat_visto_cliente : v.chat_visto_conductor) ?? 0);
+  const otro = soyCliente ? v.conductor_id : v.cliente_id;
+  const inicio = await inicioDeLaPareja(db, operacionId, v.conductor_id);
+  const filtro = `m.operacion_id = ?1 AND m.texto <> '' AND m.de_usuario_id IN (?2, ?3)
+      AND m.creado_en >= COALESCE(?4, '')
+      AND m.de_usuario_id NOT IN (SELECT bloqueado_id FROM bloqueos_usuario WHERE usuario_id = ?2)
+      AND NOT EXISTS (SELECT 1 FROM contenido_oculto x WHERE x.tipo = 'mensaje_viaje' AND x.ref = CAST(m.id AS TEXT))`;
+  const [sinLeer, ultimo] = await Promise.all([
+    db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM mensajes_viaje m WHERE ${filtro} AND m.de_usuario_id = ?3 AND m.id > ?5`,
+      )
+      .bind(operacionId, yoId, otro, inicio, visto)
+      .first<{ n: number }>(),
+    db
+      .prepare(
+        `SELECT m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en FROM mensajes_viaje m
+           JOIN usuarios u ON u.id = m.de_usuario_id WHERE ${filtro} ORDER BY m.id DESC LIMIT 1`,
+      )
+      .bind(operacionId, yoId, otro, inicio)
+      .first<{ de: string; nombre: string; texto: string; en: string }>(),
+  ]);
+  return {
+    mensajesSinLeer: Number(sinLeer?.n ?? 0),
+    ultimoMensaje: ultimo
+      ? {
+          texto: ultimo.texto.length > 90 ? `${ultimo.texto.slice(0, 89)}…` : ultimo.texto,
+          mio: ultimo.de === yoId,
+          nombre: ultimo.nombre.split(' ')[0] ?? '',
+          en: ultimo.en,
+        }
+      : null,
+  };
+}
+
+/**
+ * C-CHAT-VIAJE-LLEGA: «ya lo vi». Al abrir el chat (y mientras está abierto y llega algo nuevo), la
+ * app marca hasta el último mensaje que se le muestra. Una sola escritura y solo si avanza: abrir
+ * otra vez sin nada nuevo no escribe nada. Por persona (pasajero o conductor) y por viaje.
+ */
+chatViaje.post('/viajes/:id/mensajes/visto', limiteIntentos(60, 60_000), async (c) => {
+  const u = exigir(c, 'cliente', 'repartidor');
+  const db = base(c);
+  const v = await viajeDelChat(db, c.req.param('id'), u);
+  const col = u.id === v.cliente_id ? 'chat_visto_cliente' : 'chat_visto_conductor';
+  const ultimo = await db
+    .prepare('SELECT MAX(id) AS id FROM mensajes_viaje WHERE operacion_id = ?')
+    .bind(v.id)
+    .first<{ id: number | null }>();
+  const hasta = Number(ultimo?.id ?? 0);
+  if (hasta > 0)
+    await db
+      .prepare(`UPDATE viajes SET ${col} = ?1 WHERE operacion_id = ?2 AND COALESCE(${col}, 0) < ?1`)
+      .bind(hasta, v.id)
+      .run();
+  return c.json({ ok: true, ...(await resumenChatViaje(db, v.id, u.id)) });
+});
+
 chatViaje.get('/viajes/:id/mensajes', async (c) => {
   const u = exigir(c);
   const db = base(c);
@@ -139,7 +228,8 @@ chatViaje.post('/viajes/:id/mensajes', limiteIntentos(30, 60_000), async (c) => 
     { id: para, app: para === v.conductor_id ? 'repartidor' : 'cliente' },
     (i) => ({
       ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', limpio),
-      datos: { tipo: 'viaje', viajeId: v.id },
+      // C-CHAT-VIAJE-LLEGA: `mensaje` hace que tocar el aviso abra el viaje con el chat abierto.
+      datos: { tipo: 'viaje', viajeId: v.id, mensaje: '1' },
     }),
   ).catch((e: unknown) => console.error('chat del viaje: aviso', e));
   return c.json({ ok: true });

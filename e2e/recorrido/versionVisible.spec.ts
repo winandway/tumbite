@@ -99,9 +99,8 @@ for (const idioma of ['es', 'en'] as const)
       .waitFor({ timeout: 15_000 })
       .then(() => listo.click())
       .catch(() => undefined);
-    await rep.p
-      .getByRole('tab', { name: idioma === 'en' ? 'Profile' : 'Perfil' })
-      .click({ timeout: 30_000 });
+    await rep.p.getByTestId('pestana-cuenta').click({ timeout: 30_000 });
+    await rep.p.getByTestId('cuenta-vehiculo').click();
     await expect(listo).toBeHidden();
     await fotografiar(rep.p, 'driver');
     await rep.ctx.close();

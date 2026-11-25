@@ -27,10 +27,11 @@ import { QueTeFalta } from './piezas/QueTeFalta';
 import {
   type AccionFalta,
   type FaltaServidor,
+  avisoDeFalta,
   franjaSoloEfectivo,
 } from './piezas/queTeFaltaLogica';
 import { AltaPasajeros } from './viajes/AltaPasajeros';
-import { accionDeMotivo, faltaCaraParaEmpezar } from './papeles/logica';
+import { accionDeMotivo, avanceDeFotos, faltaCaraParaEmpezar } from './papeles/logica';
 import { AvisoIa } from './papeles/AvisoIa';
 import { hayQueMostrarAvisoIa } from './papeles/textosAvisoIa';
 import { PapelesSinCargar, TusPapeles, usePapeles } from './papeles/TusPapeles';
@@ -85,7 +86,8 @@ import { ModoDestino } from './piezas/ModoDestino';
 import { DeslizarParaCompletar } from './piezas/DeslizarParaCompletar';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
-import { CabeceraDriver } from './piezas/CabeceraDriver';
+import { CuentaDriver } from './rediseno/CuentaDriver';
+import { tituloDeVista } from './rediseno/titulos';
 import { Mapa } from './piezas/Mapa';
 import type { ZonaDemanda } from './piezas/mapaWeb';
 import { Progreso } from './piezas/Progreso';
@@ -175,6 +177,16 @@ import {
   Modal,
   Deslizador,
   MontoEnMano,
+  AnchoDriver,
+  BarraActivacionDriver,
+  BotonDriver,
+  BotonRedondoDriver,
+  CabeceraDriverPantalla,
+  EstadoConexionDriver,
+  FlotanteDriver,
+  HojaDriver,
+  PildoraGanancias,
+  SegmentadoDriver,
 } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
@@ -691,7 +703,25 @@ export function Inicio() {
     | 'ayuda'
     | 'papeles'
     | 'vehiculo'
+    | 'cuenta'
   >('inicio');
+  // C-REDISENO-DRIVER: la pestaña de abajo desde la que se abrió una pantalla (a dónde vuelve «‹»).
+  const [ultimaPestana, setUltimaPestana] = useState<Pestana>('inicio');
+  const [hojaDestino, setHojaDestino] = useState(false);
+  const [pestanaGan, setPestanaGan] = useState<'ganancias' | 'billetera'>('ganancias');
+  // La billetera (saldo, recargas, retiros) dentro de Ganancias, en su pestaña.
+  const verBilletera = () => {
+    setPestanaGan('billetera');
+    setUltimaPestana('ganancias');
+    setVista('billetera');
+  };
+  const [altoInicio, setAltoInicio] = useState(0);
+  // Cada pantalla nueva arranca arriba (antes heredaba lo deslizado de la anterior).
+  useEffect(() => {
+    scrollLienzo.current?.scrollTo({ y: 0, animated: false });
+  }, [vista]);
+  // Lo que flota arriba del mapa (escudo, ganancias, barra de activación): la hoja empieza debajo.
+  const [altoArriba, setAltoArriba] = useState(72);
   // C-CAMPANA-SE-VACIA (23 nov 2026): el punto de la campana es lo que todavía no vio (lo cuenta el
   // servidor por cuenta); abrir «Avisos» lo deja en cero. Se lee al volver al inicio, nada más.
   const [campanaSinLeer, setCampanaSinLeer] = useState(0);
@@ -799,7 +829,6 @@ export function Inicio() {
   const [mostrarChat, setMostrarChat] = useState(true);
   // Desde cuándo está conectado en esta sesión (el servidor no lo guarda).
   const [conectadoDesde, setConectadoDesde] = useState<number | null>(null);
-  const [menuAbierto, setMenuAbierto] = useState(false);
   // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
   const [errorCarga, setErrorCarga] = useState('');
   const [aviso, setAviso] = useState('');
@@ -1478,7 +1507,7 @@ export function Inicio() {
       }
       case 'recargar':
       case 'pago_movil':
-        return setVista('billetera');
+        return verBilletera();
       case 'ubicacion': {
         if (!(await permisoUbicacion())) return t.sinUbicacion;
         const p = await ubicacionAlConectar();
@@ -2085,51 +2114,43 @@ export function Inicio() {
 
   // Fase cero (C-SERVICIOS-CONECTADOS): el inicio, el perfil y «Agregar un servicio» van en fondo
   // blanco, como el diseño aprobado; las demás pantallas siguen en el gris de siempre.
-  const lienzo = (pestana: Pestana, cuerpo: ReactNode, sinScroll = false, blanco = false) => (
+  // C-REDISENO-DRIVER: las cuatro pestañas de abajo y a qué pantalla lleva cada una. Abrir «Avisos»
+  // deja la campana en cero (C-CAMPANA-SE-VACIA).
+  const irAPestana = (p: Pestana) => {
+    setUltimaPestana(p);
+    if (p === 'ganancias') setPestanaGan('ganancias');
+    setAyudaEnChat(false);
+    if (p === 'avisos') setCampanaSinLeer(0);
+    setVista(p === 'ganancias' ? 'billetera' : p);
+  };
+  const pestanaDeVista = (): Pestana =>
+    vista === 'inicio' || vista === 'agregar'
+      ? 'inicio'
+      : vista === 'billetera'
+        ? 'ganancias'
+        : vista === 'avisos'
+          ? 'avisos'
+          : vista === 'cuenta'
+            ? 'cuenta'
+            : ultimaPestana;
+  // Las pantallas de las pestañas no llevan «‹»; las demás vuelven a la pestaña de donde salieron.
+  const titulo = tituloDeVista(vista, idioma);
+  const esRaiz = vista === 'inicio' || vista === 'billetera' || vista === 'avisos';
+  const lienzo = (_pestana: string, cuerpo: ReactNode, sinScroll = false, blanco = false) => (
     <SafeAreaView
       style={[e.fondo, { backgroundColor: blanco ? '#FFFFFF' : '#F6F6F6' }]}
       edges={['top', 'left', 'right']}
     >
-      <CabeceraDriver
-        idioma={idioma}
-        cambiarIdioma={cambiarIdioma}
-        alMenu={() => setMenuAbierto((x) => !x)}
-        alCampana={() => {
-          setCampanaSinLeer(0);
-          setVista('avisos');
-        }}
-        punto={campanaSinLeer > 0}
-      />
-      {menuAbierto ? (
-        <View style={[e.tarjeta, { marginHorizontal: 16, marginTop: 8 }]}>
-          {(
-            [
-              ['inicio', t.vistaInicio],
-              ['miRuta', t.vistaMiRuta],
-              ['turnos', idioma === 'en' ? 'My shifts' : 'Mis turnos'],
-              // C-VIAJES-FIJOS: la agenda de sus clientes fijos.
-              ['clientesFijos', idioma === 'en' ? 'Regular riders' : 'Clientes fijos'],
-              ['seguridad', idioma === 'en' ? 'Safety' : 'Seguridad'],
-              // C-CAMILA-CHAT: Ayuda (Habla con soporte, Mi equipo para los líderes, casos y guías).
-              ['ayuda', textosSoporte(idioma).ayuda],
-              ['billetera', t.vistaBilletera],
-              ['datos', t.vistaDatos],
-            ] as const
-          ).map(([v, texto]) => (
-            <Text
-              key={v}
-              style={{ paddingVertical: 10, fontWeight: vista === v ? '800' : '600' }}
-              onPress={() => {
-                setAyudaEnChat(false);
-                setVista(v);
-                setMenuAbierto(false);
-              }}
-              accessibilityRole="button"
-            >
-              {texto}
-            </Text>
-          ))}
-        </View>
+      {titulo ? (
+        <CabeceraDriverPantalla
+          titulo={titulo}
+          volver={
+            esRaiz
+              ? undefined
+              : () => setVista(ultimaPestana === 'ganancias' ? 'billetera' : ultimaPestana)
+          }
+          textoVolver={idioma === 'en' ? 'Back' : 'Volver'}
+        />
       ) : null}
       <View style={{ flex: 1 }}>
         {sinScroll ? (
@@ -2143,10 +2164,11 @@ export function Inicio() {
             scrollEventThrottle={64}
             keyboardDismissMode="interactive"
             automaticallyAdjustKeyboardInsets
-            contentContainerStyle={{ paddingBottom: 16 }}
+            contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
           >
-            {cuerpo}
+            {/* C-REDISENO-DRIVER: en tableta el contenido no se estira (una columna de 600). */}
+            <AnchoDriver estilo={{ flexGrow: 1 }}>{cuerpo}</AnchoDriver>
           </ScrollView>
         )}
         {/* C-SERVICIOS-CONECTADOS y C-CONECTAR-DESLIZANDO: el aviso solo informa; ningún toque
@@ -2162,8 +2184,9 @@ export function Inicio() {
       </View>
       <BarraInferior
         idioma={idioma}
-        activa={pestana}
-        alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
+        activa={pestanaDeVista()}
+        alTocar={irAPestana}
+        sinLeer={campanaSinLeer}
       />
       <Modal
         presentationStyle="pageSheet"
@@ -2240,275 +2263,302 @@ export function Inicio() {
     return lienzo(
       'ganancias',
       <View style={{ padding: 16, gap: 12 }}>
-        {mensajes}
-        <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{td.ganancias}</Text>
-        {/* C-AGENTE-DIVOOX: cobrar las ganancias en efectivo con un Agente Divoox (si la ciudad lo tiene). */}
-        <CobrarEfectivo
-          api={api}
-          idioma={idioma}
-          cuenta={usuario?.id}
-          alCambiar={() => void cargarPrepago()}
+        {/* C-REDISENO-DRIVER: Ganancias | Billetera, como el borrador (Uber Driver y Dasher). */}
+        <SegmentadoDriver
+          opciones={[
+            { clave: 'ganancias', texto: td.nav.ganancias },
+            { clave: 'billetera', texto: idioma === 'en' ? 'Wallet' : 'Billetera' },
+          ]}
+          activa={pestanaGan}
+          alElegir={setPestanaGan}
         />
-        {prepago &&
-        (prepago.efectivoActivo ||
-          prepago.transferenciaActiva ||
-          prepago.recargasPuntoVenta ||
-          prepago.recargasStripe ||
-          (prepago.comisionTipica ?? 0) > 0 ||
-          // C-SALDO-CONDUCTOR: con regalos por cobrar o cargas de saldo, también se ve.
-          (prepago.regalosPorCobrar ?? 0) > 0 ||
-          (prepago.regalosEnRevision?.monto ?? 0) > 0 ||
-          (prepago.cargas?.length ?? 0) > 0) ? (
-          <View
-            style={{
-              borderWidth: 1,
-              borderColor: '#2a2a2a',
-              borderRadius: 12,
-              padding: 12,
-              gap: 8,
-              backgroundColor: '#fff',
-            }}
-            testID="saldo-prepago"
-          >
-            <Text style={{ fontWeight: '800', color: C.secundario }}>{tg.prepago.titulo}</Text>
-            <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.prepago.ayuda}</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.secundario }}>{tg.prepago.disponible}</Text>
-              <Text
-                style={{
-                  fontWeight: '800',
-                  color: prepago.disponible > 0 ? '#0D7A3A' : C.primario,
-                }}
-              >
-                {formatearMonto(prepago.disponible, prepago.moneda, idioma)}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.secundario }}>{tg.prepago.reservado}</Text>
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {formatearMonto(prepago.reservado, prepago.moneda, idioma)}
-              </Text>
-            </View>
-            {prepago.carrerasAlcanzan != null && prepago.comisionTipica ? (
-              <View testID="carreras-alcanzan">
-                <Text
+        {mensajes}
+        {pestanaGan === 'ganancias' ? (
+          <>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {(['hoy', 'semana', 'mes'] as const).map((pz) => (
+                <Pressable
+                  key={pz}
+                  onPress={() => setPeriodo(pz)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: periodo === pz }}
                   style={{
-                    fontWeight: '800',
-                    color: prepago.saldoBajo ? C.primario : '#0D7A3A',
+                    paddingHorizontal: 18,
+                    paddingVertical: 8,
+                    borderRadius: 999,
+                    backgroundColor: periodo === pz ? C.secundario : '#fff',
                   }}
                 >
-                  {tg.prepago.carreras(prepago.carrerasAlcanzan)}
-                </Text>
-                <Text style={{ color: '#666B73', fontSize: 12 }}>
-                  {tg.prepago.carrerasAyuda(
-                    formatearMonto(prepago.comisionTipica, prepago.moneda, idioma),
-                  )}
-                </Text>
-              </View>
-            ) : null}
-            {prepago.pedidosAlcanzan != null && prepago.comisionTipicaComida ? (
-              <View testID="pedidos-alcanzan">
-                <Text
-                  style={{
-                    fontWeight: '800',
-                    color: prepago.pedidosAlcanzan < 3 ? C.primario : '#0D7A3A',
-                  }}
-                >
-                  {tg.prepago.pedidos(prepago.pedidosAlcanzan)}
-                </Text>
-                <Text style={{ color: '#666B73', fontSize: 12 }}>
-                  {tg.prepago.pedidosAyuda(
-                    formatearMonto(prepago.comisionTipicaComida, prepago.moneda, idioma),
-                  )}
-                </Text>
-              </View>
-            ) : null}
-            {prepago.comidaEnvioEntero ? (
-              <Text testID="comida-envio-entero" style={{ color: '#0D7A3A', fontSize: 12 }}>
-                {tg.prepago.comidaEnvioEntero}
-              </Text>
-            ) : null}
-            {prepago.sinSaldoComida ? (
-              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoPedidos}</Text>
-            ) : null}
-            {prepago.sinSaldo ? (
-              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoViajes}</Text>
-            ) : prepago.saldoBajo ? (
-              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.saldoBajo}</Text>
-            ) : prepago.disponible <= 0 &&
-              (prepago.comisionTipica ?? 0) + (prepago.comisionTipicaComida ?? 0) > 0 ? (
-              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldo}</Text>
-            ) : null}
-            {(prepago.regalosPorCobrar ?? 0) > 0 ? (
-              <View testID="regalos-por-cobrar" style={{ gap: 6 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ color: C.secundario }}>{tg.prepago.regalosPorCobrar}</Text>
-                  <Text style={{ fontWeight: '800', color: '#0D7A3A' }}>
-                    {formatearMonto(prepago.regalosPorCobrar ?? 0, prepago.moneda, idioma)}
-                  </Text>
-                </View>
-                <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.prepago.regalosAyuda}</Text>
-                <Boton
-                  texto={tg.prepago.regalosASaldo}
-                  exito
-                  alTocar={() =>
-                    void (async () => {
-                      try {
-                        const r = await api.pedir<{ monto: number }>(
-                          'POST',
-                          '/datos/repartidor/regalos/a-saldo',
-                          {},
-                        );
-                        setRegalosMensaje(
-                          tg.prepago.regalosPasados(
-                            formatearMonto(r.monto, prepago.moneda, idioma),
-                          ),
-                        );
-                        await cargarPrepago();
-                      } catch (x) {
-                        setError(x instanceof Error ? x.message : String(x));
-                      }
-                    })()
-                  }
-                />
-              </View>
-            ) : null}
-            {(prepago.regalosEnRevision?.monto ?? 0) > 0 ? (
-              <View testID="regalos-en-revision" style={{ gap: 4 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-                  <Text style={{ color: C.secundario, flex: 1 }}>
-                    {tg.prepago.regalosEnRevision}
-                  </Text>
-                  <Text style={{ fontWeight: '800', color: '#666B73' }}>
-                    {formatearMonto(prepago.regalosEnRevision?.monto ?? 0, prepago.moneda, idioma)}
-                  </Text>
-                </View>
-                <Text style={{ color: '#666B73', fontSize: 12 }}>
-                  {tg.prepago.regalosEnRevisionAyuda}
-                </Text>
-              </View>
-            ) : null}
-            {regalosMensaje ? (
-              <Text accessibilityRole="alert" style={{ color: '#0D7A3A', fontWeight: '700' }}>
-                {regalosMensaje}
-              </Text>
-            ) : null}
-            {prepago.cargas?.length ? (
-              <View testID="cargas-saldo" style={{ gap: 4 }}>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>
-                  {tg.prepago.cargasTitulo}
-                </Text>
-                {prepago.cargas.slice(0, 5).map((k) => (
-                  <View
-                    key={k.id}
-                    style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
+                  <Text
+                    style={{ fontWeight: '700', color: periodo === pz ? '#fff' : C.secundario }}
                   >
-                    <Text style={{ color: '#666B73', flex: 1 }}>
-                      {new Map(Object.entries(tg.prepago.tipoCarga)).get(k.tipo) ?? k.motivo}
+                    {pz === 'hoy' ? td.hoy : pz === 'semana' ? td.semana : td.mes}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <View style={e.tarjeta}>
+              <Text style={{ color: '#666B73', fontWeight: '600' }}>
+                {periodo === 'hoy'
+                  ? td.totalDe.hoy
+                  : periodo === 'semana'
+                    ? td.totalDe.semana
+                    : td.totalDe.mes}
+              </Text>
+              <Text
+                testID="ganancias-total"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}
+              >
+                {/* C-GANANCIAS-EN-MANO: billetera (dólares) y cobrado en mano, cada moneda aparte. */}
+                {partes.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + ')}
+              </Text>
+              {enMano.length ? (
+                <Text style={{ color: '#666B73' }} testID="ganancias-incluye-en-mano">
+                  {td.incluyeEnMano.replace(
+                    '{monto}',
+                    enMano.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + '),
+                  )}
+                  {bolivares > 0
+                    ? ` ${td.enBolivares.replace('{monto}', textoLocal({ moneda: 'VES', monto: bolivares, tasa: 0, fecha: '' }, idioma))}`
+                    : ''}
+                </Text>
+              ) : null}
+              <Text style={{ color: '#666B73' }}>
+                {/* C-PLURAL y C-GANANCIAS-CARRERAS: «1 entrega», «2 carreras» o las dos. */}
+                {textoTrabajos(entregas, carreras, idioma)}
+                {periodo === 'hoy' && segundosConectado
+                  ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
+                  : ''}
+              </Text>
+              {regalos > 0 ? (
+                <Text style={{ color: '#666B73' }} testID="ganancias-incluye-regalos">
+                  {td.incluyeRegalos.replace('{monto}', formatearMonto(regalos, 'USD', idioma))}
+                </Text>
+              ) : null}
+            </View>
+            <Ganancias api={api} idioma={idioma} periodo={periodo} />
+            <ResumenAnual api={api} idioma={idioma} />
+          </>
+        ) : (
+          <>
+            {/* C-AGENTE-DIVOOX: cobrar las ganancias en efectivo con un Agente Divoox (si la ciudad lo tiene). */}
+            <CobrarEfectivo
+              api={api}
+              idioma={idioma}
+              cuenta={usuario?.id}
+              alCambiar={() => void cargarPrepago()}
+            />
+            {prepago &&
+            (prepago.efectivoActivo ||
+              prepago.transferenciaActiva ||
+              prepago.recargasPuntoVenta ||
+              prepago.recargasStripe ||
+              (prepago.comisionTipica ?? 0) > 0 ||
+              // C-SALDO-CONDUCTOR: con regalos por cobrar o cargas de saldo, también se ve.
+              (prepago.regalosPorCobrar ?? 0) > 0 ||
+              (prepago.regalosEnRevision?.monto ?? 0) > 0 ||
+              (prepago.cargas?.length ?? 0) > 0) ? (
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#2a2a2a',
+                  borderRadius: 12,
+                  padding: 12,
+                  gap: 8,
+                  backgroundColor: '#fff',
+                }}
+                testID="saldo-prepago"
+              >
+                <Text style={{ fontWeight: '800', color: C.secundario }}>{tg.prepago.titulo}</Text>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.prepago.ayuda}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ color: C.secundario }}>{tg.prepago.disponible}</Text>
+                  <Text
+                    style={{
+                      fontWeight: '800',
+                      color: prepago.disponible > 0 ? '#0D7A3A' : C.primario,
+                    }}
+                  >
+                    {formatearMonto(prepago.disponible, prepago.moneda, idioma)}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ color: C.secundario }}>{tg.prepago.reservado}</Text>
+                  <Text style={{ fontWeight: '800', color: C.secundario }}>
+                    {formatearMonto(prepago.reservado, prepago.moneda, idioma)}
+                  </Text>
+                </View>
+                {prepago.carrerasAlcanzan != null && prepago.comisionTipica ? (
+                  <View testID="carreras-alcanzan">
+                    <Text
+                      style={{
+                        fontWeight: '800',
+                        color: prepago.saldoBajo ? C.primario : '#0D7A3A',
+                      }}
+                    >
+                      {tg.prepago.carreras(prepago.carrerasAlcanzan)}
                     </Text>
-                    <Text style={{ fontWeight: '700', color: '#0D7A3A' }}>
-                      +{formatearMonto(k.monto, prepago.moneda, idioma)}
+                    <Text style={{ color: '#666B73', fontSize: 12 }}>
+                      {tg.prepago.carrerasAyuda(
+                        formatearMonto(prepago.comisionTipica, prepago.moneda, idioma),
+                      )}
                     </Text>
                   </View>
-                ))}
+                ) : null}
+                {prepago.pedidosAlcanzan != null && prepago.comisionTipicaComida ? (
+                  <View testID="pedidos-alcanzan">
+                    <Text
+                      style={{
+                        fontWeight: '800',
+                        color: prepago.pedidosAlcanzan < 3 ? C.primario : '#0D7A3A',
+                      }}
+                    >
+                      {tg.prepago.pedidos(prepago.pedidosAlcanzan)}
+                    </Text>
+                    <Text style={{ color: '#666B73', fontSize: 12 }}>
+                      {tg.prepago.pedidosAyuda(
+                        formatearMonto(prepago.comisionTipicaComida, prepago.moneda, idioma),
+                      )}
+                    </Text>
+                  </View>
+                ) : null}
+                {prepago.comidaEnvioEntero ? (
+                  <Text testID="comida-envio-entero" style={{ color: '#0D7A3A', fontSize: 12 }}>
+                    {tg.prepago.comidaEnvioEntero}
+                  </Text>
+                ) : null}
+                {prepago.sinSaldoComida ? (
+                  <Text style={{ color: C.primario, fontSize: 12 }}>
+                    {tg.prepago.sinSaldoPedidos}
+                  </Text>
+                ) : null}
+                {prepago.sinSaldo ? (
+                  <Text style={{ color: C.primario, fontSize: 12 }}>
+                    {tg.prepago.sinSaldoViajes}
+                  </Text>
+                ) : prepago.saldoBajo ? (
+                  <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.saldoBajo}</Text>
+                ) : prepago.disponible <= 0 &&
+                  (prepago.comisionTipica ?? 0) + (prepago.comisionTipicaComida ?? 0) > 0 ? (
+                  <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldo}</Text>
+                ) : null}
+                {(prepago.regalosPorCobrar ?? 0) > 0 ? (
+                  <View testID="regalos-por-cobrar" style={{ gap: 6 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text style={{ color: C.secundario }}>{tg.prepago.regalosPorCobrar}</Text>
+                      <Text style={{ fontWeight: '800', color: '#0D7A3A' }}>
+                        {formatearMonto(prepago.regalosPorCobrar ?? 0, prepago.moneda, idioma)}
+                      </Text>
+                    </View>
+                    <Text style={{ color: '#666B73', fontSize: 12 }}>
+                      {tg.prepago.regalosAyuda}
+                    </Text>
+                    <Boton
+                      texto={tg.prepago.regalosASaldo}
+                      exito
+                      alTocar={() =>
+                        void (async () => {
+                          try {
+                            const r = await api.pedir<{ monto: number }>(
+                              'POST',
+                              '/datos/repartidor/regalos/a-saldo',
+                              {},
+                            );
+                            setRegalosMensaje(
+                              tg.prepago.regalosPasados(
+                                formatearMonto(r.monto, prepago.moneda, idioma),
+                              ),
+                            );
+                            await cargarPrepago();
+                          } catch (x) {
+                            setError(x instanceof Error ? x.message : String(x));
+                          }
+                        })()
+                      }
+                    />
+                  </View>
+                ) : null}
+                {(prepago.regalosEnRevision?.monto ?? 0) > 0 ? (
+                  <View testID="regalos-en-revision" style={{ gap: 4 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                      <Text style={{ color: C.secundario, flex: 1 }}>
+                        {tg.prepago.regalosEnRevision}
+                      </Text>
+                      <Text style={{ fontWeight: '800', color: '#666B73' }}>
+                        {formatearMonto(
+                          prepago.regalosEnRevision?.monto ?? 0,
+                          prepago.moneda,
+                          idioma,
+                        )}
+                      </Text>
+                    </View>
+                    <Text style={{ color: '#666B73', fontSize: 12 }}>
+                      {tg.prepago.regalosEnRevisionAyuda}
+                    </Text>
+                  </View>
+                ) : null}
+                {regalosMensaje ? (
+                  <Text accessibilityRole="alert" style={{ color: '#0D7A3A', fontWeight: '700' }}>
+                    {regalosMensaje}
+                  </Text>
+                ) : null}
+                {prepago.cargas?.length ? (
+                  <View testID="cargas-saldo" style={{ gap: 4 }}>
+                    <Text style={{ fontWeight: '800', color: C.secundario }}>
+                      {tg.prepago.cargasTitulo}
+                    </Text>
+                    {prepago.cargas.slice(0, 5).map((k) => (
+                      <View
+                        key={k.id}
+                        style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
+                      >
+                        <Text style={{ color: '#666B73', flex: 1 }}>
+                          {new Map(Object.entries(tg.prepago.tipoCarga)).get(k.tipo) ?? k.motivo}
+                        </Text>
+                        <Text style={{ fontWeight: '700', color: '#0D7A3A' }}>
+                          +{formatearMonto(k.monto, prepago.moneda, idioma)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+                {prepago.recargasPuntoVenta ? (
+                  <>
+                    <TextInput
+                      value={codigoRecarga}
+                      onChangeText={setCodigoRecarga}
+                      placeholder={tg.prepago.codigo}
+                      accessibilityLabel={tg.prepago.codigo}
+                      autoCapitalize="characters"
+                      style={e.input}
+                    />
+                    <Boton texto={tg.prepago.canjear} alTocar={() => void canjear()} />
+                  </>
+                ) : null}
+                {prepago.recargasStripe && (prepago.recargaTarjetaMin ?? 0) > 0 ? (
+                  <RecargaTarjeta
+                    moneda={prepago.moneda ?? 'USD'}
+                    min={prepago.recargaTarjetaMin ?? 0}
+                    max={prepago.recargaTarjetaMax ?? 0}
+                    idioma={idioma}
+                    alVolver={cargarPrepago}
+                  />
+                ) : null}
               </View>
             ) : null}
-            {prepago.recargasPuntoVenta ? (
-              <>
-                <TextInput
-                  value={codigoRecarga}
-                  onChangeText={setCodigoRecarga}
-                  placeholder={tg.prepago.codigo}
-                  accessibilityLabel={tg.prepago.codigo}
-                  autoCapitalize="characters"
-                  style={e.input}
-                />
-                <Boton texto={tg.prepago.canjear} alTocar={() => void canjear()} />
-              </>
+            {prepago?.cuentasACelular?.length ? (
+              <CuentaCobro tipos={prepago.cuentasACelular} idioma={idioma} />
             ) : null}
-            {prepago.recargasStripe && (prepago.recargaTarjetaMin ?? 0) > 0 ? (
-              <RecargaTarjeta
-                moneda={prepago.moneda ?? 'USD'}
-                min={prepago.recargaTarjetaMin ?? 0}
-                max={prepago.recargaTarjetaMax ?? 0}
-                idioma={idioma}
-                alVolver={cargarPrepago}
-              />
-            ) : null}
-          </View>
-        ) : null}
-        {prepago?.cuentasACelular?.length ? (
-          <CuentaCobro tipos={prepago.cuentasACelular} idioma={idioma} />
-        ) : null}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          {(['hoy', 'semana', 'mes'] as const).map((pz) => (
-            <Pressable
-              key={pz}
-              onPress={() => setPeriodo(pz)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: periodo === pz }}
-              style={{
-                paddingHorizontal: 18,
-                paddingVertical: 8,
-                borderRadius: 999,
-                backgroundColor: periodo === pz ? C.secundario : '#fff',
-              }}
-            >
-              <Text style={{ fontWeight: '700', color: periodo === pz ? '#fff' : C.secundario }}>
-                {pz === 'hoy' ? td.hoy : pz === 'semana' ? td.semana : td.mes}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <View style={e.tarjeta}>
-          <Text style={{ color: '#666B73', fontWeight: '600' }}>
-            {periodo === 'hoy'
-              ? td.totalDe.hoy
-              : periodo === 'semana'
-                ? td.totalDe.semana
-                : td.totalDe.mes}
-          </Text>
-          <Text
-            testID="ganancias-total"
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}
-          >
-            {/* C-GANANCIAS-EN-MANO: billetera (dólares) y cobrado en mano, cada moneda aparte. */}
-            {partes.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + ')}
-          </Text>
-          {enMano.length ? (
-            <Text style={{ color: '#666B73' }} testID="ganancias-incluye-en-mano">
-              {td.incluyeEnMano.replace(
-                '{monto}',
-                enMano.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + '),
-              )}
-              {bolivares > 0
-                ? ` ${td.enBolivares.replace('{monto}', textoLocal({ moneda: 'VES', monto: bolivares, tasa: 0, fecha: '' }, idioma))}`
-                : ''}
-            </Text>
-          ) : null}
-          <Text style={{ color: '#666B73' }}>
-            {/* C-PLURAL y C-GANANCIAS-CARRERAS: «1 entrega», «2 carreras» o las dos. */}
-            {textoTrabajos(entregas, carreras, idioma)}
-            {periodo === 'hoy' && segundosConectado
-              ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
-              : ''}
-          </Text>
-          {regalos > 0 ? (
-            <Text style={{ color: '#666B73' }} testID="ganancias-incluye-regalos">
-              {td.incluyeRegalos.replace('{monto}', formatearMonto(regalos, 'USD', idioma))}
-            </Text>
-          ) : null}
-        </View>
-        <Ganancias api={api} idioma={idioma} periodo={periodo} />
-        <ResumenAnual api={api} idioma={idioma} />
-        <BilleteraRepartidor
-          datos={billetera}
-          idioma={idioma}
-          retirar={() => void retirar()}
-          conectar={() => void banco()}
-        />
+            <BilleteraRepartidor
+              datos={billetera}
+              idioma={idioma}
+              retirar={() => void retirar()}
+              conectar={() => void banco()}
+            />
+          </>
+        )}
       </View>,
     );
   }
@@ -2580,8 +2630,9 @@ export function Inicio() {
         {pieFlex}
         <BarraInferior
           idioma={idioma}
-          activa="pedidos"
-          alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
+          activa="cuenta"
+          alTocar={irAPestana}
+          sinLeer={campanaSinLeer}
         />
         {/* C-OFERTA-EN-CUALQUIER-PANTALLA (en un bloque de Flex el servidor no ofrece nada más). */}
         {hojasVisibles}
@@ -2614,7 +2665,7 @@ export function Inicio() {
         idioma={idioma}
         abrir={(paso) => {
           if (paso === 'banco') {
-            setVista('billetera');
+            verBilletera();
             return;
           }
           setVista('datos');
@@ -2669,9 +2720,6 @@ export function Inicio() {
       'pedidos',
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
-        <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>
-          {td.nav.pedidos}
-        </Text>
         <CalificarCliente api={api} idioma={idioma} />
         <Pressable
           onPress={() => setVista('miRuta')}
@@ -2715,6 +2763,35 @@ export function Inicio() {
   const registroIncompleto = Boolean(
     faltas?.some((f) => f.quien === 'conductor' && f.clave !== 'desconectado'),
   );
+  // C-REDISENO-DRIVER: la pestaña «Cuenta» (cabecera de perfil y todo en filas).
+  if (vista === 'cuenta') {
+    const niveles = new Map(Object.entries(t.niveles));
+    const nivelCuenta = estado?.reputacion
+      ? (niveles.get(estado.reputacion.nivel) ?? null)
+      : estado
+        ? enIdioma({ es: estado.nivel.es, en: estado.nivel.en }, idioma)
+        : null;
+    return lienzo(
+      'cuenta',
+      <CuentaDriver
+        idioma={idioma}
+        cambiarIdioma={cambiarIdioma}
+        nombre={usuario?.nombre ?? ''}
+        nivel={nivelCuenta}
+        puntaje={estado?.reputacion ? `${estado.reputacion.puntaje.toFixed(1)} ${t.deCien}` : null}
+        papelesPendientes={
+          (faltas ?? []).filter((f) => f.quien === 'conductor' && f.clave !== 'desconectado').length
+        }
+        alPapeles={() => abrirPapeles('datos')}
+        alIr={(v) => {
+          if (v === 'ayuda') setAyudaEnChat(false);
+          setVista(v);
+        }}
+      />,
+      false,
+      false,
+    );
+  }
   if (vista === 'datos') {
     const fila = (nombre: string, alTocar: () => void, abierto = false, detalle?: string) => (
       <Pressable
@@ -3802,10 +3879,9 @@ export function Inicio() {
       ) : null}
       {/* C-SALDO-EN-INICIO: el saldo prepago (donde el país lo usa), con aviso si se acaba. */}
       {!estado?.activo ? (
-        <SaldoInicio saldo={prepago} idioma={idioma} alRecargar={() => setVista('billetera')} />
+        <SaldoInicio saldo={prepago} idioma={idioma} alRecargar={() => verBilletera()} />
       ) : null}
       {mensajesResto}
-      {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
     </>
   );
   const panelInicio = servicios.panel ? (
@@ -3842,6 +3918,20 @@ export function Inicio() {
       arriba={arribaInicio}
       motivo={motivoInicio}
       motivoServicio={motivoConexion?.servicio}
+      tituloEstado={
+        registroIncompleto
+          ? idioma === 'en'
+            ? 'You can’t go online yet'
+            : 'Todavía no puedes conectarte'
+          : undefined
+      }
+      detalleEstado={
+        registroIncompleto
+          ? idioma === 'en'
+            ? 'Finish your documents and we’ll let you know as soon as your account is active.'
+            : 'Termina tus papeles y te avisamos en cuanto tu cuenta quede activa.'
+          : undefined
+      }
     />
   ) : (
     <>
@@ -3858,13 +3948,82 @@ export function Inicio() {
     </>
   );
 
+  // ───────── C-REDISENO-DRIVER: el inicio del borrador aprobado ─────────
+  // El mapa ocupa toda la pantalla; arriba flotan el escudo de seguridad, lo ganado hoy (un toque
+  // lleva a Ganancias) y el modo destino; la barra de activación del registro va sobre el mapa; abajo,
+  // la hoja blanca con el estado («Estás desconectado» / «Conectado · buscando ofertas») y, dentro,
+  // lo de siempre: los servicios para conectarse deslizando, lo que le falta, sus papeles y su saldo.
+  const avanceFotos = papeles.v ? avanceDeFotos(papeles.v) : null;
+  const faltasConductor = (faltasVista ?? []).filter(
+    (f) => f.quien === 'conductor' && f.clave !== 'desconectado',
+  );
+  const barraActivacion =
+    registroIncompleto && !estado?.activo ? (
+      <BarraActivacionDriver
+        titulo={idioma === 'en' ? 'Activate your account' : 'Activa tu cuenta'}
+        cuenta={
+          avanceFotos && avanceFotos.total > 0
+            ? idioma === 'en'
+              ? `${avanceFotos.listas} of ${avanceFotos.total} done`
+              : `${avanceFotos.listas} de ${avanceFotos.total} listos`
+            : undefined
+        }
+        avance={avanceFotos && avanceFotos.total > 0 ? avanceFotos.listas / avanceFotos.total : 0.1}
+        falta={
+          (idioma === 'en' ? 'Still needed: ' : 'Te falta: ') +
+          faltasConductor
+            .map((f) => avisoDeFalta(f, idioma)?.titulo)
+            .filter(Boolean)
+            .slice(0, 2)
+            .join(' · ')
+        }
+        alTocar={() => abrirPapeles('inicio')}
+      />
+    ) : null;
+  const tituloEstado = estado?.conectado
+    ? estado.ocupadoEn
+      ? estado.ocupadoEn === 'ruta_flex'
+        ? t.ocupadoRuta
+        : t.ocupadoViaje
+      : estado.pausado
+        ? tg.pausa.enPausa
+        : idioma === 'en'
+          ? 'Online · finding offers'
+          : 'Conectado · buscando ofertas'
+    : registroIncompleto
+      ? idioma === 'en'
+        ? 'You can’t go online yet'
+        : 'Todavía no puedes conectarte'
+      : idioma === 'en'
+        ? 'You’re offline'
+        : 'Estás desconectado';
+  const detalleEstado = estado?.conectado
+    ? estado.ocupadoEn || estado.pausado
+      ? undefined
+      : zonasDemanda.length
+        ? idioma === 'en'
+          ? 'You’re more likely to get offers near the shaded areas.'
+          : 'Es más probable recibir ofertas cerca de las zonas marcadas.'
+        : undefined
+    : registroIncompleto
+      ? idioma === 'en'
+        ? 'Finish your documents and we’ll let you know as soon as your account is active.'
+        : 'Termina tus papeles y te avisamos en cuanto tu cuenta quede activa.'
+      : zonasDemanda.length
+        ? idioma === 'en'
+          ? 'Shaded areas are busier right now.'
+          : 'Las zonas marcadas tienen más pedidos ahora.'
+        : undefined;
+  const ganadoHoy = hoyConEnMano.partes[0] ?? { monto: 0, moneda: 'USD' };
+
   return lienzo(
     'inicio',
-    <View style={{ flex: 1 }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, zIndex: 2 }}>
-        {panelInicio}
-      </View>
-      <View>
+    <View
+      style={{ flex: 1, backgroundColor: '#ECEEF1' }}
+      testID="inicio-driver"
+      onLayout={(ev) => setAltoInicio(Math.round(ev.nativeEvent.layout.height))}
+    >
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
         <Mapa
           yo={aqui}
           marcadores={marcadoresOfertas}
@@ -3874,227 +4033,220 @@ export function Inicio() {
               ? td.pagoPico.replace('{monto}', formatearMonto(pico, monedaDemanda, idioma))
               : td.zonaOcupada.replace('{n}', String(n))
           }
-          alto={alturaMapa}
+          alto={Math.max(alturaMapa, altoInicio)}
           etiquetas={etiquetasMapa}
         />
-        {estado?.conectado ? (
-          // C-SEGURIDAD-A-LA-VISTA (31 oct 2026, como el escudo de SafeDash en el mapa de DoorDash):
-          // mientras trabaja, la seguridad está a un toque, sin buscarla en el menú.
-          <Pressable
-            onPress={() => setVista('seguridad')}
-            accessibilityRole="button"
-            accessibilityLabel={idioma === 'en' ? 'Safety' : 'Seguridad'}
-            testID="escudo-seguridad"
-            style={{
-              position: 'absolute',
-              top: 24,
-              right: 16,
-              zIndex: 3,
-              backgroundColor: '#fff',
-              borderRadius: 999,
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              borderWidth: 1,
-              borderColor: '#E3E6EB',
-            }}
-          >
-            <View
-              style={{
-                width: 12,
-                height: 14,
-                borderTopLeftRadius: 3,
-                borderTopRightRadius: 3,
-                borderBottomLeftRadius: 7,
-                borderBottomRightRadius: 7,
-                backgroundColor: C.primario,
-              }}
+      </View>
+      <View
+        pointerEvents="box-none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, gap: 12 }}
+        onLayout={(ev) => setAltoArriba(Math.round(ev.nativeEvent.layout.height))}
+      >
+        <FlotanteDriver
+          izquierda={
+            // C-SEGURIDAD-A-LA-VISTA: el escudo, siempre a un toque (como SafeDash de DoorDash).
+            <BotonRedondoDriver
+              icono="shield-outline"
+              etiqueta={idioma === 'en' ? 'Safety' : 'Seguridad'}
+              alTocar={() => setVista('seguridad')}
+              testID="escudo-seguridad"
             />
-            <Text style={{ fontWeight: '800', fontSize: 12, color: C.secundario }}>
-              {idioma === 'en' ? 'Safety' : 'Seguridad'}
-            </Text>
-          </Pressable>
-        ) : null}
-        {aqui ? (
-          <View
-            style={{
-              position: 'absolute',
-              top: 24,
-              left: 16,
-              backgroundColor: '#fff',
-              borderRadius: 999,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.primario }} />
-            <Text style={{ fontWeight: '700', fontSize: 12 }}>{td.tuUbicacion}</Text>
-          </View>
-        ) : null}
-        {zonasDemanda.length ? (
-          <View
-            accessibilityRole="text"
-            style={{
-              position: 'absolute',
-              top: 56,
-              left: 16,
-              backgroundColor: '#fff',
-              borderRadius: 999,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <View
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 6,
-                backgroundColor: 'rgba(242,13,32,0.35)',
-                borderWidth: 1,
-                borderColor: C.primario,
-              }}
+          }
+          centro={
+            <PildoraGanancias
+              monto={formatearMonto(ganadoHoy.monto, ganadoHoy.moneda, idioma)}
+              hoy={idioma === 'en' ? 'today' : 'hoy'}
+              alTocar={() => irAPestana('ganancias')}
             />
-            <Text style={{ fontWeight: '700', fontSize: 12 }}>{td.zonasOcupadas}</Text>
-          </View>
+          }
+          derecha={
+            <BotonRedondoDriver
+              icono="flag-outline"
+              etiqueta={idioma === 'en' ? 'Destination mode' : 'Modo destino'}
+              alTocar={() => setHojaDestino(true)}
+              testID="boton-modo-destino"
+            />
+          }
+        />
+        {barraActivacion ? (
+          <AnchoDriver estilo={{ paddingHorizontal: 12 }}>{barraActivacion}</AnchoDriver>
         ) : null}
       </View>
-      <View style={{ padding: 16, gap: 10, backgroundColor: 'transparent' }}>
-        {/* C-AVISOS-WEB: en la versión web, la explicación del permiso al conectarse. */}
-        <TarjetaAvisosWeb visible={Boolean(estado?.conectado)} />
-        {estado?.conectado && estado.ocupadoEn ? (
-          // C-OCUPADO-VISIBLE (BRF-1): ocupado en una ruta o un viaje, nunca «Buscando pedidos».
-          <View style={e.tarjeta} testID="ocupado-en-otra">
-            <Text style={{ color: '#666B73' }}>
-              {estado.ocupadoEn === 'ruta_flex' ? t.ocupadoRuta : t.ocupadoViaje}
-            </Text>
-          </View>
-        ) : estado?.vuelveTrasDias ? (
-          // Como «¡Qué bueno verte de nuevo!» de DoorDash al volver después de un tiempo.
-          <View style={e.tarjeta} testID="bienvenida">
-            <Text style={{ fontWeight: '800', fontSize: 16 }}>
-              {t.bienvenida(usuario?.nombre.split(' ')[0] ?? '')}
-            </Text>
-            <Text style={{ color: '#666B73', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
-          </View>
-        ) : null}
-        {/* C-CONECTAR-DESLIZANDO: volver de la pausa trae ofertas: se desliza, nunca se toca.
+      <View
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: altoArriba + 10 }}
+        pointerEvents="box-none"
+      >
+        <View style={{ flex: 1 }} pointerEvents="none" />
+        <HojaDriver testID="hoja-inicio" altoMaximo="100%">
+          {servicios.panel ? null : (
+            <EstadoConexionDriver
+              conectado={Boolean(estado?.conectado)}
+              buscando={Boolean(
+                estado?.conectado && !estado.ocupadoEn && !estado.pausado && !activo,
+              )}
+              titulo={tituloEstado}
+              detalle={detalleEstado}
+            />
+          )}
+          {panelInicio}
+          {/* C-AVISOS-WEB: en la versión web, la explicación del permiso al conectarse. */}
+          <TarjetaAvisosWeb visible={Boolean(estado?.conectado)} />
+          {estado?.conectado && estado.ocupadoEn ? (
+            // C-OCUPADO-VISIBLE (BRF-1): ocupado en una ruta o un viaje, nunca «Buscando pedidos».
+            <View style={e.tarjeta} testID="ocupado-en-otra">
+              <Text style={{ color: '#666B73' }}>
+                {estado.ocupadoEn === 'ruta_flex' ? t.ocupadoRuta : t.ocupadoViaje}
+              </Text>
+            </View>
+          ) : estado?.vuelveTrasDias ? (
+            // Como «¡Qué bueno verte de nuevo!» de DoorDash al volver después de un tiempo.
+            <View style={e.tarjeta} testID="bienvenida">
+              <Text style={{ fontWeight: '800', fontSize: 16 }}>
+                {t.bienvenida(usuario?.nombre.split(' ')[0] ?? '')}
+              </Text>
+              <Text style={{ color: '#666B73', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
+            </View>
+          ) : null}
+          {/* C-CONECTAR-DESLIZANDO: volver de la pausa trae ofertas: se desliza, nunca se toca.
             Pausar (dejar de recibir) sigue siendo un botón. */}
-        {estado?.conectado && !activo && estado.pausado ? (
-          <Deslizador
-            variante="accion"
-            tono="exito"
-            texto={tg.pausa.deslizarReanudar}
-            accionLector={tg.pausa.reanudar}
-            confirmar={{ pregunta: tg.pausa.confirmarReanudar, si: tg.pausa.reanudar, no: ts.no }}
-            alConfirmar={() => accion('/datos/repartidor/pausar', { pausado: false })}
-            testID="reanudar-ofertas"
-          />
-        ) : estado?.conectado && !activo ? (
-          <Boton
-            texto={tg.pausa.pausar}
-            alTocar={() => void accion('/datos/repartidor/pausar', { pausado: true })}
-            secundario
-          />
-        ) : null}
-        {estado?.reputacion ? (
-          <View style={e.tarjeta} testID="nivel-reputacion">
-            <Text style={{ fontWeight: '800' }}>
-              {t.nivel}: {new Map(Object.entries(t.niveles)).get(estado.reputacion.nivel)} ·{' '}
-              {estado.reputacion.puntaje.toFixed(1)} {t.deCien}
-            </Text>
-            {estado.reputacion.siguiente ? (
-              <Text style={{ color: '#666B73' }}>
-                {t.faltan} {estado.reputacion.siguiente.faltan} {t.puntos} {t.para}{' '}
-                {new Map(Object.entries(t.niveles)).get(estado.reputacion.siguiente.nivel)}
+          {estado?.conectado && !activo && estado.pausado ? (
+            <Deslizador
+              variante="accion"
+              tono="exito"
+              texto={tg.pausa.deslizarReanudar}
+              accionLector={tg.pausa.reanudar}
+              confirmar={{ pregunta: tg.pausa.confirmarReanudar, si: tg.pausa.reanudar, no: ts.no }}
+              alConfirmar={() => accion('/datos/repartidor/pausar', { pausado: false })}
+              testID="reanudar-ofertas"
+            />
+          ) : estado?.conectado && !activo ? (
+            <Boton
+              texto={tg.pausa.pausar}
+              alTocar={() => void accion('/datos/repartidor/pausar', { pausado: true })}
+              secundario
+            />
+          ) : null}
+          {estado?.reputacion ? (
+            <View style={e.tarjeta} testID="nivel-reputacion">
+              <Text style={{ fontWeight: '800' }}>
+                {t.nivel}: {new Map(Object.entries(t.niveles)).get(estado.reputacion.nivel)} ·{' '}
+                {estado.reputacion.puntaje.toFixed(1)} {t.deCien}
               </Text>
-            ) : null}
-            {estado.reputacion.provisional ? (
-              <Text style={{ color: '#666B73' }}>{t.provisional}</Text>
-            ) : null}
-            <View
-              accessibilityRole="progressbar"
-              accessibilityValue={{ min: 0, max: 100, now: Math.round(estado.reputacion.puntaje) }}
-              style={{
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: '#E6E7EA',
-                marginTop: 8,
-                overflow: 'hidden',
-              }}
-            >
+              {estado.reputacion.siguiente ? (
+                <Text style={{ color: '#666B73' }}>
+                  {t.faltan} {estado.reputacion.siguiente.faltan} {t.puntos} {t.para}{' '}
+                  {new Map(Object.entries(t.niveles)).get(estado.reputacion.siguiente.nivel)}
+                </Text>
+              ) : null}
+              {estado.reputacion.provisional ? (
+                <Text style={{ color: '#666B73' }}>{t.provisional}</Text>
+              ) : null}
               <View
+                accessibilityRole="progressbar"
+                accessibilityValue={{
+                  min: 0,
+                  max: 100,
+                  now: Math.round(estado.reputacion.puntaje),
+                }}
                 style={{
-                  width: `${Math.max(2, Math.round(estado.reputacion.puntaje))}%`,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: C.exito,
+                  backgroundColor: '#E6E7EA',
+                  marginTop: 8,
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <View
+                  style={{
+                    width: `${Math.max(2, Math.round(estado.reputacion.puntaje))}%`,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: C.exito,
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        ) : null}
-        {estado?.reputacion ? <MiNivel api={api} idioma={idioma} /> : null}
-        {estado && !estado.reputacion && (
-          <View style={e.tarjeta}>
-            <Text style={{ fontWeight: '800' }}>
-              {t.nivel}: {enIdioma({ es: estado.nivel.es, en: estado.nivel.en }, idioma)} ·{' '}
-              {estado.puntos} {t.puntos}
-            </Text>
-            {estado.nivel.siguiente ? (
-              <Text style={{ color: '#666B73' }}>
-                {t.faltan} {estado.nivel.siguiente.faltan} {t.puntos} {t.para}{' '}
-                {enIdioma({ es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en }, idioma)}
+          ) : null}
+          {estado?.reputacion ? <MiNivel api={api} idioma={idioma} /> : null}
+          {estado && !estado.reputacion && (
+            <View style={e.tarjeta}>
+              <Text style={{ fontWeight: '800' }}>
+                {t.nivel}: {enIdioma({ es: estado.nivel.es, en: estado.nivel.en }, idioma)} ·{' '}
+                {estado.puntos} {t.puntos}
               </Text>
-            ) : null}
-            {/* Barra de avance al siguiente nivel, en verde: cada entrega es un paso hacia adelante. */}
-            <View
-              accessibilityRole="progressbar"
-              accessibilityValue={{ min: 0, max: 100, now: Math.round(estado.nivel.avance * 100) }}
-              style={{
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: '#E6E7EA',
-                marginTop: 8,
-                overflow: 'hidden',
-              }}
-            >
+              {estado.nivel.siguiente ? (
+                <Text style={{ color: '#666B73' }}>
+                  {t.faltan} {estado.nivel.siguiente.faltan} {t.puntos} {t.para}{' '}
+                  {enIdioma(
+                    { es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en },
+                    idioma,
+                  )}
+                </Text>
+              ) : null}
+              {/* Barra de avance al siguiente nivel, en verde: cada entrega es un paso hacia adelante. */}
               <View
+                accessibilityRole="progressbar"
+                accessibilityValue={{
+                  min: 0,
+                  max: 100,
+                  now: Math.round(estado.nivel.avance * 100),
+                }}
                 style={{
-                  width: `${Math.max(2, Math.round(estado.nivel.avance * 100))}%`,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: C.exito,
+                  backgroundColor: '#E6E7EA',
+                  marginTop: 8,
+                  overflow: 'hidden',
                 }}
-              />
+              >
+                <View
+                  style={{
+                    width: `${Math.max(2, Math.round(estado.nivel.avance * 100))}%`,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: C.exito,
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        )}
-        {billetera && (
-          <Pressable
-            onPress={() => setVista('billetera')}
-            accessibilityRole="link"
-            style={[e.tarjeta, { backgroundColor: C.secundario }]}
-          >
-            <Text style={{ color: '#BDBDBD', fontWeight: '600' }}>{t.saldo}</Text>
-            <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800' }}>
-              {formatearMonto(billetera.saldo, 'USD', idioma)}
-            </Text>
-            <Text style={{ color: '#FFFFFF', textDecorationLine: 'underline', marginTop: 4 }}>
-              {t.verBilletera}
-            </Text>
-          </Pressable>
-        )}
+          )}
+          {billetera && (
+            <Pressable
+              onPress={() => verBilletera()}
+              accessibilityRole="link"
+              style={[e.tarjeta, { backgroundColor: C.secundario }]}
+            >
+              <Text style={{ color: '#BDBDBD', fontWeight: '600' }}>{t.saldo}</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 28, fontWeight: '800' }}>
+                {formatearMonto(billetera.saldo, 'USD', idioma)}
+              </Text>
+              <Text style={{ color: '#FFFFFF', textDecorationLine: 'underline', marginTop: 4 }}>
+                {t.verBilletera}
+              </Text>
+            </Pressable>
+          )}
+        </HojaDriver>
       </View>
+      <Modal
+        visible={hojaDestino}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setHojaDestino(false)}
+      >
+        <View
+          style={{ flex: 1, backgroundColor: 'rgba(16,16,16,0.25)', justifyContent: 'flex-end' }}
+        >
+          <HojaDriver testID="hoja-modo-destino" altoMaximo="86%">
+            <Text accessibilityRole="header" style={{ fontSize: 19, fontWeight: '600' }}>
+              {idioma === 'en' ? 'Destination mode' : 'Modo destino'}
+            </Text>
+            <ModoDestino cerca={aqui} />
+            <BotonDriver texto={t.cerrar} variante="texto" alTocar={() => setHojaDestino(false)} />
+          </HojaDriver>
+        </View>
+      </Modal>
     </View>,
-    false,
+    true,
     true,
   );
 }

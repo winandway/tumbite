@@ -221,6 +221,7 @@ for (const idioma of ['es', 'en'] as const) {
     const pr = await ctxRep.newPage();
     await pr.goto('/driver');
     await pr.getByText(C.ganTab, { exact: true }).last().click();
+    await pr.getByTestId('segmento-billetera').click();
     const tarjeta = pr.getByTestId('cobrar-efectivo');
     await expect(tarjeta).toBeVisible({ timeout: 30_000 });
     await tarjeta.scrollIntoViewIfNeeded();
@@ -246,6 +247,7 @@ for (const idioma of ['es', 'en'] as const) {
       });
       await pr.reload();
       await pr.getByText(C.ganTab, { exact: true }).last().click();
+      await pr.getByTestId('segmento-billetera').click();
       await expect(pr.getByTestId('cobro-vivo')).toBeVisible({ timeout: 30_000 });
       await pr.getByTestId('cobrar-efectivo').scrollIntoViewIfNeeded();
       await foto(pr.getByTestId('cobrar-efectivo'), 'conductor-codigo');
@@ -337,6 +339,7 @@ for (const idioma of ['es', 'en'] as const) {
     // El conductor ve su cobro en el historial de la tarjeta.
     await pr.reload();
     await pr.getByText(C.ganTab, { exact: true }).last().click();
+    await pr.getByTestId('segmento-billetera').click();
     await expect(pr.getByTestId('cobro-historial')).toBeVisible({ timeout: 30_000 });
     await pr.getByTestId('cobrar-efectivo').scrollIntoViewIfNeeded();
     await foto(pr.getByTestId('cobrar-efectivo'), 'conductor-historial');

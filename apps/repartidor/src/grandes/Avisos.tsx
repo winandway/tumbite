@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { type Api, type Idioma, formatearMonto, marcarCampanaVista } from '@tumbite/compartido';
-import { C, e, Text } from '@tumbite/movil';
+import { DK, Icono, type NombreIcono, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 export type AvisoRep = {
@@ -43,21 +43,56 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
     };
   }, [api]);
   const titulos = new Map<string, string>(Object.entries(t));
-  return (
-    <View style={{ padding: 16, gap: 12 }} testID="avisos-repartidor">
-      <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
-      {d && d.avisos.length === 0 ? <Text style={{ color: '#666B73' }}>{t.sin}</Text> : null}
-      {(d?.avisos ?? []).map((a, i) => (
-        <View key={`${a.tipo}-${a.pedidoId ?? i}-${a.en}`} style={e.tarjeta}>
+  const avisos = d?.avisos ?? [];
+  const nuevos = avisos.filter((a) => a.leido === false);
+  const anteriores = avisos.filter((a) => a.leido !== false);
+  const fila = (a: AvisoRep, i: number) => {
+    const nuevo = a.leido === false;
+    const icono = ICONOS.get(a.tipo) ?? { nombre: 'notifications-outline' as NombreIcono };
+    return (
+      <View
+        key={`${a.tipo}-${a.pedidoId ?? i}-${a.en}`}
+        testID={nuevo ? 'aviso-fila-nuevo' : 'aviso-fila'}
+        style={{
+          flexDirection: 'row',
+          gap: 12,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: DK.borde,
+          backgroundColor: nuevo ? DK.blanco : DK.fondo,
+        }}
+      >
+        <View
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor:
+              icono.tono === 'verde'
+                ? DK.verdeSuave
+                : icono.tono === 'ambar'
+                  ? DK.ambarSuave
+                  : '#ECEEF1',
+          }}
+        >
+          <Icono
+            nombre={icono.nombre}
+            tamano={20}
+            color={icono.tono === 'verde' ? DK.verde : icono.tono === 'ambar' ? DK.ambar : DK.negro}
+          />
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text
-            style={{ fontWeight: a.leido === false ? '800' : '600', color: C.secundario }}
-            testID={a.leido === false ? 'aviso-nuevo' : undefined}
+            style={{ fontWeight: nuevo ? '700' : '600', fontSize: 14.5, color: DK.negro }}
+            testID={nuevo ? 'aviso-nuevo' : undefined}
           >
-            {a.leido === false ? <Text style={{ color: C.primario }}>● </Text> : null}
             {titulos.get(a.tipo) ?? a.tipo}
             {a.codigo ? ` · #${a.codigo}` : ''}
           </Text>
-          <Text style={{ color: '#666B73', fontSize: 13, marginTop: 2 }}>
+          <Text style={{ color: DK.gris, fontSize: 13, lineHeight: 18, marginTop: 3 }}>
             {a.restaurante ?? ''}
             {a.tipo === 'direccion_cambiada' && a.detalle ? ` · ${a.detalle}` : ''}
             {a.tipo === 'ofertas_vencidas' ? ` ${a.detalle}` : ''}
@@ -66,14 +101,67 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
               ? ` · ${t.quedasLibre}`
               : ''}
           </Text>
-          <Text style={{ color: '#6B7078', fontSize: 11, marginTop: 2 }}>
+          <Text style={{ color: DK.gris2, fontSize: 12, marginTop: 4 }}>
             {new Date(`${a.en.replace(' ', 'T')}Z`).toLocaleString(
               idioma === 'en' ? 'en-US' : 'es-US',
               { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
             )}
           </Text>
         </View>
-      ))}
+        {nuevo ? (
+          <View
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: 5,
+              backgroundColor: DK.negro,
+              marginTop: 6,
+            }}
+          />
+        ) : null}
+      </View>
+    );
+  };
+  const separador = (texto: string) => (
+    <Text
+      style={{
+        paddingHorizontal: 16,
+        paddingTop: 14,
+        paddingBottom: 6,
+        fontSize: 12,
+        fontWeight: '700',
+        color: DK.gris,
+        letterSpacing: 0.5,
+      }}
+    >
+      {texto.toUpperCase()}
+    </Text>
+  );
+  // C-REDISENO-DRIVER: la lista del borrador (círculo con ícono, título, texto, hora y el punto de
+  // lo nuevo); lo leído queda en gris, debajo de «Anteriores».
+  return (
+    <View testID="avisos-repartidor" style={{ paddingBottom: 12 }}>
+      {d && avisos.length === 0 ? (
+        <Text style={{ color: DK.gris, padding: 16, lineHeight: 21 }}>{t.sin}</Text>
+      ) : null}
+      {nuevos.length ? separador(idioma === 'en' ? 'New' : 'Nuevos') : null}
+      {nuevos.map(fila)}
+      {nuevos.length && anteriores.length
+        ? separador(idioma === 'en' ? 'Earlier' : 'Anteriores')
+        : null}
+      {anteriores.map(fila)}
     </View>
   );
 }
+
+const ICONOS = new Map<string, { nombre: NombreIcono; tono?: 'verde' | 'ambar' }>([
+  ['pedido_listo', { nombre: 'bag-check-outline', tono: 'verde' }],
+  ['cancelado_por_restaurante', { nombre: 'close-circle-outline' }],
+  ['cancelado_por_cliente', { nombre: 'close-circle-outline' }],
+  ['direccion_cambiada', { nombre: 'location-outline', tono: 'ambar' }],
+  ['excepcion_autorizada', { nombre: 'checkmark-circle-outline', tono: 'verde' }],
+  ['propina_posterior', { nombre: 'cash-outline', tono: 'verde' }],
+  ['saldo_recargado', { nombre: 'wallet-outline', tono: 'verde' }],
+  ['ofertas_vencidas', { nombre: 'time-outline', tono: 'ambar' }],
+  ['foto_control', { nombre: 'camera-outline', tono: 'ambar' }],
+]);

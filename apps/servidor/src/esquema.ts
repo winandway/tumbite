@@ -268,6 +268,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['cotizaciones_viaje', 'tarifa_json', "TEXT NOT NULL DEFAULT '{}'"],
   // C-VIAJE-PASOS-REALES: tope de intentos del código de inicio del viaje.
   ['viajes', 'intentos_pin', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-CHAT-VIAJE-LLEGA (24 nov 2026): hasta qué mensaje del chat vio cada uno (una escritura al abrir
+  // el chat, nada por mirar). Con eso la ficha del viaje dice cuántos no ha visto.
+  ['viajes', 'chat_visto_cliente', 'INTEGER'],
+  ['viajes', 'chat_visto_conductor', 'INTEGER'],
   // Divoox Moto · M2: con qué paga el pasajero y de qué cotización salió el viaje.
   ['viajes', 'metodo_pago', "TEXT NOT NULL DEFAULT 'efectivo'"],
   ['viajes', 'cotizacion_id', 'TEXT'],

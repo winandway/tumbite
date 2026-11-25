@@ -1,6 +1,7 @@
 import { revisarSaldoBajo } from '../saldoBajo';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
+import { resumenChatViaje } from './chatViaje';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
@@ -345,6 +346,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
       espera_gratis_s:
         f.espera_gratis_s == null ? ESPERA_GRATIS_S_POR_DEFECTO : Number(f.espera_gratis_s),
       intentos_pin_quedan: Math.max(0, INTENTOS_PIN_MAXIMOS - Number(f.intentos_pin ?? 0)),
+      // C-CHAT-VIAJE-LLEGA: lo que el conductor no ha visto del chat y el último mensaje.
+      ...(await resumenChatViaje(base(c), String(f.id), u.id)),
     },
   });
 });

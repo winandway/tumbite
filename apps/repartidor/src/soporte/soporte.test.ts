@@ -23,9 +23,10 @@ describe('C-CAMILA-CHAT en Driver', () => {
     expect(en.hablar).toBe('Talk to support');
   });
 
-  it('Ayuda está en el menú y abre el chat con soporte por el canal de la app', () => {
+  it('Ayuda está en la Cuenta y abre el chat con soporte por el canal de la app', () => {
     const inicio = leer('Inicio.tsx');
-    expect(inicio).toMatch(/\['ayuda', textosSoporte\(idioma\)\.ayuda\]/);
+    // C-REDISENO-DRIVER: el menú de arriba pasó a la pestaña «Cuenta».
+    expect(leer('rediseno', 'CuentaDriver.tsx')).toContain("alIr('ayuda')");
     expect(inicio).toContain("vista === 'ayuda'");
     const chat = leer('soporte', 'ChatSoporteApp.tsx');
     expect(chat).toContain("canal: 'app'");

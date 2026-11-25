@@ -2,6 +2,7 @@ import { frenarSinCelularConfirmado } from '../telefonoVuelta';
 import { avisarPasoViaje } from '../avisosViaje';
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
+import { resumenChatViaje } from './chatViaje';
 import { UMBRALES_VIAJE_REAL } from '../viajeReal';
 import { direccionDeRecogida } from './fotoPuerta';
 import { esPagoACelular, metrosEntre as metrosEntrePuntos } from '@tumbite/compartido';
@@ -1290,6 +1291,8 @@ viajesPasajero.get('/viajes/actual', async (c) => {
         paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
         ...(await enDosMonedas(db, f)),
         llegadaEnVivo: await llegadaDelViaje(db, f.id, f.estado),
+        // C-CHAT-VIAJE-LLEGA: lo que el pasajero no ha visto del chat y el último mensaje.
+        ...(await resumenChatViaje(db, f.id, u.id)),
       }
     : null;
   return c.json({
@@ -1323,6 +1326,8 @@ viajesPasajero.get('/viajes/:id', async (c) => {
     paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
     ...(await enDosMonedas(db, f)),
     llegadaEnVivo: await llegadaDelViaje(db, f.id, f.estado),
+    // C-CHAT-VIAJE-LLEGA: también aquí (la pantalla del viaje abierta desde un aviso usa esta ficha).
+    ...(await resumenChatViaje(db, f.id, u.id)),
   };
   return c.json({
     viaje,

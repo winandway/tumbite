@@ -80,6 +80,10 @@ function Contenido({
       <View
         testID={testID}
         style={{
+          // C-REDISENO-DRIVER: en tableta la hoja no se estira de borde a borde.
+          width: '100%',
+          maxWidth: 600,
+          alignSelf: 'center',
           backgroundColor: '#fff',
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,

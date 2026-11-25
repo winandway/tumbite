@@ -17,11 +17,11 @@ describe('«Modo destino» en un solo lugar: el inicio', () => {
     expect(desde).toBeGreaterThan(0);
     expect(fuente.slice(desde, hasta)).not.toContain('<ModoDestino');
   });
-  it('se dibuja una sola vez, en los mensajes del inicio', () => {
+  it('se dibuja una sola vez: en la hoja «Modo destino» del inicio (C-REDISENO-DRIVER)', () => {
     expect(fuente.match(/<ModoDestino\b/g)).toHaveLength(1);
-    const desde = fuente.indexOf('const mensajesInicio = (');
-    expect(desde).toBeGreaterThan(0);
-    expect(fuente.slice(desde, fuente.indexOf('\n  );', desde))).toContain('<ModoDestino');
+    const desde = fuente.indexOf('testID="hoja-modo-destino"');
+    expect(desde).toBeGreaterThan(fuente.indexOf('C-REDISENO-DRIVER: el inicio del borrador'));
+    expect(fuente.slice(desde, fuente.indexOf('</HojaDriver>', desde))).toContain('<ModoDestino');
   });
 });
 

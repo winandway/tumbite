@@ -46,7 +46,7 @@ test('el Driver usa los colores de la marca en la barra y la campana', async ({
   );
   await p.goto('/driver');
   await expect(p.getByTestId('nav-inicio')).toBeVisible({ timeout: 30_000 });
-  await expect(p.getByTestId('nav-perfil')).toBeVisible();
+  await expect(p.getByTestId('nav-cuenta')).toBeVisible();
   expect(viejas).toEqual([]);
   await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', 'driver-colores-es.png') });
   await ctx.close();

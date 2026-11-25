@@ -1,58 +1,25 @@
 import { View } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
-import { C, Text } from '@tumbite/movil';
+import { BarraPasosDriver, DK, EtiquetaServicioDriver, Text } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
-/** Recoger → Entregar → Completar: tres puntos unidos por una línea; lo hecho va en escarlata. */
+/**
+ * C-REDISENO-DRIVER: Recoger → Entregar → Completar del pedido de comida, con la barra de tres pasos
+ * del borrador (lo hecho en verde, el paso de ahora en negro, lo que falta en gris), la etiqueta de
+ * Comida y el nombre del paso de ahora.
+ */
 export function Progreso({ idioma, paso }: { idioma: Idioma; paso: 0 | 1 | 2 }) {
   const t = textosDriver(idioma);
   const nombres = [t.pasos.recoger, t.pasos.entregar, t.pasos.completar];
-  const avance = paso === 0 ? '0%' : paso === 1 ? '50%' : '100%';
   return (
-    <View style={{ paddingHorizontal: 16, paddingVertical: 10 }}>
-      <View style={{ position: 'relative' }}>
-        <View
-          style={{
-            position: 'absolute',
-            top: 7,
-            left: '16.6%',
-            right: '16.6%',
-            height: 3,
-            backgroundColor: '#E6E7EA',
-            borderRadius: 2,
-          }}
-        >
-          <View
-            style={{ width: avance, height: 3, backgroundColor: C.primario, borderRadius: 2 }}
-          />
-        </View>
-        <View style={{ flexDirection: 'row' }}>
-          {nombres.map((n, i) => (
-            <View key={n} style={{ flex: 1, alignItems: 'center' }}>
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: i <= paso ? C.primario : '#D6D8DC',
-                  borderWidth: 3,
-                  borderColor: '#fff',
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: i === paso ? '800' : '600',
-                  color: i <= paso ? C.primario : '#6B7078',
-                  marginTop: 4,
-                }}
-              >
-                {n}
-              </Text>
-            </View>
-          ))}
-        </View>
+    <View style={{ paddingHorizontal: 16, paddingVertical: 10, gap: 10 }} testID="progreso-pedido">
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <EtiquetaServicioDriver tipo="comida" texto={idioma === 'en' ? 'Food' : 'Comida'} />
+        <Text style={{ fontSize: 13, fontWeight: '600', color: DK.gris, flexShrink: 1 }}>
+          {`${paso + 1}/3 · ${nombres.at(paso) ?? ''}`}
+        </Text>
       </View>
+      <BarraPasosDriver paso={paso} />
     </View>
   );
 }

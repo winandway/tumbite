@@ -177,10 +177,8 @@ for (const idioma of ['es', 'en'] as const) {
       await ruta.fulfill({ response: r, json: d });
     });
     await pr.goto('/driver');
-    await pr
-      .getByText(idioma === 'es' ? 'Perfil' : 'Profile', { exact: true })
-      .last()
-      .click();
+    await pr.getByTestId('pestana-cuenta').click();
+    await pr.getByTestId('cuenta-vehiculo').click();
     // Tramo 1 del registro (C-QUE-TE-FALTA): con el registro sin terminar, lo de después va plegado en
     // «Más opciones».
     const mas = pr.getByText(idioma === 'es' ? 'Más opciones' : 'More options', { exact: true });

@@ -1,48 +1,49 @@
 import type { Idioma } from '@tumbite/compartido';
-import { BarraPestanas } from '@tumbite/movil';
+import { BarraPestanas, DK } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
-export type Pestana = 'inicio' | 'pedidos' | 'ganancias' | 'perfil';
+export type Pestana = 'inicio' | 'ganancias' | 'avisos' | 'cuenta';
 
 /**
- * Barra inferior del Driver: Inicio, Pedidos, Ganancias y Perfil. C-COLORES-DRIVER y C-APPS-DISENO
- * (15 nov 2026): íconos de línea (rellenos al elegirse) en el azul de logística, el color del Driver.
+ * C-REDISENO-DRIVER (24 nov 2026, borrador aprobado por Richard): una sola barra de abajo con cuatro
+ * lugares, como Uber Driver y DoorDash Dasher: Inicio, Ganancias, Avisos (con el número de lo que no
+ * ha visto; se va a cero al abrirla, C-CAMPANA-SE-VACIA) y Cuenta. Íconos de línea, el elegido en
+ * negro. Nada se repite en otra pantalla.
  */
 export function BarraInferior({
   idioma,
   activa,
   alTocar,
+  sinLeer = 0,
 }: {
   idioma: Idioma;
   activa: Pestana;
   alTocar: (p: Pestana) => void;
+  /** Lo que la campana todavía no mostró (lo cuenta el servidor). */
+  sinLeer?: number;
 }) {
-  const t = textosDriver(idioma);
-  const nombre = (p: Pestana) => new Map(Object.entries(t.nav) as [Pestana, string][]).get(p) ?? p;
+  const t = textosDriver(idioma).nav;
   return (
     <BarraPestanas
       activa={activa}
+      colorActivo={DK.negro}
       alTocar={(p) => alTocar(p as Pestana)}
       pestanas={[
-        { clave: 'inicio', texto: nombre('inicio'), icono: 'home-outline', iconoActivo: 'home' },
-        {
-          clave: 'pedidos',
-          texto: nombre('pedidos'),
-          icono: 'receipt-outline',
-          iconoActivo: 'receipt',
-        },
+        { clave: 'inicio', texto: t.inicio, icono: 'home-outline', iconoActivo: 'home' },
         {
           clave: 'ganancias',
-          texto: nombre('ganancias'),
+          texto: t.ganancias,
           icono: 'stats-chart-outline',
           iconoActivo: 'stats-chart',
         },
         {
-          clave: 'perfil',
-          texto: nombre('perfil'),
-          icono: 'person-outline',
-          iconoActivo: 'person',
+          clave: 'avisos',
+          texto: t.avisos,
+          icono: 'notifications-outline',
+          iconoActivo: 'notifications',
+          insignia: sinLeer > 0 ? sinLeer : undefined,
         },
+        { clave: 'cuenta', texto: t.cuenta, icono: 'person-outline', iconoActivo: 'person' },
       ]}
     />
   );

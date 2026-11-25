@@ -319,6 +319,7 @@ for (const idioma of ['es', 'en'] as const) {
         .getByText(idioma === 'es' ? 'Ganancias' : 'Earnings', { exact: true })
         .last()
         .click();
+      await pr.getByTestId('segmento-billetera').click();
       const enRevision = pr.getByTestId('regalos-en-revision');
       await expect(enRevision).toBeVisible({ timeout: 30_000 });
       await expect(pr.getByTestId('regalos-por-cobrar')).toHaveCount(0);
@@ -385,6 +386,7 @@ for (const idioma of ['es', 'en'] as const) {
         .getByText(idioma === 'es' ? 'Ganancias' : 'Earnings', { exact: true })
         .last()
         .click();
+      await pr.getByTestId('segmento-billetera').click();
       const saldoBloque = pr.getByTestId('saldo-prepago');
       await expect(saldoBloque).toBeVisible({ timeout: 30_000 });
       await expect(pr.getByTestId('regalos-por-cobrar')).toBeVisible();
@@ -426,6 +428,7 @@ for (const idioma of ['es', 'en'] as const) {
           .getByText(idioma === 'es' ? 'Ganancias' : 'Earnings', { exact: true })
           .last()
           .click();
+        await pr.getByTestId('segmento-billetera').click();
         await expect(pr.getByTestId('saldo-prepago')).toBeVisible({ timeout: 30_000 });
       }
       if (TIENDA && idioma === 'es') {

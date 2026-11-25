@@ -305,7 +305,8 @@ for (const idioma of ['es', 'en'] as const)
     await expect(estado).toBeVisible({ timeout: 20_000 });
 
     // Perfil en acordeón: Mi vehículo → Mi moto con sus papeles; Documentos compartidos.
-    await p.getByRole('tab', { name: idioma === 'en' ? 'Profile' : 'Perfil' }).click();
+    await p.getByTestId('pestana-cuenta').click();
+    await p.getByTestId('cuenta-vehiculo').click();
     await expect(p.getByTestId('perfil-acordeon')).toBeVisible({ timeout: 20_000 });
     await p.getByTestId('seccion-vehiculo').click();
     await p.getByTestId('vehiculo-moto').getByRole('button').first().click();

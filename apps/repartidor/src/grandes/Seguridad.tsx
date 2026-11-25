@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Linking, Platform, Pressable, Share, Switch, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
 import { type Api, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, Text } from '@tumbite/movil';
+import { Boton, C, Deslizador, e, Text } from '@tumbite/movil';
 import { cargarAccesibilidad, fijarAuditiva } from './accesibilidad';
 
 /**
@@ -14,6 +14,7 @@ const T = {
   es: {
     titulo: 'Seguridad',
     emergencia: 'Emergencia',
+    deslizarEmergencia: 'Desliza para emergencias',
     emergenciaAyuda: 'Avisa a nuestro equipo con tu ubicación y te deja llamar a emergencias.',
     seguro: '¿Avisar una emergencia? Nuestro equipo recibe tu ubicación ahora mismo.',
     si: 'Sí, avisar',
@@ -43,6 +44,7 @@ const T = {
   en: {
     titulo: 'Safety',
     emergencia: 'Emergency',
+    deslizarEmergencia: 'Slide for emergency help',
     emergenciaAyuda: 'Alerts our team with your location and lets you call emergency services.',
     seguro: 'Report an emergency? Our team gets your location right now.',
     si: 'Yes, alert',
@@ -162,23 +164,19 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
 
   return (
     <View style={{ padding: 16, gap: 12 }} testID="seguridad">
-      <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       {error ? <Text style={e.error}>{error}</Text> : null}
       {aviso ? <Text style={{ color: C.exito, fontWeight: '700' }}>{aviso}</Text> : null}
       <View style={[e.tarjeta, { gap: 8 }]}>
-        <Pressable
-          onPress={() => void emergencia()}
-          accessibilityRole="button"
-          accessibilityLabel={t.emergencia}
-          style={{
-            backgroundColor: C.primario,
-            borderRadius: 14,
-            paddingVertical: 16,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>{t.emergencia}</Text>
-        </Pressable>
+        {/* C-REDISENO-DRIVER: la emergencia se desliza (un toque en el bolsillo no la dispara);
+            después, como siempre, se confirma y se avisa al equipo con la ubicación. */}
+        <Deslizador
+          variante="accion"
+          tono="marca"
+          testID="seguridad-emergencia"
+          texto={t.deslizarEmergencia}
+          accionLector={t.emergencia}
+          alConfirmar={() => emergencia()}
+        />
         <Text style={{ color: '#666B73', fontSize: 13 }}>{t.emergenciaAyuda}</Text>
         {numero ? (
           <Boton texto={t.llamar(numero)} alTocar={() => void Linking.openURL(`tel:${numero}`)} />

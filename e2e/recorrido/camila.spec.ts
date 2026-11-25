@@ -191,7 +191,8 @@ for (const idioma of ['es', 'en'] as const) {
     );
     const pr = await ctxRep.newPage();
     await pr.goto('/driver');
-    await pr.getByLabel(C.textos.menu, { exact: true }).first().click({ timeout: 60_000 });
+    // C-REDISENO-DRIVER: lo del menú de arriba está en la pestaña «Cuenta».
+    await pr.getByTestId('pestana-cuenta').click({ timeout: 60_000 });
     await pr.getByText(C.textos.ayuda, { exact: true }).click();
     await expect(pr.getByTestId('ayuda-driver')).toBeVisible({ timeout: 30_000 });
     if (CAPTURAS) await pr.screenshot({ path: join(CARPETA, `camila-driver-ayuda-${idioma}.png`) });
