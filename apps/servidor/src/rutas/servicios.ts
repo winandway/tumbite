@@ -1993,7 +1993,12 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     .first();
   // C-EDAD-POR-PAIS: la edad de ESTE servicio en su país, con la fecha guardada. Si la cumple, el
   // requisito de edad queda al día (lo pone el sistema) antes de habilitar.
-  if (d.estado === 'aprobada' && (await serviciosQuePidenEdad(db)).includes(servicio)) {
+  // C-PLAZO-PAPELES: si el país del conductor declara la edad exenta, no se mira (como los demás).
+  if (
+    d.estado === 'aprobada' &&
+    (await serviciosQuePidenEdad(db)).includes(servicio) &&
+    !(await graciaDe(db, conductor)).exentos.has(REQUISITO_EDAD)
+  ) {
     const e = (await edadPorServicio(db, conductor, [servicio])).get(servicio);
     if (e?.falta) {
       // Lo demás que le falte sale junto con la edad (la misma lista del disparador).

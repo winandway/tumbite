@@ -141,7 +141,11 @@ describe('C-FECHA-GUARDADA: lo leído se guarda al leerlo y la edad sale de la f
       confianzaNacimiento: 93,
       confianza: 95,
     });
-    expect(await guardarDatosLeidos(s.m.DB, a.id)).toEqual({ escribio: true, fecha: true });
+    expect(await guardarDatosLeidos(s.m.DB, a.id)).toEqual({
+      escribio: true,
+      fecha: true,
+      leidos: true,
+    });
     const u = await s.m.DB.prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
       .bind(a.id)
       .first<{ fecha_nacimiento: string }>();
@@ -154,7 +158,11 @@ describe('C-FECHA-GUARDADA: lo leído se guarda al leerlo y la edad sale de la f
     expect(dd).toEqual({ numero: 'V12345678', nacimiento: '1974-03-10', estado: 'propuesta' });
     expect(await s.edadCumplida(a.id)).toEqual({ estado: 'aprobado', fuente: 'sistema' });
     // Al día: no escribe nada.
-    expect(await guardarDatosLeidos(s.m.DB, a.id)).toEqual({ escribio: false, fecha: false });
+    expect(await guardarDatosLeidos(s.m.DB, a.id)).toEqual({
+      escribio: false,
+      fecha: false,
+      leidos: true,
+    });
     const b = await s.conductor('Conductor Dudoso', null);
     await s.lectura(b.id, { nacimiento: '1974-03-10', confianzaNacimiento: 40, confianza: 90 });
     expect((await guardarDatosLeidos(s.m.DB, b.id)).fecha).toBe(false);
@@ -213,7 +221,11 @@ describe('C-FECHA-GUARDADA: lo leído se guarda al leerlo y la edad sale de la f
     });
     // Segunda vuelta: todo al día, nada que releer.
     releidas.length = 0;
-    expect(await rellenarDatosDocumento(s.m.DB, releer)).toEqual({ sinIa: 0, releidas: 0 });
+    expect(await rellenarDatosDocumento(s.m.DB, releer)).toEqual({
+      sinIa: 0,
+      releidas: 0,
+      fin: true,
+    });
     expect(releidas).toEqual([]);
   });
 });

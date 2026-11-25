@@ -7,6 +7,7 @@ import {
   perfilPasajeros,
 } from '@tumbite/compartido';
 import { ZONA_CONDUCTOR_SQL } from './cuentaPais';
+import { guardarError } from './errores';
 
 /**
  * C-EDAD-POR-PAIS y C-FECHA-GUARDADA (Richard, 25 nov 2026: a un conductor de Venezuela nacido en 1974
@@ -339,9 +340,9 @@ const igual = (
 export async function guardarDatosLeidos(
   db: Db,
   id: string,
-): Promise<{ escribio: boolean; fecha: boolean }> {
+): Promise<{ escribio: boolean; fecha: boolean; leidos: boolean }> {
   const datos = datosDeLecturas(await lecturasDe(db, id));
-  if (!datos) return { escribio: false, fecha: false };
+  if (!datos) return { escribio: false, fecha: false, leidos: false };
   const antes = await db
     .prepare('SELECT * FROM datos_documento WHERE usuario_id = ?')
     .bind(id)
@@ -410,7 +411,7 @@ export async function guardarDatosLeidos(
         .run();
   }
   const edad = await sincronizarEdad(db, id);
-  return { escribio: escribio || fecha || edad, fecha };
+  return { escribio: escribio || fecha || edad, fecha, leidos: true };
 }
 
 /** Al aprobar la identidad: lo leído queda confirmado por esa persona del equipo. */
@@ -426,19 +427,11 @@ export async function confirmarDatosLeidos(db: Db, id: string, adminId: string) 
 
 // ───────────────────────── Relleno de los que ya existen ─────────────────────────
 
-/** Cuántos conductores mira una vuelta (sin IA) y cuántas cédulas vuelve a leer (con IA). */
-export const LOTE_RELLENO = 40;
-export const TOPE_RELEER_POR_VUELTA = 3;
-/** Cuántas verificaciones mira por vuelta el relleno con IA (para leer poco). */
+/** Cuántas cuentas mira una vuelta y cuántas cédulas vuelve a leer (con IA) como mucho. */
 export const VENTANA_RELLENO = 100;
-export const CLAVE_CURSOR_RELLENO = 'relleno_cedulas_cursor';
+export const TOPE_RELEER_POR_VUELTA = 3;
+export const CLAVE_CURSOR_RELLENO = 'relleno_documento_cursor';
 
-/**
- * C-FECHA-GUARDADA, relleno: en cada vuelta del reloj, (1) los conductores con lecturas ya guardadas
- * y sin `datos_documento` las pasan a su cuenta SIN llamar a la IA; (2) solo a quien tiene la foto del
- * documento subida y nunca leída se le vuelve a leer, como mucho `TOPE_RELEER_POR_VUELTA` por vuelta y
- * dentro del presupuesto diario de la IA (`comprobarFoto` ya lo respeta). Al día no escribe nada.
- */
 export type CedulaPorLeer = {
   conductorId: string;
   /** La fila de la foto ya guardada, o null si solo está en la verificación vieja (`kyc`). */
@@ -446,102 +439,121 @@ export type CedulaPorLeer = {
   clave: string;
 };
 
+type FilaRelleno = {
+  rid: number;
+  id: string;
+  rol: string;
+  fecha: string | null;
+  conDatos: number;
+  edadAlDia: number;
+  conLectura: number;
+  fotoId: string | null;
+  claveFoto: string | null;
+  conFecha: number | null;
+  claveKyc: string | null;
+};
+
+/**
+ * C-FECHA-GUARDADA, relleno de los conductores que ya existían, en cada vuelta del reloj. Recorre las
+ * cuentas UNA sola vez, por tramos de `VENTANA_RELLENO`, con un cursor guardado en `config`, y al
+ * llegar al final se apaga solo («fin»: desde ahí cada vuelta lee una fila y no escribe nada). Lo
+ * nuevo ya entra por la subida de cada foto, la aprobación y la fecha a mano. A cada conductor:
+ *   1. si tiene lecturas guardadas y no su fila de `datos_documento`, las pasa a su cuenta SIN IA; una
+ *      lectura ilegible deja su fila vacía (vista) y UNA línea en el registro de errores;
+ *   2. si tiene fecha y el requisito de edad sin poner al día, lo pone al día (si no cumple ningún
+ *      servicio no escribe nada: el cursor ya lo dejó atrás);
+ *   3. solo si sigue sin fecha y su cédula nunca se leyó con la fecha, la vuelve a leer con `releer`
+ *      (el modelo barato, con su permiso y el presupuesto diario), como mucho
+ *      `TOPE_RELEER_POR_VUELTA` por vuelta: con el tope lleno, el cursor se queda ahí para la próxima.
+ */
 export async function rellenarDatosDocumento(
   db: Db,
   releer: (c: CedulaPorLeer) => Promise<boolean>,
-): Promise<{ sinIa: number; releidas: number }> {
-  const { results: conLectura } = await db
-    .prepare(
-      `SELECT DISTINCT f.conductor_id AS id FROM verificacion_fotos f
-        WHERE f.estado = 'vigente' AND f.ia_json != '' AND f.paso IN ('doc_frente', 'doc_reverso', 'licencia_frente')
-          AND NOT EXISTS (SELECT 1 FROM datos_documento d WHERE d.usuario_id = f.conductor_id)
-        LIMIT ?`,
-    )
-    .bind(LOTE_RELLENO)
-    .all<{ id: string }>();
-  let sinIa = 0;
-  for (const c of conLectura) if ((await guardarDatosLeidos(db, c.id)).escribio) sinIa++;
-  // Los que ya tenían su fecha y su edad sin poner al día (por ejemplo, antes de este cambio).
-  const { results: sinEdad } = await db
-    .prepare(
-      `SELECT u.id FROM usuarios u
-        WHERE u.rol = 'repartidor' AND u.fecha_nacimiento IS NOT NULL AND u.fecha_nacimiento != ''
-          AND NOT EXISTS (SELECT 1 FROM cumplimientos c WHERE c.conductor_id = u.id AND c.vehiculo_id = ''
-                            AND c.requisito = ? AND c.estado IN ('aprobado', 'revocado'))
-        LIMIT ?`,
-    )
-    .bind(REQUISITO_EDAD, LOTE_RELLENO)
-    .all<{ id: string }>();
-  for (const c of sinEdad) if (await sincronizarEdad(db, c.id)) sinIa++;
-  // Con IA, poquitas: la cédula sin fecha leída (nunca leída o leída antes de pedir la fecha) de quien
-  // no tiene fecha en su cuenta. Recorre las verificaciones por tramos de VENTANA_RELLENO con un cursor
-  // guardado (cada vuelta lee poco) y, al llegar al final, se apaga solo («fin»). Lo nuevo ya entra
-  // leído por la subida de cada foto.
+): Promise<{ sinIa: number; releidas: number; fin: boolean }> {
   const cursor = await db
     .prepare('SELECT valor FROM config WHERE clave = ?')
     .bind(CLAVE_CURSOR_RELLENO)
     .first<{ valor: string }>();
+  if (cursor?.valor === 'fin') return { sinIa: 0, releidas: 0, fin: true };
+  const desde = Number(cursor?.valor ?? 0) || 0;
+  const vigente = (campo: string) =>
+    `(SELECT ${campo} FROM verificacion_fotos f WHERE f.conductor_id = u.id
+        AND f.paso = 'doc_frente' AND f.estado = 'vigente' LIMIT 1)`;
+  const { results: tramo } = await db
+    .prepare(
+      `SELECT u.rowid AS rid, u.id, u.rol, u.fecha_nacimiento AS fecha,
+              EXISTS (SELECT 1 FROM datos_documento d WHERE d.usuario_id = u.id) AS conDatos,
+              EXISTS (SELECT 1 FROM cumplimientos c WHERE c.conductor_id = u.id AND c.vehiculo_id = ''
+                        AND c.requisito = '${REQUISITO_EDAD}' AND c.estado IN ('aprobado', 'revocado')) AS edadAlDia,
+              EXISTS (SELECT 1 FROM verificacion_fotos f WHERE f.conductor_id = u.id AND f.estado = 'vigente'
+                        AND f.ia_json != '' AND f.paso IN ('doc_frente', 'doc_reverso', 'licencia_frente')) AS conLectura,
+              ${vigente('f.id')} AS fotoId, ${vigente('f.clave')} AS claveFoto,
+              ${vigente(`instr(f.ia_json, '"nacimiento"')`)} AS conFecha,
+              (SELECT k.doc_frente FROM kyc k WHERE k.usuario_id = u.id) AS claveKyc
+         FROM usuarios u WHERE u.rowid > ? ORDER BY u.rowid LIMIT ?`,
+    )
+    .bind(desde, VENTANA_RELLENO)
+    .all<FilaRelleno>();
+  let sinIa = 0;
   let releidas = 0;
-  if (cursor?.valor !== 'fin') {
-    const desde = Number(cursor?.valor ?? 0) || 0;
-    const { results: tramo } = await db
-      .prepare(
-        `SELECT k.rowid AS rid, k.usuario_id AS conductorId, k.doc_frente AS claveKyc, u.rol,
-                u.fecha_nacimiento AS fecha,
-                (SELECT f.id FROM verificacion_fotos f WHERE f.conductor_id = k.usuario_id
-                   AND f.paso = 'doc_frente' AND f.estado = 'vigente' LIMIT 1) AS fotoId,
-                (SELECT f.clave FROM verificacion_fotos f WHERE f.conductor_id = k.usuario_id
-                   AND f.paso = 'doc_frente' AND f.estado = 'vigente' LIMIT 1) AS claveFoto,
-                (SELECT instr(f.ia_json, '"nacimiento"') FROM verificacion_fotos f WHERE f.conductor_id = k.usuario_id
-                   AND f.paso = 'doc_frente' AND f.estado = 'vigente' LIMIT 1) AS conFecha
-           FROM kyc k JOIN usuarios u ON u.id = k.usuario_id
-          WHERE k.rowid > ? ORDER BY k.rowid LIMIT ?`,
-      )
-      .bind(desde, VENTANA_RELLENO)
-      .all<{
-        rid: number;
-        conductorId: string;
-        claveKyc: string | null;
-        rol: string;
-        fecha: string | null;
-        fotoId: string | null;
-        claveFoto: string | null;
-        conFecha: number | null;
-      }>();
-    let hasta = tramo.at(-1)?.rid ?? desde;
-    for (const f of tramo) {
-      const porLeer: CedulaPorLeer | null =
-        f.rol !== 'repartidor' || f.fecha
-          ? null
-          : f.fotoId && f.claveFoto && !Number(f.conFecha)
-            ? { conductorId: f.conductorId, fotoId: f.fotoId, clave: f.claveFoto }
-            : !f.fotoId && f.claveKyc
-              ? { conductorId: f.conductorId, fotoId: null, clave: f.claveKyc }
-              : null;
-      if (!porLeer) continue;
-      if (releidas >= TOPE_RELEER_POR_VUELTA) {
-        hasta = f.rid - 1;
-        break;
+  let hasta = tramo.at(-1)?.rid ?? desde;
+  let lleno = false;
+  for (const f of tramo) {
+    if (f.rol !== 'repartidor') continue;
+    let fecha = f.fecha || null;
+    if (Number(f.conLectura) && !Number(f.conDatos)) {
+      const r = await guardarDatosLeidos(db, f.id);
+      if (r.escribio) sinIa++;
+      if (r.fecha) fecha = 'guardada';
+      if (!r.leidos) {
+        // Ilegible: queda vista (fila vacía) y el fallo, una sola vez, en el registro de errores.
+        await db
+          .prepare('INSERT OR IGNORE INTO datos_documento (usuario_id) VALUES (?)')
+          .bind(f.id)
+          .run();
+        await guardarError(
+          db,
+          'RELOJ',
+          '/reloj/datos_documento',
+          new Error('relleno: la lectura guardada de su documento no se puede leer'),
+          f.id,
+        ).catch((e: unknown) => console.error('relleno: no se pudo anotar el error', e));
+        sinIa++;
       }
-      await db
-        .prepare(
-          `INSERT INTO datos_documento (usuario_id, releida_en) VALUES (?, datetime('now'))
-           ON CONFLICT(usuario_id) DO UPDATE SET releida_en = datetime('now')`,
-        )
-        .bind(porLeer.conductorId)
-        .run();
-      if (await releer(porLeer)) await guardarDatosLeidos(db, porLeer.conductorId);
-      releidas++;
+    } else if (fecha && !Number(f.edadAlDia)) {
+      if (await sincronizarEdad(db, f.id)) sinIa++;
     }
-    const fin = tramo.length < VENTANA_RELLENO && hasta === (tramo.at(-1)?.rid ?? desde);
-    const valor = fin ? 'fin' : String(hasta);
-    if (valor !== cursor?.valor)
-      await db
-        .prepare(
-          "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
-        )
-        .bind(CLAVE_CURSOR_RELLENO, valor)
-        .run();
+    if (fecha) continue;
+    const porLeer: CedulaPorLeer | null =
+      f.fotoId && f.claveFoto && !Number(f.conFecha)
+        ? { conductorId: f.id, fotoId: f.fotoId, clave: f.claveFoto }
+        : !f.fotoId && f.claveKyc
+          ? { conductorId: f.id, fotoId: null, clave: f.claveKyc }
+          : null;
+    if (!porLeer) continue;
+    if (releidas >= TOPE_RELEER_POR_VUELTA) {
+      hasta = f.rid - 1;
+      lleno = true;
+      break;
+    }
+    await db
+      .prepare(
+        `INSERT INTO datos_documento (usuario_id, releida_en) VALUES (?, datetime('now'))
+         ON CONFLICT(usuario_id) DO UPDATE SET releida_en = datetime('now')`,
+      )
+      .bind(f.id)
+      .run();
+    if (await releer(porLeer)) await guardarDatosLeidos(db, f.id);
+    releidas++;
   }
-  return { sinIa, releidas };
+  const fin = !lleno && tramo.length < VENTANA_RELLENO;
+  const valor = fin ? 'fin' : String(hasta);
+  if (valor !== cursor?.valor)
+    await db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(CLAVE_CURSOR_RELLENO, valor)
+      .run();
+  return { sinIa, releidas, fin };
 }
