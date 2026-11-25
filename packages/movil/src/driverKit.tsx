@@ -1186,3 +1186,79 @@ export function useEsTableta(): boolean {
   const { width } = useWindowDimensions();
   return width >= 768;
 }
+
+/**
+ * C-CODIGO-A-LA-VISTA (24 nov 2026, Gerencia tras una prueba real; todos los países). Al llegar, si el
+ * viaje pide código, y al entregar un envío o una comida con código: un aviso grande «Pídele el código
+ * al pasajero» con la casilla de 4 dígitos dentro, arriba de la pantalla (sin bajar). Si se equivoca,
+ * dice cuántos intentos le quedan (lo manda el servidor). Las reglas del código siguen en el servidor.
+ */
+export function CodigoALaVistaDriver({
+  titulo: tituloAviso,
+  ayuda,
+  intentos,
+  error,
+  children,
+  testID = 'codigo-a-la-vista',
+}: {
+  titulo: string;
+  ayuda?: string;
+  /** «Te quedan 2 intentos» (o null si el servidor no lo cuenta). */
+  intentos?: string | null;
+  /** Lo que respondió el servidor si el código no sirvió. */
+  error?: string | null;
+  /** La casilla de 4 dígitos. */
+  children: ReactNode;
+  testID?: string;
+}) {
+  return (
+    <View
+      testID={testID}
+      accessibilityRole="summary"
+      style={{
+        borderWidth: 1.5,
+        borderColor: error ? DK.rojo : DK.negro,
+        borderRadius: 14,
+        padding: 14,
+        gap: 10,
+        backgroundColor: DK.blanco,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Icono nombre="keypad-outline" tamano={24} color={DK.negro} />
+        <Text
+          accessibilityRole="header"
+          testID={`${testID}-titulo`}
+          style={{ ...titulo(20, '700'), flex: 1, lineHeight: 26 }}
+        >
+          {tituloAviso}
+        </Text>
+      </View>
+      {ayuda ? (
+        <Text style={{ color: DK.gris, fontSize: 13.5, lineHeight: 19 }}>{ayuda}</Text>
+      ) : null}
+      {children}
+      {error ? (
+        <Text
+          accessibilityRole="alert"
+          testID={`${testID}-error`}
+          style={{ color: DK.rojoOscuro, fontFamily: FUENTE.textoNegrita, fontSize: 14 }}
+        >
+          {error}
+        </Text>
+      ) : null}
+      {intentos ? (
+        <Text
+          testID={`${testID}-intentos`}
+          style={{
+            color: error ? DK.rojoOscuro : DK.gris,
+            fontFamily: FUENTE.textoFuerte,
+            fontSize: 13,
+          }}
+        >
+          {intentos}
+        </Text>
+      ) : null}
+    </View>
+  );
+}

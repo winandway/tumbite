@@ -1319,11 +1319,10 @@ for (const idioma of ['en', 'es'] as const) {
       await expect(gustar).toBeVisible({ timeout: 20_000 });
       await gustar.scrollIntoViewIfNeeded();
       await foto(cli, 'cliente-te-puede-gustar');
-      // Calificar al cliente: el repartidor, en «Pedidos», califica a quien recibió hoy.
-      await rep
-        .getByText(/^(Orders|Pedidos)$/)
-        .last()
-        .click();
+      // Calificar al cliente: el repartidor, en Cuenta › «Mis entregas», califica a quien recibió hoy
+      // (C-REDISENO-DRIVER: la pestaña «Pedidos» pasó a esa fila de la Cuenta).
+      await rep.getByTestId('pestana-cuenta').click();
+      await rep.getByTestId('cuenta-entregas').click();
       const calificarCliente = rep.getByTestId('calificar-cliente');
       await expect(calificarCliente).toBeVisible({ timeout: 20_000 });
       await calificarCliente.scrollIntoViewIfNeeded();
@@ -1794,8 +1793,9 @@ for (const idioma of ['en', 'es'] as const) {
       await rep.getByRole('button', { name: L.misCalificaciones }).click();
       await expect(rep.getByTestId('calificaciones')).toBeVisible({ timeout: 20_000 });
       await foto(rep, 'repartidor-calificaciones');
-      await rep.getByRole('button', { name: L.campana }).click();
-      await expect(rep.getByText(L.tusAvisos)).toBeVisible({ timeout: 20_000 });
+      // C-REDISENO-DRIVER: la campana es la pestaña «Avisos» de la barra de abajo.
+      await rep.getByTestId('pestana-avisos').click();
+      await expect(rep.getByTestId('avisos-repartidor')).toBeVisible({ timeout: 20_000 });
       await foto(rep, 'repartidor-avisos');
       const saldo = sql(
         `SELECT COALESCE(SUM(m.monto), 0) AS s FROM movimientos m JOIN usuarios u ON u.id = m.usuario_id WHERE u.correo = '${correo('repartidor')}'`,

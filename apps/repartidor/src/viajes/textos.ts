@@ -52,6 +52,7 @@ export const TEXTOS_VIAJE = {
       noSePresento: 'Quien envía no se presentó',
       codigo: 'Código de quien envía',
       codigoAyuda: 'Pídele a quien envía el código de 4 dígitos que ve en su app.',
+      avisoCodigo: 'Pídele el código a quien envía',
       iniciar: 'Recogí el paquete',
       deslizarIniciar: 'Desliza: recogí el paquete',
       confirmarIniciar: { pregunta: '¿Recogiste el paquete?', si: 'Sí, lo recogí', no: 'Cancelar' },
@@ -107,6 +108,15 @@ export const TEXTOS_VIAJE = {
       codigo: 'Código del pasajero',
       codigoAyuda: 'Pídele a tu pasajero el código de 4 dígitos que ve en su app.',
       intentos: 'intentos',
+      // C-CODIGO-A-LA-VISTA (24 nov 2026).
+      avisoCodigo: 'Pídele el código al pasajero',
+      avisoCodigoEntrega: 'Pídele el código de entrega',
+      quedanIntentos: (n: number) =>
+        n === 1
+          ? 'Te queda 1 intento.'
+          : n === 0
+            ? 'No te quedan intentos.'
+            : `Te quedan ${n} intentos.`,
       iniciar: 'Iniciar viaje',
       deslizarIniciar: 'Desliza para iniciar el viaje',
       confirmarIniciar: { pregunta: '¿Iniciar el viaje?', si: 'Iniciar', no: 'Cancelar' },
@@ -204,6 +214,7 @@ export const TEXTOS_VIAJE = {
       noSePresento: 'Sender didn’t show up',
       codigo: 'Sender’s code',
       codigoAyuda: 'Ask the sender for the 4-digit code shown in their app.',
+      avisoCodigo: 'Ask the sender for their code',
       iniciar: 'I picked up the package',
       deslizarIniciar: 'Slide: I picked up the package',
       confirmarIniciar: {
@@ -261,6 +272,11 @@ export const TEXTOS_VIAJE = {
       codigo: 'Rider’s code',
       codigoAyuda: 'Ask your rider for the 4-digit code shown in their app.',
       intentos: 'attempts left',
+      // C-CODIGO-A-LA-VISTA (24 nov 2026).
+      avisoCodigo: 'Ask your rider for their code',
+      avisoCodigoEntrega: 'Ask for the delivery code',
+      quedanIntentos: (n: number) =>
+        n === 1 ? '1 attempt left.' : n === 0 ? 'No attempts left.' : `${n} attempts left.`,
       iniciar: 'Start ride',
       deslizarIniciar: 'Slide to start the ride',
       confirmarIniciar: { pregunta: 'Start the ride?', si: 'Start', no: 'Cancel' },

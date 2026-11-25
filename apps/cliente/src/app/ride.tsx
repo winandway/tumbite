@@ -30,7 +30,7 @@ function PantallaMoto() {
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
   // C-AVISOS-VIAJE: tocar un aviso de viaje abre ESE viaje (`viaje`), aunque ya haya terminado
   // (así «Viaje terminado» lleva a calificar).
-  const params = useLocalSearchParams<{ servicio?: string; viaje?: string }>();
+  const params = useLocalSearchParams<{ servicio?: string; viaje?: string; chat?: string }>();
   const pedido = params.servicio;
   const delAviso =
     typeof params.viaje === 'string' && ID_VIAJE.test(params.viaje) ? params.viaje : null;
@@ -145,6 +145,7 @@ function PantallaMoto() {
           ) : null}
           <ViajeEnCurso
             viaje={viaje}
+            chatAbierto={params.chat === '1'}
             paquete={paquete}
             alCambiar={() => void cargar()}
             alTerminar={async () => {

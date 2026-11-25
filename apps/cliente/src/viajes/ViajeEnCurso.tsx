@@ -20,6 +20,8 @@ import {
   C,
   Campo,
   ChatPedido,
+  TarjetaChatViaje,
+  type UltimoMensajeViaje,
   MontoEnMano,
   useFotoPrivada,
   useSesion,
@@ -44,6 +46,9 @@ import { PrecioCompacto, PrecioDelViaje, type RegaloDelViaje } from './PrecioDel
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
 export type ViajePasajero = {
   id: string;
+  /** C-CHAT-VIAJE-LLEGA: lo que no ha visto del chat y el último mensaje (de la ficha del viaje). */
+  mensajesSinLeer?: number;
+  ultimoMensaje?: UltimoMensajeViaje | null;
   /** C-CARRO-VIAJE-PASAJERO: moto, carro o envios, y en Carro si es XL. */
   servicio?: string;
   categoria?: string;
@@ -282,7 +287,10 @@ export function ViajeEnCurso({
   paquete = null,
   alCambiar,
   alTerminar,
+  chatAbierto = false,
 }: {
+  /** C-CHAT-VIAJE-LLEGA: se abrió desde un aviso de mensaje: el chat empieza abierto. */
+  chatAbierto?: boolean;
   viaje: ViajePasajero;
   paquete?: PaqueteCliente | null;
   alCambiar: () => void;
@@ -304,7 +312,13 @@ export function ViajeEnCurso({
   const [comentario, setComentario] = useState('');
   const [calificado, setCalificado] = useState(false);
   // C-CHAT-VIAJE: mensajes con el conductor mientras el viaje está activo (sin teléfonos).
-  const [verChat, setVerChat] = useState(false);
+  const [verChat, setVerChat] = useState(chatAbierto);
+  // Un aviso de mensaje tocado con esta pantalla ya abierta también abre el chat.
+  const [abrirVisto, setAbrirVisto] = useState(chatAbierto);
+  if (chatAbierto !== abrirVisto) {
+    setAbrirVisto(chatAbierto);
+    if (chatAbierto) setVerChat(true);
+  }
   // C-ESPERA-ADELANTE: ancho de la escena animada mientras se busca conductor.
   const [anchoEscena, setAnchoEscena] = useState(0);
   const te = enIdioma(TEXTOS_ESPERA, idioma);
@@ -430,6 +444,19 @@ export function ViajeEnCurso({
 
   return (
     <View testID="viaje-pasajero" style={{ gap: 12 }}>
+      {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
+        <>
+          {/* C-CHAT-VIAJE-LLEGA: el último mensaje y lo no leído, a la vista; tocar abre el chat. */}
+          <TarjetaChatViaje
+            idioma={idioma}
+            sinLeer={viaje.mensajesSinLeer ?? 0}
+            ultimo={viaje.ultimoMensaje ?? null}
+            abierto={verChat}
+            alTocar={() => setVerChat((x) => !x)}
+          />
+          {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
+        </>
+      ) : null}
       {buscando ? (
         // C-ESPERA-ADELANTE (fase cero): la escena animada, el título, la calma y la barra roja.
         <View onLayout={(ev) => setAnchoEscena(ev.nativeEvent.layout.width)}>
@@ -819,16 +846,6 @@ export function ViajeEnCurso({
                 : t.cancelarGratis
               : `${t.cancelarCargo} ${monto(viaje.cancelacion.cargo)}`}
           </Text>
-        </>
-      ) : null}
-      {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
-        <>
-          <Boton
-            texto={verChat ? t.ocultarMensajes : t.mensajesConductor}
-            alTocar={() => setVerChat((x) => !x)}
-            secundario
-          />
-          {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
         </>
       ) : null}
       {viaje.estado === 'terminado' && !calificado ? (

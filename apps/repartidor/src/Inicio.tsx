@@ -182,6 +182,7 @@ import {
   BotonDriver,
   BotonRedondoDriver,
   CabeceraDriverPantalla,
+  CodigoALaVistaDriver,
   EstadoConexionDriver,
   FlotanteDriver,
   HojaDriver,
@@ -444,6 +445,7 @@ const T = {
       no: 'Cancelar',
     },
     pinPedir: 'PIN de 4 dígitos (lo tiene quien recibe, en su app)',
+    pinAviso: 'Pídele el código de entrega',
     noAparece: 'El cliente no aparece',
     esperando5: 'Avisamos al cliente. Escríbele por el chat y espera',
     dejarSeguro: 'Dejar en lugar seguro (con foto)',
@@ -587,6 +589,7 @@ const T = {
     deslizarEnMano: 'Slide: handed to the customer',
     confirmarEnMano: { pregunta: 'Did you hand the order over?', si: 'Delivered', no: 'Cancel' },
     pinPedir: '4-digit PIN (the person receiving has it in their app)',
+    pinAviso: 'Ask for the delivery code',
     noAparece: 'Customer isn’t here',
     esperando5: 'We told the customer. Message them in the chat and wait',
     dejarSeguro: 'Leave in a safe spot (with photo)',
@@ -811,7 +814,14 @@ export function Inicio() {
   const [cuentaArriba, setCuentaArriba] = useState(false);
   // Flex · Fase 3: tocar un aviso de ruta abre «Mi ruta» directamente en esa ruta.
   const [rutaDelAviso, setRutaDelAviso] = useState<string | null>(null);
+  // C-CHAT-VIAJE-LLEGA: tocar el aviso de un mensaje abre el viaje con el chat abierto.
+  const [chatDelAviso, setChatDelAviso] = useState(0);
   const alTocarAviso = useCallback((d: Record<string, unknown>) => {
+    if (d.tipo === 'viaje' && d.mensaje === '1') {
+      setVista('inicio');
+      setChatDelAviso(Date.now());
+      return;
+    }
     if (d.tipo === 'flex' && typeof d.rutaId === 'string') {
       setRutaDelAviso(d.rutaId);
       setVista('miRuta');
@@ -2135,7 +2145,13 @@ export function Inicio() {
             : ultimaPestana;
   // Las pantallas de las pestañas no llevan «‹»; las demás vuelven a la pestaña de donde salieron.
   const titulo = tituloDeVista(vista, idioma);
-  const esRaiz = vista === 'inicio' || vista === 'billetera' || vista === 'avisos';
+  // «Agregar un servicio» y «Vehículo» traen su propio «Volver» (no van dos).
+  const esRaiz =
+    vista === 'inicio' ||
+    vista === 'billetera' ||
+    vista === 'avisos' ||
+    vista === 'agregar' ||
+    vista === 'vehiculo';
   const lienzo = (_pestana: string, cuerpo: ReactNode, sinScroll = false, blanco = false) => (
     <SafeAreaView
       style={[e.fondo, { backgroundColor: blanco ? '#FFFFFF' : '#F6F6F6' }]}
@@ -2964,6 +2980,7 @@ export function Inicio() {
         ) : null}
         <ViajeActivo
           key={viajeMostrado.id}
+          abrirChat={chatDelAviso}
           api={{
             // C-ENVIOS: la foto del paquete al recogerlo.
             subirFoto: (foto, ruta) => api.subirFoto(foto, ruta),
@@ -3120,6 +3137,36 @@ export function Inicio() {
           <Progreso idioma={idioma} paso={pasoActivo} />
         </View>
         <View style={{ padding: 16 }}>
+          {/* C-CODIGO-A-LA-VISTA: al entregar con PIN, el aviso y la casilla arriba de todo. */}
+          {activo.estado === 'en_camino' && activo.pinRequerido ? (
+            <View style={{ marginBottom: 12 }}>
+              <CodigoALaVistaDriver
+                titulo={t.pinAviso}
+                ayuda={t.pinPedir}
+                error={error || null}
+                testID="codigo-comida-a-la-vista"
+              >
+                <TextInput
+                  testID="pedido-pin-entrega"
+                  value={pinEntrega}
+                  onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
+                  accessibilityLabel={t.pinPedir}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  style={[
+                    e.input,
+                    {
+                      minHeight: 56,
+                      fontSize: 24,
+                      letterSpacing: 14,
+                      textAlign: 'center',
+                      fontFamily: 'Poppins_600SemiBold',
+                    },
+                  ]}
+                />
+              </CodigoALaVistaDriver>
+            </View>
+          ) : null}
           {mensajes}
           <>
             <View style={e.tarjeta}>
@@ -3529,16 +3576,6 @@ export function Inicio() {
                           >
                             {t.conPinSinFoto}
                           </Text>
-                        ) : null}
-                        {activo.pinRequerido ? (
-                          <TextInput
-                            value={pinEntrega}
-                            onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
-                            placeholder={t.pinPedir}
-                            accessibilityLabel={t.pinPedir}
-                            keyboardType="number-pad"
-                            style={[e.input, { marginTop: 6, letterSpacing: 6 }]}
-                          />
                         ) : null}
                         {activo.requiereEdad ? (
                           <Pressable
@@ -4060,12 +4097,15 @@ export function Inicio() {
             />
           }
           derecha={
-            <BotonRedondoDriver
-              icono="flag-outline"
-              etiqueta={idioma === 'en' ? 'Destination mode' : 'Modo destino'}
-              alTocar={() => setHojaDestino(true)}
-              testID="boton-modo-destino"
-            />
+            // Con un pedido en curso no hay modo destino (C-MODO-DESTINO-UN-LUGAR).
+            estado?.activo ? null : (
+              <BotonRedondoDriver
+                icono="flag-outline"
+                etiqueta={idioma === 'en' ? 'Destination mode' : 'Modo destino'}
+                alTocar={() => setHojaDestino(true)}
+                testID="boton-modo-destino"
+              />
+            )
           }
         />
         {barraActivacion ? (
@@ -4240,7 +4280,7 @@ export function Inicio() {
             <Text accessibilityRole="header" style={{ fontSize: 19, fontWeight: '600' }}>
               {idioma === 'en' ? 'Destination mode' : 'Modo destino'}
             </Text>
-            <ModoDestino cerca={aqui} />
+            {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
             <BotonDriver texto={t.cerrar} variante="texto" alTocar={() => setHojaDestino(false)} />
           </HojaDriver>
         </View>

@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { type Browser, type Page, expect, test } from './fixtures';
 import { sinDesbordes } from './desbordes';
+import { deslizar } from './deslizar';
 import { sqlLocal } from './sqlLocal';
 
 /**
@@ -315,7 +316,71 @@ for (const idioma of ['es', 'en'] as const)
       });
       expect(llegue.status()).toBe(200);
       await expect(p.getByTestId('viaje-pin')).toBeVisible({ timeout: 30_000 });
+      // C-CODIGO-A-LA-VISTA: el aviso grande y la casilla arriba, sin bajar, y con el teclado abierto
+      // (se simula quitándole a la pantalla el alto de un teclado de teléfono).
+      await expect(p.getByTestId('codigo-a-la-vista-titulo')).toHaveText(
+        en ? 'Ask your rider for their code' : 'Pídele el código al pasajero',
+      );
+      await expect(p.getByTestId('viaje-pin')).toBeInViewport();
+      if (t.movil) {
+        await p.setViewportSize({ width: t.width, height: t.height - 330 });
+        await p.getByTestId('viaje-pin').focus();
+        // Como hace el teléfono al abrir el teclado: lo enfocado queda a la vista.
+        await p
+          .getByTestId('codigo-a-la-vista')
+          .evaluate((el) => el.scrollIntoView({ block: 'end' }));
+        await expect(p.getByTestId('viaje-pin')).toBeInViewport({ ratio: 1 });
+        await expect(p.getByTestId('codigo-a-la-vista-titulo')).toBeInViewport();
+        await revisar(p, t, 'código con el teclado abierto');
+        await foto(p, t, '11-codigo-teclado', idioma, 'driver-codigo-a-la-vista');
+        await p.setViewportSize({ width: t.width, height: t.height });
+      }
+      // Un código equivocado: el servidor lo rechaza y el aviso dice cuántos intentos quedan.
+      if (t.nombre === '360') {
+        const actual = await request.get('/datos/viajes/actual', { headers: h(cli.token) });
+        const pin = ((await actual.json()) as { viaje: { pin: string } }).viaje.pin;
+        await p.getByTestId('viaje-pin').fill(pin === '0000' ? '1111' : '0000');
+        await deslizar(p, 'viaje-iniciar');
+        await expect(p.getByTestId('codigo-a-la-vista-intentos')).toHaveText(
+          en ? '4 attempts left.' : 'Te quedan 4 intentos.',
+          { timeout: 20_000 },
+        );
+        await p.getByTestId('codigo-a-la-vista').scrollIntoViewIfNeeded();
+        await foto(p, t, '12-codigo-equivocado', idioma, 'driver-codigo-equivocado');
+      }
       await revisar(p, t, 'esperando al pasajero');
       await foto(p, t, '10-codigo', idioma, 'driver-rediseno-codigo');
+      // C-CHAT-VIAJE-LLEGA: el pasajero escribe y el conductor lo ve arriba, sin abrir nada; al abrir
+      // el chat el número baja a cero. Y al revés: el pasajero ve en su app lo que escribió el conductor.
+      if (t.nombre === '360') {
+        const escribe = (tk: string, texto: string) =>
+          request.post(`/datos/viajes/${op}/mensajes`, { headers: h(tk), data: { texto } });
+        expect((await escribe(cli.token, en ? 'Coming out now' : 'Ya salgo')).ok()).toBe(true);
+        await expect(p.getByTestId('chat-viaje-sin-leer')).toHaveText('1', { timeout: 20_000 });
+        await expect(p.getByTestId('chat-viaje-ultimo')).toContainText(
+          en ? 'Coming out now' : 'Ya salgo',
+        );
+        await p.getByTestId('tarjeta-chat-viaje').scrollIntoViewIfNeeded();
+        await revisar(p, t, 'mensaje nuevo del pasajero');
+        await foto(p, t, '13-chat-sin-leer', idioma, 'driver-chat-sin-leer');
+        await p.getByTestId('tarjeta-chat-viaje').click();
+        await expect(p.getByTestId('chat-viaje-sin-leer')).toHaveCount(0, { timeout: 20_000 });
+        expect(
+          (await escribe(cond.token, en ? 'I’m in the gray car' : 'Estoy en el carro gris')).ok(),
+        ).toBe(true);
+        const pc = await ctx.newPage();
+        await pc.addInitScript((pase) => localStorage.setItem('tumbite.sesion', pase), cli.token);
+        await pc.goto(`/app/ride?servicio=carro&viaje=${op}`);
+        await expect(pc.getByTestId('chat-viaje-ultimo')).toContainText(
+          en ? 'I’m in the gray car' : 'Estoy en el carro gris',
+          { timeout: 30_000 },
+        );
+        await expect(pc.getByTestId('chat-viaje-sin-leer')).toHaveText('1');
+        await pc
+          .getByTestId('tarjeta-chat-viaje')
+          .evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        await revisar(pc, t, 'mensaje nuevo del conductor en la app de clientes');
+        await foto(pc, t, '14-chat-pasajero', idioma, 'cliente-chat-viaje-sin-leer');
+      }
       await ctx.close();
     });

@@ -25,6 +25,9 @@ import {
   AnchoDriver,
   BarraPasosDriver,
   BotonDriver,
+  CodigoALaVistaDriver,
+  TarjetaChatViaje,
+  type UltimoMensajeViaje,
   DK,
   EtiquetaServicioDriver,
   TituloPasoDriver,
@@ -84,6 +87,9 @@ export type ViajeConductor = {
   llego_en: string | null;
   espera_gratis_s: number;
   intentos_pin_quedan: number;
+  /** C-CHAT-VIAJE-LLEGA: lo que no ha visto del chat y el último mensaje. */
+  mensajesSinLeer?: number;
+  ultimoMensaje?: UltimoMensajeViaje | null;
   /** C-MOTO-CIUDAD: 0 si en esta ciudad (u hora) el viaje empieza sin código. */
   pin_requerido?: number;
   total: number | null;
@@ -128,6 +134,25 @@ export type RespuestaCierre = {
 };
 
 /** Una clave nueva por acción: el servidor no repite nada si la app reintenta. */
+/**
+ * C-CODIGO-A-LA-VISTA: los intentos con los que empieza un código (los mismos que
+ * `INTENTOS_PIN_MAXIMOS` del servidor). Con menos, ya hubo un error: el aviso dice cuántos quedan.
+ */
+const INTENTOS_PIN_DE_FABRICA = 5;
+/** C-CODIGO-A-LA-VISTA: la casilla de 4 dígitos, grande y espaciada. */
+const estiloCasillaCodigo = {
+  borderWidth: 1,
+  borderColor: DK.bordeOscuro,
+  borderRadius: 10,
+  minHeight: 56,
+  paddingHorizontal: 12,
+  fontFamily: 'Poppins_600SemiBold',
+  letterSpacing: 14,
+  textAlign: 'center' as const,
+  color: DK.negro,
+  backgroundColor: DK.blanco,
+};
+
 const clave = () => `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 
 const reloj = (s: number) =>
@@ -147,6 +172,7 @@ export function ViajeActivo({
   cierre = null,
   alCierre = () => undefined,
   yo = null,
+  abrirChat = 0,
 }: {
   api: Api;
   idioma: Idioma;
@@ -161,6 +187,8 @@ export function ViajeActivo({
   alCierre?: (c: CierreViaje<ViajeConductor, RespuestaCierre> | null) => void;
   /** C-MAPA-VIAJE-DRIVER: dónde está el conductor (para dibujarlo en el mapa del viaje). */
   yo?: { lat: number; lng: number } | null;
+  /** C-CHAT-VIAJE-LLEGA: cada vez que se toca un aviso de mensaje cambia y el chat se abre. */
+  abrirChat?: number;
 }) {
   const textos = enIdioma(TEXTOS_VIAJE, idioma);
   // C-ENVIO-TEXTOS: en un envío cada botón habla del paquete y de quien envía.
@@ -201,7 +229,13 @@ export function ViajeActivo({
    */
   const [fotoEntregaLista, setFotoEntregaLista] = useState(false);
   // C-CHAT-VIAJE: mensajes con el pasajero mientras el viaje está activo (sin teléfonos).
-  const [verChat, setVerChat] = useState(false);
+  const [verChat, setVerChat] = useState(abrirChat > 0);
+  // Un aviso de mensaje tocado con el viaje ya abierto también abre el chat.
+  const [abrirVisto, setAbrirVisto] = useState(abrirChat);
+  if (abrirChat !== abrirVisto) {
+    setAbrirVisto(abrirChat);
+    if (abrirChat > 0) setVerChat(true);
+  }
   async function fotoEntrega() {
     setError('');
     const foto = await fotoConCamara(idioma, CAMARA_ENTREGA, deArchivosEntrega);
@@ -347,6 +381,8 @@ export function ViajeActivo({
         // El paso no se hizo: el cierre se suelta y vuelve el viaje en curso (o el inicio).
         if (final) alCierre(null);
         setError(x instanceof ErrorApi ? x.message : String(x));
+        // C-CODIGO-A-LA-VISTA: tras un código equivocado se relee el viaje (los intentos que quedan).
+        if (!final) alCambiar();
       } finally {
         setEnviando(false);
       }
@@ -528,6 +564,62 @@ export function ViajeActivo({
           paso={viaje.estado === 'asignado' ? 0 : viaje.estado === 'conductor_llego' ? 1 : 2}
         />
         <TituloPasoDriver texto={titulo} testID="viaje-titulo" />
+        {/* C-CODIGO-A-LA-VISTA: el código se pide arriba, sin bajar, con los intentos que quedan. */}
+        {viaje.estado === 'conductor_llego' && conCodigo ? (
+          <CodigoALaVistaDriver
+            titulo={t.avisoCodigo}
+            ayuda={t.codigoAyuda}
+            error={error || null}
+            intentos={
+              error || viaje.intentos_pin_quedan < INTENTOS_PIN_DE_FABRICA
+                ? t.quedanIntentos(viaje.intentos_pin_quedan)
+                : null
+            }
+            testID="codigo-a-la-vista"
+          >
+            <TextInput
+              testID="viaje-pin"
+              value={pin}
+              onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
+              keyboardType="number-pad"
+              maxLength={4}
+              autoFocus
+              accessibilityLabel={t.codigo}
+              style={[estiloCasillaCodigo, { fontSize: 24 }]}
+            />
+          </CodigoALaVistaDriver>
+        ) : null}
+        {viaje.estado === 'en_curso' && esEnvio && !parada ? (
+          <CodigoALaVistaDriver
+            titulo={t.avisoCodigoEntrega}
+            ayuda={t.pinEntregaAyuda}
+            error={error || null}
+            testID="codigo-entrega-a-la-vista"
+          >
+            <TextInput
+              testID="envio-pin-entrega"
+              value={pinEntrega}
+              onChangeText={(v) => setPinEntrega(v.replace(/\D/g, '').slice(0, 4))}
+              keyboardType="number-pad"
+              maxLength={4}
+              accessibilityLabel={t.pinEntrega}
+              style={[estiloCasillaCodigo, { fontSize: 24 }]}
+            />
+          </CodigoALaVistaDriver>
+        ) : null}
+        {/* C-CHAT-VIAJE-LLEGA: arriba, el último mensaje y lo no leído; tocar abre el chat. */}
+        {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
+          <>
+            <TarjetaChatViaje
+              idioma={idioma}
+              sinLeer={viaje.mensajesSinLeer ?? 0}
+              ultimo={viaje.ultimoMensaje ?? null}
+              abierto={verChat}
+              alTocar={() => setVerChat((x) => !x)}
+            />
+            {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
+          </>
+        ) : null}
         {viaje.menor_nombre || viaje.viaje_fijo ? (
           // C-VIAJES-FIJOS: el viaje de un menor se recuerda en todo el viaje (y su PIN, al recogerlo).
           <View
@@ -717,34 +809,6 @@ export function ViajeActivo({
                 <Text style={{ color: '#666B73', fontSize: 12 }}>{t.cascoAviso}</Text>
               </>
             ) : null}
-            {conCodigo ? (
-              <>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>{t.codigo}</Text>
-                <TextInput
-                  testID="viaje-pin"
-                  value={pin}
-                  onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                  accessibilityLabel={t.codigo}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: DK.bordeOscuro,
-                    borderRadius: 10,
-                    minHeight: 54,
-                    paddingHorizontal: 12,
-                    fontSize: 22,
-                    fontFamily: 'Poppins_600SemiBold',
-                    letterSpacing: 14,
-                    textAlign: 'center',
-                    color: DK.negro,
-                  }}
-                />
-                <Text style={{ color: '#666B73', fontSize: 12 }}>
-                  {t.codigoAyuda} ({viaje.intentos_pin_quedan} {t.intentos})
-                </Text>
-              </>
-            ) : null}
             {casco && (!conCodigo || pin.length === 4) ? (
               // C-PASOS-DESLIZANDO: iniciar el viaje (o «recogí el paquete») se desliza.
               <Deslizador
@@ -784,25 +848,6 @@ export function ViajeActivo({
         ) : null}
         {viaje.estado === 'en_curso' && esEnvio ? (
           <>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>{t.pinEntrega}</Text>
-            <TextInput
-              testID="envio-pin-entrega"
-              value={pinEntrega}
-              onChangeText={(v) => setPinEntrega(v.replace(/\D/g, '').slice(0, 4))}
-              keyboardType="number-pad"
-              maxLength={4}
-              accessibilityLabel={t.pinEntrega}
-              style={{
-                borderWidth: 1,
-                borderColor: '#2a2a2a',
-                borderRadius: 10,
-                padding: 12,
-                fontSize: 24,
-                letterSpacing: 8,
-                textAlign: 'center',
-              }}
-            />
-            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
             <Text style={{ fontWeight: '700', color: C.secundario }}>
               {fotoEntregaLista ? t.fotoEntregaLista : t.fotoEntrega}
             </Text>
@@ -812,16 +857,6 @@ export function ViajeActivo({
               cargando={subiendoFoto}
               secundario
             />
-          </>
-        ) : null}
-        {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
-          <>
-            <Boton
-              texto={verChat ? t.ocultarMensajes : t.mensajesPasajero}
-              alTocar={() => setVerChat((x) => !x)}
-              secundario
-            />
-            {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
           </>
         ) : null}
         {/* C-PAGO-MOVIL-VIAJE: confirmación MANUAL de que el pago móvil llegó (nunca «del banco»). */}

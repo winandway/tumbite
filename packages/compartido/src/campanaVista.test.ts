@@ -55,7 +55,8 @@ describe('C-CAMPANA-SE-VACIA · la campana de las apps', () => {
     expect(leer('repartidor/src/grandes/Avisos.tsx')).toContain(
       "marcarCampanaVista(api, 'repartidor'",
     );
-    // El punto de la campana del conductor sale de lo no leído (no de tareas pendientes).
-    expect(leer('repartidor/src/Inicio.tsx')).toMatch(/punto=\{campanaSinLeer > 0\}/);
+    // El número de «Avisos» del conductor sale de lo no leído (no de tareas pendientes). Desde
+    // C-REDISENO-DRIVER la campana es la pestaña «Avisos» de la barra de abajo.
+    expect(leer('repartidor/src/Inicio.tsx')).toMatch(/sinLeer=\{campanaSinLeer\}/);
   });
 });

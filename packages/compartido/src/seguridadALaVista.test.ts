@@ -11,9 +11,9 @@ const inicio = readFileSync(join(src, 'Inicio.tsx'), 'utf8');
 const ruta = readFileSync(join(src, 'flex', 'MiRuta.tsx'), 'utf8');
 
 describe('seguridad siempre a la vista', () => {
-  it('escudo en el mapa mientras está conectado', () => {
+  it('escudo en el mapa, siempre (C-REDISENO-DRIVER: conectado o no)', () => {
     expect(inicio).toMatch(/testID="escudo-seguridad"/);
-    expect(inicio).toMatch(/onPress=\{\(\) => setVista\('seguridad'\)\}/);
+    expect(inicio).toMatch(/alTocar=\{\(\) => setVista\('seguridad'\)\}/);
   });
   it('«Ayuda de emergencia» en Mi ruta', () => {
     expect(ruta).toContain('testID="ayuda-emergencia"');

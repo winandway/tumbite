@@ -121,12 +121,16 @@ export function ChatPedido({
         ultimo.current = Math.max(ultimo.current, r.mensajes[r.mensajes.length - 1]!.id);
         // C-CHAT-SIN-DOBLES: dos consultas cruzadas pueden traer el mismo mensaje.
         setMensajes((m) => unirMensajes(m, r.mensajes));
+        // C-CHAT-VIAJE-LLEGA: con el chat del viaje abierto, lo que llegó ya está visto (una escritura
+        // en el servidor, y solo si avanza). La ficha del viaje deja el número en cero.
+        if (esViaje && r.mensajes.some((x) => !x.mio))
+          void api.pedir('POST', `${raiz}/mensajes/visto`, {}).catch(() => undefined);
       }
     } catch {
       /* la siguiente consulta lo intenta otra vez (cada vez más espaciada) */
       return false;
     }
-  }, [api, raiz]);
+  }, [api, raiz, esViaje]);
 
   // C-SESION-TERMINADA: cada 4 s; si falla, espera cada vez más.
   useSondeo(cargar, 4000);
