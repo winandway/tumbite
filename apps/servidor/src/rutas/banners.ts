@@ -14,6 +14,7 @@ import {
   type Lugar,
   SERVICIOS_DESTINO,
   abiertosDeZona,
+  azarBanners,
   elegirPorPeso,
   filaABanner,
   generarOpciones,
@@ -78,7 +79,7 @@ banners.get('/banners', async (c) => {
       )
     : porCiudad;
   if (lugar === 'cabecera') {
-    const elegido = elegirPorPeso(visibles, Math.random(), c.req.query('excluir'));
+    const elegido = elegirPorPeso(visibles, azarBanners.siguiente(), c.req.query('excluir'));
     const res = c.json({
       lugar,
       banner: elegido ? paraLaApp(elegido, idioma, origen) : null,

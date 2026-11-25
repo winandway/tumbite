@@ -3,6 +3,7 @@ import {
   type Banner,
   TOPE_IMAGENES_DIA,
   aplicaA,
+  azarBanners,
   elegirPorPeso,
   olvidarCacheBanners,
   necesitaServicios,
@@ -301,10 +302,26 @@ describe('C-BANNERS · la ruta pública', () => {
     const b = await crear({ peso: 5 });
     await publicar(a);
     await publicar(b);
-    const vistos = new Set<string>();
-    for (let i = 0; i < 30; i++)
-      vistos.add((await ver('lugar=cabecera&ciudad=VE-MER-ELVIGIA')).datos.banner.id as string);
-    expect(vistos).toEqual(new Set([a, b]));
+    // C-BANNER-AZAR-COMPROBABLE: el azar de la ruta es una secuencia fija que recorre [0, 1) entero;
+    // así la prueba nunca depende de la suerte (antes, 1 de cada 250 corridas salía solo «b»).
+    let i = 0;
+    const espia = vi
+      .spyOn(azarBanners, 'siguiente')
+      .mockImplementation(() => ((i++ % 30) + 0.5) / 30);
+    const cuenta = new Map<string, number>();
+    const orden: string[] = [];
+    for (let n = 0; n < 30; n++) {
+      const id = (await ver('lugar=cabecera&ciudad=VE-MER-ELVIGIA')).datos.banner.id as string;
+      cuenta.set(id, (cuenta.get(id) ?? 0) + 1);
+      orden.push(id);
+    }
+    expect(espia).toHaveBeenCalledTimes(30);
+    espia.mockRestore();
+    // Con el azar subiendo de 0 a 1, cada anuncio ocupa su tramo: el elegido cambia una sola vez.
+    expect(orden.filter((id, n) => n > 0 && id !== orden[n - 1])).toHaveLength(1);
+    expect(new Set(cuenta.keys())).toEqual(new Set([a, b]));
+    // Por peso: «b» (peso 5) sale cinco veces más que «a» (peso 1) en una vuelta completa del azar.
+    expect(cuenta.get(b)).toBe(5 * (cuenta.get(a) ?? 0));
     for (let i = 0; i < 5; i++)
       expect((await ver(`lugar=cabecera&ciudad=VE-MER-ELVIGIA&excluir=${b}`)).datos.banner.id).toBe(
         a,

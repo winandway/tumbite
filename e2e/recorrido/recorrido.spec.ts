@@ -1674,7 +1674,19 @@ for (const idioma of ['en', 'es'] as const) {
       style: 'currency',
       currency: 'USD',
     }).format((cobro.desglose.pagoRestaurante + recogida.desglose.pagoRestaurante) / 100);
-    await expect(panel.getByText(L.teToca).locator('..')).toContainText(pagoRest);
+    // C-PAYOUT-SIN-MEDIANOCHE (25 nov 2026): «Te toca» suma los pedidos del día de la ciudad (por
+    // `pagado_en`). Si la corrida cruzaba la medianoche de la zona, un pedido caía en el día anterior
+    // y la prueba fallaba a ratos. Los dos pedidos se ponen en el mismo instante («ahora») y se mira
+    // otra vez; si justo entre medias cambió el día, la vuelta siguiente los pone en el día nuevo. La
+    // exigencia es la misma: la suma exacta de los dos.
+    const mismoDia = `UPDATE pedidos SET pagado_en = datetime('now') WHERE id IN ('${cobro.pedidoId}', '${recogida.pedidoId}')`;
+    await expect(async () => {
+      sql(mismoDia);
+      await panel.reload();
+      await expect(panel.getByText(L.teToca).locator('..')).toContainText(pagoRest, {
+        timeout: 10_000,
+      });
+    }).toPass({ timeout: 60_000 });
     // La calculadora «Comparado con otras apps» usa sus ventas reales y lo propio sale primero.
     const compara = panel.getByRole('region', {
       name: /Compared with other apps|Comparado con otras apps/,

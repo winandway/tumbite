@@ -158,6 +158,13 @@ export const necesitaServicios = (l: Pick<Banner, 'destinoTipo' | 'destinoValor'
   l.some((b) => b.destinoTipo === 'servicio' && b.destinoValor !== 'comida');
 
 /**
+ * C-BANNER-AZAR-COMPROBABLE (25 nov 2026): el número al azar de la rotación sale de aquí, para que
+ * las pruebas pongan una secuencia fija (sin azar no hay prueba que falle a ratos). En producción es
+ * `Math.random()`.
+ */
+export const azarBanners: { siguiente: () => number } = { siguiente: () => Math.random() };
+
+/**
  * Rotación de la cabecera: uno al azar según su peso (peso 3 sale tres veces más que peso 1). Si hay
  * más de uno, nunca repite el que se mostró la vez anterior (`excluir`), así cada apertura cambia.
  * `azar` es un número en [0, 1).
