@@ -69,6 +69,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // C-BARRA-ACTIVACION: la barra de activación del conductor (solo lee).
   'GET /admin/conductores/:id/activacion': 'repartidores.ver',
   'PUT /admin/conductores/:id/ciudad': 'repartidores.gestionar',
+  // C-FECHA-GUARDADA: la fecha de nacimiento escrita a mano (con motivo y auditoría).
+  'PUT /admin/conductores/:id/fecha-nacimiento': 'repartidores.gestionar',
   'GET /admin/conductores/:id/ciudades-destino': 'repartidores.ver',
   // C-REGRESO-PASAJERO (25 nov 2026): la ciudad base del conductor y los números del regreso por país.
   'GET /admin/conductores/:id/ciudad-base': 'repartidores.ver',
@@ -351,6 +353,9 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PUT /admin/despacho-catalogo/:zona': 'config.editar',
   'GET /admin/interruptores-repartidor': 'config.ver',
   'PUT /admin/interruptores-repartidor': 'config.editar',
+  // C-EDAD-POR-PAIS: la edad mínima de cada servicio en cada país.
+  'GET /admin/edades-pais': 'config.ver',
+  'PUT /admin/edades-pais': 'config.editar',
   // C-TELEFONO-POR-PAIS: el código por SMS al registrarse, país por país, y quién lo confirmó.
   'GET /admin/telefono-codigo': 'config.ver',
   'PUT /admin/telefono-codigo': 'config.editar',
@@ -542,6 +547,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/conductores/:id/pasajeros': ficha('repartidor'),
   'GET /admin/conductores/:id/activacion': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),
+  'PUT /admin/conductores/:id/fecha-nacimiento': ficha('repartidor'),
   'GET /admin/conductores/:id/ciudades-destino': ficha('repartidor'),
   'GET /admin/conductores/:id/ciudad-base': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad-base': ficha('repartidor'),
@@ -791,6 +797,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PUT /admin/despacho-catalogo/:zona': CONFIG,
   'GET /admin/interruptores-repartidor': CONFIG,
   'PUT /admin/interruptores-repartidor': CONFIG,
+  'GET /admin/edades-pais': CONFIG,
+  'PUT /admin/edades-pais': CONFIG,
   'GET /admin/telefono-codigo': CONFIG,
   'PUT /admin/telefono-codigo': CONFIG,
   'GET /admin/ganar-por-tiempo': CONFIG,

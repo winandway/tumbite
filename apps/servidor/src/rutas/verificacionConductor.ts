@@ -29,6 +29,7 @@ import {
 import { papelesPaisQueFaltan } from '../papelesPais';
 import { type Ctx, type UsuarioSesion, type Variables, base, exigir } from '../sesion';
 import { anotarHito, origenDePeticion } from '../rastro';
+import { type CedulaPorLeer, guardarDatosLeidos } from '../edadYDocumento';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   aciertoDeLaIa,
@@ -337,6 +338,8 @@ export async function revisarPendientesConIa(
     await revisarFotoKycConIa(env, db, u, pieza, img, clave);
     revisadas++;
   }
+  // C-FECHA-GUARDADA: lo leído del documento pasa a la cuenta (propuesta) en ese momento.
+  if (revisadas) await guardarDatosLeidos(db, u.id);
   return revisadas;
 }
 
@@ -593,6 +596,8 @@ async function subirFotoDePaso(c: Ctx, u: UsuarioSesion) {
         ]
       : []),
   ]);
+  // C-FECHA-GUARDADA: lo leído del documento pasa a la cuenta (propuesta) en ese momento.
+  if (ia.lectura) await guardarDatosLeidos(db, u.id);
   // C-LLEGA-SOLO-A-REVISION: con esta foto, ¿algún papel quedó completo? Entonces va a revisión solo.
   await enviarSoloTrasSubir(c.env, db, u);
   return c.json({ id, paso, ia: { color: ia.color, aviso: ia.aviso } }, 201);
@@ -657,6 +662,44 @@ function leerJson(texto: string | undefined): unknown {
   } catch {
     return null;
   }
+}
+
+/**
+ * C-FECHA-GUARDADA, relleno con IA: vuelve a leer la cédula ya subida de un conductor (con su permiso
+ * para la comprobación automática). La misma llamada de siempre, con el modelo barato aprobado y su
+ * presupuesto diario. Devuelve si hubo lectura.
+ */
+export async function releerCedula(env: Env, db: D1Database, c: CedulaPorLeer): Promise<boolean> {
+  if ((await permisoIa(db, c.conductorId)) !== true) return false;
+  const img = await leerImagen(env, c.clave);
+  if (!img) return false;
+  const g = await graciaDe(db, c.conductorId);
+  const ia = await comprobarFoto(env, db, {
+    paso: 'doc_frente',
+    pais: g.pais,
+    ingles: false,
+    imagen: img,
+    intentos: 0,
+  });
+  if (!ia.lectura) return false;
+  // La fecha queda pedida aunque no se viera, para no volver a leer la misma foto.
+  const json = JSON.stringify({ ...ia.lectura, nacimiento: ia.lectura.nacimiento ?? '' });
+  if (c.fotoId)
+    await db
+      .prepare(
+        'UPDATE verificacion_fotos SET ia_color = ?, ia_clase = ?, ia_confianza = ?, ia_json = ? WHERE id = ?',
+      )
+      .bind(ia.color, ia.clase, ia.confianza, json, c.fotoId)
+      .run();
+  else
+    await db
+      .prepare(
+        `INSERT INTO verificacion_fotos (id, conductor_id, paso, clave, pais, ia_color, ia_clase, ia_confianza, ia_json)
+         VALUES (?, ?, 'doc_frente', ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(nuevoId(), c.conductorId, c.clave, g.pais, ia.color, ia.clase, ia.confianza, json)
+      .run();
+  return true;
 }
 
 async function leerImagen(env: Env, clave: string) {
@@ -1282,4 +1325,5 @@ export async function revisarFotoKycConIa(
         ia.lectura ? JSON.stringify(ia.lectura) : '',
       ),
   ]);
+  if (ia.lectura) await guardarDatosLeidos(db, u.id);
 }

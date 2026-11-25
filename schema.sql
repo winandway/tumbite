@@ -5152,6 +5152,26 @@ CREATE TABLE IF NOT EXISTS verificacion_fotos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS verificacion_fotos_conductor ON verificacion_fotos(conductor_id, paso, estado);
+-- C-FECHA-GUARDADA (25 nov 2026): lo que la comprobación automática leyó del documento de la persona,
+-- guardado en su cuenta al momento de leerlo (propuesta) y confirmado al aprobar la identidad. Una fila
+-- por persona; la fecha de nacimiento con confianza en verde pasa a usuarios.fecha_nacimiento.
+-- Sin llave foránea a propósito: borrar una cuenta no lee una tabla más (C-LECTURAS-VUELTA-RUTAS); la
+-- fila se borra con la cuenta en borrarCuenta.ts.
+CREATE TABLE IF NOT EXISTS datos_documento (
+  usuario_id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL DEFAULT '',
+  numero TEXT NOT NULL DEFAULT '',
+  vence TEXT NOT NULL DEFAULT '',
+  nacimiento TEXT NOT NULL DEFAULT '',
+  confianza_nacimiento INTEGER,
+  confianza INTEGER,
+  licencia_numero TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'propuesta' CHECK (estado IN ('propuesta', 'confirmado')),
+  confirmado_por TEXT,
+  confirmado_en TEXT,
+  releida_en TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS verificacion_fotos_acierto ON verificacion_fotos(pais, paso) WHERE decision != '';
 
 -- La comparación de la cara en vivo con la foto del documento (una fila por conductor: la última).

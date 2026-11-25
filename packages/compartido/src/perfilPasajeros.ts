@@ -167,13 +167,14 @@ const EEUU: PerfilPasajeros = {
 /**
  * Venezuela: los precios de moto se muestran en dólares (Ridery, Yummy, Yango [OBS]) y se pagan en
  * efectivo o por pago móvil. Antecedentes: no se exigen (decisión de Richard del 19 nov 2026; la
- * política del país los declara exentos). El conductor sube su licencia y el equipo la revisa. La edad mínima queda
- * en 21 hasta que el abogado diga otra cosa (no se baja el piso sin una fuente).
+ * política del país los declara exentos). El conductor sube su licencia y el equipo la revisa. La edad mínima
+ * para llevar pasajeros es 18, la mayoría de edad (orden de Richard, 25 nov 2026, C-EDAD-POR-PAIS); el
+ * equipo la cambia por servicio en Sistema y configuración → Países y servicios.
  */
 const VENEZUELA: PerfilPasajeros = {
   pais: 'VE',
   antecedentes: 'documentos',
-  edadMinima: 21,
+  edadMinima: 18,
   metodosPago: ['efectivo', 'pago_movil'],
   monedaViajes: 'USD',
   placaNacional: true,

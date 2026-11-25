@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { CrucesDocumento } from './CrucesDocumento';
+import type { CruceDocumento } from '@tumbite/compartido';
 import { Settings } from 'lucide-react';
 import { type Idioma, enIdioma, tramoCoincidente } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
@@ -77,6 +79,8 @@ type Solicitud = {
   /** C-VERIFICACION-UNICA: lo que espera una decisión de esa persona y si está toda en verde. */
   porDecidir?: string[];
   enVerde?: boolean;
+  /** C-CRUCES-DOCUMENTO: lo que no cuadra entre lo leído y la cuenta. */
+  cruces?: CruceDocumento[];
 };
 type Respuesta = {
   solicitudes: Solicitud[];
@@ -563,6 +567,7 @@ function Bandeja({ base, idioma }: { base: string; idioma: Idioma }) {
                     ) : null}
                   </ul>
                 ) : null}
+                <CrucesDocumento cruces={s.cruces} idioma={idioma} />
                 {sinEnviar ? (
                   <ul className="kyc-comprobaciones">
                     {s.falta?.length ? (

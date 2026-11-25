@@ -407,6 +407,8 @@ export async function borrarCuenta(
     // IA leyó del documento (nombre, número, vencimiento); la cara, su comparación; y el perfil que
     // ven los pasajeros, lo que el conductor escribió de sí mismo.
     db.prepare('DELETE FROM verificacion_fotos WHERE conductor_id = ?').bind(u.id),
+    // C-FECHA-GUARDADA: lo leído de su documento se borra con la cuenta.
+    db.prepare('DELETE FROM datos_documento WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM verificacion_caras WHERE conductor_id = ?').bind(u.id),
     db.prepare('DELETE FROM verificacion_avisos WHERE conductor_id = ?').bind(u.id),
     db.prepare('DELETE FROM verificacion_permiso_ia WHERE conductor_id = ?').bind(u.id),

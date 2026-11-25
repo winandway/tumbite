@@ -264,7 +264,7 @@ const NOMBRE_REQUISITO: Record<string, [string, string]> = {
   historial_manejo: ['Récord de manejo', 'Driving record'],
   licencia: ['Licencia de conducir', "Driver's license"],
   licencia_moto: ['Licencia de moto', 'Motorcycle license'],
-  edad_minima_21: ['Tener 21 años o más', 'Age 21 or older'],
+  edad_minima_21: ['Tener la edad mínima de su país', 'Meet the minimum age in their country'],
   capacitacion: ['Capacitación', 'Training'],
   seguro_vehiculo: ['Seguro del vehículo', 'Vehicle insurance'],
   seguro_pasajeros: ['Seguro para pasajeros', 'Rideshare insurance'],

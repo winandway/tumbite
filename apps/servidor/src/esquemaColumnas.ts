@@ -3373,6 +3373,21 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "decidido_en",
     "creado_en"
   ],
+  "datos_documento": [
+    "usuario_id",
+    "nombre",
+    "numero",
+    "vence",
+    "nacimiento",
+    "confianza_nacimiento",
+    "confianza",
+    "licencia_numero",
+    "estado",
+    "confirmado_por",
+    "confirmado_en",
+    "releida_en",
+    "actualizado_en"
+  ],
   "verificacion_caras": [
     "conductor_id",
     "resultado",

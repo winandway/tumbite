@@ -5,6 +5,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EsperaAlEquipo, RevisionConductor } from './RevisionConductor';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
+import { EdadesPais } from './EdadesPais';
 import { tonoFicha } from './diseno/EtiquetaEstado';
 import { MOTIVOS_SERVICIO, codigoEnPalabras, palabra } from './diseno/palabras';
 import { compararDatos } from './kycComparar';
@@ -235,7 +236,9 @@ describe('C-FICHA-HABILITACION-VERDAD: la habilitación dice lo que falta de ver
       'Moto todavía no está abierto en su ciudad.',
     );
     expect(screen.queryByTestId('aprobar-edad')).toBeNull();
-    expect(screen.getByTestId('ficha-nacimiento').textContent).toMatch(/se guarda sola/);
+    // C-FECHA-GUARDADA: sin fecha, en rojo y con el botón para escribirla a mano.
+    expect(screen.getByTestId('sin-fecha').getAttribute('data-tono')).toBe('problema');
+    expect(screen.getByTestId('escribir-fecha')).toBeTruthy();
   });
 
   it('con todo listo dice «No le falta nada» en verde', async () => {
@@ -320,5 +323,79 @@ describe('C-BORRADOR-SIN-AVISO-VACIO en «Cambiar ciudad»', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
     await waitFor(() => expect(localStorage.getItem(llave)).toBeNull());
     expect(cerrar).toHaveBeenCalled();
+  });
+});
+
+describe('C-EDAD-POR-PAIS, C-FECHA-GUARDADA y C-CRUCES-DOCUMENTO en la ficha', () => {
+  it('la edad dice la de su país (nunca 21 fijo), los cruces van en ámbar y la fecha se escribe a mano', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      servicios: [
+        servicio({ requisitosFaltantes: ['edad_minima_21'], motivo: 'requisitos_faltantes' }),
+      ],
+      detalle: {
+        edades: [{ servicio: 'moto', minima: 18, edad: null, falta: 'sin_fecha' }],
+        datosDocumento: { nacimiento: '1974-03-10', confianzaNacimiento: 55, estado: 'propuesta' },
+        cruces: [
+          { clave: 'nombre', leido: 'Otra Persona', escrito: 'Conductor Uno' },
+          { clave: 'sin_fecha', leido: '', escrito: '' },
+        ],
+      },
+    });
+    render(<RevisionConductor id="con-1" base="/panel/x" idioma="es" enFicha />);
+    const ficha = await screen.findByTestId('detalle-conductor');
+    await waitFor(() =>
+      expect(ficha.textContent).toContain('Tener 18 años o más (la edad mínima de su país)'),
+    );
+    expect(ficha.textContent).not.toMatch(/21 años/);
+    expect(screen.getByTestId('cruce-nombre').getAttribute('data-tono')).toBe('pendiente');
+    expect(screen.getByTestId('cruce-nombre').textContent).toMatch(/Otra Persona/);
+    expect(screen.queryByTestId('cruce-sin_fecha')).toBeNull();
+    expect(screen.getByTestId('fecha-propuesta').textContent).toMatch(/1974-03-10/);
+    await userEvent.click(screen.getByTestId('escribir-fecha'));
+    const form = screen.getByTestId('form-fecha');
+    await userEvent.type(
+      within(form).getByLabelText('Motivo (queda en el registro)'),
+      'Vista en su cédula',
+    );
+    await userEvent.click(within(form).getByRole('button', { name: 'Guardar la fecha' }));
+    await waitFor(() =>
+      expect(
+        llamadas.find((l) => l.url === '/datos/admin/conductores/con-1/fecha-nacimiento')?.cuerpo,
+      ).toEqual({ fecha: '1974-03-10', motivo: 'Vista en su cédula' }),
+    );
+  });
+
+  it('Países y servicios enseña la edad de cada país y guarda el cambio con su motivo', async () => {
+    const llamadas: Llamada[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      llamadas.push({
+        url,
+        metodo: init?.method ?? 'GET',
+        cuerpo: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
+      });
+      const fila = (pais: string, moto: number) => ({
+        pais,
+        servicios: [{ servicio: 'moto', edad: moto, porDefecto: moto, fijada: false }],
+      });
+      return ok({ paises: [fila('US', 21), fila('VE', 18)], limites: { minima: 16, maxima: 30 } });
+    });
+    render(<EdadesPais idioma="es" />);
+    expect((await screen.findByTestId('edad-VE-moto')).textContent).toMatch(/^18/);
+    expect(screen.getByTestId('edad-US-moto').textContent).toMatch(/^21/);
+    await userEvent.type(screen.getByLabelText('Edad mínima'), '19');
+    await userEvent.type(
+      screen.getByLabelText('Motivo del cambio de edad (queda en el registro)'),
+      'Decisión del equipo',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar la edad' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toEqual({
+        pais: 'VE',
+        servicio: 'moto',
+        edad: 19,
+        motivo: 'Decisión del equipo',
+      }),
+    );
   });
 });

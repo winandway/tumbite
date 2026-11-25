@@ -23,6 +23,20 @@ import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
 import { listaEncendidaDelConductor } from '../papelesPais';
+import {
+  CLAVE_EDADES,
+  EDAD_MAXIMA_PERMITIDA,
+  EDAD_MINIMA_PERMITIDA,
+  PAISES_CON_EDAD,
+  SERVICIOS_CON_EDAD,
+  edadMinimaDe,
+  edadPorServicio,
+  edadesConfiguradas,
+  serviciosQuePidenEdad,
+  sincronizarEdad,
+  tablaEdades,
+} from '../edadYDocumento';
+import { crucesDocumento, fechaNacimientoValida } from '@tumbite/compartido';
 import { documentosDeLista, nombresDeLista } from '@tumbite/compartido';
 
 /**
@@ -94,7 +108,11 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
     perfil: {
       pais: perfil.pais,
       antecedentes: perfil.antecedentes,
-      edadMinima: perfil.edadMinima,
+      // C-EDAD-POR-PAIS: la de Moto en su país (la del equipo o la de por defecto).
+      edadMinima: edadMinimaDe(await edadesConfiguradas(db), {
+        pais: perfil.pais,
+        servicio: 'moto',
+      }),
       placaNacional: perfil.placaNacional,
       documentos: perfil.documentosConductor,
       // C-CARRO-PAPELES-PAIS: lo que pide su país para cada servicio de pasajeros.
@@ -624,6 +642,39 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
       return enc ? { papelesPais: enc.lista.papeles } : {};
     })()),
     identidad: kycFila?.estado ?? 'sin_enviar',
+    // C-EDAD-POR-PAIS: la edad de cada servicio que la pide, con la fecha guardada.
+    edades: [...(await edadPorServicio(db, id, await serviciosQuePidenEdad(db))).values()],
+    // C-FECHA-GUARDADA y C-CRUCES-DOCUMENTO: lo leído de su documento y lo que no cuadra.
+    ...(await (async () => {
+      const leido = await db
+        .prepare(
+          'SELECT nombre, numero, vence, nacimiento, confianza_nacimiento AS confianzaNacimiento, licencia_numero AS licenciaNumero, estado FROM datos_documento WHERE usuario_id = ?',
+        )
+        .bind(id)
+        .first<{
+          nombre: string;
+          numero: string;
+          vence: string;
+          nacimiento: string;
+          confianzaNacimiento: number | null;
+          licenciaNumero: string;
+          estado: string;
+        }>();
+      const moto = (await edadPorServicio(db, id, ['moto'])).get('moto');
+      return {
+        datosDocumento: leido ?? null,
+        cruces: crucesDocumento({
+          nombreEscrito: persona.nombre,
+          nombreLeido: leido?.nombre ?? '',
+          numeroDocumento: leido?.numero ?? '',
+          numeroLicencia: leido?.licenciaNumero ?? '',
+          venceDocumento: leido?.vence ?? '',
+          fechaNacimiento: persona.fecha_nacimiento || null,
+          edad: moto?.edad ?? null,
+          edadMinima: moto?.minima ?? null,
+        }),
+      };
+    })()),
     documentos,
     vehiculoActivo: estado.vehiculoActivo,
     // C-BARRA-IGUAL-REPARTO: si tiene un vehículo (no retirado ni rechazado) que sirva para cada
@@ -654,6 +705,93 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
       ),
     ],
   });
+});
+
+/**
+ * C-FECHA-GUARDADA: sin fecha de nacimiento (no se leyó bien en su documento), el equipo la escribe a
+ * mano mirando la foto. Queda en la auditoría con quién, cuándo y el motivo, y la edad se pone al día.
+ */
+conductorPapeles.put('/admin/conductores/:id/fecha-nacimiento', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      motivo: z.string().trim().min(3).max(200),
+    }),
+  );
+  if (!fechaNacimientoValida(d.fecha))
+    throw new ErrorDatos('Esa fecha no es válida para una persona que trabaja.', 'fecha', 422);
+  const antes = await db
+    .prepare("SELECT fecha_nacimiento FROM usuarios WHERE id = ? AND rol = 'repartidor'")
+    .bind(id)
+    .first<{ fecha_nacimiento: string | null }>();
+  if (!antes) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
+  await db.batch([
+    db.prepare('UPDATE usuarios SET fecha_nacimiento = ? WHERE id = ?').bind(d.fecha, id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        admin.id,
+        'conductor.fecha_nacimiento',
+        `usuario:${id}`,
+        JSON.stringify({ fecha_nacimiento: antes.fecha_nacimiento }),
+        JSON.stringify({ fecha_nacimiento: d.fecha, fuente: 'a_mano', motivo: d.motivo }),
+      ),
+  ]);
+  await sincronizarEdad(db, id);
+  return c.json({ fechaNacimiento: d.fecha });
+});
+
+/** C-EDAD-POR-PAIS: la edad mínima de cada servicio en cada país (Sistema y configuración). */
+conductorPapeles.get('/admin/edades-pais', async (c) => {
+  exigir(c, 'admin');
+  return c.json({
+    paises: tablaEdades(await edadesConfiguradas(base(c))),
+    limites: { minima: EDAD_MINIMA_PERMITIDA, maxima: EDAD_MAXIMA_PERMITIDA },
+  });
+});
+
+conductorPapeles.put('/admin/edades-pais', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      pais: z.enum(PAISES_CON_EDAD),
+      servicio: z.enum(SERVICIOS_CON_EDAD),
+      edad: z.number().int().min(EDAD_MINIMA_PERMITIDA).max(EDAD_MAXIMA_PERMITIDA),
+      motivo: z.string().trim().min(3).max(200),
+    }),
+  );
+  const antes = await edadesConfiguradas(db);
+  const despues = {
+    ...antes,
+    [d.pais]: { ...(new Map(Object.entries(antes)).get(d.pais) ?? {}), [d.servicio]: d.edad },
+  };
+  await db.batch([
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(CLAVE_EDADES, JSON.stringify(despues)),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        admin.id,
+        'config.edad_minima',
+        `config:${CLAVE_EDADES}:${d.pais}:${d.servicio}`,
+        JSON.stringify(antes),
+        JSON.stringify({ ...despues, motivo: d.motivo }),
+      ),
+  ]);
+  return c.json({ paises: tablaEdades(despues) });
 });
 
 conductorPapeles.get('/admin/papeles-conductor/:id/archivo', async (c) => {

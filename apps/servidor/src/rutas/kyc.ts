@@ -17,7 +17,6 @@ import { z } from 'zod';
 import {
   distanciaKm,
   edadEnAnios,
-  edadMinimaRepartidor,
   estadoEeuuDeZona,
   perfilPasajeros,
   pideReversoDocumento,
@@ -25,8 +24,17 @@ import {
   medidasWebp,
   nacimientoDeLecturas,
   nacimientoSeGuardaSolo,
+  type CruceDocumento,
+  crucesDocumento,
 } from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
+import {
+  REQUISITO_EDAD,
+  confirmarDatosLeidos,
+  edadMinimaDe as edadMinimaPais,
+  edadesConfiguradas,
+  sincronizarEdad,
+} from '../edadYDocumento';
 import { graciaDe } from '../plazoPapeles';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -554,10 +562,15 @@ kyc.get('/admin/kyc', async (c) => {
     .all<FilaBandeja>();
   const pagina = results.slice(0, POR_PAGINA_BANDEJA);
   const ultima = pagina.at(-1);
+  // C-CRUCES-DOCUMENTO: lo que no cuadra de cada conductor de la página (una lectura para todos).
+  const cruces = await crucesDePagina(
+    db,
+    pagina.map((r) => r.id),
+  );
   return c.json({
     // C-MINIATURA-SIEMPRE: quien no puede ver documentos ve las iniciales, no la foto.
     solicitudes: pagina
-      .map((r) => filaDeBandeja(r, DISTANCIA_MAXIMA_M))
+      .map((r) => ({ ...filaDeBandeja(r, DISTANCIA_MAXIMA_M), cruces: cruces.get(r.id) ?? [] }))
       .map((f) => (tienePermiso(c, 'repartidores.documentos') ? f : { ...f, miniatura: null })),
     siguiente:
       results.length > POR_PAGINA_BANDEJA && ultima
@@ -566,6 +579,54 @@ kyc.get('/admin/kyc', async (c) => {
     totales,
   });
 });
+
+/** C-CRUCES-DOCUMENTO: los cruces de los conductores de una página de la bandeja. */
+async function crucesDePagina(db: D1Database, ids: string[]) {
+  const salida = new Map<string, CruceDocumento[]>();
+  if (!ids.length) return salida;
+  const { results } = await db
+    .prepare(
+      `SELECT u.id, u.rol, u.nombre, u.fecha_nacimiento AS fecha, d.nombre AS leido, d.numero,
+              d.licencia_numero AS licencia, d.vence,
+              (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL}) AS pais
+         FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
+         LEFT JOIN datos_documento d ON d.usuario_id = u.id
+        WHERE u.id IN (${ids.map(() => '?').join(',')})`,
+    )
+    .bind(...ids)
+    .all<{
+      id: string;
+      rol: string;
+      nombre: string;
+      fecha: string | null;
+      leido: string | null;
+      numero: string | null;
+      licencia: string | null;
+      vence: string | null;
+      pais: string | null;
+    }>();
+  const config = await edadesConfiguradas(db);
+  for (const f of results.filter((x) => x.rol === 'repartidor')) {
+    const edad = edadEnAnios(f.fecha || null);
+    salida.set(
+      f.id,
+      crucesDocumento({
+        nombreEscrito: f.nombre,
+        nombreLeido: f.leido ?? '',
+        numeroDocumento: f.numero ?? '',
+        numeroLicencia: f.licencia ?? '',
+        venceDocumento: f.vence ?? '',
+        fechaNacimiento: f.fecha || null,
+        edad,
+        edadMinima: edadMinimaPais(config, {
+          pais: (f.pais ?? 'US').toUpperCase(),
+          servicio: 'moto',
+        }),
+      }),
+    );
+  }
+  return salida;
+}
 
 /**
  * C-FOTO-CONDUCTOR-SE-VE (24 nov 2026) — todos los países. La reparación de la foto que ve el
@@ -931,7 +992,24 @@ async function edadMinimaDe(db: D1Database, id: string): Promise<number> {
     .first<{ valor: string }>();
   const f = await datosEdad(db, id);
   if (apagada?.valor === '0' || !f) return 18;
-  return edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
+  return edadDelReparto(db, f);
+}
+
+/** C-EDAD-POR-PAIS: la edad para repartir (Comida) de su país, la del equipo o la de por defecto. */
+async function edadDelReparto(
+  db: D1Database,
+  f: { zona_id: string; vehiculo: string | null },
+): Promise<number> {
+  const z = await db
+    .prepare('SELECT pais FROM zonas WHERE id = ?')
+    .bind(f.zona_id)
+    .first<{ pais: string }>();
+  return edadMinimaPais(await edadesConfiguradas(db), {
+    pais: (z?.pais ?? f.zona_id.slice(0, 2)).toUpperCase(),
+    servicio: 'comida',
+    zonaId: f.zona_id,
+    vehiculo: f.vehiculo,
+  });
 }
 
 async function exigirEdadRepartidor(db: D1Database, id: string, leida: string | null = null) {
@@ -943,7 +1021,7 @@ async function exigirEdadRepartidor(db: D1Database, id: string, leida: string | 
   // C-NACIMIENTO-DEL-DOCUMENTO: sin fecha escrita, vale la leída en su documento (la que se guardará).
   const edad = edadEnAnios(f?.fecha_nacimiento || leida);
   if (edad == null || !f) return;
-  const minima = edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
+  const minima = await edadDelReparto(db, f);
   if (edad < minima)
     throw new ErrorDatos(
       `Esta persona tiene ${edad} años; para repartir en ${estadoEeuuDeZona(f.zona_id) ?? f.zona_id}${
@@ -1007,25 +1085,15 @@ async function guardarNacimientoLeido(
         JSON.stringify({ fecha_nacimiento: leida, fuente: 'documento_identidad' }),
       )
       .run();
-  const u = await db
-    .prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
-    .bind(id)
-    .first<{ fecha_nacimiento: string | null }>();
-  const edadMinima = perfilPasajeros((await paisDelConductor(db, id)).pais).edadMinima;
-  const edad = edadEnAnios(u?.fecha_nacimiento);
-  if (edad == null || edad < edadMinima) return { fecha, edad: false };
+  // C-EDAD-POR-PAIS: el requisito de edad lo pone al día el sistema con la fecha guardada.
+  await sincronizarEdad(db, id);
   const e = await db
     .prepare(
-      `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, fuente_id, aprobado_por)
-       VALUES (?, '', 'edad_minima_21', 'aprobado', 'revision_manual', 'documento_identidad', ?)
-       ON CONFLICT(conductor_id, vehiculo_id, requisito) DO UPDATE SET estado = 'aprobado',
-         fuente = excluded.fuente, fuente_id = excluded.fuente_id, aprobado_por = excluded.aprobado_por,
-         actualizado_en = datetime('now')
-       WHERE cumplimientos.estado != 'aprobado'`,
+      "SELECT 1 FROM cumplimientos WHERE conductor_id = ? AND vehiculo_id = '' AND requisito = ? AND estado = 'aprobado'",
     )
-    .bind(id, adminId)
-    .run();
-  return { fecha, edad: Number(e.meta?.changes ?? 0) > 0 };
+    .bind(id, REQUISITO_EDAD)
+    .first();
+  return { fecha, edad: Boolean(e) };
 }
 
 /** G3 y G4b: los dos interruptores de repartidores (config). La edad nace encendida; los papeles, apagados. */
@@ -1285,6 +1353,9 @@ kyc.patch('/admin/kyc/:id', async (c) => {
     leida && u.rol === 'repartidor'
       ? await guardarNacimientoLeido(db, id, admin.id, leida)
       : { fecha: false, edad: false };
+  // C-FECHA-GUARDADA: lo leído de su documento queda confirmado por quien aprobó la identidad.
+  if (u.rol === 'repartidor' && d.estado === 'aprobado')
+    await confirmarDatosLeidos(db, id, admin.id);
   // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
   if (u.rol === 'repartidor' && d.estado === 'aprobado') await avisarSiQuedoActivo(c.env, db, id);
   return c.json({ ok: true, nacimiento });

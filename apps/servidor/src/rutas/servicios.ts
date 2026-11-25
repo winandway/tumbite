@@ -28,6 +28,12 @@ import { esCuentaPrueba } from './cuentaPrueba';
 import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { type Entorno, faltaParaAprobarSinEnviar, textoPlano } from '@tumbite/compartido';
+import {
+  REQUISITO_EDAD,
+  edadPorServicio,
+  serviciosQuePidenEdad,
+  sincronizarEdad,
+} from '../edadYDocumento';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { exigirComisionEnMoneda } from '../finanzas/conductor';
@@ -528,6 +534,18 @@ export async function estadoDelConductor(
       )
       .all<{ servicio_id: string; requisito: string }>(),
   ]);
+  // C-EDAD-POR-PAIS: la edad de CADA servicio se mira con la fecha guardada y la edad de su país (no con
+  // el requisito suelto, que es uno para todos): falta si no hay fecha o no llega a la de ese servicio.
+  const pidenEdad = await serviciosQuePidenEdad(db);
+  const edades = pidenEdad.length
+    ? await edadPorServicio(db, conductorId, pidenEdad)
+    : new Map<string, { falta: string | null }>();
+  const faltanConEdad = [
+    ...faltan.results.filter((f) => f.requisito !== REQUISITO_EDAD),
+    ...pidenEdad
+      .filter((sv) => edades.get(sv)?.falta)
+      .map((sv) => ({ servicio_id: sv, requisito: REQUISITO_EDAD })),
+  ];
   const hab = new Map(habs.results.map((h) => [h.servicio_id, h]));
   const pref = new Map(prefs.results.map((p) => [p.servicio_id, p.activa === 1]));
   const ahora = ahoraSql();
@@ -542,7 +560,7 @@ export async function estadoDelConductor(
       tiposCompatibles: compat.results
         .filter((x) => x.servicio_id === s.id)
         .map((x) => x.vehiculo_tipo),
-      requisitosFaltantes: faltan.results
+      requisitosFaltantes: faltanConEdad
         .filter((f) => f.servicio_id === s.id)
         .map((f) => f.requisito),
       versionDriver,
@@ -1933,6 +1951,22 @@ servicios.get('/admin/habilitaciones', async (c) => {
   return c.json({ habilitaciones: results });
 });
 
+/** Lo que le falta a un conductor para que la base deje habilitarlo en un servicio (sin lo exento). */
+async function faltantesParaHabilitar(db: Db, conductor: string, servicio: string) {
+  const { results } = await db
+    .prepare(
+      `SELECT sr.requisito FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
+        WHERE sr.servicio_id = ? AND sr.obligatorio = 1 AND rd.nivel = 'conductor' AND NOT EXISTS (
+          SELECT 1 FROM cumplimientos c WHERE c.conductor_id = ? AND c.vehiculo_id = '' AND c.requisito = sr.requisito
+            AND c.estado = 'aprobado' AND (c.vence_en IS NULL OR c.vence_en > datetime('now')))`,
+    )
+    .bind(servicio, conductor)
+    .all<{ requisito: string }>();
+  // C-PLAZO-PAPELES: lo que el país del conductor declara exento no cuenta como faltante.
+  const { exentos } = await graciaDe(db, conductor);
+  return results.map((r) => r.requisito).filter((r) => !exentos.has(r));
+}
+
 servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
   const admin = exigir(c, 'admin');
   const db = base(c);
@@ -1957,6 +1991,29 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     .prepare('SELECT * FROM habilitaciones WHERE conductor_id = ? AND servicio_id = ?')
     .bind(conductor, servicio)
     .first();
+  // C-EDAD-POR-PAIS: la edad de ESTE servicio en su país, con la fecha guardada. Si la cumple, el
+  // requisito de edad queda al día (lo pone el sistema) antes de habilitar.
+  if (d.estado === 'aprobada' && (await serviciosQuePidenEdad(db)).includes(servicio)) {
+    const e = (await edadPorServicio(db, conductor, [servicio])).get(servicio);
+    if (e?.falta) {
+      // Lo demás que le falte sale junto con la edad (la misma lista del disparador).
+      const otros = (await faltantesParaHabilitar(db, conductor, servicio)).filter(
+        (r) => r !== REQUISITO_EDAD,
+      );
+      return c.json(
+        {
+          error:
+            e.falta === 'sin_fecha'
+              ? 'Falta la fecha de nacimiento de esta persona: escríbela en su ficha o apruébale la identidad.'
+              : `Esta persona tiene ${e.edad} años y para este servicio en su país hacen falta ${e.minima}.`,
+          requisitosFaltantes: [...otros, REQUISITO_EDAD],
+          edad: e,
+        },
+        409,
+      );
+    }
+    await sincronizarEdad(db, conductor);
+  }
   try {
     await conRestricciones(
       db
@@ -1972,21 +2029,10 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     );
   } catch (e) {
     if (e instanceof ErrorDatos && e.estado === 409 && d.estado === 'aprobada') {
-      const { results } = await db
-        .prepare(
-          `SELECT sr.requisito FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
-            WHERE sr.servicio_id = ? AND sr.obligatorio = 1 AND rd.nivel = 'conductor' AND NOT EXISTS (
-              SELECT 1 FROM cumplimientos c WHERE c.conductor_id = ? AND c.vehiculo_id = '' AND c.requisito = sr.requisito
-                AND c.estado = 'aprobado' AND (c.vence_en IS NULL OR c.vence_en > datetime('now')))`,
-        )
-        .bind(servicio, conductor)
-        .all<{ requisito: string }>();
-      // C-PLAZO-PAPELES: lo que el país del conductor declara exento no cuenta como faltante.
-      const { exentos } = await graciaDe(db, conductor);
       return c.json(
         {
           error: e.message,
-          requisitosFaltantes: results.map((r) => r.requisito).filter((r) => !exentos.has(r)),
+          requisitosFaltantes: await faltantesParaHabilitar(db, conductor, servicio),
         },
         409,
       );
@@ -2052,7 +2098,9 @@ servicios.put('/admin/cumplimientos/:conductor/:requisito', async (c) => {
       .prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
       .bind(conductor)
       .first<{ fecha_nacimiento: string | null }>();
-    const minima = perfilPasajeros((await paisDelConductor(db, conductor)).pais).edadMinima;
+    // C-EDAD-POR-PAIS: la menor edad de los servicios de su país que la piden.
+    const porServicio = await edadPorServicio(db, conductor, await serviciosQuePidenEdad(db));
+    const minima = Math.min(...[...porServicio.values()].map((x) => x.minima), 99);
     const nacio = p?.fecha_nacimiento ? new Date(`${p.fecha_nacimiento}T00:00:00Z`) : null;
     const limite = new Date();
     limite.setUTCFullYear(limite.getUTCFullYear() - minima);

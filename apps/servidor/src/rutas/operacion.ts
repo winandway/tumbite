@@ -138,6 +138,8 @@ import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
 import { graciaDe } from '../plazoPapeles';
 import { correrRezagados } from '../rezagados';
+import { rellenarDatosDocumento } from '../edadYDocumento';
+import { releerCedula } from './verificacionConductor';
 import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { correrPlazoPapeles } from './verificacionConductor';
@@ -3445,6 +3447,16 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     cada: 'media_hora',
     escriturasEsperadas: 960,
     correr: (env, db) => correrRezagados(env, db),
+  },
+  // C-FECHA-GUARDADA (relleno): lo leído de las cédulas ya guardado pasa a la cuenta de cada conductor
+  // sin llamar a la IA (40 por vuelta), la edad se pone al día con la fecha, y solo a quien nunca se le
+  // leyó la fecha se le vuelve a leer su cédula: 3 por vuelta, con su permiso y el presupuesto diario de
+  // la IA. Al día, solo lee: cero escrituras.
+  {
+    nombre: 'datos_documento',
+    critica: false,
+    escriturasEsperadas: 260,
+    correr: (env, db) => rellenarDatosDocumento(db, (c) => releerCedula(env, db, c)),
   },
   // C-CARRO-DINAMICA: el multiplicador de cada ciudad con tarifa dinámica encendida. Escribe como
   // mucho una fila por ciudad y solo cuando cambia (o cada 5 minutos mientras dura un recargo).

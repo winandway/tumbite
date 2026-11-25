@@ -4,6 +4,7 @@ import { Hora } from './horario';
 import {
   CIUDAD_PRUEBAS_VENEZUELA,
   TARIFAS_COMIDA_VENEZUELA,
+  type CruceDocumento,
   ErrorApi,
   type Idioma,
   tarifaDeMercado,
@@ -26,6 +27,9 @@ import { Pastilla } from './armazon/Piezas';
 import { pedir } from './api';
 import { AyudaAqui } from './AyudaAqui';
 import { EtiquetaEstado } from './diseno/EtiquetaEstado';
+import { CrucesDocumento } from './CrucesDocumento';
+import { EdadesPais } from './EdadesPais';
+import { type DatosDocumentoFicha, FechaNacimientoFicha } from './FechaNacimientoFicha';
 import {
   T_ESTADOS_VEHICULO,
   T_TIPOS_VEHICULO,
@@ -217,6 +221,7 @@ const T = {
     sinFechaAyuda:
       'Falta la fecha de nacimiento: se guarda sola al aprobar la identidad si se lee bien en su documento.',
     edadAprobada: 'Edad aprobada',
+    edadMinimaDe: (n: number) => `Tener ${n} años o más (la edad mínima de su país)`,
     cascoAprobado: 'Casco del pasajero aprobado',
     leFalta: 'Le falta',
     nadaFalta: 'No le falta nada para Moto.',
@@ -226,7 +231,7 @@ const T = {
       antecedentes: 'Antecedentes penales',
       historial_manejo: 'Historial de manejo',
       licencia_moto: 'Licencia de moto',
-      edad_minima_21: 'Tener 21 años o más',
+      edad_minima_21: 'Tener la edad mínima de su país',
       seguro_pasajeros: 'Seguro de pasajeros',
       casco_pasajero: 'Casco para el pasajero',
       seguro_vehiculo: 'Seguro del vehículo',
@@ -473,6 +478,7 @@ const T = {
     sinFechaAyuda:
       'Date of birth missing: it is saved automatically when you approve the identity if it reads well on their ID.',
     edadAprobada: 'Age approved',
+    edadMinimaDe: (n: number) => `Be ${n} or older (the minimum age in their country)`,
     cascoAprobado: 'Passenger helmet approved',
     leFalta: 'Missing',
     nadaFalta: 'Nothing missing for Moto.',
@@ -482,7 +488,7 @@ const T = {
       antecedentes: 'Criminal background',
       historial_manejo: 'Driving record',
       licencia_moto: 'Motorcycle license',
-      edad_minima_21: 'Age 21 or older',
+      edad_minima_21: 'Meet the minimum age in their country',
       seguro_pasajeros: 'Passenger insurance',
       casco_pasajero: 'Passenger helmet',
       seguro_vehiculo: 'Vehicle insurance',
@@ -1265,6 +1271,10 @@ type DetalleConductor = {
   }[];
   /** Requisitos ya aprobados (del conductor y de su vehículo en uso). */
   cumplidos?: string[];
+  /** C-EDAD-POR-PAIS: la edad de cada servicio que la pide en su país, con la fecha guardada. */
+  edades?: { servicio: string; minima: number; edad: number | null; falta: string | null }[];
+  datosDocumento?: DatosDocumentoFicha;
+  cruces?: CruceDocumento[];
 };
 
 // ---------------------------------------------------------------- tasa de referencia (bolívares)
@@ -1647,8 +1657,12 @@ export function Conductor({
     }
   }
 
-  const requisitoDe = (servicio: string) => (r: string) =>
-    nombreRequisitoPais(d?.ciudad.pais, servicio, r, idioma) ?? enPalabras(t.requisitos, r);
+  const requisitoDe = (servicio: string) => (r: string) => {
+    // C-EDAD-POR-PAIS: la edad dice la de su país para ese servicio, nunca un número fijo.
+    const edad = r === 'edad_minima_21' ? d?.edades?.find((x) => x.servicio === servicio) : null;
+    if (edad) return t.edadMinimaDe(edad.minima);
+    return nombreRequisitoPais(d?.ciudad.pais, servicio, r, idioma) ?? enPalabras(t.requisitos, r);
+  };
   const requisito = requisitoDe('moto');
   // C-CARRO-PANEL: la habilitación de cada servicio de pasajeros que el conductor tenga a la vista.
   const deServicio = (s: string) => d?.servicios.find((x) => x.servicioId === s);
@@ -1702,7 +1716,7 @@ export function Conductor({
             <p>{t.leFalta}:</p>
             <ul aria-label={`${t.leFalta} · ${titulo}`}>
               {x.requisitosFaltantes.map((r) => (
-                <li key={r}>{requisito(r)}</li>
+                <li key={r}>{requisitoDe(x.servicioId)(r)}</li>
               ))}
             </ul>
           </>
@@ -1747,15 +1761,20 @@ export function Conductor({
             <li>
               <div className="lista-texto">
                 <strong>{t.nacimiento}</strong>
-                <span data-testid="ficha-nacimiento">
-                  {d.fechaNacimiento ?? (
-                    <>
-                      <EtiquetaEstado estado="sin_datos">{t.sinFecha}</EtiquetaEstado>{' '}
-                      <small className="suave">{t.sinFechaAyuda}</small>
-                    </>
-                  )}
-                </span>
+                <FechaNacimientoFicha
+                  key={d.fechaNacimiento ?? 'sin-fecha'}
+                  id={id}
+                  fecha={d.fechaNacimiento || null}
+                  datos={d.datosDocumento ?? null}
+                  idioma={idioma}
+                  alGuardar={() => {
+                    cargar();
+                    alCambiar?.();
+                  }}
+                />
               </div>
+              {/* C-CRUCES-DOCUMENTO: lo que no cuadra, en ámbar con su motivo. */}
+              <CrucesDocumento cruces={d.cruces} idioma={idioma} sinFecha={false} />
             </li>
             <li>
               <div className="lista-texto">
@@ -2199,6 +2218,8 @@ export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
       <AbrirCiudad idioma={idioma} t={t} />
       <CompuertaPais t={t} idioma={idioma} />
       <TasaReferencia idioma={idioma} t={t} />
+      {/* C-EDAD-POR-PAIS: la edad mínima de cada servicio en cada país. */}
+      <EdadesPais idioma={idioma} />
       <div className="tarjeta-form" data-testid="revision-se-mudo">
         <h2>{t.motos}</h2>
         <p className="pista">

@@ -244,12 +244,13 @@ describe('C-NACIMIENTO-DEL-DOCUMENTO: la fecha de nacimiento sale del documento'
       .bind(s.rep.id)
       .first<{ fecha_nacimiento: string }>();
     expect(u?.fecha_nacimiento).toBe('1994-05-10');
+    // C-EDAD-POR-PAIS: la edad la pone al día el sistema con la fecha guardada.
     const edad = await s.m.DB.prepare(
-      "SELECT estado, aprobado_por FROM cumplimientos WHERE conductor_id = ? AND requisito = 'edad_minima_21'",
+      "SELECT estado, fuente FROM cumplimientos WHERE conductor_id = ? AND requisito = 'edad_minima_21'",
     )
       .bind(s.rep.id)
-      .first<{ estado: string; aprobado_por: string }>();
-    expect(edad).toEqual({ estado: 'aprobado', aprobado_por: s.admin.id });
+      .first<{ estado: string; fuente: string }>();
+    expect(edad).toEqual({ estado: 'aprobado', fuente: 'sistema' });
     const audit = await s.m.DB.prepare(
       "SELECT actor_id FROM auditoria_admin WHERE accion = 'conductor.fecha_nacimiento' AND objeto = ?",
     )
