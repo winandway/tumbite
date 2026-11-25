@@ -409,7 +409,7 @@ describe('Tarifa dinámica de Carro (C-CARRO-DINAMICA)', () => {
 });
 
 describe('Paradas de un viaje (C-VIAJE-PARADAS)', () => {
-  it('una parada sube el precio; el máximo del país, la ciudad y los envíos se respetan', async () => {
+  it('una parada sube el precio; el máximo del país y los envíos se respetan', async () => {
     const { m, cliente, cotizar } = await ciudad();
     const directo = (await cotizar()).datos.cotizacion;
     const conParada = (await cotizar({ paradas: [PARADA] })).datos.cotizacion;
@@ -418,9 +418,8 @@ describe('Paradas de un viaje (C-VIAJE-PARADAS)', () => {
     expect(conParada.total).toBeGreaterThan(directo.total);
     // EE. UU.: hasta 3 paradas.
     expect((await cotizar({ paradas: [PARADA, PARADA_2, PARADA, PARADA_2] })).estado).toBe(422);
-    // Una parada en otra ciudad no entra.
-    const lejos = { lat: 40.7128, lng: -74.006, direccion: 'Otra ciudad' };
-    expect((await cotizar({ paradas: [lejos] })).estado).toBe(422);
+    // Una parada en otra ciudad del país SÍ entra y una de otro país no: C-DESTINO-EN-EL-PAIS
+    // (apps/servidor/src/destinoEnElPais.test.ts, con Google simulado).
     // Un envío va de un punto a otro.
     const envio = await m.llamar(
       'POST',

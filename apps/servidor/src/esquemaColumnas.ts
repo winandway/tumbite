@@ -1970,6 +1970,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "comfort_pb",
     "premium_pb",
     "espera_parada_gratis_s",
+    "km_maximo",
     "de_prueba",
     "activa",
     "motivo",

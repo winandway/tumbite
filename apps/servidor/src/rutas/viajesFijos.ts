@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { exigirPuntoEnElPais } from '../destinoEnElPais';
 import { z } from 'zod';
 import {
   CONFIANZA,
@@ -436,11 +437,10 @@ viajesFijos.get('/rutinas', async (c) => {
 async function validarRutina(env: Env, db: D1Database, clienteId: string, d: DatosRutina) {
   const zona = await zonaPara(db, d.origen.lat, d.origen.lng);
   if (!zona) throw new ErrorDatos('Todavía no llegamos a esa dirección.', 'origen', 409);
-  const zonaDestino = await zonaPara(db, d.destino.lat, d.destino.lng);
-  if (zonaDestino?.id !== zona.id)
-    throw new ErrorDatos('El destino queda fuera de la ciudad del viaje.', 'destino', 422);
   if ((await estadoServicioEnZona(db, d.servicio, zona.id, clienteId)) !== 'disponible')
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
+  // C-DESTINO-EN-EL-PAIS: el destino puede salir de la ciudad, sin salir del país.
+  await exigirPuntoEnElPais(env, db, zona, d.destino, 'destino');
   if (!perfilPasajeros(zona.pais).metodosPago.includes(d.metodoPago))
     throw new ErrorDatos('Ese método de pago no está disponible en tu ciudad.', 'metodoPago', 422);
   if (d.metodoPago === 'tarjeta' && !(await tarjetaGuardada(env, db, clienteId)))

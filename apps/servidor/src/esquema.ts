@@ -107,6 +107,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['tarifas_viaje', 'comfort_pb', 'INTEGER'],
   ['tarifas_viaje', 'premium_pb', 'INTEGER'],
   ['tarifas_viaje', 'espera_parada_gratis_s', 'INTEGER NOT NULL DEFAULT 120'],
+  // C-DESTINO-EN-EL-PAIS: tope de seguridad de km por ciudad y servicio (vacío = el alto de siempre).
+  ['tarifas_viaje', 'km_maximo', 'INTEGER'],
   ['cotizaciones_viaje', 'paradas_json', "TEXT NOT NULL DEFAULT '[]'"],
   ['vehiculos', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
   ['vehiculos', 'acepta_menores', 'INTEGER NOT NULL DEFAULT 1'],
