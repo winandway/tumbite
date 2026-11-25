@@ -2,6 +2,14 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-PANICO-SOLO-REALES · La alarma de pánico cuenta solo zonas con conductores reales (25 nov 2026) — todos los países · servidor
+
+- **Qué se veía:** la salud tenía `panicoZonas` en rojo por Miami (sin lanzar), Novi (pruebas) y la zona de revisión de las tiendas, zonas donde nadie trabaja de verdad. Con el rojo siempre encendido, el rojo de Tucaní (la que importa) se perdía.
+- **Qué se hizo:** `apps/servidor/src/panicoZona.ts` (`saludPanicoZonas` y `zonasSinResponsable`, una sola consulta) cuenta una zona activa solo si tiene al menos un conductor REAL que puede trabajar: `es_prueba = 0`, correo que no es nuestro (`@windoce.com`, `@divoox.com`) y vehículo aprobado o plazo de papeles vigente. La zona de revisión de las tiendas (`VE-ZZ-REVIEW`) queda fuera siempre. Sin escrituras; la lectura sigue guardada un minuto en memoria. No se tocó la zona de revisión ni sus cuentas.
+- **Cómo se comprueba:** `apps/servidor/src/panicoZona.test.ts`, bloque C-PANICO-SOLO-REALES (zona vacía, solo prueba, solo Soporte, conductor sin papeles, con plazo vigente y zona de revisión), visto en ROJO con la consulta vieja.
+- **Estado al publicar (25 nov, lectura de producción):** solo Tucaní queda en rojo (seis conductores reales, sin responsable con teléfono). El Vigía tiene responsable. Miami, Novi y la de revisión no cuentan.
+- **Qué NO tocar:** si se agrega otro tipo de cuenta nuestra o de prueba, se suma a la consulta, no se apaga el canario.
+
 ## C-PANICO-ZONA-A-LA-VISTA · Las zonas cuyo pánico cae al equipo central se ven por su nombre (25 nov 2026) — todos los países · panel
 
 - **Qué faltaba:** la salud marcaba `panicoZonas` en rojo y el servidor ya devolvía `zonasSinResponsable` en `GET /datos/admin/panico/sin-atender`, pero ninguna pantalla del panel lo mostraba: el equipo veía el rojo sin saber qué zona era.
