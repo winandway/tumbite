@@ -65,6 +65,12 @@ export const esquemaTarifaViaje = z
     factorCallePb: z.number().int().min(10_000).max(20_000).default(13_000),
     /** Sin mapa de rutas: velocidad media para estimar el tiempo, por ciudad. [INF] */
     velocidadKmh: z.number().int().min(5).max(80).default(24),
+    /**
+     * C-DESTINO-EN-EL-PAIS (25 nov 2026): tope de seguridad de distancia de ESTA ciudad y servicio, en
+     * km. Sin él vale DISTANCIA_MAXIMA_KM (alto: el destino puede estar en cualquier punto del país y
+     * el conductor ve la distancia antes de aceptar).
+     */
+    kmMaximo: z.number().int().min(5).max(5000).optional(),
   })
   .refine((t) => t.minimo <= 100_000_000, { path: ['minimo'] });
 export type TarifaViaje = z.infer<typeof esquemaTarifaViaje>;
@@ -76,12 +82,22 @@ export type TarifaViaje = z.infer<typeof esquemaTarifaViaje>;
  * reales; Picap publica 33 km/h para la moto en trancón), y se reemplazan por la ruta real cuando
  * haya mapa (docs/investigaciones-rea/2026-10-28-moto-rea.md).
  */
-/** Un viaje de Moto más largo que esto no se cotiza (los grandes limitan la moto a la ciudad). */
+/**
+ * C-DESTINO-EN-EL-PAIS (25 nov 2026, Richard): tope de seguridad de un viaje, alto a propósito. El
+ * destino puede estar en cualquier punto del país (Tucaní a Caja Seca o a Caracas); la tarifa es la
+ * de siempre por km y minuto y el conductor ve la distancia antes de aceptar. Cada ciudad lo puede
+ * bajar en su tarifa (`kmMaximo`, en el panel).
+ */
 export const DISTANCIA_MAXIMA_KM: Record<ServicioViaje, number> = {
-  moto: 40,
-  carro: 80,
-  envios: 60,
+  moto: 1500,
+  carro: 1500,
+  envios: 1500,
 };
+/** El tope de un viaje con la tarifa de su ciudad. */
+export const kmMaximoDe = (servicio: ServicioViaje, t: { kmMaximo?: number }) =>
+  t.kmMaximo ??
+  new Map(Object.entries(DISTANCIA_MAXIMA_KM)).get(servicio) ??
+  DISTANCIA_MAXIMA_KM.carro;
 
 /**
  * C-ENVIOS (30 oct 2026), como Uber Courier: lo que el cliente dice del paquete al pedir. El valor

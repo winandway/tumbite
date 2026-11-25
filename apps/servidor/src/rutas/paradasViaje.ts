@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import {
-  DISTANCIA_MAXIMA_KM,
+  kmMaximoDe,
   type DesgloseViaje,
   type ParadaViaje,
   type PuntoViaje,
@@ -196,7 +196,7 @@ export async function cambiarParadas(
       'paradas',
       422,
     );
-  await exigirParadasValidas(db, v.servicio_id, { id: v.zona_id, pais: v.pais }, nuevas);
+  await exigirParadasValidas(env, db, v.servicio_id, { id: v.zona_id, pais: v.pais }, nuevas);
   let tarifa;
   try {
     tarifa = esquemaTarifaViaje.parse(JSON.parse(v.tarifa_json));
@@ -215,7 +215,7 @@ export async function cambiarParadas(
     ...nuevas,
   ];
   const ruta = await rutaParaCotizar(env, db, v.cliente_id, tarifa, origen, destino, todas);
-  if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[v.servicio_id as ServicioViaje] * 1000)
+  if (ruta.distanciaM > kmMaximoDe(v.servicio_id as ServicioViaje, tarifa) * 1000)
     throw new ErrorDatos('Con esas paradas el viaje queda demasiado largo.', 'paradas', 422);
   const sinTarifa = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
   // C-QUIEN-PAGA-VIAJES: con el precio nuevo, la tarifa de servicio se recalcula con quién paga en

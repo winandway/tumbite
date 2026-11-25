@@ -110,6 +110,14 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Cómo se comprueba:** `apps/servidor/src/guionesReintento.test.ts` (4, incluida la que busca llamadas sueltas en los guiones). Vista en ROJO el 24 nov 2026 repitiendo ante 404 y dejando una llamada suelta en `cuenta-vuelta.mjs` (fallaron 3).
 - **Qué NO tocar:** no repetir ante un 4xx ni ante un 500; no repetir lo que escribe ante un 504.
 
+## C-DESTINO-EN-EL-PAIS · La recogida en una ciudad abierta; el destino en cualquier punto del mismo país (25 nov 2026) — todos los países · servidor, panel y Docs; las apps NO cambian
+
+- **Qué se veía:** en la prueba real, un Envío de Tucaní a Caja Seca (25 minutos) decía «El destino queda fuera de la ciudad del viaje» y no dejaba pedir. Además había un tope fijo de 40 km (Moto), 60 (Envíos) y 80 (Carro).
+- **Qué se hizo:** `apps/servidor/src/destinoEnElPais.ts` (`exigirPuntoEnElPais`) reemplaza la exigencia de ciudad en cotizar, paradas y viajes fijos (`rutas/viajesPasajero.ts`, `rutas/paradasViaje.ts`, `rutas/viajesFijos.ts`): el destino y cada parada valen si están en una ciudad nuestra del mismo país o, fuera de las ciudades, si Google (búsqueda cercana de lugares, la API que ya usamos) dice que es el mismo país. Se recuerda por cuadrícula de ~1 km. Si Google no responde, NO deja pasar (503 «prueba otra vez») y queda en `errores_servidor`. El tope de km sube a 1500 por defecto y cada ciudad lo puede bajar en su tarifa (`tarifas_viaje.km_maximo`, campo «Distancia máxima» en Viajes del panel, es/en). Guía pública de Envíos al día (es/en).
+- **Apps viejas:** las apps no validan el destino por su cuenta: Driver 0.1.75 y clientes 0.1.65 funcionan con solo publicar el servidor.
+- **Cómo se comprueba:** `apps/servidor/src/destinoEnElPais.test.ts` (otra ciudad del país sí, otro país no, paradas, sin gastar Google dentro de la ciudad, Google caído no deja pasar, tope por ciudad, campo del panel), visto en ROJO con la exigencia vieja.
+- **Columna nueva:** `tarifas_viaje.km_maximo` va en COLUMNAS (`esquema.ts`) y en `schema.sql`.
+
 ## C-CORREO-REINTENTO · Un corte suelto con el servicio de correo no tranca las publicaciones (24 nov 2026) — todos los países · servidor
 
 - **Qué se rompió y cómo se veía:** la publicación de main 1a92d58 se frenó en el semáforo del sitio de pruebas: la salud respondía 503 porque la pieza `correo` estaba en `error`. Había un solo fallo en 24 horas: «No se pudo hablar con el servicio de correo: TimeoutError» (21:01 UTC, durante una pasada de pruebas). Con un único corte, la pieza queda en rojo 24 horas y ninguna publicación pasa el semáforo en todo ese tiempo.

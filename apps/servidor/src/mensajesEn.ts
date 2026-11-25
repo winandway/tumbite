@@ -2373,6 +2373,18 @@ export const MENSAJES_EN = new Map<string, string>([
     'The destination is outside the city of this ride.',
   ],
   [
+    'El destino tiene que estar en el mismo país del viaje.',
+    'The destination has to be in the same country as the pickup.',
+  ],
+  [
+    'Una parada tiene que estar en el mismo país del viaje.',
+    'Each stop has to be in the same country as the pickup.',
+  ],
+  [
+    'No pudimos comprobar esa dirección. Prueba otra vez en un momento.',
+    'We couldn’t check that address. Please try again in a moment.',
+  ],
+  [
     'Este servicio todavía no está disponible en tu ciudad.',
     'This service isn’t available in your city yet.',
   ],
