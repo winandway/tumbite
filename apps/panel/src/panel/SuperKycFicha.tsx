@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { palabra } from './diseno/palabras';
 import {
+  CONFIANZA_NACIMIENTO,
   ErrorApi,
   type Idioma,
   almacenNavegador,
@@ -28,7 +30,7 @@ import { MenuTresPuntos } from './MenuTresPuntos';
 import { miniaturaWebp } from './SubirFoto';
 import { caraEnNegro } from './fotoEnNegro';
 import { PapelesConductor } from './SuperPapeles';
-import { RevisionConductor } from './RevisionConductor';
+import { EsperaAlEquipo, RevisionConductor } from './RevisionConductor';
 
 /**
  * C-VERIFICACION-UNICA: aprobar la identidad desde «Aprobar todo lo que está en verde» o desde la lista
@@ -116,6 +118,7 @@ const T = {
       numeroDocumento: 'Número del documento',
       venceDocumento: 'Vencimiento del documento',
       paisDocumento: 'País del documento',
+      nacimiento: 'Fecha de nacimiento',
       licenciaNumero: 'Número de licencia',
       licenciaVence: 'Vencimiento de la licencia',
       seguroPoliza: 'Número de póliza',
@@ -127,6 +130,10 @@ const T = {
       vencido: 'Parece vencido',
       sin_dato: 'Sin dato para comparar',
     } as Record<string, string>,
+    // C-NACIMIENTO-DEL-DOCUMENTO.
+    confianzaLeida: (n: number) => `${n} % de confianza`,
+    nacimientoSeGuarda: 'Se guarda sola al aprobar la identidad.',
+    nacimientoDudosa: 'Confianza baja: no se guarda sola. Compárala con la foto del documento.',
     decision: 'Decisión',
     decisionNota:
       'Si apruebas, la selfie queda como su foto de perfil y no la puede cambiar. Si rechazas, le llega el motivo para que lo corrija.',
@@ -201,6 +208,7 @@ const T = {
       numeroDocumento: 'ID number',
       venceDocumento: 'ID expiration',
       paisDocumento: 'ID country',
+      nacimiento: 'Date of birth',
       licenciaNumero: 'License number',
       licenciaVence: 'License expiration',
       seguroPoliza: 'Policy number',
@@ -212,6 +220,9 @@ const T = {
       vencido: 'Looks expired',
       sin_dato: 'Nothing to compare',
     } as Record<string, string>,
+    confianzaLeida: (n: number) => `${n}% confidence`,
+    nacimientoSeGuarda: 'Saved automatically when you approve the identity.',
+    nacimientoDudosa: 'Low confidence: not saved automatically. Compare it with the ID photo.',
     decision: 'Decision',
     decisionNota:
       'If you approve, the selfie becomes their profile photo and they can’t change it. If you reject, they get the reason so they can fix it.',
@@ -390,6 +401,7 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
     nombre: p.nombre,
     pais: p.zona_id ? p.zona_id.slice(0, 2) : null,
     declarado: d.declarado ?? null,
+    nacimiento: p.fecha_nacimiento ?? null,
   });
   const horas = horasDesde(d.kyc.enviado);
   const idiomaPersona = p.idioma === 'en' ? 'en' : 'es';
@@ -425,7 +437,7 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
           </Insignia>
         ) : (
           <Insignia estado={d.kyc.estado} testId="ficha-estado">
-            {t.estados[d.kyc.estado] ?? d.kyc.estado}
+            {palabra(t.estados, d.kyc.estado)}
           </Insignia>
         )}
         {ficha ? (
@@ -435,6 +447,14 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
         ) : null}
         {opciones.length ? <MenuTresPuntos etiqueta={t.masOpciones} opciones={opciones} /> : null}
       </EncabezadoPagina>
+      {/* C-FICHA-VEHICULO-SIN-ENVIAR: lo que espera al equipo, arriba y en rojo. */}
+      {p.rol === 'repartidor' ? (
+        <EsperaAlEquipo
+          id={id}
+          idioma={idioma}
+          identidad={d.kyc.estado === 'pendiente' ? '#kyc-decision' : null}
+        />
+      ) : null}
 
       <p className="kyc-ficha-datos">
         <span className="suave">{t.datos}:</span> {p.correo} · {p.telefono || '—'} ·{' '}
@@ -505,8 +525,24 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
                     }
                     data-estado={f.estado}
                   >
-                    <th scope="row">{t.claves[f.clave] ?? f.clave}</th>
-                    <td>{f.leido || '—'}</td>
+                    <th scope="row">{palabra(t.claves, f.clave)}</th>
+                    <td>
+                      {f.leido || '—'}
+                      {f.confianza != null ? (
+                        <small className="suave" data-testid={`confianza-${f.clave}`}>
+                          {' '}
+                          · {t.confianzaLeida(f.confianza)}
+                        </small>
+                      ) : null}
+                      {f.clave === 'nacimiento' && f.leido && !f.escrito ? (
+                        <small className="suave" data-testid="nacimiento-propuesta">
+                          <br />
+                          {f.confianza != null && f.confianza >= CONFIANZA_NACIMIENTO
+                            ? t.nacimientoSeGuarda
+                            : t.nacimientoDudosa}
+                        </small>
+                      ) : null}
+                    </td>
                     <td>{f.escrito || '—'}</td>
                     <td>
                       <Insignia
@@ -518,7 +554,7 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
                               : 'pendiente'
                         }
                       >
-                        {t.estadosComparacion[f.estado] ?? f.estado}
+                        {palabra(t.estadosComparacion, f.estado)}
                       </Insignia>
                     </td>
                   </tr>
@@ -654,8 +690,7 @@ export function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma;
       ) : null}
       {d.antecedentes ? (
         <p>
-          <strong>{t.antecedentes}:</strong>{' '}
-          {t.antecedentesEstados[d.antecedentes.estado] ?? d.antecedentes.estado}
+          <strong>{t.antecedentes}:</strong> {palabra(t.antecedentesEstados, d.antecedentes.estado)}
         </p>
       ) : null}
       {d.selfiesControl ? (

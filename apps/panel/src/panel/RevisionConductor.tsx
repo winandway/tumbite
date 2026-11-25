@@ -4,7 +4,10 @@ import { Enlace } from '../Enlace';
 import { pedir } from './api';
 import { Insignia } from './diseno/Insignia';
 import { Conductor, FilaMoto, FilaPapel, type Moto, type Papel, T_MOTO } from './SuperMoto';
-import { avisarDecision } from './sonarEvento';
+import { EVENTO_CAMBIO, avisarDecision } from './sonarEvento';
+import { VehiculoSinEnviar } from './VehiculoSinEnviar';
+import { palabra } from './diseno/palabras';
+import { type FaltaSinEnviar, faltaParaAprobarSinEnviar } from '@tumbite/compartido';
 import './verificaciones.css';
 
 /**
@@ -126,6 +129,19 @@ export const T_ACTIVACION = {
     nadaQueAprobar: 'No hay nada en verde por aprobar.',
     aprobadoTodo: (n: number) => (n === 1 ? 'Aprobaste 1 cosa.' : `Aprobaste ${n} cosas.`),
     fallo: (n: number, e: string) => `Aprobaste ${n}; lo siguiente no se pudo: ${e}`,
+    // C-FICHA-VEHICULO-SIN-ENVIAR: lo que espera una acción del equipo va arriba, en rojo.
+    esperaEquipo: 'Espera al equipo',
+    tareas: {
+      vehiculo: (n: number) => (n === 1 ? '1 vehículo por revisar' : `${n} vehículos por revisar`),
+      sinEnviar: (n: number) =>
+        n === 1
+          ? '1 vehículo sin enviar que ya puedes aprobar'
+          : `${n} vehículos sin enviar que ya puedes aprobar`,
+      papeles: (n: number) => (n === 1 ? '1 papel por revisar' : `${n} papeles por revisar`),
+      identidad: 'Su identidad, por aprobar o rechazar',
+    },
+    irA: 'Ir',
+    sinEnviarTitulo: 'Vehículo registrado sin enviar',
   },
   en: {
     titulo: 'Activation bar',
@@ -190,11 +206,23 @@ export const T_ACTIVACION = {
     nadaQueAprobar: 'Nothing in green to approve.',
     aprobadoTodo: (n: number) => (n === 1 ? 'You approved 1 item.' : `You approved ${n} items.`),
     fallo: (n: number, e: string) => `You approved ${n}; the next one failed: ${e}`,
+    esperaEquipo: 'Waiting for the team',
+    tareas: {
+      vehiculo: (n: number) => (n === 1 ? '1 vehicle to review' : `${n} vehicles to review`),
+      sinEnviar: (n: number) =>
+        n === 1
+          ? '1 unsent vehicle you can approve now'
+          : `${n} unsent vehicles you can approve now`,
+      papeles: (n: number) => (n === 1 ? '1 document to review' : `${n} documents to review`),
+      identidad: 'Their identity, to approve or reject',
+    },
+    irA: 'Go',
+    sinEnviarTitulo: 'Registered vehicle not sent',
   },
 };
 
-const de = (tabla: Record<string, string>, clave: string) =>
-  new Map(Object.entries(tabla)).get(clave) ?? clave;
+// C-SIN-CODIGOS-CRUDOS: lo que la tabla no conoce se dice en palabras, nunca el código.
+const de = (tabla: Record<string, string>, clave: string) => palabra(tabla, clave);
 const mensaje = (x: unknown) => (x instanceof Error ? x.message : String(x));
 
 /** Dónde se hace, en esta misma pantalla, un paso que le toca al equipo. */
@@ -328,6 +356,88 @@ export function BarraActivacion({
 }
 
 /**
+ * C-FICHA-VEHICULO-SIN-ENVIAR (Richard, 25 nov 2026): lo que espera una acción del EQUIPO va arriba de
+ * la ficha, en rojo y con su botón: la identidad por revisar, los vehículos por revisar, los sin enviar
+ * que ya se pueden aprobar y los papeles por revisar. Se vuelve a contar al decidir algo.
+ */
+export function EsperaAlEquipo({
+  id,
+  idioma,
+  identidad,
+}: {
+  id: string;
+  idioma: Idioma;
+  /** La identidad espera la decisión: a dónde lleva su botón («#kyc-decision» o su verificación). */
+  identidad?: string | null;
+}) {
+  const t = enIdioma(T_ACTIVACION, idioma);
+  const [vuelta, setVuelta] = useState(0);
+  const [n, setN] = useState<{ vehiculos: number; aprobables: number; papeles: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    const otra = () => setVuelta((v) => v + 1);
+    window.addEventListener(EVENTO_CAMBIO, otra);
+    return () => window.removeEventListener(EVENTO_CAMBIO, otra);
+  }, []);
+  useEffect(() => {
+    let vivo = true;
+    const q = encodeURIComponent(id);
+    const lista = (estado: string) =>
+      pedir<{ vehiculos?: (Moto & { faltaParaAprobar?: FaltaSinEnviar[] })[] }>(
+        'GET',
+        `/datos/admin/vehiculos?estado=${estado}&conductor=${q}`,
+      ).then((r) => (Array.isArray(r?.vehiculos) ? r.vehiculos : []));
+    Promise.all([
+      lista('en_revision'),
+      lista('registrado'),
+      pedir<{ documentos?: unknown[] }>(
+        'GET',
+        `/datos/admin/papeles-conductor?estado=pendiente&conductor=${q}`,
+      ).then((r) => (Array.isArray(r?.documentos) ? r.documentos.length : 0)),
+    ])
+      .then(([revision, registrados, papeles]) => {
+        if (!vivo) return;
+        setN({
+          vehiculos: revision.length,
+          aprobables: registrados.filter(
+            (m) =>
+              Array.isArray(m?.documentos) &&
+              (m.faltaParaAprobar ?? faltaParaAprobarSinEnviar(m, m.documentos)).length === 0,
+          ).length,
+          papeles,
+        });
+      })
+      .catch(() => vivo && setN(null));
+    return () => {
+      vivo = false;
+    };
+  }, [id, vuelta]);
+  const tareas = [
+    identidad ? { texto: t.tareas.identidad, ancla: identidad } : null,
+    n?.vehiculos ? { texto: t.tareas.vehiculo(n.vehiculos), ancla: '#revision-vehiculo' } : null,
+    n?.aprobables ? { texto: t.tareas.sinEnviar(n.aprobables), ancla: '#revision-vehiculo' } : null,
+    n?.papeles ? { texto: t.tareas.papeles(n.papeles), ancla: '#revision-papeles' } : null,
+  ].filter((x): x is { texto: string; ancla: string } => x !== null);
+  if (!tareas.length) return null;
+  return (
+    <section className="espera-equipo" data-testid="espera-equipo" role="status">
+      <Insignia tono="problema">{t.esperaEquipo}</Insignia>
+      <ul>
+        {tareas.map((x) => (
+          <li key={x.texto}>
+            <span>{x.texto}</span>{' '}
+            <a className="boton chico" href={x.ancla}>
+              {t.irA}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
  * Lo que se decide del conductor fuera de su identidad, en su ficha de Verificaciones y en su ficha
  * de conductor: vehículo, papeles y servicios, más «Aprobar todo lo que está en verde».
  */
@@ -353,6 +463,10 @@ export function RevisionConductor({
   const [vuelta, setVuelta] = useState(0);
   const [motos, setMotos] = useState<Moto[] | null>(null);
   const [papeles, setPapeles] = useState<Papel[] | null>(null);
+  // C-FICHA-VEHICULO-SIN-ENVIAR: lo que registró y no envió también sale en su ficha.
+  const [sinEnviar, setSinEnviar] = useState<
+    (Moto & { faltaParaAprobar?: FaltaSinEnviar[] })[] | null
+  >(null);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [ocupado, setOcupado] = useState(false);
@@ -367,6 +481,15 @@ export function RevisionConductor({
     pedir<{ vehiculos: Moto[] }>('GET', `/datos/admin/vehiculos?estado=en_revision&conductor=${q}`)
       .then((r) =>
         setMotos(
+          Array.isArray(r?.vehiculos)
+            ? r.vehiculos.filter((m) => Array.isArray(m?.documentos))
+            : [],
+        ),
+      )
+      .catch((x: unknown) => setError(mensaje(x)));
+    pedir<{ vehiculos: Moto[] }>('GET', `/datos/admin/vehiculos?estado=registrado&conductor=${q}`)
+      .then((r) =>
+        setSinEnviar(
           Array.isArray(r?.vehiculos)
             ? r.vehiculos.filter((m) => Array.isArray(m?.documentos))
             : [],
@@ -422,6 +545,9 @@ export function RevisionConductor({
     }
   }
 
+  const aprobables = (sinEnviar ?? []).filter(
+    (m) => (m.faltaParaAprobar ?? faltaParaAprobarSinEnviar(m, m.documentos)).length === 0,
+  );
   return (
     <>
       <BarraActivacion id={id} base={base} idioma={idioma} vuelta={vuelta} />
@@ -449,7 +575,9 @@ export function RevisionConductor({
       ) : null}
       <section id="revision-vehiculo" data-testid="revision-vehiculo">
         <h2>{t.vehiculo}</h2>
-        {motos && motos.length === 0 ? <p className="pista">{t.sinVehiculo}</p> : null}
+        {motos && motos.length === 0 && !(sinEnviar ?? []).length ? (
+          <p className="pista">{t.sinVehiculo}</p>
+        ) : null}
         <ul className="lista">
           {(motos ?? []).map((m) => (
             <FilaMoto
@@ -461,8 +589,18 @@ export function RevisionConductor({
             />
           ))}
         </ul>
+        {/* Primero los que el equipo ya puede aprobar; después los que esperan al conductor. */}
+        {[...aprobables, ...(sinEnviar ?? []).filter((m) => !aprobables.includes(m))].map((m) => (
+          <div
+            key={`${m.id}-${m.documentos.map((d) => d.estado).join('')}`}
+            className="tarjeta-form"
+          >
+            <h3>{t.sinEnviarTitulo}</h3>
+            <VehiculoSinEnviar v={m} idioma={idioma} alCambiar={cambio} />
+          </div>
+        ))}
       </section>
-      <section data-testid="revision-papeles">
+      <section id="revision-papeles" data-testid="revision-papeles">
         <h2>{t.papeles}</h2>
         {papeles && papeles.length === 0 ? <p className="pista">{t.sinPapeles}</p> : null}
         <ul className="lista">

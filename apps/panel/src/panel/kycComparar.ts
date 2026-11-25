@@ -1,4 +1,4 @@
-import { textoPlano } from '@tumbite/compartido';
+import { nacimientoDeLecturas, textoPlano } from '@tumbite/compartido';
 
 /**
  * C-VERIFICACIONES-BANDEJA (22 nov 2026, Gerencia) — todos los países. La tabla de la ficha de una
@@ -13,6 +13,10 @@ export type LecturaIa = {
     numero?: string;
     vence?: string;
     pais?: string;
+    /** C-NACIMIENTO-DEL-DOCUMENTO: la fecha de nacimiento leída, con su confianza. */
+    nacimiento?: string;
+    confianzaNacimiento?: number;
+    confianza?: number;
   } | null;
 };
 
@@ -28,6 +32,7 @@ export type ClaveComparacion =
   | 'numeroDocumento'
   | 'venceDocumento'
   | 'paisDocumento'
+  | 'nacimiento'
   | 'licenciaNumero'
   | 'licenciaVence'
   | 'seguroPoliza'
@@ -41,6 +46,8 @@ export type FilaComparacion = {
   leido: string;
   escrito: string;
   estado: EstadoComparacion;
+  /** De 0 a 100: qué tan segura está la lectura (solo la fecha de nacimiento por ahora). */
+  confianza?: number;
 };
 
 const palabras = (s: string) =>
@@ -88,6 +95,8 @@ export function compararDatos(d: {
   pais?: string | null;
   declarado: DatosDeclarados;
   hoy?: string;
+  /** La fecha de nacimiento que tiene la cuenta (AAAA-MM-DD), si la tiene. */
+  nacimiento?: string | null;
 }): FilaComparacion[] {
   const de = (paso: string) => d.lecturas.find((l) => l.paso === paso)?.lectura ?? null;
   const doc = de('doc_frente');
@@ -102,6 +111,17 @@ export function compararDatos(d: {
   sumar('numeroDocumento', doc?.numero ?? '', '', 'sin_dato');
   const venceDoc = dia(doc?.vence);
   sumar('venceDocumento', venceDoc, '', yaVencio(venceDoc, d.hoy) ? 'vencido' : 'sin_dato');
+  // C-NACIMIENTO-DEL-DOCUMENTO: la fecha leída en el documento, propuesta con su confianza.
+  const nac = nacimientoDeLecturas(d.lecturas);
+  const nacEscrito = dia(d.nacimiento);
+  if (nac || nacEscrito)
+    filas.push({
+      clave: 'nacimiento',
+      leido: nac?.fecha ?? '',
+      escrito: nacEscrito,
+      estado: estadoDe(nac?.fecha ?? '', nacEscrito, (a, b) => a === b),
+      ...(nac ? { confianza: nac.confianza } : {}),
+    });
   const pais = (d.pais ?? '').toUpperCase();
   const paisLeido = (doc?.pais ?? '').toUpperCase();
   sumar(

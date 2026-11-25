@@ -62,6 +62,33 @@ function alSalirNavegador(guardarYa: () => void): () => void {
   };
 }
 
+/** Un valor tal como cuenta para el borrador: el texto sin espacios de más (solo espacios = vacío). */
+const normal = (v: unknown) => (typeof v === 'string' ? v.trim() : v);
+const mismo = (a: unknown, b: unknown) => {
+  const [x, y] = [normal(a), normal(b)];
+  if (Object.is(x, y)) return true;
+  // Listas u objetos (casillas marcadas, por ejemplo): iguales si se escriben igual.
+  return typeof x === 'object' && typeof y === 'object' && JSON.stringify(x) === JSON.stringify(y);
+};
+
+/**
+ * C-BORRADOR-SIN-AVISO-VACIO (Richard, 25 nov 2026: «Recuperamos lo que estabas escribiendo» sin haber
+ * escrito nada) — todos los formularios. ¿Lo guardado es igual a lo que ya estaba (en blanco, o lo que
+ * vino del servidor)? Entonces no es un borrador: ni se guarda ni se avisa. Los campos sensibles no
+ * cuentan. Pura (lleva su prueba).
+ */
+export function borradorSinCambios<T extends Record<string, unknown>>(
+  valores: Partial<T>,
+  base: T,
+  sensibles: readonly (keyof T)[] = [],
+): boolean {
+  const fuera = new Set<string>(sensibles.map(String));
+  const claves = new Set([...Object.keys(valores), ...Object.keys(base)]);
+  const v = new Map(Object.entries(valores));
+  const b = new Map(Object.entries(base));
+  return [...claves].every((k) => fuera.has(k) || !v.has(k) || mismo(v.get(k), b.get(k)));
+}
+
 export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorrador<T>) {
   const {
     formulario,
@@ -81,6 +108,10 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
   // Lo que ya está guardado de verdad (en blanco, o lo que vino del servidor). Igual a esto = no es borrador.
   const baseRef = useRef<T>(inicial);
   const sensiblesRef = useRef(sensibles);
+  const valoresRef = useRef<T>(inicial);
+  useEffect(() => {
+    valoresRef.current = valores;
+  }, [valores]);
 
   useEffect(() => {
     let vivo = true;
@@ -90,6 +121,15 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
         if (!vivo || !guardado) return;
         try {
           const datos = JSON.parse(guardado) as Partial<T>;
+          // Un borrador igual a lo que ya estaba (vacío o viejo) se tira sin avisar nada.
+          if (
+            !datos ||
+            typeof datos !== 'object' ||
+            borradorSinCambios(datos, baseRef.current, sensiblesRef.current)
+          ) {
+            void Promise.resolve(almacen.borrar(llave)).catch(() => {});
+            return;
+          }
           setValores({ ...baseRef.current, ...datos });
           recuperadoRef.current = true;
           setRecuperado(true);
@@ -116,12 +156,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     const copia: Record<string, unknown> = { ...v };
     for (const campo of sensiblesRef.current) delete copia[campo as string];
     // Un formulario igual a lo ya guardado (en blanco o lo que vino del servidor) no es borrador.
-    const inicialSinSensibles: Record<string, unknown> = { ...baseRef.current };
-    for (const campo of sensiblesRef.current) delete inicialSinSensibles[campo as string];
-    const valoresIniciales = new Map(Object.entries(inicialSinSensibles));
-    const vacio = Object.entries(copia).every(([k, val]) =>
-      Object.is(val, valoresIniciales.get(k)),
-    );
+    const vacio = borradorSinCambios(copia as Partial<T>, baseRef.current, sensiblesRef.current);
     Promise.resolve(
       vacio ? almacen.borrar(llave) : almacen.guardar(llave, JSON.stringify(copia)),
     ).catch((e) => console.warn('borrador: no se pudo guardar', e));
@@ -167,10 +202,23 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
    * Lo que vino del servidor al abrir la pantalla. Si la persona tenía algo a medio escribir,
    * eso manda y se queda encima; si no, el formulario se llena con lo guardado.
    */
-  const cargarBase = useCallback((v: T) => {
-    baseRef.current = v;
-    if (!recuperadoRef.current) setValores(v);
-  }, []);
+  const cargarBase = useCallback(
+    (v: T) => {
+      baseRef.current = v;
+      if (!recuperadoRef.current) {
+        setValores(v);
+        return;
+      }
+      // Lo recuperado resultó igual a lo que vino del servidor: no hay nada que avisar.
+      if (borradorSinCambios(valoresRef.current, v, sensiblesRef.current)) {
+        recuperadoRef.current = false;
+        setRecuperado(false);
+        void Promise.resolve(almacen.borrar(llave)).catch(() => {});
+        setValores(v);
+      }
+    },
+    [almacen, llave],
+  );
 
   /** Al guardar con éxito, al cancelar a propósito o al cerrar sesión. */
   const limpiar = useCallback(async () => {

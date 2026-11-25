@@ -15,6 +15,7 @@
  */
 import { papelesDelPais, plazoPapeles } from './papeles';
 import { menuPorUso, verificacionUnica } from './activacion';
+import { fichaConductor } from './fichaConductor';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -3481,6 +3482,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(plazoPapeles),
         de(papelesDelPais),
         de(verificacionUnica),
+        de(fichaConductor),
       ],
     },
     {

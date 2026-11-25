@@ -581,16 +581,36 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
     .first<{ nombre: string; fecha_nacimiento: string | null; es_prueba: number | null }>();
   if (!persona) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
   const donde = await paisDelConductor(db, id);
-  const [estado, { results: documentos }, kycFila] = await Promise.all([
-    estadoDelConductor(db, id, false, Number.MAX_SAFE_INTEGER),
-    db
-      .prepare(
-        "SELECT id, tipo, estado, motivo, vence_en AS venceEn FROM conductor_documentos WHERE conductor_id = ? AND estado != 'reemplazado'",
-      )
-      .bind(id)
-      .all(),
-    db.prepare('SELECT estado FROM kyc WHERE usuario_id = ?').bind(id).first<{ estado: string }>(),
-  ]);
+  const [estado, { results: documentos }, kycFila, { results: guardadas }, { results: cumplidos }] =
+    await Promise.all([
+      estadoDelConductor(db, id, false, Number.MAX_SAFE_INTEGER),
+      db
+        .prepare(
+          "SELECT id, tipo, estado, motivo, vence_en AS venceEn FROM conductor_documentos WHERE conductor_id = ? AND estado != 'reemplazado'",
+        )
+        .bind(id)
+        .all(),
+      db
+        .prepare('SELECT estado FROM kyc WHERE usuario_id = ?')
+        .bind(id)
+        .first<{ estado: string }>(),
+      // C-FICHA-HABILITACION-VERDAD: la habilitación que el EQUIPO guardó (sin el plazo de papeles), para
+      // que «Habilitar» salga solo cuando sirve.
+      db
+        .prepare('SELECT servicio_id AS s, estado FROM habilitaciones WHERE conductor_id = ?')
+        .bind(id)
+        .all<{ s: string; estado: string }>(),
+      // Lo ya aprobado (del conductor y de su vehículo): «Aprobar la edad» o «el casco» solo si falta.
+      db
+        .prepare(
+          `SELECT requisito, vehiculo_id AS vehiculoId FROM cumplimientos
+          WHERE conductor_id = ? AND estado = 'aprobado' AND (vence_en IS NULL OR vence_en > datetime('now'))`,
+        )
+        .bind(id)
+        .all<{ requisito: string; vehiculoId: string }>(),
+    ]);
+  const guardada = new Map(guardadas.map((h) => [h.s, h.estado]));
+  const activoId = estado.vehiculoActivo?.id ?? '';
   return c.json({
     nombre: persona.nombre,
     // C-CUENTA-PRUEBA: en una cuenta de prueba el equipo puede aprobar los antecedentes.
@@ -620,8 +640,19 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
       const con = new Set(results.map((r) => r.s));
       return estado.servicios
         .filter((s) => s.servicioId === 'moto' || s.servicioId === 'carro')
-        .map((s) => ({ ...s, tieneVehiculo: con.has(s.servicioId) }));
+        .map((s) => ({
+          ...s,
+          tieneVehiculo: con.has(s.servicioId),
+          habilitacionGuardada: guardada.get(s.servicioId) ?? null,
+        }));
     })(),
+    cumplidos: [
+      ...new Set(
+        cumplidos
+          .filter((x) => x.vehiculoId === '' || (activoId && x.vehiculoId === activoId))
+          .map((x) => x.requisito),
+      ),
+    ],
   });
 });
 

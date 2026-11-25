@@ -27,7 +27,7 @@ import { esParticipante } from './piloto';
 import { esCuentaPrueba } from './cuentaPrueba';
 import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import { type Entorno, textoPlano } from '@tumbite/compartido';
+import { type Entorno, faltaParaAprobarSinEnviar, textoPlano } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { exigirComisionEnMoneda } from '../finanzas/conductor';
@@ -1708,9 +1708,20 @@ servicios.get('/admin/vehiculos', async (c) => {
   return c.json({
     vehiculos: results.map((v) => {
       const g = gracias.get(v.conductor_id);
+      const documentos = docs.filter((d) => d.vehiculoId === v.id);
       return {
         ...v,
-        documentos: docs.filter((d) => d.vehiculoId === v.id),
+        documentos,
+        // C-FICHA-VEHICULO-SIN-ENVIAR: lo que le falta a uno sin enviar para que el equipo lo apruebe.
+        ...(estado === 'registrado'
+          ? {
+              faltaParaAprobar: faltaParaAprobarSinEnviar(
+                v as unknown as { tipo: string; placa: string | null; placa_estado: string | null },
+                documentos as unknown as { tipo: string; estado: string }[],
+                seguroEnPlazo(g) ? ['registro'] : ['registro', 'seguro'],
+              ),
+            }
+          : {}),
         /** La póliza que todavía puede llegar dentro del plazo: cuándo vence ese plazo. */
         seguroEnPlazo: seguroEnPlazo(g) ? { venceEn: g?.venceEn ?? null } : null,
       };
@@ -1827,8 +1838,35 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
     anio: number | null;
     plazas: number | null;
     categoria: string;
+    estado: string;
+    placa: string | null;
+    placa_estado: string | null;
   }>();
   if (!antes) throw new ErrorDatos('No encontramos ese vehículo.', undefined, 404);
+  // C-FICHA-VEHICULO-SIN-ENVIAR: uno que el conductor no envió se aprueba solo con sus fotos y su
+  // placa completas; nunca sin ellas.
+  if (d.estado === 'aprobado' && antes.estado === 'registrado') {
+    const { results: docsAntes } = await db
+      .prepare(
+        "SELECT tipo, estado FROM vehiculo_documentos WHERE vehiculo_id = ? AND estado != 'reemplazado'",
+      )
+      .bind(id)
+      .all<{ tipo: string; estado: string }>();
+    const falta = faltaParaAprobarSinEnviar(
+      antes,
+      docsAntes,
+      seguroEnPlazo(await graciaDe(db, antes.conductor_id)) ? ['registro'] : ['registro', 'seguro'],
+    );
+    if (falta.length)
+      return c.json(
+        {
+          error:
+            'Este vehículo todavía no tiene completos sus fotos, su placa y sus papeles: no se puede aprobar sin ellos.',
+          faltaParaAprobar: falta,
+        },
+        422,
+      );
+  }
   const pais = d.estado === 'aprobado' ? (await paisDelConductor(db, antes.conductor_id)).pais : '';
   const categoria =
     d.estado === 'aprobado'
@@ -1836,6 +1874,11 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
       : antes.categoria;
   await conRestricciones(
     db.batch([
+      // C-FICHA-VEHICULO-SIN-ENVIAR: el sin enviar pasa primero por «en revisión» (la transición de
+      // siempre), en el mismo lote: si la base no deja aprobarlo, tampoco queda enviado a medias.
+      ...(d.estado === 'aprobado' && antes.estado === 'registrado'
+        ? [db.prepare(`${A_REVISION} AND estado = 'registrado'`).bind(id)]
+        : []),
       db
         .prepare(
           `UPDATE vehiculos SET estado = ?, motivo = ?, aprobado_por = ?, categoria = ?,
@@ -1851,7 +1894,11 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
         .bind(id, d.estado),
     ]),
   );
-  await auditar(db, admin.id, 'vehiculo.revision', `vehiculo:${id}`, antes, { ...d, categoria });
+  await auditar(db, admin.id, 'vehiculo.revision', `vehiculo:${id}`, antes, {
+    ...d,
+    categoria,
+    ...(antes.estado === 'registrado' ? { sinEnviar: true } : {}),
+  });
   // C-VEHICULO-ACTIVO-SOLO: si no tiene otro activo y válido, el aprobado queda activo solo.
   const activo =
     d.estado === 'aprobado'

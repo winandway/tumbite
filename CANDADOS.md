@@ -2,6 +2,42 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-FICHA-VEHICULO-SIN-ENVIAR · El vehículo registrado y sin enviar sale en la ficha, con «Recordarle» y «Aprobar» (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se rompía:** en la ficha de un conductor (Verificaciones y ficha del repartidor) solo salían los vehículos «en revisión»; una moto registrada y sin enviar no aparecía y no había cómo recordarle ni aprobarla. Lo que esperaba al equipo quedaba abajo, sin botón visible.
+- **Qué se hizo:** `RevisionConductor.tsx` también pide `GET /datos/admin/vehiculos?estado=registrado&conductor=` y pinta cada uno con la pieza `VehiculoSinEnviar.tsx` (fotos en miniatura, placa, papeles con su estado, «Esperando que el conductor la envíe» en gris, «Recordarle» = `POST /datos/admin/camila/recordatorios/:id/mensaje` con `{canales:['aviso'], plantilla:'vehiculo_enviar'}`, y «Aprobar» en el botón de la marca solo si está completo: aprueba los papeles pendientes y después el vehículo). Regla única `faltaParaAprobarSinEnviar` (`packages/compartido/src/vehiculoSinEnviar.ts`): placa, dónde se emitió, fotos de frente y de la placa (carro: interior) y los papeles que exige la base (registro; seguro fuera del plazo). La lista del servidor trae `faltaParaAprobar`; `PUT /datos/admin/vehiculos/:id` se niega con 422 sin ellos y, si está completo, pasa por «en revisión» y aprueba en el MISMO lote (la máquina de estados y el disparador `vehiculos_aprobar_exige_documentos` no se tocan); la auditoría guarda quién, cuándo y `sinEnviar: true`. `EsperaAlEquipo` (arriba de la ficha, en rojo, con «Ir») cuenta identidad por decidir, vehículos por revisar, sin enviar aprobables y papeles; se recuenta con el evento de decisión. La pestaña «Vehículos · Sin enviar» usa la misma pieza.
+- **Cómo se comprueba:** `apps/servidor/src/fichaConductor.test.ts` (regla pura; sin fotos 422; con fotos sin registro 422; completo 200 con auditoría) y `apps/panel/src/panel/fichaConductor.test.tsx` (sale en la ficha, «Recordarle» manda la plantilla, «Aprobar» aprueba papeles y vehículo, «Espera al equipo» en rojo). **Vistas en ROJO** sin la guarda del servidor y sin la lista «registrado». En pantalla: `node scripts/recorrido/capturas-ficha-conductor.mjs` (local).
+- **Qué NO tocar:** no aflojar el disparador de papeles para aprobar sin registro (decisión legal de Richard, en PENDIENTES); no crear rutas nuevas de aprobar.
+
+## C-NACIMIENTO-DEL-DOCUMENTO · La fecha de nacimiento sale de la misma lectura del documento (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se rompía:** «Fecha de nacimiento: sin fecha» y «Aprobar la edad» fallaba: la comprobación automática leía nombre, número y vencimiento, pero no la fecha de nacimiento.
+- **Qué se hizo:** `verificacionIa.ts`: la MISMA llamada (modelo aprobado `MODELO_VERIFICACION`, model-guard intacto) pide `nacimiento` y `confianzaNacimiento`; queda en `verificacion_fotos.ia_json` (sin columna nueva). `nacimientoDeLecturas` (`packages/compartido/src/nacimientoLeido.ts`): cédula primero, fecha real de 14 a 100 años. Al aprobar la identidad (`PATCH /datos/admin/kyc/:id`): si la cuenta no tiene fecha y la confianza llega a 80, se guarda en `usuarios.fecha_nacimiento` (nunca pisa una escrita; auditoría `conductor.fecha_nacimiento`), la edad mínima del país se comprueba con esa fecha y, si cuadra, `edad_minima_21` queda aprobado (`revision_manual`, `aprobado_por` = quien aprobó). La tabla «Lo que leyó» de la ficha la enseña con su confianza.
+- **Cómo se comprueba:** `fichaConductor.test.ts` (una sola llamada al modelo con la fecha pedida; con confianza 92 se guarda y aprueba la edad; con 40 no) y la fila de `compararDatos` en `fichaConductor.test.tsx`. **Vistas en ROJO** sin el campo en el esquema y sin `guardarNacimientoLeido`.
+
+## C-SIN-CODIGOS-CRUDOS · Ningún código del servidor sale crudo en la ficha (Richard, 25 nov 2026) — todos los países · panel
+
+- **Qué se veía:** «vehiculo_incompatible» y «proximamente» en la habilitación; el vehículo activo como «moto · registrado».
+- **Qué se hizo:** `apps/panel/src/panel/diseno/palabras.ts`: `palabra(tabla, código)` (lo desconocido en palabras, nunca con guiones bajos), `motivoServicioEnPalabras` (todos los `MotivoSinComida` en es/en), estados y tipos de vehículo. Usado en `SuperMoto.tsx` (`enPalabras`), `RevisionConductor.tsx`, `VehiculoSinEnviar.tsx`, `SuperKycFicha.tsx`, `SuperPapeles.tsx` y `SuperFichas.tsx` (KYC, vehículos, faltas, tipo de contrato, quejas).
+- **Cómo se comprueba:** `fichaConductor.test.tsx`: cada motivo en los dos idiomas sin código crudo, y un escaneo de esas pantallas que falla si aparece `?? algo.estado|motivo|tipo|clave…}`. **Visto en ROJO** con el motivo crudo.
+
+## C-FICHA-HABILITACION-VERDAD · «Habilitado» dice lo que falta y cada botón sale solo cuando sirve (Richard, 25 nov 2026) — todos los países · servidor y panel
+
+- **Qué se veía:** «Habilitación para Moto: Habilitado · No le falta nada» sin moto activa, y «Habilitar para Moto» estando ya habilitado.
+- **Qué se hizo:** `GET /datos/admin/conductores/:id/pasajeros` trae `habilitacionGuardada` (la del equipo, sin el plazo) y `cumplidos`. La ficha dice «No le falta nada» en verde solo con `puedeActivar`; si no, la frase del motivo («Habilitado, pero sin moto aprobada en uso.», «Moto todavía no está abierto en su ciudad.»); «Habilitado por su plazo» cuando lo habilita el plazo. «Habilitar» solo si el equipo no lo aprobó y tiene vehículo para ese servicio; «Aprobar la edad» solo con fecha y sin la edad aprobada; «Aprobar el casco» solo con moto activa y sin casco aprobado.
+- **Cómo se comprueba:** `fichaConductor.test.tsx` (tres casos). **Vistos en ROJO** con el botón siempre visible.
+
+## C-FICHA-ESTADOS-CON-COLOR · Verde lo hecho, rojo lo del equipo, gris lo del conductor (Richard, 25 nov 2026) — todos los países · panel
+
+- **Qué se hizo:** pieza única `apps/panel/src/panel/diseno/EtiquetaEstado.tsx` (`tonoFicha(estado, quien)` sobre la `Insignia` de siempre; el verde es el de éxito). Usada en identidad, papeles, vehículo activo, habilitación, KYC de la ficha y la tarjeta de papeles (`en_revision` = equipo, rojo; pendiente o por enviar = conductor, gris).
+- **Cómo se comprueba:** `fichaConductor.test.tsx` (pieza y ficha: identidad y licencia en verde, papel por revisar en rojo). **Visto en ROJO** con el tono de la tabla vieja.
+
+## C-BORRADOR-SIN-AVISO-VACIO · «Recuperamos lo que estabas escribiendo» solo si de verdad se escribió (Richard, 25 nov 2026) — todos los formularios · compartido y panel
+
+- **Qué se veía:** en «Cambiar ciudad» salía el aviso sin haber escrito nada (un borrador vacío guardado de antes).
+- **Qué se hizo:** en la pieza única `useBorrador` (`packages/compartido/src/borrador.ts`): `borradorSinCambios` (vacío, solo espacios o igual a lo guardado, sin los campos sensibles) se usa al leer (se borra y no se avisa), al guardar y en `cargarBase` (si lo recuperado es igual a lo del servidor, deja de avisar). «Cancelar» en «Cambiar ciudad» tira el borrador.
+- **Cómo se comprueba:** `packages/compartido/src/borradorSinAvisoVacio.test.tsx` y el caso de «Cambiar ciudad» en `fichaConductor.test.tsx`. **Vistos en ROJO** sin la comprobación.
+
 ## C-MENU-UNA-CONFIGURACION · Una sola «Configuración» en el menú del equipo (25 nov 2026) — todos los países · panel
 
 - **Qué se veía:** el menú del superadmin mostraba «Configuración» dos veces: la del sistema (en «Sistema y configuración») y la de la propia cuenta (grupo «Ajustes»).

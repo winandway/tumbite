@@ -18,9 +18,16 @@ const DECIDIR = [
   /`\/datos\/admin\/cumplimientos\/\$\{/,
 ];
 /** Las únicas fuentes que pueden decidir algo de un conductor. */
-const PERMITIDOS = ['RevisionConductor.tsx', 'SuperKycFicha.tsx', 'SuperMoto.tsx'];
-/** Las piezas de revisión que viven en SuperMoto solo se dibujan desde la pieza de Verificaciones. */
-const PIEZAS = [/<FilaMoto\b/, /<FilaPapel\b/, /<Conductor\b/];
+// C-FICHA-VEHICULO-SIN-ENVIAR: la pieza del vehículo sin enviar también es de Verificaciones (se
+// dibuja solo dentro de ella: lo exige la segunda prueba).
+const PERMITIDOS = [
+  'RevisionConductor.tsx',
+  'SuperKycFicha.tsx',
+  'SuperMoto.tsx',
+  'VehiculoSinEnviar.tsx',
+];
+/** Las piezas de revisión solo se dibujan desde la pieza de Verificaciones. */
+const PIEZAS = [/<FilaMoto\b/, /<FilaPapel\b/, /<Conductor\b/, /<VehiculoSinEnviar\b/];
 
 function fuentes(dir: string): string[] {
   return readdirSync(dir).flatMap((n) => {

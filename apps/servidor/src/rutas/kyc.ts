@@ -23,6 +23,8 @@ import {
   pideReversoDocumento,
   TAMANOS_FOTO,
   medidasWebp,
+  nacimientoDeLecturas,
+  nacimientoSeGuardaSolo,
 } from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
 import { graciaDe } from '../plazoPapeles';
@@ -932,13 +934,14 @@ async function edadMinimaDe(db: D1Database, id: string): Promise<number> {
   return edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
 }
 
-async function exigirEdadRepartidor(db: D1Database, id: string) {
+async function exigirEdadRepartidor(db: D1Database, id: string, leida: string | null = null) {
   const apagada = await db
     .prepare("SELECT valor FROM config WHERE clave = 'edad_repartidor_por_estado'")
     .first<{ valor: string }>();
   if (apagada?.valor === '0') return;
   const f = await datosEdad(db, id);
-  const edad = edadEnAnios(f?.fecha_nacimiento);
+  // C-NACIMIENTO-DEL-DOCUMENTO: sin fecha escrita, vale la leída en su documento (la que se guardará).
+  const edad = edadEnAnios(f?.fecha_nacimiento ?? leida);
   if (edad == null || !f) return;
   const minima = edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
   if (edad < minima)
@@ -949,6 +952,80 @@ async function exigirEdadRepartidor(db: D1Database, id: string) {
       undefined,
       409,
     );
+}
+
+/**
+ * C-NACIMIENTO-DEL-DOCUMENTO (Richard, 25 nov 2026): la fecha de nacimiento que la comprobación
+ * automática leyó en sus documentos vigentes (la misma lectura de nombre, número y vencimiento).
+ */
+async function nacimientoLeidoDe(db: D1Database, id: string) {
+  const { results } = await db
+    .prepare(
+      "SELECT paso, ia_json FROM verificacion_fotos WHERE conductor_id = ? AND estado = 'vigente' AND ia_json != '' ORDER BY creado_en DESC LIMIT 12",
+    )
+    .bind(id)
+    .all<{ paso: string; ia_json: string }>();
+  return nacimientoDeLecturas(
+    results.map((r) => {
+      try {
+        return { paso: r.paso, lectura: JSON.parse(r.ia_json) as Record<string, unknown> };
+      } catch {
+        return { paso: r.paso, lectura: null };
+      }
+    }),
+  );
+}
+
+/**
+ * Al aprobar la identidad: si la cuenta no tiene fecha de nacimiento y la leída tiene la confianza en
+ * verde, queda guardada (con quién y cuándo en la auditoría), y si cumple la edad de su país, el
+ * requisito de la edad queda aprobado solo. Nunca pisa una fecha ya escrita. Devuelve lo que hizo.
+ */
+async function guardarNacimientoLeido(
+  db: D1Database,
+  id: string,
+  adminId: string,
+  leida: string,
+): Promise<{ fecha: boolean; edad: boolean }> {
+  const r = await db
+    .prepare(
+      "UPDATE usuarios SET fecha_nacimiento = ? WHERE id = ? AND (fecha_nacimiento IS NULL OR fecha_nacimiento = '')",
+    )
+    .bind(leida, id)
+    .run();
+  const fecha = Number(r.meta?.changes ?? 0) > 0;
+  if (fecha)
+    await db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        adminId,
+        'conductor.fecha_nacimiento',
+        `usuario:${id}`,
+        JSON.stringify({ fecha_nacimiento: null }),
+        JSON.stringify({ fecha_nacimiento: leida, fuente: 'documento_identidad' }),
+      )
+      .run();
+  const u = await db
+    .prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
+    .bind(id)
+    .first<{ fecha_nacimiento: string | null }>();
+  const edadMinima = perfilPasajeros((await paisDelConductor(db, id)).pais).edadMinima;
+  const edad = edadEnAnios(u?.fecha_nacimiento);
+  if (edad == null || edad < edadMinima) return { fecha, edad: false };
+  const e = await db
+    .prepare(
+      `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, fuente_id, aprobado_por)
+       VALUES (?, '', 'edad_minima_21', 'aprobado', 'revision_manual', 'documento_identidad', ?)
+       ON CONFLICT(conductor_id, vehiculo_id, requisito) DO UPDATE SET estado = 'aprobado',
+         fuente = excluded.fuente, fuente_id = excluded.fuente_id, aprobado_por = excluded.aprobado_por,
+         actualizado_en = datetime('now')
+       WHERE cumplimientos.estado != 'aprobado'`,
+    )
+    .bind(id, adminId)
+    .run();
+  return { fecha, edad: Number(e.meta?.changes ?? 0) > 0 };
 }
 
 /** G3 y G4b: los dos interruptores de repartidores (config). La edad nace encendida; los papeles, apagados. */
@@ -1126,7 +1203,11 @@ kyc.patch('/admin/kyc/:id', async (c) => {
     .first<{ nombre: string; correo: string; idioma: 'es' | 'en'; rol: string }>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
   // G3: edad mínima del repartidor por estado y vehículo (como DoorDash y Uber), con interruptor.
-  if (d.estado === 'aprobado' && u.rol === 'repartidor') await exigirEdadRepartidor(db, id);
+  // C-NACIMIENTO-DEL-DOCUMENTO: la fecha leída en su documento (solo con la confianza en verde).
+  const leido =
+    d.estado === 'aprobado' && u.rol === 'repartidor' ? await nacimientoLeidoDe(db, id) : null;
+  const leida = nacimientoSeGuardaSolo(leido) ? leido.fecha : null;
+  if (d.estado === 'aprobado' && u.rol === 'repartidor') await exigirEdadRepartidor(db, id, leida);
   // Los restaurantes se vuelven a verificar cada año (¿sigue el local ahí?).
   const proxima =
     d.estado === 'aprobado' && u.rol === 'restaurante'
@@ -1199,7 +1280,12 @@ kyc.patch('/admin/kyc/:id', async (c) => {
       decision: d.estado,
       por: admin.id,
     });
+  // C-NACIMIENTO-DEL-DOCUMENTO: la fecha leída queda guardada y la edad se aprueba sola si cuadra.
+  const nacimiento =
+    leida && u.rol === 'repartidor'
+      ? await guardarNacimientoLeido(db, id, admin.id, leida)
+      : { fecha: false, edad: false };
   // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
   if (u.rol === 'repartidor' && d.estado === 'aprobado') await avisarSiQuedoActivo(c.env, db, id);
-  return c.json({ ok: true });
+  return c.json({ ok: true, nacimiento });
 });

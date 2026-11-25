@@ -1724,6 +1724,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'A passenger service can’t be turned on without its minimum safety requirements.',
   ],
   [
+    'Este vehículo todavía no tiene completos sus fotos, su placa y sus papeles: no se puede aprobar sin ellos.',
+    'This vehicle’s photos, plate and documents aren’t complete yet: it can’t be approved without them.',
+  ],
+  [
     'Ese cambio de estado no está permitido para este vehículo.',
     'That status change isn’t allowed for this vehicle.',
   ],

@@ -1,4 +1,6 @@
 import { Insignia } from './diseno/Insignia';
+import { palabra } from './diseno/palabras';
+import { EtiquetaEstado } from './diseno/EtiquetaEstado';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -587,8 +589,13 @@ export function PapelesConductor({
       <ul className="papeles-estados">
         {v.papeles.map((p) => (
           <li key={p.papel}>
-            <strong>{t.nombres[p.papel] ?? p.papel}</strong>{' '}
-            <Insignia estado={p.estado}>{t.estados[p.estado] ?? p.estado}</Insignia>
+            <strong>{palabra(t.nombres, p.papel)}</strong>{' '}
+            <EtiquetaEstado
+              estado={p.estado}
+              quien={p.estado === 'en_revision' ? 'equipo' : 'conductor'}
+            >
+              {palabra(t.estados, p.estado)}
+            </EtiquetaEstado>
             {p.motivo ? <small> · {p.motivo}</small> : null}
           </li>
         ))}
@@ -690,7 +697,7 @@ export function PapelesConductor({
                     <Luz color={foto.color} idioma={idioma} />
                     {foto.clase ? (
                       <span>
-                        {t.seVe}: {t.clases[foto.clase] ?? foto.clase}
+                        {t.seVe}: {palabra(t.clases, foto.clase)}
                         {foto.confianza !== null ? ` · ${foto.confianza} % ${t.confianza}` : ''}
                       </span>
                     ) : null}
@@ -713,7 +720,7 @@ export function PapelesConductor({
                       </dl>
                     ) : null}
                     {foto.decision ? (
-                      <span className="suave">{t.decision[foto.decision] ?? foto.decision}</span>
+                      <span className="suave">{palabra(t.decision, foto.decision)}</span>
                     ) : null}
                     {foto.estado === 'repetir' ? (
                       <span className="doc-por_vencer">
@@ -730,7 +737,7 @@ export function PapelesConductor({
           {v.caras ? (
             <p className="papeles-caras" data-testid="papeles-caras">
               <strong>{t.caras}:</strong> <Luz color={v.caras.color} idioma={idioma} />{' '}
-              {t.carasR[v.caras.resultado] ?? v.caras.resultado}
+              {palabra(t.carasR, v.caras.resultado)}
               {v.caras.confianza !== null ? ` · ${v.caras.confianza} % ${t.confianza}` : ''}
             </p>
           ) : null}

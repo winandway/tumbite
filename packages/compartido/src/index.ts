@@ -108,6 +108,8 @@ export * from './escpos';
 export * from './enlacesTiendas';
 export * from './smsConsentimiento';
 export * from './perfilPasajeros';
+export * from './vehiculoSinEnviar';
+export * from './nacimientoLeido';
 export * from './tasaReferencia';
 export * from './regaloDivoox';
 export * from './sondeo';

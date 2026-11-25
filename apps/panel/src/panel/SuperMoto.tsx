@@ -25,6 +25,13 @@ import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { Pastilla } from './armazon/Piezas';
 import { pedir } from './api';
 import { AyudaAqui } from './AyudaAqui';
+import { EtiquetaEstado } from './diseno/EtiquetaEstado';
+import {
+  T_ESTADOS_VEHICULO,
+  T_TIPOS_VEHICULO,
+  motivoServicioEnPalabras,
+  palabra,
+} from './diseno/palabras';
 
 /**
  * C-MOTO-PANEL (13 nov 2026): lo que el equipo necesita para preparar y operar Divoox Moto por país,
@@ -202,7 +209,15 @@ const T = {
       rechazada: 'Rechazado',
       suspendida: 'Suspendido',
       ninguna: 'Sin habilitar',
+      sin_solicitar: 'Sin habilitar',
+      vencida: 'Vencida',
     } as Record<string, string>,
+    // C-FICHA-HABILITACION-VERDAD: lo que dice la ficha cuando está habilitado y algo más falta.
+    enPlazo: 'Habilitado por su plazo',
+    sinFechaAyuda:
+      'Falta la fecha de nacimiento: se guarda sola al aprobar la identidad si se lee bien en su documento.',
+    edadAprobada: 'Edad aprobada',
+    cascoAprobado: 'Casco del pasajero aprobado',
     leFalta: 'Le falta',
     nadaFalta: 'No le falta nada para Moto.',
     requisitos: {
@@ -451,7 +466,14 @@ const T = {
       rechazada: 'Rejected',
       suspendida: 'Suspended',
       ninguna: 'Not approved',
+      sin_solicitar: 'Not approved',
+      vencida: 'Expired',
     } as Record<string, string>,
+    enPlazo: 'Enabled by grace period',
+    sinFechaAyuda:
+      'Date of birth missing: it is saved automatically when you approve the identity if it reads well on their ID.',
+    edadAprobada: 'Age approved',
+    cascoAprobado: 'Passenger helmet approved',
     leFalta: 'Missing',
     nadaFalta: 'Nothing missing for Moto.',
     requisitos: {
@@ -539,8 +561,9 @@ const T = {
 export type Textos = (typeof T)['es'];
 /** C-VERIFICACION-UNICA: los textos de la revisión, para la pieza de Verificaciones. */
 export const T_MOTO = T;
+// C-SIN-CODIGOS-CRUDOS: un código que la tabla no conoce se dice en palabras, nunca crudo.
 const enPalabras = (mapa: Record<string, string>, clave: string | null | undefined) =>
-  new Map(Object.entries(mapa)).get(clave ?? '') ?? clave ?? '';
+  palabra(mapa, clave);
 const mensaje = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
 
 // ---------------------------------------------------------------- 1. abrir en una ciudad
@@ -1235,7 +1258,13 @@ type DetalleConductor = {
     motivo: string;
     /** C-BARRA-IGUAL-REPARTO: tiene un vehículo que sirve para este servicio. */
     tieneVehiculo?: boolean;
+    estadoServicio?: string;
+    vehiculoCompatible?: boolean;
+    /** C-FICHA-HABILITACION-VERDAD: la que guardó el equipo (sin contar el plazo de papeles). */
+    habilitacionGuardada?: string | null;
   }[];
+  /** Requisitos ya aprobados (del conductor y de su vehículo en uso). */
+  cumplidos?: string[];
 };
 
 // ---------------------------------------------------------------- tasa de referencia (bolívares)
@@ -1625,37 +1654,73 @@ export function Conductor({
   const deServicio = (s: string) => d?.servicios.find((x) => x.servicioId === s);
   const moto = deServicio('moto');
   const carro = deServicio('carro');
+  const cumplidos = new Set(d?.cumplidos ?? []);
+  const nombreServicio = (s: string) =>
+    s === 'carro' ? (idioma === 'en' ? 'Car' : 'Carro') : 'Moto';
+  /**
+   * C-FICHA-HABILITACION-VERDAD (Richard, 25 nov 2026: «Habilitado · No le falta nada para Moto» sin
+   * moto activa): la frase dice lo que falta de verdad, con el motivo del reparto en palabras.
+   */
+  const fraseServicio = (x: NonNullable<ReturnType<typeof deServicio>>, nadaFalta: string) => {
+    if (x.puedeActivar || x.motivo === 'habilitado') return { texto: nadaFalta, listo: true };
+    return {
+      texto: motivoServicioEnPalabras(x.motivo, nombreServicio(x.servicioId), idioma),
+      listo: false,
+    };
+  };
+  /** «Habilitar» sirve solo si el equipo todavía no lo aprobó (el plazo de papeles no cuenta). */
+  const sirveHabilitar = (x: ReturnType<typeof deServicio>) =>
+    ((x?.habilitacionGuardada !== undefined ? x.habilitacionGuardada : x?.habilitacion) ??
+      'ninguna') !== 'aprobada';
   const bloqueServicio = (
     x: NonNullable<ReturnType<typeof deServicio>>,
     titulo: string,
     nadaFalta: string,
-  ) => (
-    <div key={x.servicioId}>
-      <h3>
-        {titulo}:{' '}
-        <Insignia estado={x.habilitacion ?? 'apagado'}>
-          {enPalabras(t.estadosHabilitacion, x.habilitacion ?? 'ninguna')}
-        </Insignia>
-      </h3>
-      {x.tieneVehiculo === false ? (
-        <p className="pista" data-testid={`sin-vehiculo-${x.servicioId}`}>
-          {x.servicioId === 'carro' ? t.sinCarroServicio : t.sinMotoServicio}
-        </p>
-      ) : x.requisitosFaltantes.length ? (
-        <>
-          <p>{t.leFalta}:</p>
-          <ul aria-label={`${t.leFalta} · ${titulo}`}>
-            {x.requisitosFaltantes.map((r) => (
-              <li key={r}>{requisito(r)}</li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <p className="texto-exito">{nadaFalta}</p>
-      )}
-      {x.motivo ? <p className="pista">{x.motivo}</p> : null}
-    </div>
-  );
+  ) => {
+    const frase = fraseServicio(x, nadaFalta);
+    const enPlazo =
+      x.habilitacion === 'aprobada' &&
+      x.habilitacionGuardada !== undefined &&
+      x.habilitacionGuardada !== 'aprobada';
+    return (
+      <div key={x.servicioId} data-testid={`servicio-${x.servicioId}`}>
+        <h3>
+          {titulo}:{' '}
+          <EtiquetaEstado
+            estado={enPlazo ? 'en_plazo' : (x.habilitacion ?? 'ninguna')}
+            quien={x.habilitacion === 'pendiente' ? 'equipo' : 'conductor'}
+          >
+            {enPlazo ? t.enPlazo : enPalabras(t.estadosHabilitacion, x.habilitacion ?? 'ninguna')}
+          </EtiquetaEstado>
+        </h3>
+        {x.tieneVehiculo === false ? (
+          <p className="pista" data-testid={`sin-vehiculo-${x.servicioId}`}>
+            {x.servicioId === 'carro' ? t.sinCarroServicio : t.sinMotoServicio}
+          </p>
+        ) : x.requisitosFaltantes.length ? (
+          <>
+            <p>{t.leFalta}:</p>
+            <ul aria-label={`${t.leFalta} · ${titulo}`}>
+              {x.requisitosFaltantes.map((r) => (
+                <li key={r}>{requisito(r)}</li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p
+            className={frase.listo ? 'texto-exito' : 'pista'}
+            data-testid={`frase-servicio-${x.servicioId}`}
+          >
+            {frase.texto}
+          </p>
+        )}
+      </div>
+    );
+  };
+  const faltaEdad = !cumplidos.has('edad_minima_21');
+  const faltaCasco = !cumplidos.has('casco_pasajero');
+  const tiposVehiculo = idioma === 'en' ? T_TIPOS_VEHICULO.en : T_TIPOS_VEHICULO.es;
+  const estadosVehiculo = idioma === 'en' ? T_ESTADOS_VEHICULO.en : T_ESTADOS_VEHICULO.es;
   return (
     <div className="tarjeta-form" data-testid="detalle-conductor">
       <div className="fila-botones">
@@ -1682,15 +1747,33 @@ export function Conductor({
             <li>
               <div className="lista-texto">
                 <strong>{t.nacimiento}</strong>
-                <span>{d.fechaNacimiento ?? t.sinFecha}</span>
+                <span data-testid="ficha-nacimiento">
+                  {d.fechaNacimiento ?? (
+                    <>
+                      <EtiquetaEstado estado="sin_datos">{t.sinFecha}</EtiquetaEstado>{' '}
+                      <small className="suave">{t.sinFechaAyuda}</small>
+                    </>
+                  )}
+                </span>
               </div>
             </li>
             <li>
               <div className="lista-texto">
                 <strong>{t.identidad}</strong>
                 <span>
-                  {enPalabras(t.estadosIdentidad, d.identidad)} · {t.identidadAyuda}{' '}
-                  <Enlace a={`${base}/verifications`}>{t.irVerificaciones}</Enlace>
+                  <EtiquetaEstado
+                    estado={d.identidad}
+                    quien={d.identidad === 'pendiente' ? 'equipo' : 'conductor'}
+                    testId="ficha-identidad"
+                  >
+                    {enPalabras(t.estadosIdentidad, d.identidad)}
+                  </EtiquetaEstado>{' '}
+                  {d.identidad === 'aprobado' ? null : (
+                    <>
+                      {t.identidadAyuda}{' '}
+                      <Enlace a={`${base}/verifications`}>{t.irVerificaciones}</Enlace>
+                    </>
+                  )}
                 </span>
               </div>
             </li>
@@ -1698,9 +1781,19 @@ export function Conductor({
               <div className="lista-texto">
                 <strong>{carro && !moto ? t.vehiculoActivo : t.motoActiva}</strong>
                 <span>
-                  {d.vehiculoActivo
-                    ? `${d.vehiculoActivo.tipo} · ${d.vehiculoActivo.estado}`
-                    : t.sinMoto}
+                  {d.vehiculoActivo ? (
+                    <>
+                      {enPalabras(tiposVehiculo, d.vehiculoActivo.tipo)}{' '}
+                      <EtiquetaEstado
+                        estado={d.vehiculoActivo.estado}
+                        quien={d.vehiculoActivo.estado === 'en_revision' ? 'equipo' : 'conductor'}
+                      >
+                        {enPalabras(estadosVehiculo, d.vehiculoActivo.estado)}
+                      </EtiquetaEstado>
+                    </>
+                  ) : (
+                    t.sinMoto
+                  )}
                 </span>
               </div>
               {d.vehiculoActivo?.tipo === 'carro' && d.vehiculoActivo.estado === 'aprobado' ? (
@@ -1721,7 +1814,12 @@ export function Conductor({
                       enPalabras(t.tiposPapel, doc.tipo)}
                   </strong>
                   <span>
-                    {enPalabras(t.estadosPapel, doc.estado)}
+                    <EtiquetaEstado
+                      estado={doc.estado}
+                      quien={doc.estado === 'pendiente' ? 'equipo' : 'conductor'}
+                    >
+                      {enPalabras(t.estadosPapel, doc.estado)}
+                    </EtiquetaEstado>
                     {doc.venceEn ? ` · ${doc.venceEn}` : ''}
                   </span>
                 </div>
@@ -1742,6 +1840,20 @@ export function Conductor({
           ) : null}
           {moto ? bloqueServicio(moto, t.habilitacion, t.nadaFalta) : null}
           {carro ? bloqueServicio(carro, t.habilitacionCarro, t.nadaFaltaCarro) : null}
+          {!faltaEdad || ((moto || !carro) && d.vehiculoActivo && !faltaCasco) ? (
+            <ul className="kyc-comprobaciones">
+              {!faltaEdad ? (
+                <li>
+                  <EtiquetaEstado estado="aprobado">{t.edadAprobada}</EtiquetaEstado>
+                </li>
+              ) : null}
+              {(moto || !carro) && d.vehiculoActivo && !faltaCasco ? (
+                <li>
+                  <EtiquetaEstado estado="aprobado">{t.cascoAprobado}</EtiquetaEstado>
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
           <div className="fila-botones">
             {d.esPrueba ? (
               <button
@@ -1763,25 +1875,29 @@ export function Conductor({
                 {t.aprobarAntecedentesPrueba}
               </button>
             ) : null}
-            <button
-              type="button"
-              className="boton exito"
-              onClick={() =>
-                void hacer(
-                  'PUT',
-                  `/datos/admin/cumplimientos/${id}/edad_minima_21`,
-                  { estado: 'aprobado' },
-                  t.hecho,
-                )
-              }
-            >
-              {t.aprobarEdad}
-            </button>
-            {moto || !carro ? (
+            {/* C-FICHA-HABILITACION-VERDAD: cada botón solo cuando sirve. */}
+            {faltaEdad && d.fechaNacimiento ? (
               <button
                 type="button"
                 className="boton exito"
-                disabled={!d.vehiculoActivo}
+                data-testid="aprobar-edad"
+                onClick={() =>
+                  void hacer(
+                    'PUT',
+                    `/datos/admin/cumplimientos/${id}/edad_minima_21`,
+                    { estado: 'aprobado' },
+                    t.hecho,
+                  )
+                }
+              >
+                {t.aprobarEdad}
+              </button>
+            ) : null}
+            {(moto || !carro) && d.vehiculoActivo && faltaCasco ? (
+              <button
+                type="button"
+                className="boton exito"
+                data-testid="aprobar-casco"
                 onClick={() =>
                   d.vehiculoActivo &&
                   void hacer(
@@ -1795,10 +1911,11 @@ export function Conductor({
                 {t.aprobarCasco}
               </button>
             ) : null}
-            {moto || !carro ? (
+            {(moto || !carro) && moto?.tieneVehiculo !== false && sirveHabilitar(moto) ? (
               <button
                 type="button"
                 className="boton exito"
+                data-testid="habilitar-moto"
                 onClick={() =>
                   void hacer(
                     'PUT',
@@ -1811,10 +1928,11 @@ export function Conductor({
                 {t.habilitar}
               </button>
             ) : null}
-            {carro ? (
+            {carro && carro.tieneVehiculo !== false && sirveHabilitar(carro) ? (
               <button
                 type="button"
                 className="boton exito"
+                data-testid="habilitar-carro"
                 onClick={() =>
                   void hacer(
                     'PUT',

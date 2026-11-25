@@ -33,7 +33,9 @@ import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { AvisoNoElegibles } from './AvisoNoElegibles';
 import { usePreferencias } from './usePreferencias';
 import { FiltroPapeles, InsigniaPapeles, PapelesConductor } from './SuperPapeles';
-import { RevisionConductor } from './RevisionConductor';
+import { EsperaAlEquipo, RevisionConductor } from './RevisionConductor';
+import { EtiquetaEstado } from './diseno/EtiquetaEstado';
+import { palabra } from './diseno/palabras';
 
 /**
  * Superadmin a escala: ciudades → repartidores / clientes / restaurantes de cada ciudad, con
@@ -162,6 +164,10 @@ const T = {
     historial: 'Historial',
     quejas: 'Quejas y tickets',
     sinQuejas: 'Sin quejas.',
+    estadosQueja: { abierto: 'Abierto', respondido: 'Respondido', cerrado: 'Cerrado' } as Record<
+      string,
+      string
+    >,
     revisar: 'Revisión',
     aprobar: 'Aprobar antecedentes',
     rechazar: 'Rechazar',
@@ -309,6 +315,10 @@ const T = {
     historial: 'History',
     quejas: 'Complaints and tickets',
     sinQuejas: 'No complaints.',
+    estadosQueja: { abierto: 'Open', respondido: 'Answered', cerrado: 'Closed' } as Record<
+      string,
+      string
+    >,
     revisar: 'Review',
     aprobar: 'Approve background',
     rechazar: 'Reject',
@@ -886,7 +896,13 @@ function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idiom
   const t = enIdioma(TK, idioma);
   return (
     <p className="super-kyc">
-      {t.titulo}: <Insignia estado={kyc.estado}>{t.estados[kyc.estado] ?? kyc.estado}</Insignia>
+      {t.titulo}:{' '}
+      <EtiquetaEstado
+        estado={kyc.estado}
+        quien={kyc.estado === 'pendiente' ? 'equipo' : 'conductor'}
+      >
+        {palabra(t.estados, kyc.estado)}
+      </EtiquetaEstado>
       {kyc.estado !== 'sin_enviar' && (
         <>
           {' · '}
@@ -1002,8 +1018,8 @@ function Quejas({
         <ul className="super-lista">
           {quejas.map((q) => (
             <li key={q.id}>
-              <Enlace a={`${base}/tickets/${q.id}`}>{q.asunto}</Enlace> · {q.estado} ·{' '}
-              {fechaCorta(q.fecha, idioma)}
+              <Enlace a={`${base}/tickets/${q.id}`}>{q.asunto}</Enlace> ·{' '}
+              {palabra(t.estadosQueja, q.estado)} · {fechaCorta(q.fecha, idioma)}
             </li>
           ))}
         </ul>
@@ -1071,6 +1087,12 @@ export function SuperRepartidor({
         rol="repartidor"
         alMensaje={() => setVueltaActividad((n) => n + 1)}
       />
+      {/* C-FICHA-VEHICULO-SIN-ENVIAR: lo que espera al equipo, arriba y en rojo. */}
+      <EsperaAlEquipo
+        id={r.id}
+        idioma={idioma}
+        identidad={r.kyc?.estado === 'pendiente' ? `${base}/verifications/${r.id}` : null}
+      />
       <HistorialCorreo lista={r.historialCorreo} idioma={idioma} />
       <p>
         <span
@@ -1084,17 +1106,17 @@ export function SuperRepartidor({
       </p>
       {r.recibeViajes === false && r.falta ? (
         <p className="pista" data-testid="ficha-falta">
-          {t.faltas[r.falta] ?? r.falta}
+          {palabra(t.faltas, r.falta)}
           {(r.faltas ?? []).length > 1
             ? ` ${t.tambien} ${(r.faltas ?? [])
                 .slice(1)
-                .map((x) => t.faltas[x.clave] ?? x.clave)
+                .map((x) => palabra(t.faltas, x.clave))
                 .join(' ')}`
             : ''}
         </p>
       ) : null}
       <p className="pista">
-        {t.contrato}: {t.tipos[r.tipo] ?? r.tipo}
+        {t.contrato}: {palabra(t.tipos, r.tipo)}
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
       <PapelesConductor id={id} idioma={idioma} />
@@ -1202,8 +1224,13 @@ export function SuperRepartidor({
                 <dl className="super-dl" key={v.id} data-vehiculo={v.id}>
                   <dt>{t.tipo}</dt>
                   <dd>
-                    {t.vehiculos[v.tipo] ?? v.tipo}{' '}
-                    <Insignia estado={v.estado}>{t.estadosVehiculo[v.estado] ?? v.estado}</Insignia>{' '}
+                    {palabra(t.vehiculos, v.tipo)}{' '}
+                    <EtiquetaEstado
+                      estado={v.estado}
+                      quien={v.estado === 'en_revision' ? 'equipo' : 'conductor'}
+                    >
+                      {palabra(t.estadosVehiculo, v.estado)}
+                    </EtiquetaEstado>{' '}
                     {v.activo ? <Insignia tono="hecho">{t.enUso}</Insignia> : null}
                   </dd>
                   <dt>{t.marcaModelo}</dt>
@@ -1230,7 +1257,7 @@ export function SuperRepartidor({
             <h2>{t.datosReparto}</h2>
             <dl className="super-dl">
               <dt>{t.tipo}</dt>
-              <dd>{t.vehiculos[d.vehiculoTipo] ?? d.vehiculoTipo}</dd>
+              <dd>{palabra(t.vehiculos, d.vehiculoTipo)}</dd>
               <dt>{t.marcaModelo}</dt>
               <dd>{[d.marca, d.modelo].filter(Boolean).join(' ') || '—'}</dd>
               <dt>{t.anio}</dt>

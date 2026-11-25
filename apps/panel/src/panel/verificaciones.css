@@ -412,3 +412,44 @@
   font-size: 0.875rem;
   color: var(--pd-suave, #666b73);
 }
+
+/* C-FICHA-VEHICULO-SIN-ENVIAR: lo que espera al equipo, arriba de la ficha (borde fino, sin franjas). */
+.espera-equipo {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--pd-problema-punto, #e5151f);
+  border-radius: 10px;
+  background: var(--pd-problema-fondo, #fde6e7);
+}
+.espera-equipo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.espera-equipo li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--pd-problema, #9a0d18);
+  font-weight: 600;
+}
+.vehiculo-sin-enviar {
+  display: grid;
+  gap: 10px;
+}
+.vehiculo-sin-enviar .lista-texto {
+  margin: 0;
+}
+
+/* La ficha no se desborda en el celular: la tabla de lo leído se desliza dentro de su caja. */
+.kyc-ficha,
+.kyc-ficha > * {
+  min-width: 0;
+  max-width: 100%;
+}

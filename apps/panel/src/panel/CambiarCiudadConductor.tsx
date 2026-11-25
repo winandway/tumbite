@@ -202,7 +202,15 @@ export function CambiarCiudadConductor({
             <button type="submit" className="boton" disabled={!destinos}>
               {t.seguir}
             </button>{' '}
-            <button type="button" className="enlace" onClick={alCerrar}>
+            <button
+              type="button"
+              className="enlace"
+              onClick={() => {
+                // Cancelar a propósito tira lo escrito (regla del borrador).
+                void b.limpiar();
+                alCerrar();
+              }}
+            >
               {t.cancelar}
             </button>
           </>

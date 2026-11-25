@@ -7,6 +7,7 @@ import { HORAS_URGENTE, horasDesde } from './diseno/estados';
 import { Insignia } from './diseno/Insignia';
 import { FilaMoto, type Moto, T_MOTO } from './SuperMoto';
 import { avisarDecision } from './sonarEvento';
+import { MiniaturasVehiculo, VehiculoSinEnviar } from './VehiculoSinEnviar';
 import './verificaciones.css';
 
 /**
@@ -148,36 +149,6 @@ function Resaltado({ texto, q }: { texto: string; q: string }) {
       <mark>{texto.slice(tramo[0], tramo[1])}</mark>
       {texto.slice(tramo[1])}
     </>
-  );
-}
-
-/** Las fotos y papeles del vehículo en miniatura (se abren en grande en otra pestaña). */
-function Miniaturas({ v, idioma }: { v: Vehiculo; idioma: Idioma }) {
-  const tm = enIdioma(T_MOTO, idioma);
-  const nombres = v.tipo === 'carro' ? tm.documentosCarro : tm.documentosMoto;
-  if (!v.documentos.length) return null;
-  return (
-    <ul className="vehiculo-fotos" data-testid={`vehiculo-fotos-${v.id}`}>
-      {v.documentos.map((d) => {
-        const url = `/datos/admin/vehiculos/${encodeURIComponent(v.id)}/documentos/${encodeURIComponent(d.id)}/archivo`;
-        const nombre = new Map(Object.entries(nombres)).get(d.tipo) ?? d.tipo;
-        return (
-          <li key={d.id}>
-            <a href={url} target="_blank" rel="noopener noreferrer" title={nombre}>
-              <img
-                src={url}
-                alt={nombre}
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.style.visibility = 'hidden';
-                }}
-              />
-            </a>
-            <span>{nombre}</span>
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -326,7 +297,7 @@ export function VerificacionesVehiculos({
                   </div>
                 </div>
               </div>
-              <Miniaturas v={v} idioma={idioma} />
+              <MiniaturasVehiculo v={v} idioma={idioma} />
               {lista === 'en_revision' ? (
                 <ul className="lista">
                   <FilaMoto
@@ -338,14 +309,13 @@ export function VerificacionesVehiculos({
                   />
                 </ul>
               ) : (
-                <ul className="kyc-comprobaciones">
-                  <li>
-                    <Insignia tono="pendiente">{t.papelesSubidos(v.documentos.length)}</Insignia>
-                  </li>
-                  <li>
-                    <Insignia tono="apagado">{t.camila}</Insignia>
-                  </li>
-                </ul>
+                <VehiculoSinEnviar
+                  key={`${v.id}-${v.documentos.map((d) => d.estado).join('')}`}
+                  v={v}
+                  idioma={idioma}
+                  alCambiar={decidido}
+                  conMiniaturas={false}
+                />
               )}
             </li>
           );
