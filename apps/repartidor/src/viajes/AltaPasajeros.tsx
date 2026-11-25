@@ -73,6 +73,8 @@ type Papeles = {
     documentos: string[];
     documentosPorServicio?: Partial<Record<ServicioPasajeros, string[]>>;
     documentosVehiculo?: Partial<Record<ServicioPasajeros, string[]>>;
+    /** C-PAPELES-POR-PAIS: con la lista del país encendida, el nombre de cada papel lo manda el servidor. */
+    nombres?: Partial<Record<ServicioPasajeros, Record<string, { es: string; en: string }>>>;
   };
   documentos: Doc[];
 };
@@ -546,8 +548,15 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     (servicio === 'moto' ? (papeles?.perfil.documentos ?? []) : []);
   // C-PAPELES-POR-PAIS: en Perú los papeles se llaman SOAT, tarjeta de identificación vehicular, CITV…
   const paisCiudad = papeles?.ciudad.pais;
+  const delServidor = (tipo: string) => {
+    const n = new Map(Object.entries(delServicio(papeles?.perfil.nombres) ?? {})).get(tipo);
+    return n ? (idioma === 'en' ? n.en : n.es) : null;
+  };
   const nombreDoc = (tipo: string) =>
-    nombrePapelPais(paisCiudad, servicio, tipo, idioma) ?? de(t.docs, tipo) ?? tipo;
+    delServidor(tipo) ??
+    nombrePapelPais(paisCiudad, servicio, tipo, idioma) ??
+    de(t.docs, tipo) ??
+    tipo;
   const docVehiculo = (tipo: string) => vehiculo?.documentos.find((d) => d.tipo === tipo);
   const docMio = (tipo: string) => papeles?.documentos.find((d) => d.tipo === tipo);
   const casilla = (

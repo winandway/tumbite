@@ -11,6 +11,7 @@
 // es la del sitio de pruebas.
 // Uso: URL_PRUEBAS=https://staging.tumbite.com RELOJ_SECRETO=… node scripts/staging/probar-regalo-viaje-real.mjs
 import { createHash, randomBytes } from 'node:crypto';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? '').replace(/\/$/, '');
 if (!/^https:\/\/staging\./.test(URL_PRUEBAS)) {
@@ -24,7 +25,7 @@ if (!SECRETO) {
 }
 
 async function pedir(metodo, ruta, cuerpo, cabeceras = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: { 'content-type': 'application/json', 'x-idioma': 'es', ...cabeceras },
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),

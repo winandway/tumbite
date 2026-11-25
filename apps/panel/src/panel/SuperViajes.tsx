@@ -20,9 +20,12 @@ const T = {
   es: {
     titulo: 'Viajes · Emergencias y tarifas',
     intro:
-      'Moto existe solo en el sitio de pruebas hasta que Richard lo encienda con la aprobación legal. Las tarifas son de prueba.',
+      'Aquí llegan las emergencias de los viajes de Moto, Carro y Envíos, y se ven las tarifas de cada ciudad.',
     emergencias: 'Emergencias abiertas',
     sinEmergencias: 'No hay emergencias abiertas.',
+    sinResponsable: 'Zonas activas sin responsable de pánico con teléfono',
+    sinResponsableAyuda:
+      'El pánico de estas zonas llega al equipo central (aviso y SMS). Asigna el responsable y su celular en Zonas.',
     pasajero: 'Pasajero',
     conductor: 'Conductor',
     atender: 'Marcar atendida',
@@ -75,8 +78,11 @@ const T = {
   en: {
     titulo: 'Rides · Emergencies and fares',
     intro:
-      'Moto exists only on the test site until Richard turns it on with legal approval. Prices are test prices.',
+      'Emergencies from Moto, Car and Delivery rides arrive here, along with the fares for each city.',
     emergencias: 'Open emergencies',
+    sinResponsable: 'Active zones with no panic contact phone',
+    sinResponsableAyuda:
+      'Panic alerts from these zones go to the central team (notification and SMS). Set the contact and their phone in Zones.',
     sinEmergencias: 'No open emergencies.',
     pasajero: 'Rider',
     conductor: 'Driver',
@@ -170,6 +176,8 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
   const t = enIdioma(T, idioma);
   const campos = new Map(Object.entries(t.campos));
   const [datos, setDatos] = useState<Datos | null>(null);
+  // C-PANICO-ZONA-A-LA-VISTA: las zonas cuyo pánico cae al equipo central, por su nombre.
+  const [sinResponsable, setSinResponsable] = useState<{ id: string; nombre: string }[]>([]);
   const [falla, setFalla] = useState('');
   const [aviso, setAviso] = useState('');
   const [notas, setNotas] = useState<Map<string, string>>(() => new Map());
@@ -207,6 +215,13 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
       .pedir<Datos>('GET', '/datos/admin/viajes?lista=0')
       .then(setDatos)
       .catch((x: unknown) => setFalla(x instanceof ErrorApi ? x.message : String(x)));
+    api
+      .pedir<{ zonasSinResponsable?: { id: string; nombre: string }[] }>(
+        'GET',
+        '/datos/admin/panico/sin-atender',
+      )
+      .then((r) => setSinResponsable(r.zonasSinResponsable ?? []))
+      .catch((x: unknown) => console.error('viajes: zonas sin responsable de pánico', x));
   }, []);
   useEffect(() => {
     cargar();
@@ -283,6 +298,18 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
         </p>
       )}
       {aviso && <p role="status">{aviso}</p>}
+
+      {sinResponsable.length ? (
+        <div className="tarjeta-alerta" role="alert" data-testid="zonas-sin-responsable-panico">
+          <strong>{t.sinResponsable}</strong>
+          <ul>
+            {sinResponsable.map((z) => (
+              <li key={z.id}>{z.nombre}</li>
+            ))}
+          </ul>
+          <p>{t.sinResponsableAyuda}</p>
+        </div>
+      ) : null}
 
       <h2>{t.emergencias}</h2>
       {!datos?.emergencias.length ? (

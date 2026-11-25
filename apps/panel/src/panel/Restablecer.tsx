@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   accionDeError,
   textoAccionAcceso,
@@ -14,7 +14,7 @@ import { Icono } from '../sitio/Icono';
 import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
 import { api } from './api';
-import { reiniciarTurnstile } from './Turnstile';
+import { Turnstile, reiniciarTurnstile } from './Turnstile';
 
 const T = {
   es: {
@@ -88,6 +88,21 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
   const [sinCuenta, setSinCuenta] = useState(false);
   // El correo al que se pidió: el código del celular se comprueba con él.
   const [pedido, setPedido] = useState('');
+  // C-TURNSTILE-LISTO: el escudo anti-robots también aquí (la web y las tres apps recuperan la clave
+  // en esta página). La clave pública la publica el servidor; vacía = apagado y no se pinta nada.
+  const [turnstileSitio, setTurnstileSitio] = useState('');
+  useEffect(() => {
+    let vivo = true;
+    api
+      .pedir<{ turnstileSitio?: string }>('GET', '/datos/publico')
+      .then((p) => {
+        if (vivo) setTurnstileSitio(p.turnstileSitio ?? '');
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, []);
   // Desde el panel (restaurantes y empresas) se crea la cuenta ahí; desde las apps, en la app.
   const desdePanel = new URLSearchParams(window.location.search).get('desde') === 'panel';
 
@@ -137,6 +152,7 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
             placeholder={correoEjemplo(idioma)}
             error={error || undefined}
           />
+          <Turnstile sitio={turnstileSitio} idioma={idioma} />
           <button type="submit" className="boton ancho" disabled={estado === 'enviando'}>
             {estado === 'enviando' ? t.enviando : t.mandar}
           </button>

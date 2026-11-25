@@ -24,6 +24,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? '').replace(/\/$/, '');
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(URL_PRUEBAS);
@@ -59,7 +60,7 @@ const CASA = { lat: 8.6229, lng: -71.6512 }; // a unos 50 m: sin saltos de GPS i
 
 const casos = [];
 async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',
@@ -76,7 +77,7 @@ async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
   return { estado: r.status, d };
 }
 async function foto(ruta, token, donde) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}?lat=${donde.lat}&lng=${donde.lng}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}?lat=${donde.lat}&lng=${donde.lng}`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,

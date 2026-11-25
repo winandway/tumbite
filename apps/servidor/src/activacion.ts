@@ -2,6 +2,7 @@ import { sqlAptos } from './aprobadosNoElegibles';
 import type { Env } from './env';
 import { notificar } from './notificaciones';
 import { type ClaveFalta, type Falta, queTeFalta } from './queTeFalta';
+import { type PapelQueFalta, papelesPaisQueFaltan } from './papelesPais';
 
 /**
  * C-BARRA-ACTIVACION (23 nov 2026, Richard: «una barra del usuario, su barra verde, con los pasos
@@ -30,6 +31,8 @@ export type ClavePaso =
   | 'zona'
   | 'saldo'
   | 'papeles'
+  /** C-PAPELES-POR-PAIS: los papeles de su país que «solo se piden» (nunca frena; solo con la lista encendida). */
+  | 'papeles_pais'
   | 'requisitos'
   | 'conectado'
   | 'pago_movil';
@@ -48,6 +51,8 @@ export type Paso = {
   falta?: ClaveFalta;
   vehiculoId?: string;
   motivo?: string;
+  /** C-PAPELES-POR-PAIS: en el paso `papeles_pais`, cuáles faltan o esperan revisión. */
+  papelesPais?: PapelQueFalta[];
 };
 
 export type Activacion = {
@@ -100,6 +105,7 @@ export const ORDEN_PASOS: readonly ClavePaso[] = [
   'zona',
   'saldo',
   'papeles',
+  'papeles_pais',
   'requisitos',
   'conectado',
   'pago_movil',
@@ -118,6 +124,7 @@ const QUIEN_DE_TABLA: Record<ClavePaso, Quien> = {
   zona: 'equipo',
   saldo: 'conductor',
   papeles: 'conductor',
+  papeles_pais: 'conductor',
   requisitos: 'equipo',
   conectado: 'conductor',
   pago_movil: 'conductor',
@@ -164,7 +171,7 @@ export const SERVICIOS_CON_SALDO: ReadonlySet<string> = new Set(['moto', 'carro'
 const bloquea = (p: Paso) => !p.opcional && p.clave !== 'conectado';
 
 export async function barraActivacion(db: D1Database, id: string, env?: Env): Promise<Activacion> {
-  const [q, kyc, aptos] = await Promise.all([
+  const [q, kyc, aptos, delPais] = await Promise.all([
     queTeFalta(db, id, env),
     db
       .prepare(
@@ -173,6 +180,7 @@ export async function barraActivacion(db: D1Database, id: string, env?: Env): Pr
       .bind(id)
       .first<{ estado: string; motivo: string; documento: number }>(),
     serviciosAptos(db, id),
+    papelesPaisQueFaltan(db, id),
   ]);
   // C-BARRA-SALDO (ensayo general, 24 nov 2026): donde rige el prepago, el reparto de viajes y envíos
   // salta a quien no le alcanza el saldo para la comisión (C-SALDO-OFERTAS, en operaciones.ts). La
@@ -219,30 +227,43 @@ export async function barraActivacion(db: D1Database, id: string, env?: Env): Pr
       opcional: false,
       vehiculoId: q.vehiculo.id,
     });
+  // C-PAPELES-POR-PAIS: con la lista de su país encendida, sus papeles que «solo se piden». Nunca frena
+  // (el reparto no los mira): es opcional y la frase del final sigue saliendo del reparto.
+  if (delPais)
+    poner(
+      delPais.length
+        ? {
+            clave: 'papeles_pais',
+            estado: 'pendiente',
+            quien: delPais.some((p) => p.estado === 'falta') ? 'conductor' : 'equipo',
+            opcional: true,
+            papelesPais: delPais,
+          }
+        : { clave: 'papeles_pais', estado: 'hecho', quien: 'conductor', opcional: true },
+    );
   // Ningún paso nombrado lo frena y aun así el reparto no lo toma: un requisito de su servicio (un
   // papel del vehículo o la habilitación) sigue sin aprobar. Nunca «todo en verde» y «todavía no».
   if (!listo && ![...porPaso.values()].some(bloquea))
     poner({ clave: 'requisitos', estado: 'pendiente', quien: 'equipo', opcional: false });
 
-  const pasos: Paso[] = ORDEN_PASOS.filter((c) => c !== 'requisitos' || porPaso.has(c)).map(
-    (c): Paso => {
-      const p = porPaso.get(c);
-      if (c === 'conectado')
-        return recibiendo
-          ? { clave: c, estado: 'hecho', quien: 'conductor', opcional: false }
-          : (p ?? {
-              clave: c,
-              estado: 'pendiente',
-              quien: 'conductor',
-              opcional: false,
-              falta: 'desconectado',
-            });
-      if (!p)
-        return { clave: c, estado: 'hecho', quien: quienBase(c), opcional: c === 'pago_movil' };
-      // El reparto ya lo toma (p. ej. dentro del plazo de papeles): lo pendiente no lo frena.
-      return listo && bloquea(p) ? { ...p, opcional: true } : p;
-    },
-  );
+  const pasos: Paso[] = ORDEN_PASOS.filter(
+    (c) => (c !== 'requisitos' && c !== 'papeles_pais') || porPaso.has(c),
+  ).map((c): Paso => {
+    const p = porPaso.get(c);
+    if (c === 'conectado')
+      return recibiendo
+        ? { clave: c, estado: 'hecho', quien: 'conductor', opcional: false }
+        : (p ?? {
+            clave: c,
+            estado: 'pendiente',
+            quien: 'conductor',
+            opcional: false,
+            falta: 'desconectado',
+          });
+    if (!p) return { clave: c, estado: 'hecho', quien: quienBase(c), opcional: c === 'pago_movil' };
+    // El reparto ya lo toma (p. ej. dentro del plazo de papeles): lo pendiente no lo frena.
+    return listo && bloquea(p) ? { ...p, opcional: true } : p;
+  });
   const siguiente = recibiendo
     ? null
     : (pasos.find((p) => p.estado !== 'hecho' && bloquea(p)) ??

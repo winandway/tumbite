@@ -32,6 +32,7 @@ export type ClavePaso =
   | 'zona'
   | 'saldo'
   | 'papeles'
+  | 'papeles_pais'
   | 'requisitos'
   | 'conectado'
   | 'pago_movil';
@@ -44,6 +45,8 @@ export type Paso = {
   falta?: string;
   vehiculoId?: string;
   motivo?: string;
+  /** C-PAPELES-POR-PAIS: los papeles de su país que «solo se piden» y faltan o esperan revisión. */
+  papelesPais?: { tipo: string; es: string; en: string; estado: 'falta' | 'revision' }[];
 };
 
 export type Activacion = {
@@ -73,6 +76,7 @@ export const T_ACTIVACION = {
       zona: 'Servicio abierto en su zona',
       saldo: 'Saldo para la comisión',
       papeles: 'Papeles enviados',
+      papeles_pais: 'Papeles del país (solo se piden)',
       requisitos: 'Requisitos del servicio aprobados (papeles del vehículo o habilitación)',
       conectado: 'Abre Driver y se conecta',
       pago_movil: 'Pago móvil cargado (recibe más carreras)',
@@ -84,6 +88,8 @@ export const T_ACTIVACION = {
     } as Record<string, string>,
     opcional: 'Opcional',
     noFrena: 'No lo frena',
+    faltaSubir: 'falta subir',
+    enRevision: 'en revisión',
     hacerlo: 'Hacerlo aquí',
     abrirZona: 'Abrir el servicio en la zona',
     servicios: { moto: 'Moto', carro: 'Carro', comida: 'Comida', envios: 'Envíos' } as Record<
@@ -128,6 +134,7 @@ export const T_ACTIVACION = {
       zona: 'Service open in their area',
       saldo: 'Balance for the commission',
       papeles: 'Documents submitted',
+      papeles_pais: 'Country documents (requested only)',
       requisitos: 'Service requirements approved (vehicle documents or service approval)',
       conectado: 'Opens Driver and goes online',
       pago_movil: 'Mobile payment added (gets more trips)',
@@ -139,6 +146,8 @@ export const T_ACTIVACION = {
     } as Record<string, string>,
     opcional: 'Optional',
     noFrena: 'Doesn’t block',
+    faltaSubir: 'not uploaded',
+    enRevision: 'under review',
     hacerlo: 'Do it here',
     abrirZona: 'Open the service in the area',
     servicios: { moto: 'Moto', carro: 'Car', comida: 'Food', envios: 'Delivery' } as Record<
@@ -273,6 +282,14 @@ export function BarraActivacion({
                   {de(t.quien, p.quien)}
                   {p.opcional ? ` · ${p.clave === 'pago_movil' ? t.opcional : t.noFrena}` : ''}
                   {p.motivo ? ` · ${p.motivo}` : ''}
+                  {p.papelesPais?.length
+                    ? ` · ${p.papelesPais
+                        .map(
+                          (x) =>
+                            `${idioma === 'en' ? x.en : x.es} (${x.estado === 'falta' ? t.faltaSubir : t.enRevision})`,
+                        )
+                        .join(', ')}`
+                    : ''}
                 </span>
               ) : null}
               {p.estado !== 'hecho' && p.quien === 'equipo' && ancla ? (

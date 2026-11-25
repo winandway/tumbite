@@ -435,6 +435,39 @@ export async function panicosSinAtender(db: D1Database) {
  * en el panel (y avisa una vez al equipo por el canario). El pánico de esa zona igual llega al equipo
  * central, pero alguien de la zona tiene que poder llegar en minutos.
  */
+
+/**
+ * C-PANICO-SOLO-REALES (25 nov 2026, Gerencia) — todos los países. El canario y la tarjeta roja solo
+ * cuentan una zona abierta que tiene al menos un conductor REAL que puede trabajar: cuenta que no es
+ * de prueba (`es_prueba = 0`), que no es nuestra (correo de windoce.com o «Soporte» en el nombre) y con
+ * un vehículo aprobado o un plazo de papeles vigente. Fuera siempre la zona de revisión de las
+ * tiendas (`VE-ZZ-REVIEW`, la usa el revisor de Apple). Una zona sin nadie que la recorra (Miami
+ * antes del lanzamiento, Novi de pruebas) no pone la alarma en rojo; el día que llega un conductor
+ * real, sí.
+ */
+export const ZONA_REVISION_TIENDAS = 'VE-ZZ-REVIEW';
+const SQL_ZONAS_CON_CONDUCTORES_REALES = `
+  SELECT z.id, z.nombre, z.responsable_telefono AS t
+    FROM zonas z
+   WHERE z.activa = 1
+     AND z.id <> ?
+     AND EXISTS (
+           SELECT 1 FROM repartidores r JOIN usuarios u ON u.id = r.usuario_id
+            WHERE r.zona_id = z.id
+              AND u.es_prueba = 0
+              AND lower(u.correo) NOT LIKE '%@windoce.com'
+              AND lower(u.nombre) NOT LIKE '%soporte%'
+              AND (EXISTS (SELECT 1 FROM vehiculos v
+                            WHERE v.conductor_id = r.usuario_id AND v.estado = 'aprobado')
+                   OR EXISTS (SELECT 1 FROM plazo_papeles pp
+                               WHERE pp.conductor_id = r.usuario_id AND pp.estado = 'en_plazo'
+                                 AND pp.vence_en > datetime('now'))))
+   LIMIT 500`;
+const zonasConConductoresReales = (db: D1Database) =>
+  db
+    .prepare(SQL_ZONAS_CON_CONDUCTORES_REALES)
+    .bind(ZONA_REVISION_TIENDAS)
+    .all<{ id: string; nombre: string; t: string | null }>();
 const MS_MEMORIA_SALUD = 60_000;
 let memoriaSalud: { db: D1Database; en: number; estado: 'ok' | 'error' } | null = null;
 /** Al cambiar el responsable de una zona, la salud se vuelve a mirar en la próxima llamada. */
@@ -447,17 +480,13 @@ export async function saludPanicoZonas(db: D1Database): Promise<'ok' | 'error'> 
   const ahora = Date.now();
   if (memoriaSalud && memoriaSalud.db === db && ahora - memoriaSalud.en < MS_MEMORIA_SALUD)
     return memoriaSalud.estado;
-  const { results } = await db
-    .prepare('SELECT responsable_telefono AS t FROM zonas WHERE activa = 1 LIMIT 500')
-    .all<{ t: string | null }>();
+  const { results } = await zonasConConductoresReales(db);
   const estado = results.some((z) => !telefonoE164(z.t)) ? 'error' : 'ok';
   memoriaSalud = { db, en: ahora, estado };
   return estado;
 }
 
 export async function zonasSinResponsable(db: D1Database) {
-  const { results } = await db
-    .prepare('SELECT id, nombre, responsable_telefono AS t FROM zonas WHERE activa = 1 LIMIT 500')
-    .all<{ id: string; nombre: string; t: string | null }>();
+  const { results } = await zonasConConductoresReales(db);
   return results.filter((z) => !telefonoE164(z.t)).map((z) => ({ id: z.id, nombre: z.nombre }));
 }

@@ -39,6 +39,7 @@ import {
   perfilPasajeros,
 } from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
+import { listaEncendidaDelConductor } from '../papelesPais';
 import {
   PAISES_PASAJEROS_ABRIBLES,
   SOLICITUD_MARCA_EEUU,
@@ -948,6 +949,22 @@ servicios.put('/conductor/vehiculos/:id', async (c) => {
 });
 
 export const MAX_DOC_BYTES = 5 * 1024 * 1024;
+
+/** C-PAPELES-POR-PAIS: los papeles que se guardan con el mismo archivo (solo con la lista encendida). */
+async function papelesQueTambien(
+  db: Db,
+  conductorId: string,
+  tipoVehiculo: string,
+  tipoPapel: string,
+): Promise<string[]> {
+  if (tipoVehiculo !== 'moto' && tipoVehiculo !== 'carro') return [];
+  const enc = await listaEncendidaDelConductor(db, conductorId);
+  if (!enc) return [];
+  const p = enc.lista.papeles.find(
+    (x) => x.donde === 'vehiculo' && x.tipo === tipoPapel && x.servicios.includes(tipoVehiculo),
+  );
+  return p?.tambien ?? [];
+}
 const TIPOS_DOC = z.enum([
   'registro',
   'seguro',
@@ -1009,6 +1026,25 @@ servicios.post('/conductor/vehiculos/:id/documentos', async (c) => {
     )
     .bind(id, v.id, q.data.tipo, clave, q.data.vence ?? null)
     .run();
+  // C-PAPELES-POR-PAIS: con la lista del país encendida, un papel que «también» vale por otro (en
+  // Venezuela, la póliza RCV es también la póliza de pasajeros) se guarda en las dos casillas con el
+  // mismo archivo, como ya hace el asistente de fotos. Apagada, nada cambia.
+  const tambien = await papelesQueTambien(db, u.id, v.tipo, q.data.tipo);
+  if (tambien.length)
+    await db.batch(
+      tambien.flatMap((t) => [
+        db
+          .prepare(
+            "UPDATE vehiculo_documentos SET estado = 'reemplazado' WHERE vehiculo_id = ? AND tipo = ? AND estado IN ('pendiente', 'rechazado')",
+          )
+          .bind(v.id, t),
+        db
+          .prepare(
+            'INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, vence_en) VALUES (?, ?, ?, ?, ?)',
+          )
+          .bind(nuevoId(), v.id, t, clave, q.data.vence ?? null),
+      ]),
+    );
   // C-LLEGA-SOLO-A-REVISION: si con este papel el vehículo quedó completo, va a revisión solo. Lo que
   // suba estando ya en revisión se suma a la misma revisión (el equipo ve todos sus papeles).
   await vehiculosSoloARevision(db, u.id);

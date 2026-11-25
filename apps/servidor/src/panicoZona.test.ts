@@ -321,6 +321,7 @@ describe('C-PANICO-CENTRAL · el pánico de un viaje también va por SMS al equi
     capturarTodo();
     const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
     const admin = await equipoConTelefono(m);
+    await conductorDeMoto(m, ORIGEN);
     const { saludPanicoZonas } = await import('./panicoZona');
     expect(await saludPanicoZonas(m.DB)).toBe('error');
     const { PIEZAS_DE_OPERACION } = await import('./aprobadosNoElegibles');
@@ -425,6 +426,7 @@ describe('C-PANICO-INSISTE · el pánico insiste hasta que alguien lo abre o lo 
     capturarTodo();
     const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
     const admin = await equipoConTelefono(m);
+    await conductorDeMoto(m, ORIGEN);
     const vacio = await m.llamar('GET', '/datos/admin/panico/sin-atender', undefined, admin.token);
     expect(vacio.estado, JSON.stringify(vacio.datos)).toBe(200);
     expect(vacio.datos.cantidad).toBe(0);
@@ -539,5 +541,66 @@ describe('Revisión del 24 nov: el pánico sin fallos silenciosos, sin silenciad
     expect(sms.filter((s) => s.para === '+584120000000')).toHaveLength(
       PANICO_SMS_POR_PERSONA_HORA + 1,
     );
+  });
+});
+
+describe('C-PANICO-SOLO-REALES · la alarma de pánico cuenta solo zonas con conductores reales', () => {
+  const q = (m: ReturnType<typeof mundo>, sql: string, ...v: unknown[]) =>
+    m.DB.prepare(sql)
+      .bind(...v)
+      .run();
+  const mirar = async (m: ReturnType<typeof mundo>) => {
+    const { saludPanicoZonas, zonasSinResponsable, olvidarSaludPanico } =
+      await import('./panicoZona');
+    olvidarSaludPanico();
+    return {
+      salud: await saludPanicoZonas(m.DB),
+      zonas: (await zonasSinResponsable(m.DB)).map((z) => z.id),
+    };
+  };
+
+  it('zona sin conductores, con solo cuentas de prueba o solo nuestras: no pone la alarma en rojo', async () => {
+    capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    await equipoConTelefono(m);
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+    const prueba = await conductorDeMoto(m, ORIGEN);
+    await q(m, 'UPDATE usuarios SET es_prueba = 1 WHERE id = ?', prueba.id);
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+    const nuestra = await conductorDeMoto(m, ORIGEN);
+    await q(
+      m,
+      "UPDATE usuarios SET correo = 'soporte.driver@windoce.com' WHERE id = ?",
+      nuestra.id,
+    );
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+    const revisor = await conductorDeMoto(m, ORIGEN);
+    await q(m, "UPDATE usuarios SET nombre = 'Soporte Revisión Driver' WHERE id = ?", revisor.id);
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+  });
+
+  it('un conductor real sin vehículo aprobado ni plazo vigente tampoco cuenta; con plazo vigente, sí', async () => {
+    capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    const c = await conductorDeMoto(m, ORIGEN);
+    await q(m, "UPDATE vehiculos SET estado = 'suspendido' WHERE conductor_id = ?", c.id);
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+    await q(
+      m,
+      "INSERT INTO plazo_papeles (conductor_id, pais, estado, vence_en) VALUES (?, 'US', 'en_plazo', datetime('now', '+5 days'))",
+      c.id,
+    );
+    expect(await mirar(m)).toEqual({ salud: 'error', zonas: [ZONA] });
+  });
+
+  it('la zona de revisión de las tiendas nunca cuenta, aunque tenga un conductor real', async () => {
+    capturarTodo();
+    const m = mundo(TWILIO, { host: 'staging.tumbite.com' });
+    await q(
+      m,
+      "INSERT OR IGNORE INTO zonas (id, nombre, pais, lat, lng, activa) VALUES ('VE-ZZ-REVIEW', 'Revisión', 'VE', 8.6, -71.6, 1)",
+    );
+    await conductorDeMoto(m, ORIGEN, 'VE-ZZ-REVIEW');
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
   });
 });

@@ -7,6 +7,7 @@
 // Uso: node scripts/staging/cuentas-prueba.mjs            (pregunta el correo y la contraseña)
 //      URL_PRUEBAS=http://localhost:8787 node …            (para probar el guion en local)
 import { createInterface } from 'node:readline';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const base = process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com';
 if (!/^https:\/\/staging\.tumbite\.com$|^http:\/\/localhost:\d+$/.test(base)) {
@@ -69,7 +70,7 @@ export function correoValido(c) {
 }
 
 async function crear(c, correo, clave) {
-  const r = await fetch(`${base}/datos/cuentas/registro`, {
+  const r = await pedirConReintento(`${base}/datos/cuentas/registro`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-idioma': 'es' },
     body: JSON.stringify({ nombre: c.nombre, correo, clave, rol: c.rol, idioma: 'es' }),

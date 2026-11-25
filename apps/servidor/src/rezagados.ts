@@ -35,6 +35,8 @@ export const PASOS_REZAGADO = [
   'repetir',
   'vehiculo',
   'saldo',
+  // C-PAPELES-POR-PAIS: le faltan papeles de su país que «solo se piden» (solo con la lista encendida).
+  'papeles',
   'servicio',
   'linea',
   'correo',
@@ -127,6 +129,22 @@ export const PLANTILLAS_DE_FABRICA: Record<PasoRezagado, PlantillasPaso> = {
       sms: 'Divoox: {nombre}, you can work now but you need balance to get trips. Open Divoox Driver and go to Wallet: {enlace_corto} Camila',
     },
   },
+  // C-PAPELES-POR-PAIS: los papeles de su país que «solo se piden» (por ejemplo, el certificado médico).
+  // No frenan sus viajes: se le recuerdan para completar su registro.
+  papeles: {
+    es: {
+      asunto: 'Te falta subir unos papeles en Divoox',
+      texto:
+        'Hola, {nombre}. Soy Camila, de Divoox. Tu registro de conductor va bien, pero todavía te faltan unos papeles que pedimos en tu país. Abre Divoox Driver y entra en «Tu vehículo» o en «Tus papeles»: ahí ves cuáles son y los subes con una foto.{plazo}\n\nContinúa aquí:\n{enlace}\n\nSi no sabes cuál te falta, respóndeme este correo y te ayudo.',
+      sms: 'Divoox: {nombre}, te faltan unos papeles de tu registro de conductor. Abre Divoox Driver y subelos con una foto: {enlace_corto} Camila',
+    },
+    en: {
+      asunto: 'A few documents are still missing on Divoox',
+      texto:
+        'Hi {nombre}, this is Camila from Divoox. Your driver sign-up is going well, but a few documents we ask for in your country are still missing. Open Divoox Driver and go to “Your vehicle” or “Your documents”: you will see which ones and can upload them with a photo.{plazo}\n\nContinue here:\n{enlace}\n\nIf you are not sure which one is missing, reply to this email and I will help.',
+      sms: 'Divoox: {nombre}, a few documents from your driver sign-up are missing. Open Divoox Driver and upload them with a photo: {enlace_corto} Camila',
+    },
+  },
   servicio: {
     es: {
       asunto: 'Tu cuenta de Divoox ya está aprobada',
@@ -213,6 +231,16 @@ const AVISO: Record<PasoRezagado, Record<Idioma, { titulo: string; cuerpo: strin
     },
     en: { titulo: 'Register your vehicle', cuerpo: 'Go to “Your vehicle” and enter its details.' },
   },
+  papeles: {
+    es: {
+      titulo: 'Te faltan unos papeles',
+      cuerpo: 'Abre la app: verás cuáles son y los subes con una foto.',
+    },
+    en: {
+      titulo: 'A few documents are missing',
+      cuerpo: 'Open the app: you will see which ones and can upload them with a photo.',
+    },
+  },
   servicio: {
     es: {
       titulo: 'Tu cuenta ya está aprobada',
@@ -247,6 +275,7 @@ const porPaso = z.object({
   repetir: plantillasPaso.optional(),
   vehiculo: plantillasPaso.optional(),
   saldo: plantillasPaso.optional(),
+  papeles: plantillasPaso.optional(),
   servicio: plantillasPaso.optional(),
   linea: plantillasPaso.optional(),
   correo: plantillasPaso.optional(),
@@ -469,9 +498,17 @@ const ES_RAREZA_EQUIPO = new Set<string>(RAREZAS_EQUIPO);
 export function lecturaDeBarra(b: {
   listo: boolean;
   siguiente: { clave: ClavePaso; quien: string; estado: string } | null;
+  pasos?: readonly { clave: ClavePaso; quien: string; estado: string }[];
 }): { paso: PasoRezagado | null; equipo: RarezaEquipo | null } {
   const s = b.siguiente;
-  if (b.listo || !s) return { paso: null, equipo: null };
+  // C-PAPELES-POR-PAIS: lo de su país que «solo se pide» y no subió. No lo frena (va después de todo
+  // lo que sí lo frena); si ya lo subió, lo revisa el equipo en Verificaciones (sin aviso aparte).
+  const papeles = b.pasos?.some(
+    (p) => p.clave === 'papeles_pais' && p.estado === 'pendiente' && p.quien === 'conductor',
+  )
+    ? { paso: 'papeles' as const, equipo: null }
+    : { paso: null, equipo: null };
+  if (b.listo || !s) return papeles;
   if (s.quien === 'equipo')
     return {
       paso: null,
@@ -482,7 +519,7 @@ export function lecturaDeBarra(b: {
   if (s.clave === 'saldo') return { paso: 'saldo', equipo: null };
   if ((s.clave === 'identidad' || s.clave === 'vehiculo_aprobado') && s.estado === 'problema')
     return { paso: 'repetir', equipo: null };
-  return { paso: null, equipo: null };
+  return papeles;
 }
 
 /** Cuántas barras de activación mira una vuelta como mucho (cada una son unas pocas lecturas). */
@@ -695,7 +732,10 @@ async function revisarCuentas(
       barras++;
       barraLeida = true;
       const l = lecturaDeBarra(await barraActivacion(db, f.id));
-      if (l.paso) paso = l.paso;
+      // C-PAPELES-POR-PAIS: los papeles que solo se piden no tapan «conéctate» ni «tu línea».
+      if (l.paso === 'papeles') {
+        if (paso === null || paso === 'correo') paso = 'papeles';
+      } else if (l.paso) paso = l.paso;
       else if (l.equipo) {
         equipo = l.equipo;
         if (paso === 'servicio') paso = null;

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { pedirConReintento } from './pedirConReintento.mjs';
 // El Agente Divoox de punta a punta (C-AGENTE-DIVOOX, 18 nov 2026) — todos los países con prepago.
 // Recorre el circuito por la API, como las pantallas:
 //   el equipo enciende la ciudad de pruebas y anota el fondo → el agente entra en dos pasos →
@@ -33,7 +34,7 @@ const VUELTA = process.env.VUELTA_PRUEBAS ?? `agente-${Date.now().toString(36)}`
 const casos = [];
 
 async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

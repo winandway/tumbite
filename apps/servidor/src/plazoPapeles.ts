@@ -289,8 +289,13 @@ export async function cerrarPlazoCompleto(db: D1Database, conductorId: string) {
 
 // ───────────────────────── La tarea diaria ─────────────────────────
 
-/** completo = ya puede trabajar con la regla entera; subio_todo = solo falta que el equipo revise. */
-export type SituacionPlazo = 'completo' | 'subio_todo' | 'falta';
+/**
+ * completo = ya puede trabajar con la regla entera; subio_todo = solo falta que el equipo revise.
+ * faltan_pedidos (C-PAPELES-POR-PAIS) = la regla entera ya se cumple, pero le faltan papeles de su país
+ * que «solo se piden»: se le sigue recordando y, al vencer, el plazo se cierra sin pausar a nadie
+ * (esos papeles no frenan el reparto, así que decirle «tu cuenta quedó en pausa» sería mentira).
+ */
+export type SituacionPlazo = 'completo' | 'subio_todo' | 'faltan_pedidos' | 'falta';
 /** Días que se suman al plazo si venció con todo enviado y todavía sin revisar por el equipo. */
 export const DIAS_SI_FALTA_REVISAR = 7;
 
@@ -334,6 +339,22 @@ export async function recordarPlazos(
     if (s === 'completo') {
       await cerrarPlazoCompleto(db, f.conductor_id);
       cuenta.completos++;
+      continue;
+    }
+    if (s === 'faltan_pedidos') {
+      if (hito === 0) {
+        await cerrarPlazoCompleto(db, f.conductor_id);
+        cuenta.completos++;
+        continue;
+      }
+      await db
+        .prepare(
+          "UPDATE plazo_papeles SET ultimo_aviso = ?, actualizado_en = datetime('now') WHERE conductor_id = ? AND estado = 'en_plazo'",
+        )
+        .bind(hito, f.conductor_id)
+        .run();
+      cuenta.avisados++;
+      await avisar(env, db, f.conductor_id, (i) => T.recordatorio(i, dias));
       continue;
     }
     // Ya subió y envió todo: lo que falta es nuestra revisión. No se le avisa ni se le pausa por

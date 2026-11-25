@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { pedirConReintento } from './pedirConReintento.mjs';
 // Divoox Moto · M10: viaje de Moto de PUNTA A PUNTA en el SITIO DE PRUEBAS, por la API, como lo
 // hacen las apps. La herramienta interna del sitio (doble cerrojo: dominio de pruebas + secreto del
 // reloj) arma un pasajero y un conductor temporales («zz-mt-…») y al final los borra.
@@ -18,7 +19,7 @@ if (!SECRETO) {
 }
 
 async function pedir(metodo, ruta, cuerpo, cabeceras = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: { 'content-type': 'application/json', 'x-idioma': 'es', ...cabeceras },
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),

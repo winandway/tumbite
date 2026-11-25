@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { pedirConReintento } from './pedirConReintento.mjs';
 // Divoox Carro de punta a punta (C-CARRO-GUION, 14 nov 2026) — Venezuela y EE. UU. Hermano de
 // probar-moto-venezuela.mjs: pide por la API, como las apps y el panel,
 //   El Vigía (VE-MER-ELVIGIA): el equipo abre Carro si hace falta → el taxista con saldo recarga en
@@ -36,7 +37,7 @@ const casos = [];
 let n = 0;
 
 async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

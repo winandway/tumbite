@@ -71,6 +71,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-TERRITORIO-OFICIAL (21 nov 2026): el municipio oficial donde cae cada zona (P-code del INE en
   // Venezuela, «VE1401»). Sale de los contornos oficiales; el panel lo muestra y lo puede corregir.
   ['zonas', 'municipio_pcode', 'TEXT'],
+  // C-ZONA-MUNICIPIO (24 nov 2026): el municipio que el equipo elige o escribe para la zona (todos los
+  // países). Vacío = el oficial que sale de su centro (municipio_pcode), si su país lo tiene.
+  ['zonas', 'municipio', "TEXT NOT NULL DEFAULT ''"],
   // C-INVITAR-LIDER-UN-PASO (21 nov 2026): el enlace personal de la invitación (secreto, de un solo
   // líder) y cuándo se le mandó el correo.
   ['invitaciones_lider', 'token', 'TEXT'],

@@ -6,8 +6,14 @@ import {
   PASOS_REVERSO,
   PAISES,
   PLAZO_DIAS_MAXIMO,
+  faltanEnLista,
+  listaPapelesDeFabrica,
+  nombreDePapel,
+  normalizarLista,
+  perfilPasajeros,
   politicaPlazoDeFabrica,
 } from '@tumbite/compartido';
+import { esquemaListaPapeles } from '../papelesPais';
 import { esquemaTarifasPais } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
 import { sincronizarPoliticaRequisitos } from '../esquemaPlazo';
@@ -82,6 +88,12 @@ export const esquemaConfigPais = z.object({
       sinReverso: z.array(z.enum(PASOS_REVERSO)).max(PASOS_REVERSO.length).optional(),
     })
     .optional(),
+  /**
+   * C-PAPELES-POR-PAIS (24 nov 2026): qué papeles se le piden al conductor en este país, con su nombre
+   * es/en, si vencen, si llevan foto y si frenan las carreras (la verdad del reparto) o solo se piden.
+   * APAGADA de fábrica: apagada, el conductor ve lo de siempre. Ver `papelesListaPais.ts`.
+   */
+  papelesPais: esquemaListaPapeles.optional(),
   /**
    * C-COMIDA-PAGO-RESTAURANTE (22 nov 2026): el cliente le paga la comida DIRECTO al restaurante (pago
    * móvil) y el envío al conductor; el conductor ya no adelanta nada en el local. De fábrica, solo
@@ -182,6 +194,11 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     tarifas: null,
     propinasPb: null,
     plazoPapeles: politicaPlazoDeFabrica(pais),
+    papelesPais: normalizarLista(
+      listaPapelesDeFabrica(perfilPasajeros(pais)),
+      perfilPasajeros(pais),
+      politicaPlazoDeFabrica(pais).exentos,
+    ),
     comidaPagoRestaurante: pais === 'VE',
     comidaComisionEnvioPb: COMISION_ENVIO_COMIDA_VE_PB,
     pagoComida: { ...TIEMPOS_PAGO_COMIDA },
@@ -266,6 +283,23 @@ export async function guardarConfigPais(
       falta,
       409,
     );
+  // C-PAPELES-POR-PAIS: «frena» es siempre la verdad del reparto, y una lista encendida no puede dejar
+  // fuera un papel que el reparto exige (el conductor no tendría dónde subirlo).
+  if (nueva.papelesPais) {
+    const perfil = perfilPasajeros(pais);
+    const exentos = nueva.plazoPapeles?.exentos ?? politicaPlazoDeFabrica(pais).exentos;
+    const lista = normalizarLista(nueva.papelesPais, perfil, exentos);
+    if (lista.activa) {
+      const falta = faltanEnLista(lista, perfil, exentos)[0];
+      if (falta)
+        throw new ErrorDatos(
+          `Falta «${nombreDePapel(falta.tipo, 'es')}» para ${falta.servicio === 'carro' ? 'Carro' : 'Moto'}: el reparto lo exige y el conductor no tendría dónde subirlo.`,
+          'papelesPais',
+          409,
+        );
+    }
+    nueva.papelesPais = lista;
+  }
   const t = nueva.tarifas;
   if (t && (t.servicioMinimo > t.servicioMaximo || t.envioBase > t.envioMaximo))
     throw new ErrorDatos(

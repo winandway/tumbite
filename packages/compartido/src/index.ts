@@ -52,6 +52,7 @@ export * from './perfilChile';
 export * from './perfilPeru';
 export * from './zonaPorPais';
 export * from './papelesPorPais';
+export * from './papelesListaPais';
 export * from './plazoPapeles';
 export * from './motivosCancelacion';
 export * from './mapas';

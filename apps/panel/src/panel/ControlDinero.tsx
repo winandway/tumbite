@@ -14,7 +14,8 @@ import { ExcepcionesConciliacion } from './ExcepcionesConciliacion';
 import { pedir } from './api';
 import { type TarifasPais, type TopesPais, TarifasTopesPais } from './TarifasTopesPais';
 import { PoliticaPapelesPais } from './SuperPapeles';
-import type { PoliticaPlazoPapeles } from '@tumbite/compartido';
+import { PapelesDelPais } from './PapelesDelPais';
+import type { ListaPapelesPais, PoliticaPlazoPapeles } from '@tumbite/compartido';
 
 const T = {
   es: {
@@ -330,6 +331,8 @@ type ConfigPais = {
   tarifas: TarifasPais | null;
   /** C-PLAZO-PAPELES: la política del plazo de papeles del conductor en este país. */
   plazoPapeles?: PoliticaPlazoPapeles;
+  /** C-PAPELES-POR-PAIS: los papeles que se le piden al conductor (apagada de fábrica). */
+  papelesPais?: ListaPapelesPais;
   topes: TopesPais | null;
   /** C-COMIDA-VENEZUELA: propinas sugeridas en el carrito, en puntos base (null = las de siempre). */
   propinasPb?: number[] | null;
@@ -883,6 +886,23 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
               guardar={async (plazoPapeles) => {
                 await pedir('PUT', `/datos/admin/paises/${paisElegido}`, { plazoPapeles });
                 setRecargaPuntos((n) => n + 1);
+              }}
+            />
+          ) : null}
+          {pais.papelesPais ? (
+            <PapelesDelPais
+              key={`papeles-pais-${paisElegido}`}
+              pais={paisElegido}
+              lista={pais.papelesPais}
+              idioma={idioma}
+              guardar={async (papelesPais) => {
+                const r = await pedir<{ config: { papelesPais: ListaPapelesPais } }>(
+                  'PUT',
+                  `/datos/admin/paises/${paisElegido}`,
+                  { papelesPais },
+                );
+                setRecargaPuntos((n) => n + 1);
+                return r.config.papelesPais;
               }}
             />
           ) : null}
