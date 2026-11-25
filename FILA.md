@@ -12,6 +12,10 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Precios fijos de la zona (24 nov 2026, encargo de Richard) — todos los países · rama `fase-precio-zona`, sin subir
+
+- [ ] [para: revisor-calidad] Revisar la rama fase-precio-zona (C-PRECIO-ZONA, todos los países): tabla rutas_precio_zona, columna tarifas_viaje.umbral_precio_zona_pb (en COLUMNAS), cotización con el menor y umbral, ida y vuelta como parada, panel «Precios de la zona», Docs es/en con capturas reales. Al publicar: subir las capturas grandes (`node scripts/docs/subir-capturas-grandes.mjs`) y compilar clientes y Driver para la etiqueta y la ida y vuelta.
+
 ## Formularios por pasos y desbordes a 360 px (24 nov 2026, orden de Richard) — todos los países · rama `fase-formularios-pasos`, sin subir
 
 - [x] [para: desarrollador] Pieza única `FormularioPorPasos` y crear la cuenta por pasos en la app de clientes y en Driver; Envíos A → B y el registro de la empresa de Flex por pasos; candados C-FORMULARIO-POR-PASOS y C-DESBORDES-360 (rojo visto); Docs es/en con capturas nuevas.

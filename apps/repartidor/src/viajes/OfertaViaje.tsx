@@ -47,6 +47,9 @@ export type OfertaViaje = {
   categoria?: string;
   /** C-CARRO-DINAMICA: el multiplicador del viaje (10 000 = precio normal). */
   multiplicadorPb?: number;
+  /** C-PRECIO-ZONA: el viaje va con el precio fijo de la zona; y si es de ida y vuelta. */
+  precioZona?: boolean;
+  idaVuelta?: boolean;
   /** C-VIAJE-PARADAS: las direcciones de las paradas intermedias, en orden. */
   paradas?: string[];
   /** C-CONDUCTOR-CONFIANZA: el cliente lo eligió de confianza (solo para él, por un minuto). */
@@ -303,6 +306,18 @@ export function OfertaViajeModal({
             {textos.oferta.dinamica} {textoMultiplicador(oferta.multiplicadorPb ?? 10_000, idioma)}
           </Text>
           <Text style={{ color: '#666B73', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
+        </View>
+      ) : null}
+      {oferta.precioZona ? (
+        // C-PRECIO-ZONA: el conductor sabe que es el precio fijo de la zona (y si es ida y vuelta).
+        <View
+          testID="oferta-viaje-precio-zona"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+        >
+          <Text style={{ fontWeight: '800', color: C.secundario }}>{textos.oferta.precioZona}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>
+            {oferta.idaVuelta ? textos.oferta.idaVuelta : textos.oferta.precioZonaAyuda}
+          </Text>
         </View>
       ) : null}
       {oferta.origenPunto && oferta.destinoPunto ? (

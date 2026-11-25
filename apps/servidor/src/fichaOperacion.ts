@@ -523,7 +523,7 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
           v.pin_requerido, v.intentos_pin, v.metodo_pago, v.distancia_m_real, v.duracion_s_real,
           v.total_final_centavos, v.asignado_en, v.llego_en, v.iniciado_en, v.terminado_en,
           v.categoria, v.programado_para, q.total, q.moneda, q.distancia_m, q.duracion_s,
-          q.tarifa_json, pu.nombre AS pasajero, pu.activo AS pasajero_activo,
+          q.tarifa_json, q.desglose_json, pu.nombre AS pasajero, pu.activo AS pasajero_activo,
           cu.nombre AS conductor, d.codigo AS conductor_codigo, ve.tipo AS vehiculo_tipo,
           ve.marca, ve.modelo, ve.color, ve.placa, z.nombre AS ciudad, z.zona_horaria, z.pais
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
@@ -736,6 +736,8 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
       final: numero(o.total_final_centavos),
       moneda: texto(o.moneda) ?? 'USD',
       metodo: String(o.metodo_pago ?? 'efectivo'),
+      // C-PRECIO-ZONA: el viaje fue con el precio fijo de la zona (y lo que habría salido por km).
+      ...precioZonaDe(o.desglose_json),
     },
     distancia: { cotizadaM: numero(o.distancia_m), realM: numero(o.distancia_m_real) },
     duracion: { cotizadaS: numero(o.duracion_s), realS: numero(o.duracion_s_real) },
@@ -774,4 +776,22 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
       creadoEn: String(t.creado_en),
     })),
   };
+}
+
+/** C-PRECIO-ZONA: el precio de la zona y el calculado de un viaje, o nada si fue calculado. */
+export function precioZonaDe(json: unknown): { precioZona?: number; calculado?: number } {
+  try {
+    const d = JSON.parse(typeof json === 'string' ? json : '{}') as {
+      precioZona?: unknown;
+      calculado?: unknown;
+    } | null;
+    return d && typeof d.precioZona === 'number'
+      ? {
+          precioZona: d.precioZona,
+          ...(typeof d.calculado === 'number' ? { calculado: d.calculado } : {}),
+        }
+      : {};
+  } catch {
+    return {};
+  }
 }

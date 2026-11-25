@@ -95,6 +95,8 @@ const ORDEN_PIEZAS = [
   'dinamico',
   'cargoFijo',
   'redondeo',
+  // C-PRECIO-ZONA: el precio fijo de la zona, en su propia línea del recibo.
+  'precioZona',
   // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, en su propia línea del recibo.
   'tarifaServicio',
 ];

@@ -66,6 +66,7 @@ import { enviarSms } from '../sms';
 import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
 import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
+import { conPrecioZona, rutaPrecioPara } from '../precioZona';
 import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../rutaPorCalles';
 import { multiplicadorVigente } from '../viajesDinamica';
 import { paradasDe } from './paradasViaje';
@@ -120,6 +121,7 @@ type FilaTarifa = {
   espera_parada_gratis_s: number | null;
   valor_maximo: number | null;
   km_maximo?: number | null;
+  umbral_precio_zona_pb?: number | null;
   de_prueba: number;
   activa: number;
   motivo: string;
@@ -150,6 +152,7 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     ...(f.valor_maximo != null ? { valorMaximo: f.valor_maximo } : {}),
     velocidadKmh: f.velocidad_kmh,
     ...(f.km_maximo != null ? { kmMaximo: f.km_maximo } : {}),
+    ...(f.umbral_precio_zona_pb != null ? { umbralPrecioZonaPb: f.umbral_precio_zona_pb } : {}),
   };
 }
 
@@ -287,8 +290,8 @@ export async function guardarTarifaViaje(
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
            cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
            de_prueba, motivo, creada_por, xl_pb, valor_maximo, comfort_pb, premium_pb, espera_parada_gratis_s,
-           km_maximo)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           km_maximo, umbral_precio_zona_pb)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -318,6 +321,7 @@ export async function guardarTarifaViaje(
         t.premiumPb ?? null,
         t.esperaParadaGratisS,
         t.kmMaximo ?? null,
+        t.umbralPrecioZonaPb ?? null,
       ),
     db
       .prepare(
@@ -564,11 +568,27 @@ export async function cotizarParaCliente(
   if (d.categoria !== 'estandar' && (!tarifa || d.servicio !== 'carro'))
     throw new ErrorDatos(SIN_CATEGORIA[d.categoria], 'categoria', 409);
   if (!tarifa) throw new ErrorDatos(SIN_CATEGORIA.xl, 'categoria', 409);
+  // C-PRECIO-ZONA: la etiqueta de ruta (precio fijo de la zona) en la que caen la recogida y el
+  // destino. Solo viajes sin paradas: con paradas el trayecto ya no es el acostumbrado.
+  const rutaZona = d.paradas.length
+    ? null
+    : await rutaPrecioPara(db, d.servicio, zona, fila.moneda, d.origen, d.destino);
+  const idaVuelta = d.idaVuelta === true;
+  if (
+    idaVuelta &&
+    (d.servicio === 'envios' || d.categoria !== 'estandar' || rutaZona?.precio_ida_vuelta == null)
+  )
+    throw new ErrorDatos('Este trayecto no tiene precio de ida y vuelta.', 'idaVuelta', 422);
+  // C-PRECIO-ZONA: ida y vuelta = la vuelta como una parada en el destino y el viaje termina donde
+  // empezó. Usa el ciclo de paradas de siempre (C-VIAJE-PARADAS): espera en la parada y la ruta
+  // completa para el conductor.
+  const paradas: PuntoViaje[] = idaVuelta ? [d.destino] : d.paradas;
+  const destino: PuntoViaje = idaVuelta ? d.origen : d.destino;
   // C-VIAJE-PARADAS: paradas intermedias (máximo del país, todas en el mismo país).
-  await exigirParadasValidas(env, db, d.servicio, zona, d.paradas);
+  await exigirParadasValidas(env, db, d.servicio, zona, paradas);
   // C-RUTA-POR-CALLES: distancia y tiempo reales por calles (Google Routes, sin tráfico); si no se
   // puede, la fórmula de siempre, sin error para el pasajero. Solo para el precio.
-  const ruta = await rutaParaCotizar(env, db, clienteId, tarifa, d.origen, d.destino, d.paradas);
+  const ruta = await rutaParaCotizar(env, db, clienteId, tarifa, d.origen, destino, paradas);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
   if (ruta.distanciaM > kmMaximoDe(d.servicio, tarifa) * 1000)
@@ -600,7 +620,42 @@ export async function cotizarParaCliente(
       total: dg.total + t.tarifaServicio,
     };
   };
-  const desglose = await conTarifa(cotizarViaje(tarifa, ruta, multiplicadorPb));
+  // C-PRECIO-ZONA: el precio del viaje es el MENOR entre el de la zona y el calculado (si la
+  // diferencia pasa del umbral de la tarifa). Solo la categoría estándar: Comfort, Premium y XL
+  // siguen calculadas. La tarifa de servicio, la comisión y el regalo salen de este precio.
+  const precioDe = (
+    t: TarifaViaje,
+    categoria: CategoriaViaje,
+    r: { distanciaM: number; duracionS: number } = ruta,
+    vuelta = idaVuelta,
+  ): DesgloseViaje => {
+    const calculado = cotizarViaje(t, r, multiplicadorPb);
+    if (!rutaZona || categoria !== 'estandar') return calculado;
+    const precio = vuelta ? rutaZona.precio_ida_vuelta : rutaZona.precio;
+    if (precio == null) return calculado;
+    return conPrecioZona(calculado, precio, normal.umbralPrecioZonaPb, {
+      id: rutaZona.id,
+      idaVuelta: vuelta,
+    });
+  };
+  const desglose = await conTarifa(precioDe(tarifa, d.categoria));
+  // C-PRECIO-ZONA: si la ruta tiene precio de ida y vuelta, se ofrece (la vuelta estimada como el
+  // doble del trayecto, sin otra consulta de rutas). Al elegirla, la app vuelve a cotizar con
+  // `idaVuelta` y ese es el precio fijo.
+  const vueltaDg =
+    !idaVuelta &&
+    rutaZona?.precio_ida_vuelta != null &&
+    d.servicio !== 'envios' &&
+    d.categoria === 'estandar'
+      ? precioDe(
+          tarifa,
+          'estandar',
+          { distanciaM: ruta.distanciaM * 2, duracionS: ruta.duracionS * 2 },
+          true,
+        )
+      : null;
+  const ofertaIdaVuelta =
+    vueltaDg?.precioZona != null ? { total: (await conTarifa(vueltaDg)).total } : null;
   // C-CARRO-CATEGORIAS: el precio de cada categoría que ofrece la ciudad para este mismo trayecto,
   // calculado aquí mismo (sin guardar nada): la app las muestra para elegir (con su tarifa).
   const opciones =
@@ -610,7 +665,7 @@ export async function cotizarParaCliente(
             categoriasOfrecidas(normal).map(async (categoria) => {
               const t = tarifaDeCategoria(normal, categoria);
               if (!t) return null;
-              const dg = await conTarifa(cotizarViaje(t, ruta, multiplicadorPb));
+              const dg = await conTarifa(precioDe(t, categoria));
               return {
                 categoria,
                 total: dg.total,
@@ -627,8 +682,8 @@ export async function cotizarParaCliente(
     d.servicio,
     d.categoria,
     d.origen,
-    d.destino,
-    d.paradas,
+    destino,
+    paradas,
   );
   // C-FOTO-RECOGIDA: si la recogida cae en una dirección guardada del pasajero (solo viajes de
   // personas), queda anotada con la cotización: el conductor asignado verá la foto de esa entrada.
@@ -658,9 +713,9 @@ export async function cotizarParaCliente(
       d.origen.lng,
       // C-PUNTO-EXACTO: el conductor ve el punto de encuentro con su referencia.
       direccionConReferencia(d.origen.direccion, d.origen.referencia),
-      d.destino.lat,
-      d.destino.lng,
-      direccionConReferencia(d.destino.direccion, d.destino.referencia),
+      destino.lat,
+      destino.lng,
+      direccionConReferencia(destino.direccion, destino.referencia),
       ruta.distanciaM,
       ruta.duracionS,
       multiplicadorPb,
@@ -671,7 +726,7 @@ export async function cotizarParaCliente(
       venceEn,
       d.categoria,
       ruta.fuente,
-      JSON.stringify(d.paradas),
+      JSON.stringify(paradas),
       tasaLocal?.tasa ?? null,
       tasaLocal?.fecha ?? null,
       recogida.direccionId,
@@ -687,7 +742,7 @@ export async function cotizarParaCliente(
     },
     servicio: d.servicio,
     categoria: d.categoria,
-    paradas: d.paradas,
+    paradas,
     paradasMaximas: d.servicio === 'envios' ? 0 : perfilPasajeros(zona.pais).carro.paradasMaximas,
     multiplicadorPb,
     zona: { id: zona.id, nombre: zona.nombre },
@@ -703,6 +758,11 @@ export async function cotizarParaCliente(
     venceEn,
     dePrueba: fila.de_prueba === 1,
     metodosPago: [...perfilPasajeros(zona.pais).metodosPago],
+    // C-PRECIO-ZONA: el precio fijo de la zona (con el lugar de la ruta) y la ida y vuelta.
+    precioZona: desglose.precioZona != null,
+    ...(desglose.precioZona != null && rutaZona ? { lugarZona: rutaZona.hasta_nombre } : {}),
+    idaVuelta,
+    ofertaIdaVuelta,
     precioCambio: anterior != null && anterior.total !== desglose.total,
     ...(anterior != null && anterior.total !== desglose.total
       ? { totalAnterior: anterior.total }

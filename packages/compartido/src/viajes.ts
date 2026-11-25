@@ -71,6 +71,11 @@ export const esquemaTarifaViaje = z
      * el conductor ve la distancia antes de aceptar).
      */
     kmMaximo: z.number().int().min(5).max(5000).optional(),
+    /**
+     * C-PRECIO-ZONA (24 nov 2026): el precio de la zona (etiqueta de ruta) reemplaza al calculado solo
+     * si es más barato por AL MENOS esta diferencia, en puntos básicos (1000 = 10 %). Sin él, 10 %.
+     */
+    umbralPrecioZonaPb: z.number().int().min(0).max(9000).optional(),
   })
   .refine((t) => t.minimo <= 100_000_000, { path: ['minimo'] });
 export type TarifaViaje = z.infer<typeof esquemaTarifaViaje>;
@@ -179,6 +184,16 @@ export type DesgloseViaje = {
   precioViaje?: number;
   tarifaServicio?: number;
   quienPaga?: import('./quienPaga').QuienPaga;
+  /**
+   * C-PRECIO-ZONA (24 nov 2026): el viaje va con el precio fijo de la zona (etiqueta de ruta). Las
+   * piezas del cálculo quedan en 0, `precioZona` es el precio y `calculado` lo que habría salido por
+   * km y minuto (solo para el equipo). Sin estos campos: precio calculado de siempre.
+   */
+  precioZona?: number;
+  calculado?: number;
+  precioZonaId?: string;
+  /** C-PRECIO-ZONA: el viaje es de ida y vuelta (la vuelta es una parada en el destino). */
+  idaVuelta?: number;
 };
 
 /** Redondeo de la mitad hacia arriba al paso de la tarifa. */
@@ -263,6 +278,11 @@ export const esquemaCotizarViaje = z.object({
    * se le cobra al pasajero una tarifa que su app no le muestra.
    */
   tarifaServicio: z.boolean().optional(),
+  /**
+   * C-PRECIO-ZONA: el pasajero eligió el precio de ida y vuelta de la ruta (la vuelta va como una
+   * parada en el destino y el viaje termina donde empezó). Las apps de antes no lo mandan.
+   */
+  idaVuelta: z.boolean().optional(),
 });
 
 /** C-CARRO-XL: plazas mínimas del vehículo para un viaje XL. */
@@ -490,7 +510,16 @@ export type CotizacionViaje = {
   precioCambio?: boolean;
   totalAnterior?: number;
   /** C-CUPON-DIVOOX: el regalo que paga Divoox en este viaje si se paga en mano (o null). */
-  regalo?: import('./regaloDivoox').RegaloDivoox | null;
+  regalo?:
+    | import('./regaloDivoox').RegaloDivoox
+    | null; /** C-PRECIO-ZONA: el precio es el fijo de la zona (etiqueta de ruta), no el calculado. */
+  precioZona?: boolean;
+  /** C-PRECIO-ZONA: el lugar de destino de la ruta («hasta»), para decirlo en la app. */
+  lugarZona?: string;
+  /** C-PRECIO-ZONA: la cotización es de ida y vuelta. */
+  idaVuelta?: boolean;
+  /** C-PRECIO-ZONA: la ruta tiene precio de ida y vuelta y se puede elegir (total con su tarifa). */
+  ofertaIdaVuelta?: { total: number } | null;
 };
 
 /**

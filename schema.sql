@@ -3174,6 +3174,9 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   -- C-VIAJE-PARADAS (14 nov 2026): espera gratis en cada parada intermedia.
   espera_parada_gratis_s INTEGER NOT NULL DEFAULT 120,
   km_maximo INTEGER,
+  -- C-PRECIO-ZONA (24 nov 2026): diferencia mínima, en puntos básicos (1000 = 10 %), para que el
+  -- precio de la zona reemplace al calculado. NULL = 1000.
+  umbral_precio_zona_pb INTEGER,
   de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
   motivo TEXT NOT NULL DEFAULT '',
@@ -3182,6 +3185,38 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   cerrada_en TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS tarifas_viaje_una_activa ON tarifas_viaje(servicio_id, zona_id) WHERE activa = 1;
+
+-- C-PRECIO-ZONA (24 nov 2026, Richard): «etiquetas de ruta». En los pueblos se cobra un precio fijo
+-- acostumbrado entre lugares cercanos. El equipo de la ciudad escribe la ruta: desde (la zona entera
+-- o un punto con radio) hasta (un punto con radio y su nombre), el precio y, si hay, el de ida y
+-- vuelta. El pasajero paga el MENOR entre este precio y el calculado (con el umbral de la tarifa).
+-- Nunca se borra: se apaga (activa = 0). Montos en la unidad menor de la moneda de la zona.
+CREATE TABLE IF NOT EXISTS rutas_precio_zona (
+  id TEXT PRIMARY KEY,
+  -- La ciudad se comprueba al guardar (precioZona.ts); sin clave foránea, como `creada_por`, para no
+  -- sumar una lectura a cada borrado de ciudad o de cuenta (C-LECTURAS-VUELTA-RUTAS).
+  zona_id TEXT NOT NULL,
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  moneda TEXT NOT NULL,
+  desde_lat REAL,
+  desde_lng REAL,
+  desde_radio_km REAL,
+  desde_nombre TEXT,
+  hasta_lat REAL NOT NULL,
+  hasta_lng REAL NOT NULL,
+  hasta_radio_km REAL NOT NULL CHECK (hasta_radio_km > 0),
+  hasta_nombre TEXT NOT NULL,
+  precio INTEGER NOT NULL CHECK (precio > 0),
+  precio_ida_vuelta INTEGER CHECK (precio_ida_vuelta IS NULL OR precio_ida_vuelta > 0),
+  activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  -- Quién del equipo la creó o la cambió (sin clave foránea: no encarece borrar una cuenta; el
+  -- detalle de cada cambio queda en auditoria_admin).
+  creada_por TEXT,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizada_por TEXT,
+  actualizada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS rutas_precio_zona_buscar ON rutas_precio_zona(zona_id, servicio_id) WHERE activa = 1;
 
 CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
   id TEXT PRIMARY KEY,

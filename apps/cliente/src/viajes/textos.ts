@@ -93,6 +93,12 @@ export const TEXTOS_MOTO = {
     pinDestino: 'Destino',
     verPrecio: 'Ver precio',
     precioFijo: 'Precio fijo',
+    // C-PRECIO-ZONA: el precio fijo que se acostumbra en la zona para este trayecto.
+    precioZona: 'Precio de la zona',
+    precioZonaAyuda: 'El precio que se cobra siempre para ir hasta {lugar}.',
+    idaVuelta: 'Ida y vuelta',
+    idaVueltaAyuda: 'El conductor te espera allá y te trae de vuelta al punto de recogida.',
+    soloIda: 'Solo ida',
     // C-QUIEN-PAGA-VIAJES
     precioDelViaje: 'Viaje',
     tarifaServicio: 'Tarifa de servicio de Divoox',
@@ -318,6 +324,11 @@ export const TEXTOS_MOTO = {
     pinDestino: 'Destination',
     verPrecio: 'See price',
     precioFijo: 'Upfront price',
+    precioZona: 'Local fixed price',
+    precioZonaAyuda: 'The usual price people pay to go to {lugar}.',
+    idaVuelta: 'Round trip',
+    idaVueltaAyuda: 'Your driver waits for you there and brings you back to your pickup spot.',
+    soloIda: 'One way',
     // C-QUIEN-PAGA-VIAJES
     precioDelViaje: 'Ride fare',
     tarifaServicio: 'Divoox service fee',
@@ -492,6 +503,8 @@ export const TEXTOS_MIS_VIAJES = {
       dinamico: 'Alta demanda',
       cargoFijo: 'Cargo de servicio',
       redondeo: 'Redondeo',
+      // C-PRECIO-ZONA: el viaje fue con el precio fijo de la zona.
+      precioZona: 'Precio de la zona',
       tarifaServicio: 'Tarifa de servicio de Divoox',
     } as Record<string, string>,
     total: 'Total',
@@ -591,6 +604,7 @@ export const TEXTOS_MIS_VIAJES = {
       // Como Uber: el cargo fijo de la ciudad es «Booking fee» (no se confunde con la de Divoox).
       cargoFijo: 'Booking fee',
       redondeo: 'Rounding',
+      precioZona: 'Local fixed price',
       tarifaServicio: 'Divoox service fee',
     } as Record<string, string>,
     total: 'Total',

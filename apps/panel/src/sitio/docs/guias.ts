@@ -8,6 +8,7 @@ import { GUIAS_PERU, PERU_PUBLICADA } from './peru';
 import { GUIAS_VIAJES_FIJOS, VIAJES_FIJOS_PUBLICADA } from './viajesFijos';
 import { GUIA_VERIFICAR_CELULAR, VERIFICAR_CELULAR_PUBLICADA } from './verificarCelular';
 import { GUIAS_TARIFA_SERVICIO, TARIFA_SERVICIO_PUBLICADA } from './tarifaServicio';
+import { GUIA_PRECIO_ZONA, PRECIO_ZONA_PUBLICADA } from './precioZona';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIA_AVISOS_VIAJE } from './avisosViaje';
 import { GUIAS_AVISOS_QUE_RECIBES } from './avisosQueRecibes';
@@ -11211,6 +11212,10 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const ts = idioma === 'es' ? GUIAS_TARIFA_SERVICIO.es : GUIAS_TARIFA_SERVICIO.en;
   const tarifaPasajero = TARIFA_SERVICIO_PUBLICADA ? [ts.pasajero] : [];
   const tarifaConductor = TARIFA_SERVICIO_PUBLICADA ? [ts.conductor] : [];
+  // C-PRECIO-ZONA: el precio fijo de la zona (etiquetas de ruta) y la ida y vuelta.
+  const precioZona = PRECIO_ZONA_PUBLICADA
+    ? [idioma === 'es' ? GUIA_PRECIO_ZONA.es : GUIA_PRECIO_ZONA.en]
+    : [];
   // C-FOTO-CARA-A-LA-VISTA y C-QUE-TE-FALTA: la foto de la cara y «qué te falta para recibir carreras».
   const fc = idioma === 'es' ? GUIAS_FOTO_CARA.es : GUIAS_FOTO_CARA.en;
   const fotoCara = FOTO_CARA_PUBLICADA ? [fc.cara, fc.falta] : [];
@@ -11230,6 +11235,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           avisosViaje,
           avisosActor.cliente,
           ...tarifaPasajero,
+          ...precioZona,
           ...mismaRuta,
           ...fijosPasajero,
           ...peruPasajero,

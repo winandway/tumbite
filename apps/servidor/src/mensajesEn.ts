@@ -2376,6 +2376,14 @@ export const MENSAJES_EN = new Map<string, string>([
     'El destino tiene que estar en el mismo país del viaje.',
     'The destination has to be in the same country as the pickup.',
   ],
+  // C-PRECIO-ZONA (24 nov 2026): precios fijos de la zona e ida y vuelta.
+  ['Este trayecto no tiene precio de ida y vuelta.', 'This trip doesn’t have a round-trip price.'],
+  ['Esa ruta no existe.', 'That route doesn’t exist.'],
+  ['Un envío no tiene precio de ida y vuelta.', 'A delivery can’t have a round-trip price.'],
+  [
+    'El precio de ida y vuelta no puede ser menor que el de ida.',
+    'The round-trip price can’t be lower than the one-way price.',
+  ],
   [
     'Una parada tiene que estar en el mismo país del viaje.',
     'Each stop has to be in the same country as the pickup.',

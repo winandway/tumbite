@@ -12,6 +12,10 @@ export const TEXTOS_VIAJE = {
       } as Record<string, string>,
       dinamica: 'Tarifa dinámica',
       dinamicaAyuda: 'Ya está incluida en lo que ganas.',
+      // C-PRECIO-ZONA
+      precioZona: 'Precio de la zona',
+      precioZonaAyuda: 'El precio fijo que se cobra en la zona para este trayecto.',
+      idaVuelta: 'Ida y vuelta: esperas en el destino y vuelves al punto de recogida.',
       conParadas: (n: number) => (n === 1 ? 'Con 1 parada' : `Con ${n} paradas`),
       // C-VIAJE-PROGRAMADO: la oferta de una reserva dice para cuándo.
       programado: 'Viaje programado para',
@@ -169,6 +173,9 @@ export const TEXTOS_VIAJE = {
       } as Record<string, string>,
       dinamica: 'Dynamic pricing',
       dinamicaAyuda: 'Already included in what you earn.',
+      precioZona: 'Local fixed price',
+      precioZonaAyuda: 'The usual fixed price in this area for this trip.',
+      idaVuelta: 'Round trip: you wait at the drop-off and come back to the pickup spot.',
       conParadas: (n: number) => (n === 1 ? 'With 1 stop' : `With ${n} stops`),
       programado: 'Scheduled ride for',
       ganas: 'You earn',
