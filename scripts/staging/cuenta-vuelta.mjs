@@ -1,3 +1,4 @@
+import { pedirConReintento } from './pedirConReintento.mjs';
 // C-PRESUPUESTO-VUELTA-PRUEBAS: al terminar una corrida contra el sitio de pruebas, dice cuántas
 // filas leyó y escribió esa vuelta y cuántas van hoy, y falla si el servidor la frenó.
 // Uso (desde GitHub): URL_PRUEBAS=… RELOJ_SECRETO=… VUELTA_PRUEBAS=… node scripts/staging/cuenta-vuelta.mjs
@@ -8,7 +9,7 @@ if (!base || !secreto || !id) {
   console.log('cuenta de la vuelta: faltan datos, se omite');
   process.exit(0);
 }
-const r = await fetch(`${base}/datos/interno/diagnostico/vuelta`, {
+const r = await pedirConReintento(`${base}/datos/interno/diagnostico/vuelta`, {
   method: 'POST',
   headers: { 'content-type': 'application/json', 'x-reloj-secreto': secreto },
   body: JSON.stringify({ id }),

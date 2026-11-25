@@ -2,12 +2,13 @@
 // Capturas reales del sitio de pruebas (29 oct 2026): entra con el pase de las cuentas demo por la API
 // (sin escribir contraseñas en la página). Uso: CLAVE_DEMO=… SALIDA=carpeta node scripts/recorrido/capturas-staging-29oct.mjs
 import { chromium } from '@playwright/test';
+import { pedirConReintento } from '../staging/pedirConReintento.mjs';
 const URL = 'https://staging.tumbite.com';
 const CLAVE = process.env.CLAVE_DEMO;
 if (!CLAVE) throw new Error('Falta CLAVE_DEMO (la de las cuentas demo de pruebas).');
 const SALIDA = process.env.SALIDA;
 async function api(metodo, ruta, cuerpo, token) {
-  const r = await fetch(URL + ruta, {
+  const r = await pedirConReintento(URL + ruta, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

@@ -7,6 +7,7 @@
 // CIUDAD=novi (29 oct 2026, pedido de Richard): abre la zona de pruebas de Detroit, con Novi adentro,
 // y arma ahí «Mercado Demo Novi» para probar desde Michigan. Solo en el sitio de pruebas.
 import { execSync } from 'node:child_process';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com').replace(/\/$/, '');
 if (!/^https:\/\/staging\./.test(URL_PRUEBAS)) {
@@ -25,7 +26,7 @@ const LLAVE = execSync(
   .trim();
 
 async function api(metodo, ruta, cuerpo, token) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

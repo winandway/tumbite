@@ -4,6 +4,7 @@
 // punta a punta en el simulador o en un teléfono. Se puede correr varias veces (crea otra ruta).
 // Uso: CLAVE_DEMO=… node scripts/staging/armar-ruta-flex-novi.mjs
 import { execSync } from 'node:child_process';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = 'https://staging.tumbite.com';
 const CLAVE = process.env.CLAVE_DEMO;
@@ -18,7 +19,7 @@ const LLAVE = execSync(
   .trim();
 
 async function api(metodo, ruta, cuerpo, token) {
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': 'application/json',

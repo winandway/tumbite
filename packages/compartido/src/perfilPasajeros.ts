@@ -43,6 +43,9 @@ export const DOCUMENTOS_CONDUCTOR = [
   'antecedentes_penales',
   // C-CARRO-PAPELES-PAIS (13 nov 2026): la licencia para manejar carro (en Venezuela, la del INTT).
   'licencia_conducir',
+  // C-PAPELES-POR-PAIS (24 nov 2026): el certificado médico que pide Venezuela. Solo se acepta donde
+  // la lista del país está encendida y lo pide (`papelesListaPais.ts`); nunca frena el reparto.
+  'certificado_medico',
 ] as const;
 export type DocumentoConductor = (typeof DOCUMENTOS_CONDUCTOR)[number];
 

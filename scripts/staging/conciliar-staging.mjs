@@ -1,3 +1,4 @@
+import { pedirConReintento } from './pedirConReintento.mjs';
 // Conciliación de saldos en el SITIO DE PRUEBAS después del recorrido: el libro del día cuadra
 // por dentro y cada cobro coincide con Stripe (modo prueba). Corre desde GitHub con el secreto.
 const base = process.env.URL_PRUEBAS;
@@ -6,7 +7,7 @@ if (!base || !secreto || !/staging\.tumbite\.com|tumbite-pruebas/.test(base)) {
   console.error('Solo contra el sitio de pruebas, con URL_PRUEBAS y RELOJ_SECRETO.');
   process.exit(1);
 }
-const r = await fetch(`${base}/datos/interno/diagnostico/conciliacion`, {
+const r = await pedirConReintento(`${base}/datos/interno/diagnostico/conciliacion`, {
   method: 'POST',
   headers: {
     'content-type': 'application/json',

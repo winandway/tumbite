@@ -14,6 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
+import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com').replace(/\/$/, '');
 if (!/^https:\/\/(staging\.tumbite\.com|tumbite-pruebas\.sitios\.dev)$/.test(URL_PRUEBAS)) {
@@ -140,7 +141,7 @@ async function dibujarFotos() {
 // ───────────── API ─────────────
 async function pedir(metodo, ruta, cuerpo, token, tipo = 'application/json') {
   const crudo = cuerpo instanceof Uint8Array;
-  const r = await fetch(`${URL_PRUEBAS}${ruta}`, {
+  const r = await pedirConReintento(`${URL_PRUEBAS}${ruta}`, {
     method: metodo,
     headers: {
       'content-type': tipo,

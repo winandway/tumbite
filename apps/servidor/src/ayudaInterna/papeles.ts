@@ -146,3 +146,72 @@ export const plazoPapeles: Record<IdiomaAyuda, GuiaAyuda> = {
     nota: 'During the grace period, drivers work without a license or insurance verified by the team. It’s a company decision to get started; that’s why it helps to review what comes in quickly and keep a close eye on those ending soon.',
   },
 };
+
+/**
+ * C-PAPELES-POR-PAIS (24 nov 2026) — todos los países por configuración. La guía interna de la lista
+ * de papeles por país (Ajustes → país). Solo para el equipo: nunca en Docs públicos.
+ */
+export const papelesDelPais: Record<IdiomaAyuda, GuiaAyuda> = {
+  es: {
+    id: 'driver-documents-by-country',
+    titulo: 'Papeles del conductor por país',
+    resumen:
+      'En Ajustes, cada país tiene su lista de papeles: qué se le pide al conductor, cómo se llama cada papel en español y en inglés, si vence, si lleva foto y si frena las carreras o solo se pide. Viene apagada: apagada, el conductor ve los papeles de siempre.',
+    explicacion: [
+      'La lista está en Ajustes → elige el país → «Papeles que se le piden al conductor en este país», debajo del plazo de papeles.',
+      'Cada papel dice si es del conductor (licencia, certificado médico) o del vehículo (título o carnet de circulación, póliza, fotos), para qué servicio se pide (Moto, Carro o los dos), su nombre en los dos idiomas, si vence y si lleva foto.',
+      '«Frena las carreras» o «Solo se pide» no lo eliges tú: lo dice el reparto. Los papeles que hoy frenan (el registro, la póliza y la póliza de pasajeros del vehículo, la inspección en Carro y la licencia) siguen frenando. Los nuevos, como el certificado médico o la foto con la placa, solo se piden: el conductor los sube y el equipo los revisa, pero no le quitan carreras.',
+      'Una lista encendida no puede dejar fuera un papel que frena: el conductor no tendría dónde subirlo. Si falta, al guardar sale el aviso con el papel exacto.',
+      'En Venezuela la póliza RCV también cubre al pasajero: se pide una sola vez y se guarda en las dos casillas, como ya hacía el asistente de fotos.',
+      'Encendida la lista de un país: Driver pide esos papeles con esos nombres; la barra de activación suma el paso «Papeles del país (solo se piden)», que nunca frena; Verificaciones recibe esos papeles para revisarlos; Camila le recuerda al conductor los que no subió; y el plazo de papeles no se da por completo mientras le falte subir alguno (al vencer no se le pausa por eso).',
+      'Mientras escribes, lo que cambias se guarda en tu navegador. Si se cierra la ventana, al volver está todo; «Empezar de nuevo» vuelve a lo guardado.',
+    ],
+    capturas: [
+      cap(
+        'lista-pais',
+        'es',
+        'Ajustes de Venezuela con la lista de papeles del conductor: licencia, certificado médico, título o carnet de circulación, póliza RCV y foto con la placa, cada uno con «Frena las carreras» o «Solo se pide».',
+        'La lista de papeles de un país, en Ajustes.',
+      ),
+    ],
+    pasos: [
+      'Ajustes → elige el país → baja hasta «Papeles que se le piden al conductor en este país».',
+      'Revisa cada papel: para qué servicio, nombre en español y en inglés, si vence y si lleva foto.',
+      'Para agregar uno: elige el papel en «Agregar papel» y toca «Agregar papel». Para quitarlo: los tres puntos de ese papel → «Quitar de la lista».',
+      'Marca «Encender la lista de este país» cuando la versión de Driver que muestra estos nombres ya esté en las tiendas.',
+      'Toca «Guardar los papeles del país». Queda en el historial de cambios con tu nombre.',
+    ],
+    nota: 'Antes de encender un país, comprueba que los conductores ya tengan la versión nueva de Driver: la anterior mostraría el certificado médico con su nombre interno.',
+  },
+  en: {
+    id: 'driver-documents-by-country',
+    titulo: 'Driver documents by country',
+    resumen:
+      'In Settings, each country has its own documents list: what drivers are asked for, what each document is called in Spanish and English, whether it expires, whether it needs a photo, and whether it blocks trips or is requested only. It starts off: while off, drivers see the usual documents.',
+    explicacion: [
+      'The list is in Settings → pick the country → “Documents drivers are asked for in this country,” below the documents grace period.',
+      'Each document says whether it belongs to the driver (license, medical certificate) or to the vehicle (title or registration card, insurance policy, photos), which service it is for (Moto, Car or both), its name in both languages, whether it expires and whether it needs a photo.',
+      '“Blocks trips” or “Requested only” is not up to you: dispatch decides it. Documents that block today (the vehicle registration, insurance and rider insurance, the inspection for Car, and the license) keep blocking. New ones, like the medical certificate or the photo with the plate, are requested only: the driver uploads them and the team reviews them, but they never take trips away.',
+      'A list that is on cannot leave out a document that blocks: the driver would have nowhere to upload it. If one is missing, saving shows a notice naming it.',
+      'In Venezuela the RCV policy also covers the rider: it is asked for once and saved in both boxes, as the photo assistant already did.',
+      'With a country’s list on: Driver asks for those documents with those names; the activation bar adds the step “Country documents (requested only),” which never blocks; Verifications receives those documents for review; Camila reminds drivers of the ones they did not upload; and the documents grace period is not marked complete while one is still missing (when it ends, nobody is paused for that).',
+      'While you type, your changes are saved in your browser. If the window closes, everything is there when you come back; “Start over” goes back to what was saved.',
+    ],
+    capturas: [
+      cap(
+        'lista-pais',
+        'en',
+        'Settings for a country with the driver documents list: license, medical certificate, title or registration card, insurance policy and plate photo, each marked “Blocks trips” or “Requested only”.',
+        'A country’s documents list, in Settings.',
+      ),
+    ],
+    pasos: [
+      'Settings → pick the country → scroll to “Documents drivers are asked for in this country.”',
+      'Check each document: which service, name in Spanish and in English, whether it expires and whether it needs a photo.',
+      'To add one: pick it in “Add document” and tap “Add document.” To remove it: that document’s three dots → “Remove from the list.”',
+      'Check “Turn on this country’s list” once the Driver version that shows these names is in the stores.',
+      'Tap “Save the country’s documents.” It is recorded in the change history with your name.',
+    ],
+    nota: 'Before turning a country on, make sure drivers already have the new Driver version: the previous one would show the medical certificate by its internal name.',
+  },
+};

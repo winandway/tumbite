@@ -1432,7 +1432,7 @@ END;
 CREATE TABLE IF NOT EXISTS conductor_documentos (
   id TEXT PRIMARY KEY,
   conductor_id TEXT NOT NULL REFERENCES usuarios(id),
-  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales', 'licencia_conducir')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales', 'licencia_conducir', 'certificado_medico')),
   clave TEXT NOT NULL,
   vence_en TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reemplazado')),

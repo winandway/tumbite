@@ -125,6 +125,7 @@ const T = {
       licencia_moto: 'Licencia de moto',
       antecedentes_penales: 'Certificado de antecedentes penales',
       licencia_conducir: 'Licencia de conducir',
+      certificado_medico: 'Certificado médico',
     } as Record<string, string>,
     estadosPapel: {
       pendiente: 'Por revisar',
@@ -374,6 +375,7 @@ const T = {
       licencia_moto: 'Motorcycle license',
       antecedentes_penales: 'Criminal record certificate',
       licencia_conducir: 'Driver’s license',
+      certificado_medico: 'Medical certificate',
     } as Record<string, string>,
     estadosPapel: {
       pendiente: 'To review',
