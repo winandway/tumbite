@@ -22,9 +22,11 @@ import {
   HORA_RECORDATORIOS_UTC,
   empezarPlazo,
   graciaDe,
+  type SituacionPlazo,
   politicaPlazo,
   recordarPlazos,
 } from '../plazoPapeles';
+import { papelesPaisQueFaltan } from '../papelesPais';
 import { type Ctx, type UsuarioSesion, type Variables, base, exigir } from '../sesion';
 import { anotarHito, origenDePeticion } from '../rastro';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -972,13 +974,20 @@ export async function plazoCumplido(db: D1Database, conductorId: string) {
 /** La vuelta diaria del plazo (la llama el reloj en su vuelta de cada hora; corre una vez al día). */
 export async function correrPlazoPapeles(env: Env, db: D1Database) {
   if (new Date().getUTCHours() !== HORA_RECORDATORIOS_UTC) return 0;
-  return recordarPlazos(env, db, async (id) =>
-    (await plazoCumplido(db, id))
-      ? 'completo'
-      : (await estadoVerificacion(db, id)).subioTodo
-        ? 'subio_todo'
-        : 'falta',
-  );
+  return recordarPlazos(env, db, (id) => situacionDelPlazo(db, id));
+}
+
+/**
+ * Cómo va el plazo de un conductor. C-PAPELES-POR-PAIS: con la lista de su país encendida, cumplir la
+ * regla entera no cierra el plazo mientras le falte SUBIR un papel que «solo se pide» (los que ya subió
+ * y revisa el equipo no cuentan: la demora es nuestra).
+ */
+export async function situacionDelPlazo(db: D1Database, id: string): Promise<SituacionPlazo> {
+  if (await plazoCumplido(db, id)) {
+    const delPais = await papelesPaisQueFaltan(db, id);
+    return delPais?.some((p) => p.estado === 'falta') ? 'faltan_pedidos' : 'completo';
+  }
+  return (await estadoVerificacion(db, id)).subioTodo ? 'subio_todo' : 'falta';
 }
 
 // ───────────────────────── El equipo (superadmin) ─────────────────────────

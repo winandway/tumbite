@@ -22,6 +22,8 @@ import { entornoDeHost } from '@tumbite/compartido';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
+import { listaEncendidaDelConductor } from '../papelesPais';
+import { documentosDeLista, nombresDeLista } from '@tumbite/compartido';
 
 /**
  * C-PAPELES-CONDUCTOR (13 nov 2026) — Venezuela y todos los países. Los papeles del CONDUCTOR (no de
@@ -54,7 +56,7 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
   const eleccion = await eleccionCiudad(db, u.id);
   // C-CIUDAD-CONDUCTOR: ya elegida, solo se muestran las de su país.
   const soloPais = eleccion?.ciudad_elegida_en ? eleccion.pais : null;
-  const [{ results: docs }, { results: ciudades }] = await Promise.all([
+  const [{ results: docs }, { results: ciudades }, encendida] = await Promise.all([
     db
       .prepare(
         `SELECT id, tipo, estado, motivo, vence_en AS venceEn, creado_en AS creadoEn FROM conductor_documentos
@@ -68,7 +70,18 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       )
       .bind(soloPais)
       .all<{ id: string; nombre: string; pais: string }>(),
+    listaEncendidaDelConductor(db, u.id),
   ]);
+  // C-PAPELES-POR-PAIS: con la lista de su país ENCENDIDA, lo que se pide y cómo se llama lo manda el
+  // servidor (Driver pinta esos nombres). Apagada, la respuesta es exactamente la de siempre.
+  const deLista = encendida
+    ? {
+        ...documentosDeLista(encendida.lista),
+        documentos: documentosDeLista(encendida.lista).documentosPorServicio.moto,
+        nombres: nombresDeLista(encendida.lista),
+        papelesPais: encendida.lista.papeles,
+      }
+    : null;
   return c.json({
     ciudad: { id: donde.zona_id, nombre: donde.nombre, pais: donde.pais },
     ciudades,
@@ -87,6 +100,7 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       // C-CARRO-PAPELES-PAIS: lo que pide su país para cada servicio de pasajeros.
       documentosPorServicio: { moto: perfil.documentosConductor, carro: perfil.documentosCarro },
       documentosVehiculo: DOCUMENTOS_VEHICULO_PASAJEROS,
+      ...(deLista ?? {}),
     },
     documentos: docs,
   });
@@ -476,7 +490,17 @@ conductorPapeles.post('/conductor/papeles', async (c) => {
         .optional(),
     })
     .safeParse(c.req.query());
-  if (!q.success)
+  // C-PAPELES-POR-PAIS: el certificado médico solo se acepta donde la lista del país está encendida y
+  // lo pide. Apagada, todo como siempre.
+  const pideNuevo =
+    q.success && q.data.tipo === 'certificado_medico'
+      ? Boolean(
+          (await listaEncendidaDelConductor(db, u.id))?.lista.papeles.some(
+            (p) => p.donde === 'conductor' && p.tipo === 'certificado_medico',
+          ),
+        )
+      : true;
+  if (!q.success || !pideNuevo)
     throw new ErrorDatos(
       'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
       'tipo',
@@ -571,6 +595,11 @@ conductorPapeles.get('/admin/conductores/:id/pasajeros', async (c) => {
     fechaNacimiento: persona.fecha_nacimiento,
     ciudad: { id: donde.zona_id, nombre: donde.nombre, pais: donde.pais },
     perfil: perfilPasajeros(donde.pais),
+    // C-PAPELES-POR-PAIS: la lista de su país, solo si está encendida (apagada no cambia nada).
+    ...(await (async () => {
+      const enc = await listaEncendidaDelConductor(db, id);
+      return enc ? { papelesPais: enc.lista.papeles } : {};
+    })()),
     identidad: kycFila?.estado ?? 'sin_enviar',
     documentos,
     vehiculoActivo: estado.vehiculoActivo,

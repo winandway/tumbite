@@ -3,9 +3,12 @@
  * una lista cerrada de tipos (CHECK) que solo conocía los papeles del mototaxista. El taxista sube
  * también su licencia de conducir (`licencia_conducir`). SQLite no cambia un CHECK: si la tabla es la
  * vieja, se rehace con la lista nueva sin perder filas (una sola vez; después ya no coincide).
+ *
+ * C-PAPELES-POR-PAIS (24 nov 2026) — Venezuela: la lista suma el certificado médico. La misma pieza
+ * rehace la tabla que todavía no lo acepta (las que ya aceptaban la licencia de conducir también).
  */
 export const TIPOS_DOCUMENTO_CONDUCTOR =
-  "'licencia_moto', 'antecedentes_penales', 'licencia_conducir'";
+  "'licencia_moto', 'antecedentes_penales', 'licencia_conducir', 'certificado_medico'";
 
 export const CONDUCTOR_DOCUMENTOS_DDL = `CREATE TABLE IF NOT EXISTS conductor_documentos (
   id TEXT PRIMARY KEY,
@@ -23,9 +26,12 @@ export const CONDUCTOR_DOCUMENTOS_DDL = `CREATE TABLE IF NOT EXISTS conductor_do
 const COLUMNAS =
   'id, conductor_id, tipo, clave, vence_en, estado, motivo, revisado_por, revisado_en, creado_en';
 
-/** ¿La tabla existe y todavía no acepta la licencia de conducir? */
+/** ¿La tabla existe y todavía no acepta todos los tipos (la licencia de conducir, el certificado médico)? */
 export function papelesViejos(sql: string | null): boolean {
-  return Boolean(sql) && !String(sql).includes("'licencia_conducir'");
+  return (
+    Boolean(sql) &&
+    !(String(sql).includes("'licencia_conducir'") && String(sql).includes("'certificado_medico'"))
+  );
 }
 
 export async function rehacerConductorDocumentos(db: D1Database): Promise<boolean> {
@@ -55,7 +61,7 @@ export async function rehacerConductorDocumentos(db: D1Database): Promise<boolea
     ),
   ]);
   console.warn(
-    'esquema: conductor_documentos rehecha con la licencia de conducir (C-CARRO-PAPELES-PAIS)',
+    'esquema: conductor_documentos rehecha con la lista de tipos al día (C-CARRO-PAPELES-PAIS, C-PAPELES-POR-PAIS)',
   );
   return true;
 }

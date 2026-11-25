@@ -12,6 +12,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Papeles por país configurables y reintentos de los guiones (24 nov 2026, orden de Richard por Gerencia) — Venezuela lista para encender; EE. UU. sin cambios · rama `trabajo-papeles-por-pais`, sin publicar
+
+- [x] [para: desarrollador] Lista de papeles por país en Ajustes (apagada de fábrica), certificado médico, RCV también como póliza de pasajeros, barra/vigilante/plazo/Verificaciones con la lista encendida, ayuda interna es/en (C-PAPELES-POR-PAIS, segunda parte). Reintento acotado en los guiones del sitio de pruebas (C-GUIONES-REINTENTAN-RED).
+- [ ] [para: revisor-calidad] Revisar la rama `trabajo-papeles-por-pais` (C-PAPELES-POR-PAIS segunda parte, C-GUIONES-REINTENTAN-RED) antes de publicar. Servidor y panel salen solos al publicar; Driver necesita compilarse para pintar los nombres del servidor. Al publicar: tomar en el sitio de pruebas las capturas de la ayuda interna (papeles-lista-pais-es y -en, Ajustes de Venezuela y de Estados Unidos) y subirlas con scripts/docs/subir-ayuda-interna.mjs.
+- [ ] [para: tiendas-lanzamientos] Compilar Driver con el cambio de nombres de papeles (`AltaPasajeros.tsx`) en la próxima versión del día. No encender la lista de Venezuela hasta que esa versión esté en las tiendas. Venezuela.
+
 ## Formularios por pasos y desbordes a 360 px (24 nov 2026, orden de Richard) — todos los países · rama `fase-formularios-pasos`, sin subir
 
 - [x] [para: desarrollador] Pieza única `FormularioPorPasos` y crear la cuenta por pasos en la app de clientes y en Driver; Envíos A → B y el registro de la empresa de Flex por pasos; candados C-FORMULARIO-POR-PASOS y C-DESBORDES-360 (rojo visto); Docs es/en con capturas nuevas.
