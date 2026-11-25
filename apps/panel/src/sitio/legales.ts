@@ -41,6 +41,11 @@ const FECHA_PRIVACIDAD = {
   es: 'Actualizado: 24 de noviembre de 2026',
   en: 'Last updated: November 24, 2026',
 };
+// C-BORRAR-CUENTA-PAPELES: /delete-account cambió el 25 nov 2026 (papeles y dueño de restaurante).
+const FECHA_BORRAR = {
+  es: 'Actualizado: 25 de noviembre de 2026',
+  en: 'Last updated: November 25, 2026',
+};
 const FECHA_CHAT = {
   es: 'Actualizado: 18 de noviembre de 2026',
   en: 'Last updated: November 18, 2026',
@@ -735,7 +740,7 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
 export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Borrar tu cuenta de Divoox',
-    actualizado: FECHA_CHAT.es,
+    actualizado: FECHA_BORRAR.es,
     accion: { texto: 'Borrar mi cuenta ahora', href: '/panel/settings' },
     intro: `Así borras tu cuenta de Divoox (app de clientes, Divoox Driver o Divoox para restaurantes), de ${EMPRESA}. No hace falta tener la app instalada.`,
     secciones: [
@@ -747,6 +752,8 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
           'Sin la app: toca el botón «Borrar mi cuenta ahora» de esta página.',
           'Entra con el correo y la contraseña de tu cuenta. En Configuración, toca los tres puntos junto al título → «Borrar mi cuenta» y escribe BORRAR para confirmar.',
           'Si tienes un pedido, un viaje o un envío en curso, espera a que termine: después ya puedes borrarla.',
+          'Tu cuenta es una sola: al borrarla se borran a la vez todos tus papeles en Divoox (cliente, conductor o repartidor y dueño de restaurante), en todas las apps.',
+          'Si eres dueño de un restaurante activo, primero escríbenos a soporte para cerrarlo o traspasarlo; después ya puedes borrar tu cuenta.',
         ],
       },
       {
@@ -776,7 +783,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Delete your Divoox account',
-    actualizado: FECHA_CHAT.en,
+    actualizado: FECHA_BORRAR.en,
     accion: { texto: 'Delete my account now', href: '/panel/settings' },
     intro: `Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by ${EMPRESA}. You don’t need the app installed.`,
     secciones: [
@@ -788,6 +795,8 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
           'Without the app: tap the “Delete my account now” button on this page.',
           'Sign in with your account’s email and password. In Settings, tap the three dots next to the title → “Delete my account” and type DELETE to confirm.',
           'If you have an order, ride, or package delivery in progress, wait until it’s done: then you can delete it.',
+          'You have one account: deleting it removes all your roles in Divoox at once (customer, driver or courier, and restaurant owner), in every app.',
+          'If you own an active restaurant, first contact support to close it or transfer it; then you can delete your account.',
         ],
       },
       {

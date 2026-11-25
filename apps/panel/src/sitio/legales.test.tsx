@@ -333,3 +333,18 @@ describe('intentos fallidos de entrar y de crear cuenta', () => {
     );
   });
 });
+
+// C-BORRAR-CUENTA-PAPELES (25 nov 2026, auditor de tiendas): /delete-account dice que borrar la
+// cuenta borra todos los papeles y que el dueño de un restaurante activo pasa antes por soporte
+// (así lo hace apps/servidor/src/borrarCuenta.ts). En ROJO antes del cambio.
+describe('C-BORRAR-CUENTA-PAPELES', () => {
+  it('la página de borrar cuenta lo dice en español y en inglés', async () => {
+    const { BORRAR_CUENTA } = await import('./legales');
+    const es = JSON.stringify(BORRAR_CUENTA.es);
+    const en = JSON.stringify(BORRAR_CUENTA.en);
+    expect(es).toContain('se borran a la vez todos tus papeles');
+    expect(es).toContain('dueño de un restaurante activo');
+    expect(en).toContain('removes all your roles');
+    expect(en).toContain('own an active restaurant');
+  });
+});

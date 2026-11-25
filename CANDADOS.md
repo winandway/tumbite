@@ -2,6 +2,12 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-BORRAR-CUENTA-PAPELES · /delete-account dice que se borran todos los papeles y que el dueño de un restaurante activo pasa por soporte (25 nov 2026) — todos los países · web
+
+- **Por qué:** dictamen vigésimo segundo del auditor de tiendas. La página no decía que la cuenta es una sola (borrarla quita cliente, conductor y dueño a la vez) ni que el servidor frena el borrado del dueño de un restaurante activo (`apps/servidor/src/borrarCuenta.ts`, C-CUENTA-UNICA-RESTAURANTE).
+- **Qué se hizo:** dos párrafos en «Opción 1» de `BORRAR_CUENTA` (`apps/panel/src/sitio/legales.ts`), es/en, y fecha de la página al 25 nov.
+- **Cómo se comprueba:** `apps/panel/src/sitio/legales.test.tsx`, bloque C-BORRAR-CUENTA-PAPELES, visto en ROJO con el texto viejo.
+
 ## C-VIAJE-LARGO-A-LA-VISTA · La oferta avisa en grande un viaje largo y a dónde va (25 nov 2026) — todos los países · app Driver
 
 - **Por qué:** con C-DESTINO-EN-EL-PAIS el destino puede estar en cualquier punto del país (Tucaní a Caja Seca o a Caracas). El conductor tiene que verlo antes de aceptar.

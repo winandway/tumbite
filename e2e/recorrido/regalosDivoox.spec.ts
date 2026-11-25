@@ -396,6 +396,8 @@ for (const idioma of ['es', 'en'] as const) {
       // El saldo y los regalos son el modelo de Venezuela: van SOLO en la ficha en español (tercera
       // auditoría de tiendas, 18 nov 2026); el total de hoy ya no cuenta el regalo como una entrega
       // (C-GANANCIAS-COHERENTES).
+      // C-REDISENO-DRIVER: el total y sus líneas viven en la pestaña «Ganancias», no en «Billetera».
+      await pr.getByTestId('segmento-ganancias').click();
       await expect(pr.getByTestId('ganancias-incluye-regalos')).toBeVisible();
       // C-GANANCIAS-EN-MANO: lo que el pasajero pagó en mano entra en el total del conductor, con sus
       // bolívares, y la carrera sale en «Carreras cobradas en mano».
@@ -404,6 +406,8 @@ for (const idioma of ['es', 'en'] as const) {
       await expect(pr.getByTestId('ganancias-viajes-en-mano')).toBeVisible({ timeout: 30_000 });
       // C-CUENTA-COBRO-VENEZUELA: la tarjeta habla de pago móvil y pide banco, teléfono y cédula.
       // En inglés el ejemplo es de Estados Unidos, donde no hay billeteras de celular: sin tarjeta.
+      // C-REDISENO-DRIVER: la cuenta de cobro vive en la pestaña «Billetera».
+      await pr.getByTestId('segmento-billetera').click();
       const cuentaCobro = pr.getByTestId('cuenta-cobro');
       if (idioma === 'es') {
         await expect(cuentaCobro).toBeVisible();
@@ -412,9 +416,11 @@ for (const idioma of ['es', 'en'] as const) {
       } else await expect(cuentaCobro).toHaveCount(0);
       if (process.env.CARPETA_REVISION && idioma === 'es') {
         const carpetaRev = process.env.CARPETA_REVISION;
+        await pr.getByTestId('segmento-ganancias').click();
         await pr.screenshot({ path: join(carpetaRev, `ganancias-${idioma}.png`), fullPage: true });
         await pr.getByTestId('ganancias-total').scrollIntoViewIfNeeded();
         await pr.screenshot({ path: join(carpetaRev, `ganancias-total-${idioma}.png`) });
+        await pr.getByTestId('segmento-billetera').click();
         const abrir = cuentaCobro.getByRole('button').last();
         await abrir.scrollIntoViewIfNeeded();
         await abrir.click();
