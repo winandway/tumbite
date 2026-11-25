@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { avisoViajeLargo } from './viajeLargo';
 import { View } from 'react-native';
 import {
   type Idioma,
@@ -199,6 +200,39 @@ export function OfertaViajeModal({
             color={C.exito}
             tamano="grande"
           />
+          {(() => {
+            // C-VIAJE-LARGO-A-LA-VISTA: un viaje largo se avisa en grande antes de aceptar.
+            const largo = avisoViajeLargo(
+              oferta.viajeM,
+              oferta.destino,
+              idioma === 'en' ? 'en' : 'es',
+            );
+            return largo ? (
+              <View
+                testID="oferta-viaje-largo"
+                accessibilityRole="alert"
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#2a2a2a',
+                  borderRadius: 12,
+                  padding: 12,
+                  gap: 4,
+                }}
+              >
+                <Text style={{ fontSize: 22, fontWeight: '900', color: C.secundario }}>
+                  {largo.titulo}
+                </Text>
+                {largo.hasta ? (
+                  <Text
+                    numberOfLines={2}
+                    style={{ fontSize: 16, fontWeight: '700', color: C.secundario }}
+                  >
+                    {largo.hasta}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null;
+          })()}
           {oferta.metodoPago !== 'tarjeta' && oferta.enMano ? (
             oferta.enMano.monto > 0 ? (
               // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: lo que cobra en mano, tan grande como lo que gana,

@@ -2,6 +2,12 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-VIAJE-LARGO-A-LA-VISTA · La oferta avisa en grande un viaje largo y a dónde va (25 nov 2026) — todos los países · app Driver
+
+- **Por qué:** con C-DESTINO-EN-EL-PAIS el destino puede estar en cualquier punto del país (Tucaní a Caja Seca o a Caracas). El conductor tiene que verlo antes de aceptar.
+- **Qué se hizo:** `apps/repartidor/src/viajes/viajeLargo.ts` (`avisoViajeLargo`, desde 20 km) y la oferta (`OfertaViaje.tsx`) pintan, justo debajo de lo que gana, «Viaje largo: 45 km» y «Hasta: <destino>» (en inglés, en millas). Borde fino, sin franjas de color.
+- **Cómo se comprueba:** `apps/repartidor/src/viajes/viajeLargo.test.ts`, en ROJO antes del cambio. Llega con la próxima compilación de Driver.
+
 ## C-CHAT-VISTO-REINTENTA · El «visto» del chat del viaje se repite si falla, y cada aviso vuelve a abrir el chat (25 nov 2026) — todos los países · apps de clientes y Driver
 
 - **Qué fallaba (revisor de calidad):** `packages/movil/src/ChatPedido.tsx` marcaba «visto» con `.catch(() => undefined)`: si fallaba, el número rojo de mensajes sin leer se quedaba pegado sin que nadie se enterara. Y en la app de clientes, tocar un segundo aviso de mensaje con el chat ya cerrado no lo volvía a abrir (el parámetro era siempre «1»).
