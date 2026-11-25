@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SuperCiudad } from './SuperCiudad';
+import { INACTIVIDAD_MS, LATIDO_MS, SuperCiudad } from './SuperCiudad';
 
 // C-CIUDAD-PRUEBAS en el panel: la ciudad de pruebas en vivo solo mira (GET) y «Parar» pide parar.
 vi.mock('leaflet', () => ({}));
@@ -260,4 +260,107 @@ describe('C-CIUDAD-PRUEBAS en el panel', () => {
     expect(await screen.findByTestId('ciudad-cerrando')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Apagar ya' })).toBeTruthy();
   });
+});
+
+describe('C-CIUDAD-LATIDO-OCULTA', () => {
+  /** Una ciudad de juego ya encendida, con todos sus robots: la pantalla late sola. */
+  function ciudadEncendida() {
+    const metodos: string[] = [];
+    let encendida = true;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      metodos.push(`${init?.method ?? 'GET'} ${url}`);
+      if (url.endsWith('/latido'))
+        return new Response(JSON.stringify({ estado: 'corriendo' }), { status: 200 });
+      if (url.endsWith('/apagar')) {
+        encendida = false;
+        return new Response(JSON.stringify({ estado: 'terminada' }), { status: 200 });
+      }
+      return new Response(
+        JSON.stringify({
+          sesion: {
+            id: 'juego-3',
+            estado: encendida ? 'corriendo' : 'terminada',
+            inicio: '2026-11-13 10:00:00',
+            fin: null,
+            meta: {},
+            fallos: [],
+          },
+          porEstado: {},
+          ventas: { entregados: 0, total: 0, moneda: 'USD', cancelados: 0 },
+          pedidos: [],
+          restaurantes: [],
+          repartidores: [],
+          juego: {
+            encendida,
+            segundosSinLatido: 1,
+            quieta: false,
+            filas: { sesion: 10, tope: 3000 },
+            minutosMax: 60,
+            robots: { listos: 7, total: 7 },
+            motivoFin: encendida ? null : 'la apagó el superadmin',
+          },
+          enCurso: [],
+          jugadores: [],
+          erroresServidor: [],
+        }),
+        { status: 200 },
+      );
+    });
+    const latidos = () => metodos.filter((m) => m.endsWith('/latido')).length;
+    return { metodos, latidos };
+  }
+  const ponerVisibilidad = (estado: 'hidden' | 'visible') => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => estado });
+    document.dispatchEvent(new Event('visibilitychange'));
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    ponerVisibilidad('visible');
+  });
+
+  it('con la pestaña escondida no late; al volver, late otra vez', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    const { latidos } = ciudadEncendida();
+    render(<SuperCiudad idioma="es" />);
+    expect(await screen.findByTestId('ciudad-sin-tocar')).toBeTruthy();
+    await vi.advanceTimersByTimeAsync(LATIDO_MS * 2 + 10);
+    const conVista = latidos();
+    expect(conVista).toBeGreaterThanOrEqual(2);
+    act(() => ponerVisibilidad('hidden'));
+    await vi.advanceTimersByTimeAsync(LATIDO_MS * 10);
+    expect(latidos()).toBe(conVista);
+    act(() => ponerVisibilidad('visible'));
+    await vi.advanceTimersByTimeAsync(LATIDO_MS + 10);
+    expect(latidos()).toBeGreaterThan(conVista);
+  });
+
+  it('a los 20 minutos sin que nadie toque la pantalla, la apaga y lo dice (en inglés también)', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    const { metodos } = ciudadEncendida();
+    render(<SuperCiudad idioma="en" />);
+    expect(await screen.findByTestId('ciudad-sin-tocar')).toBeTruthy();
+    expect(screen.getByTestId('ciudad-sin-tocar').textContent).toMatch(/20 minutes/);
+    // Un toque a los 15 minutos reinicia la cuenta.
+    await vi.advanceTimersByTimeAsync(15 * 60_000);
+    act(() => {
+      window.dispatchEvent(new Event('pointerdown'));
+    });
+    await vi.advanceTimersByTimeAsync(INACTIVIDAD_MS - 60_000);
+    expect(metodos).not.toContain('POST /datos/admin/ciudad-pruebas/apagar');
+    await vi.advanceTimersByTimeAsync(60_000 + LATIDO_MS);
+    expect(metodos).toContain('POST /datos/admin/ciudad-pruebas/apagar');
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          'We turned off the city because nobody touched this screen for 20 minutes.',
+        ),
+      ).toBeTruthy(),
+    );
+    // Apagada, ya no late.
+    const despues = metodos.filter((m) => m.endsWith('/latido')).length;
+    await vi.advanceTimersByTimeAsync(LATIDO_MS * 5);
+    expect(metodos.filter((m) => m.endsWith('/latido')).length).toBe(despues);
+  }, 15_000);
 });

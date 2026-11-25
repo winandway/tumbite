@@ -85,6 +85,10 @@ const T = {
     filas: (n: number, t: number) =>
       `${n.toLocaleString('es-US')} de ${t.toLocaleString('es-US')} filas`,
     seApaga: (m: number) => `Se apaga sola a los ${m} minutos o al llegar al tope de filas.`,
+    seApagaSinTocar: (m: number) =>
+      `Si nadie toca esta pantalla en ${m} minutos, la ciudad se apaga sola. Con la pestaña escondida, los robots esperan.`,
+    apagadaSinTocar: (m: number) =>
+      `Apagamos la ciudad porque nadie tocó esta pantalla en ${m} minutos.`,
     motivoFin: 'Se apagó porque',
     comoJugar: 'Cómo se juega',
     pasos: [
@@ -168,6 +172,10 @@ const T = {
     filas: (n: number, t: number) =>
       `${n.toLocaleString('en-US')} of ${t.toLocaleString('en-US')} rows`,
     seApaga: (m: number) => `Turns itself off after ${m} minutes or at the row limit.`,
+    seApagaSinTocar: (m: number) =>
+      `If nobody touches this screen for ${m} minutes, the city turns itself off. While the tab is hidden, the robots wait.`,
+    apagadaSinTocar: (m: number) =>
+      `We turned off the city because nobody touched this screen for ${m} minutes.`,
     motivoFin: 'It turned off because',
     comoJugar: 'How to play',
     pasos: [
@@ -278,6 +286,14 @@ const ORDEN = [
 ];
 /** Cada cuánto late la pantalla con la ciudad encendida (los robots avanzan un paso). */
 export const LATIDO_MS = 4_000;
+/**
+ * C-CIUDAD-LATIDO-OCULTA (regla «cada escritura tiene presupuesto»): cada latido escribe en la base.
+ * Con la pestaña escondida no late, y si nadie toca la pantalla en este tiempo la ciudad se apaga.
+ */
+export const INACTIVIDAD_MS = 20 * 60_000;
+const MINUTOS_INACTIVIDAD = INACTIVIDAD_MS / 60_000;
+const pestanaVisible = () =>
+  typeof document === 'undefined' || document.visibilityState !== 'hidden';
 
 /** Hora de una fecha de la base con segundos, con el reloj y la zona del empleado. */
 const hora = (x: string | null | undefined, idioma: Idioma = 'es') =>
@@ -292,6 +308,8 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
   const [trabajando, setTrabajando] = useState(false);
   const [grande, setGrande] = useState(false);
   const raiz = useRef<HTMLElement | null>(null);
+  const [visible, setVisible] = useState(pestanaVisible);
+  const ultimoToque = useRef(0);
   const mensaje = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
   const cargar = useCallback(async () => {
     try {
@@ -313,14 +331,49 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
     s && juego?.encendida && juego.robots.listos >= juego.robots.total && !trabajando,
   );
 
-  // Mirar: solo GET. Con la ciudad de juego encendida, un latido antes de cada mirada.
+  // C-CIUDAD-LATIDO-OCULTA: se sabe si la pestaña está a la vista y cuándo la tocó alguien. Volver a
+  // la pestaña cuenta como tocarla.
   useEffect(() => {
+    const tocar = () => {
+      ultimoToque.current = Date.now();
+    };
+    tocar(); // abrir la pantalla cuenta como tocarla
+    const alCambiar = () => {
+      const v = pestanaVisible();
+      if (v) tocar();
+      setVisible(v);
+    };
+    const eventos = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
+    document.addEventListener('visibilitychange', alCambiar);
+    for (const e of eventos) window.addEventListener(e, tocar, { passive: true });
+    return () => {
+      document.removeEventListener('visibilitychange', alCambiar);
+      for (const e of eventos) window.removeEventListener(e, tocar);
+    };
+  }, []);
+
+  // Mirar: solo GET. Con la ciudad de juego encendida, un latido antes de cada mirada. Con la
+  // pestaña escondida no corre nada (ni latido ni mirada).
+  useEffect(() => {
+    if (!visible) return;
     let vivoEfecto = true;
     let ocupado = false;
     const vuelta = async () => {
       if (ocupado) return;
       ocupado = true;
       try {
+        if (late && s && Date.now() - ultimoToque.current >= INACTIVIDAD_MS) {
+          await pedir('POST', '/datos/admin/ciudad-pruebas/apagar', { sesion: s.id }).catch(
+            (x: unknown) => {
+              if (vivoEfecto) setError(mensaje(x));
+            },
+          );
+          if (vivoEfecto) {
+            setAviso(t.apagadaSinTocar(MINUTOS_INACTIVIDAD));
+            await cargar();
+          }
+          return;
+        }
         if (late && s) {
           const r = await pedir<{ estado: string; motivo?: string }>(
             'POST',
@@ -344,7 +397,7 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
       window.clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cargar, late, s?.id]);
+  }, [cargar, late, s?.id, visible]);
 
   async function parar() {
     if (!s) return;
@@ -555,6 +608,11 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
               </p>
             ) : null}
             {encendida ? <p className="pista">{t.seApaga(juego?.minutosMax ?? 60)}</p> : null}
+            {encendida ? (
+              <p className="pista" data-testid="ciudad-sin-tocar">
+                {t.seApagaSinTocar(MINUTOS_INACTIVIDAD)}
+              </p>
+            ) : null}
             {juego && !juego.encendida && juego.motivoFin ? (
               <p className="pista">
                 {t.motivoFin} {juego.motivoFin}.
