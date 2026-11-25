@@ -493,7 +493,10 @@ export async function recibirMensaje(
   // mensaje ya quedó guardado; va a la bandeja del equipo y se le dice, una vez, que una persona le
   // responderá. Este corte va antes de leer ajustes, herramientas o modelo: de aquí para abajo es
   // donde vive toda llamada al modelo. El correo no pasa por aquí (se decide aparte).
-  if (enPantalla && Number(persona.permiso_ia ?? -1) !== 1) {
+  // C-WHATSAPP-ENTRANTE: por WhatsApp vale la misma regla (el permiso que dio en Driver o en el chat).
+  const porWhatsapp = canal === 'whatsapp';
+  const sinPermiso = Number(persona.permiso_ia ?? -1) !== 1;
+  if ((enPantalla && Number(persona.permiso_ia ?? -1) !== 1) || (porWhatsapp && sinPermiso)) {
     const abierto = await db
       .prepare("SELECT 1 FROM camila_casos WHERE persona_id = ? AND estado = 'abierto' LIMIT 1")
       .bind(persona.id)
@@ -513,7 +516,14 @@ export async function recibirMensaje(
       texto: respuesta,
       herramienta: 'sin_permiso_ia',
     }).run();
-    return { respuesta, modo: 'fija', pideCaptura: false };
+    // Por WhatsApp el aviso fijo (sin IA, sin datos de cuenta) sale por el mismo canal.
+    const salida = porWhatsapp
+      ? await enviarPorCanal(env, db, persona, canal, respuesta).catch((e: unknown): Salida => ({
+          enviado: false,
+          motivo: String(e),
+        }))
+      : null;
+    return { respuesta, modo: 'fija', pideCaptura: false, ...(salida ? { salida } : {}) };
   }
 
   const ajustes = await leerAjustes(db);

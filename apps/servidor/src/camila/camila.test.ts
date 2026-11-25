@@ -1030,13 +1030,15 @@ describe('C-CAMILA-LIDER: Camila acompaña al líder sobre la pieza única de eq
 });
 
 describe('C-CAMILA-CANALES y C-CAMILA-CONOCIMIENTO', () => {
-  it('SMS y WhatsApp están listos y apagados; chat y correo encendidos', () => {
+  // C-WHATSAPP-ENTRANTE (25 nov 2026): WhatsApp se encendió (respuestas de sesión dentro de las 24 h;
+  // sus candados están en whatsappEntrante.test.ts). El SMS sigue listo y apagado.
+  it('SMS listo y apagado; chat, correo y WhatsApp encendidos', () => {
     expect(CANALES_ENCENDIDOS).toEqual({
       web: true,
       app: true,
       correo: true,
       sms: false,
-      whatsapp: false,
+      whatsapp: true,
     });
   });
 

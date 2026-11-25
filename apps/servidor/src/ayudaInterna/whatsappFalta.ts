@@ -26,7 +26,10 @@ export const whatsappFalta: Record<IdiomaAyuda, GuiaAyuda> = {
       'Países y presupuesto: WhatsApp se enciende por país (Venezuela encendido, Estados Unidos apagado de fábrica). Hay un tope de mensajes y de dólares al día, con el costo estimado de cada mensaje (unos 0,01 dólares en Venezuela). Al llegar al tope, ese día no sale nada más y la pieza del canario se pone amarilla desde el 80 % y roja al tope.',
       'A todos los trabados de una zona: elige la zona, toca «Ver a quién se le manda» y revisa la tabla: cada conductor, lo que le falta y si sale o por qué no. «Mandar a N por WhatsApp» pide confirmación y manda solo a los que dicen «Sí». Se ven de 25 en 25: después de mandar, mira la página siguiente. Nunca se manda con un guion a mano.',
       'Dónde queda: cada envío queda en la línea de tiempo de la ficha («Camila le envió un WhatsApp» o «El equipo le envió un WhatsApp») con su estado, que pasa a «entregado» cuando Meta lo confirma. Si Meta no lo acepta, queda «no salió» con su motivo.',
-      'Las respuestas: si la persona responde el WhatsApp, por ahora no llegan a la bandeja de Camila. Para atenderla, escríbele por los otros canales desde «Enviar mensaje».',
+      'Las respuestas llegan a la bandeja de Camila: lo que la persona escribe por WhatsApp entra a su conversación (canal «WhatsApp»), unida a su cuenta por su celular. Si dio su permiso de IA, Camila le contesta por el mismo WhatsApp con sus reglas de siempre; si no, le dice que una persona del equipo le responderá y abre su caso. Una foto, un audio o un documento se anota («mandó una foto»), no se descarga. Un número que no es de ninguna cuenta deja su caso sin cuenta y nunca recibe datos de nadie.',
+      'Responder desde el panel: abre su conversación en Camila y responde como siempre; sale por WhatsApp. Meta solo deja responder dentro de las 24 horas desde su último mensaje: fuera de esa ventana tu respuesta queda en el hilo, el panel te lo dice, y le escribes por otro canal con «Enviar mensaje».',
+      'La baja: si responde «BAJA», «STOP» o «no más», deja de recibir los avisos de registro (la misma baja del enlace del correo) y se le confirma por WhatsApp.',
+      'Para que todo esto llegue, el aviso (webhook) de la app de Meta tiene que estar suscrito a los mensajes y al estado de las plantillas. Lo hace el equipo técnico una sola vez con el guion suscribir-webhook; mientras no esté suscrito, ni las respuestas ni la aprobación de la plantilla llegan solas.',
     ],
     capturas: [
       cap(
@@ -53,6 +56,7 @@ export const whatsappFalta: Record<IdiomaAyuda, GuiaAyuda> = {
       'Para uno: abre su ficha (en Verificaciones o en Repartidores), toca «Mandarle por WhatsApp lo que le falta», revisa el texto y toca «Mandar por WhatsApp».',
       'Para toda una zona: abre «Recordatorios de registro», baja a «WhatsApp “te falta”», elige la zona, toca «Ver a quién se le manda», revisa la tabla y toca «Mandar a N por WhatsApp».',
       'Para apagarlo en un país: en esa misma sección, desmarca el país y toca «Guardar».',
+      'Para contestar a quien respondió: abre «Camila · Soporte», entra en su conversación y responde dentro de las 24 horas.',
     ],
     nota: 'Nunca se le manda a una cuenta de prueba ni a quien no confirmó su celular por WhatsApp.',
   },
@@ -70,7 +74,10 @@ export const whatsappFalta: Record<IdiomaAyuda, GuiaAyuda> = {
       'Countries and budget: WhatsApp is turned on per country (Venezuela on, the United States off by default). There is a daily cap on messages and dollars, with the estimated cost of each message (about 0.01 dollars in Venezuela). Once the cap is reached nothing else goes out that day, and the health check piece turns yellow from 80% and red at the cap.',
       'Everyone stuck in a zone: pick the zone, tap “See who gets it” and check the table: each driver, what is missing and whether it goes out or why not. “Send to N on WhatsApp” asks for confirmation and sends only to those marked “Yes.” They are shown 25 at a time: after sending, check the next page. It is never sent with a script by hand.',
       'Where it is logged: every send shows on the file’s timeline (“Camila sent them a WhatsApp message” or “The team sent them a WhatsApp message”) with its status, which turns “delivered” when Meta confirms it. If Meta does not accept it, it shows “not sent” with the reason.',
-      'Replies: if the person replies on WhatsApp, replies do not reach Camila’s inbox yet. To help them, write to them through the other channels with “Send message.”',
+      'Replies reach Camila’s inbox: what the person writes on WhatsApp goes into their conversation (channel “WhatsApp”), linked to their account by their phone number. If they gave their AI permission, Camila answers on the same WhatsApp with her usual rules; if not, she tells them a person on the team will reply and opens their case. A photo, an audio message or a document is noted (“sent a photo”), never downloaded. A number that belongs to no account gets its case without an account and never receives anyone’s data.',
+      'Replying from the panel: open their conversation in Camila and reply as usual; it goes out on WhatsApp. Meta only allows replies within 24 hours of their last message: outside that window your reply stays in the thread, the panel tells you, and you write to them on another channel with “Send message.”',
+      'Opting out: if they reply “STOP,” “BAJA” or “no más,” they stop getting sign-up notices (the same opt-out as the email link) and get a confirmation on WhatsApp.',
+      'For all of this to arrive, the Meta app’s webhook has to be subscribed to messages and to template status. The technical team does it once with the suscribir-webhook script; until it is subscribed, neither replies nor the template approval arrive on their own.',
     ],
     capturas: [
       cap(
@@ -97,6 +104,7 @@ export const whatsappFalta: Record<IdiomaAyuda, GuiaAyuda> = {
       'For one driver: open their file (in Verifications or Drivers), tap “Send them what is missing on WhatsApp,” check the text and tap “Send on WhatsApp.”',
       'For a whole zone: open “Sign-up reminders,” scroll to “WhatsApp ‘what is missing’,” pick the zone, tap “See who gets it,” check the table and tap “Send to N on WhatsApp.”',
       'To turn it off in a country: in that same section, uncheck the country and tap “Save.”',
+      'To answer someone who replied: open “Camila · Support,” go into their conversation and reply within 24 hours.',
     ],
     nota: 'It is never sent to a test account or to anyone who did not confirm their phone on WhatsApp.',
   },

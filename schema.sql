@@ -5232,6 +5232,16 @@ CREATE INDEX IF NOT EXISTS rezagados_mensajes_dia ON rezagados_mensajes(creado_e
 -- C-WHATSAPP-FALTA (25 nov 2026): el aviso de entrega de Meta busca el mensaje «te falta» por su
 -- referencia (wamid). Parcial: solo cuenta como escritura de más en las filas de WhatsApp.
 CREATE INDEX IF NOT EXISTS rezagados_mensajes_whatsapp ON rezagados_mensajes(referencia) WHERE canal = 'whatsapp';
+-- C-WHATSAPP-ENTRANTE (25 nov 2026): cada mensaje que nos escriben por WhatsApp, por su id de Meta, para
+-- que un reintento de Meta no lo procese dos veces, y el tope por número al día. Sin el número en claro:
+-- solo su huella (sha256). Sin REFERENCES a propósito.
+CREATE TABLE IF NOT EXISTS whatsapp_entrantes (
+  wamid TEXT PRIMARY KEY,
+  numero_hash TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'text',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS whatsapp_entrantes_numero ON whatsapp_entrantes(numero_hash, creado_en);
 
 -- Quien pidió no recibir más recordatorios de su registro (enlace al pie del correo).
 CREATE TABLE IF NOT EXISTS rezagados_bajas (

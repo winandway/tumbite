@@ -74,6 +74,9 @@ const T = {
     enviado: 'Respuesta enviada.',
     noEnviado:
       'Quedó en el hilo, pero no salió por el canal de la persona. La verá cuando vuelva a abrir el chat.',
+    // C-WHATSAPP-ENTRANTE: la regla de Meta.
+    fueraDeVentana:
+      'Quedó en el hilo, pero por WhatsApp solo se puede responder dentro de las 24 horas desde su último mensaje. Escríbele por otro canal con «Enviar mensaje».',
     devolver: 'Devolver a Camila',
     devuelta: 'Camila vuelve a responder esta conversación.',
     casosDe: 'Casos de esta persona',
@@ -170,6 +173,8 @@ const T = {
     enviado: 'Reply sent.',
     noEnviado:
       'It’s in the thread, but it didn’t go out on the person’s channel. They’ll see it next time they open the chat.',
+    fueraDeVentana:
+      'It’s in the thread, but on WhatsApp you can only reply within 24 hours of their last message. Write to them on another channel with “Send message.”',
     devolver: 'Give back to Camila',
     devuelta: 'Camila is answering this conversation again.',
     casosDe: 'This person’s cases',
@@ -701,13 +706,17 @@ function HiloEquipo({ t, idioma, persona }: { t: Textos; idioma: Idioma; persona
           const texto = b.valores.texto.trim();
           if (!texto || enviando) return;
           void accion(async () => {
-            const r = await pedir<{ enviado: boolean }>(
+            const r = await pedir<{ enviado: boolean; motivo?: string | null }>(
               'POST',
               `/datos/admin/camila/hilos/${encodeURIComponent(p.id)}/responder`,
               { texto },
             );
             await b.limpiar();
-            return r.enviado ? t.enviado : t.noEnviado;
+            return r.enviado
+              ? t.enviado
+              : r.motivo === 'fuera_de_ventana'
+                ? t.fueraDeVentana
+                : t.noEnviado;
           });
         }}
       >
