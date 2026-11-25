@@ -49,7 +49,8 @@ export function nacimientoDeLecturas(
       if (l.paso !== paso || !l.lectura) continue;
       const fecha = fechaNacimientoValida(l.lectura.nacimiento, hoy);
       if (!fecha) continue;
-      const confianza = numero(l.lectura.confianzaNacimiento) ?? numero(l.lectura.confianza) ?? 0;
+      // Solo la confianza propia de la fecha: sin ella, la fecha se propone pero nunca se guarda sola.
+      const confianza = numero(l.lectura.confianzaNacimiento) ?? 0;
       return { fecha, confianza, paso };
     }
   }

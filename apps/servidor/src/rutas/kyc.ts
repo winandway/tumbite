@@ -941,7 +941,7 @@ async function exigirEdadRepartidor(db: D1Database, id: string, leida: string | 
   if (apagada?.valor === '0') return;
   const f = await datosEdad(db, id);
   // C-NACIMIENTO-DEL-DOCUMENTO: sin fecha escrita, vale la leída en su documento (la que se guardará).
-  const edad = edadEnAnios(f?.fecha_nacimiento ?? leida);
+  const edad = edadEnAnios(f?.fecha_nacimiento || leida);
   if (edad == null || !f) return;
   const minima = edadMinimaRepartidor({ zonaId: f.zona_id, vehiculo: f.vehiculo });
   if (edad < minima)

@@ -190,6 +190,15 @@ describe('C-NACIMIENTO-DEL-DOCUMENTO: la fecha de nacimiento sale del documento'
         ),
       ),
     ).toBe(false);
+    // Sin confianza propia de la fecha (aunque el documento entero se leyó con 95), nunca se guarda sola.
+    expect(
+      nacimientoSeGuardaSolo(
+        nacimientoDeLecturas(
+          [{ paso: 'doc_frente', lectura: { nacimiento: '1994-05-10', confianza: 95 } }],
+          hoy,
+        ),
+      ),
+    ).toBe(false);
   });
 
   async function conIdentidadPendiente(confianza: number) {
