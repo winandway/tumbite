@@ -218,13 +218,12 @@ describe('C-VIAJE-PRECIO-FIJO: cotización del pasajero', () => {
     expect(sin.datos.error).toMatch(/pricing|precio/);
   });
 
-  it('rechaza recogidas fuera de cobertura, destinos de otra ciudad y viajes demasiado cortos', async () => {
+  it('rechaza recogidas fuera de cobertura y viajes demasiado cortos (el destino fuera de la ciudad: C-DESTINO-EN-EL-PAIS)', async () => {
     const e = await enPruebas();
     await encenderMoto(e);
     await ponerTarifa(e);
     const lejos = { lat: 4.65, lng: -74.05, direccion: 'Otra ciudad' };
     expect((await cotizar(e, { origen: lejos })).estado).toBe(409);
-    expect((await cotizar(e, { destino: lejos })).estado).toBe(422);
     expect((await cotizar(e, { destino: { ...ORIGEN, direccion: 'Al lado' } })).estado).toBe(422);
     expect((await cotizar(e, { servicio: 'comida' })).estado).toBe(400);
   });

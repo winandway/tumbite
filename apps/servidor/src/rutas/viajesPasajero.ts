@@ -1,4 +1,5 @@
 import { frenarSinCelularConfirmado } from '../telefonoVuelta';
+import { exigirPuntoEnElPais } from '../destinoEnElPais';
 import { avisarPasoViaje } from '../avisosViaje';
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
@@ -8,7 +9,7 @@ import { esPagoACelular, metrosEntre as metrosEntrePuntos } from '@tumbite/compa
 import { z } from 'zod';
 import {
   type CotizacionViaje,
-  DISTANCIA_MAXIMA_KM,
+  kmMaximoDe,
   SERVICIOS_VIAJE,
   type TarifaViaje,
   VIGENCIA_COTIZACION_S,
@@ -118,6 +119,7 @@ type FilaTarifa = {
   premium_pb: number | null;
   espera_parada_gratis_s: number | null;
   valor_maximo: number | null;
+  km_maximo?: number | null;
   de_prueba: number;
   activa: number;
   motivo: string;
@@ -147,6 +149,7 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     esperaParadaGratisS: f.espera_parada_gratis_s ?? 120,
     ...(f.valor_maximo != null ? { valorMaximo: f.valor_maximo } : {}),
     velocidadKmh: f.velocidad_kmh,
+    ...(f.km_maximo != null ? { kmMaximo: f.km_maximo } : {}),
   };
 }
 
@@ -283,8 +286,9 @@ export async function guardarTarifaViaje(
         `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
            cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
-           de_prueba, motivo, creada_por, xl_pb, valor_maximo, comfort_pb, premium_pb, espera_parada_gratis_s)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           de_prueba, motivo, creada_por, xl_pb, valor_maximo, comfort_pb, premium_pb, espera_parada_gratis_s,
+           km_maximo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -313,6 +317,7 @@ export async function guardarTarifaViaje(
         t.comfortPb ?? null,
         t.premiumPb ?? null,
         t.esperaParadaGratisS,
+        t.kmMaximo ?? null,
       ),
     db
       .prepare(
@@ -498,9 +503,11 @@ const SIN_CATEGORIA: Record<Exclude<CategoriaViaje, 'estandar'>, string> = {
 
 /**
  * C-VIAJE-PARADAS: las paradas de un viaje son válidas si el servicio las admite (Moto y Carro; un
- * envío va de un punto a otro), no pasan del máximo del país y quedan en la ciudad del viaje.
+ * envío va de un punto a otro), no pasan del máximo del país y quedan en el MISMO país del viaje
+ * (C-DESTINO-EN-EL-PAIS: pueden salir de la ciudad).
  */
 export async function exigirParadasValidas(
+  env: Env,
   db: D1Database,
   servicio: string,
   zona: { id: string; pais: string },
@@ -518,11 +525,7 @@ export async function exigirParadasValidas(
       'paradas',
       422,
     );
-  for (const p of paradas) {
-    const z = await zonaPara(db, p.lat, p.lng);
-    if (z?.id !== zona.id)
-      throw new ErrorDatos('Una parada queda fuera de la ciudad del viaje.', 'paradas', 422);
-  }
+  for (const p of paradas) await exigirPuntoEnElPais(env, db, zona, p, 'paradas');
 }
 
 viajesPasajero.post('/viajes/cotizar', async (c) => {
@@ -547,11 +550,10 @@ export async function cotizarParaCliente(
 ) {
   const zona = await zonaPara(db, d.origen.lat, d.origen.lng);
   if (!zona) throw new ErrorDatos('Todavía no llegamos a esa dirección.', 'origen', 409);
-  const zonaDestino = await zonaPara(db, d.destino.lat, d.destino.lng);
-  if (zonaDestino?.id !== zona.id)
-    throw new ErrorDatos('El destino queda fuera de la ciudad del viaje.', 'destino', 422);
+  // C-DESTINO-EN-EL-PAIS: la recogida en una ciudad abierta; el destino, en el mismo país.
   if ((await estadoServicioEnZona(db, d.servicio, zona.id, clienteId)) !== 'disponible')
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
+  await exigirPuntoEnElPais(env, db, zona, d.destino, 'destino');
   const fila = await tarifaActiva(db, d.servicio, zona.id);
   if (!fila)
     throw new ErrorDatos('Este servicio todavía no tiene precio en tu ciudad.', 'servicio', 409);
@@ -562,14 +564,14 @@ export async function cotizarParaCliente(
   if (d.categoria !== 'estandar' && (!tarifa || d.servicio !== 'carro'))
     throw new ErrorDatos(SIN_CATEGORIA[d.categoria], 'categoria', 409);
   if (!tarifa) throw new ErrorDatos(SIN_CATEGORIA.xl, 'categoria', 409);
-  // C-VIAJE-PARADAS: paradas intermedias (máximo del país, todas dentro de la ciudad).
-  await exigirParadasValidas(db, d.servicio, zona, d.paradas);
+  // C-VIAJE-PARADAS: paradas intermedias (máximo del país, todas en el mismo país).
+  await exigirParadasValidas(env, db, d.servicio, zona, d.paradas);
   // C-RUTA-POR-CALLES: distancia y tiempo reales por calles (Google Routes, sin tráfico); si no se
   // puede, la fórmula de siempre, sin error para el pasajero. Solo para el precio.
   const ruta = await rutaParaCotizar(env, db, clienteId, tarifa, d.origen, d.destino, d.paradas);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
-  if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[d.servicio] * 1000)
+  if (ruta.distanciaM > kmMaximoDe(d.servicio, tarifa) * 1000)
     throw new ErrorDatos('El destino está demasiado lejos para este servicio.', 'destino', 422);
   // C-CARRO-DINAMICA: el multiplicador de la ciudad en este momento (10 000 = precio normal), nunca
   // por encima del tope de la tarifa ni del tope del país. Queda fijo para este viaje.

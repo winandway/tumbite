@@ -60,6 +60,9 @@ const T = {
     carro: 'Carro',
     envios: 'Envíos',
     valorMaximo: 'Envíos: valor máximo declarado de un paquete (vacío = 100)',
+    // C-DESTINO-EN-EL-PAIS: el destino puede estar en cualquier punto del país.
+    kmMaximo:
+      'Distancia máxima de un viaje, en km (vacío = 1500; el destino puede estar en todo el país)',
     xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
     comfort: 'Carro Comfort: veces el precio del carro (vacío = sin Comfort; 1,3 = un 30 % más)',
@@ -118,6 +121,8 @@ const T = {
     carro: 'Car',
     envios: 'Delivery',
     valorMaximo: 'Delivery: maximum declared value of a package (empty = 100)',
+    kmMaximo:
+      'Maximum trip distance, in km (empty = 1500; the drop-off can be anywhere in the country)',
     xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
     comfort: 'Car Comfort: times the car price (empty = no Comfort; 1.3 = 30% more)',
@@ -204,6 +209,7 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
       topeDinamico: '',
       esperaParada: '2',
       valorMaximo: '',
+      kmMaximo: '',
       motivo: '',
     },
     almacen: almacenNavegador,
@@ -271,6 +277,8 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
       tarifa.esperaParadaGratisS = Math.max(0, Math.round(veces(v.esperaParada) * 60));
     // C-ENVIOS: tope del valor declarado de un paquete en esta ciudad.
     if (v.valorMaximo.trim()) tarifa.valorMaximo = textoAMonto(v.valorMaximo, m);
+    // C-DESTINO-EN-EL-PAIS: tope de seguridad de km de esta ciudad y servicio (vacío = el alto).
+    if (Math.round(veces(v.kmMaximo)) >= 5) tarifa.kmMaximo = Math.round(veces(v.kmMaximo));
     try {
       await api.pedir('POST', '/datos/admin/viajes/tarifas', {
         servicio: v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto',
@@ -520,6 +528,15 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
             inputMode="decimal"
             value={b.valores.valorMaximo}
             onChange={(e) => b.cambiar('valorMaximo', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.kmMaximo}</span>
+          <input
+            inputMode="numeric"
+            data-testid="tarifa-km-maximo"
+            value={b.valores.kmMaximo}
+            onChange={(e) => b.cambiar('kmMaximo', e.target.value)}
           />
         </label>
         <label className="campo">
