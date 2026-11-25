@@ -97,6 +97,8 @@ export const TEXTOS_VIAJE = {
       confirmarLlegueParada: { pregunta: '¿Llegaste a la parada?', si: 'Llegué', no: 'Cancelar' },
       confirmarSeguir: { pregunta: '¿Seguir el viaje?', si: 'Seguir', no: 'Cancelar' },
       saltarParada: 'Saltar parada',
+      // C-PRECIO-ZONA: en un viaje con precio de la zona no se saltan paradas.
+      sinCambiosParadas: 'Viaje con precio de la zona: no admite cambios de paradas.',
       saltarConfirmar: 'Si tu pasajero ya no va a parar, toca de nuevo para saltarla',
       esperaParada: 'Espera gratis en la parada',
       esperaParadaTerminada: 'La espera gratis terminó: ya se cobra la espera',
@@ -254,6 +256,7 @@ export const TEXTOS_VIAJE = {
       confirmarLlegueParada: { pregunta: 'Are you at the stop?', si: 'I’m here', no: 'Cancel' },
       confirmarSeguir: { pregunta: 'Continue the ride?', si: 'Continue', no: 'Cancel' },
       saltarParada: 'Skip stop',
+      sinCambiosParadas: 'Ride with a local fixed price: stops can’t be changed.',
       saltarConfirmar: 'If your rider no longer wants to stop, tap again to skip it',
       esperaParada: 'Free wait at the stop',
       esperaParadaTerminada: 'Free wait is over: wait time is now charged',

@@ -153,6 +153,17 @@ describe('C-PRECIO-ZONA · un viaje de ida y vuelta con precio de la zona, de pu
       .viaje.pin;
     expect(await e.cond.paso(id, 'iniciar', { pin })).toBe(200);
 
+    // Las dos apps saben que es un viaje con precio de la zona (para no ofrecer cambiar paradas).
+    const delPasajero = await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    expect(delPasajero.datos.viaje.precioZona).toBe(true);
+    const delConductor = await e.m.llamar(
+      'GET',
+      '/datos/conductor/operaciones/actual',
+      undefined,
+      e.cond.token,
+    );
+    expect(Number(delConductor.datos.operacion.precio_zona)).toBe(1);
+
     // Nadie cambia las paradas: ni el pasajero agrega una, ni el conductor salta la vuelta.
     const otra = await e.m.llamar(
       'POST',
@@ -214,5 +225,34 @@ describe('C-PRECIO-ZONA · un viaje de ida y vuelta con precio de la zona, de pu
     };
     expect(importe.precioZona).toBe(e.vuelta);
     expect(importe.calculado).toBeGreaterThan(e.vuelta);
+  });
+
+  it('las apps no ofrecen agregar ni saltar paradas en un viaje con precio de la zona (línea es/en en su lugar)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const leer = (...r: string[]) =>
+      readFileSync(join(import.meta.dirname, '..', '..', ...r), 'utf8');
+    const cliente = leer('cliente', 'src', 'viajes', 'ViajeEnCurso.tsx');
+    // «Agregar parada» (en la tarjeta de paradas y en el botón «Parada» mientras busca) se apaga.
+    expect(cliente).toMatch(/puedeCambiar=\{[^}]*!viaje\.precioZona &&/);
+    expect(cliente).toMatch(
+      /viaje\.estado === 'buscando' &&\s*\(viaje\.paradasMaximas \?\? 0\) > 0 &&\s*!viaje\.precioZona/,
+    );
+    expect(cliente).toContain('testID="viaje-sin-cambios-paradas"');
+    // En Driver, «Saltar parada» solo existe en la rama SIN precio de la zona.
+    const driver = leer('repartidor', 'src', 'viajes', 'ViajeActivo.tsx');
+    const linea = driver.indexOf('{viaje.precio_zona ? (');
+    const sinCambios = driver.indexOf('testID="viaje-parada-sin-cambios"');
+    const saltar = driver.indexOf('testID="viaje-parada-saltar"');
+    expect(linea).toBeGreaterThan(0);
+    expect(sinCambios).toBeGreaterThan(linea);
+    expect(saltar).toBeGreaterThan(sinCambios);
+    for (const t of [
+      leer('cliente', 'src', 'viajes', 'textos.ts'),
+      leer('repartidor', 'src', 'viajes', 'textos.ts'),
+    ]) {
+      expect(t).toContain('Viaje con precio de la zona: no admite cambios de paradas.');
+      expect(t).toContain('Ride with a local fixed price: stops can’t be changed.');
+    }
   });
 });

@@ -304,6 +304,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
               e.tamano AS paquete_tamano, v.menor_nombre, v.rutina_id IS NOT NULL AS viaje_fijo,
               v.ref_tasa, v.ref_fecha,
+              -- C-PRECIO-ZONA: con precio de la zona no se saltan paradas (la app esconde el botón).
+              json_extract(q.desglose_json, '$.precioZona') IS NOT NULL AS precio_zona,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id

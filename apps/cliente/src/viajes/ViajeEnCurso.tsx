@@ -97,6 +97,8 @@ export type ViajePasajero = {
   /** C-HORA-LLEGADA: la hora calculada con tráfico en el servidor (recogida o destino). */
   llegadaEnVivo?: LlegadaEnVivo | null;
   paradasMaximas?: number;
+  /** C-PRECIO-ZONA: el viaje va con precio de la zona (no admite cambios de paradas). */
+  precioZona?: boolean;
   /** C-CARRO-DINAMICA: el multiplicador con que se cotizó (10 000 = precio normal). */
   multiplicadorPb?: number;
 };
@@ -542,6 +544,7 @@ export function ViajeEnCurso({
           maximo={viaje.paradasMaximas ?? 0}
           puedeCambiar={
             (viaje.paradasMaximas ?? 0) > 0 &&
+            !viaje.precioZona &&
             ['buscando', 'asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado)
           }
           cerca={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
@@ -550,6 +553,12 @@ export function ViajeEnCurso({
           sinBoton={buscando}
           abrirCon={abrirParadas}
         />
+      ) : null}
+      {/* C-PRECIO-ZONA: en lugar de «Agregar parada», una línea discreta. */}
+      {viaje.precioZona && !FINALES.has(viaje.estado) ? (
+        <Text testID="viaje-sin-cambios-paradas" style={{ color: '#666B73', fontSize: 13 }}>
+          {base.sinCambiosParadas}
+        </Text>
       ) : null}
 
       {/* C-PERFIL-CONDUCTOR: la tarjeta del conductor ampliada con su perfil (variante oscura del
@@ -721,7 +730,9 @@ export function ViajeEnCurso({
                 testID="buscando-que-envias"
               />
             </View>
-          ) : viaje.estado === 'buscando' && (viaje.paradasMaximas ?? 0) > 0 ? (
+          ) : viaje.estado === 'buscando' &&
+            (viaje.paradasMaximas ?? 0) > 0 &&
+            !viaje.precioZona ? (
             <View style={{ flex: 1 }}>
               <Boton
                 tipo="terciario"

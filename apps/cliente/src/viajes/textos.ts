@@ -32,6 +32,8 @@ export const TEXTOS_MOTO = {
     dinamicaAyuda:
       'Hay muchas personas pidiendo viajes ahora. El precio ya lo incluye y no cambia durante el viaje.',
     agregarParada: 'Agregar parada',
+    // C-PRECIO-ZONA: un viaje con precio de la zona no admite cambios de paradas.
+    sinCambiosParadas: 'Viaje con precio de la zona: no admite cambios de paradas.',
     parada: (n: number) => `Parada ${n}`,
     paradaAyuda: 'Dónde paras antes de llegar',
     quitarParada: 'Quitar parada',
@@ -266,6 +268,7 @@ export const TEXTOS_MOTO = {
     dinamicaAyuda:
       'Lots of people are requesting rides right now. The price already includes it and won’t change during the ride.',
     agregarParada: 'Add a stop',
+    sinCambiosParadas: 'Ride with a local fixed price: stops can’t be changed.',
     parada: (n: number) => `Stop ${n}`,
     paradaAyuda: 'Where you stop on the way',
     quitarParada: 'Remove stop',

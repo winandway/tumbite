@@ -1114,6 +1114,8 @@ type FilaViajeCliente = FilaRegaloPasajero & {
   pais: string | null;
   categoria: string | null;
   multiplicador_pb: number | null;
+  /** C-PRECIO-ZONA: el precio de la zona del viaje (NULL = precio calculado). */
+  precio_zona?: number | null;
   /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox (ya sumada en `total`). */
   tarifa_servicio: number | null;
   vehiculo_tipo: string | null;
@@ -1133,6 +1135,7 @@ async function viajeDelCliente(
               v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
               q.total, q.moneda, q.tarifa_json, q.multiplicador_pb,
+              json_extract(q.desglose_json, '$.precioZona') AS precio_zona,
               ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
               h.marca, h.modelo, h.color, h.placa, h.tipo AS vehiculo_tipo, h.plazas, v.categoria,
@@ -1214,6 +1217,8 @@ function viajePublico(f: FilaViajeCliente) {
     recogidaGuardada: Number(f.recogida_guardada ?? 0) === 1,
     // C-CARRO-DINAMICA: el multiplicador con que se cotizó este viaje (10 000 = precio normal).
     multiplicadorPb: Number(f.multiplicador_pb ?? 10_000),
+    // C-PRECIO-ZONA: con precio de la zona no se cambian las paradas (la app no ofrece hacerlo).
+    precioZona: f.precio_zona != null,
     estado: f.estado,
     // El código solo lo ve el pasajero, y solo hasta que empieza el viaje.
     pin:
