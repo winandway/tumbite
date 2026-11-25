@@ -840,7 +840,7 @@ async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
  * nada. Corre con la migración, nunca a mano.
  */
 export const SQL_MARCA_VIEJA = [
-  "UPDATE usuarios SET nombre = 'Soporte Divoox' WHERE nombre = 'Soporte Tumbite'",
+  "UPDATE usuarios SET nombre = 'Soporte Divoox' WHERE nombre = 'Soporte Tumbite' AND rol = 'admin'",
   "UPDATE usuarios SET nombre = replace(nombre, 'Tumbite', 'Divoox') WHERE rol = 'admin' AND instr(nombre, 'Tumbite') > 0",
   `UPDATE restaurantes SET nombre = replace(nombre, 'Tumbite', 'Divoox')
     WHERE instr(nombre, 'Tumbite') > 0 AND dueno_id IN (SELECT id FROM usuarios WHERE rol = 'admin')`,

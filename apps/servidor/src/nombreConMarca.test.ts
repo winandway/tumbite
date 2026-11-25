@@ -53,6 +53,7 @@ describe('C-NOMBRE-CON-MARCA: la migración renombra las cuentas del equipo en l
     await usuario('eq1', 'Soporte Tumbite', 'admin');
     await usuario('eq2', 'Ana (Soporte Tumbite)', 'admin');
     await usuario('cli', 'Tienda Tumbite Express', 'cliente');
+    await usuario('cli2', 'Soporte Tumbite', 'cliente');
     await usuario('dueno', 'Dueño Ajeno', 'restaurante');
     await DB.prepare(
       "INSERT INTO restaurantes (id, dueno_id, nombre) VALUES ('r-eq', 'eq1', 'Restaurante de revisión Tumbite'), ('r-aj', 'dueno', 'Pizzas Tumbite')",
@@ -72,6 +73,7 @@ describe('C-NOMBRE-CON-MARCA: la migración renombra las cuentas del equipo en l
     expect(await nombre('restaurantes', 'r-eq')).toBe('Restaurante de revisión Divoox');
     // Lo que no es del equipo se queda como su dueño lo escribió.
     expect(await nombre('usuarios', 'cli')).toBe('Tienda Tumbite Express');
+    expect(await nombre('usuarios', 'cli2')).toBe('Soporte Tumbite');
     expect(await nombre('restaurantes', 'r-aj')).toBe('Pizzas Tumbite');
     // Idempotente: con todo al día no escribe ni una fila.
     expect(await renombrarMarcaVieja(DB)).toBe(0);
