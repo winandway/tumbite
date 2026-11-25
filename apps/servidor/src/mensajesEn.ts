@@ -1001,6 +1001,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa tarjeta no existe.', 'That card doesn’t exist.'],
   ['Esa verificación no está pendiente.', 'That verification isn’t pending.'],
   ['Esa zona no existe.', 'That zone doesn’t exist.'],
+  // C-WHATSAPP-FALTA
+  [
+    'Esto es de toda la empresa: lo hace alguien con alcance total.',
+    'This covers the whole company: someone with full access does it.',
+  ],
+  [
+    'Ya le mandamos un WhatsApp hace menos de 24 horas. Confirma para mandarlo igual.',
+    'We already sent them a WhatsApp message less than 24 hours ago. Confirm to send it anyway.',
+  ],
   ['Este aviso de pánico no es para tu cuenta.', 'This panic alert isn’t for your account.'],
   // C-TELEFONO-E164 y C-TERRITORIO-OFICIAL (21 nov 2026).
   [

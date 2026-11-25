@@ -24,6 +24,7 @@ import {
   palabraEstado,
   tonoMensaje,
 } from './rezagadosTextos';
+import { WhatsappFaltaAjustes } from './WhatsappFalta';
 import './rezagados.css';
 
 /**
@@ -520,6 +521,8 @@ export function SuperRezagados({ base, idioma }: { base: string; idioma: Idioma 
       ) : (
         <p className="pista">{t.cargando}</p>
       )}
+      {/* C-WHATSAPP-FALTA: el canal «te falta», sus ajustes y el envío a todos los trabados de una zona. */}
+      <WhatsappFaltaAjustes idioma={idioma} />
     </div>
   );
 }

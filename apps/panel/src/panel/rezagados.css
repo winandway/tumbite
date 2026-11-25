@@ -217,3 +217,18 @@
 .rez-enlace-corto {
   max-width: 420px;
 }
+
+/* C-WHATSAPP-FALTA: las filas de casillas y botones de la sección de WhatsApp «te falta». */
+.wa-fila {
+  display: flex;
+  gap: 12px 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+.wa-fila .campo {
+  margin: 0;
+}
+.rezagados .rez-tarjeta .wa-subtitulo {
+  margin-top: 24px;
+}

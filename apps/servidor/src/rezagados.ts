@@ -10,6 +10,7 @@ import { aceptoSms, destinoPermitido, enviarSms, smsConfigurado, telefonoE164 } 
 import { estadoEnSmsMasivo, vaPorSmsMasivo } from './smsMasivo';
 import { enviarPorCanal } from './camila/canales';
 import { humanoActivo, personaDeUsuario, sentenciaMensaje } from './camila/memoria';
+import { vueltaWhatsappFalta } from './whatsappFalta';
 
 /**
  * C-REZAGADOS (22 nov 2026, orden de Richard por Gerencia) — todos los países, encendido por zona.
@@ -631,6 +632,8 @@ export type Candidato = {
   zona: string;
   zonaNombre: string;
   zonaHoraria: string;
+  /** C-WHATSAPP-FALTA: el país de su zona (el interruptor de WhatsApp es por país). */
+  pais: string | null;
   creadoEn: string;
   /** El paso que le toca a la persona, o null si lo que falta es del equipo. */
   paso: PasoRezagado | null;
@@ -894,7 +897,7 @@ async function revisarCuentas(
       .prepare(
         `SELECT usuario_id, paso, numero, canal = 'equipo' AS equipo, SUM(estado <> 'resuelto') AS abiertos,
                 MAX(creado_en) AS creado_en FROM rezagados_mensajes
-          WHERE origen = 'auto' AND usuario_id IN (${lote.map(() => '?').join(',')})
+          WHERE origen = 'auto' AND canal <> 'whatsapp' AND usuario_id IN (${lote.map(() => '?').join(',')})
           GROUP BY usuario_id, paso, numero, canal = 'equipo'`,
       )
       .bind(...lote)
@@ -957,6 +960,7 @@ async function revisarCuentas(
       zona: f.zona,
       zonaNombre: f.zona_nombre,
       zonaHoraria: f.zona_horaria,
+      pais: f.zona_pais,
       creadoEn: f.creado_en,
       paso,
       equipo,
@@ -1173,6 +1177,7 @@ export async function correrRezagados(env: Env, db: D1Database, ahora = new Date
     entregados: 0,
     alEquipo: 0,
     resueltos: 0,
+    whatsapp: 0,
   };
   if (!zonas.length) return cuenta;
   const { lista: todos, evaluados } = await revisarCuentas(env, db, a, zonas, ahora);
@@ -1212,6 +1217,20 @@ export async function correrRezagados(env: Env, db: D1Database, ahora = new Date
       if (r.some((x) => x.estado === 'enviado')) cuenta.enviados++;
     }
   }
+  // C-WHATSAPP-FALTA: lo que le falta, solo por WhatsApp, con sus propios topes y su plantilla
+  // aprobada. Sin canal listo no lee más que sus ajustes y no escribe nada.
+  cuenta.whatsapp = (
+    await vueltaWhatsappFalta(
+      env,
+      db,
+      todos.filter((c) => encendidas.has(c.zona) || autorizados.has(c.id)),
+      a,
+      ahora,
+    ).catch((e: unknown) => {
+      console.error('rezagados: la vuelta de WhatsApp falló', String(e));
+      return { enviados: 0 };
+    })
+  ).enviados;
   cuenta.entregados = await refrescarEntregas(env, db, ahora);
   return cuenta;
 }

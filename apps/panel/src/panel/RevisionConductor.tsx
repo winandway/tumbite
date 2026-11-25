@@ -8,6 +8,7 @@ import { EVENTO_CAMBIO, avisarDecision } from './sonarEvento';
 import { VehiculoSinEnviar } from './VehiculoSinEnviar';
 import { palabra } from './diseno/palabras';
 import { type FaltaSinEnviar, faltaParaAprobarSinEnviar } from '@tumbite/compartido';
+import { MandarWhatsappFalta } from './WhatsappFalta';
 import './verificaciones.css';
 
 /**
@@ -551,6 +552,8 @@ export function RevisionConductor({
   return (
     <>
       <BarraActivacion id={id} base={base} idioma={idioma} vuelta={vuelta} />
+      {/* C-WHATSAPP-FALTA: en la ficha y en Verificaciones, con vista previa y confirmación. */}
+      <MandarWhatsappFalta id={id} idioma={idioma} alEnviar={alCambiar} />
       <div className="fila-botones">
         <button
           type="button"

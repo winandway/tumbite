@@ -3,6 +3,7 @@ import type { Env } from '../env';
 import type { Variables } from '../sesion';
 import { respaldoDeReferencia } from '../telefonoVuelta';
 import { anotarEstadosWhatsapp, firmaMetaValida } from '../whatsapp';
+import { anotarAvisoFalta } from '../whatsappFalta';
 
 /**
  * C-WHATSAPP-ENTREGA (23 nov 2026, Gerencia): el aviso de estados de la app de Meta «Divoox Avisos»
@@ -12,6 +13,8 @@ import { anotarEstadosWhatsapp, firmaMetaValida } from '../whatsapp';
  * - POST: solo con la firma X-Hub-Signature-256 válida (META_APP_SECRET); anota sent / delivered /
  *   read / failed de cada mensaje y, si un código falló, lo manda por SMS al momento.
  * No lee ni guarda el contenido de los mensajes: solo el estado de los nuestros.
+ * C-WHATSAPP-FALTA: también la entrega de los mensajes «te falta» y el estado y la categoría de su
+ * plantilla (campos `message_template_status_update` y `template_category_update` del mismo webhook).
  */
 export const whatsappAviso = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -36,6 +39,9 @@ whatsappAviso.post('/whatsapp/aviso', async (c) => {
   const db = c.env.DB;
   if (!db) return c.json({ ok: true });
   const fallidas = await anotarEstadosWhatsapp(db, aviso);
+  await anotarAvisoFalta(db, aviso as Parameters<typeof anotarAvisoFalta>[1]).catch((e: unknown) =>
+    console.error('whatsapp: aviso de la plantilla «te falta»', String(e)),
+  );
   for (const ref of fallidas)
     await respaldoDeReferencia(c.env, db, ref).catch((e: unknown) =>
       console.error('whatsapp: respaldo tras «failed»', String(e)),

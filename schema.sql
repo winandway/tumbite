@@ -5229,6 +5229,9 @@ CREATE TABLE IF NOT EXISTS rezagados_mensajes (
 );
 CREATE INDEX IF NOT EXISTS rezagados_mensajes_usuario ON rezagados_mensajes(usuario_id, creado_en);
 CREATE INDEX IF NOT EXISTS rezagados_mensajes_dia ON rezagados_mensajes(creado_en);
+-- C-WHATSAPP-FALTA (25 nov 2026): el aviso de entrega de Meta busca el mensaje «te falta» por su
+-- referencia (wamid). Parcial: solo cuenta como escritura de más en las filas de WhatsApp.
+CREATE INDEX IF NOT EXISTS rezagados_mensajes_whatsapp ON rezagados_mensajes(referencia) WHERE canal = 'whatsapp';
 
 -- Quien pidió no recibir más recordatorios de su registro (enlace al pie del correo).
 CREATE TABLE IF NOT EXISTS rezagados_bajas (

@@ -164,6 +164,8 @@ import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludSmsMasivo } from './smsMasivo';
 import { saludCodigo } from './telefonoVuelta';
 import { whatsappAviso } from './rutas/whatsappAviso';
+import { saludWhatsappFalta } from './whatsappFalta';
+import { whatsappFaltaRutas } from './rutas/whatsappFalta';
 import { rastroRutas } from './rutas/rastro';
 import { rezagadosRutas } from './rutas/rezagados';
 import { saludDinero } from './conciliacion';
@@ -422,6 +424,12 @@ app.get('/datos/salud', async (c) => {
   });
   piezas.smsGasto = codigo.smsGasto;
   piezas.whatsapp = codigo.whatsapp;
+  // C-WHATSAPP-FALTA: el mensaje «te falta» del vigilante (pendiente sin credenciales o sin plantilla
+  // aprobada; amarillo desde el 80 % del presupuesto del día). Sin credenciales no lee la base.
+  piezas.whatsappFalta = await saludWhatsappFalta(c.env, c.env.DB).catch((e: unknown) => {
+    console.error('salud: whatsapp te falta', e);
+    return 'error' as const;
+  });
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
   // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
   const presentes = c.env.DB
@@ -809,6 +817,7 @@ app.route('/datos/cuentas', cuentas);
 app.route('/datos', whatsappAviso);
 app.route('/datos', rastroRutas);
 app.route('/datos', rezagadosRutas);
+app.route('/datos', whatsappFaltaRutas);
 // C-AVISOS-WEB: suscribirse y darse de baja de los avisos en el navegador.
 app.route('/datos/avisos-web', rutasAvisosWeb);
 // C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».
