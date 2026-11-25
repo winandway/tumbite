@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-PANICO-ZONA-A-LA-VISTA · Las zonas cuyo pánico cae al equipo central se ven por su nombre (25 nov 2026) — todos los países · panel
+
+- **Qué faltaba:** la salud marcaba `panicoZonas` en rojo y el servidor ya devolvía `zonasSinResponsable` en `GET /datos/admin/panico/sin-atender`, pero ninguna pantalla del panel lo mostraba: el equipo veía el rojo sin saber qué zona era.
+- **Qué se hizo:** Viajes · Emergencias (`apps/panel/src/panel/SuperViajes.tsx`) pinta una tarjeta roja con el nombre de cada zona activa sin responsable de pánico con teléfono, y dice que su pánico llega al equipo central y que el responsable se asigna en Zonas. Es/en. Sin escrituras: la misma lectura que ya hace la alarma del panel.
+- **Cómo se comprueba:** `apps/panel/src/panel/SuperViajesPanicoZonas.test.tsx`, vista en ROJO sin la tarjeta.
+- **Estado al publicar (25 nov):** Miami, Novi (pruebas), Tucaní y la zona de revisión de las tiendas no tienen responsable con teléfono; El Vigía sí.
+
 ## C-VIAJES-SIN-TEXTO-VIEJO · Viajes · Emergencias ya no dice que Moto vive solo en pruebas (25 nov 2026) — todos los países · panel
 
 - **Qué se veía:** el panel de operaciones, en Viajes · Emergencias, decía «Moto existe solo en el sitio de pruebas hasta que Richard lo encienda… Las tarifas son de prueba», cuando Moto y Carro ya trabajan en producción.
