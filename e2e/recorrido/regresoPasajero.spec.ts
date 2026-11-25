@@ -23,9 +23,15 @@ const DATOS = STAGING
 const CAPTURAS = process.env.CAPTURAS === '1' && !process.env.TIENDA;
 const sql = sqlLocal;
 
-const ORIGEN = { lat: 25.7617, lng: -80.1918 };
+/**
+ * C-REGRESO-E2E-AISLADO (25 nov 2026): el spec corre en la misma base que todo el recorrido, y en
+ * Miami quedaban viajes buscando y conductores de otros specs que se llevaban la oferta (en la nube
+ * llegó a otro conductor o a nadie). Cada corrida usa SU propia ciudad, activa solo durante esa prueba y
+ * lejos de todo: ahí solo están sus dos conductores y su único viaje. La exigencia es la misma.
+ */
+const ORIGEN = { lat: 31.0, lng: -100.0 };
 /** El viaje del pasajero: 15 km hacia el norte, en el rumbo de la ciudad base del conductor. */
-const HACIA_CASA = { lat: 25.8967, lng: -80.1918 };
+const HACIA_CASA = { lat: 31.135, lng: -100.0 };
 const KM = 1 / 111.2;
 const REQUISITOS_CARRO = `INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) VALUES
   ('carro', 'identidad', 1), ('carro', 'antecedentes_pasajeros', 1), ('carro', 'historial_manejo', 1),
@@ -39,6 +45,8 @@ test.afterAll(() => {
   sql(`UPDATE servicios SET estado = 'proximamente' WHERE id = 'carro'`);
   sql(`DELETE FROM servicios_implementados WHERE servicio_id = 'carro'`);
   sql(`UPDATE modo_destino SET activo = 0 WHERE tipo = 'regreso'`);
+  sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id LIKE 'US-TX-REGRESO-%'`);
+  sql(`UPDATE zonas SET activa = 0 WHERE id LIKE 'US-TX-REGRESO-%'`);
 });
 
 async function foto(p: Page, nombre: string, idioma: 'es' | 'en') {
@@ -63,11 +71,19 @@ for (const idioma of ['es', 'en'] as const)
     const id = `${Date.now().toString(36)}${idioma}`;
     // Una ciudad de ejemplo (nada real en las capturas públicas), ~60 km al norte.
     const base = {
-      id: `XX-REGRESO-${id}`.toUpperCase(),
+      id: `US-TX-BASE-${id}`.toUpperCase(),
       nombre: en ? 'Sample City' : 'Ciudad Ejemplo',
     };
     sql(`INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
-         VALUES ('${base.id}', '${base.nombre}', 'US', 'USD', 'America/New_York', 26.3, -80.19, 20, 0)`);
+         VALUES ('${base.id}', '${base.nombre}', 'US', 'USD', 'America/Chicago', ${ORIGEN.lat + 0.54}, ${ORIGEN.lng}, 20, 0)`);
+    // Las ciudades de corridas anteriores (el otro idioma, o el mismo spec repetido) se apagan con sus
+    // conductores: están en el mismo punto y si no, el viaje caía en ellas.
+    sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id LIKE 'US-TX-REGRESO-%'`);
+    sql(`UPDATE zonas SET activa = 0 WHERE id LIKE 'US-TX-REGRESO-%'`);
+    // La ciudad del spec (donde termina el viaje largo): solo sus conductores y su viaje.
+    const zona = `US-TX-REGRESO-${id}`.toUpperCase();
+    sql(`INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
+         VALUES ('${zona}', '${en ? 'Trip City' : 'Ciudad del Viaje'}', 'US', 'USD', 'America/Chicago', ${ORIGEN.lat}, ${ORIGEN.lng}, 20, 1)`);
     let ip = 0;
     const cuenta = async (rol: string, nombre: string) => {
       const r = await request.post('/datos/cuentas/registro', {
@@ -91,20 +107,20 @@ for (const idioma of ['es', 'en'] as const)
     );
     sql(`UPDATE servicios SET estado = 'disponible' WHERE id = 'carro'`);
     sql(
-      `UPDATE servicios_zona SET estado = 'disponible' WHERE servicio_id = 'carro' AND zona_id = 'US-FL-MIAMI'`,
+      `INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('carro', '${zona}', 'disponible')
+       ON CONFLICT(servicio_id, zona_id) DO UPDATE SET estado = 'disponible'`,
     );
     const tarifa = await request.post('/datos/admin/viajes/tarifas', {
       headers: h(admin.token),
       data: {
         servicio: 'carro',
-        zona: 'US-FL-MIAMI',
+        zona,
         tarifa: { base: 300, porKm: 120, porMinuto: 25, minimo: 800 },
         dePrueba: true,
         motivo: 'Tarifa de prueba',
       },
     });
     expect(tarifa.ok(), await tarifa.text()).toBe(true);
-    sql(`UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = 'US-FL-MIAMI'`);
     sql(`DELETE FROM servicio_requisitos WHERE servicio_id = 'carro'`);
 
     /** Un conductor de Carro en regla, conectado en `donde`, con su ciudad base al norte. */
@@ -113,7 +129,7 @@ for (const idioma of ['es', 'en'] as const)
       const c = cond.usuario.id;
       const v = `veh-regreso-${ip}-${id}`;
       sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id, zona_base_id)
-           VALUES ('${c}', 1, ${donde.lat}, ${donde.lng}, datetime('now'), 'US-FL-MIAMI', '${base.id}')
+           VALUES ('${c}', 1, ${donde.lat}, ${donde.lng}, datetime('now'), '${zona}', '${base.id}')
            ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng,
              ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id, zona_base_id = excluded.zona_base_id`);
       sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
