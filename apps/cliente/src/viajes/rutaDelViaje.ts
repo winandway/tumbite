@@ -9,9 +9,15 @@ export const ID_VIAJE = /^[\w-]{8,64}$/;
 export function rutaDelViaje(d: Record<string, unknown>) {
   if (d.tipo !== 'viaje' || typeof d.viajeId !== 'string' || !ID_VIAJE.test(d.viajeId)) return null;
   const servicio = d.servicio === 'carro' || d.servicio === 'envios' ? d.servicio : 'moto';
-  // C-CHAT-VIAJE-LLEGA: un aviso de mensaje abre el viaje con el chat abierto.
+  // C-CHAT-VIAJE-LLEGA: un aviso de mensaje abre el viaje con el chat abierto. Lleva la hora del toque
+  // (no un «1» fijo): si el pasajero cerró el chat y toca otro aviso, el valor cambia y el chat se
+  // vuelve a abrir, como en Driver.
   return {
     pathname: '/ride' as const,
-    params: { servicio, viaje: d.viajeId, ...(d.mensaje === '1' ? { chat: '1' } : {}) },
+    params: {
+      servicio,
+      viaje: d.viajeId,
+      ...(d.mensaje === '1' ? { chat: String(Date.now()) } : {}),
+    },
   };
 }

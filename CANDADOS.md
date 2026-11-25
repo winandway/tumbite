@@ -2,6 +2,12 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CHAT-VISTO-REINTENTA · El «visto» del chat del viaje se repite si falla, y cada aviso vuelve a abrir el chat (25 nov 2026) — todos los países · apps de clientes y Driver
+
+- **Qué fallaba (revisor de calidad):** `packages/movil/src/ChatPedido.tsx` marcaba «visto» con `.catch(() => undefined)`: si fallaba, el número rojo de mensajes sin leer se quedaba pegado sin que nadie se enterara. Y en la app de clientes, tocar un segundo aviso de mensaje con el chat ya cerrado no lo volvía a abrir (el parámetro era siempre «1»).
+- **Qué se hizo:** el «visto» queda pendiente si falla y se repite en la siguiente consulta (cada 4 s), con aviso en el registro. El aviso de mensaje lleva la hora del toque (`chat=<número>`) y `ViajeEnCurso` abre el chat con cada valor nuevo, igual que Driver.
+- **Cómo se comprueba:** `apps/repartidor/src/rediseno/candadoCodigoYChat.test.ts`, bloque C-CHAT-VISTO-REINTENTA, visto en ROJO con el código viejo.
+
 ## C-CHAT-VIAJE-LLEGA · Los mensajes del viaje se ven sin abrir nada (prueba real, Gerencia, 24 nov 2026) — todos los países · servidor (sale al publicar) y apps de clientes y Driver (necesitan app nueva)
 
 - **Qué pasaba:** en una prueba real el pasajero no vio los mensajes del conductor. El servidor los guardaba y avisaba bien; la falla estaba en las apps: el chat del viaje iba escondido detrás de un botón («Escribirle al conductor» / «Escribirle al pasajero»), sin punto de no leído, y solo se consultaba con ese botón abierto. Tocar el aviso abría el viaje con el chat cerrado.

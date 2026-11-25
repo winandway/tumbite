@@ -73,24 +73,43 @@ describe('C-CHAT-VIAJE-LLEGA (apps)', () => {
 
   it('el chat abierto marca «visto» (y el número baja a cero)', () => {
     expect(leer('packages/movil/src/ChatPedido.tsx')).toMatch(
-      /if \(esViaje && r\.mensajes\.some\(\(x\) => !x\.mio\)\)\s*void api\.pedir\('POST', `\$\{raiz\}\/mensajes\/visto`/,
+      /if \(esViaje && r\.mensajes\.some\(\(x\) => !x\.mio\)\) vistoPendiente\.current = true;[\s\S]{0,200}api\.pedir\('POST', `\$\{raiz\}\/mensajes\/visto`/,
     );
   });
 
   it('tocar un aviso de mensaje abre el viaje con el chat abierto (clientes y Driver)', () => {
     expect(rutaDelViaje({ tipo: 'viaje', viajeId: 'viaje-12345678', mensaje: '1' })).toEqual({
       pathname: '/ride',
-      params: { servicio: 'moto', viaje: 'viaje-12345678', chat: '1' },
+      params: { servicio: 'moto', viaje: 'viaje-12345678', chat: expect.stringMatching(/^\d+$/) },
     });
     expect(rutaDelViaje({ tipo: 'viaje', viajeId: 'viaje-12345678' })?.params).not.toHaveProperty(
       'chat',
     );
-    expect(leer('apps/cliente/src/app/ride.tsx')).toContain("chatAbierto={params.chat === '1'}");
+    expect(leer('apps/cliente/src/app/ride.tsx')).toContain('abrirChat={Number(params.chat) || 0}');
     const i = leer('apps/repartidor/src/Inicio.tsx');
     expect(i).toMatch(/d\.tipo === 'viaje' && d\.mensaje === '1'/);
     expect(i).toContain('abrirChat={chatDelAviso}');
     expect(leer('apps/servidor/src/rutas/chatViaje.ts')).toContain(
       "datos: { tipo: 'viaje', viajeId: v.id, mensaje: '1' }",
     );
+  });
+});
+
+describe('C-CHAT-VISTO-REINTENTA y reabrir el chat (revisión del 25 nov)', () => {
+  it('cada aviso de mensaje tocado lleva un valor nuevo: el chat del pasajero se vuelve a abrir', async () => {
+    const uno = rutaDelViaje({ tipo: 'viaje', viajeId: 'viaje-abc-123', mensaje: '1' });
+    await new Promise((r) => setTimeout(r, 2));
+    const dos = rutaDelViaje({ tipo: 'viaje', viajeId: 'viaje-abc-123', mensaje: '1' });
+    expect(Number(uno?.params.chat)).toBeGreaterThan(0);
+    expect(dos?.params.chat).not.toBe(uno?.params.chat);
+    const pantalla = leer('apps/cliente/src/viajes/ViajeEnCurso.tsx');
+    expect(pantalla).toContain('if (abrirChat !== abrirVisto)');
+  });
+
+  it('marcar «visto» nunca se traga el fallo: queda pendiente y se repite en la próxima consulta', () => {
+    const chat = leer('packages/movil/src/ChatPedido.tsx');
+    expect(chat).not.toMatch(/mensajes\/visto`, \{\}\)\.catch\(\(\) => undefined\)/);
+    const fallo = chat.slice(chat.indexOf('mensajes/visto'));
+    expect(fallo.slice(0, 300)).toContain('vistoPendiente.current = true');
   });
 });

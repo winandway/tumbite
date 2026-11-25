@@ -145,7 +145,7 @@ function PantallaMoto() {
           ) : null}
           <ViajeEnCurso
             viaje={viaje}
-            chatAbierto={params.chat === '1'}
+            abrirChat={Number(params.chat) || 0}
             paquete={paquete}
             alCambiar={() => void cargar()}
             alTerminar={async () => {

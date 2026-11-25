@@ -287,10 +287,11 @@ export function ViajeEnCurso({
   paquete = null,
   alCambiar,
   alTerminar,
-  chatAbierto = false,
+  abrirChat = 0,
 }: {
   /** C-CHAT-VIAJE-LLEGA: se abrió desde un aviso de mensaje: el chat empieza abierto. */
-  chatAbierto?: boolean;
+  /** Hora del último aviso de mensaje tocado (0 = ninguno): cada valor nuevo abre el chat. */
+  abrirChat?: number;
   viaje: ViajePasajero;
   paquete?: PaqueteCliente | null;
   alCambiar: () => void;
@@ -312,12 +313,12 @@ export function ViajeEnCurso({
   const [comentario, setComentario] = useState('');
   const [calificado, setCalificado] = useState(false);
   // C-CHAT-VIAJE: mensajes con el conductor mientras el viaje está activo (sin teléfonos).
-  const [verChat, setVerChat] = useState(chatAbierto);
+  const [verChat, setVerChat] = useState(abrirChat > 0);
   // Un aviso de mensaje tocado con esta pantalla ya abierta también abre el chat.
-  const [abrirVisto, setAbrirVisto] = useState(chatAbierto);
-  if (chatAbierto !== abrirVisto) {
-    setAbrirVisto(chatAbierto);
-    if (chatAbierto) setVerChat(true);
+  const [abrirVisto, setAbrirVisto] = useState(abrirChat);
+  if (abrirChat !== abrirVisto) {
+    setAbrirVisto(abrirChat);
+    if (abrirChat > 0) setVerChat(true);
   }
   // C-ESPERA-ADELANTE: ancho de la escena animada mientras se busca conductor.
   const [anchoEscena, setAnchoEscena] = useState(0);

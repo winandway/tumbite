@@ -108,6 +108,9 @@ export function ChatPedido({
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const ultimo = useRef(0);
+  // C-CHAT-VISTO-REINTENTA: si marcar «visto» falla, se repite en la siguiente consulta (4 s) hasta
+  // que el servidor lo confirme; el número de mensajes sin leer nunca se queda pegado en silencio.
+  const vistoPendiente = useRef(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -123,8 +126,14 @@ export function ChatPedido({
         setMensajes((m) => unirMensajes(m, r.mensajes));
         // C-CHAT-VIAJE-LLEGA: con el chat del viaje abierto, lo que llegó ya está visto (una escritura
         // en el servidor, y solo si avanza). La ficha del viaje deja el número en cero.
-        if (esViaje && r.mensajes.some((x) => !x.mio))
-          void api.pedir('POST', `${raiz}/mensajes/visto`, {}).catch(() => undefined);
+        if (esViaje && r.mensajes.some((x) => !x.mio)) vistoPendiente.current = true;
+      }
+      if (esViaje && vistoPendiente.current) {
+        vistoPendiente.current = false;
+        void api.pedir('POST', `${raiz}/mensajes/visto`, {}).catch((e: unknown) => {
+          vistoPendiente.current = true;
+          console.warn('[chat] no se pudo marcar visto; se repite en la próxima consulta', e);
+        });
       }
     } catch {
       /* la siguiente consulta lo intenta otra vez (cada vez más espaciada) */
