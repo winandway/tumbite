@@ -801,6 +801,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(preciosDeFabrica),
         DISPARADORES_RESUMEN_CATALOGO,
         String(asegurarResumenCatalogo),
+        SQL_MARCA_VIEJA,
+        String(renombrarMarcaVieja),
       ]),
     ) + `:${entorno ?? 'local'}`
   );
@@ -827,6 +829,27 @@ async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
       )
       .bind(CLAVE_HUELLA_ESQUEMA, huella)
       .run();
+}
+
+/**
+ * C-NOMBRE-CON-MARCA (25 nov 2026, Richard: la línea de tiempo firmaba «por Soporte Tumbite») —
+ * todos los países. Las cuentas del EQUIPO (rol admin) y los restaurantes de esas cuentas creados
+ * antes del cambio de marca llevan «Tumbite» en el nombre visible: se renombran a «Divoox». Solo
+ * cuentas nuestras (nunca el nombre de un cliente, un conductor o un restaurante ajeno). Idempotente:
+ * el WHERE solo toma las filas que todavía dicen «Tumbite», así que una base ya al día no escribe
+ * nada. Corre con la migración, nunca a mano.
+ */
+export const SQL_MARCA_VIEJA = [
+  "UPDATE usuarios SET nombre = 'Soporte Divoox' WHERE nombre = 'Soporte Tumbite'",
+  "UPDATE usuarios SET nombre = replace(nombre, 'Tumbite', 'Divoox') WHERE rol = 'admin' AND instr(nombre, 'Tumbite') > 0",
+  `UPDATE restaurantes SET nombre = replace(nombre, 'Tumbite', 'Divoox')
+    WHERE instr(nombre, 'Tumbite') > 0 AND dueno_id IN (SELECT id FROM usuarios WHERE rol = 'admin')`,
+] as const;
+export async function renombrarMarcaVieja(db: D1Database): Promise<number> {
+  const r = await db.batch(SQL_MARCA_VIEJA.map((sql) => db.prepare(sql)));
+  const cambiadas = r.reduce((n, x) => n + Number(x.meta?.changes ?? 0), 0);
+  if (cambiadas) console.warn(`esquema: ${cambiadas} nombres del equipo pasaron a Divoox`);
+  return cambiadas;
 }
 
 async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<void> {
@@ -898,6 +921,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // Después de la anterior: usa el vehículo que esa dejó en uso.
   await repararServiciosVehiculo(db).catch((e: unknown) =>
     console.error('esquema: la reparación «servicios del vehículo» falló', e),
+  );
+  // C-NOMBRE-CON-MARCA: el equipo firma «Soporte Divoox» también en la base.
+  await renombrarMarcaVieja(db).catch((e: unknown) =>
+    console.error('esquema: renombrar la marca vieja del equipo falló', e),
   );
 }
 
