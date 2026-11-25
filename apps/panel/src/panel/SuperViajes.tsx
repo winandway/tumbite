@@ -20,7 +20,7 @@ const T = {
   es: {
     titulo: 'Viajes · Emergencias y tarifas',
     intro:
-      'Moto existe solo en el sitio de pruebas hasta que Richard lo encienda con la aprobación legal. Las tarifas son de prueba.',
+      'Aquí llegan las emergencias de los viajes de Moto, Carro y Envíos, y se ven las tarifas de cada ciudad.',
     emergencias: 'Emergencias abiertas',
     sinEmergencias: 'No hay emergencias abiertas.',
     pasajero: 'Pasajero',
@@ -75,7 +75,7 @@ const T = {
   en: {
     titulo: 'Rides · Emergencies and fares',
     intro:
-      'Moto exists only on the test site until Richard turns it on with legal approval. Prices are test prices.',
+      'Emergencies from Moto, Car and Delivery rides arrive here, along with the fares for each city.',
     emergencias: 'Open emergencies',
     sinEmergencias: 'No open emergencies.',
     pasajero: 'Rider',

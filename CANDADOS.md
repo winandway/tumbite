@@ -2,6 +2,12 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-VIAJES-SIN-TEXTO-VIEJO · Viajes · Emergencias ya no dice que Moto vive solo en pruebas (25 nov 2026) — todos los países · panel
+
+- **Qué se veía:** el panel de operaciones, en Viajes · Emergencias, decía «Moto existe solo en el sitio de pruebas hasta que Richard lo encienda… Las tarifas son de prueba», cuando Moto y Carro ya trabajan en producción.
+- **Qué se hizo:** `apps/panel/src/panel/SuperViajes.tsx` dice qué llega a esa pantalla (emergencias de Moto, Carro y Envíos, y las tarifas de cada ciudad), en español e inglés.
+- **Cómo se comprueba:** `apps/panel/src/panel/superViajesTextos.test.ts`, vista en ROJO con el texto viejo.
+
 ## C-ZONA-MUNICIPIO · El municipio de cada zona: se elige o se escribe, se ve y filtra la lista (24 nov 2026) — todos los países · servidor y panel salen al publicar; las apps NO cambian
 
 - **Qué faltaba:** en Zonas del superadmin cada zona tenía país, estado y ciudad, y en Venezuela un «municipio oficial» calculado por su centro (C-TERRITORIO-OFICIAL), pero el equipo no podía elegirlo al crear ni editarlo desde la pantalla, no había casilla para escribir uno a mano (países sin territorio cargado: Estados Unidos, Perú, Colombia) y la lista no se podía filtrar por municipio.
