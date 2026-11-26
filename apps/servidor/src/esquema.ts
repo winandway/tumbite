@@ -25,6 +25,7 @@ import {
 } from './esquemaPlazo';
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
+import { SQL_INDICES_RETIRADOS } from './indicesRetirados';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
 import {
@@ -790,6 +791,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
       JSON.stringify([
         COLUMNAS,
         INDICES,
+        SQL_INDICES_RETIRADOS,
         ESQUEMA_FASE3,
         ESQUEMA_PEDIDOS,
         ESQUEMA_FLEX,
@@ -931,6 +933,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   }
   // Un solo viaje a la base para todos los índices (antes, uno por índice en cada arranque).
   await db.batch(INDICES.map((sql) => db.prepare(sql)));
+  // C-INDICES-SIN-USO: los índices que ninguna consulta usa se borran (schema.sql ya no los crea).
+  await db.batch(SQL_INDICES_RETIRADOS.map((sql) => db.prepare(sql)));
   // C-LECTURAS-CATALOGO: los disparadores del resumen del listado (y su relleno, una sola vez).
   await asegurarResumenCatalogo(db);
   // Flex · Fase 2: rehacer rutas_flex y conductor_ocupacion si vienen de antes (sin perder filas);
