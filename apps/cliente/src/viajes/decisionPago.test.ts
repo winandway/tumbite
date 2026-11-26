@@ -155,3 +155,29 @@ describe('C-METODO-PAGO-PANTALLA (revisión): nada se tapa ni cambia en silencio
     expect(s).toMatch(/\(saldo === 0 \|\| aceptaSaldo\)/);
   });
 });
+
+describe('C-VIGIA-SALDO-CIRCUITO: de noche, «Método de pago» cobra el total con la tarifa nocturna', () => {
+  const noche = cot({
+    total: 390,
+    recargoNoche: { pb: 3000, monto: 90 },
+  } as Partial<CotizacionViaje>);
+
+  it('el monto a pagar es el total de la noche y el saldo se descuenta sobre él', () => {
+    const d = decisionDePago(noche, { metodo: 'efectivo', usarSaldo: true, reserva: false });
+    expect(d).toMatchObject({ despuesDelRegalo: 390, saldoUsado: 100, resto: 290 });
+    const todo = decisionDePago(
+      { ...noche, saldoDivoox: { disponible: 1000, moneda: 'USD' } },
+      { metodo: 'efectivo', usarSaldo: true, reserva: false },
+    );
+    expect(todo).toMatchObject({ saldoUsado: 390, resto: 0, cubreTodo: true, saldoQueQueda: 610 });
+  });
+
+  it('la pantalla dice «Incluye la tarifa nocturna» bajo el monto (es/en) y la cotización sigue con su línea', () => {
+    const fuente = leer('MetodoPago.tsx');
+    expect(fuente).toContain('testID="pago-tarifa-nocturna"');
+    expect(fuente).toMatch(/cotizacion\.recargoNoche \?/);
+    expect(fuente).toContain('Incluye la tarifa nocturna (+${pct} %)');
+    expect(fuente).toContain('Includes the night fare (+${pct}%)');
+    expect(leer('PedirMoto.tsx')).toContain('testID="moto-tarifa-nocturna"');
+  });
+});

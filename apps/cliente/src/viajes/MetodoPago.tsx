@@ -34,6 +34,7 @@ export const TEXTOS_METODO_PAGO = {
     titulo: 'Método de pago',
     volver: 'Volver',
     montoAPagar: 'Monto a pagar',
+    incluyeNocturna: (pct: string) => `Incluye la tarifa nocturna (+${pct} %)`,
     saldo: 'Saldo Divoox',
     disponible: (m: string) => `Disponible: ${m}`,
     usarSaldo: 'Usar mi Saldo Divoox',
@@ -59,6 +60,7 @@ export const TEXTOS_METODO_PAGO = {
     titulo: 'Payment method',
     volver: 'Back',
     montoAPagar: 'Amount to pay',
+    incluyeNocturna: (pct: string) => `Includes the night fare (+${pct}%)`,
     saldo: 'Divoox Balance',
     disponible: (m: string) => `Available: ${m}`,
     usarSaldo: 'Use my Divoox Balance',
@@ -191,6 +193,15 @@ export function MetodoPago({
               centrado
               testID="pago-monto-bs"
             />
+          ) : null}
+          {/* C-VIGIA-SALDO-CIRCUITO: de noche, el monto ya trae la tarifa nocturna y se dice aquí,
+              igual que en la cotización (el saldo se descuenta sobre ese total). */}
+          {cotizacion.recargoNoche ? (
+            <Text testID="pago-tarifa-nocturna" style={{ color: COLOR.textoSuave, fontSize: 13 }}>
+              {t.incluyeNocturna(
+                String(cotizacion.recargoNoche.pb / 100).replace('.', i === 'es' ? ',' : '.'),
+              )}
+            </Text>
           ) : null}
         </View>
 
