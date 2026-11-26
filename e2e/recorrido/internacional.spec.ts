@@ -334,6 +334,10 @@ for (const P of PAISES) {
           })
           .then(async (c) => {
             await c.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), P.idioma);
+            // C-REGISTRO-OTRO-PAIS: aquí se mira la pregunta «¿Dónde vives?» de verdad.
+            await c.addInitScript(() => {
+              (globalThis as { __preguntaLugarDeVerdad?: boolean }).__preguntaLugarDeVerdad = true;
+            });
             return c;
           });
 
