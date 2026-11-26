@@ -41,7 +41,7 @@ export function nombreVistaPrevia(rama: string): string {
 /** La vista previa de una rama: divoox-preview-<algo>.windoce1.workers.dev (nada más). */
 export function esHostVistaPrevia(host: string): boolean {
   const h = host.toLowerCase().split(':')[0] ?? '';
-  return /^divoox-preview-[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?\.windoce1\.workers\.dev$/.test(h);
+  return /^divoox-preview-[a-z0-9-]{1,40}\.windoce1\.workers\.dev$/.test(h) && !h.includes('-.');
 }
 
 /** Dominios que sirven Divoox y a qué entorno pertenecen. */
