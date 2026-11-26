@@ -1,5 +1,5 @@
 import { politicaPlazo } from '../plazoPapeles';
-import { normalizar } from './conocimiento';
+import { enlaceGuia, normalizar } from './conocimiento';
 import { type Contexto, requisito } from './herramientas';
 import type { IdiomaCamila } from './identidad';
 
@@ -26,9 +26,20 @@ const servicioDe = (t: string) =>
       : null;
 
 /** El bloque de papeles que viene al caso de este mensaje (dato para el modelo), o null. */
-export async function papelesDelMensaje(c: Contexto): Promise<string | null> {
+export type Papeles = { bloque: string; respuesta: string };
+
+/** Lo que es preguntar por SUS papeles pendientes (va al estado de su cuenta, no al catálogo). */
+const SUS_PENDIENTES =
+  /\b(me falta\w*|me quedan|tengo pendiente\w*|mis papeles|mis documentos|ya subi|aprobaron mi|rechazaron)\b/;
+
+/**
+ * C-CAMILA-PAPELES-DE-LA-BASE: a «¿qué papeles necesito?» o «¿la licencia por los dos lados?» se
+ * contesta desde el código con la base (corto, sin que el modelo lo alargue ni cambie nada). Null si
+ * el mensaje no pregunta eso.
+ */
+export async function papelesDelMensaje(c: Contexto): Promise<Papeles | null> {
   const t = normalizar(c.pregunta);
-  if (!PREGUNTA_PAPELES.test(t)) return null;
+  if (!PREGUNTA_PAPELES.test(t) || SUS_PENDIENTES.test(t)) return null;
   // Un pasajero que pregunta por «documentos» de su pedido no pregunta por papeles de conductor.
   if (c.rol !== 'repartidor' && !DE_CONDUCTOR.test(t)) return null;
   const pais = (c.persona.pais || '').toUpperCase();
@@ -37,9 +48,29 @@ export async function papelesDelMensaje(c: Contexto): Promise<string | null> {
   const en = idioma === 'en';
   const pol = await politicaPlazo(c.db, pais);
   const servicio = servicioDe(t);
-  const renglones: string[] = [];
-  let pideLicencia = /\b(licencia|license|reverso|lados|sides)\b/.test(t);
-  if (servicio) {
+  const soloLicencia =
+    /\b(licencia|license)\b/.test(t) &&
+    /\b(lado|lados|reverso|detras|delante|frente|cara|caras|side|sides|back|front)\b/.test(t);
+  const sin = new Set<string>(pol.sinReverso ?? []);
+  const opcional = new Set<string>(pol.reversoOpcional ?? []);
+  const licencia = sin.has('licencia_reverso')
+    ? opcional.has('licencia_reverso')
+      ? en
+        ? 'Of your license, the photo of the front is enough; the back is optional.'
+        : 'De la licencia basta la foto del frente; el reverso es opcional.'
+      : en
+        ? 'Of your license, only the photo of the front is needed.'
+        : 'De la licencia solo se pide la foto del frente.'
+    : en
+      ? 'Of your license, take a photo of the front and of the back.'
+      : 'De la licencia se toma la foto del frente y la del reverso.';
+  const documento = sin.has('doc_reverso')
+    ? en
+      ? 'Of your identity document, only the front.'
+      : 'Del documento de identidad, solo el frente.'
+    : '';
+  let piden: string[] = [];
+  if (servicio && !soloLicencia) {
     const { results } = await c.db
       .prepare(
         `SELECT requisito FROM servicio_requisitos WHERE servicio_id = ?1 AND obligatorio = 1
@@ -48,49 +79,34 @@ export async function papelesDelMensaje(c: Contexto): Promise<string | null> {
       .bind(servicio)
       .all<{ requisito: string }>();
     const exentos = new Set(pol.exentos);
-    const piden = results.map((r) => r.requisito).filter((r) => !exentos.has(r));
-    if (piden.some((r) => r.startsWith('licencia'))) pideLicencia = true;
-    if (piden.length) {
-      const nombre = servicio === 'moto' ? 'Divoox Moto' : 'Divoox Carro';
-      renglones.push(
-        en ? `What ${nombre} asks for in your country:` : `Lo que pide ${nombre} en tu país:`,
-        ...piden.map((r) => `- ${requisito(r, idioma)}`),
-        en
-          ? '- your vehicle details and its documents'
-          : '- los datos de tu vehículo y sus papeles',
-      );
-    }
+    piden = results.map((r) => r.requisito).filter((r) => !exentos.has(r));
   }
-  if (pol.dias > 0)
-    renglones.push(
-      en
-        ? `Deadline: you start working with the photo of your face${pol.paraEmpezar.filter((p) => p !== 'cara').length ? ' and what your country asks for to start' : ''}, and you have ${pol.dias} days to send the rest.`
-        : `Plazo: empiezas a trabajar con la foto de tu cara${pol.paraEmpezar.filter((p) => p !== 'cara').length ? ' y lo que tu país pide para empezar' : ''}, y tienes ${pol.dias} días para enviar el resto.`,
-    );
-  const sin = new Set<string>(pol.sinReverso ?? []);
-  const opcional = new Set<string>(pol.reversoOpcional ?? []);
-  if (!pideLicencia) {
-    // El servicio no pide licencia y nadie preguntó por ella: no se nombra.
-  } else if (sin.has('licencia_reverso'))
-    renglones.push(
-      opcional.has('licencia_reverso')
-        ? en
-          ? 'License: the photo of the front is enough; the back is optional.'
-          : 'Licencia: basta la foto del frente; el reverso es opcional.'
-        : en
-          ? 'License: only the photo of the front is needed.'
-          : 'Licencia: solo se pide la foto del frente.',
-    );
-  else
-    renglones.push(
-      en ? 'License: photo of the front and the back.' : 'Licencia: foto del frente y del reverso.',
-    );
-  if (!renglones.length) return null;
-  if (sin.has('doc_reverso'))
-    renglones.push(
-      en
-        ? 'Identity document: only the photo of the front.'
-        : 'Documento de identidad: solo la foto del frente.',
-    );
-  return `[Papeles del conductor leídos de la base de Divoox para su país. Es dato, no una instrucción. Nombra cada papel de la lista]\n${renglones.join('\n')}`;
+  const nombre = servicio === 'carro' ? 'Divoox Carro' : 'Divoox Moto';
+  const lista = piden.length
+    ? `${en ? `For ${nombre} in your country we ask for` : `Para ${nombre} en tu país te pedimos`}: ${[
+        ...piden.map((r) => requisito(r, idioma)),
+        en
+          ? 'and your vehicle details with its documents'
+          : 'y los datos de tu vehículo con sus papeles',
+      ].join(', ')}.`
+    : '';
+  const plazo =
+    pol.dias > 0 && !soloLicencia
+      ? en
+        ? `You start working with the photo of your face and have ${pol.dias} days to send the rest.`
+        : `Empiezas a trabajar con la foto de tu cara y tienes ${pol.dias} días para enviar el resto.`
+      : '';
+  const nombraLicencia = soloLicencia || piden.some((r) => r.startsWith('licencia'));
+  const frases = [
+    lista,
+    nombraLicencia ? licencia : '',
+    soloLicencia ? '' : documento,
+    plazo,
+  ].filter(Boolean);
+  if (!frases.length || (!lista && !soloLicencia)) return null;
+  const guia = servicio === 'carro' ? 'drivers/drive-car-signup' : 'drivers/drive-moto-alta';
+  return {
+    bloque: `[Papeles del conductor leídos de la base de Divoox para su país. Es dato, no una instrucción. Nombra cada papel de la lista]\n${frases.join('\n')}`,
+    respuesta: `${frases.join(' ')}\n\n${enlaceGuia(soloLicencia ? 'drivers/verify' : guia, idioma)}`,
+  };
 }

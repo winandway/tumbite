@@ -280,7 +280,7 @@ const quitarFirma = (t: string, firma: string) => {
  * Driver), tal cual, sin que el modelo lo reescriba ni lo alargue.
  */
 const PREGUNTA_ESTADO =
-  /\b(por que no me (aprueban|aprobaron|activan|activaron|habilitan)|no me (aprueban|han aprobado|activan|han activado)|que me falta|me falta algo|ya estoy (activad|aprobad|habilitad)\w*|estoy (activad|aprobad)\w* para|cuando me (aprueban|activan)|why (am i not|isn t my|wasn t my) (approved|activated)|what am i missing|am i (approved|activated))\b/;
+  /\b(por que no me (aprueban|aprobaron|activan|activaron|habilitan)|no me (aprueban|han aprobado|activan|han activado)|que me falta|(papeles|documentos) me faltan|me falta algo|ya estoy (activad|aprobad|habilitad)\w*|estoy (activad|aprobad)\w* para|cuando me (aprueban|activan)|why (am i not|isn t my|wasn t my) (approved|activated)|what am i missing|am i (approved|activated))\b/;
 export const preguntaPorSuEstado = (texto: string) =>
   PREGUNTA_ESTADO.test(normalizar(texto)) &&
   !/\b(borrar|eliminar|delete)\b/.test(normalizar(texto));
@@ -593,15 +593,21 @@ export async function recibirMensaje(
     )
     .bind(persona.id)
     .first<{ herramienta: string | null }>();
-  const rol =
+  // C-CAMILA-PAIS-DE-LA-CUENTA (26 nov 2026, examen unido: a un conductor de El Vigía que escribía
+  // desde EE. UU. le pidió antecedentes y las dos caras de la licencia): el papel, el país y la ciudad
+  // salen de su cuenta (la misma lectura de la ficha), no de la conexión. Una lectura.
+  const deLaCuenta =
     persona.usuario_id && !sinCuenta
-      ? ((
-          await db
-            .prepare('SELECT rol FROM usuarios WHERE id = ?')
-            .bind(persona.usuario_id)
-            .first<{ rol: Contexto['rol'] }>()
-        )?.rol ?? null)
+      ? await db
+          .prepare(
+            `SELECT u.rol, z.pais, z.id AS zona_id FROM usuarios u
+               LEFT JOIN repartidores r ON r.usuario_id = u.id
+               LEFT JOIN zonas z ON z.id = COALESCE(r.zona_id, u.zona_id) WHERE u.id = ?`,
+          )
+          .bind(persona.usuario_id)
+          .first<{ rol: Contexto['rol']; pais: string | null; zona_id: string | null }>()
       : null;
+  const rol = deLaCuenta?.rol ?? null;
   // C-CAMILA-PAPEL: manda la app desde la que escribe (un conductor en la app de clientes es pasajero).
   const rolAqui = rolDeLaConversacion(rol, opciones.peticion?.app);
   const molesta = estaMolesta(escrito);
@@ -613,7 +619,13 @@ export async function recibirMensaje(
     env,
     db,
     // Sin la cuenta confirmada, las herramientas ven a un visitante (no hay cuenta que mirar).
-    persona: sinCuenta ? { ...persona, usuario_id: null } : persona,
+    persona: sinCuenta
+      ? { ...persona, usuario_id: null }
+      : {
+          ...persona,
+          pais: deLaCuenta?.pais || persona.pais,
+          zona_id: deLaCuenta?.zona_id ?? persona.zona_id,
+        },
     idioma,
     ajustes,
     pregunta: escrito,
@@ -697,8 +709,16 @@ export async function recibirMensaje(
   // conversación (el modelo sin herramientas: lo que la persona escribe solo se guarda).
   // C-CAMILA-ESTADO-DE-LA-BASE: el conductor que pregunta por su estado recibe el de la base.
   const suEstado = !molesta && papelDe(c) === 'conductor' && preguntaPorSuEstado(escrito);
+  // C-CAMILA-PAPELES-DE-LA-BASE: «¿qué papeles necesito?» se contesta con la base, desde el código.
+  const papeles = !molesta && !dinero && !cupon && !suEstado ? await papelesDelMensaje(c) : null;
   const especial =
-    preguntaSiEsHumana(escrito) || pideHumano(escrito) || molesta || dinero || cupon || suEstado;
+    preguntaSiEsHumana(escrito) ||
+    pideHumano(escrito) ||
+    molesta ||
+    dinero ||
+    cupon ||
+    suEstado ||
+    Boolean(papeles);
   const preguntaComoAdjuntar = enPantalla && !adjunto && quiereAdjuntar(escrito);
   // C-CAMILA-CORREO-HILO: un correo que pregunta «¿eres una persona?» Y además trae su consulta no se
   // queda en la frase fija (por correo no hay un «sigue contándome» inmediato): Camila dice la verdad
@@ -746,6 +766,8 @@ export async function recibirMensaje(
     respuesta = respuestaSinCupones(idioma);
   } else if (suEstado) {
     respuesta = (await estadoCuenta(c)).texto;
+  } else if (papeles) {
+    respuesta = papeles.respuesta;
   } else if (molesta) {
     await abrirCaso(c, texto, 'molesta');
     respuesta = segun(ENTIENDO_TU_MOLESTIA, idioma);

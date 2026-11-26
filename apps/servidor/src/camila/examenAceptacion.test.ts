@@ -201,27 +201,61 @@ describe('C-CAMILA-CUERPO-DE-LA-GUIA: recargar por pago móvil está en Docs y C
 });
 
 describe('C-CAMILA-PAPELES-DE-LA-BASE: los papeles del conductor salen del catálogo y de la política del país', () => {
-  it('«¿qué documentos necesito para mototaxista?»: nombra la licencia y, en Venezuela, que basta el frente', async () => {
+  it('«¿qué documentos necesito para mototaxista?»: desde el código, con la licencia, sin lo exento y con el país de la CUENTA aunque escriba desde EE. UU.', async () => {
     const e = await escenario();
     await e.m.DB.prepare(
       "INSERT OR IGNORE INTO servicio_vehiculo_requisitos (servicio_id, vehiculo_tipo, requisito) VALUES ('moto', 'moto', 'licencia_moto')",
     ).run();
+    await e.m.DB.prepare(
+      "INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) VALUES ('moto', 'antecedentes_pasajeros', 1)",
+    ).run();
     const conductor = await e.persona('repartidor', 'Ana Conductora');
-    const llamadas = e.eco();
-    await e.decir(conductor.token, '¿Qué documentos necesito para trabajar como mototaxista?');
-    const visto = recibido(llamadas[0]);
-    expect(visto).toContain('Papeles del conductor leídos de la base');
-    expect(visto).toContain('- tu licencia de moto');
-    expect(visto).toContain('Licencia: basta la foto del frente; el reverso es opcional.');
-    // Lo que Venezuela declara exento no se pide (C-PLAZO-PAPELES).
-    expect(visto.split('[Guías de Docs')[0]).not.toContain('antecedentes');
-
-    // Otro país, otra política: sin la excepción de Venezuela se piden las dos caras.
-    await e.m.DB.prepare("UPDATE camila_personas SET pais = 'US' WHERE usuario_id = ?")
+    // La ficha quedó con el país de la conexión (EE. UU.), como le pasó al robot.
+    await e.m.DB.prepare(
+      "UPDATE camila_personas SET pais = 'US', zona_id = NULL WHERE usuario_id = ?",
+    )
       .bind(conductor.id)
       .run();
-    await e.decir(conductor.token, '¿Tengo que subir la licencia por los dos lados?');
-    expect(recibido(llamadas[1])).toContain('Licencia: foto del frente y del reverso.');
+    const llamadas = e.eco();
+    const r = await e.decir(
+      conductor.token,
+      '¿Qué documentos necesito para trabajar como mototaxista?',
+    );
+    expect(r.datos.respuesta).toContain('tu licencia de moto');
+    expect(r.datos.respuesta).toContain(
+      'De la licencia basta la foto del frente; el reverso es opcional.',
+    );
+    expect(r.datos.respuesta).not.toContain('antecedentes');
+    expect(r.datos.respuesta).toContain('/docs/drivers/drive-moto-alta');
+    const l = await e.decir(
+      conductor.token,
+      '¿Tengo que subir la licencia por los dos lados o solo por delante?',
+    );
+    expect(l.datos.respuesta).toMatch(
+      /^De la licencia basta la foto del frente; el reverso es opcional\./,
+    );
+    expect(l.datos.respuesta).not.toMatch(/ambos lados|los dos lados|tanto del frente como/i);
+    expect(llamadas.length).toBe(0);
+
+    // Otro país, otra política: con la cuenta en EE. UU. se piden las dos caras.
+    await e.m.DB.prepare(
+      "INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES ('US-MI-NOVI', 'Novi', 'US', 'USD', 'America/Detroit', 42.48, -83.47, 15, 1)",
+    ).run();
+    await e.m.DB.prepare("UPDATE repartidores SET zona_id = 'US-MI-NOVI' WHERE usuario_id = ?")
+      .bind(conductor.id)
+      .run();
+    const us = await e.decir(conductor.token, '¿Tengo que subir la licencia por los dos lados?');
+    expect(us.datos.respuesta).toContain(
+      'De la licencia se toma la foto del frente y la del reverso.',
+    );
+  });
+
+  it('«¿qué papeles me faltan?» no es el catálogo: es su estado', async () => {
+    const e = await escenario();
+    const conductor = await e.persona('repartidor', 'Ana Conductora');
+    e.eco();
+    const r = await e.decir(conductor.token, '¿Qué papeles me faltan por subir?');
+    expect(r.datos.respuesta).not.toContain('te pedimos');
   });
 });
 
