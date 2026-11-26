@@ -1,10 +1,24 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { type DesgloseViaje, SERVICIOS_VIAJE, distanciaKm } from '@tumbite/compartido';
+import {
+  type DesgloseViaje,
+  type QuienPaga,
+  SERVICIOS_VIAJE,
+  type TarifaViaje,
+  calcularComision,
+  cuentaDelConductor,
+  distanciaKm,
+  recargoNocheDe,
+  repartirComision,
+} from '@tumbite/compartido';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
 import { type Variables, base, exigir } from './sesion';
 import { ErrorDatos, leerCuerpo } from './validar';
+import { quienPagaViaje } from './finanzas/quienPaga';
+import { servicioFinancieroViaje } from './finanzas/conductor';
+import { politicaVigente } from './finanzas/politicas';
+import { filaATarifa, tarifaActiva } from './rutas/viajesPasajero';
 
 /**
  * C-PRECIO-ZONA (24 nov 2026, Richard): «etiquetas de ruta». En los pueblos la gente cobra un precio
@@ -37,6 +51,9 @@ export type FilaRutaPrecio = {
   precio: number;
   precio_ida_vuelta: number | null;
   activa: number;
+  /** C-TABULADOR-VIGIA: la vía o grupo (NULL = sin grupo) y si el punto hay que revisarlo. */
+  grupo?: string | null;
+  revisar?: number | null;
   creada_por: string | null;
   creada_en: string;
   actualizada_por: string | null;
@@ -56,6 +73,12 @@ export function caeEnRuta(f: FilaRutaPrecio, origen: Punto, destino: Punto): boo
 }
 
 /**
+ * Tope de rutas activas por zona y servicio que se miran al cotizar (una lectura). El tabulador de El
+ * Vigía trae unas 130 (ida y regreso); el tope deja lugar a las que el equipo agregue a mano.
+ */
+export const TOPE_RUTAS_POR_ZONA = 200;
+
+/**
  * La ruta activa del servicio en la zona en la que caen la recogida y el destino (la más barata si
  * caen en varias), o null. Una sola lectura por el índice de la zona.
  */
@@ -70,7 +93,7 @@ export async function rutaPrecioPara(
   const { results } = await db
     .prepare(
       `SELECT * FROM rutas_precio_zona WHERE zona_id = ? AND servicio_id = ? AND activa = 1
-        AND moneda = ? ORDER BY precio, creada_en LIMIT 200`,
+        AND moneda = ? ORDER BY precio, creada_en LIMIT ${TOPE_RUTAS_POR_ZONA}`,
     )
     .bind(zona.id, servicio, moneda)
     .all<FilaRutaPrecio>();
@@ -108,7 +131,78 @@ export function conPrecioZona(
   };
 }
 
-function rutaPublica(f: FilaRutaPrecio) {
+/** C-TABULADOR-VIGIA: lo que paga el pasajero, lo de Divoox y lo que le queda al conductor. */
+export type RepartoRuta = {
+  pasajero: number;
+  comision: number;
+  conductor: number;
+  /** De noche (null si la ciudad no tiene tarifa nocturna). */
+  noche: { pasajero: number; comision: number; conductor: number } | null;
+};
+
+/**
+ * El reparto de UN precio con la comisión real (la política vigente de la ciudad) y quién la paga en
+ * esa ciudad: las mismas piezas que usa la cotización (`tarifaServicioViaje`) y la app del conductor
+ * (`cuentaDelConductor`). Puro: la política y la tarifa ya vienen leídas.
+ */
+export function repartoDePrecio(
+  precio: number,
+  ctx: {
+    quienPaga: QuienPaga;
+    regla: Parameters<typeof calcularComision>[0] | null;
+    descuentoPb?: number;
+    tarifa: TarifaViaje | null;
+  },
+): RepartoRuta {
+  const uno = (p: number) => {
+    const comision = ctx.regla
+      ? calcularComision(ctx.regla, { unidades: 1, valor: p, descuentoPb: ctx.descuentoPb ?? 0 })
+      : 0;
+    const { tarifaServicio } = repartirComision(comision, ctx.quienPaga);
+    const pasajero = p + tarifaServicio;
+    return {
+      pasajero,
+      comision,
+      conductor: cuentaDelConductor({ total: pasajero, comision, tarifaServicio }).tuyo,
+    };
+  };
+  const dia = uno(precio);
+  // La noche: el mismo recargo de la cotización, sobre el precio de la ruta.
+  const recargo = ctx.tarifa ? recargoNocheDe(precio, ctx.tarifa) : 0;
+  return { ...dia, noche: recargo > 0 ? uno(precio + recargo) : null };
+}
+
+type ContextoReparto = Parameters<typeof repartoDePrecio>[1];
+
+/** El contexto del reparto de una zona y un servicio (unas cuatro lecturas, una vez por zona). */
+async function contextoReparto(
+  db: D1Database,
+  zonaId: string,
+  servicio: string,
+): Promise<ContextoReparto> {
+  const zona = await db
+    .prepare('SELECT id, pais, moneda FROM zonas WHERE id = ?')
+    .bind(zonaId)
+    .first<{ id: string; pais: string; moneda: string }>();
+  const fila = await tarifaActiva(db, servicio, zonaId);
+  if (!zona) return { quienPaga: 'conductor', regla: null, tarifa: null };
+  const pol = await politicaVigente(db, {
+    servicio: servicioFinancieroViaje(servicio),
+    tipoCuenta: 'conductor',
+    pais: zona.pais,
+    ciudad: zona.id,
+    moneda: fila?.moneda ?? zona.moneda,
+  });
+  return {
+    // Envíos y las apps de antes van siempre con «conductor» (como la cotización).
+    quienPaga: servicio === 'envios' ? 'conductor' : await quienPagaViaje(db, zona.pais, zona.id),
+    regla: pol && pol.modalidad === 'prepago' ? pol.regla : null,
+    descuentoPb: pol?.descuentoPb ?? 0,
+    tarifa: fila ? filaATarifa(fila) : null,
+  };
+}
+
+function rutaPublica(f: FilaRutaPrecio, reparto?: RepartoRuta) {
   return {
     id: f.id,
     zona: f.zona_id,
@@ -132,6 +226,9 @@ function rutaPublica(f: FilaRutaPrecio) {
     precio: f.precio,
     precioIdaVuelta: f.precio_ida_vuelta,
     activa: f.activa === 1,
+    grupo: f.grupo ?? null,
+    revisar: f.revisar === 1,
+    ...(reparto ? { reparto } : {}),
     creadaPor: f.creada_por,
     creadaEn: f.creada_en,
     actualizadaEn: f.actualizada_en,
@@ -153,6 +250,8 @@ const esquemaRuta = z.object({
   hasta: lugar,
   precio,
   precioIdaVuelta: precio.nullable().optional(),
+  /** C-TABULADOR-VIGIA: la vía o grupo de la ruta (vacío = sin grupo). */
+  grupo: z.string().trim().max(60).nullable().optional(),
 });
 
 export const preciosZona = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -169,7 +268,19 @@ preciosZona.get('/admin/viajes/precios-zona', async (c) => {
     )
     .bind(q.zona ?? null, q.servicio ?? null)
     .all<FilaRutaPrecio>();
-  return c.json({ rutas: results.map(rutaPublica) });
+  // C-TABULADOR-VIGIA: cuánto le queda al conductor, con la comisión real de cada ciudad.
+  const db = base(c);
+  const contextos = new Map<string, ContextoReparto>();
+  for (const f of results) {
+    const k = `${f.zona_id}|${f.servicio_id}`;
+    if (!contextos.has(k)) contextos.set(k, await contextoReparto(db, f.zona_id, f.servicio_id));
+  }
+  return c.json({
+    rutas: results.map((f) => {
+      const ctx = contextos.get(`${f.zona_id}|${f.servicio_id}`);
+      return rutaPublica(f, ctx ? repartoDePrecio(f.precio, ctx) : undefined);
+    }),
+  });
 });
 
 async function zonaDe(db: D1Database, id: string) {
@@ -226,8 +337,8 @@ preciosZona.post('/admin/viajes/precios-zona', async (c) => {
       .prepare(
         `INSERT INTO rutas_precio_zona (id, zona_id, servicio_id, moneda, desde_lat, desde_lng, desde_radio_km,
            desde_nombre, hasta_lat, hasta_lng, hasta_radio_km, hasta_nombre, precio, precio_ida_vuelta,
-           creada_por, actualizada_por)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           creada_por, actualizada_por, grupo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -246,6 +357,7 @@ preciosZona.post('/admin/viajes/precios-zona', async (c) => {
         d.precioIdaVuelta ?? null,
         admin.id,
         admin.id,
+        d.grupo || null,
       ),
     auditoria(db, admin.id, 'viaje.precio_zona.agregar', id, null, d),
   ]);
@@ -270,15 +382,31 @@ preciosZona.put('/admin/viajes/precios-zona/:id', async (c) => {
   const admin = exigir(c, 'admin');
   const db = base(c);
   const antes = await rutaExistente(db, c.req.param('id'));
-  const d = await leerCuerpo(c, esquemaRuta.extend({ activa: z.boolean().optional() }));
+  const d = await leerCuerpo(
+    c,
+    esquemaRuta.extend({
+      activa: z.boolean().optional(),
+      /** C-TABULADOR-VIGIA: «el punto ya está bien» sin moverlo (desmarca «revisar»). */
+      revisado: z.boolean().optional(),
+    }),
+  );
   exigirIdaVuelta(d);
   const zona = await zonaDe(db, d.zona);
+  // C-TABULADOR-VIGIA: corregir el punto (o el radio) en el mapa desmarca «revisar».
+  const movida =
+    antes.hasta_lat !== d.hasta.lat ||
+    antes.hasta_lng !== d.hasta.lng ||
+    antes.hasta_radio_km !== d.hasta.radioKm ||
+    (antes.desde_lat ?? null) !== (d.desde?.lat ?? null) ||
+    (antes.desde_lng ?? null) !== (d.desde?.lng ?? null);
+  const revisar = movida || d.revisado === true ? 0 : (antes.revisar ?? 0);
   await db.batch([
     db
       .prepare(
         `UPDATE rutas_precio_zona SET zona_id = ?, servicio_id = ?, moneda = ?, desde_lat = ?, desde_lng = ?,
            desde_radio_km = ?, desde_nombre = ?, hasta_lat = ?, hasta_lng = ?, hasta_radio_km = ?, hasta_nombre = ?,
-           precio = ?, precio_ida_vuelta = ?, activa = ?, actualizada_por = ?, actualizada_en = datetime('now')
+           precio = ?, precio_ida_vuelta = ?, activa = ?, actualizada_por = ?, actualizada_en = datetime('now'),
+           grupo = ?, revisar = ?
          WHERE id = ?`,
       )
       .bind(
@@ -297,6 +425,8 @@ preciosZona.put('/admin/viajes/precios-zona/:id', async (c) => {
         d.precioIdaVuelta ?? null,
         d.activa === undefined ? antes.activa : d.activa ? 1 : 0,
         admin.id,
+        d.grupo === undefined ? (antes.grupo ?? null) : d.grupo || null,
+        revisar,
         antes.id,
       ),
     auditoria(db, admin.id, 'viaje.precio_zona.editar', antes.id, rutaPublica(antes), d),

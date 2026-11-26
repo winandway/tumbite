@@ -1,0 +1,156 @@
+{
+  "merida:La Vega II": {
+    "lat": 8.6,
+    "lng": -71.626,
+    "revisar": true,
+    "motivo": "Google no tiene La Vega II: punto aproximado cerca del peaje (mismo precio)"
+  },
+  "merida:Alcabala La Victoria": {
+    "lat": 8.45,
+    "lng": -71.6,
+    "revisar": true,
+    "motivo": "centro aproximado del sector La Victoria, no la alcabala"
+  },
+  "merida:La Providencia": {
+    "lat": 8.4814,
+    "lng": -71.5974,
+    "radioKm": 1.5,
+    "motivo": "escuela La Providencia, al lado de Mesa Bolívar (mismo precio)"
+  },
+  "zulia:Pedeca": {
+    "lat": 8.638,
+    "lng": -71.663,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado sobre la vía, antes de Parque Chama"
+  },
+  "zulia:Caño Frío": {
+    "lat": 8.645,
+    "lng": -71.67,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado sobre la vía, cerca de Parque Chama"
+  },
+  "zulia:Alcabala Vera Agua": {
+    "lat": 8.709,
+    "lng": -71.7004,
+    "motivo": "pueblo Vera de Agua (la alcabala está a su entrada)"
+  },
+  "zulia:Cañito": {
+    "lat": 8.685,
+    "lng": -71.69,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado sobre la vía, antes de Vera de Agua"
+  },
+  "zulia:Caracolí": {
+    "lat": 8.7629,
+    "lng": -71.7423,
+    "motivo": "Caracolí, Zulia (segundo resultado de Google)"
+  },
+  "zulia:KM 35": {
+    "lat": 8.84,
+    "lng": -71.85,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado a unos 35 km por la vía a Santa Bárbara"
+  },
+  "zulia:Encontrado": {
+    "lat": 9.0634,
+    "lng": -72.2339,
+    "motivo": "Plaza Bolívar de Encontrados"
+  },
+  "tachira:Carlos Andrés": {
+    "lat": 8.575,
+    "lng": -71.705,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado pasando Onia, vía a Los Giros"
+  },
+  "tachira:Culebria": {
+    "lat": 8.5,
+    "lng": -71.72,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado en la vía a Los Giros"
+  },
+  "tachira:KM 12": {
+    "lat": 8.588,
+    "lng": -71.735,
+    "revisar": true,
+    "motivo": "punto aproximado sobre la Troncal 1, pasando el kilómetro 9"
+  },
+  "tachira:KM 15": {
+    "lat": 8.575,
+    "lng": -71.752,
+    "revisar": true,
+    "motivo": "punto aproximado sobre la Troncal 1, antes del peaje de Zea"
+  },
+  "tachira:El Puerto": {
+    "lat": 8.13,
+    "lng": -72.26,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado entre La Fría y San Juan de Colón"
+  },
+  "tachira:Aguas Clara": {
+    "lat": 8.07,
+    "lng": -72.28,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado cerca de San Juan de Colón (mismo precio)"
+  },
+  "panamericana:Aroa I": {
+    "lat": 8.65,
+    "lng": -71.625,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado pasando Aroa II"
+  },
+  "panamericana:Los Naranjos": {
+    "lat": 8.7421,
+    "lng": -71.6558,
+    "motivo": "Los Naranjos, Zulia (vía Los Naranjos desde La Blanca)"
+  },
+  "panamericana:El Chivo": {
+    "lat": 8.95,
+    "lng": -71.65,
+    "revisar": true,
+    "motivo": "centro aproximado de Pueblo Nuevo-El Chivo (Google da un punto redondeado)"
+  },
+  "panamericana:Los Robles": {
+    "lat": 8.6419,
+    "lng": -71.6146,
+    "revisar": true,
+    "motivo": "una finca llamada Los Robles en Caño Seco; confirmar el sector"
+  },
+  "panamericana:Las Delicias": {
+    "lat": 8.6296,
+    "lng": -71.6107,
+    "motivo": "Las Delicias, en la Panamericana (La Blanca)"
+  },
+  "cortas:La Pedregosa (Redoma)": {
+    "lat": 8.6144,
+    "lng": -71.6825,
+    "motivo": "La Redoma, Av. La Pedregosa"
+  },
+  "cortas:La Pedregosa ULA": {
+    "lat": 8.618,
+    "lng": -71.6897,
+    "motivo": "Núcleo Alberto Adriani de la ULA"
+  },
+  "cortas:Colinas de Buenos Aires": {
+    "lat": 8.592,
+    "lng": -71.628,
+    "revisar": true,
+    "motivo": "Google no lo ubica: punto aproximado pasando la Urb. Buenos Aires"
+  },
+  "cortas:Cementerio Onia": {
+    "lat": 8.6005,
+    "lng": -71.688,
+    "revisar": true,
+    "motivo": "cerca del Cementerio Santa Isabel de Onia (por la dirección de una escuela)"
+  },
+  "cortas:Las Primicias": {
+    "lat": 8.6127,
+    "lng": -71.68,
+    "motivo": "Sector Primicia"
+  },
+  "tachira:San Cristóbal": {
+    "lat": 7.7714,
+    "lng": -72.2261,
+    "radioKm": 6,
+    "motivo": "San Cristóbal (ciudad grande: radio de 6 km)"
+  }
+}

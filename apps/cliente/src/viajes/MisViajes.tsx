@@ -97,6 +97,8 @@ const ORDEN_PIEZAS = [
   'redondeo',
   // C-PRECIO-ZONA: el precio fijo de la zona, en su propia línea del recibo.
   'precioZona',
+  // C-RECARGO-NOCHE: la tarifa nocturna, en su propia línea del recibo.
+  'recargoNoche',
   // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, en su propia línea del recibo.
   'tarifaServicio',
 ];

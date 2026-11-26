@@ -67,7 +67,15 @@ const T = {
       'Distancia máxima de un viaje, en km (vacío = 1500; el destino puede estar en todo el país)',
     // C-PRECIO-ZONA: diferencia mínima para que el precio de la zona reemplace al calculado.
     umbralZona:
-      'Precios de la zona: se usan si son al menos este % más baratos que el calculado (vacío = 10)',
+      'Precios de la zona: se usan si son al menos este % más baratos que el calculado (vacío = 10; 0 = siempre que no sean más caros)',
+    // C-RECARGO-NOCHE (25 nov 2026): lo que sube el viaje de noche, en la hora de la ciudad.
+    recargoNoche:
+      'Tarifa nocturna: cuánto sube el viaje de noche, en % (vacío = no sube; 30 = un 30 % más). Se suma al precio que gane, el de la zona o el calculado',
+    nocheDesde: 'La noche empieza a esta hora, de 0 a 23 (vacío = 21, las 9 de la noche)',
+    nocheHasta: 'La noche termina a esta hora, de 0 a 23 (vacío = 6, las 6 de la mañana)',
+    nocheLista: (pct: string, desde: number, hasta: number) =>
+      `de noche +${pct} % (${desde}:00 a ${hasta}:00)`,
+    umbralLista: (pct: string) => `precios de la zona si son ${pct} % más baratos`,
     xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
     comfort: 'Carro Comfort: veces el precio del carro (vacío = sin Comfort; 1,3 = un 30 % más)',
@@ -129,7 +137,14 @@ const T = {
     kmMaximo:
       'Maximum trip distance, in km (empty = 1500; the drop-off can be anywhere in the country)',
     umbralZona:
-      'Local fixed prices: used when at least this % cheaper than the distance-based price (empty = 10)',
+      'Local fixed prices: used when at least this % cheaper than the distance-based price (empty = 10; 0 = whenever they are not more expensive)',
+    recargoNoche:
+      'Night fare: how much a ride goes up at night, in % (empty = no change; 30 = 30% more). It is added to the winning price, local or distance-based',
+    nocheDesde: 'Night starts at this hour, 0 to 23 (empty = 21, 9 pm)',
+    nocheHasta: 'Night ends at this hour, 0 to 23 (empty = 6, 6 am)',
+    nocheLista: (pct: string, desde: number, hasta: number) =>
+      `at night +${pct}% (${desde}:00 to ${hasta}:00)`,
+    umbralLista: (pct: string) => `local fixed prices when ${pct}% cheaper`,
     xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
     comfort: 'Car Comfort: times the car price (empty = no Comfort; 1.3 = 30% more)',
@@ -173,6 +188,10 @@ type Tarifa = Record<(typeof MONTOS)[number], number> & {
   comfortPb?: number;
   premiumPb?: number;
   topeDinamicoPb?: number;
+  umbralPrecioZonaPb?: number;
+  recargoNochePb?: number;
+  nocheDesdeH?: number;
+  nocheHastaH?: number;
 };
 type Datos = {
   emergencias: Record<string, unknown>[];
@@ -218,6 +237,9 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
       valorMaximo: '',
       kmMaximo: '',
       umbralZona: '',
+      recargoNoche: '',
+      nocheDesde: '',
+      nocheHasta: '',
       motivo: '',
     },
     almacen: almacenNavegador,
@@ -290,6 +312,17 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
     // C-PRECIO-ZONA: el umbral de los precios de la zona, en por ciento (vacío = 10 %).
     if (v.umbralZona.trim() && veces(v.umbralZona) >= 0 && veces(v.umbralZona) <= 90)
       tarifa.umbralPrecioZonaPb = Math.round(veces(v.umbralZona) * 100);
+    // C-RECARGO-NOCHE: la tarifa nocturna en por ciento (vacío o 0 = sin recargo) y sus horas.
+    if (v.recargoNoche.trim() && veces(v.recargoNoche) > 0 && veces(v.recargoNoche) <= 100)
+      tarifa.recargoNochePb = Math.round(veces(v.recargoNoche) * 100);
+    const hora = (x: string) => {
+      const n = Number(x.trim());
+      return x.trim() && Number.isInteger(n) && n >= 0 && n <= 23 ? n : null;
+    };
+    const desde = hora(v.nocheDesde);
+    const hasta = hora(v.nocheHasta);
+    if (desde != null) tarifa.nocheDesdeH = desde;
+    if (hasta != null) tarifa.nocheHastaH = hasta;
     try {
       await api.pedir('POST', '/datos/admin/viajes/tarifas', {
         servicio: v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto',
@@ -419,6 +452,12 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
                     : t.sinDinamica}
                 </>
               ) : null}
+              {x.umbralPrecioZonaPb != null
+                ? ` · ${t.umbralLista(String(x.umbralPrecioZonaPb / 100))}`
+                : ''}
+              {x.recargoNochePb
+                ? ` · ${t.nocheLista(String(x.recargoNochePb / 100), x.nocheDesdeH ?? 21, x.nocheHastaH ?? 6)}`
+                : ''}
               {x.servicio === 'carro' && (x.topeDinamicoPb ?? 10_000) > 10_000 ? (
                 <DinamicaCiudad zona={x.zona} idioma={idioma} />
               ) : null}
@@ -557,6 +596,33 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
             data-testid="tarifa-umbral-zona"
             value={b.valores.umbralZona}
             onChange={(e) => b.cambiar('umbralZona', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.recargoNoche}</span>
+          <input
+            inputMode="decimal"
+            data-testid="tarifa-recargo-noche"
+            value={b.valores.recargoNoche}
+            onChange={(e) => b.cambiar('recargoNoche', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.nocheDesde}</span>
+          <input
+            inputMode="numeric"
+            data-testid="tarifa-noche-desde"
+            value={b.valores.nocheDesde}
+            onChange={(e) => b.cambiar('nocheDesde', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.nocheHasta}</span>
+          <input
+            inputMode="numeric"
+            data-testid="tarifa-noche-hasta"
+            value={b.valores.nocheHasta}
+            onChange={(e) => b.cambiar('nocheHasta', e.target.value)}
           />
         </label>
         <label className="campo">
