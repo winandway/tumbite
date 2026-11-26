@@ -5234,14 +5234,20 @@ CREATE INDEX IF NOT EXISTS rezagados_mensajes_dia ON rezagados_mensajes(creado_e
 CREATE INDEX IF NOT EXISTS rezagados_mensajes_whatsapp ON rezagados_mensajes(referencia) WHERE canal = 'whatsapp';
 -- C-WHATSAPP-ENTRANTE (25 nov 2026): cada mensaje que nos escriben por WhatsApp, por su id de Meta, para
 -- que un reintento de Meta no lo procese dos veces, y el tope por número al día. Sin el número en claro:
--- solo su huella (sha256). Sin REFERENCES a propósito.
+-- solo su huella (HMAC). Se limpia sola a los 7 días. Sin REFERENCES a propósito.
 CREATE TABLE IF NOT EXISTS whatsapp_entrantes (
   wamid TEXT PRIMARY KEY,
-  numero_hash TEXT NOT NULL,
+  -- HMAC del número con WHATSAPP_HUELLA_SECRETO; NULL si el sitio no tiene ese secreto.
+  numero_hash TEXT,
   tipo TEXT NOT NULL DEFAULT 'text',
+  -- «ok» o «fallido»; los intentos (también los fallidos) cuentan para el tope por número.
+  estado TEXT NOT NULL DEFAULT 'ok',
+  intentos INTEGER NOT NULL DEFAULT 1,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS whatsapp_entrantes_numero ON whatsapp_entrantes(numero_hash, creado_en);
+-- La limpieza de lo de más de 7 días y el tope general sin huella van por fecha.
+CREATE INDEX IF NOT EXISTS whatsapp_entrantes_dia ON whatsapp_entrantes(creado_en);
 
 -- Quien pidió no recibir más recordatorios de su registro (enlace al pie del correo).
 CREATE TABLE IF NOT EXISTS rezagados_bajas (

@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createHmac } from 'node:crypto';
 import { mundo } from './pruebas/ayuda';
-import { esBaja } from './whatsappEntrante';
+import { createHash } from 'node:crypto';
+import type { Env } from './env';
+import { correrRezagados } from './rezagados';
+import {
+  ENTRANTES_POR_NUMERO_DIA,
+  MAX_INTENTOS_ENTRANTE,
+  esBaja,
+  saludWhatsappEntrante,
+} from './whatsappEntrante';
 
 /**
  * C-WHATSAPP-ENTRANTE (25 nov 2026) — todos los países. Lo que nos escriben por WhatsApp entra a la
@@ -15,6 +23,7 @@ const META = {
   META_WHATSAPP_PHONE_ID: '1000000000000001',
   META_APP_SECRET: SECRETO,
   GEMINI_API_KEY: undefined,
+  WHATSAPP_HUELLA_SECRETO: 'huella-de-prueba-'.repeat(3),
 };
 
 type Salida = { para: string; tipo: string; texto: string };
@@ -38,8 +47,8 @@ function simularMeta() {
 }
 afterEach(() => vi.unstubAllGlobals());
 
-async function escenario() {
-  const m = mundo(META);
+async function escenario(extra: Record<string, unknown> = {}) {
+  const m = mundo({ ...META, ...extra });
   const rep = await m.cuenta('repartidor', 'Marina Ejemplo');
   await m.DB.prepare(
     "UPDATE usuarios SET idioma = 'es', telefono = '+584121234567', telefono_canonico = '+584121234567' WHERE id = ?",
@@ -230,5 +239,97 @@ describe('C-WHATSAPP-ENTRANTE', () => {
     );
     expect(fuera.datos).toMatchObject({ enviado: false, motivo: 'fuera_de_ventana' });
     expect(salidas.some((x) => x.texto.includes('Seguimos aquí.'))).toBe(false);
+  });
+
+  it('HUELLA: es un HMAC con el secreto del servidor (nunca sha256 a secas); sin secreto no se guarda y el canario avisa', async () => {
+    const s = await escenario();
+    simularMeta();
+    await s.entra([{ id: 'wamid.uno', type: 'text', text: { body: 'Hola' } }]);
+    const f = await s.m.DB.prepare('SELECT numero_hash FROM whatsapp_entrantes').first<{
+      numero_hash: string | null;
+    }>();
+    const hmac = createHmac('sha256', META.WHATSAPP_HUELLA_SECRETO)
+      .update('whatsapp:+584121234567')
+      .digest('hex');
+    expect(f?.numero_hash).toBe(hmac);
+    expect(f?.numero_hash).not.toBe(
+      createHash('sha256').update('whatsapp:+584121234567').digest('hex'),
+    );
+    expect(saludWhatsappEntrante({ ...META } as unknown as Env)).toBe('ok');
+    const sin = await escenario({ WHATSAPP_HUELLA_SECRETO: undefined });
+    simularMeta();
+    await sin.entra([{ id: 'wamid.dos', type: 'text', text: { body: 'Hola' } }]);
+    const g = await sin.m.DB.prepare('SELECT numero_hash FROM whatsapp_entrantes').first<{
+      numero_hash: string | null;
+    }>();
+    expect(g?.numero_hash).toBeNull();
+    expect(
+      saludWhatsappEntrante({ ...META, WHATSAPP_HUELLA_SECRETO: 'corto' } as unknown as Env),
+    ).toBe('atrasado');
+  });
+
+  it('TOPE: 30 al día por número; el 31.º no se procesa', async () => {
+    const s = await escenario();
+    simularMeta();
+    await s.entra(
+      Array.from({ length: ENTRANTES_POR_NUMERO_DIA + 1 }, (_, i) => ({
+        id: `wamid.t${i}`,
+        type: 'text',
+        text: { body: `Mensaje ${i}` },
+      })),
+    );
+    const persona = (await s.hilo()).filter((x) => x.autor === 'persona');
+    expect(persona).toHaveLength(ENTRANTES_POR_NUMERO_DIA);
+    expect(persona.some((x) => x.texto === `Mensaje ${ENTRANTES_POR_NUMERO_DIA}`)).toBe(false);
+  });
+
+  it('FALLOS: un mensaje que siempre falla se intenta como mucho 3 veces, queda en errores y sus intentos cuentan para el tope', async () => {
+    const s = await escenario();
+    simularMeta();
+    // Algo dentro falla siempre (abrir el caso para el equipo).
+    await s.m.DB.prepare(
+      "CREATE TRIGGER sin_casos BEFORE INSERT ON camila_casos BEGIN SELECT RAISE(ABORT, 'casos caídos'); END",
+    ).run();
+    const msg = [{ id: 'wamid.malo', type: 'text', text: { body: 'Hola' } }];
+    const estados: number[] = [];
+    for (let i = 0; i < 5; i++) estados.push((await s.entra(msg)).status);
+    expect(estados).toEqual([500, 500, 200, 200, 200]);
+    const f = await s.m.DB.prepare(
+      "SELECT intentos, estado FROM whatsapp_entrantes WHERE wamid = 'wamid.malo'",
+    ).first<{ intentos: number; estado: string }>();
+    expect(f).toEqual({ intentos: MAX_INTENTOS_ENTRANTE, estado: 'fallido' });
+    const e = await s.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM errores_servidor WHERE ruta = 'whatsapp/entrante'",
+    ).first<{ n: number }>();
+    expect(Number(e?.n)).toBe(1);
+    // Los intentos cuentan: con 28 más llega al tope (3 + 27 = 30) y el siguiente ya no entra.
+    await s.m.DB.prepare('DROP TRIGGER sin_casos').run();
+    await s.entra(
+      Array.from({ length: 28 }, (_, i) => ({
+        id: `wamid.u${i}`,
+        type: 'text',
+        text: { body: `Otro ${i}` },
+      })),
+    );
+    const ultimos = (await s.hilo()).filter((x) => x.texto.startsWith('Otro '));
+    expect(ultimos).toHaveLength(27);
+  });
+
+  it('LIMPIEZA: lo de más de 7 días se borra solo en la vuelta del vigilante; lo nuevo se queda', async () => {
+    const s = await escenario();
+    simularMeta();
+    await s.m.DB.batch([
+      s.m.DB.prepare(
+        "INSERT INTO whatsapp_entrantes (wamid, numero_hash, creado_en) VALUES ('wamid.viejo', 'x', datetime('now', '-8 days'))",
+      ),
+      s.m.DB.prepare(
+        "INSERT INTO whatsapp_entrantes (wamid, numero_hash, creado_en) VALUES ('wamid.nuevo', 'x', datetime('now', '-1 day'))",
+      ),
+    ]);
+    await correrRezagados({ DB: s.m.DB, ...s.m.extra } as unknown as Env, s.m.DB);
+    const quedan = await s.m.DB.prepare('SELECT wamid FROM whatsapp_entrantes').all<{
+      wamid: string;
+    }>();
+    expect(quedan.results.map((r) => r.wamid)).toEqual(['wamid.nuevo']);
   });
 });

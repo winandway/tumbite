@@ -4,6 +4,7 @@ import { alcanceEsTotal } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { accesoDe } from '../accesoInterno';
 import { zonaRealSql } from '../cuentaPais';
+import { ZONA_REVISION_TIENDAS } from '../panicoZona';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { proveedorWhatsapp, whatsappConfigurado } from '../whatsapp';
@@ -15,6 +16,7 @@ import {
   MAX_POR_PASO,
   type Evaluacion,
   type Persona,
+  SQL_CUENTA_INTERNA,
   conductoresDeZona,
   enviarUno,
   esquemaAjustesWhatsappFalta,
@@ -78,7 +80,6 @@ const vistaDe = (e: Evaluacion) => ({
   texto: e.texto,
   puede: e.puede,
   motivo: e.motivo,
-  esperaSaltable: e.esperaSaltable,
   delPaso: e.delPaso,
   ultimoEn: e.ultimoEn,
 });
@@ -114,7 +115,13 @@ whatsappFaltaRutas.get('/admin/camila/whatsapp', async (c) => {
 
 const cuerpoAjustes = esquemaAjustesWhatsappFalta.extend({
   /** Marcar a mano el estado de la plantilla (lo que se ve en el administrador de WhatsApp de Meta). */
-  plantilla: z.object({ estado: z.enum(ESTADOS_PLANTILLA) }).optional(),
+  plantilla: z
+    .object({
+      estado: z.enum(ESTADOS_PLANTILLA),
+      /** La categoría que dice Meta. Sin ella, no se supone utilidad: no se envía. */
+      categoria: z.enum(['UTILITY', 'MARKETING', 'AUTHENTICATION']).nullable().optional(),
+    })
+    .optional(),
 });
 
 whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
@@ -129,11 +136,16 @@ whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
   lotes.push(
     auditar(db, yo.id, 'whatsapp_falta_ajustes', 'config:whatsapp_falta', antes.ajustes, ajustes),
   );
-  if (plantilla && plantilla.estado !== antes.plantilla.estado) {
+  const categoria =
+    plantilla?.categoria === undefined ? antes.plantilla.categoria : plantilla.categoria;
+  if (
+    plantilla &&
+    (plantilla.estado !== antes.plantilla.estado || categoria !== antes.plantilla.categoria)
+  ) {
     const def = PLANTILLAS_FALTA.es!;
     await guardarEstadoPlantilla(db, def.nombre, def.idioma, {
       estado: plantilla.estado,
-      categoria: antes.plantilla.categoria ?? PLANTILLA_FALTA_CATEGORIA,
+      categoria,
       motivo: null,
       fuente: 'equipo',
     });
@@ -143,8 +155,8 @@ whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
         yo.id,
         'whatsapp_plantilla_estado',
         `plantilla:${def.nombre}:${def.idioma}`,
-        { estado: antes.plantilla.estado },
-        { estado: plantilla.estado },
+        { estado: antes.plantilla.estado, categoria: antes.plantilla.categoria },
+        { estado: plantilla.estado, categoria },
       ),
     );
   }
@@ -189,7 +201,6 @@ async function personaDe(db: D1Database, id: string): Promise<Persona> {
 const cuerpoUno = z.object({
   soloVista: z.boolean().optional(),
   confirmar: z.boolean().optional(),
-  saltarEspera: z.boolean().optional(),
 });
 
 whatsappFaltaRutas.post('/admin/camila/whatsapp/:id', async (c) => {
@@ -201,30 +212,12 @@ whatsappFaltaRutas.post('/admin/camila/whatsapp/:id', async (c) => {
     const { evaluacion, canal, gasto } = await evaluarUno(c.env, db, p);
     return c.json({ vista: vistaDe(evaluacion), listo: canal.listo, motivo: canal.motivo, gasto });
   }
-  const { evaluacion, resultado } = await enviarUno(c.env, db, p, {
-    actorId: yo.id,
-    saltarEspera: Boolean(d.saltarEspera),
-  });
-  if (!resultado) {
+  // C-WHATSAPP-FALTA: a mano tampoco se salta nada (ni las 24 horas). La auditoría se reserva antes
+  // de llamar a Meta y se completa después (whatsappFalta.ts, `enviar`).
+  const { evaluacion, resultado } = await enviarUno(c.env, db, p, { actorId: yo.id });
+  if (!resultado)
     // Nada salió: no se escribe nada. El panel dice por qué en palabras.
-    if (evaluacion.motivo === 'ya_hoy')
-      return c.json(
-        {
-          error: 'Ya le mandamos un WhatsApp hace menos de 24 horas. Confirma para mandarlo igual.',
-          vista: vistaDe(evaluacion),
-          enviado: false,
-          motivo: evaluacion.motivo,
-        },
-        409,
-      );
     return c.json({ vista: vistaDe(evaluacion), enviado: false, motivo: evaluacion.motivo });
-  }
-  await auditar(db, yo.id, 'whatsapp_falta_enviar', `usuario:${p.id}`, null, {
-    falta: evaluacion.falta?.clave,
-    estado: resultado.estado,
-    saltoEspera: Boolean(d.saltarEspera),
-    mensaje: resultado.id,
-  }).run();
   return c.json({
     vista: vistaDe(evaluacion),
     enviado: resultado.estado === 'enviado',
@@ -245,6 +238,13 @@ async function zonaExiste(db: D1Database, zona: string) {
     .bind(zona)
     .first<{ id: string; nombre: string; pais: string }>();
   if (!z) throw new ErrorDatos('Esa zona no existe.', 'zona', 404);
+  // C-WHATSAPP-FALTA: la zona de revisión de las tiendas nunca recibe envíos masivos.
+  if (z.id === ZONA_REVISION_TIENDAS)
+    throw new ErrorDatos(
+      'Esa es la zona de revisión de las tiendas: ahí no se manda nada.',
+      'zona',
+      403,
+    );
   return z;
 }
 
@@ -284,7 +284,7 @@ whatsappFaltaRutas.post('/admin/camila/whatsapp/zona/:zona', async (c) => {
       `WITH ids AS MATERIALIZED (SELECT value AS id FROM json_each(?))
        SELECT u.id, u.nombre, u.idioma, z.pais FROM ids JOIN usuarios u ON u.id = ids.id
          JOIN repartidores r ON r.usuario_id = u.id JOIN zonas z ON z.id = ${zonaRealSql('r', 'u')}
-        WHERE z.id = ? AND u.rol = 'repartidor' AND u.activo = 1 AND u.es_prueba = 0`,
+        WHERE z.id = ? AND u.rol = 'repartidor' AND u.activo = 1 AND NOT ${SQL_CUENTA_INTERNA('u')}`,
     )
     .bind(JSON.stringify([...new Set(d.ids)]), zona.id)
     .all<{ id: string; nombre: string; idioma: string; pais: string | null }>();
@@ -295,21 +295,11 @@ whatsappFaltaRutas.post('/admin/camila/whatsapp/zona/:zona', async (c) => {
     pais: f.pais,
     rol: 'repartidor',
   }));
+  // Cada envío reserva su auditoría antes de llamar a Meta y la completa después.
   const r = await evaluarVarios(c.env, db, personas, {
-    enviar: { origen: 'manual', actorId: yo.id },
+    enviar: { origen: 'manual', actorId: yo.id, auditoria: { zona: zona.id } },
   });
   const salieron = r.filas.filter((f) => f.resultado);
-  if (salieron.length)
-    await db.batch(
-      salieron.map((f) =>
-        auditar(db, yo.id, 'whatsapp_falta_enviar', `usuario:${f.persona.id}`, null, {
-          falta: f.falta?.clave,
-          estado: f.resultado!.estado,
-          zona: zona.id,
-          mensaje: f.resultado!.id,
-        }),
-      ),
-    );
   return c.json({
     enviados: salieron.filter((f) => f.resultado!.estado === 'enviado').length,
     fallidos: salieron.filter((f) => f.resultado!.estado === 'fallido').length,

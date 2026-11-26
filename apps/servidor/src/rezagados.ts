@@ -11,6 +11,7 @@ import { estadoEnSmsMasivo, vaPorSmsMasivo } from './smsMasivo';
 import { enviarPorCanal } from './camila/canales';
 import { humanoActivo, personaDeUsuario, sentenciaMensaje } from './camila/memoria';
 import { vueltaWhatsappFalta } from './whatsappFalta';
+import { limpiarEntrantes } from './whatsappEntrante';
 
 /**
  * C-REZAGADOS (22 nov 2026, orden de Richard por Gerencia) — todos los países, encendido por zona.
@@ -1158,6 +1159,11 @@ const esDeCobro = (c: CanalRezagado) => c === 'correo' || c === 'sms';
  * y no escribe nada. Escribe una fila por canal de cada recordatorio que sale.
  */
 export async function correrRezagados(env: Env, db: D1Database, ahora = new Date()) {
+  // C-WHATSAPP-ENTRANTE: lo de más de 7 días de los mensajes entrantes se borra aquí, con tope (sin
+  // nada viejo, no escribe nada).
+  await limpiarEntrantes(db).catch((e: unknown) =>
+    console.error('rezagados: no se pudo limpiar los entrantes de WhatsApp', String(e)),
+  );
   const a = await leerAjustesRezagados(db);
   const encendidas = new Set(
     Object.entries(a.zonas)

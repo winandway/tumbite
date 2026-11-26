@@ -161,7 +161,7 @@ try {
       topeDiario: 150,
       presupuestoDiaUsd: 3,
       costoUsd: 0.01,
-      plantilla: { estado: 'APPROVED' },
+      plantilla: { estado: 'APPROVED', categoria: 'UTILITY' },
     },
     token,
   );

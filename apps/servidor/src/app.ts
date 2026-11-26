@@ -165,6 +165,7 @@ import { saludSmsMasivo } from './smsMasivo';
 import { saludCodigo } from './telefonoVuelta';
 import { whatsappAviso } from './rutas/whatsappAviso';
 import { saludWhatsappFalta } from './whatsappFalta';
+import { saludWhatsappEntrante } from './whatsappEntrante';
 import { whatsappFaltaRutas } from './rutas/whatsappFalta';
 import { rastroRutas } from './rutas/rastro';
 import { rezagadosRutas } from './rutas/rezagados';
@@ -426,6 +427,8 @@ app.get('/datos/salud', async (c) => {
   piezas.whatsapp = codigo.whatsapp;
   // C-WHATSAPP-FALTA: el mensaje «te falta» del vigilante (pendiente sin credenciales o sin plantilla
   // aprobada; amarillo desde el 80 % del presupuesto del día). Sin credenciales no lee la base.
+  // C-WHATSAPP-ENTRANTE: sin el secreto de la huella, amarillo (solo rige el tope general). No lee la base.
+  piezas.whatsappEntrante = saludWhatsappEntrante(c.env);
   piezas.whatsappFalta = await saludWhatsappFalta(c.env, c.env.DB).catch((e: unknown) => {
     console.error('salud: whatsapp te falta', e);
     return 'error' as const;

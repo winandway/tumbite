@@ -1,6 +1,7 @@
 /* eslint-disable security/detect-object-injection -- claves de idioma (es/en) y tipos de Meta contra listas propias */
 import type { Env } from './env';
-import { sha256 } from './cripto';
+import { guardarError } from './errores';
+import { whatsappConfigurado } from './whatsapp';
 import { telefonoE164 } from './sms';
 import { enviarPorCanal } from './camila/canales';
 import { recibirMensaje } from './camila/cerebro';
@@ -22,10 +23,13 @@ import { type Persona, personaDeTelefono, sentenciaMensaje } from './camila/memo
  * - «BAJA», «STOP», «no más»: baja de los avisos de registro (rezagados_bajas, la misma baja del
  *   correo; el WhatsApp «te falta» la respeta). Se le confirma por el mismo canal, sin IA.
  * - Idempotente por el id del mensaje de Meta (whatsapp_entrantes): un reintento no duplica nada.
- *   Si algo falla a medias, se suelta la marca para que el reintento de Meta lo procese.
- * - Tope por número: ENTRANTES_POR_NUMERO_DIA al día; lo de más se marca y no se procesa (un robot
- *   no convierte esto en una factura de IA).
- * Nunca se guarda el número en claro fuera de la ficha de Camila (aquí, solo su huella).
+ *   Si algo falla a medias queda «fallido» y el reintento de Meta lo vuelve a intentar, como mucho
+ *   MAX_INTENTOS_ENTRANTE veces; después queda en errores_servidor.
+ * - Tope por número: ENTRANTES_POR_NUMERO_DIA intentos al día (los fallidos cuentan); lo de más se
+ *   marca y no se procesa (un robot no convierte esto en una factura de IA).
+ * - La huella del número es un HMAC con WHATSAPP_HUELLA_SECRETO; sin él no se guarda huella, rige un
+ *   tope general y el canario lo dice. La tabla se limpia sola a los 7 días (limpiarEntrantes).
+ * Nunca se guarda el número en claro fuera de la ficha de Camila.
  */
 export const ENTRANTES_POR_NUMERO_DIA = 30;
 
@@ -86,7 +90,7 @@ function textoDe(m: MensajeMeta, idioma: 'es' | 'en'): string {
 
 export type ResultadoEntrante = {
   wamid: string;
-  resultado: 'atendido' | 'repetido' | 'baja' | 'tope' | 'invalido';
+  resultado: 'atendido' | 'repetido' | 'baja' | 'tope' | 'invalido' | 'agotado';
   persona?: string;
 };
 
@@ -105,25 +109,83 @@ export async function recibirWhatsappEntrantes(
   return r;
 }
 
+/** Cuántas veces se intenta procesar un mismo mensaje (los reintentos de Meta) antes de dejarlo. */
+export const MAX_INTENTOS_ENTRANTE = 3;
+/** Sin secreto para la huella no hay tope por número: rige este tope general del día. */
+export const ENTRANTES_SIN_HUELLA_DIA = 200;
+/** Lo de más de 7 días se borra, de a LOTE_LIMPIEZA por vuelta del vigilante. */
+export const DIAS_ENTRANTES = 7;
+export const LOTE_LIMPIEZA = 200;
+
+/** El secreto de la huella, solo si es válido (32 caracteres o más). */
+export const secretoHuella = (env: Env) => {
+  const s = env.WHATSAPP_HUELLA_SECRETO ?? '';
+  return s.length >= 32 ? s : null;
+};
+
+/** HMAC-SHA256 del número con el secreto del servidor (nunca sha256 a secas: se podría adivinar). */
+export async function huellaNumero(secreto: string, para: string): Promise<string> {
+  const llave = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secreto),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const firma = new Uint8Array(
+    await crypto.subtle.sign('HMAC', llave, new TextEncoder().encode(`whatsapp:${para}`)),
+  );
+  return [...firma].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * La marca del mensaje. Primera vez: se crea. Reintento de Meta de un mensaje que FALLÓ: se vuelve a
+ * intentar (sumando el intento) hasta MAX_INTENTOS_ENTRANTE. Lo demás es un repetido.
+ */
+async function marcar(db: D1Database, wamid: string, huella: string | null, tipo: string) {
+  const nueva = await db
+    .prepare('INSERT OR IGNORE INTO whatsapp_entrantes (wamid, numero_hash, tipo) VALUES (?, ?, ?)')
+    .bind(wamid, huella, tipo)
+    .run();
+  if (nueva.meta.changes) return true;
+  const otra = await db
+    .prepare(
+      "UPDATE whatsapp_entrantes SET estado = 'ok', intentos = intentos + 1 WHERE wamid = ? AND estado = 'fallido' AND intentos < ?",
+    )
+    .bind(wamid, MAX_INTENTOS_ENTRANTE)
+    .run();
+  return Boolean(otra.meta.changes);
+}
+
+/** ¿Pasó el tope del día? Con huella, por número; sin huella, el general. Los intentos cuentan. */
+async function pasoElTope(db: D1Database, huella: string | null) {
+  const f = huella
+    ? await db
+        .prepare(
+          "SELECT COALESCE(SUM(intentos), 0) AS n FROM whatsapp_entrantes WHERE numero_hash = ? AND creado_en >= datetime('now', '-1 day')",
+        )
+        .bind(huella)
+        .first<{ n: number }>()
+    : await db
+        .prepare(
+          "SELECT COALESCE(SUM(intentos), 0) AS n FROM whatsapp_entrantes WHERE creado_en >= datetime('now', '-1 day') AND numero_hash IS NULL",
+        )
+        .first<{ n: number }>();
+  return Number(f?.n ?? 0) > (huella ? ENTRANTES_POR_NUMERO_DIA : ENTRANTES_SIN_HUELLA_DIA);
+}
+
 async function uno(env: Env, db: D1Database, m: MensajeMeta): Promise<ResultadoEntrante> {
   const wamid = String(m.id ?? '').slice(0, 200);
   const para = telefonoE164(`+${String(m.from ?? '').replace(/\D/g, '')}`);
   if (!wamid || !para) return { wamid, resultado: 'invalido' };
-  const huella = await sha256(`whatsapp:${para}`);
+  const secreto = secretoHuella(env);
+  const huella = secreto ? await huellaNumero(secreto, para) : null;
+  if (!huella) console.error('whatsapp: sin WHATSAPP_HUELLA_SECRETO; rige el tope general');
   // La marca va primero: un reintento de Meta (o dos entregas a la vez) no hace nada dos veces.
-  const marca = await db
-    .prepare(`INSERT OR IGNORE INTO whatsapp_entrantes (wamid, numero_hash, tipo) VALUES (?, ?, ?)`)
-    .bind(wamid, huella, String(m.type ?? 'otro').slice(0, 20))
-    .run();
-  if (!marca.meta.changes) return { wamid, resultado: 'repetido' };
-  const hoy = await db
-    .prepare(
-      "SELECT COUNT(*) AS n FROM whatsapp_entrantes WHERE numero_hash = ? AND creado_en >= datetime('now', '-1 day')",
-    )
-    .bind(huella)
-    .first<{ n: number }>();
-  if (Number(hoy?.n ?? 0) > ENTRANTES_POR_NUMERO_DIA) {
-    console.error('whatsapp: un número pasó el tope de mensajes del día; no se procesa');
+  if (!(await marcar(db, wamid, huella, String(m.type ?? 'otro').slice(0, 20))))
+    return { wamid, resultado: 'repetido' };
+  if (await pasoElTope(db, huella)) {
+    console.error('whatsapp: se pasó el tope de mensajes del día; no se procesa');
     return { wamid, resultado: 'tope' };
   }
   try {
@@ -163,11 +225,42 @@ async function uno(env: Env, db: D1Database, m: MensajeMeta): Promise<ResultadoE
     });
     return { wamid, resultado: 'atendido', persona: persona.id };
   } catch (e) {
-    await db
-      .prepare('DELETE FROM whatsapp_entrantes WHERE wamid = ?')
+    // Queda «fallido» con su intento contado: Meta reintenta, pero como mucho MAX_INTENTOS_ENTRANTE
+    // veces (un mensaje que siempre falla no repite el gasto de IA sin fin).
+    const f = await db
+      .prepare(
+        "UPDATE whatsapp_entrantes SET estado = 'fallido' WHERE wamid = ? RETURNING intentos",
+      )
       .bind(wamid)
-      .run()
-      .catch(() => undefined);
+      .first<{ intentos: number }>()
+      .catch(() => null);
+    if (Number(f?.intentos ?? 0) >= MAX_INTENTOS_ENTRANTE) {
+      await guardarError(db, 'WHATSAPP', 'whatsapp/entrante', e).catch(() => undefined);
+      return { wamid, resultado: 'agotado' };
+    }
     throw e;
   }
+}
+
+/**
+ * Borra lo de más de DIAS_ENTRANTES días, de a LOTE_LIMPIEZA por vuelta del vigilante (por el índice
+ * de fecha). Sin nada viejo, no escribe nada.
+ */
+export async function limpiarEntrantes(db: D1Database): Promise<number> {
+  const r = await db
+    .prepare(
+      `DELETE FROM whatsapp_entrantes WHERE wamid IN (
+         SELECT wamid FROM whatsapp_entrantes WHERE creado_en < datetime('now', '-${DIAS_ENTRANTES} days') LIMIT ${LOTE_LIMPIEZA})`,
+    )
+    .run();
+  return Number(r.meta.changes ?? 0);
+}
+
+/**
+ * La pieza `whatsappEntrante` del canario, sin leer la base: «pendiente» sin WhatsApp; «atrasado» si
+ * falta el secreto de la huella (rige solo el tope general por día); «ok» con todo.
+ */
+export function saludWhatsappEntrante(env: Env): 'ok' | 'pendiente' | 'atrasado' {
+  if (!whatsappConfigurado(env) || !env.META_APP_SECRET) return 'pendiente';
+  return secretoHuella(env) ? 'ok' : 'atrasado';
 }

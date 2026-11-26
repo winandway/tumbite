@@ -1003,6 +1003,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa zona no existe.', 'That zone doesn’t exist.'],
   // C-WHATSAPP-FALTA
   [
+    'Esa es la zona de revisión de las tiendas: ahí no se manda nada.',
+    'That is the app store review zone: nothing is sent there.',
+  ],
+  [
     'Esto es de toda la empresa: lo hace alguien con alcance total.',
     'This covers the whole company: someone with full access does it.',
   ],

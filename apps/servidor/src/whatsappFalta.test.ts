@@ -335,7 +335,7 @@ describe('C-WHATSAPP-FALTA: la vuelta del vigilante', () => {
     expect(meta).toHaveLength(0);
   });
 
-  it('el aviso de Meta «APPROVED» enciende el envío, y «delivered» marca el mensaje entregado', async () => {
+  it('el aviso de Meta «APPROVED» SIN categoría no enciende; con la categoría UTILITY sí, y «delivered» marca el mensaje entregado', async () => {
     const s = await escenario({ aprobada: false });
     const meta = simularMeta();
     const aviso = (cambio: unknown) => {
@@ -365,6 +365,20 @@ describe('C-WHATSAPP-FALTA: la vuelta del vigilante', () => {
         })
       ).status,
     ).toBe(200);
+    // Aprobada pero sin saber su categoría: no se supone utilidad, no sale nada.
+    await correrRezagados(s.env, s.m.DB, dentroDe(4));
+    expect(meta).toHaveLength(0);
+    expect((await s.equipo('GET', '/datos/admin/camila/whatsapp')).datos.motivo).toBe(
+      'plantilla_sin_categoria',
+    );
+    await aviso({
+      field: 'template_category_update',
+      value: {
+        message_template_name: PLANTILLA_FALTA_NOMBRE,
+        message_template_language: 'es',
+        new_category: 'UTILITY',
+      },
+    });
     await correrRezagados(s.env, s.m.DB, dentroDe(4));
     expect(meta).toHaveLength(1);
     await aviso({
@@ -455,7 +469,7 @@ describe('C-WHATSAPP-FALTA: el botón del panel', () => {
     expect(Number(audit?.n)).toBe(0);
   });
 
-  it('AUDITORÍA: enviar deja su fila en la auditoría y en su línea de tiempo; las 24 h se saltan solo confirmando', async () => {
+  it('AUDITORÍA: enviar deja su fila en la auditoría y en su línea de tiempo; a mano tampoco se saltan las 24 h', async () => {
     const s = await escenario();
     const meta = simularMeta();
     const r = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
@@ -470,33 +484,32 @@ describe('C-WHATSAPP-FALTA: el botón del panel', () => {
     ).all<{ actor_id: string; objeto: string; despues_json: string }>();
     expect(audit.results).toHaveLength(1);
     expect(audit.results[0]!.objeto).toBe(`usuario:${s.rep.id}`);
-    // Otra vez en menos de 24 horas: sin confirmar, 409 y nada sale.
+    expect(JSON.parse(audit.results[0]!.despues_json)).toMatchObject({ estado: 'enviado' });
+    // Otra vez en menos de 24 horas: no sale, ni pidiendo saltar la espera.
     const otra = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
-      confirmar: true,
-    });
-    expect(otra.estado).toBe(409);
-    expect(otra.datos.motivo).toBe('ya_hoy');
-    expect(meta).toHaveLength(1);
-    // Confirmando, sí (hasta el tope de tres por paso, que nunca se salta).
-    for (const n of [2, 3])
-      expect(
-        (
-          await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
-            confirmar: true,
-            saltarEspera: true,
-          })
-        ).datos.enviado,
-        `el ${n}.º`,
-      ).toBe(true);
-    const cuarto = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
       confirmar: true,
       saltarEspera: true,
     });
-    expect(cuarto.datos.motivo).toBe('tope_paso');
-    expect(meta).toHaveLength(3);
+    expect(otra.estado).toBe(200);
+    expect(otra.datos).toMatchObject({ enviado: false, motivo: 'ya_hoy' });
+    expect(meta).toHaveLength(1);
     // La línea de tiempo de la ficha muestra el canal.
     const act = await s.equipo('GET', `/datos/admin/repartidores/${s.rep.id}/actividad`);
     expect(JSON.stringify(act.datos)).toContain('mensaje:whatsapp');
+  });
+
+  it('AUDITORÍA: si no se puede reservar la auditoría, no se manda nada a Meta', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    await s.m.DB.prepare(
+      "CREATE TRIGGER sin_auditoria BEFORE INSERT ON auditoria_admin BEGIN SELECT RAISE(ABORT, 'auditoría caída'); END",
+    ).run();
+    const r = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
+      confirmar: true,
+    });
+    expect(r.estado).toBe(500);
+    expect(meta).toHaveLength(0);
+    expect(await s.deWhatsapp()).toHaveLength(0);
   });
 
   it('a todos los trabados de la zona: vista previa sin escribir y, confirmando, solo a los de esa zona', async () => {
@@ -521,5 +534,145 @@ describe('C-WHATSAPP-FALTA: el botón del panel', () => {
     });
     expect(r.datos.enviados).toBe(2);
     expect(meta.map((x) => x.para).sort()).toEqual(['584121234567', '584141112233']);
+  });
+});
+
+describe('C-WHATSAPP-FALTA: revisión del 25 nov', () => {
+  it('NUNCA a cuentas nuestras ni a la zona de revisión de las tiendas: reloj, zona y botón', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    const soporte = await s.conductor('Soporte Pruebas', '+584141110001');
+    const windoce = await s.conductor('Luis Ejemplo', '+584141110002');
+    await s.m.DB.prepare("UPDATE usuarios SET correo = 'luis.ejemplo@windoce.com' WHERE id = ?")
+      .bind(windoce.id)
+      .run();
+    const prueba = await s.conductor('Ana Ejemplo', '+584141110003');
+    await s.m.DB.prepare('UPDATE usuarios SET es_prueba = 1 WHERE id = ?').bind(prueba.id).run();
+    const revisor = await s.conductor('Pedro Ejemplo', '+584141110004');
+    await s.m.DB.prepare(
+      "INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES ('VE-ZZ-REVIEW', 'Revisión', 'VE', 'USD', 'America/Caracas', 10.5, -66.9, 10, 1)",
+    ).run();
+    await s.m.DB.prepare(
+      "UPDATE repartidores SET zona_id = 'VE-ZZ-REVIEW', ciudad_elegida_en = datetime('now') WHERE usuario_id = ?",
+    )
+      .bind(revisor.id)
+      .run();
+    await s.ajustarRezagados({ zonas: { [CCS.id]: 'encendido', 'VE-ZZ-REVIEW': 'encendido' } });
+    await correrRezagados(s.env, s.m.DB, dentroDe(4));
+    // Solo Marina (la real) recibe.
+    expect(meta.map((x) => x.para)).toEqual(['584121234567']);
+    for (const [u, motivo] of [
+      [soporte, 'cuenta_interna'],
+      [windoce, 'cuenta_interna'],
+      [prueba, 'cuenta_interna'],
+      [revisor, 'zona_revision'],
+    ] as const) {
+      const r = await s.equipo('POST', `/datos/admin/camila/whatsapp/${u.id}`, { confirmar: true });
+      expect(r.datos, u.id).toMatchObject({ enviado: false, motivo });
+    }
+    // La zona de revisión no se puede ni mirar ni mandar.
+    expect((await s.equipo('GET', '/datos/admin/camila/whatsapp/zona/VE-ZZ-REVIEW')).estado).toBe(
+      403,
+    );
+    expect(
+      (
+        await s.equipo('POST', '/datos/admin/camila/whatsapp/zona/VE-ZZ-REVIEW', {
+          ids: [revisor.id],
+          confirmar: true,
+        })
+      ).estado,
+    ).toBe(403);
+    // La lista de la zona real no las trae, y mandarlas a mano por la zona no sale.
+    const vista = await s.equipo('GET', `/datos/admin/camila/whatsapp/zona/${CCS.id}`);
+    const ids = (vista.datos.filas as { id: string }[]).map((f) => f.id);
+    for (const u of [soporte, windoce, prueba]) expect(ids).not.toContain(u.id);
+    await s.equipo('POST', `/datos/admin/camila/whatsapp/zona/${CCS.id}`, {
+      ids: [soporte.id, windoce.id, prueba.id],
+      confirmar: true,
+    });
+    expect(meta).toHaveLength(1);
+  });
+
+  it('RELOJ: los que no pueden recibirlo no tapan a los demás, y el cursor avanza', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    // 26 sin consentimiento (confirmaron por SMS) y MÁS viejos que el que sí puede.
+    for (let i = 0; i < 26; i++)
+      await s.conductor(`Sin Permiso ${i}`, `+5841400000${String(i).padStart(2, '0')}`, 'sms');
+    await s.m.DB.prepare(
+      "UPDATE usuarios SET creado_en = datetime('now', '-3 days') WHERE nombre LIKE 'Sin Permiso%'",
+    ).run();
+    // Lo que cuenta es cuánto llevan quietos: su último paso del registro también es viejo.
+    await s.m.DB.prepare(
+      "UPDATE embudo_cuenta SET creado_en = datetime('now', '-3 days') WHERE usuario_id IN (SELECT id FROM usuarios WHERE nombre LIKE 'Sin Permiso%')",
+    ).run();
+    await s.m.DB.prepare("UPDATE usuarios SET creado_en = datetime('now', '-1 day') WHERE id = ?")
+      .bind(s.rep.id)
+      .run();
+    await s.m.DB.prepare(
+      "UPDATE embudo_cuenta SET creado_en = datetime('now', '-1 day') WHERE usuario_id = ?",
+    )
+      .bind(s.rep.id)
+      .run();
+    await correrRezagados(s.env, s.m.DB, dentroDe(4));
+    expect(meta.map((x) => x.para)).toEqual(['584121234567']);
+  });
+
+  it('RELOJ: con más de un lote, la siguiente vuelta sigue donde quedó (cursor)', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    // 26 con permiso que ya agotaron sus 3 de «la foto de la cara» (hace días) y son más viejos.
+    const agotados: string[] = [];
+    for (let i = 0; i < 26; i++) {
+      const u = await s.conductor(`Agotado ${i}`, `+5841410000${String(i).padStart(2, '0')}`);
+      agotados.push(u.id);
+    }
+    await s.m.DB.prepare(
+      "UPDATE usuarios SET creado_en = datetime('now', '-3 days') WHERE nombre LIKE 'Agotado%'",
+    ).run();
+    // Lo que cuenta es cuánto llevan quietos: su último paso del registro también es viejo.
+    await s.m.DB.prepare(
+      "UPDATE embudo_cuenta SET creado_en = datetime('now', '-3 days') WHERE usuario_id IN (SELECT id FROM usuarios WHERE nombre LIKE 'Agotado%')",
+    ).run();
+    for (const id of agotados)
+      for (let n = 1; n <= 3; n++)
+        await s.m.DB.prepare(
+          `INSERT INTO rezagados_mensajes (id, usuario_id, paso, canal, origen, numero, estado, creado_en)
+           VALUES (?, ?, 'cara', 'whatsapp', 'auto', ?, 'enviado', datetime('now', '-${n + 3} days'))`,
+        )
+          .bind(`${id}-${n}`, id, n)
+          .run();
+    await s.m.DB.prepare("UPDATE usuarios SET creado_en = datetime('now', '-1 day') WHERE id = ?")
+      .bind(s.rep.id)
+      .run();
+    await s.m.DB.prepare(
+      "UPDATE embudo_cuenta SET creado_en = datetime('now', '-1 day') WHERE usuario_id = ?",
+    )
+      .bind(s.rep.id)
+      .run();
+    const vueltas: number[] = [];
+    for (let v = 0; v < 3; v++) {
+      await correrRezagados(s.env, s.m.DB, dentroDe(4));
+      vueltas.push(meta.length);
+    }
+    // Sin cursor los mismos 25 agotados ocupaban cada vuelta y Marina nunca llegaba.
+    expect(vueltas.at(-1)).toBe(1);
+    expect(meta[0]!.para).toBe('584121234567');
+  });
+
+  it('RECHAZOS: lo que Meta rechaza cuenta para los tres por paso y queda en errores', async () => {
+    const s = await escenario();
+    const meta = simularMeta({ falla: true });
+    await s.ajustarRezagados({ plazosHoras: [1, 2, 3] });
+    for (const h of [4, 30, 60, 100, 200]) {
+      await correrRezagados(s.env, s.m.DB, dentroDe(h));
+      await s.moverA(h);
+      olvidarErrorWhatsappFalta();
+    }
+    expect(meta).toHaveLength(3);
+    const e = await s.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM errores_servidor WHERE ruta = 'whatsapp/te-falta'",
+    ).first<{ n: number }>();
+    expect(Number(e?.n)).toBe(3);
   });
 });

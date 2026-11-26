@@ -3429,6 +3429,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "wamid",
     "numero_hash",
     "tipo",
+    "estado",
+    "intentos",
     "creado_en"
   ],
   "rezagados_bajas": [

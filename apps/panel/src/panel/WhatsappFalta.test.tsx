@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MandarWhatsappFalta, WhatsappFaltaAjustes } from './WhatsappFalta';
 import { PermisosContexto } from './permisosPanel';
@@ -23,7 +23,6 @@ const vista = (extra: Record<string, unknown> = {}) => ({
   texto: TEXTO,
   puede: true,
   motivo: null,
-  esperaSaltable: false,
   delPaso: 0,
   ultimoEn: null,
   ...extra,
@@ -67,27 +66,35 @@ describe('C-WHATSAPP-FALTA: el botón de la ficha y de Verificaciones', () => {
     await userEvent.click(screen.getByTestId('whatsapp-falta-enviar'));
     await screen.findByText(/le mandamos el WhatsApp/);
     expect(llamadas).toHaveLength(2);
-    expect(llamadas[1]!.cuerpo).toEqual({ confirmar: true, saltarEspera: false });
+    expect(llamadas[1]!.cuerpo).toEqual({ confirmar: true });
     expect(confirmar).toHaveBeenCalledTimes(2);
   });
 
-  it('menos de 24 horas: lo dice y solo lo manda igual con otra confirmación', async () => {
-    const llamadas = simular((c) =>
-      (c.cuerpo as { soloVista?: boolean })?.soloVista
-        ? json({
-            vista: vista({ puede: false, motivo: 'ya_hoy', esperaSaltable: true, delPaso: 1 }),
-          })
-        : json({ vista: vista({ delPaso: 2 }), enviado: true, estado: 'enviado' }),
+  it('menos de 24 horas: lo dice y NO ofrece mandarlo (a mano tampoco se salta)', async () => {
+    const llamadas = simular(() =>
+      json({ vista: vista({ puede: false, motivo: 'ya_hoy', delPaso: 1 }) }),
     );
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<MandarWhatsappFalta id="u-ejemplo-1" idioma="es" />);
     await userEvent.click(screen.getByTestId('whatsapp-falta-boton'));
     expect(await screen.findByTestId('whatsapp-falta-motivo')).toHaveTextContent(
       'Ya le mandamos uno hace menos de 24 horas.',
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Mandarlo igual' }));
-    await waitFor(() => expect(llamadas).toHaveLength(2));
-    expect(llamadas[1]!.cuerpo).toEqual({ confirmar: true, saltarEspera: true });
+    expect(screen.queryByTestId('whatsapp-falta-enviar')).toBeNull();
+    expect(llamadas).toHaveLength(1);
+  });
+
+  it('cuenta nuestra o zona de revisión: lo dice y no hay botón de enviar', async () => {
+    for (const [motivo, texto] of [
+      ['cuenta_interna', 'Es una cuenta nuestra'],
+      ['zona_revision', 'zona de revisión de las tiendas'],
+    ] as const) {
+      simular(() => json({ vista: vista({ puede: false, motivo }) }));
+      const { unmount } = render(<MandarWhatsappFalta id="u-ejemplo-1" idioma="es" />);
+      await userEvent.click(screen.getByTestId('whatsapp-falta-boton'));
+      expect(await screen.findByTestId('whatsapp-falta-motivo')).toHaveTextContent(texto);
+      expect(screen.queryByTestId('whatsapp-falta-enviar')).toBeNull();
+      unmount();
+    }
   });
 
   it('sin consentimiento no hay botón de enviar, y dice por qué en palabras', async () => {

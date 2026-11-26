@@ -4,6 +4,8 @@ import { z } from 'zod';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
 import { zonaRealSql } from './cuentaPais';
+import { guardarError } from './errores';
+import { ZONA_REVISION_TIENDAS } from './panicoZona';
 import { type Activacion, barraActivacion } from './activacion';
 import { telefonoE164 } from './sms';
 import { esMenor, minimosDe } from './versionApp';
@@ -186,10 +188,12 @@ export async function guardarEstadoPlantilla(
   return true;
 }
 
-/** La plantilla aprobada sirve solo si además sigue siendo de UTILIDAD (Meta puede recategorizarla). */
+/**
+ * La plantilla aprobada sirve solo si además se SABE que es de UTILIDAD (Meta puede recategorizarla).
+ * Sin categoría conocida no se asume nada: no se envía hasta saberla (aviso de Meta o el panel).
+ */
 export const plantillaUsable = (e: EstadoPlantilla) =>
-  e.estado === 'APPROVED' &&
-  (e.categoria ?? PLANTILLA_FALTA_CATEGORIA) === PLANTILLA_FALTA_CATEGORIA;
+  e.estado === 'APPROVED' && e.categoria === PLANTILLA_FALTA_CATEGORIA;
 
 // ───────────────────────── ¿Está listo el canal? ─────────────────────────
 
@@ -197,6 +201,7 @@ export type MotivoCanal =
   | 'sin_credenciales'
   | 'proveedor_sin_plantilla'
   | 'plantilla_no_aprobada'
+  | 'plantilla_sin_categoria'
   | 'plantilla_no_es_utilidad';
 
 export type EstadoCanal = {
@@ -231,9 +236,11 @@ export async function estadoCanal(
     sinBase ??
     (plantilla.estado !== 'APPROVED'
       ? 'plantilla_no_aprobada'
-      : !plantillaUsable(plantilla)
-        ? 'plantilla_no_es_utilidad'
-        : null);
+      : !plantilla.categoria
+        ? 'plantilla_sin_categoria'
+        : !plantillaUsable(plantilla)
+          ? 'plantilla_no_es_utilidad'
+          : null);
   return { listo: motivo === null, motivo, plantilla, ajustes };
 }
 
@@ -348,7 +355,13 @@ export async function appVieja(env: Env, db: D1Database, id: string): Promise<bo
 // ───────────────────────── Consentimiento, historial y presupuesto ─────────────────────────
 
 export type MotivoConsentimiento =
-  'sin_celular' | 'no_confirmo_por_whatsapp' | 'celular_cambio' | 'whatsapp_fallo' | 'baja';
+  | 'cuenta_interna'
+  | 'zona_revision'
+  | 'sin_celular'
+  | 'no_confirmo_por_whatsapp'
+  | 'celular_cambio'
+  | 'whatsapp_fallo'
+  | 'baja';
 
 type FilaConsentimiento = {
   id: string;
@@ -359,7 +372,17 @@ type FilaConsentimiento = {
   entrega: string | null;
   baja: number;
   pais: string | null;
+  zona: string | null;
+  interna: number;
 };
+
+/**
+ * C-WHATSAPP-FALTA: nunca a una cuenta nuestra (de prueba, correo de windoce.com o «Soporte» en el
+ * nombre) ni a la zona de revisión de las tiendas (la usa el revisor de Apple). La misma regla que el
+ * canario de pánico (panicoZona.ts). En SQL, alias `u` = usuarios.
+ */
+export const SQL_CUENTA_INTERNA = (u = 'u') =>
+  `(${u}.es_prueba = 1 OR lower(${u}.correo) LIKE '%@windoce.com' OR lower(${u}.nombre) LIKE '%soporte%')`;
 
 /**
  * CONSENTIMIENTO (C-WHATSAPP-FALTA): el canal WhatsApp vale SOLO para quien confirmó su celular ACTUAL
@@ -384,7 +407,8 @@ export async function consentimientos(
          SELECT u.id, u.telefono, u.telefono_verificado_en AS verificado, ct.canal, ct.telefono AS tel_codigo,
                 (SELECT s.entrega FROM sms_enviados s WHERE s.referencia = ct.referencia AND ct.referencia IS NOT NULL LIMIT 1) AS entrega,
                 EXISTS (SELECT 1 FROM rezagados_bajas b WHERE b.usuario_id = u.id) AS baja,
-                (SELECT z.pais FROM zonas z WHERE z.id = ${zonaRealSql('rp', 'u')}) AS pais
+                (SELECT z.pais FROM zonas z WHERE z.id = ${zonaRealSql('rp', 'u')}) AS pais,
+                ${zonaRealSql('rp', 'u')} AS zona, ${SQL_CUENTA_INTERNA('u')} AS interna
            FROM ids JOIN usuarios u ON u.id = ids.id
            LEFT JOIN codigos_telefono ct ON ct.usuario_id = u.id
            LEFT JOIN repartidores rp ON rp.usuario_id = u.id`,
@@ -393,17 +417,21 @@ export async function consentimientos(
       .all<FilaConsentimiento>();
     for (const f of results) {
       const para = telefonoE164(f.telefono, f.pais);
-      const motivo: MotivoConsentimiento | null = Number(f.baja)
-        ? 'baja'
-        : !para
-          ? 'sin_celular'
-          : !f.verificado || f.canal !== 'whatsapp'
-            ? 'no_confirmo_por_whatsapp'
-            : f.tel_codigo !== para
-              ? 'celular_cambio'
-              : f.entrega === 'failed'
-                ? 'whatsapp_fallo'
-                : null;
+      const motivo: MotivoConsentimiento | null = Number(f.interna)
+        ? 'cuenta_interna'
+        : f.zona === ZONA_REVISION_TIENDAS
+          ? 'zona_revision'
+          : Number(f.baja)
+            ? 'baja'
+            : !para
+              ? 'sin_celular'
+              : !f.verificado || f.canal !== 'whatsapp'
+                ? 'no_confirmo_por_whatsapp'
+                : f.tel_codigo !== para
+                  ? 'celular_cambio'
+                  : f.entrega === 'failed'
+                    ? 'whatsapp_fallo'
+                    : null;
       r.set(f.id, { ok: motivo === null, motivo, para: motivo === null ? para : null });
     }
   }
@@ -423,7 +451,8 @@ export async function historiales(
     const lote = lista.slice(i, i + 80);
     const { results } = await db
       .prepare(
-        `SELECT usuario_id, paso, SUM(estado IN ('enviado', 'entregado')) AS salieron, MAX(creado_en) AS ultimo
+        // Un rechazo de Meta («fallido») también cuenta: un envío que siempre falla no se repite sin fin.
+        `SELECT usuario_id, paso, SUM(estado IN ('enviado', 'entregado', 'fallido')) AS salieron, MAX(creado_en) AS ultimo
            FROM rezagados_mensajes WHERE canal = 'whatsapp' AND estado <> 'sin_destino'
             AND usuario_id IN (${lote.map(() => '?').join(',')})
           GROUP BY usuario_id, paso`,
@@ -492,8 +521,6 @@ export type Evaluacion = {
   texto: string | null;
   puede: boolean;
   motivo: MotivoNo | null;
-  /** Ya se le mandó uno hace menos de 24 h: a mano se puede mandar igual, confirmando. */
-  esperaSaltable: boolean;
   /** Cuántos le salieron ya por ese paso y cuándo fue el último. */
   delPaso: number;
   ultimoEn: string | null;
@@ -522,22 +549,21 @@ async function contexto(env: Env, db: D1Database, ids: readonly string[], ahora:
 
 /**
  * Decide si se le puede mandar AHORA y arma el texto exacto. Lee su barra de activación (la misma del
- * panel y del reparto). Nunca escribe. `saltarEspera` (solo a mano, confirmado) salta las 24 horas;
- * nada salta el consentimiento, el tope por paso, la plantilla, el país ni el presupuesto.
+ * panel y del reparto). Nunca escribe. Nada se salta, tampoco a mano: ni el consentimiento, ni las 24
+ * horas, ni el tope por paso, ni la plantilla, ni el país, ni el presupuesto.
  */
 async function evaluarCon(
   env: Env,
   db: D1Database,
   p: Persona,
   ctx: Contexto,
-  o: { ahora: Date; saltarEspera: boolean; barra?: Activacion },
+  o: { ahora: Date; barra?: Activacion },
 ): Promise<Evaluacion> {
   const h = ctx.historial.get(p.id);
   const base = {
     persona: p,
     falta: null,
     texto: null,
-    esperaSaltable: false,
     delPaso: 0,
     ultimoEn: h?.ultimoEn ?? null,
     para: null,
@@ -549,6 +575,9 @@ async function evaluarCon(
     motivo,
   });
   if (p.rol !== 'repartidor') return no('no_es_conductor');
+  // Lo nuestro y la zona de revisión de las tiendas, antes que nada (ni se mira su barra).
+  const c = ctx.consentimiento.get(p.id);
+  if (c?.motivo === 'cuenta_interna' || c?.motivo === 'zona_revision') return no(c.motivo);
   // Lo que le falta y su texto se arman siempre (la vista previa lo muestra aunque no se pueda enviar).
   const barra = o.barra ?? (await barraActivacion(db, p.id));
   const falta = faltaDeBarra(barra, { pais: p.pais, appVieja: await appVieja(env, db, p.id) });
@@ -563,26 +592,20 @@ async function evaluarCon(
   if (!ctx.canal.listo) return no(ctx.canal.motivo ?? 'plantilla_no_aprobada', extra);
   if (!def) return no('idioma_sin_plantilla', extra);
   if (!p.pais || !ctx.canal.ajustes.paises[p.pais]) return no('pais_apagado', extra);
-  const c = ctx.consentimiento.get(p.id);
   if (!c?.ok) return no(c?.motivo ?? 'no_confirmo_por_whatsapp', extra);
   if (delPaso >= MAX_POR_PASO) return no('tope_paso', extra);
   const reciente = Boolean(h?.ultimoEn && horasDesde(h.ultimoEn, o.ahora) < HORAS_ENTRE_MENSAJES);
   if (!cabeOtro(ctx.gasto, ctx.canal.ajustes)) return no('tope_diario', extra);
-  if (reciente && !o.saltarEspera) return no('ya_hoy', { ...extra, esperaSaltable: true });
+  if (reciente) return no('ya_hoy', extra);
   return { ...base, ...extra, puede: true, motivo: null, para: c.para };
 }
 
 /** Para el panel (un conductor): solo lee. */
-export async function evaluarUno(
-  env: Env,
-  db: D1Database,
-  p: Persona,
-  o: { ahora?: Date; saltarEspera?: boolean } = {},
-) {
+export async function evaluarUno(env: Env, db: D1Database, p: Persona, o: { ahora?: Date } = {}) {
   const ahora = o.ahora ?? new Date();
   const ctx = await contexto(env, db, [p.id], ahora);
   return {
-    evaluacion: await evaluarCon(env, db, p, ctx, { ahora, saltarEspera: Boolean(o.saltarEspera) }),
+    evaluacion: await evaluarCon(env, db, p, ctx, { ahora }),
     canal: ctx.canal,
     gasto: ctx.gasto,
   };
@@ -641,16 +664,35 @@ export function olvidarErrorWhatsappFalta() {
 export type ResultadoEnvio = { estado: 'enviado' | 'fallido'; detalle: string; id: string };
 
 /**
- * Manda la evaluación ya aprobada (`puede`) y deja UNA fila en rezagados_mensajes, salga o no. Nunca
- * lanza: un fallo de Meta queda escrito («fallido», con su motivo) y en el canario.
+ * Manda la evaluación ya aprobada (`puede`) y deja UNA fila en rezagados_mensajes, salga o no. Un
+ * fallo de Meta queda escrito («fallido», con su motivo), en el canario y en errores_servidor, y
+ * cuenta para los tres por paso.
+ * C-WHATSAPP-FALTA (auditoría): a mano, la fila de auditoria_admin se RESERVA antes de llamar a Meta
+ * (si no se puede escribir, no sale nada) y se completa después con el resultado: nunca queda un
+ * mensaje enviado sin su registro.
  */
 async function enviar(
   env: Env,
   db: D1Database,
   ev: Evaluacion,
-  o: { origen: 'auto' | 'manual'; actorId: string | null },
+  o: { origen: 'auto' | 'manual'; actorId: string | null; auditoria?: Record<string, unknown> },
 ): Promise<ResultadoEnvio> {
   const id = nuevoId();
+  let auditoriaId: number | null = null;
+  if (o.origen === 'manual' && o.actorId) {
+    const reserva = await db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, NULL, ?)',
+      )
+      .bind(
+        o.actorId,
+        'whatsapp_falta_enviar',
+        `usuario:${ev.persona.id}`,
+        JSON.stringify({ falta: ev.falta?.clave, estado: 'enviando', mensaje: id, ...o.auditoria }),
+      )
+      .run();
+    auditoriaId = Number(reserva.meta.last_row_id);
+  }
   const def = PLANTILLAS_FALTA[ev.persona.idioma]!;
   let estado: ResultadoEnvio['estado'] = 'enviado';
   let detalle = 'meta';
@@ -669,8 +711,11 @@ async function enviar(
     detalle = `meta: ${String(e instanceof Error ? e.message : e)}`.slice(0, 200);
     ultimoErrorWhatsappFalta = { cuando: new Date().toISOString(), motivo: detalle };
     console.error('whatsapp falta: Meta no aceptó el mensaje', detalle);
+    await guardarError(db, 'WHATSAPP', 'whatsapp/te-falta', new Error(detalle)).catch(
+      (x: unknown) => console.error('whatsapp falta: no se pudo anotar el error', String(x)),
+    );
   }
-  await db
+  const fila = db
     .prepare(
       `INSERT INTO rezagados_mensajes (id, usuario_id, paso, canal, origen, numero, estado, detalle, referencia, texto, actor_id)
        VALUES (?, ?, ?, 'whatsapp', ?, ?, ?, ?, ?, ?, ?)`,
@@ -686,8 +731,21 @@ async function enviar(
       referencia,
       (ev.texto ?? '').slice(0, 1500),
       o.actorId,
-    )
-    .run();
+    );
+  // La fila del mensaje y la auditoría completa, juntas.
+  await db.batch([
+    fila,
+    ...(auditoriaId
+      ? [
+          db
+            .prepare('UPDATE auditoria_admin SET despues_json = ? WHERE id = ?')
+            .bind(
+              JSON.stringify({ falta: ev.falta?.clave, estado, mensaje: id, ...o.auditoria }),
+              auditoriaId,
+            ),
+        ]
+      : []),
+  ]);
   return { estado, detalle, id };
 }
 
@@ -696,7 +754,7 @@ export async function enviarUno(
   env: Env,
   db: D1Database,
   p: Persona,
-  o: { actorId: string; saltarEspera: boolean; ahora?: Date },
+  o: { actorId: string; ahora?: Date },
 ): Promise<{ evaluacion: Evaluacion; resultado: ResultadoEnvio | null }> {
   const { evaluacion } = await evaluarUno(env, db, p, o);
   if (!evaluacion.puede) return { evaluacion, resultado: null };
@@ -716,30 +774,42 @@ export async function evaluarVarios(
   env: Env,
   db: D1Database,
   personas: readonly Persona[],
-  o: { ahora?: Date; enviar?: { origen: 'auto' | 'manual'; actorId: string | null } } = {},
+  o: {
+    ahora?: Date;
+    enviar?: {
+      origen: 'auto' | 'manual';
+      actorId: string | null;
+      auditoria?: Record<string, unknown>;
+    };
+    /** El contexto ya leído (el reloj lo lee antes para filtrar sin mirar barras). */
+    ctx?: Contexto;
+  } = {},
 ) {
   const ahora = o.ahora ?? new Date();
-  const ctx = await contexto(
-    env,
-    db,
-    personas.map((p) => p.id),
-    ahora,
-  );
+  const ctx =
+    o.ctx ??
+    (await contexto(
+      env,
+      db,
+      personas.map((p) => p.id),
+      ahora,
+    ));
   const filas: (Evaluacion & { resultado: ResultadoEnvio | null })[] = [];
   for (const p of personas) {
-    const ev = await evaluarCon(env, db, p, ctx, { ahora, saltarEspera: false });
+    const ev = await evaluarCon(env, db, p, ctx, { ahora });
     let resultado: ResultadoEnvio | null = null;
     if (ev.puede && o.enviar) {
       resultado = await enviar(env, db, ev, o.enviar);
+      // Lo intentado cuenta para sus topes aunque Meta lo rechace; el gasto, solo lo que salió.
+      const h = ctx.historial.get(p.id) ?? { ultimoEn: null, porPaso: new Map<string, number>() };
+      h.ultimoEn = sqlFecha(ahora);
+      h.porPaso.set(ev.falta!.clave, (h.porPaso.get(ev.falta!.clave) ?? 0) + 1);
+      ctx.historial.set(p.id, h);
       if (resultado.estado === 'enviado') {
         ctx.gasto = {
           mensajes: ctx.gasto.mensajes + 1,
           usd: ctx.gasto.usd + ctx.canal.ajustes.costoUsd,
         };
-        const h = ctx.historial.get(p.id) ?? { ultimoEn: null, porPaso: new Map<string, number>() };
-        h.ultimoEn = sqlFecha(ahora);
-        h.porPaso.set(ev.falta!.clave, (h.porPaso.get(ev.falta!.clave) ?? 0) + 1);
-        ctx.historial.set(p.id, h);
       }
     }
     filas.push({ ...ev, resultado });
@@ -761,10 +831,10 @@ export async function conductoresDeZona(
     .prepare(
       `SELECT u.id, u.nombre, u.idioma, z.pais
          FROM usuarios u JOIN repartidores r ON r.usuario_id = u.id JOIN zonas z ON z.id = ${zonaRealSql('r', 'u')}
-        WHERE z.id = ? AND u.rol = 'repartidor' AND u.activo = 1 AND u.es_prueba = 0
+        WHERE z.id = ? AND z.id <> ? AND u.rol = 'repartidor' AND u.activo = 1 AND NOT ${SQL_CUENTA_INTERNA('u')}
         ORDER BY u.creado_en DESC LIMIT ${LOTE_ZONA} OFFSET ?`,
     )
-    .bind(zona, Math.max(0, Math.floor(pagina)) * LOTE_ZONA)
+    .bind(zona, ZONA_REVISION_TIENDAS, Math.max(0, Math.floor(pagina)) * LOTE_ZONA)
     .all<{ id: string; nombre: string; idioma: string; pais: string | null }>();
   return results.map((f) => ({
     id: f.id,
@@ -775,10 +845,18 @@ export async function conductoresDeZona(
   }));
 }
 
+export const CLAVE_CURSOR = 'whatsapp_falta_cursor';
+
 /**
  * La vuelta del reloj (la llama correrRezagados): a los conductores trabados en un paso SUYO de las
  * zonas donde el vigilante está encendido, dentro del horario de su zona y quietos el plazo del
- * recordatorio que toca. Sin canal listo no lee nada más que sus ajustes y no escribe nada.
+ * recordatorio que toca.
+ * C-WHATSAPP-FALTA (revisión): ANTES de mirar ninguna barra se descarta, con una lectura por lote,
+ * a quien no puede recibirlo (sin consentimiento, cuenta nuestra, zona de revisión, país apagado, ya
+ * tuvo uno en 24 h o no cumplió el plazo) y se corta por el presupuesto del día: así los que no pueden
+ * no tapan a los demás ni gastan lecturas. Si quedan más de LOTE_VUELTA, un cursor guardado en
+ * `config` hace que la siguiente vuelta siga donde quedó (solo se escribe cuando hay más que el lote).
+ * Sin canal listo no lee nada más que sus ajustes y no escribe nada.
  */
 export async function vueltaWhatsappFalta(
   env: Env,
@@ -796,8 +874,9 @@ export async function vueltaWhatsappFalta(
   }[],
   a: { plazosHoras: readonly number[]; horaDesde: number; horaHasta: number },
   ahora = new Date(),
-): Promise<{ enviados: number; motivo: MotivoCanal | null }> {
-  if (motivoSinBase(env)) return { enviados: 0, motivo: motivoSinBase(env) };
+): Promise<{ enviados: number; evaluados: number; motivo: MotivoCanal | null }> {
+  const sinBase = motivoSinBase(env);
+  if (sinBase) return { enviados: 0, evaluados: 0, motivo: sinBase };
   const posibles = lista.filter((c) => {
     if (
       c.rol !== 'repartidor' ||
@@ -810,14 +889,22 @@ export async function vueltaWhatsappFalta(
     const { minutos } = momentoEn(c.zonaHoraria, ahora);
     return minutos >= a.horaDesde * 60 && minutos < a.horaHasta * 60;
   });
-  if (!posibles.length) return { enviados: 0, motivo: null };
+  if (!posibles.length) return { enviados: 0, evaluados: 0, motivo: null };
   const canal = await estadoCanal(env, db);
-  if (!canal.listo) return { enviados: 0, motivo: canal.motivo };
-  const ids = posibles.map((c) => c.id);
-  const historial = await historiales(db, ids);
-  // Primero quien lleva más tiempo esperando; solo los que ya cumplieron el plazo del que toca.
-  const listos = posibles
+  if (!canal.listo) return { enviados: 0, evaluados: 0, motivo: canal.motivo };
+  const delPais = posibles.filter((c) => c.pais && canal.ajustes.paises[c.pais]);
+  if (!delPais.length) return { enviados: 0, evaluados: 0, motivo: null };
+  const ids = delPais.map((c) => c.id);
+  const [consentimiento, historial, gasto] = await Promise.all([
+    consentimientos(db, ids),
+    historiales(db, ids),
+    gastoDelDia(db, canal.ajustes, ahora),
+  ]);
+  if (!cabeOtro(gasto, canal.ajustes)) return { enviados: 0, evaluados: 0, motivo: null };
+  const llave = (c: (typeof delPais)[number]) => `${c.quietoDesde}|${c.id}`;
+  const listos = delPais
     .filter((c) => {
+      if (!consentimiento.get(c.id)?.ok) return false;
       const h = historial.get(c.id);
       const yaSalieron = h ? [...h.porPaso.values()].reduce((s, n) => s + n, 0) : 0;
       const plazo = a.plazosHoras[Math.min(yaSalieron, a.plazosHoras.length - 1)] ?? Infinity;
@@ -826,17 +913,41 @@ export async function vueltaWhatsappFalta(
         !(h?.ultimoEn && horasDesde(h.ultimoEn, ahora) < HORAS_ENTRE_MENSAJES)
       );
     })
-    .sort((x, y) => x.quietoDesde.localeCompare(y.quietoDesde))
-    .slice(0, LOTE_VUELTA);
-  if (!listos.length) return { enviados: 0, motivo: null };
+    // Primero quien lleva más tiempo esperando.
+    .sort((x, y) => llave(x).localeCompare(llave(y)));
+  if (!listos.length) return { enviados: 0, evaluados: 0, motivo: null };
+  let tanda = listos;
+  if (listos.length > LOTE_VUELTA) {
+    const f = await db
+      .prepare('SELECT valor FROM config WHERE clave = ?')
+      .bind(CLAVE_CURSOR)
+      .first<{ valor: string }>();
+    const cursor = f?.valor ?? '';
+    const despues = listos.filter((c) => llave(c) > cursor);
+    tanda = [...despues, ...listos.filter((c) => llave(c) <= cursor)].slice(0, LOTE_VUELTA);
+    const ultimo = llave(tanda[tanda.length - 1]!);
+    if (ultimo !== cursor)
+      await db
+        .prepare(
+          `INSERT INTO config (clave, valor) VALUES (?, ?)
+           ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
+        )
+        .bind(CLAVE_CURSOR, ultimo)
+        .run();
+  }
   const r = await evaluarVarios(
     env,
     db,
-    listos.map((c) => ({ id: c.id, nombre: c.nombre, idioma: c.idioma, pais: c.pais, rol: c.rol })),
-    { ahora, enviar: { origen: 'auto', actorId: null } },
+    tanda.map((c) => ({ id: c.id, nombre: c.nombre, idioma: c.idioma, pais: c.pais, rol: c.rol })),
+    {
+      ahora,
+      enviar: { origen: 'auto', actorId: null },
+      ctx: { canal, consentimiento, historial, gasto },
+    },
   );
   return {
     enviados: r.filas.filter((f) => f.resultado?.estado === 'enviado').length,
+    evaluados: tanda.length,
     motivo: null,
   };
 }
@@ -854,6 +965,7 @@ type AvisoMeta = {
         message_template_language?: string;
         reason?: string | null;
         new_category?: string;
+        message_template_category?: string;
         previous_category?: string;
       };
     }[];
@@ -905,7 +1017,10 @@ export async function anotarAvisoFalta(db: D1Database, aviso: AvisoMeta): Promis
           : 'PENDING';
         await guardarEstadoPlantilla(db, nombre, idioma, {
           estado,
-          categoria: antes.categoria ?? PLANTILLA_FALTA_CATEGORIA,
+          // La categoría solo si Meta la dice (o la que ya se sabía); nunca se supone UTILIDAD.
+          categoria: v.message_template_category
+            ? String(v.message_template_category).toUpperCase().slice(0, 40)
+            : antes.categoria,
           motivo: v.reason && v.reason !== 'NONE' ? String(v.reason).slice(0, 300) : null,
           fuente: 'meta',
         });

@@ -18,8 +18,8 @@ import './rezagados.css';
  * país. Dos piezas:
  * - `MandarWhatsappFalta`: «Mandarle por WhatsApp lo que le falta», en la ficha del conductor y en
  *   Verificaciones (las dos usan RevisionConductor). Primero la vista previa con el texto exacto; para
- *   enviar hay que confirmar. Si ya se le mandó uno hace menos de 24 horas, se puede mandar igual
- *   confirmando otra vez; el consentimiento y el tope de tres por paso no se saltan nunca.
+ *   enviar hay que confirmar. A mano no se salta nada: ni las 24 horas, ni el consentimiento, ni el
+ *   tope de tres por paso.
  * - `WhatsappFaltaAjustes`: en «Recordatorios de registro»: el estado del canal y de la plantilla, los
  *   países, el presupuesto, y «a todos los trabados de esta zona» con vista previa y confirmación.
  */
@@ -32,7 +32,6 @@ type Vista = {
   texto: string | null;
   puede: boolean;
   motivo: string | null;
-  esperaSaltable: boolean;
   delPaso: number;
   ultimoEn: string | null;
 };
@@ -45,13 +44,10 @@ const T = {
     asi: 'Así le llega por WhatsApp',
     sinTexto: 'No hay nada que le toque a él ahora: no se le manda nada.',
     enviar: 'Mandar por WhatsApp',
-    enviarIgual: 'Mandarlo igual',
     enviando: 'Mandando…',
     cancelar: 'Cancelar',
     cerrar: 'Cerrar',
     confirmar: '¿Le mandamos este WhatsApp ahora?',
-    confirmarEspera:
-      'Ya le mandamos un WhatsApp hace menos de 24 horas. ¿Se lo mandamos igual? Queda en la auditoría con tu nombre.',
     enviado: 'Listo: le mandamos el WhatsApp. Queda en su línea de tiempo.',
     fallido: 'Meta no aceptó el mensaje. Queda anotado en su línea de tiempo.',
     yaVan: (n: number) =>
@@ -66,6 +62,10 @@ const T = {
       proveedor_sin_plantilla: 'El proveedor de WhatsApp de este sitio no tiene esta plantilla.',
       plantilla_no_aprobada:
         'La plantilla todavía no está aprobada por Meta: no sale ningún mensaje.',
+      plantilla_sin_categoria:
+        'Meta aprobó la plantilla, pero no sabemos su categoría: no sale nada hasta marcarla (utilidad).',
+      cuenta_interna: 'Es una cuenta nuestra (de prueba o del equipo): nunca se le manda.',
+      zona_revision: 'Está en la zona de revisión de las tiendas: ahí nunca se manda nada.',
       plantilla_no_es_utilidad:
         'Meta pasó la plantilla a otra categoría (no utilidad): no se usa hasta revisarla.',
       sin_celular: 'No tiene un celular válido en su cuenta.',
@@ -100,6 +100,8 @@ const T = {
       IN_APPEAL: 'En apelación',
     } as Record<string, string>,
     marcarPlantilla: 'Marcar el estado a mano (lo que dice el administrador de WhatsApp de Meta)',
+    marcarCategoria: 'Su categoría en Meta',
+    sinCategoria: 'No se sabe todavía',
     paises: 'Países encendidos',
     tope: 'Mensajes al día',
     presupuesto: 'Dólares al día',
@@ -132,13 +134,10 @@ const T = {
     asi: 'This is what they get on WhatsApp',
     sinTexto: 'Nothing depends on them right now: nothing is sent.',
     enviar: 'Send on WhatsApp',
-    enviarIgual: 'Send it anyway',
     enviando: 'Sending…',
     cancelar: 'Cancel',
     cerrar: 'Close',
     confirmar: 'Send this WhatsApp message now?',
-    confirmarEspera:
-      'We already sent them a WhatsApp message less than 24 hours ago. Send it anyway? It is logged in the audit trail with your name.',
     enviado: 'Done: the WhatsApp message was sent. It shows on their timeline.',
     fallido: 'Meta did not accept the message. It is logged on their timeline.',
     yaVan: (n: number) => `${n} already sent for this step (3 at most).`,
@@ -148,6 +147,10 @@ const T = {
       sin_credenciales: 'WhatsApp is not connected on this site yet (the Meta keys are missing).',
       proveedor_sin_plantilla: 'This site’s WhatsApp provider does not have this template.',
       plantilla_no_aprobada: 'Meta has not approved the template yet: no message goes out.',
+      plantilla_sin_categoria:
+        'Meta approved the template, but we do not know its category: nothing goes out until it is marked (utility).',
+      cuenta_interna: 'This is one of our accounts (test or team): it is never sent.',
+      zona_revision: 'They are in the app store review zone: nothing is ever sent there.',
       plantilla_no_es_utilidad:
         'Meta moved the template to another category (not utility): it is not used until reviewed.',
       sin_celular: 'Their account has no valid phone number.',
@@ -182,6 +185,8 @@ const T = {
       IN_APPEAL: 'In appeal',
     } as Record<string, string>,
     marcarPlantilla: 'Set the status by hand (what Meta’s WhatsApp Manager shows)',
+    marcarCategoria: 'Its category on Meta',
+    sinCategoria: 'Not known yet',
     paises: 'Countries turned on',
     tope: 'Messages per day',
     presupuesto: 'Dollars per day',
@@ -273,14 +278,12 @@ export function MandarWhatsappFalta({
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [ocupado, setOcupado] = useState(false);
-  const [pedirEspera, setPedirEspera] = useState(false);
   const cerrar = useCallback(() => setAbierto(false), []);
 
   const ver = useCallback(() => {
     setVista(null);
     setError('');
     setOk('');
-    setPedirEspera(false);
     pedir<{ vista: Vista }>('POST', `/datos/admin/camila/whatsapp/${encodeURIComponent(id)}`, {
       soloVista: true,
     })
@@ -288,16 +291,16 @@ export function MandarWhatsappFalta({
       .catch((x: unknown) => setError(mensajeDe(x) || t.error));
   }, [id, t.error]);
 
-  async function mandar(saltarEspera: boolean) {
+  async function mandar() {
     if (!vista || ocupado) return;
-    if (!window.confirm(saltarEspera ? t.confirmarEspera : t.confirmar)) return;
+    if (!window.confirm(t.confirmar)) return;
     setOcupado(true);
     setError('');
     try {
       const r = await pedir<{ vista: Vista; enviado: boolean; estado?: string; motivo?: string }>(
         'POST',
         `/datos/admin/camila/whatsapp/${encodeURIComponent(id)}`,
-        { confirmar: true, saltarEspera },
+        { confirmar: true },
       );
       setVista(r.vista);
       if (r.enviado) setOk(t.enviado);
@@ -305,8 +308,7 @@ export function MandarWhatsappFalta({
       else setError(motivoEn(t, r.motivo ?? null));
       alEnviar?.();
     } catch (x) {
-      if (x instanceof ErrorApi && x.estado === 409) setPedirEspera(true);
-      else setError(mensajeDe(x));
+      setError(mensajeDe(x));
     } finally {
       setOcupado(false);
     }
@@ -356,11 +358,6 @@ export function MandarWhatsappFalta({
               ) : null}
             </>
           ) : null}
-          {pedirEspera ? (
-            <p className="pista" role="alert">
-              {t.confirmarEspera}
-            </p>
-          ) : null}
           {error ? (
             <p className="error-general" role="alert">
               {error}{' '}
@@ -380,26 +377,15 @@ export function MandarWhatsappFalta({
             <button type="button" className="boton secundario" onClick={cerrar}>
               {ok ? t.cerrar : t.cancelar}
             </button>
-            {!ok &&
-            (vista?.puede ||
-              pedirEspera ||
-              (vista?.motivo === 'ya_hoy' && vista.esperaSaltable)) ? (
+            {!ok && vista?.puede ? (
               <button
                 type="button"
                 className="boton"
                 disabled={ocupado}
                 data-testid="whatsapp-falta-enviar"
-                onClick={() =>
-                  void mandar(
-                    pedirEspera || (vista?.motivo === 'ya_hoy' && Boolean(vista?.esperaSaltable)),
-                  )
-                }
+                onClick={() => void mandar()}
               >
-                {ocupado
-                  ? t.enviando
-                  : pedirEspera || vista?.motivo === 'ya_hoy'
-                    ? t.enviarIgual
-                    : t.enviar}
+                {ocupado ? t.enviando : t.enviar}
               </button>
             ) : null}
           </div>
@@ -433,13 +419,14 @@ type Estado = {
 };
 type FilaZona = Vista;
 /** Lo que se escribe en el formulario de ajustes (guarda su borrador: regla de formularios). */
-type ValoresAjustes = Ajustes & { plantillaEstado: string };
+type ValoresAjustes = Ajustes & { plantillaEstado: string; plantillaCategoria: string };
 const VACIO: ValoresAjustes = {
   paises: {},
   topeDiario: 0,
   presupuestoDiaUsd: 0,
   costoUsd: 0,
   plantillaEstado: 'sin_crear',
+  plantillaCategoria: '',
 };
 
 export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
@@ -470,7 +457,11 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
       pedir<Estado>('GET', '/datos/admin/camila/whatsapp')
         .then((d) => {
           setE(d);
-          cargarBase({ ...d.ajustes, plantillaEstado: d.plantilla.estado });
+          cargarBase({
+            ...d.ajustes,
+            plantillaEstado: d.plantilla.estado,
+            plantillaCategoria: d.plantilla.categoria ?? '',
+          });
         })
         .catch((x: unknown) => setError(mensajeDe(x))),
     [cargarBase],
@@ -484,12 +475,20 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
     setOcupado(true);
     setError('');
     setOk('');
-    const { plantillaEstado, ...ajustes } = aj;
+    const { plantillaEstado, plantillaCategoria, ...ajustes } = aj;
+    const cambioPlantilla =
+      plantillaEstado !== e.plantilla.estado ||
+      plantillaCategoria !== (e.plantilla.categoria ?? '');
     try {
       await pedir('PUT', '/datos/admin/camila/whatsapp', {
         ...ajustes,
-        ...(plantillaEstado !== e.plantilla.estado
-          ? { plantilla: { estado: plantillaEstado } }
+        ...(cambioPlantilla
+          ? {
+              plantilla: {
+                estado: plantillaEstado,
+                categoria: plantillaCategoria || null,
+              },
+            }
           : {}),
       });
       setOk(t.guardado);
@@ -587,6 +586,21 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
             {Object.entries(t.estadoPlantilla).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="campo">
+          <span>{t.marcarCategoria}</span>
+          <select
+            value={aj.plantillaCategoria}
+            data-testid="whatsapp-falta-categoria"
+            onChange={(x) => b.cambiar('plantillaCategoria', x.target.value)}
+          >
+            <option value="">{t.sinCategoria}</option>
+            {['UTILITY', 'MARKETING', 'AUTHENTICATION'].map((k) => (
+              <option key={k} value={k}>
+                {k}
               </option>
             ))}
           </select>
