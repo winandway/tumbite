@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import type { Page } from '@playwright/test';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
@@ -127,9 +128,7 @@ for (const idioma of ['es', 'en'] as const) {
     );
 
     // ── El equipo: Dinero → Agentes. Enciende la ciudad y crea al agente. ──
-    const { ruta } = (await (
-      await request.get('/datos/admin/ruta', { headers: h(admin.token) })
-    ).json()) as { ruta: string | null };
+    const ruta = await rutaSuperadmin(request, h(admin.token));
     const panel = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await panel.addCookies([
       { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },

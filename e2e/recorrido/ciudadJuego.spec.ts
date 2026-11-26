@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import { sqlLocal, sqlLocalTexto } from './sqlLocal';
+import { rutaSuperadmin } from './rutaSuperadmin';
 
 /**
  * C-CIUDAD-JUEGO (SIM-7, 13 nov 2026, Richard): la ciudad de pruebas en modo juego, de punta a punta
@@ -116,9 +117,7 @@ test('modo juego: un jugador pide en efectivo y los robots lo entregan', async (
   // 4. La pantalla: en el celular nada se sale de lado y el jugador aparece con su compra; en el
   // televisor, la pantalla grande llena la ventana.
   // La dirección del superadmin es secreta: el servidor se la dice a un admin.
-  const { ruta } = (await (
-    await request.get('/datos/admin/ruta', { headers: h(admin.token) })
-  ).json()) as { ruta: string | null };
+  const ruta = await rutaSuperadmin(request, h(admin.token));
   const pantalla = `/panel${ruta ? `/${ruta}` : ''}/test-city`;
   for (const [nombre, ancho, alto] of [
     ['celular', 375, 812],
