@@ -12,8 +12,13 @@ import { estadoDelPais, type LugarCuenta, type PaisConCatalogo, sinAcentos } fro
  * se busca con código, sin IA, desde la primera letra y sin acentos ni mayúsculas.
  */
 
-/** [lugarId, ciudad, municipio, lat, lng, poblacion] (+ estado en «principales»). */
-export type FilaCatalogoLugar = [string, string, string, number, number, number, string?];
+/**
+ * Una fila del archivo (formato 2, `scripts/lugares/formato.mjs`): [id de GeoNames, ciudad, posición
+ * del municipio en «m» (-1 = sin municipio), lat y lng en milésimas de grado, posición del estado en
+ * «e» (solo en «principales»)]. La población no viaja: las filas van de la más poblada a la menos.
+ */
+export type FilaCatalogoLugar = [number, string, number, number, number, number?];
+export type ArchivoCatalogoLugar = { v: 2; m: string[]; e?: string[]; f: FilaCatalogoLugar[] };
 
 export type LugarCatalogo = {
   pais: PaisConCatalogo;
@@ -23,6 +28,7 @@ export type LugarCatalogo = {
   municipio: string;
   lat: number;
   lng: number;
+  /** Peso para ordenar: más alto = más poblado (sale del orden del archivo). */
   poblacion: number;
 };
 
@@ -30,24 +36,37 @@ export function rutaCatalogo(pais: PaisConCatalogo, estado: string | 'principale
   return `/lugares/${pais}/${estado}.json`;
 }
 
-export function filaALugar(
-  f: FilaCatalogoLugar,
+/**
+ * Lee un archivo del catálogo (el de un estado o «principales»). Una fila rota se salta; un archivo
+ * que no es del formato 2 da una lista vacía (y quien lo pidió lo dice en palabras).
+ */
+export function leerArchivoCatalogo(
+  datos: unknown,
   pais: PaisConCatalogo,
   estado?: string,
-): LugarCatalogo | null {
-  const est = estado ?? f[6];
-  if (!est || !Array.isArray(f) || typeof f[0] !== 'string' || typeof f[1] !== 'string')
-    return null;
-  return {
-    pais,
-    estado: est,
-    lugarId: f[0],
-    ciudad: f[1],
-    municipio: f[2] || '',
-    lat: Number(f[3]),
-    lng: Number(f[4]),
-    poblacion: Number(f[5]) || 0,
-  };
+): LugarCatalogo[] {
+  const a = datos as Partial<ArchivoCatalogoLugar> | null;
+  if (!a || a.v !== 2 || !Array.isArray(a.f) || !Array.isArray(a.m)) return [];
+  const m = a.m;
+  const e = Array.isArray(a.e) ? a.e : [];
+  const n = a.f.length;
+  const lugares: LugarCatalogo[] = [];
+  a.f.forEach((f, i) => {
+    if (!Array.isArray(f) || !Number.isInteger(f[0]) || typeof f[1] !== 'string') return;
+    const est = estado ?? (typeof f[5] === 'number' ? e[f[5]] : undefined);
+    if (!est) return;
+    lugares.push({
+      pais,
+      estado: est,
+      lugarId: `gn:${f[0]}`,
+      ciudad: f[1],
+      municipio: (f[2] >= 0 ? m[f[2]] : '') ?? '',
+      lat: Number(f[3]) / 1000,
+      lng: Number(f[4]) / 1000,
+      poblacion: n - i,
+    });
+  });
+  return lugares;
 }
 
 /** Lo que se manda al servidor al elegir (el contrato de lugarCuenta.ts). */
@@ -79,11 +98,13 @@ export function crearCatalogoLugares(op: { base: string; fetch?: Traer }) {
     const promesa = traer(`${op.base}${ruta}`)
       .then(async (r) => {
         if (!r.ok) throw new Error('catalogo');
-        const filas = (await r.json()) as FilaCatalogoLugar[];
-        if (!Array.isArray(filas)) throw new Error('catalogo');
-        return filas
-          .map((f) => filaALugar(f, pais, estado === 'principales' ? undefined : estado))
-          .filter((x): x is LugarCatalogo => x !== null);
+        const lugares = leerArchivoCatalogo(
+          await r.json(),
+          pais,
+          estado === 'principales' ? undefined : estado,
+        );
+        if (!lugares.length) throw new Error('catalogo');
+        return lugares;
       })
       .catch((e: unknown) => {
         cache.delete(ruta);

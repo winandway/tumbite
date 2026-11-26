@@ -6,10 +6,9 @@ import {
   buscarLugares,
   buscarMunicipios,
   crearCatalogoLugares,
-  filaALugar,
+  leerArchivoCatalogo,
   municipiosDelEstado,
   resaltar,
-  type FilaCatalogoLugar,
   type LugarCatalogo,
 } from './catalogoLugares';
 import { ESTADOS_US, ESTADOS_VE, leerLugarCuenta, type PaisConCatalogo } from './lugarCuenta';
@@ -30,16 +29,12 @@ import { filasParaRevisar, validarRegistro } from './revisarRegistro';
  * - sacando `lugar` de esquemaRegistro, falla «el registro guarda el lugar elegido».
  */
 const CARPETA = join(__dirname, '..', '..', '..', 'apps', 'panel', 'public', 'lugares');
-const leer = (pais: PaisConCatalogo, archivo: string) =>
-  JSON.parse(readFileSync(join(CARPETA, pais, `${archivo}.json`), 'utf8')) as FilaCatalogoLugar[];
+const leer = (pais: PaisConCatalogo, archivo: string): unknown =>
+  JSON.parse(readFileSync(join(CARPETA, pais, `${archivo}.json`), 'utf8'));
 const delEstado = (pais: PaisConCatalogo, estado: string): LugarCatalogo[] =>
-  leer(pais, estado)
-    .map((f) => filaALugar(f, pais, estado))
-    .filter((x): x is LugarCatalogo => x !== null);
+  leerArchivoCatalogo(leer(pais, estado), pais, estado);
 const principales = (pais: PaisConCatalogo): LugarCatalogo[] =>
-  leer(pais, 'principales')
-    .map((f) => filaALugar(f, pais))
-    .filter((x): x is LugarCatalogo => x !== null);
+  leerArchivoCatalogo(leer(pais, 'principales'), pais);
 
 describe('C-REGISTRO-TODO-EL-PAIS: el catálogo completo', () => {
   it('cada estado del contrato tiene su archivo, y nada más', () => {
@@ -102,7 +97,9 @@ describe('C-REGISTRO-TODO-EL-PAIS: el catálogo completo', () => {
       ['US', 'CA'],
       ['US', 'principales'],
     ] as const) {
-      const ids = leer(pais, est).map((f) => f[0]);
+      const ids = (est === 'principales' ? principales(pais) : delEstado(pais, est)).map(
+        (l) => l.lugarId,
+      );
       expect(new Set(ids).size, `${pais}-${est}`).toBe(ids.length);
     }
   });
@@ -170,6 +167,34 @@ describe('C-REGISTRO-TODO-EL-PAIS: el buscador', () => {
   });
 });
 
+describe('C-REGISTRO-TODO-EL-PAIS: el formato 2 (compacto) del catálogo', () => {
+  it('pesa poco: todo el catálogo cabe en 2,4 MB y ningún archivo pasa de 200 KB', () => {
+    let total = 0;
+    for (const pais of ['VE', 'US'] as const)
+      for (const n of readdirSync(join(CARPETA, pais))) {
+        const kb = readFileSync(join(CARPETA, pais, n)).length / 1024;
+        expect(kb, `${pais}/${n}`).toBeLessThan(200);
+        total += kb;
+      }
+    expect(total / 1024).toBeLessThan(2.4);
+  });
+
+  it('la más poblada va primero, y un archivo de otro formato o una fila rota no rompen nada', () => {
+    expect(delEstado('VE', 'V')[0]?.ciudad).toBe('Maracaibo');
+    expect(principales('US')[0]?.ciudad).toBe('New York City');
+    expect(leerArchivoCatalogo([['gn:1', 'Vieja', '', 1, 1, 1]], 'VE', 'V')).toEqual([]);
+    expect(
+      leerArchivoCatalogo(
+        { v: 2, m: [], f: [null, ['x'], [7, 'Buena', -1, 1000, 2000]] },
+        'VE',
+        'V',
+      ),
+    ).toEqual([
+      expect.objectContaining({ lugarId: 'gn:7', ciudad: 'Buena', municipio: '', lat: 1, lng: 2 }),
+    ]);
+  });
+});
+
 describe('C-REGISTRO-TODO-EL-PAIS: lector con caché', () => {
   it('lee una vez por archivo y no guarda un fallo', async () => {
     let falla = true;
@@ -178,7 +203,8 @@ describe('C-REGISTRO-TODO-EL-PAIS: lector con caché', () => {
       if (falla) return Promise.resolve({ ok: false, json: () => Promise.resolve(null) });
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve([['gn:1', 'Ciudad Uno', 'Municipio Uno', 10, -71, 5]]),
+        json: () =>
+          Promise.resolve({ v: 2, m: ['Municipio Uno'], f: [[1, 'Ciudad Uno', 0, 10000, -71000]] }),
       });
     });
     const cat = crearCatalogoLugares({ base: 'https://ejemplo.com', fetch: traer });
@@ -187,7 +213,15 @@ describe('C-REGISTRO-TODO-EL-PAIS: lector con caché', () => {
     const a = await cat.estado('VE', 'V');
     const b = await cat.estado('VE', 'V');
     expect(a).toBe(b);
-    expect(a[0]).toMatchObject({ pais: 'VE', estado: 'V', ciudad: 'Ciudad Uno' });
+    expect(a[0]).toMatchObject({
+      pais: 'VE',
+      estado: 'V',
+      ciudad: 'Ciudad Uno',
+      municipio: 'Municipio Uno',
+      lugarId: 'gn:1',
+      lat: 10,
+      lng: -71,
+    });
     expect(traer).toHaveBeenCalledTimes(2);
   });
 });
@@ -206,10 +240,10 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro', () => {
     expect(r.lugar).toEqual(maracaibo);
   });
 
-  it('un lugar mal formado no impide crear la cuenta (llega como null)', () => {
+  it('un lugar mal formado no impide crear la cuenta (el servidor lo lee como null y sigue)', () => {
     const r = esquemaRegistro.safeParse({ ...base, lugar: { pais: 'XX', ciudad: '' } });
     expect(r.success).toBe(true);
-    expect(r.success && r.data.lugar).toBeNull();
+    expect(leerLugarCuenta(r.success ? r.data.lugar : undefined)).toBeNull();
     const viejo = esquemaRegistro.parse(base);
     expect(viejo.lugar).toBeUndefined();
   });

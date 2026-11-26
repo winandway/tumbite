@@ -19,7 +19,7 @@
 //   lugares designados) más las cabeceras (PPLA, PPLA2, PPLC). Los ~140 000 caseríos sin población
 //   inflarían el catálogo diez veces; quien vive en uno elige su condado o la ciudad más cercana.
 // - Sin repetidos: mismo nombre en el mismo municipio o condado = un solo lugar (el más poblado).
-// - Coordenadas a 4 decimales (~11 m).
+// - Coordenadas a 3 decimales (~110 m), en el formato 2 (formato.mjs).
 /* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion local: carpetas fijas del repositorio y de la carpeta temporal; claves de tablas fijas */
 import { execFileSync } from 'node:child_process';
 import {
@@ -34,6 +34,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import { compactar } from './formato.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SALIDA = join(RAIZ, 'apps', 'panel', 'public', 'lugares');
@@ -146,7 +147,8 @@ for (const pais of ['VE', 'US']) {
   const todos = [];
   for (const [estado, lista] of [...porEstado].sort()) {
     const filas = ordenar([...lista.values()].map((x) => x.fila));
-    const texto = JSON.stringify(filas);
+    // Formato 2 (formato.mjs): municipios por índice, coordenadas en milésimas, sin población.
+    const texto = JSON.stringify(compactar(filas));
     writeFileSync(join(dir, `${estado}.json`), texto);
     totalBytes += texto.length;
     totalArchivos++;
@@ -164,7 +166,7 @@ for (const pais of ['VE', 'US']) {
       )
       .map((x) => [...x.fila, x.estado]),
   );
-  const texto = JSON.stringify(principales);
+  const texto = JSON.stringify(compactar(principales, true));
   writeFileSync(join(dir, 'principales.json'), texto);
   totalBytes += texto.length;
   totalArchivos++;
@@ -180,6 +182,6 @@ for (const pais of ['VE', 'US']) {
 writeFileSync(
   join(SALIDA, 'ATRIBUCION.txt'),
   'Lugares poblados de Venezuela y Estados Unidos: GeoNames (https://www.geonames.org), licencia CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).\n' +
-    'Filtrados y compactados por Divoox (sin barrios ni lugares abandonados, coordenadas a 4 decimales).\n',
+    'Filtrados y compactados por Divoox (sin barrios ni lugares abandonados, coordenadas a 3 decimales).\n',
 );
 console.log(`Listo: ${totalArchivos} archivos, ${Math.round(totalBytes / 1024)} KB en ${SALIDA}`);

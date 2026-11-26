@@ -10,7 +10,10 @@ import { describe, expect, it } from 'vitest';
  * Lo pesado que no es código (PDF, videos, capturas nítidas) vive en el almacén del sitio.
  */
 const PUBLICO = join(process.cwd(), 'apps', 'panel', 'public');
-/** Hoy pesa unos 42 MB. Al pasar de aquí hay que adelgazar o mandar cosas al almacén. */
+/**
+ * Hoy pesa unos 44 MB (25 nov: con el catálogo de lugares en formato compacto y 351 capturas de Docs
+ * recomprimidas). Al pasar de aquí hay que adelgazar o mandar cosas al almacén.
+ */
 const TOPE_PUBLICO_MB = 46;
 const TOPE_ARCHIVO_KB = 400;
 const PROHIBIDAS = /\.(pdf|mp4|mov|webm|zip|psd|ai|wav\.bak)$/i;
