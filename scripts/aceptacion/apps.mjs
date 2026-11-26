@@ -15,7 +15,6 @@
  *   --instalar  reinstala las apps de apks-pruebas/ios-simulador antes de correr.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { randomInt } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -26,6 +25,21 @@ import {
   escribirSeccion,
   sitioDePruebas,
 } from './comun.mjs';
+import { celularRobot } from './base-pruebas.mjs';
+
+/**
+ * Las seis ciudades de C1 (la cuenta se crea desde cualquier ciudad, con su código de país). Las de
+ * EE. UU. usan un celular +1 de guion; las de Venezuela, +58.
+ */
+export const CIUDADES = [
+  { nombre: 'El Vigía', pais: 'VE', lat: 8.6219, lng: -71.65 },
+  { nombre: 'Maracaibo', pais: 'VE', lat: 10.6427, lng: -71.6125 },
+  { nombre: 'Caracas', pais: 'VE', lat: 10.4806, lng: -66.9036 },
+  { nombre: 'Gilroy', pais: 'US', lat: 37.0058, lng: -121.5683 },
+  { nombre: 'Nueva York', pais: 'US', lat: 40.7128, lng: -74.006 },
+  { nombre: 'Novi', pais: 'US', lat: 42.4806, lng: -83.4755 },
+];
+const EL_VIGIA = CIUDADES[0];
 
 const args = process.argv.slice(2);
 const solo = (() => {
@@ -64,12 +78,18 @@ const APPS = {
 };
 
 function simuladorEncendido() {
-  const salida = execFileSync('xcrun', ['simctl', 'list', 'devices', 'booted'], { encoding: 'utf8' });
+  const salida = execFileSync('xcrun', ['simctl', 'list', 'devices', 'booted'], {
+    encoding: 'utf8',
+  });
   const m = salida.match(/\(([0-9A-F-]{36})\)/);
   if (m) return m[1];
   // De noche nadie lo enciende: se enciende el iPhone de pruebas.
-  const lista = execFileSync('xcrun', ['simctl', 'list', 'devices', 'available'], { encoding: 'utf8' });
-  const iphone = lista.match(/iPhone 18 Pro \(([0-9A-F-]{36})\)/) ?? lista.match(/iPhone[^(]*\(([0-9A-F-]{36})\)/);
+  const lista = execFileSync('xcrun', ['simctl', 'list', 'devices', 'available'], {
+    encoding: 'utf8',
+  });
+  const iphone =
+    lista.match(/iPhone 18 Pro \(([0-9A-F-]{36})\)/) ??
+    lista.match(/iPhone[^(]*\(([0-9A-F-]{36})\)/);
   if (!iphone) throw new Error('No hay un iPhone simulado en esta Mac.');
   execFileSync('xcrun', ['simctl', 'boot', iphone[1]]);
   execFileSync('xcrun', ['simctl', 'bootstatus', iphone[1], '-b']);
@@ -78,7 +98,11 @@ function simuladorEncendido() {
 
 function precioKm9() {
   const hora = Number(
-    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Caracas', hour: 'numeric', hourCycle: 'h23' }).format(new Date()),
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Caracas',
+      hour: 'numeric',
+      hourCycle: 'h23',
+    }).format(new Date()),
   );
   return hora >= 21 || hora < 6 ? '3[.,]90' : '3[.,]00';
 }
@@ -86,7 +110,7 @@ function precioKm9() {
 function leerCabecera(ruta) {
   const cab = {};
   for (const l of readFileSync(ruta, 'utf8').split('\n')) {
-    const m = l.match(/^#\s*(linea|titulo|app|tambien):\s*(.+)$/);
+    const m = l.match(/^#\s*(linea|titulo|app|tambien|ciudades):\s*(.+)$/);
     if (m) cab[m[1]] = m[2].trim();
     else if (l.trim() && !l.startsWith('#')) break;
   }
@@ -120,12 +144,18 @@ function instalar(udid) {
 
 /** Lo que Maestro dijo al fallar, en una línea que se entienda. */
 function motivoDeFallo(texto) {
-  const lineas = texto.split('\n').map((l) => l.trim()).filter(Boolean);
+  const lineas = texto
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
   // El paso que falló (Maestro lo marca «FAILED») y, si lo dice, la causa.
   const paso = lineas.find((l) => /\.\.\. FAILED$/.test(l) && !/^Run /.test(l));
   const causa = lineas.find((l) => /^(Assertion is false|Element not found)/.test(l));
   const clave = paso ? `${paso.replace(/\.\.\. FAILED$/, '')}${causa ? ` (${causa})` : ''}` : null;
-  return (clave || lineas.at(-1) || 'falló sin decir por qué').replace(/\x1b\[[0-9;]*m/g, '').slice(0, 300);
+  return (clave || lineas.at(-1) || 'falló sin decir por qué')
+    // eslint-disable-next-line no-control-regex
+    .replace(/\x1b\[[0-9;]*m/g, '')
+    .slice(0, 300);
 }
 
 async function main() {
@@ -138,56 +168,100 @@ async function main() {
   const demo = cuentasDemo();
   const empezo = new Date().toISOString();
   const lineas = [];
-  // Ubicación del teléfono: El Vigía (Venezuela), ciudad de prueba de la lista.
-  spawnSync('xcrun', ['simctl', 'location', udid, 'set', '8.6219,-71.6510']);
-
   for (const f of flujos()) {
     const id = f.linea.toUpperCase();
-    const salidaPrueba = join(capturas, id);
-    mkdirSync(salidaPrueba, { recursive: true });
-    const env = {
-      APP_ID: APPS[f.app],
-      SITIO: base,
-      CORREO_NUEVO: correoRobot(`robot-${f.app}-${id.toLowerCase()}`),
-      CLAVE_NUEVA: `Robot-${Date.now().toString(36)}-Noche9`,
-      NOMBRE_NUEVO: 'Robot Nocturno',
-      // Celular de Venezuela que existe (Movistar 0414) y distinto en cada cuenta: un teléfono no abre
-      // dos cuentas. Al sitio de pruebas no le llega ningún código para un correo «.test».
-      CELULAR_NUEVO: `414${String(randomInt(10 ** 7)).padStart(7, '0')}`,
-      CORREO_DEMO_CONDUCTOR: 'demo.repartidor@ejemplo.com',
-      CLAVE_DEMO_CONDUCTOR: demo['demo.repartidor@ejemplo.com'] ?? '',
-      CORREO_DEMO_CLIENTE: 'demo.cliente@ejemplo.com',
-      CLAVE_DEMO_CLIENTE: demo['demo.cliente@ejemplo.com'] ?? '',
-      // Tabulador de El Vigía: KM 9 vale 3,00 de día y 3,90 de 9 pm a 6 am (hora de Venezuela).
-      PRECIO_KM9: precioKm9(),
-      CAPTURA: join(salidaPrueba, 'final'),
-    };
-    const parametros = Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]);
-    process.stdout.write(`── ${id} ${f.titulo} … `);
-    const r = spawnSync(
-      'maestro',
-      ['--device', udid, 'test', ...parametros, '--test-output-dir', salidaPrueba, f.ruta],
-      { encoding: 'utf8', timeout: 15 * 60_000, env: { ...process.env, MAESTRO_CLI_NO_ANALYTICS: '1' } },
-    );
-    // Captura de cómo quedó la pantalla, pase o no pase.
-    const foto = join(salidaPrueba, 'pantalla.png');
-    spawnSync('xcrun', ['simctl', 'io', udid, 'screenshot', foto]);
-    const verde = r.status === 0;
-    const motivo = verde ? '' : motivoDeFallo(`${r.stdout}\n${r.stderr}`);
-    console.log(verde ? 'verde' : `ROJO: ${motivo}`);
+    // C1 se corre en las seis ciudades; el resto, en El Vigía (ciudad de prueba de la lista).
+    const ciudades = f.ciudades ? CIUDADES : [EL_VIGIA];
+    const pasos = [];
+    for (const ciudad of ciudades) {
+      const sufijo = ciudades.length > 1 ? `-${ciudad.nombre.replace(/\s/g, '')}` : '';
+      const salidaPrueba = join(capturas, `${id}${sufijo}`);
+      mkdirSync(salidaPrueba, { recursive: true });
+      spawnSync('xcrun', ['simctl', 'location', udid, 'set', `${ciudad.lat},${ciudad.lng}`]);
+      const env = {
+        APP_ID: APPS[f.app],
+        SITIO: base,
+        CORREO_NUEVO: correoRobot(`robot-${f.app}-${id.toLowerCase()}`),
+        CLAVE_NUEVA: `Robot-${Date.now().toString(36)}-Noche9`,
+        NOMBRE_NUEVO: 'Robot Nocturno',
+        // Celular que existe en su país y distinto en cada cuenta: un teléfono no abre dos cuentas.
+        // Al sitio de pruebas no le llega ningún código para un correo «.test».
+        CELULAR_NUEVO: celularRobot(ciudad.pais),
+        CORREO_DEMO_CONDUCTOR: 'demo.repartidor@ejemplo.com',
+        CLAVE_DEMO_CONDUCTOR: demo['demo.repartidor@ejemplo.com'] ?? '',
+        CORREO_DEMO_CLIENTE: 'demo.cliente@ejemplo.com',
+        CLAVE_DEMO_CLIENTE: demo['demo.cliente@ejemplo.com'] ?? '',
+        // Tabulador de El Vigía: KM 9 vale 3,00 de día y 3,90 de 9 pm a 6 am (hora de Venezuela).
+        PRECIO_KM9: precioKm9(),
+        CAPTURA: join(salidaPrueba, 'final'),
+      };
+      const parametros = Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]);
+      process.stdout.write(`── ${id} ${ciudad.nombre} ${f.titulo} … `);
+      const correr = () => {
+        const r = spawnSync(
+          'maestro',
+          ['--device', udid, 'test', ...parametros, '--test-output-dir', salidaPrueba, f.ruta],
+          {
+            encoding: 'utf8',
+            timeout: 15 * 60_000,
+            env: { ...process.env, MAESTRO_CLI_NO_ANALYTICS: '1' },
+          },
+        );
+        spawnSync('xcrun', ['simctl', 'terminate', udid, APPS[f.app]]);
+        return r;
+      };
+      // Si falla, una segunda vez: el teléfono simulado a veces va lento. El parte lo dice.
+      let r = correr();
+      let primera = null;
+      if (r.status !== 0 && !r.error) {
+        primera = motivoDeFallo(`${r.stdout}\n${r.stderr}`);
+        r = correr();
+      }
+      // Captura de cómo quedó la pantalla, pase o no pase.
+      const foto = join(salidaPrueba, 'pantalla.png');
+      spawnSync('xcrun', ['simctl', 'io', udid, 'screenshot', foto]);
+      const verde = r.status === 0;
+      const lugar = ciudades.length > 1 ? `${ciudad.nombre}: ` : '';
+      const motivo = verde
+        ? primera
+          ? `${lugar}bien al segundo intento (el primero falló: ${primera})`
+          : ciudades.length > 1
+            ? `${lugar}bien`
+            : ''
+        : `${lugar}${motivoDeFallo(`${r.stdout}\n${r.stderr}`)}`;
+      console.log(verde ? (primera ? 'verde al segundo intento' : 'verde') : `ROJO: ${motivo}`);
+      pasos.push({
+        estado: verde ? 'verde' : r.error ? 'no-se-pudo' : 'rojo',
+        motivo,
+        captura: foto.replace(`${carpeta}/`, ''),
+      });
+    }
+    const estado = pasos.some((p) => p.estado === 'rojo')
+      ? 'rojo'
+      : pasos.every((p) => p.estado === 'verde')
+        ? 'verde'
+        : 'no-se-pudo';
     lineas.push({
       id,
       titulo: f.titulo,
-      estado: verde ? 'verde' : r.error ? 'no-se-pudo' : 'rojo',
-      motivo,
-      captura: foto.replace(`${carpeta}/`, ''),
+      estado,
+      motivo: pasos
+        .map((p) => p.motivo)
+        .filter(Boolean)
+        .join(' · '),
+      captura: (pasos.find((p) => p.estado !== 'verde') ?? pasos[0]).captura,
     });
     // Un recorrido que comprueba también otra línea (C1 cubre C2: entra sin pedir código).
-    for (const otra of (f.tambien ?? '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean)) {
-      lineas.push({ ...lineas.at(-1), id: otra, titulo: `${LINEAS_LISTA.find(([i]) => i === otra)?.[1] ?? otra} (dentro de ${id})` });
+    for (const otra of (f.tambien ?? '')
+      .split(',')
+      .map((x) => x.trim().toUpperCase())
+      .filter(Boolean)) {
+      lineas.push({
+        ...lineas.at(-1),
+        id: otra,
+        titulo: `${LINEAS_LISTA.find(([i]) => i === otra)?.[1] ?? otra} (dentro de ${id})`,
+      });
     }
-    // Cada línea arranca con la app limpia (sin sesión de la anterior).
-    spawnSync('xcrun', ['simctl', 'terminate', udid, APPS[f.app]]);
   }
 
   // Las líneas de la lista que todavía no tienen recorrido salen en el parte, nunca escondidas.
@@ -195,7 +269,12 @@ async function main() {
     const hechas = new Set(lineas.map((l) => l.id));
     for (const [id, titulo] of LINEAS_LISTA) {
       if (!hechas.has(id)) {
-        lineas.push({ id, titulo, estado: 'no-se-pudo', motivo: 'todavía sin recorrido automático' });
+        lineas.push({
+          id,
+          titulo,
+          estado: 'no-se-pudo',
+          motivo: 'todavía sin recorrido automático',
+        });
       }
     }
     lineas.sort((a, b) => a.id.localeCompare(b.id, 'es', { numeric: true }));
@@ -215,7 +294,14 @@ main().catch((e) => {
   escribirSeccion('apps', {
     empezo: new Date().toISOString(),
     termino: new Date().toISOString(),
-    lineas: [{ id: 'APPS', titulo: 'Robot de las apps', estado: 'no-se-pudo', motivo: String(e.message || e) }],
+    lineas: [
+      {
+        id: 'APPS',
+        titulo: 'Robot de las apps',
+        estado: 'no-se-pudo',
+        motivo: String(e.message || e),
+      },
+    ],
   });
   process.exit(1);
 });

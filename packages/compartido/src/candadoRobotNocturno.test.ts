@@ -44,9 +44,19 @@ describe('C-ROBOT-NOCTURNO · los robots solo van al sitio de pruebas', () => {
   });
 
   it('los tres lanzadores pasan por la pieza común del sitio de pruebas', () => {
-    for (const f of ['apps.mjs', 'panel.mjs', 'camila.mjs']) {
+    // camila.mjs y panel-datos.mjs llegan al sitio por base-pruebas.mjs (URL_PRUEBAS = sitioDePruebas()).
+    expect(leer('scripts/aceptacion/base-pruebas.mjs')).toMatch(
+      /export const URL_PRUEBAS = sitioDePruebas\(\);/,
+    );
+    for (const f of [
+      'apps.mjs',
+      'panel.mjs',
+      'camila.mjs',
+      'base-pruebas.mjs',
+      'panel-datos.mjs',
+    ]) {
       const texto = leer(`scripts/aceptacion/${f}`);
-      expect(texto, f).toContain('sitioDePruebas');
+      expect(texto, f).toMatch(/sitioDePruebas|URL_PRUEBAS/);
       expect(texto, f).not.toMatch(/https:\/\/(www\.)?(divoox|tumbite)\.com(?![\w.-])/);
     }
   });
@@ -55,7 +65,7 @@ describe('C-ROBOT-NOCTURNO · los robots solo van al sitio de pruebas', () => {
     const todos = [
       ...archivos('maestro', '.yaml'),
       ...archivos('e2e/aceptacion', '.ts'),
-      'scripts/aceptacion/camila-examen.json',
+      'scripts/aceptacion/camila-preguntas.json',
     ];
     expect(todos.length).toBeGreaterThan(5);
     for (const f of todos) {
@@ -76,5 +86,21 @@ describe('C-ROBOT-NOCTURNO · los robots solo van al sitio de pruebas', () => {
       expect(texto, f).toMatch(/^# linea: [CP]\d+$/m);
       expect(texto, f).toMatch(/^# titulo: .+$/m);
     }
+  });
+
+  it('un solo juego: el examen de Camila corre una vez por noche y C1 va en seis ciudades', () => {
+    const camila = leer('scripts/aceptacion/camila.mjs');
+    expect(camila).toContain('existsSync(YA_CORRIO)');
+    expect(camila).toContain("'--forzar'");
+    const apps = leer('scripts/aceptacion/apps.mjs');
+    for (const c of ['El Vigía', 'Maracaibo', 'Caracas', 'Gilroy', 'Nueva York', 'Novi'])
+      expect(apps, c).toContain(`nombre: '${c}'`);
+    expect(apps).toContain('al segundo intento');
+    // La tarea de la Mac es UNA: robot-nocturno (2:00) y su parte (7:00), nada más.
+    const tarea = leer('scripts/aceptacion/instalar-tarea.sh');
+    expect([...tarea.matchAll(/^plist (\S+)/gm)].map((m) => m[1])).toEqual([
+      'robot-nocturno',
+      'robot-parte',
+    ]);
   });
 });

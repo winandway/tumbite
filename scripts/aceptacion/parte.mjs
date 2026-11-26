@@ -31,7 +31,7 @@ for (const [clave, nombre] of SECCIONES) {
   const verdes = d.lineas.filter((l) => l.estado === 'verde').length;
   const rojas = d.lineas.filter((l) => l.estado === 'rojo').length;
   resumen.push(
-    `- ${rojas ? '🔴' : verdes === d.lineas.length ? '🟢' : '⚪'} ${nombre}: ${verdes} de ${d.lineas.length} en verde${rojas ? `, ${rojas} en rojo` : ''}${typeof d.nota === 'number' ? ` (nota ${d.nota} de 50)` : ''}.`,
+    `- ${rojas ? '🔴' : verdes === d.lineas.length ? '🟢' : '⚪'} ${nombre}: ${verdes} de ${d.lineas.length} en verde${rojas ? `, ${rojas} en rojo` : ''}${typeof d.nota === 'number' ? ` (nota ${d.nota} de ${d.de ?? 50})` : ''}.`,
   );
   salida.push(`## ${nombre}`, '');
   for (const l of d.lineas) {

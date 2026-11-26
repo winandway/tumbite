@@ -1,5 +1,6 @@
 # linea: C1
-# titulo: Crear la cuenta de conductor desde El Vigía (Venezuela) y entrar sin pedir código (C2)
+# titulo: Crear la cuenta de conductor desde seis ciudades (El Vigía, Maracaibo, Caracas, Gilroy, Nueva York, Novi) y entrar sin pedir código (C2)
+# ciudades: si
 # app: repartidor
 # tambien: C2
 appId: ${APP_ID}

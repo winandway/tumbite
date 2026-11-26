@@ -1,6 +1,7 @@
 # Pantalla «Permite los permisos» y los avisos del sistema (ubicación, avisos, cámara).
 appId: ${APP_ID}
 ---
+- runFlow: sin-avisos-sistema.yaml
 - tapOn:
     text: "I’m ready|Estoy listo|Listo"
     optional: true
@@ -13,6 +14,10 @@ appId: ${APP_ID}
 # «Cómo revisamos tus documentos»: el robot da el permiso, como la mayoría de los conductores.
 - tapOn:
     text: "I give my permission.*|Doy mi permiso.*|Autorizo.*"
+    optional: true
+# El botón se enciende solo con la casilla marcada (AvisoIa.tsx).
+- tapOn:
+    id: "aviso-ia-casilla"
     optional: true
 - tapOn:
     id: "aviso-ia-aceptar"

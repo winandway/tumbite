@@ -1,5 +1,6 @@
 # Registro por pasos de Driver o de la app de clientes (pieza Acceso de packages/movil), con una cuenta
-# del robot: correo «.test» (el sitio de pruebas no pide código de celular) y celular de Venezuela.
+# del robot: correo «.test» (el sitio de pruebas no pide código de celular) y celular con su código de
+# país (+58 Venezuela, +1 EE. UU.), según la ciudad de la corrida.
 # El iPhone simulado corre con el teclado físico conectado (lo pone noche.sh): el teclado de la
 # pantalla no aparece y no tapa «Siguiente».
 appId: ${APP_ID}
@@ -51,7 +52,7 @@ appId: ${APP_ID}
     timeout: 10000
 - tapOn:
     id: "pasos-siguiente"
-# Paso 3: celular (país Venezuela por la ubicación; si no, se elige)
+# Paso 3: celular, escrito con su código de país
 - extendedWaitUntil:
     visible:
       id: "pasos-paso-celular"
@@ -59,7 +60,7 @@ appId: ${APP_ID}
 - tapOn:
     text: "Mobile phone|Celular"
     index: 1
-- inputText: "+58${CELULAR_NUEVO}"
+- inputText: "${CELULAR_NUEVO}"
 - scrollUntilVisible:
     element:
       id: "pasos-siguiente"

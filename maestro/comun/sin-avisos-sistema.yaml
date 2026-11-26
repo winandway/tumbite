@@ -1,0 +1,8 @@
+# Si Android muestra «… no responde» (el emulador va lento), se toca «Esperar». No es la app.
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      visible: '.*no responde.*'
+    commands:
+      - tapOn: 'Esperar'

@@ -15,7 +15,10 @@ import { fileURLToPath } from 'node:url';
 export const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 /** Solo el sitio de pruebas. Cualquier otro destino se rechaza antes de tocar nada. */
-export const SITIOS_PERMITIDOS = ['https://staging.tumbite.com', 'https://tumbite-pruebas.sitios.dev'];
+export const SITIOS_PERMITIDOS = [
+  'https://staging.tumbite.com',
+  'https://tumbite-pruebas.sitios.dev',
+];
 export function sitioDePruebas() {
   const url = (process.env.ACEPTACION_URL || SITIOS_PERMITIDOS[0]).replace(/\/$/, '');
   if (!SITIOS_PERMITIDOS.includes(url)) {

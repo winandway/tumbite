@@ -24,7 +24,7 @@ set -uo pipefail
 cd "$REPO" || exit 1
 git fetch -q origin main || true
 # Mientras los robots no estén en la rama principal, se corre la rama de los robots.
-if git cat-file -e origin/main:scripts/aceptacion/noche.sh 2>/dev/null; then REF=origin/main; else REF=refs/heads/fase-robots-nocturnos; fi
+if git cat-file -e origin/main:scripts/aceptacion/noche.sh 2>/dev/null; then REF=origin/main; else REF=refs/heads/fase-robots-union; fi
 if [ ! -d "$COPIA" ]; then git worktree add --detach "$COPIA" "\$REF"; fi
 cd "$COPIA" || exit 1
 git checkout -q --detach "\$REF" && git reset -q --hard "\$REF"
