@@ -290,9 +290,9 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso, y cada papel completo lle
       paso: string;
       soloEnVivo: boolean;
     }[];
-    // C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante.
+    // C-DOCUMENTO-SIN-REVERSO y C-LICENCIA-SIN-REVERSO: en Venezuela la cédula y la licencia van solo por delante.
     expect(pasos.map((p) => p.paso).sort()).toEqual(
-      PASOS_VERIFICACION.filter((p) => p !== 'doc_reverso').sort(),
+      PASOS_VERIFICACION.filter((p) => p !== 'doc_reverso' && p !== 'licencia_reverso').sort(),
     );
     expect(pasos.every((p) => p.soloEnVivo)).toBe(true);
     for (const { paso } of pasos) {
@@ -354,15 +354,16 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso, y cada papel completo lle
     const c = await conductorNuevo();
     await c.moto();
     await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true });
-    // C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula no se fotografía por detrás.
-    const orden = ['identidad_frente', 'licencia_frente', 'licencia_reverso', 'seguro', 'cara'];
+    // C-DOCUMENTO-SIN-REVERSO y C-LICENCIA-SIN-REVERSO: en Venezuela ni la cédula ni la licencia se
+    // fotografían por detrás; la licencia llega sola a revisión con el frente.
+    const orden = ['identidad_frente', 'licencia_frente', 'seguro', 'cara'];
     const m = modelo([
       ...orden.map((clase) =>
         lectura(clase, clase === 'licencia_frente' ? { vence: '2031-05-10' } : {}),
       ),
       { resultado: 'misma', confianza: 93 },
     ]);
-    const pasos = ['doc_frente', 'licencia_frente', 'licencia_reverso', 'seguro'];
+    const pasos = ['doc_frente', 'licencia_frente', 'seguro'];
     for (const p of pasos) expect((await c.foto(p)).estado).toBe(201);
     const kyc = () =>
       c.m.DB.prepare('SELECT estado FROM kyc WHERE usuario_id = ?')
@@ -390,7 +391,7 @@ describe('C-VERIFICACION-ASISTENTE: una foto por paso, y cada papel completo lle
       .bind(c.rep.id)
       .first();
     expect(lic).toEqual({ tipo: 'licencia_moto', estado: 'pendiente', vence_en: '2031-05-10' });
-    expect(m.llamadas).toBe(6);
+    expect(m.llamadas).toBe(5);
     // El revisor ve cada comprobación con su color, lo leído y la comparación de la cara.
     const ficha = (await c.equipo('GET', `/datos/admin/verificacion/${c.rep.id}`)).datos;
     expect(ficha.caras).toMatchObject({ resultado: 'misma', color: 'verde' });

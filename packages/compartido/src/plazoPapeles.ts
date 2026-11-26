@@ -60,9 +60,11 @@ const DE_FABRICA = new Map<string, PoliticaPlazoPapeles>([
       asistente: true,
       aprobacionAutomatica: false,
       // C-DOCUMENTO-SIN-REVERSO (23 nov 2026, Richard): la cédula venezolana no tiene nada útil por
-      // detrás (una lámina en blanco con un número de serie): solo se fotografía por delante. La
-      // licencia venezolana SÍ tiene dos caras y se sigue pidiendo por frente y por reverso.
-      sinReverso: ['doc_reverso'],
+      // detrás (una lámina en blanco con un número de serie): solo se fotografía por delante.
+      // C-LICENCIA-SIN-REVERSO (26 nov 2026, Richard: «la licencia de Venezuela tiene una sola
+      // cara… si la parte trasera no está, entonces que sea conforme con el frente»): la licencia
+      // también va solo por delante. La carta médica ya era una sola foto en «Tus papeles».
+      sinReverso: ['doc_reverso', 'licencia_reverso'],
     },
   ],
   // Perú («hay que ser más serios»): licencia y seguro (SOAT) aprobados para empezar; 30 días para el resto.

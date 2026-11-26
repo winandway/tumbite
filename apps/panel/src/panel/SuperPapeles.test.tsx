@@ -253,7 +253,7 @@ describe('papeles del conductor en el superadmin', () => {
       asistente: true,
       aprobacionAutomatica: false,
       // C-DOCUMENTO-SIN-REVERSO: lo que no edita la pantalla viaja tal cual.
-      sinReverso: ['doc_reverso'],
+      sinReverso: ['doc_reverso', 'licencia_reverso'],
     });
     expect(await screen.findByText('Guardado.')).toBeInTheDocument();
   });

@@ -77,7 +77,7 @@ const MOTOR = new Set(['moto', 'carro']);
 
 /**
  * Las fotos que le tocan: sin moto ni carro no hay licencia ni seguro que pedir. Y sin los reversos
- * que su país no pide (C-DOCUMENTO-SIN-REVERSO: en Venezuela, el de la cédula).
+ * que su país no pide (C-DOCUMENTO-SIN-REVERSO: en Venezuela, el de la cédula y el de la licencia).
  */
 export function pasosDe(
   vehiculoTipo: string | null | undefined,
