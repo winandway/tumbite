@@ -562,13 +562,30 @@ try {
   const noLlego = ok(await paso(v3.id, 'pago-movil', { recibido: false }), 'no me llegó');
   exigir(noLlego.estado === 'no_recibido', 'el «no me llegó» no quedó anotado');
   ok(await paso(v3.id, 'terminar'), 'terminar el viaje con Plin');
-  const bandeja = ok(
-    await equipo('GET', '/datos/admin/bandeja-dinero?tipo=pago_movil_viaje'),
-    'bandeja de soporte del dinero',
-  );
-  exigir(
-    JSON.stringify(bandeja).includes(v3.id),
-    'el «no me llegó» no abrió un caso en la bandeja de soporte',
+  // C-NO-ME-LLEGO-BANDEJA: el caso es una «incidencia» de la bandeja; se busca página por página (la
+  // bandeja trae 50 por página, los más viejos primero) y, ya comprobado, el guion lo cierra para que
+  // los casos de las vueltas no se acumulen en el sitio de pruebas.
+  let casoNoLlego = null;
+  for (let pagina = 0; pagina < 40 && !casoNoLlego; pagina++) {
+    const bandeja = ok(
+      await equipo('GET', `/datos/admin/bandeja-dinero?tipo=incidencia&pagina=${pagina}`),
+      'bandeja de soporte del dinero',
+    );
+    casoNoLlego = bandeja.casos.find((x) => String(x.detalle ?? '').includes(v3.id)) ?? null;
+    if (!bandeja.hayMas?.incidencia) break;
+  }
+  exigir(casoNoLlego, 'el «no me llegó» no abrió un caso en la bandeja de soporte');
+  ok(
+    await equipo(
+      'POST',
+      `/datos/admin/bandeja-dinero/${encodeURIComponent(casoNoLlego.clave)}/acciones`,
+      {
+        accion: 'resolver',
+        nota: 'Caso del guion de pruebas de Ica: comprobado y cerrado por el guion.',
+        idempotencia: `guion-peru-${VUELTA}`.slice(0, 80),
+      },
+    ),
+    'cerrar el caso del guion',
   );
   casos.push(
     `viaje con Plin de ${v3.total} céntimos a un conductor con Yape: «no me llegó» abrió un caso para soporte`,

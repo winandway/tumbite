@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-NO-ME-LLEGO-BANDEJA · «No me llegó» (Pago Móvil, Yape, Plin) se encuentra en la bandeja aunque haya muchos casos viejos (26 nov 2026, la vuelta del sitio de pruebas cayó) — Venezuela y Perú · servidor y guion
+
+- **Qué se rompió:** la vuelta de `fase-vigia-pago-buscadores` cayó en `probar-moto-peru.mjs` («el «no me llegó» no abrió un caso en la bandeja de soporte»). El caso SÍ se abría. El guion pedía `/datos/admin/bandeja-dinero?tipo=pago_movil_viaje`, un tipo que la bandeja no tiene: el servidor lo ignoraba en silencio y devolvía la primera página de cada tipo (50 casos, los más viejos primero). Cada vuelta dejaba su caso abierto; al pasar de 50 en el sitio de pruebas, el nuevo quedó fuera. No dependía del código de la rama (la bandeja es igual en main): le tocó a la vuelta número 51. Reproducido en local con 55 casos viejos.
+- **Qué se hizo:** `rutas/internacional.ts`: un `tipo` desconocido es un 422 en palabras con la lista de tipos. El guion busca el caso en `tipo=incidencia` página por página y, ya comprobado, lo cierra con «resolver» y su nota (las vueltas no acumulan casos).
+- **Pruebas:** `apps/servidor/src/rutas/noMeLlegoBandeja.test.ts` (422 del tipo desconocido; Venezuela Pago Móvil y Perú Plin a un conductor con Yape con 55 casos viejos abiertos: la primera página no lo trae, paginando sí). Vista en ROJO (sin el arreglo, el tipo desconocido daba 200). Guion corrido en local con 55 casos viejos: verde, y su caso queda resuelto.
+- **Qué NO tocar:** nunca leer solo la primera página de la bandeja para buscar un caso; nunca ignorar un filtro desconocido en silencio.
+
 ## C-VIGIA-SALDO-CIRCUITO · El tabulador de El Vigía, la tarifa nocturna y el Saldo Divoox cobran bien JUNTOS (25 nov 2026, unión de tres ramas) — Venezuela, El Vigía, Moto · servidor, app de clientes, web
 
 - **Qué se rompía al unirlos:** (1) la página pública de tarifas llamaba a `quienPagaViaje` sin el servicio, así que ignoraba la regla de Moto de El Vigía («conductor», que siembra el tabulador) y le sumaba al pasajero la tarifa de servicio de Venezuela: publicaba 2,20 $ donde la app cobra 2,00 $. (2) Al aceptar, si el prepago del conductor no alcanzaba para la comisión (se gastó entre la oferta y el toque), el uso del Saldo Divoox del pasajero quedaba a su nombre y le contaba para su tope de viajes con saldo del día (el arreglo de 8342c14207 solo soltaba el regalo cuando fallaba tomar el saldo). (3) El guion del sitio de pruebas de Moto en Venezuela movía la palanca de quién paga en la regla de TODOS los servicios de la ciudad, que pierde contra la de Moto: la vuelta iba a caer.
