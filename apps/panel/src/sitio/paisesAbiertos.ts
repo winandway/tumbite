@@ -17,8 +17,14 @@ import FOTO from './paisesAbiertos.json';
 export type ServicioAbierto = { id: string; es: string; en: string };
 export type EstadoPais = { estado: Estado; abierto: boolean; servicios: ServicioAbierto[] };
 type Mapa = Record<string, ServicioAbierto[]>;
+/** Por país (dos letras), cada ciudad pública (su clave) con lo que tiene abierto. */
+type MapaCiudades = Record<string, Record<string, ServicioAbierto[]>>;
+type Respuesta = { paises: Mapa; ciudades: MapaCiudades | null };
 
 export const PAISES_ABIERTOS_PUBLICADOS: Mapa = (FOTO as { paises: Mapa }).paises;
+/** C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades abiertas según producción al compilar. */
+export const CIUDADES_ABIERTAS_PUBLICADAS: MapaCiudades =
+  (FOTO as { ciudades?: MapaCiudades }).ciudades ?? {};
 
 /** El estado de un país con la lista que se le pase (la publicada o la del servidor). */
 export function estadoDePais(p: Pick<Lugar, 'estado' | 'codigo'>, abiertos: Mapa): EstadoPais {
@@ -29,11 +35,35 @@ export function estadoDePais(p: Pick<Lugar, 'estado' | 'codigo'>, abiertos: Mapa
     : { estado: p.estado, abierto: false, servicios: [] };
 }
 
-let enCurso: Promise<Mapa | null> | null = null;
+/**
+ * C-CIUDAD-ABIERTA-SIN-PRONTO (25 nov 2026, orden de Richard: la web pública sí tiene páginas de
+ * ciudad). Una ciudad con `clave` (las de Venezuela) dice lo que de verdad tiene abierto: abierta, con
+ * sus servicios; si no, la página no afirma que haya viajes hoy, y tampoco dice «muy pronto».
+ */
+export type EstadoCiudad = { abierta: boolean; servicios: ServicioAbierto[] };
+export function estadoDeCiudad(
+  c: Pick<Lugar, 'clave' | 'pais'>,
+  codigoPais: string | undefined,
+  ciudades: MapaCiudades,
+): EstadoCiudad {
+  const delPais = codigoPais ? new Map(Object.entries(ciudades)).get(codigoPais) : undefined;
+  const servicios = (c.clave && delPais && new Map(Object.entries(delPais)).get(c.clave)) || [];
+  return { abierta: servicios.length > 0, servicios };
+}
+
+let enCurso: Promise<Respuesta | null> | null = null;
 function pedir() {
   enCurso ??= fetch('/datos/web/paises')
-    .then((r) => (r.ok ? (r.json() as Promise<{ paises?: Mapa }>) : null))
-    .then((d) => (d?.paises && typeof d.paises === 'object' ? d.paises : null))
+    .then((r) => (r.ok ? (r.json() as Promise<{ paises?: Mapa; ciudades?: MapaCiudades }>) : null))
+    .then((d) =>
+      d?.paises && typeof d.paises === 'object'
+        ? {
+            paises: d.paises,
+            // Un servidor de antes no da las ciudades: manda lo publicado.
+            ciudades: d.ciudades && typeof d.ciudades === 'object' ? d.ciudades : null,
+          }
+        : null,
+    )
     .catch((e: unknown) => {
       // Sin respuesta manda lo publicado (nunca se inventa un país abierto ni cerrado).
       console.warn('paises abiertos: sin respuesta del servidor, queda lo publicado', e);
@@ -42,8 +72,8 @@ function pedir() {
   return enCurso;
 }
 
-export function usePaisesAbiertos() {
-  const [vivos, setVivos] = useState<Mapa | null>(null);
+function useRespuesta() {
+  const [vivos, setVivos] = useState<Respuesta | null>(null);
   useEffect(() => {
     let vigente = true;
     void pedir().then((m) => {
@@ -53,8 +83,25 @@ export function usePaisesAbiertos() {
       vigente = false;
     };
   }, []);
+  return vivos;
+}
+
+export function usePaisesAbiertos() {
+  const vivos = useRespuesta();
   return (p: Pick<Lugar, 'estado' | 'codigo'>) =>
-    estadoDePais(p, vivos ?? PAISES_ABIERTOS_PUBLICADOS);
+    estadoDePais(p, vivos?.paises ?? PAISES_ABIERTOS_PUBLICADOS);
+}
+
+/** El mapa de ciudades abiertas: el publicado y, en cuanto responde, el del servidor. */
+export function useMapaCiudades(): MapaCiudades {
+  return useRespuesta()?.ciudades ?? CIUDADES_ABIERTAS_PUBLICADAS;
+}
+
+/** El estado de una ciudad con `clave`, con el código del país al que pertenece. */
+export function useCiudadesAbiertas() {
+  const vivos = useRespuesta();
+  return (c: Pick<Lugar, 'clave' | 'pais'>, codigoPais: string | undefined) =>
+    estadoDeCiudad(c, codigoPais, vivos?.ciudades ?? CIUDADES_ABIERTAS_PUBLICADAS);
 }
 
 /** Solo para las pruebas: olvida lo consultado. */

@@ -12,5 +12,23 @@
         "en": "Car"
       }
     ]
+  },
+  "ciudades": {
+    "VE": {
+      "el-vigia": [
+        {
+          "id": "moto",
+          "es": "Moto",
+          "en": "Moto"
+        }
+      ],
+      "tucani": [
+        {
+          "id": "moto",
+          "es": "Moto",
+          "en": "Moto"
+        }
+      ]
+    }
   }
 }

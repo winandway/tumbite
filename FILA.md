@@ -12,6 +12,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Divoox en Venezuela para Google y los buscadores de IA (encargo de Richard, 25 nov 2026) — Venezuela · rama `fase-seo-venezuela` (lleva dentro `fase-venezuela-abierta` y `fase-tabulador-vigia`), sin subir
+
+- [x] [para: desarrollador] Páginas de ciudad de Venezuela (El Vigía y Tucaní abiertas; nueve ciudades grandes sin «pronto» ni «ya disponible»), la del país con sus ciudades y preguntas frecuentes, y «Tarifas de mototaxi en El Vigía» de los datos que cobra el sistema, con datos estructurados, mapa del sitio, hreflang y llms.txt (C-CIUDAD-ABIERTA-SIN-PRONTO, C-TARIFAS-PUBLICAS; cambio de regla de C-SIN-LISTA-DE-CIUDADES solo para la web).
+- [ ] [para: revisor-calidad] Revisar la rama `fase-seo-venezuela` una vez antes de publicar (se publica junto con, o después de, `fase-venezuela-abierta` y `fase-tabulador-vigia`).
+- [ ] [para: desarrollador] Después de publicar: `curl -s https://divoox.com/datos/web/paises` con `ciudades.VE` y `curl -s https://divoox.com/datos/web/tarifas/el-vigia`; volver a compilar la web para que el HTML prearmado y sus datos estructurados tomen las ciudades y los precios reales de producción (hoy van los de la semilla y moto en El Vigía y Tucaní).
+
 ## Tabulador de El Vigía y tarifa nocturna (encargo de Richard, 25 nov 2026) — Venezuela, El Vigía, Moto · rama `fase-tabulador-vigia`, sin subir
 
 - [x] [para: desarrollador] Tabulador de la calle como precios fijos (83 destinos por vía, 126 rutas con los regresos de la zona), tarifa aprendida (base 0, 0,33 $/km, mínimo 1 $), umbral 0, comisión del conductor en El Vigía, tarifa nocturna +30 %, panel con lo que le queda al conductor, Docs es/en (C-TABULADOR-VIGIA, C-RECARGO-NOCHE).

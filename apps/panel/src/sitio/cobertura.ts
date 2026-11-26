@@ -11,6 +11,14 @@ export type Lugar = {
   estado: Estado;
   /** Solo ciudades: país al que pertenece. */
   pais?: string;
+  /**
+   * Solo ciudades (C-CIUDAD-ABIERTA-SIN-PRONTO): la clave pública de su zona (el nombre sin acentos,
+   * «el-vigia»). Con clave, la página dice lo que de verdad está abierto (lo da el servidor) y nunca
+   * «muy pronto»; sin clave (Estados Unidos), sigue el interruptor de siempre.
+   */
+  clave?: string;
+  /** Solo ciudades: el estado donde queda («Mérida»), para el texto y los datos estructurados. */
+  estadoRegion?: string;
   /** Solo países: código de dos letras para las banderas y los formularios. */
   codigo?: string;
   /** Solo países: región para agruparlos en el pie de página. */
@@ -163,7 +171,8 @@ export const PAISES: Lugar[] = [
     region: 'sudamerica',
     primerasCiudades: ['Caracas', 'Maracaibo', 'Valencia'],
     idioma: { es: 'español', en: 'Spanish' },
-    moneda: { es: 'bolívar', en: 'bolívar' },
+    // Los viajes se cobran en dólares (perfil de Venezuela, monedaViajes USD); también se usa el bolívar.
+    moneda: { es: 'dólar y bolívar', en: 'US dollar and bolívar' },
   },
   {
     slug: 'ecuador',
@@ -368,6 +377,31 @@ export const CIUDADES: Lugar[] = [
   },
   { slug: 'tampa', nombre: { es: 'Tampa', en: 'Tampa' }, estado: 'pronto', pais: 'united-states' },
   { slug: 'ocala', nombre: { es: 'Ocala', en: 'Ocala' }, estado: 'pronto', pais: 'united-states' },
+  // C-CIUDAD-ABIERTA-SIN-PRONTO (25 nov 2026, orden de Richard): las ciudades de Venezuela. Lo que
+  // cada una tiene abierto sale del servidor por su `clave`; aquí no se abre ni se cierra nada.
+  // Las que se repiten en otros países llevan el país en la dirección (Mérida, Valencia, San Cristóbal).
+  ...(
+    [
+      ['el-vigia', 'El Vigía', 'el-vigia', 'Mérida'],
+      ['tucani', 'Tucaní', 'tucani', 'Mérida'],
+      ['caracas', 'Caracas', 'caracas', 'Distrito Capital'],
+      ['maracaibo', 'Maracaibo', 'maracaibo', 'Zulia'],
+      ['valencia-venezuela', 'Valencia', 'valencia', 'Carabobo'],
+      ['barquisimeto', 'Barquisimeto', 'barquisimeto', 'Lara'],
+      ['merida-venezuela', 'Mérida', 'merida', 'Mérida'],
+      ['san-cristobal-venezuela', 'San Cristóbal', 'san-cristobal', 'Táchira'],
+      ['maracay', 'Maracay', 'maracay', 'Aragua'],
+      ['puerto-la-cruz', 'Puerto La Cruz', 'puerto-la-cruz', 'Anzoátegui'],
+      ['ciudad-guayana', 'Ciudad Guayana', 'ciudad-guayana', 'Bolívar'],
+    ] as const
+  ).map(([slug, nombre, clave, estadoRegion]): Lugar => ({
+    slug,
+    nombre: { es: nombre, en: nombre },
+    estado: 'pronto',
+    pais: 'venezuela',
+    clave,
+    estadoRegion,
+  })),
 ];
 
 /** Tipos de comida que la gente busca (sirven de enlaces internos para el SEO). */

@@ -16,7 +16,10 @@ import {
 } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
-import { fraseServicios, listaHumana, usePaisesAbiertos } from './paisesAbiertos';
+import { fraseServicios, listaHumana, useMapaCiudades, usePaisesAbiertos } from './paisesAbiertos';
+import { CiudadesDelPais, PaginaCiudadPublica, PaginaTarifas, Preguntas } from './CiudadPublica';
+import { TEXTOS_CIUDAD, ciudadConTarifas, preguntasPais } from './ciudadesPublicas';
+import { TARIFAS_PUBLICADAS } from './tarifasCiudades';
 
 /**
  * Páginas por país, por ciudad y por tipo de comida (/country/x, /city/x, /food/x).
@@ -24,12 +27,29 @@ import { fraseServicios, listaHumana, usePaisesAbiertos } from './paisesAbiertos
  */
 export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma).lugar;
-  const [, tipo, slug] = ruta.split('/');
+  const [, tipo, slug, sub] = ruta.split('/');
   const pais = tipo === 'country' ? paisDe(slug ?? '') : null;
   const ciudad = tipo === 'city' ? ciudadDe(slug ?? '') : null;
   const cocina = tipo === 'food' ? cocinaDe(slug ?? '') : null;
   const estadoCiudad = useCiudadesEnVivo();
   const estadoPais = usePaisesAbiertos();
+  const mapaCiudades = useMapaCiudades();
+
+  // C-TARIFAS-PUBLICAS: /city/el-vigia/prices (solo ciudades con clave; lo demás no existe).
+  if (sub !== undefined) {
+    if (sub === 'prices' && ciudad?.clave && !pais && !cocina)
+      return <PaginaTarifas ciudad={ciudad} idioma={idioma} />;
+    return (
+      <main className="lugar">
+        <h1>{t.noExiste}</h1>
+        <Enlace a="/" className="docs-volver">
+          {t.volver}
+        </Enlace>
+      </main>
+    );
+  }
+  // C-CIUDAD-ABIERTA-SIN-PRONTO: una ciudad con clave (Venezuela) dice lo que de verdad tiene abierto.
+  if (ciudad?.clave) return <PaginaCiudadPublica ciudad={ciudad} idioma={idioma} />;
 
   if (cocina) {
     const nombre = enIdioma(cocina.nombre, idioma);
@@ -71,7 +91,10 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const abierto = ep?.abierto ?? false;
   const serviciosAbiertos = ep?.servicios ?? [];
   const activo = (ciudad ? estadoCiudad(ciudad) : (ep?.estado ?? lugar.estado)) === 'activo';
-  const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug) : [];
+  // Las ciudades con clave van en su propia sección (CiudadesDelPais), sin «muy pronto».
+  const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug && !c.clave) : [];
+  const tc = enIdioma(TEXTOS_CIUDAD, idioma);
+  const conTarifas = pais ? ciudadConTarifas(pais.slug) : null;
   const paisDeCiudad = ciudad ? PAISES.find((p) => p.slug === ciudad.pais) : null;
   const region = pais?.region ? (REGIONES.find((r) => r.id === pais.region) ?? null) : null;
   // Enlaces internos a los países de la misma región (ayudan a Google a recorrer el sitio).
@@ -120,11 +143,29 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
           </section>
         )}
         {abierto && pais && (
-          // Sin nombrar ciudades (C-SIN-LISTA-DE-CIUDADES): solo los datos del país.
-          <section className="lugar-datos">
-            <h2>{t.datos.replace('{lugar}', frase)}</h2>
-            <DatosPais pais={pais} idioma={idioma} region={region} t={t} />
-          </section>
+          // C-CIUDAD-ABIERTA-SIN-PRONTO (25 nov 2026, orden nueva de Richard): la web pública SÍ
+          // enlaza las páginas de ciudad del país (las apps siguen sin listar ciudades).
+          <>
+            <CiudadesDelPais pais={pais} idioma={idioma} />
+            {conTarifas ? (
+              <p>
+                <Enlace a={`/city/${conTarifas.slug}/prices`} className="lugar-tarifas">
+                  {tc.verTarifas.replace('{ciudad}', enIdioma(conTarifas.nombre, idioma))}
+                </Enlace>
+              </p>
+            ) : null}
+            <section className="lugar-datos">
+              <h2>{t.datos.replace('{lugar}', frase)}</h2>
+              <DatosPais pais={pais} idioma={idioma} region={region} t={t} />
+            </section>
+            <Preguntas
+              titulo={tc.preguntas}
+              preguntas={preguntasPais(pais, idioma, {
+                ciudades: mapaCiudades,
+                tarifas: TARIFAS_PUBLICADAS,
+              })}
+            />
+          </>
         )}
         {!abierto && pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
           <section className="lugar-datos">
