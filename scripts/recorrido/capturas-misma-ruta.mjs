@@ -146,6 +146,10 @@ async function correr(M, idioma) {
   // tarjeta según el viaje anterior; con tarjeta se queda en la autorización y no se fotografía)
   await c.getByTestId('misma-ruta-confirmar').click();
   // C-METODO-PAGO-PANTALLA: también pasa por «Método de pago».
+  await c.getByTestId('metodo-pago').waitFor({ timeout: 30_000 });
+  // Estas fotos son de pago en mano: si la cuenta tiene Saldo Divoox, se apaga.
+  if (await c.getByTestId('pago-saldo-desglose').isVisible())
+    await c.getByTestId('pago-saldo-usar').click();
   await c.getByTestId('pago-solicitar').click();
   await c.waitForURL(/\/ride\?/, { timeout: 30_000 });
   await espera(2_500);

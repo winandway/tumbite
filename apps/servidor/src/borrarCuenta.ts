@@ -2,7 +2,7 @@ import type { Env } from './env';
 import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
 import { capturasDeCamila, sentenciasBorrarDeCamila } from './camila/memoria';
-import { cerrarSaldoAlBorrar, saldoDeCliente } from './saldoCliente';
+import { saldoDeCliente, sentenciasCierreSaldo } from './saldoCliente';
 
 /**
  * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026): el borrado de una cuenta, en UNA sola pieza. Lo usan la app
@@ -66,7 +66,7 @@ export async function borrarCuenta(
   const saldoDivoox = await saldoDeCliente(db, u.id);
   if (saldoDivoox > 0 && !opciones.saldoAceptado)
     throw new ErrorDatos(
-      'Tienes Saldo Divoox. Si borras tu cuenta lo pierdes; confirma que lo entiendes para seguir.',
+      'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/delete-account.',
       'saldoDivoox',
       409,
     );
@@ -159,9 +159,11 @@ export async function borrarCuenta(
   // claves siguen en la base para reintentar (nunca queda una captura sin fila que la apunte).
   if (env.BUCKET && capturasCamila.length) await env.BUCKET.delete(capturasCamila);
   // C-SALDO-CLIENTE (I4): el saldo se cierra a cero con su movimiento propio y, si había prepago real,
-  // queda un caso en la bandeja de dinero para devolverlo. Antes de borrar las filas de la persona.
-  if (saldoDivoox > 0) await cerrarSaldoAlBorrar(db, u.id);
+  // queda un caso en la bandeja de dinero para devolverlo.
+  // En el MISMO lote que el borrado (atómico): si el borrado falla, el saldo no queda en cero.
+  const cierreSaldo = saldoDivoox > 0 ? (await sentenciasCierreSaldo(db, u.id)).sentencias : [];
   await db.batch([
+    ...cierreSaldo,
     // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
     ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
     db

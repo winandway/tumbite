@@ -289,6 +289,11 @@ try {
   await navegador.close();
   await restaurarCiudad();
   await pagoMovil(true).catch(() => null);
+  // Novi se apaga otra vez: la salud del servidor local (servicios y zonas de pánico) queda como estaba.
+  await sql(`UPDATE servicios_zona SET estado = 'proximamente' WHERE zona_id = '${NOVI.id}'`).catch(
+    () => null,
+  );
+  await sql(`UPDATE zonas SET activa = 0 WHERE id = '${NOVI.id}'`).catch(() => null);
 }
 for (const f of fotos) {
   execFileSync('cwebp', ['-quiet', '-q', '82', f.archivo, '-o', f.publica]);

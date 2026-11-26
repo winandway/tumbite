@@ -939,3 +939,143 @@ describe('C-SALDO-CLIENTE (revisión): borrar la cuenta y el prepago', () => {
     expect(caso?.monto_esperado).toBe(700);
   });
 });
+
+// ───────────── Ajustes finales del revisor (25 nov 2026) ─────────────
+
+describe('C-SALDO-CLIENTE (ajustes finales): borrar la cuenta sin callejón y devolver el prepago', () => {
+  it('1: una app vieja recibe un 409 que dice la salida en palabras (es y en)', async () => {
+    const p = await preparar();
+    await p.cargar(500);
+    const es = await p.e.m.llamar('DELETE', '/datos/cuentas/yo', undefined, p.e.cliente.token, {
+      'x-idioma': 'es',
+    });
+    expect(es.estado).toBe(409);
+    expect(es.datos.error).toContain('divoox.com/delete-account');
+    expect(es.datos.error).toContain('actualiza la app');
+    const en = await p.e.m.llamar('DELETE', '/datos/cuentas/yo', undefined, p.e.cliente.token, {
+      'x-idioma': 'en',
+    });
+    expect(en.datos.error).toContain('divoox.com/delete-account');
+    expect(en.datos.error).toContain('update the app');
+  });
+
+  it('2: el caso de la bandeja trae monto, referencia y fecha; «devuelto» deja su asiento y el canario cuadra', async () => {
+    const p = await preparar();
+    await p.cargar(700, { motivo: 'prepago', comprobante: 'REF-PREPAGO-9' });
+    expect(
+      (await p.e.m.llamar('DELETE', '/datos/cuentas/yo?saldo=acepto', undefined, p.e.cliente.token))
+        .estado,
+    ).toBe(200);
+    const lista = await p.e.m.llamar(
+      'GET',
+      '/datos/admin/bandeja-dinero?tipo=incidencia',
+      undefined,
+      p.e.admin.token,
+    );
+    const caso = (
+      lista.datos.casos as {
+        clave: string;
+        detalle: string;
+        detalleEn: string;
+        acciones: string[];
+        montos: Record<string, number>;
+      }[]
+    ).find((x) => x.acciones.includes('saldo_devuelto'));
+    expect(caso).toBeDefined();
+    expect(caso?.montos.porDevolver).toBe(700);
+    expect(caso?.detalle).toContain('REF-PREPAGO-9');
+    expect(caso?.detalle).toMatch(/política de borrado/);
+    expect(caso?.detalleEn).toContain('REF-PREPAGO-9');
+    expect(caso?.detalleEn).toMatch(/deletion policy/);
+    const hecho = await p.e.m.llamar(
+      'POST',
+      `/datos/admin/bandeja-dinero/${encodeURIComponent(caso?.clave ?? '')}/acciones`,
+      {
+        accion: 'saldo_devuelto',
+        nota: 'Pago móvil de devolución, ref 000777',
+        idempotencia: 'devolver-1-abc',
+      },
+      p.e.admin.token,
+    );
+    expect(hecho.estado).toBe(200);
+    const asiento = await p.e.m.DB.prepare(
+      "SELECT bolsillo, monto FROM libro WHERE concepto = 'saldo_cliente_prepago_devuelto'",
+    ).all<{ bolsillo: string; monto: number }>();
+    expect(asiento.results).toEqual([{ bolsillo: 'directo', monto: -700 }]);
+    const inc = await p.e.m.DB.prepare(
+      "SELECT estado FROM incidencias_dinero WHERE tipo = 'saldo_cliente_por_devolver'",
+    ).first<{ estado: string }>();
+    expect(inc?.estado).toBe('resuelta');
+    expect(await saludSaldoClientes(p.e.m.DB)).toBe('ok');
+    // Un uso cobrado (con su crédito al conductor) pero SIN su asiento contra Divoox: el libro no
+    // cuadra y el canario se pone en rojo.
+    await p.e.m.DB.batch([
+      p.e.m.DB.prepare(
+        `INSERT INTO usos_saldo_divoox (operacion_id, cliente_id, conductor_id, monto, apartado, pais, estado, cerrado_en)
+         VALUES ('op-sin-asiento-xx', 'otro', ?, 100, 100, 'VE', 'cobrado', datetime('now'))`,
+      ).bind(p.e.admin.id),
+      p.e.m.DB.prepare(
+        "INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia) VALUES ('mx', ?, 100, 'regalo', 'saldo-divoox:op-sin-asiento-xx')",
+      ).bind(p.e.admin.id),
+    ]);
+    expect(await saludSaldoClientes(p.e.m.DB)).toBe('error');
+  });
+
+  it('3: el cierre del saldo va en el mismo lote que el borrado: si el borrado falla, el saldo sigue', async () => {
+    const p = await preparar();
+    await p.cargar(900);
+    const { borrarCuenta } = await import('../borrarCuenta');
+    const real = p.e.m.DB;
+    const falla = new Proxy(real, {
+      get(t, k) {
+        if (k === 'batch')
+          return async (s: D1PreparedStatement[]) => {
+            // Los lotes chicos pasan; el del borrado (muchas sentencias) se corta.
+            if (s.length > 3) throw new Error('corte a mitad del borrado');
+            return t.batch(s);
+          };
+        const v = Reflect.get(t, k) as unknown;
+        return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(t) : v;
+      },
+    });
+    const u = await real
+      .prepare('SELECT id, correo FROM usuarios WHERE id = ?')
+      .bind(p.e.cliente.id)
+      .first<{ id: string; correo: string }>();
+    await expect(
+      borrarCuenta({ BUCKET: undefined } as never, falla, u!, { saldoAceptado: true }),
+    ).rejects.toThrow(/corte/);
+    expect(await saldoDeCliente(real, p.e.cliente.id)).toBe(900);
+  });
+});
+
+describe('C-SALDO-CLIENTE (ajustes finales): regalo y saldo en el mismo viaje', () => {
+  it('4: si el saldo frena al conductor, el regalo que tomó se suelta (no le cuenta para su tope)', async () => {
+    const p = await preparar();
+    await conRegaloCodigo(p, 100);
+    await p.cargar(500);
+    const c = await conductorListoVe(p.e, 2000);
+    const q = await p.cotizar();
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'efectivo',
+      usarSaldo: true,
+      regalo: 'SALDOREG',
+    });
+    const id = v.datos.viaje.id as string;
+    for (let i = 0; i < TOPE_DIARIO_SALDO_CONDUCTOR; i++)
+      await p.e.m.DB.prepare(
+        `INSERT INTO usos_saldo_divoox (operacion_id, cliente_id, conductor_id, monto, apartado, pais, estado, tomado_en)
+         VALUES (?, 'otro-cliente', ?, 100, 100, 'VE', 'cobrado', datetime('now'))`,
+      )
+        .bind(`op-tope4-${i}-xxxxxx`, c.rep.id)
+        .run();
+    expect((await c.paso(id, 'aceptar')).estado).toBe(409);
+    const regalo = await p.e.m.DB.prepare(
+      'SELECT conductor_id, tomado_en FROM usos_cupon_divoox WHERE operacion_id = ?',
+    )
+      .bind(id)
+      .first<{ conductor_id: string | null; tomado_en: string | null }>();
+    expect(regalo).toEqual({ conductor_id: null, tomado_en: null });
+  });
+});

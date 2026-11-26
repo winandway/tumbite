@@ -397,7 +397,13 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // quien ya llegó al tope de viajes con regalo del día.
   await tomarRegaloConductor(base(c), id, u.id, await aparatoDe(c));
   // C-SALDO-CLIENTE: tampoco un viaje pagado con el Saldo Divoox de su propia cuenta o teléfono.
-  await tomarSaldoConductor(base(c), id, u.id, await aparatoDe(c));
+  try {
+    await tomarSaldoConductor(base(c), id, u.id, await aparatoDe(c));
+  } catch (e) {
+    // El regalo que quedó a su nombre se suelta también: no le cuenta para su tope del día.
+    await soltarRegaloConductor(base(c), id, u.id);
+    throw e;
+  }
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)

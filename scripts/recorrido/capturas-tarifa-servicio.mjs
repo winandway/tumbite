@@ -202,6 +202,11 @@ try {
     );
     // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita en efectivo.
     await c.getByTestId('pedir-boton').click();
+    await c.getByTestId('metodo-pago').waitFor({ timeout: 30_000 });
+    await espera(600);
+    // Con Saldo Divoox que cubre todo no hay formas de pago a la vista: se apaga para pagar en mano.
+    if (!(await c.getByTestId('pago-metodo-efectivo').isVisible()))
+      await c.getByTestId('pago-saldo-usar').click();
     await c.getByTestId('pago-metodo-efectivo').click();
     await c.getByTestId('pago-solicitar').click();
     await espera(2_500);

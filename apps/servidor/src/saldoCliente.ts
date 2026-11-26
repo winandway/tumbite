@@ -319,9 +319,9 @@ export async function movimientosSaldoCliente(db: D1Database, clienteId: string,
  * que el cliente prepagó (no un regalo), se abre un caso en la bandeja de dinero del equipo para
  * devolvérselo. Idempotente (referencia por cliente).
  */
-export async function cerrarSaldoAlBorrar(db: D1Database, clienteId: string) {
+export async function sentenciasCierreSaldo(db: D1Database, clienteId: string) {
   const saldo = await saldoDeCliente(db, clienteId);
-  if (saldo <= 0) return { cerrado: 0, porDevolver: 0 };
+  if (saldo <= 0) return { sentencias: [] as D1PreparedStatement[], cerrado: 0, porDevolver: 0 };
   const f = await db
     .prepare(
       `SELECT COALESCE(SUM(monto), 0) AS prepago FROM saldo_cliente_movimientos
@@ -331,8 +331,28 @@ export async function cerrarSaldoAlBorrar(db: D1Database, clienteId: string) {
     .first<{ prepago: number }>();
   // Se devuelve lo prepagado, nunca más de lo que queda (lo gastado primero se toma como regalo).
   const porDevolver = Math.max(0, Math.min(saldo, Number(f?.prepago ?? 0)));
+  // Lo que el equipo necesita para devolverlo: monto, referencia y fecha de cada prepago. El
+  // contacto del cliente NO se guarda: la política de borrado lo elimina con la cuenta.
+  const { results: prepagos } = await db
+    .prepare(
+      `SELECT monto, comprobante, creado_en FROM saldo_cliente_movimientos
+        WHERE cliente_id = ? AND concepto = 'recarga' ORDER BY creado_en LIMIT 20`,
+    )
+    .bind(clienteId)
+    .all<{ monto: number; comprobante: string; creado_en: string }>();
+  const lista = (i: 'es' | 'en') =>
+    prepagos
+      .map(
+        (x) =>
+          `${formatearMonto(Number(x.monto), 'USD', i)} · ${x.comprobante || '—'} · ${x.creado_en}`,
+      )
+      .join('; ');
+  const textos = JSON.stringify({
+    es: `El cliente borró su cuenta con ${formatearMonto(saldo, 'USD', 'es')} de Saldo Divoox; ${formatearMonto(porDevolver, 'USD', 'es')} era prepago suyo y hay que devolvérselo. Prepagos (monto · referencia · fecha): ${lista('es')}. Su correo y su teléfono se borraron con la cuenta (política de borrado): búscalo por la referencia del pago original.`,
+    en: `The customer deleted their account with ${formatearMonto(saldo, 'USD', 'en')} of Divoox Balance; ${formatearMonto(porDevolver, 'USD', 'en')} was their own prepayment and must be refunded. Prepayments (amount · reference · date): ${lista('en')}. Their email and phone were deleted with the account (deletion policy): find them through the original payment reference.`,
+  });
   const ref = `cierre-cuenta:${clienteId}`;
-  await db.batch([
+  const sentencias = [
     db
       .prepare(
         `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, motivo)
@@ -352,13 +372,20 @@ export async function cerrarSaldoAlBorrar(db: D1Database, clienteId: string) {
               `saldo-cliente-devolver:${clienteId}`,
               clienteId,
               porDevolver,
-              `El cliente borró su cuenta con ${formatearMonto(saldo, 'USD', 'es')} de Saldo Divoox; ${formatearMonto(porDevolver, 'USD', 'es')} era prepago suyo. Hay que devolvérselo.`,
+              textos,
               ref,
             ),
         ]
       : []),
-  ]);
-  return { cerrado: saldo, porDevolver };
+  ];
+  return { sentencias, cerrado: saldo, porDevolver };
+}
+
+/** Cierra el saldo sola (sin borrar la cuenta). El borrado usa `sentenciasCierreSaldo` en su lote. */
+export async function cerrarSaldoAlBorrar(db: D1Database, clienteId: string) {
+  const c = await sentenciasCierreSaldo(db, clienteId);
+  if (c.sentencias.length) await db.batch(c.sentencias);
+  return { cerrado: c.cerrado, porDevolver: c.porDevolver };
 }
 
 // ───────────────────────── El saldo en un viaje ─────────────────────────
@@ -803,7 +830,26 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
              AND u.creado_en < datetime('now', '-7 days')) AS olvidadas`,
     )
     .first<{ negativos: number; colgados: number; sin_credito: number; olvidadas: number }>();
+  // El libro de Divoox cuadra con el saldo (C-LECTURAS-SALUD: por índices, nunca el libro entero):
+  // cada uso cobrado de 7 días tiene su asiento contra Divoox, cada prepago de 7 días su entrada, y
+  // nunca se devolvió más prepago del que entró (bolsillo «directo», por su índice de concepto).
+  const l = await db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM usos_saldo_divoox u WHERE u.estado = 'cobrado' AND u.monto > 0
+             AND u.cerrado_en > datetime('now', '-7 days')
+             AND NOT EXISTS (SELECT 1 FROM libro x WHERE x.referencia = 'saldo-divoox:' || u.operacion_id || ':divoox')) AS sin_asiento,
+         (SELECT COUNT(*) FROM saldo_cliente_movimientos m WHERE m.concepto = 'recarga'
+             AND m.creado_en > datetime('now', '-7 days')
+             AND NOT EXISTS (SELECT 1 FROM libro x WHERE x.referencia = 'saldo-cliente-prepago:' || m.id)) AS sin_entrada,
+         (SELECT COALESCE(SUM(monto), 0) FROM libro WHERE bolsillo = 'directo'
+             AND concepto IN ('saldo_cliente_prepago_recibido', 'saldo_cliente_prepago_devuelto')) AS neto`,
+    )
+    .first<{ sin_asiento: number; sin_entrada: number; neto: number }>();
+  const descuadre =
+    Number(l?.sin_asiento ?? 0) > 0 || Number(l?.sin_entrada ?? 0) > 0 || Number(l?.neto ?? 0) < 0;
   const malos =
+    (descuadre ? 1 : 0) +
     Number(f?.negativos ?? 0) +
     Number(f?.colgados ?? 0) +
     Number(f?.sin_credito ?? 0) +
