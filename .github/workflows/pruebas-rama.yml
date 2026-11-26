@@ -2,15 +2,13 @@ name: pruebas-rama
 # Publica una rama de trabajo («fase-*») SOLO en el sitio de pruebas (rama yapanel-pruebas →
 # tumbite-pruebas, con su propia base y su propio almacén, sin llaves de Stripe). NUNCA toca
 # producción: no hay ningún paso que empuje a yapanel-build. Fase 0 (15 oct 2026).
+# C-VISTA-PREVIA-RAMA (26 nov 2026): con la variable VISTA_PREVIA_POR_RAMA=si cada rama se prueba en
+# su propia vista previa («vista-previa-rama») y este flujo se apaga: la fila compartida queda solo
+# para main. Sin la variable, sigue como siempre.
 on:
   push:
     branches: ['fase-*']
   workflow_dispatch:
-
-# La misma fila que «publicar»: si llegan dos a la vez, la segunda espera.
-concurrency:
-  group: publicar
-  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -18,6 +16,12 @@ permissions:
 
 jobs:
   pruebas:
+    if: ${{ vars.VISTA_PREVIA_POR_RAMA != 'si' }}
+    # La misma fila que «publicar»: si llegan dos a la vez, la segunda espera. Va en el trabajo (no en
+    # el flujo) para que, apagado por la vista previa por rama, no ocupe ni cancele nada de la fila.
+    concurrency:
+      group: publicar
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.sha }}
@@ -166,7 +170,7 @@ jobs:
   # suelte la fila y publica esa versión.
   republicar:
     needs: pruebas
-    if: ${{ always() }}
+    if: ${{ always() && vars.VISTA_PREVIA_POR_RAMA != 'si' }}
     runs-on: ubuntu-latest
     steps:
       - env:

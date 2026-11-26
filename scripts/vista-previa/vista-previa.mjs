@@ -14,6 +14,7 @@
 // la sesión aparte HOME=~/.tumbite-cloudflare (se pone sola si no hay token).
 // Secreto del reloj de la vista previa: RELOJ_SECRETO_VISTA (si no viene, se crea uno al azar y se
 // imprime en GITHUB_OUTPUT / en pantalla para los guiones).
+/* eslint-disable security/detect-non-literal-fs-filename -- rutas del paquete y de una carpeta temporal propia */
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { appendFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -79,6 +80,21 @@ function sql(nombre, comando) {
   });
 }
 
+/**
+ * Las llaves de Stripe de la vista previa: SOLO de modo prueba (sk_test_/pk_test_). Una llave real
+ * frena todo (además, el servidor la ignoraría en un sitio de pruebas: C-ENTORNOS-SEPARADOS).
+ */
+function llavesStripePrueba() {
+  const sk = process.env.STRIPE_SECRET_KEY_PRUEBA ?? '';
+  const pk = process.env.STRIPE_PUBLISHABLE_KEY_PRUEBA ?? '';
+  if (!sk && !pk) return {};
+  if (!/^(sk|rk)_test_/.test(sk) || !pk.startsWith('pk_test_'))
+    throw new Error(
+      'PROHIBIDO: las llaves de Stripe de una vista previa tienen que ser de modo prueba',
+    );
+  return { STRIPE_SECRET_KEY: sk, STRIPE_PUBLISHABLE_KEY: pk };
+}
+
 async function esperarVersion(url) {
   for (let i = 0; i < 40; i++) {
     try {
@@ -96,7 +112,9 @@ async function esperarVersion(url) {
 
 async function abrir() {
   if (!existsSync(join(paquete, '_worker.js')))
-    throw new Error(`Falta el paquete ${paquete} (arma primero: bash scripts/empaquetar.sh pruebas)`);
+    throw new Error(
+      `Falta el paquete ${paquete} (arma primero: bash scripts/empaquetar.sh pruebas)`,
+    );
   const nombre = nombreVistaPrevia(rama);
   const url = urlVistaPrevia(nombre);
   const t0 = Date.now();
@@ -130,10 +148,21 @@ async function abrir() {
 
   // 3) El almacén de archivos compartido de las vistas previas (se vacía solo a los 14 días).
   const almacenes = wrangler(['r2', 'bucket', 'list'], { silencio: true });
+  // eslint-disable-next-line security/detect-non-literal-regexp -- ALMACEN es una constante fija
   if (!new RegExp(`name:\\s+${ALMACEN}\\b`).test(almacenes)) {
     wrangler(['r2', 'bucket', 'create', ALMACEN], { silencio: true });
     wrangler(
-      ['r2', 'bucket', 'lifecycle', 'add', ALMACEN, 'vaciar-14-dias', '--expire-days', '14', '--force'],
+      [
+        'r2',
+        'bucket',
+        'lifecycle',
+        'add',
+        ALMACEN,
+        'vaciar-14-dias',
+        '--expire-days',
+        '14',
+        '--force',
+      ],
       { silencio: true },
     );
   }
@@ -148,12 +177,23 @@ async function abrir() {
     const config = configWorker({ nombre, idBase: base.uuid, paquete, commit });
     writeFileSync(join(dir, 'wrangler.json'), JSON.stringify(config, null, 2));
     const reloj = process.env.RELOJ_SECRETO_VISTA || randomBytes(24).toString('hex');
-    writeFileSync(join(dir, 'secretos.json'), JSON.stringify({ RELOJ_SECRETO: reloj }));
-    wrangler(['deploy', '--config', join(dir, 'wrangler.json'), '--secrets-file', join(dir, 'secretos.json')], {
-      silencio: true,
-    });
+    const secretos = { RELOJ_SECRETO: reloj, ...llavesStripePrueba() };
+    writeFileSync(join(dir, 'secretos.json'), JSON.stringify(secretos));
+    wrangler(
+      [
+        'deploy',
+        '--config',
+        join(dir, 'wrangler.json'),
+        '--secrets-file',
+        join(dir, 'secretos.json'),
+      ],
+      {
+        silencio: true,
+      },
+    );
     if (process.env.GITHUB_ACTIONS) console.log(`::add-mask::${reloj}`);
     salida('reloj', reloj);
+    salida('stripe', secretos.STRIPE_SECRET_KEY ? 'si' : 'no');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

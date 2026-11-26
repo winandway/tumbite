@@ -101,6 +101,14 @@ pruebasComidaVe.post('/interno/pruebas/comida-ve/armar', async (c) => {
         "INSERT OR REPLACE INTO selfies_control (id, usuario_id, tomada_en, resultado) VALUES (?, ?, datetime('now'), 'ok')",
       )
       .bind(`zz-cmve-sc-${id}`, id),
+    // C-VISTA-PREVIA-RAMA (26 nov 2026): en una base nueva el conductor nace dentro del plazo de papeles
+    // y su país pide la foto de la cara para conectarse. En el sitio compartido la cuenta ya la tenía de
+    // vueltas viejas; aquí se le deja una (sin tocar la que ya tenga).
+    db
+      .prepare(
+        "INSERT INTO kyc (usuario_id, selfie) VALUES (?, 'kyc/guion-cara.jpg') ON CONFLICT(usuario_id) DO UPDATE SET selfie = COALESCE(kyc.selfie, excluded.selfie)",
+      )
+      .bind(id),
   ];
   await db.batch([ficha(repartidor), ficha(sinSaldo), ...selfie(repartidor), ...selfie(sinSaldo)]);
   return c.json({

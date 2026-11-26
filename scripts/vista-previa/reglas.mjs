@@ -43,10 +43,14 @@ export function urlVistaPrevia(nombre) {
  */
 export function validarBaseVistaPrevia({ nombre, id }) {
   if (typeof nombre !== 'string' || !nombre.startsWith(PREFIJO))
-    throw new Error(`«${nombre}» no es una base de vista previa (tiene que empezar por ${PREFIJO})`);
+    throw new Error(
+      `«${nombre}» no es una base de vista previa (tiene que empezar por ${PREFIJO})`,
+    );
   for (const p of BASES_PROHIBIDAS)
     if (p.nombre === nombre || (id && p.id === String(id).toLowerCase()))
-      throw new Error(`PROHIBIDO: «${nombre}» es la base de ${p.nombre}; una vista previa nunca la toca`);
+      throw new Error(
+        `PROHIBIDO: «${nombre}» es la base de ${p.nombre}; una vista previa nunca la toca`,
+      );
   if (/tumbite-db|tumbite-pruebas|^site-/.test(nombre))
     throw new Error(`PROHIBIDO: «${nombre}» parece una base de un sitio publicado`);
   return true;
