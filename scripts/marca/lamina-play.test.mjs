@@ -12,6 +12,7 @@ import {
   colorDeApp,
   comprobarIcono,
   comprobarLamina,
+  contraste,
 } from './lamina-play.mjs';
 
 const lisa = (hex, { ancho = ANCHO, alto = ALTO, alfa = false } = {}) =>
@@ -84,5 +85,12 @@ describe('C-LAMINA-PLAY-COLOR-APP', () => {
     await expect(comprobarIcono(negro, colorDeApp('repartidor'))).rejects.toThrow(
       /color de su app/,
     );
+  });
+
+  it('el rótulo pequeño se lee: contraste de al menos 4,3 a 1 sobre el fondo de su app', () => {
+    for (const { app, rotulo } of LAMINAS)
+      expect(contraste(rotulo, colorDeApp(app))).toBeGreaterThanOrEqual(4.3);
+    // El rótulo azul claro de Driver que marcó el auditor (3,3 a 1) no pasa.
+    expect(contraste('#4AA5DC', colorDeApp('repartidor'))).toBeLessThan(4.3);
   });
 });

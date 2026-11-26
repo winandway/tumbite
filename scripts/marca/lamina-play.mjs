@@ -35,6 +35,7 @@ export const LAMINAS = [
     etiqueta: ['FOR CUSTOMERS', 'PARA CLIENTES'],
     // Sobre el rojo, el resalte va en el negro de la marca (el rojo desaparecería).
     resalte: '#101010',
+    rotulo: '#101010',
     // Auditor de tiendas (26 nov): Moto y Carro no están abiertos en todos los países, así que la
     // frase los nombra con «donde haya» (política de metadatos de Google Play).
     frase: [
@@ -49,6 +50,9 @@ export const LAMINAS = [
     nombre: 'Divoox Driver',
     etiqueta: ['FOR DRIVERS', 'PARA CONDUCTORES'],
     resalte: '#4AA5DC',
+    // Auditor de tiendas (26 nov): el rótulo pequeño en azul claro sobre azul petróleo tenía un
+    // contraste de 3,3 a 1; en blanco pasa a 9 a 1. La frase conserva su resalte azul claro.
+    rotulo: '#FFFFFF',
     frase: ['Drive and deliver *on your schedule*', 'Conduce y reparte *a tu ritmo*'],
   },
   {
@@ -58,9 +62,23 @@ export const LAMINAS = [
     nombre: 'Divoox Restaurants',
     etiqueta: ['FOR RESTAURANTS', 'PARA RESTAURANTES'],
     resalte: '#F20D20',
+    rotulo: '#F20D20',
     frase: ['Orders for *your restaurant*', 'Pedidos para *tu restaurante*'],
   },
 ];
+
+/** Contraste WCAG entre dos colores (1 a 21). */
+export function contraste(a, b) {
+  const lum = (hex) => {
+    const [r, g, bl] = aRgb(hex).map((v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+}
 
 const aRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 const cerca = (a, b, tol = 10) => a.every((v, i) => Math.abs(v - b[i]) <= tol);

@@ -35,7 +35,7 @@ const copiar = (ruta, nombre) => {
 
 const navegador = await chromium.launch();
 const pagina = await navegador.newPage();
-for (const { app, carpeta, nombre, etiqueta, resalte, frase: frases } of LAMINAS) {
+for (const { app, carpeta, nombre, etiqueta, resalte, rotulo, frase: frases } of LAMINAS) {
   const fondo = colorDeApp(app);
   const destino = join(RAIZ, 'capturas-tiendas-con-titulo', carpeta, 'Google Play');
   mkdirSync(destino, { recursive: true });
@@ -64,7 +64,7 @@ for (const { app, carpeta, nombre, etiqueta, resalte, frase: frases } of LAMINAS
 html,body{margin:0;width:${ANCHO}px;height:${ALTO}px;background:${fondo};overflow:hidden}
 .c{height:${ALTO}px;display:flex;align-items:center;gap:44px;padding:0 70px;box-sizing:border-box}
 .c img{width:270px;height:270px;border-radius:60px;border:3px solid rgba(255,255,255,.28);flex:none}
-.e{font-family:Poppins,sans-serif;font-weight:700;font-size:24px;letter-spacing:3px;color:${resalte}}
+.e{font-family:Poppins,sans-serif;font-weight:700;font-size:24px;letter-spacing:3px;color:${rotulo}}
 .n{font-family:Poppins,sans-serif;font-weight:700;font-size:62px;line-height:1.1;color:#fff;margin:6px 0 14px}
 .t{font-family:Poppins,sans-serif;font-weight:700;font-size:36px;line-height:1.2;color:#fff}
 .t b{color:${resalte}}
