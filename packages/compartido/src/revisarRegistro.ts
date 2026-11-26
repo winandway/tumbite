@@ -1,5 +1,6 @@
 import { leerTelefono, mensajeTelefono, telefonoParaMostrar } from './pais/telefono';
 import type { Idioma } from './idiomas';
+import { lugarEscrito, type LugarCuenta } from './lugarCuenta';
 
 /**
  * C-REVISA-TUS-DATOS (19 nov 2026, orden de Richard) — todos los países. Al crear la cuenta, nada se
@@ -11,9 +12,21 @@ import type { Idioma } from './idiomas';
  * La sugerencia del dominio mal escrito (gmial.com → gmail.com) vive en `sugerirCorreo.ts`.
  */
 
+/** El lugar guardado en el borrador (texto JSON) → objeto; null si no hay o no sirve. */
+export function lugarDeBorrador(texto: string | null | undefined): LugarCuenta | null {
+  if (!texto) return null;
+  try {
+    const o = JSON.parse(texto) as LugarCuenta;
+    return o && typeof o.ciudad === 'string' && typeof o.lugarId === 'string' ? o : null;
+  } catch {
+    // Un borrador viejo o roto: como si no hubiera elegido.
+    return null;
+  }
+}
+
 /** Las casillas del registro que se validan y se revisan. */
 export type CasillaRegistro =
-  'nombre' | 'correo' | 'telefono' | 'fechaNacimiento' | 'invitacion' | 'clave';
+  'nombre' | 'correo' | 'telefono' | 'fechaNacimiento' | 'invitacion' | 'clave' | 'lugar';
 
 export type DatosRegistroEscritos = {
   nombre: string;
@@ -24,6 +37,8 @@ export type DatosRegistroEscritos = {
   invitacion?: string;
   /** C-TELEFONO-E164: el país del celular elegido en la pantalla (ISO de dos letras). */
   paisTelefono?: string | null;
+  /** C-REGISTRO-TODO-EL-PAIS: dónde vive, como texto JSON del borrador (LugarCuenta). */
+  lugar?: string;
 };
 
 export type FalloCasilla = { campo: CasillaRegistro; mensaje: string };
@@ -51,6 +66,7 @@ const ES = {
     invitacion: 'Código de invitación',
     correo: 'Correo',
     clave: 'Contraseña',
+    lugar: 'Ciudad',
   },
   errores: {
     correoVacio: 'Escribe tu correo.',
@@ -66,6 +82,7 @@ const ES = {
     telefonoLargo: 'El celular tiene números de más.',
     claveCorta: 'La contraseña lleva al menos 8 caracteres.',
     invitacion: 'El código lleva solo letras y números.',
+    lugar: 'Elige dónde vives.',
   },
   meses: [
     'enero',
@@ -103,6 +120,7 @@ const EN: typeof ES = {
     invitacion: 'Invitation code',
     correo: 'Email',
     clave: 'Password',
+    lugar: 'City',
   },
   errores: {
     correoVacio: 'Enter your email.',
@@ -118,6 +136,7 @@ const EN: typeof ES = {
     telefonoLargo: 'Your phone number has too many digits.',
     claveCorta: 'Your password needs at least 8 characters.',
     invitacion: 'The code uses letters and numbers only.',
+    lugar: 'Choose where you live.',
   },
   meses: [
     'January',
@@ -226,7 +245,7 @@ export function validarRegistro(
     else if (campo === 'invitacion') {
       const codigo = (datos.invitacion ?? '').trim();
       fallo(campo, codigo && !/^[A-Z0-9-]{1,20}$/i.test(codigo) ? e.invitacion : null);
-    }
+    } else if (campo === 'lugar') fallo(campo, lugarDeBorrador(datos.lugar) ? null : e.lugar);
     // La fecha la valida su propia casilla (CampoFecha): a medias queda vacía y no bloquea.
   }
   return fallos;
@@ -282,7 +301,10 @@ export function filasParaRevisar(
         etiqueta: t.fechaNacimiento,
         valor: fechaParaLeer(datos.fechaNacimiento, idioma),
       });
-    else if (campo === 'invitacion' && datos.invitacion?.trim())
+    else if (campo === 'lugar' && lugarDeBorrador(datos.lugar)) {
+      const l = lugarDeBorrador(datos.lugar);
+      if (l) filas.push({ campo, etiqueta: t.lugar, valor: lugarEscrito(l) });
+    } else if (campo === 'invitacion' && datos.invitacion?.trim())
       filas.push({ campo, etiqueta: t.invitacion, valor: datos.invitacion.trim().toUpperCase() });
   }
   return filas;

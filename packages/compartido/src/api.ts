@@ -1,6 +1,14 @@
 import { avisarRed } from './sondeo';
 import type { DatosEntrar, DatosRegistro, RespuestaSesion, Usuario } from './esquemas';
 import type { HitoDesdeApp } from './rastro';
+import type { LugarCuenta } from './lugarCuenta';
+
+/** C-REGISTRO-TODO-EL-PAIS: lo que responden GET y PUT /datos/cuentas/lugar. */
+export type RespuestaLugarCuenta = {
+  lugar: LugarCuenta | null;
+  zona: { id: string; nombre: string } | null;
+  enEspera: boolean;
+};
 
 /** Error del servidor contado en palabras claras, con el campo que falló si lo hay. */
 export class ErrorApi extends Error {
@@ -379,6 +387,11 @@ export function crearApi(op: OpcionesApi) {
     salir: () => pedir<{ ok: true }>('POST', '/datos/cuentas/salir', {}),
     yo: () => pedir<{ usuario: Usuario }>('GET', '/datos/cuentas/yo'),
     borrarCuenta: () => pedir<{ ok: true }>('DELETE', '/datos/cuentas/yo'),
+    /** C-REGISTRO-TODO-EL-PAIS: dónde vive la cuenta, su zona (si la hay) y si espera que abramos. */
+    lugarCuenta: () => pedir<RespuestaLugarCuenta>('GET', '/datos/cuentas/lugar'),
+    /** C-REGISTRO-TODO-EL-PAIS: cambia dónde vive. Nunca responde «no disponible». */
+    cambiarLugarCuenta: (lugar: LugarCuenta) =>
+      pedir<RespuestaLugarCuenta>('PUT', '/datos/cuentas/lugar', { lugar }),
   };
 }
 
