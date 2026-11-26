@@ -252,9 +252,6 @@ CREATE TABLE IF NOT EXISTS movimientos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS movimientos_usuario ON movimientos(usuario_id, creado_en);
--- C-SALDO-CLIENTE: «¿ya se le acreditó esto?» (`referencia = ?`, al pagar el saldo y en el canario)
--- por índice; solo guarda las filas con referencia.
-CREATE INDEX IF NOT EXISTS movimientos_referencia ON movimientos(referencia) WHERE referencia IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS movimientos_unico ON movimientos(usuario_id, pedido_id, concepto) WHERE pedido_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS cuentas_stripe (
@@ -3184,11 +3181,6 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   -- C-PRECIO-ZONA (24 nov 2026): diferencia mínima, en puntos básicos (1000 = 10 %), para que el
   -- precio de la zona reemplace al calculado. NULL = 1000.
   umbral_precio_zona_pb INTEGER,
-  -- C-RECARGO-NOCHE (25 nov 2026): recargo de noche en puntos básicos (3000 = +30 %; NULL = sin
-  -- recargo) y las horas locales en que empieza y termina la noche (NULL = 21 y 6).
-  recargo_noche_pb INTEGER,
-  noche_desde_h INTEGER,
-  noche_hasta_h INTEGER,
   de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
   motivo TEXT NOT NULL DEFAULT '',
@@ -3221,10 +3213,6 @@ CREATE TABLE IF NOT EXISTS rutas_precio_zona (
   precio INTEGER NOT NULL CHECK (precio > 0),
   precio_ida_vuelta INTEGER CHECK (precio_ida_vuelta IS NULL OR precio_ida_vuelta > 0),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
-  -- C-TABULADOR-VIGIA (25 nov 2026): la vía o grupo de la ruta («Vía Mérida»; NULL = sin grupo) y si
-  -- su punto es aproximado y hay que revisarlo en el mapa (editar la ruta lo desmarca).
-  grupo TEXT,
-  revisar INTEGER NOT NULL DEFAULT 0,
   -- Quién del equipo la creó o la cambió (sin clave foránea: no encarece borrar una cuenta; el
   -- detalle de cada cambio queda en auditoria_admin).
   creada_por TEXT,
@@ -5374,16 +5362,13 @@ CREATE INDEX IF NOT EXISTS cargas_saldo_restaurante_rest ON cargas_saldo_restaur
 -- «mitad». Una fila por país (ciudad = '') y, si hace falta, por ciudad (id de la zona). Sin fila:
 -- «conductor». El porcentaje sale siempre de la política de comisión; aquí solo se dice quién lo carga.
 -- Cada viaje guarda el valor con que nació (en su cotización): cambiarlo no toca viajes en curso.
--- C-QUIEN-PAGA-SERVICIO (25 nov 2026): la regla puede ser de un solo servicio ('' = todos). Las bases
--- con la clave vieja (pais, ciudad) se rehacen al arrancar (esquemaQuienPaga.ts).
 CREATE TABLE IF NOT EXISTS quien_paga_viajes (
   pais TEXT NOT NULL,
   ciudad TEXT NOT NULL DEFAULT '',
-  servicio TEXT NOT NULL DEFAULT '',
   valor TEXT NOT NULL CHECK (valor IN ('conductor', 'cliente', 'mitad')),
   cambiado_por TEXT,
   cambiado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (pais, ciudad, servicio)
+  PRIMARY KEY (pais, ciudad)
 );
 -- Valor inicial (Richard, 23 nov 2026): en Venezuela la paga el cliente. Solo si no hay fila (un
 -- cambio hecho desde el panel nunca se pisa al publicar).
@@ -5439,58 +5424,3 @@ CREATE TABLE IF NOT EXISTS suspensiones_negocio (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS suspensiones_negocio_persona ON suspensiones_negocio(persona_id);
-
--- C-SALDO-CLIENTE (25 nov 2026, Venezuela): el Saldo Divoox del pasajero. Crédito prepagado en
--- dólares que carga el equipo desde el panel (carrera de regalo, recarga de regalo o el prepago del
--- cliente con su referencia) y que el pasajero usa en sus viajes. Libro PROPIO e INMUTABLE: el saldo es
--- la suma de los movimientos; nada se cambia ni se borra (los disparadores lo impiden) y cada
--- movimiento lleva una referencia única (idempotencia). Solo `saldoCliente.ts` escribe aquí.
-CREATE TABLE IF NOT EXISTS saldo_cliente_movimientos (
-  id TEXT PRIMARY KEY,
-  cliente_id TEXT NOT NULL,
-  monto INTEGER NOT NULL CHECK (monto <> 0),
-  moneda TEXT NOT NULL DEFAULT 'USD',
-  concepto TEXT NOT NULL CHECK (concepto IN ('regalo', 'recarga', 'uso_viaje', 'devolucion', 'ajuste', 'cierre_cuenta')),
-  referencia TEXT NOT NULL UNIQUE,
-  operacion_id TEXT,
-  autor_id TEXT,
-  motivo TEXT NOT NULL DEFAULT '',
-  comprobante TEXT NOT NULL DEFAULT '',
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_cliente ON saldo_cliente_movimientos(cliente_id, moneda, creado_en);
--- Las cargas del equipo por persona y día (topes diarios): solo las filas con autor.
-CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_autor ON saldo_cliente_movimientos(autor_id, creado_en) WHERE autor_id IS NOT NULL;
--- El canario del saldo (`saludSaldoClientes`): los prepagos de 7 días por concepto y los clientes que
--- se movieron en el último día, sin recorrer la tabla entera.
-CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_concepto ON saldo_cliente_movimientos(concepto, creado_en);
-CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_fecha ON saldo_cliente_movimientos(creado_en);
--- Los disparadores (inmutable y nunca negativo) los crea esquemaSaldoCliente.ts al arrancar.
--- El saldo usado en cada viaje: se APARTA al pedir (sale del saldo), se LIBERA si el viaje no se hizo
--- (vuelve como devolución) y se COBRA al terminar (se le acredita al conductor como ganancia). Lo
--- dudoso queda «en_revision» hasta que el equipo lo mire (mismas protecciones que el regalo).
-CREATE TABLE IF NOT EXISTS usos_saldo_divoox (
-  operacion_id TEXT PRIMARY KEY,
-  cliente_id TEXT NOT NULL,
-  conductor_id TEXT,
-  monto INTEGER NOT NULL CHECK (monto >= 0),
-  apartado INTEGER NOT NULL CHECK (apartado > 0),
-  moneda TEXT NOT NULL DEFAULT 'USD',
-  pais TEXT NOT NULL,
-  -- Antifraude (igual que el regalo): la huella del aparato que pidió y cuándo lo tomó el conductor.
-  aparato TEXT,
-  tomado_en TEXT,
-  estado TEXT NOT NULL DEFAULT 'apartado' CHECK (estado IN ('apartado', 'cobrado', 'liberado', 'en_revision')),
-  motivos TEXT NOT NULL DEFAULT '[]',
-  detalle TEXT NOT NULL DEFAULT '',
-  resuelto_por TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  cerrado_en TEXT,
-  motivo TEXT
-);
--- Por estado y fecha: lo usan el reloj (`estado = 'apartado'`, del más viejo al más nuevo), la
--- revisión del equipo y el canario. Un índice parcial con `IN (...)` SQLite no lo usa para `= 'apartado'`.
-CREATE INDEX IF NOT EXISTS usos_saldo_divoox_estado ON usos_saldo_divoox(estado, creado_en);
-CREATE INDEX IF NOT EXISTS usos_saldo_divoox_conductor ON usos_saldo_divoox(conductor_id, estado) WHERE conductor_id IS NOT NULL;
--- El canario: los usos cobrados de los últimos 7 días por la fecha de cierre (no la de creación).
-CREATE INDEX IF NOT EXISTS usos_saldo_divoox_cerrado ON usos_saldo_divoox(estado, cerrado_en);
