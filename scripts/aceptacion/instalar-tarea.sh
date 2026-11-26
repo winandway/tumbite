@@ -8,6 +8,8 @@ set -euo pipefail
 REPO=/Users/windocellc/Divoox
 COPIA=$REPO/.robot-nocturno
 DIR=$HOME/.config/tumbite/robot-nocturno
+# launchd no carga el perfil de la terminal: se guarda dónde está Node (nvm) al instalar.
+NODO=$(dirname "$(command -v node)")
 mkdir -p "$DIR" "$HOME/Library/LaunchAgents"
 chmod 700 "$DIR"
 
@@ -17,7 +19,7 @@ grep -qx '/.robot-nocturno/' "$REPO/.git/info/exclude" 2>/dev/null || echo '/.ro
 cat > "$DIR/lanzar.sh" <<EOF
 #!/bin/bash
 # Lo llama launchd. Pone al día la copia fija y corre la noche.
-export PATH="/opt/homebrew/bin:/usr/local/bin:\$PATH"
+export PATH="$NODO:/opt/homebrew/bin:/usr/local/bin:\$PATH"
 set -uo pipefail
 cd "$REPO" || exit 1
 git fetch -q origin main || true
@@ -31,7 +33,7 @@ exec bash scripts/aceptacion/noche.sh
 EOF
 cat > "$DIR/parte.sh" <<EOF
 #!/bin/bash
-export PATH="/opt/homebrew/bin:/usr/local/bin:\$PATH"
+export PATH="$NODO:/opt/homebrew/bin:/usr/local/bin:\$PATH"
 cd "$COPIA" 2>/dev/null && exec node scripts/aceptacion/parte.mjs
 EOF
 chmod 700 "$DIR/lanzar.sh" "$DIR/parte.sh"
