@@ -10,6 +10,7 @@ import { AvisoBorrador } from './AvisoBorrador';
 import { AyudaAqui } from './AyudaAqui';
 import { FallosReportados, PreguntasDiagnostico } from './SuperCamilaFallos';
 import { pedir } from './api';
+import { palabra } from './diseno/palabras';
 
 /**
  * C-CAMILA-BUZON (17 nov 2026) — todos los países, primero El Vigía y Tucaní. El buzón de Camila
@@ -39,10 +40,16 @@ const T = {
     deTope: (g: string, t: string) => `${g} de ${t}`,
     llamadas: (n: number) => (n === 1 ? '1 consulta' : `${n} consultas`),
     regalos: (n: number) => (n === 1 ? '1 regalo de arranque' : `${n} regalos de arranque`),
-    motivo: { ayuda: 'Necesita ayuda', pide_persona: 'Pidió una persona' } as Record<
-      string,
-      string
-    >,
+    // C-SIN-CODIGOS-CRUDOS: cada motivo con el que el servidor abre un caso, dicho en palabras.
+    motivo: {
+      ayuda: 'Necesita ayuda',
+      pide_persona: 'Pidió una persona',
+      molesta: 'Está molesto',
+      no_supo: 'Camila no supo responder',
+      sin_permiso_ia: 'Sin permiso para la IA: lo atiende una persona',
+      respuesta_reportada: 'Reportó una respuesta de Camila',
+      fallo_sigue: 'Un fallo sigue sin resolverse',
+    } as Record<string, string>,
     abrir: 'Abrir la conversación',
     canal: {
       web: 'Web',
@@ -145,7 +152,15 @@ const T = {
     deTope: (g: string, t: string) => `${g} of ${t}`,
     llamadas: (n: number) => (n === 1 ? '1 request' : `${n} requests`),
     regalos: (n: number) => (n === 1 ? '1 starter gift' : `${n} starter gifts`),
-    motivo: { ayuda: 'Needs help', pide_persona: 'Asked for a person' } as Record<string, string>,
+    motivo: {
+      ayuda: 'Needs help',
+      pide_persona: 'Asked for a person',
+      molesta: 'Upset',
+      no_supo: 'Camila didn’t know the answer',
+      sin_permiso_ia: 'No AI permission: a person handles it',
+      respuesta_reportada: 'Reported one of Camila’s answers',
+      fallo_sigue: 'A failure is still unresolved',
+    } as Record<string, string>,
     abrir: 'Open the conversation',
     canal: {
       web: 'Web',
@@ -473,7 +488,7 @@ function BandejaCamila({
                 <button type="button" className="camila-fila" onClick={() => abrir(c.persona_id)}>
                   <span className="camila-fila-cabeza">
                     <strong>{c.nombre || t.sinCuenta}</strong>
-                    <span className="camila-chip">{t.motivo[c.motivo] ?? c.motivo}</span>
+                    <span className="camila-chip">{palabra(t.motivo, c.motivo)}</span>
                     <small className="pista">
                       {t.canal[c.canal_ultimo] ?? c.canal_ultimo} ·{' '}
                       {fechaCamila(c.creado_en, idioma)}
@@ -745,7 +760,7 @@ function HiloEquipo({ t, idioma, persona }: { t: Textos; idioma: Idioma; persona
             {hilo.casos.map((c) => (
               <li key={c.id} className="camila-caso">
                 <span>
-                  <strong>{t.motivo[c.motivo] ?? c.motivo}</strong> ·{' '}
+                  <strong>{palabra(t.motivo, c.motivo)}</strong> ·{' '}
                   {t.estadoCaso[c.estado] ?? c.estado} · {fechaCamila(c.creado_en, idioma)}
                   <br />
                   {c.resumen}

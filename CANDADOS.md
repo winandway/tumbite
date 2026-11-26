@@ -48,6 +48,22 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Ajustes finales del revisor:** un `vencido` que no es «si», «no» ni «no_se_ve» se lee como «no_se_ve» pero queda marcado (`vencidoDesconocido`) y la foto nunca sale en verde: sale en amarillo para que la mire una persona; el «no_se_ve» de verdad sigue igual. La marca del borrador es `{declarados, libres}`: al leer, un formulario que declara sus campos conserva los de su base y los que crecieron solos; un campo que la marca dice declarado y hoy ya no está no vuelve. Los formularios de campos libres conservan todo.
 - **Cómo se comprueba:** `confianzaLeida.test.ts` (licencia con "", `null` y texto largo; cara y foto de vehículo con campos nulos; `vencido` desconocido en amarillo) y `borradorSinAvisoVacio.test.tsx` (campos que crecen e `inicial: {}` no pierden lo escrito; un campo que el formulario dejó de declarar no vuelve; los del aviso falso siguen en verde). **Vistas en ROJO** con las piezas anteriores.
 
+## C-FIRMA-EQUIPO · La respuesta del equipo firma una sola vez y corta (Gerencia en vivo, 26 nov 2026) — todos los países y canales · servidor
+
+- **Qué se rompió y cómo se veía:** Richard recibió por WhatsApp una respuesta del equipo firmada «Soporte Divoox, del equipo de soporte de Divoox».
+- **Causa real:** la ruta de responder (`apps/servidor/src/rutas/camila.ts`) pegaba siempre «, del equipo de soporte de Divoox» detrás del nombre de la cuenta, y la cuenta del equipo ya se llama «Soporte Divoox». Una prueba vieja de correo fijaba justo esa firma doble.
+- **Qué se hizo:** pieza única `firmaDelEquipo` en `apps/servidor/src/camila/identidad.ts`. Si el nombre ya dice «Soporte», «Support» o la marca: solo «Soporte Divoox» («Divoox Support»). Si es un nombre propio: «María, de Soporte Divoox» («María, Divoox Support»). Siempre una línea. La firma de Camila no cambia.
+- **Cómo se comprueba:** `apps/servidor/src/camila/firmaEquipo.test.ts` (los dos casos, en los dos idiomas) y la prueba de correo de `correoEntrante.test.ts`, que responde desde la bandeja con la cuenta «Soporte Divoox» y exige la firma sola. Comprobado en rojo con la firma vieja.
+- **Qué NO tocar:** ninguna pantalla arma la firma a mano; todo canal pasa por `firmaDelEquipo`.
+
+## C-SIN-CODIGOS-CRUDOS en la bandeja de Camila · Cada motivo de caso dicho en palabras (Gerencia en vivo, 26 nov 2026) — todos los países · panel
+
+- **Qué se rompió y cómo se veía:** en la bandeja de Camila del superadmin, el motivo de algunos casos salía como código: «sin_permiso_ia», «respuesta_reportada», «no_supo».
+- **Causa real:** la tabla de motivos del panel solo conocía «ayuda» y «pide_persona», y lo desconocido se pintaba tal cual (`t.motivo[c.motivo] ?? c.motivo`).
+- **Qué se hizo:** `apps/panel/src/panel/SuperCamila.tsx` tiene la frase de cada motivo con el que el servidor abre un caso (ayuda, pide_persona, molesta, no_supo, sin_permiso_ia, respuesta_reportada, fallo_sigue), en español y en inglés, y pinta con la pieza `palabra` de `diseno/palabras.ts`: un código nuevo nunca sale con guiones bajos.
+- **Cómo se comprueba:** `apps/panel/src/panel/SuperCamilaMotivos.test.tsx` lee del código del servidor los motivos que escribe en `camila_casos` (no de una lista a mano), pinta la bandeja con todos en los dos idiomas y falla si uno sale como código o sin frase propia. Comprobado en rojo con la tabla vieja.
+- **Qué NO tocar:** un motivo nuevo en el servidor obliga a darle su frase aquí: el candado se pone en rojo solo.
+
 ## C-BORRADOR-ELECCION-SOLA · Una elección de una lista, sola, no es un borrador (Gerencia en vivo, 26 nov 2026) — todos los países · compartido y panel
 
 - **Qué se rompió y cómo se veía:** con la versión del 25 nov ya publicada, «Cambiar ciudad» de la ficha del conductor seguía diciendo «Recuperamos lo que estabas escribiendo» en una pestaña nueva donde nadie escribió nada.
