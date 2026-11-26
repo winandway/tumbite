@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-SMS-ENLACE-NO-ES-DINERO · El código al azar de un enlace nunca frena un SMS como si fuera un monto (26 nov 2026, la vuelta del sitio de pruebas cayó) — Venezuela · servidor
+
+- **Qué se rompía:** la compuerta de SMS a Venezuela (`textoParaSmsVenezuela`, sin montos ni datos de pago) miraba también los enlaces. El código de seguimiento es aleatorio y a veces trae «9usd», «Bs5» o «VES0»: el aviso al destinatario de un envío salía «bloqueado» por dinero. Se vio en la prueba `smsVenezuelaTextos.test.ts` («manda la versión corta…»), que caía de vez en cuando según el código; en producción, el SMS de ese destinatario no salía.
+- **Qué se hizo:** `smsVenezuelaTextos.ts` revisa el dinero sobre el texto SIN enlaces (`sinEnlaces`: `http(s)://…` y dominios con ruta). Un monto de verdad junto a un enlace sigue frenado.
+- **Prueba:** `smsVenezuelaTextos.test.ts`, «C-SMS-ENLACE-NO-ES-DINERO», con códigos que disparaban el fallo. **Vista en ROJO** sin el arreglo.
+- **Qué NO tocar:** nunca volver a pasar el enlace por las reglas de `DINERO`.
+
 ## C-ACCESO-CON-CABECERA · «Entrar» de Driver y Restaurants sigue en el color del arranque, con el logo blanco (26 nov 2026, Richard) — todos los países · apps (y su versión web)
 
 - **Qué se veía:** al abrir la Driver, el arranque azul petróleo mostraba bien el logo; al pasar a «Sign in» el fondo saltaba a blanco y el logo «desaparecía». Palabras de Richard: «el logo sale bien con un fondo… debería mantenerse el azul petróleo».
