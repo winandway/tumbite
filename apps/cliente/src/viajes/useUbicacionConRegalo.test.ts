@@ -10,7 +10,10 @@ describe('la ubicación del pasajero en un viaje con regalo', () => {
   const s = readFileSync(join(import.meta.dirname, 'useUbicacionConRegalo.ts'), 'utf8');
   const pantalla = readFileSync(join(import.meta.dirname, '..', 'app', 'ride.tsx'), 'utf8');
   it('solo con regalo y con el viaje en curso', () => {
-    expect(s).toMatch(/Boolean\(viaje\?\.regalo\) && viaje\?\.estado === 'en_curso'/);
+    // C-SALDO-CLIENTE: también con el viaje pagado con Saldo Divoox (mismas protecciones).
+    expect(s).toMatch(
+      /\(Boolean\(viaje\?\.regalo\) \|\| \(viaje\?\.saldoDivoox \?\? 0\) > 0\) && viaje\?\.estado === 'en_curso'/,
+    );
     expect(s).toMatch(/if \(!id \|\| !activo\) return;/);
   });
   it('nunca abre la pregunta del permiso ni muestra un error', () => {
