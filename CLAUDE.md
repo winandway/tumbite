@@ -269,6 +269,12 @@ INVESTIGACIÓN → EVIDENCIA [REA] / [OBS] / [DOC] → DIAGRAMA → COMPARACIÓN
 - **Prohibido usar tarjetas reales o generar cobros reales para probar**, también en tumbite.com. Lo que pasó: una compra de prueba real de 7,18 dólares quedó abierta desde el 12 oct; Richard decidió no reembolsarla y se marcó como entregada el 15 oct.
 - Nada se publica en producción sin pasar antes por staging (flujo permanente, abajo).
 
+## Cada rama se prueba en SU vista previa, no en la fila compartida (Gerencia, 26 nov 2026)
+
+- **Camino normal:** cada rama `fase-*` tiene su propio sitio de pruebas en Cloudflare (`https://divoox-preview-<rama>.windoce1.workers.dev`) con su propia base D1 (`divoox-preview-<rama>`), creada, sembrada y borrada sola (flujos `vista-previa-rama` y `vista-previa-cerrar`). Las ramas corren a la vez; la fila compartida (staging.tumbite.com) queda solo para `main`.
+- Desde esta Mac: `node scripts/vista-previa/vista-previa.mjs abrir <rama>` (con el paquete de pruebas ya armado). Guía completa: `docs/VISTAS-PREVIAS-POR-RAMA.md`.
+- **Candado C-VISTA-PREVIA-RAMA:** una vista previa jamás usa la base de producción ni la del sitio compartido (el servidor responde 503 sin su marca; el guion se niega con esas bases). Se enciende en GitHub con la variable `VISTA_PREVIA_POR_RAMA=si` y el secreto `CLOUDFLARE_TOKEN_VISTAS_PREVIAS`; sin ellos, las ramas siguen con `pruebas-rama` como antes.
+
 ## Flujo permanente de publicación (dictado por Richard, 17 oct 2026)
 
 DESARROLLO → STAGING → PRUEBAS → PRODUCCIÓN. **Toda versión aprobada en staging continúa a producción como parte normal del ciclo**, sin esperar otra autorización. Entregas frecuentes: nada aprobado se queda acumulado sin publicar.
