@@ -4,7 +4,7 @@
 
 ## Where Divoox is live
 
-- Live today in Venezuela: Moto, Car, Delivery. https://divoox.com/country/venezuela
+- Live today in Venezuela (El Vigía, Tucaní): Moto, Car, Delivery. https://divoox.com/country/venezuela
 
 ## Main pages
 
@@ -286,8 +286,8 @@
 - [Divoox is coming soon to Orlando](https://divoox.com/city/orlando): We’re getting ready to launch in Orlando: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in
 - [Divoox is coming soon to Tampa](https://divoox.com/city/tampa): We’re getting ready to launch in Tampa: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
 - [Divoox is coming soon to Ocala](https://divoox.com/city/ocala): We’re getting ready to launch in Ocala: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
-- [Divoox in El Vigía](https://divoox.com/city/el-vigia): El Vigía (Mérida): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Dr
-- [Divoox in Tucaní](https://divoox.com/city/tucani): Tucaní (Mérida): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Driv
+- [Divoox in El Vigía: now live](https://divoox.com/city/el-vigia): In El Vigía you can already request motorbike and car rides with Divoox. You see the price before you request, follow your driver on the map, and pay in ca
+- [Divoox in Tucaní: now live](https://divoox.com/city/tucani): In Tucaní you can already request motorbike rides and package delivery with Divoox. You see the price before you request, follow your driver on the map, an
 - [Divoox in Caracas](https://divoox.com/city/caracas): Caracas (Distrito Capital): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in 
 - [Divoox in Maracaibo](https://divoox.com/city/maracaibo): Maracaibo (Zulia): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Dr
 - [Divoox in Valencia](https://divoox.com/city/valencia-venezuela): Valencia (Carabobo): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox 
@@ -298,6 +298,9 @@
 - [Divoox in Puerto La Cruz](https://divoox.com/city/puerto-la-cruz): Puerto La Cruz (Anzoátegui): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in
 - [Divoox in Ciudad Guayana](https://divoox.com/city/ciudad-guayana): Ciudad Guayana (Bolívar): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Di
 
+## Fares
+
+- [Moto taxi fares in El Vigía · Divoox](https://divoox.com/city/el-vigia/prices): What a Divoox moto taxi costs from downtown El Vigía, by road, by day and by night. These are the same prices the app charges: what you see here is what th
 
 ## Food types
 
