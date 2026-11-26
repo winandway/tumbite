@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { entornoDe } from '../entorno';
+import { paisesAbiertos } from './servicios';
 
 /**
  * F17 (29 oct 2026): el estado público de cada ciudad en la web sale del servidor. Encender una
@@ -23,6 +25,17 @@ ciudadesWeb.get('/web/ciudades', async (c) => {
   const filas = await estados(base(c));
   c.header('Cache-Control', 'public, max-age=60');
   return c.json({ ciudades: Object.fromEntries(filas.map((f) => [f.slug, f.estado])) });
+});
+
+/**
+ * C-PAIS-ABIERTO-SIN-PRONTO (25 nov 2026): los países con al menos un servicio abierto al público,
+ * con sus servicios. La web la usa para decir «Ya estamos en …» y la publicación la guarda en las
+ * páginas prearmadas (título, descripción y tarjeta social). Solo lee, con caché de borde.
+ */
+ciudadesWeb.get('/web/paises', async (c) => {
+  const paises = await paisesAbiertos(base(c), entornoDe(c.req.url));
+  c.header('Cache-Control', 'public, max-age=300');
+  return c.json({ paises });
 });
 
 ciudadesWeb.get('/admin/web/ciudades', async (c) => {
