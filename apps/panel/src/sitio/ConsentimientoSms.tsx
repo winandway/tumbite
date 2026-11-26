@@ -58,6 +58,14 @@ const T = {
         ],
       },
       {
+        // C-WHATSAPP-FALTA (25 nov 2026): WhatsApp es otro canal, con su propia regla.
+        titulo: 'WhatsApp messages',
+        parrafos: [
+          'WhatsApp is a separate channel from text messages and the SMS checkbox does not apply to it. If you request your verification code on WhatsApp and confirm your phone with it, and you are a Divoox Driver driver, we may also send you, from Divoox’s official WhatsApp account, a short notice telling you which step is still missing to activate your account (for example, sending your motorcycle for review). It contains no marketing.',
+          'At most one every 24 hours, and at most three for the same step; they stop as soon as you complete it. If you change your phone number, they stop until you confirm the new one. To stop them, reply “STOP” or “BAJA” to that WhatsApp message, tap “Stop the reminders” in any of our sign-up emails or write to us. If you reply with a question, our support team answers on the same WhatsApp within 24 hours of your message.',
+        ],
+      },
+      {
         titulo: 'Privacy',
         parrafos: [
           'We do not sell your mobile number. We do not share your mobile number or SMS consent with third parties or affiliates for their marketing purposes. It is shared only with the provider that delivers the message on our behalf.',
@@ -112,6 +120,13 @@ const T = {
         parrafos: [
           'Responde STOP a cualquier mensaje para darte de baja: recibirás una confirmación y ningún mensaje más. Responde START para volver a recibirlos y HELP para pedir ayuda. También puedes desmarcar la casilla de mensajes de texto en tu cuenta cuando quieras.',
           `Para ayuda, escríbenos a ${CONTACTO}. Los operadores no son responsables de mensajes demorados o no entregados.`,
+        ],
+      },
+      {
+        titulo: 'Mensajes por WhatsApp',
+        parrafos: [
+          'WhatsApp es un canal aparte de los mensajes de texto y la casilla de SMS no se aplica a él. Si pides tu código de verificación por WhatsApp y confirmas tu celular con él, y eres conductor de Divoox Driver, también podemos enviarte, desde la cuenta oficial de WhatsApp de Divoox, un aviso corto con el paso que te falta para activar tu cuenta (por ejemplo, enviar tu moto a revisión). No lleva publicidad.',
+          'Como mucho uno cada 24 horas y tres por el mismo paso; dejan de llegar en cuanto lo completas. Si cambias tu número de celular, dejan de llegar hasta que confirmes el nuevo. Para no recibirlos más, responde «BAJA» o «STOP» a ese WhatsApp, toca «No enviarme más recordatorios» en cualquiera de nuestros correos de registro o escríbenos. Si respondes con una pregunta, nuestro equipo de soporte te contesta por el mismo WhatsApp dentro de las 24 horas desde tu mensaje.',
         ],
       },
       {

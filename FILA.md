@@ -16,6 +16,7 @@
 
 - [x] [para: desarrollador] Pestaña «Vehículos» en Verificaciones (esperan revisión y sin enviar, aprobar ahí mismo, número del menú por persona), Camila recuerda enviar el vehículo, menú por uso («Países y servicios» y «Para aprobar» al final, límites por moneda en Configuración), barra del vehículo coherente, foto real de la licencia, «Soporte Divoox» en la línea de tiempo, documento vencido claro y pedido por Camila, privacidad con ciudad base y regreso. Candados vistos en rojo.
 - [ ] [para: revisor-calidad] Revisar la rama `fase-verificaciones-todo` una vez antes de publicar.
+- [ ] [para: revisor-calidad] Revisar la rama `fase-whatsapp-falta` (C-WHATSAPP-FALTA, todos los países) una vez antes de publicar. Al publicar: subir las capturas privadas whatsapp-falta-vista y whatsapp-falta-zona (es/en) con scripts/docs/subir-ayuda-interna.mjs; después crear la plantilla en Meta con scripts/whatsapp/enviar-plantilla-a-meta.mjs --enviar y suscribir el webhook con scripts/whatsapp/suscribir-webhook.mjs --enviar (messages y estado de plantillas; incluye C-WHATSAPP-ENTRANTE).
 - [ ] [para: desarrollador] Al publicar: subir las capturas privadas nuevas de la ayuda interna (`activacion-vehiculos-{es,en}.webp`, `menu-por-uso-{es,en}.webp`) con `node scripts/docs/subir-ayuda-interna.mjs`.
 - [ ] [para: desarrollador] Medir el uso real del menú sin escribir en la base por mirar (por ejemplo, contar acciones de `auditoria_admin` por sección, solo lectura) y reordenar Operación con esos datos.
 

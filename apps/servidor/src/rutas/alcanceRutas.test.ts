@@ -285,6 +285,9 @@ const LISTAS_DE_NUMEROS = [
   // C-REZAGADOS: los recordatorios de registro son de toda la empresa.
   'GET /admin/camila/recordatorios',
   'PUT /admin/camila/recordatorios',
+  // C-WHATSAPP-FALTA: «a todos los trabados de una zona» exige alcance total (prueba de abajo).
+  'GET /admin/camila/whatsapp/zona/:zona',
+  'POST /admin/camila/whatsapp/zona/:zona',
 ];
 
 const conIds = (patron: string, valor: (param: string) => string) =>
@@ -454,6 +457,9 @@ describe('C-CAMILA: lo de toda la empresa exige alcance total', () => {
       ['PUT', '/datos/admin/camila/ajustes'],
       ['GET', '/datos/admin/camila/recordatorios'],
       ['PUT', '/datos/admin/camila/recordatorios'],
+      ['PUT', '/datos/admin/camila/whatsapp'],
+      ['GET', '/datos/admin/camila/whatsapp/zona/x'],
+      ['POST', '/datos/admin/camila/whatsapp/zona/x'],
     ] as const) {
       const cuerpo =
         metodo === 'PUT'

@@ -3425,6 +3425,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "actor_id",
     "creado_en"
   ],
+  "whatsapp_entrantes": [
+    "wamid",
+    "numero_hash",
+    "tipo",
+    "estado",
+    "intentos",
+    "creado_en"
+  ],
   "rezagados_bajas": [
     "usuario_id",
     "canal",

@@ -156,7 +156,11 @@ export async function personaDeCorreo(db: D1Database, correoCrudo: string, nombr
   return crear(db, { correo, nombre: nombre.slice(0, 80) });
 }
 
-/** La persona de un teléfono verificado (SMS y WhatsApp, cuando se enciendan). */
+/**
+ * La persona de un teléfono (SMS y WhatsApp). Primero la ficha que ya tiene ese número; si no, la cuenta
+ * con ese celular canónico (C-WHATSAPP-ENTRANTE: conductor primero, después cualquier cuenta activa); si
+ * no hay ninguna, una ficha nueva SIN cuenta (solo el número).
+ */
 export async function personaDeTelefono(db: D1Database, telefono: string) {
   const ya = await db
     .prepare(`SELECT ${COLUMNAS} FROM camila_personas WHERE telefono = ?`)
@@ -164,7 +168,9 @@ export async function personaDeTelefono(db: D1Database, telefono: string) {
     .first<Persona>();
   if (ya) return ya;
   const u = await db
-    .prepare("SELECT id FROM usuarios WHERE telefono_canonico = ? AND rol = 'repartidor' LIMIT 1")
+    .prepare(
+      "SELECT id FROM usuarios WHERE telefono_canonico = ? AND activo = 1 AND rol <> 'admin' ORDER BY rol = 'repartidor' DESC, creado_en DESC LIMIT 1",
+    )
     .bind(telefono)
     .first<{ id: string }>();
   if (u) return personaDeUsuario(db, u.id);

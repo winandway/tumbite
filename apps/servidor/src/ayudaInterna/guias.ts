@@ -16,6 +16,7 @@
 import { papelesDelPais, plazoPapeles } from './papeles';
 import { menuPorUso, verificacionUnica } from './activacion';
 import { fichaConductor } from './fichaConductor';
+import { whatsappFalta } from './whatsappFalta';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -3474,6 +3475,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(camilaBuzon),
         de(verificacionesEnVivo),
         de(recordatoriosRegistro),
+        // C-WHATSAPP-FALTA: el aviso por WhatsApp de lo que le falta al conductor.
+        de(whatsappFalta),
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
         de(cambiarCiudad),

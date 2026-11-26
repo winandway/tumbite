@@ -182,6 +182,12 @@ export const esquemaEnv = z.object({
    */
   META_WHATSAPP_VERIFY_TOKEN: z.string().optional(),
   META_APP_SECRET: z.string().optional(),
+  /**
+   * C-WHATSAPP-ENTRANTE: el secreto con que se saca la huella (HMAC) del número de quien nos escribe por
+   * WhatsApp, para el tope por número sin guardar el número. Secreto, de 32 caracteres o más; sin él no
+   * se guarda huella (rige un tope general) y la pieza `whatsappEntrante` del canario lo dice.
+   */
+  WHATSAPP_HUELLA_SECRETO: z.string().optional(),
   TWILIO_WHATSAPP_FROM: z.string().optional(),
   TWILIO_WHATSAPP_PLANTILLA_ES: z.string().optional(),
   TWILIO_WHATSAPP_PLANTILLA_EN: z.string().optional(),

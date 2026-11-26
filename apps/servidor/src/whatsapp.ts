@@ -330,3 +330,54 @@ export async function numeroWhatsappVivo(
   numeroComprobado = { cuando: ahora, ...r };
   return r;
 }
+
+/**
+ * C-WHATSAPP-ENTRANTE (25 nov 2026): un mensaje de SESIÓN (texto libre, sin plantilla) por la API de
+ * Meta. Meta solo lo deja salir dentro de las 24 horas desde el último mensaje de la persona; esa
+ * ventana la comprueba quien llama (camila/canales.ts). Solo con Meta (Twilio no lo tiene aquí).
+ */
+export async function enviarTextoWhatsapp(
+  env: Env,
+  para: string,
+  texto: string,
+): Promise<{ ok: boolean; motivo?: string; referencia?: string }> {
+  if (!whatsappConfigurado(env) || proveedorWhatsapp(env) !== 'meta')
+    return { ok: false, motivo: 'sin_proveedor' };
+  const version = /^v\d+\.\d+$/.test(env.META_WHATSAPP_VERSION ?? '')
+    ? env.META_WHATSAPP_VERSION!
+    : VERSION_META;
+  try {
+    const res = await fetch(
+      `${baseMeta(env)}/${version}/${encodeURIComponent(env.META_WHATSAPP_PHONE_ID ?? '')}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${env.META_WHATSAPP_TOKEN}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: para.replace(/\D/g, ''),
+          type: 'text',
+          text: { preview_url: false, body: texto.slice(0, 4000) },
+        }),
+        signal: AbortSignal.timeout(TIEMPO_MS),
+      },
+    );
+    const r = (await res.json().catch(() => null)) as {
+      messages?: { id?: string }[];
+      error?: { message?: string; code?: number };
+    } | null;
+    const id = r?.messages?.[0]?.id;
+    if (!res.ok || !id) {
+      const motivo = `meta ${r?.error?.code ?? res.status} ${r?.error?.message ?? ''}`.trim();
+      console.error('whatsapp: la respuesta de sesión no salió', motivo);
+      return { ok: false, motivo: motivo.slice(0, 200) };
+    }
+    return { ok: true, referencia: id };
+  } catch (e) {
+    console.error('whatsapp: la respuesta de sesión no salió', String(e));
+    return { ok: false, motivo: String(e).slice(0, 200) };
+  }
+}
