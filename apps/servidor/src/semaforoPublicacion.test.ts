@@ -38,8 +38,8 @@ describe('semáforo de la publicación', () => {
     expect(verify).not.toMatch(/cancel-in-progress: true/);
   });
 
-  // C-SEMAFORO-RELOJ (26 nov 2026): el reloj de pruebas solo lo mueven los guiones; una pasada cortada
-  // dejó un regalo apartado sin cerrar, la salud dio 503 una hora después y frenó la publicación.
+  // C-SEMAFORO-RELOJ (26 nov 2026): el reloj de pruebas solo lo mueven los guiones; un regalo apartado
+  // por una pasada cortada no se liberaba solo y la salud en 503 frena toda publicación.
   it('C-SEMAFORO-RELOJ: antes de exigir la salud le da un toque al reloj del sitio de pruebas', () => {
     expect(script).toMatch(/-X POST "\$URL\/datos\/reloj" -H "x-reloj-secreto: \$RELOJ_SECRETO"/);
     const rama = leer('.github', 'workflows', 'pruebas-rama.yml');
@@ -51,6 +51,11 @@ describe('semáforo de la publicación', () => {
     expect(flujo).not.toMatch(
       /RELOJ_SECRETO: [^\n]+\n\s+YAD_LLAVE_SITIO: \$\{\{ secrets\.YAD_LLAVE_PRODUCCION/,
     );
+  });
+
+  it('C-SEMAFORO-DICE-LA-PIEZA: si la salud frena, el registro dice qué pieza está mal', () => {
+    expect(script).toMatch(/piezas que no están bien/);
+    expect(script).toMatch(/grep -E '"\(error\|atrasado\|tope\)"/);
   });
 
   it('dos publicaciones nunca corren a la vez', () => {

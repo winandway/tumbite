@@ -24,8 +24,8 @@ for i in $(seq 1 $INTENTOS); do
     seguidas=0
     for j in $(seq 1 60); do
       # C-SEMAFORO-RELOJ (26 nov 2026): el reloj del sitio de pruebas solo lo mueven los guiones. Una
-      # pasada cortada a medias dejaba un regalo apartado sin cerrar, una hora después la salud daba
-      # 503 y el semáforo frenaba a todas las publicaciones siguientes. Se le da un toque al reloj
+      # pasada cortada a medias puede dejar un regalo apartado sin cerrar que nadie libera, y con la salud
+      # en 503 el semáforo frena a todas las publicaciones siguientes. Se le da un toque al reloj
       # (al empezar y cada minuto) para que cierre lo que quedó cortado antes de exigir la salud.
       if [ -n "${RELOJ_SECRETO:-}" ] && [ $(( (j - 1) % 12 )) = 0 ]; then
         curl -s -m 60 -o /dev/null -X POST "$URL/datos/reloj" -H "x-reloj-secreto: $RELOJ_SECRETO" \
@@ -40,6 +40,10 @@ for i in $(seq 1 $INTENTOS); do
       sleep "$PAUSA_SERVIDOR"
     done
     if [ "$seguidas" -lt 3 ]; then
+      # C-SEMAFORO-DICE-LA-PIEZA (26 nov 2026): si lo que frena es la salud, se imprime qué pieza está
+      # mal (el 26 nov fueron horas adivinando: era una revisión de regalo olvidada siete días).
+      echo "Salud del sitio de pruebas (piezas que no están bien):"
+      curl -s -m 30 "$URL/datos/salud?v=$RANDOM" | tr ',{' '\n\n' | grep -E '"(error|atrasado|tope)"|"commit"' || true
       echo "::error::La página sirve $VERSION pero el servidor no la confirmó tres veces seguidas en cinco minutos."
       exit 1
     fi
