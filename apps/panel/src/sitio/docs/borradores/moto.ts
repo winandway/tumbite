@@ -99,7 +99,9 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         resumen:
           'El Saldo Divoox es crédito en dólares para pagar tus viajes: si alcanza, pagas todo con saldo; si no, usas lo que tienes y el resto lo pagas en mano.',
         explicacion: [
-          'Tu Saldo Divoox lo carga nuestro equipo: una carrera de regalo, una recarga de regalo o lo que pagaste por adelantado. Cuando te cargamos saldo, te llega un aviso con el monto.',
+          'Tu Saldo Divoox puede ser un regalo de Divoox (por ejemplo, el regalo de bienvenida que te llega al confirmar tu celular, si tu ciudad lo tiene) o lo que pagaste por adelantado. Cuando te llega saldo, recibes un aviso con el monto.',
+          'Los regalos de Divoox tienen fecha de vencimiento; lo que pagaste por adelantado no vence nunca. En «Método de pago» ves cuánto es regalo y cuánto es tuyo, y la línea «Incluye … de regalo que vence el …» cuando un regalo está por vencer. Te avisamos 3 días antes y el día que vence.',
+          'Al pagar con saldo, primero se usa el regalo que vence antes, después los demás regalos y al final lo que pagaste por adelantado. Si un viaje no se hace, cada parte vuelve a donde estaba.',
           'En «Método de pago» ves tu saldo disponible en dólares y en bolívares, con el logo de Divoox. Con el interruptor encendido, primero se descuenta tu regalo de código (si tienes) y después tu saldo, hasta donde alcance.',
           'Si el saldo cubre todo el viaje, no pagas nada en mano. Si no alcanza, la pantalla te dice cuánto usas y cuánto te queda por pagar, y eliges si el resto va por Pago Móvil o en efectivo.',
           'El saldo se separa al pedir. Si cancelas, o si no encontramos conductor, vuelve completo a tu cuenta. Por ahora se usa en los viajes de ahora, no en las reservas.',
@@ -108,10 +110,12 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           '¿Cómo consigo Saldo Divoox?',
           '¿Qué pasa con mi saldo si cancelo el viaje?',
           '¿Puedo usar el saldo en una reserva?',
+          '¿Cuándo vence mi regalo de Saldo Divoox?',
+          '¿Qué se usa primero, el regalo o lo que pagué?',
         ],
         pasos: [
           'Pide tu viaje y toca «Continuar».',
-          'En la tarjeta «Saldo Divoox», deja el interruptor encendido.',
+          'En la tarjeta «Saldo Divoox», deja el interruptor encendido y mira si tienes un regalo por vencer.',
           'Mira cuánto usas y cuánto te queda por pagar.',
           'Si queda algo por pagar, elige Pago Móvil o efectivo.',
           'Toca «Solicitar».',
@@ -318,6 +322,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'In some countries, our team can add Divoox Balance to your account (a gift ride, a gift top-up or a prepayment), and you use it on the “Payment method” screen.',
           'Divoox Balance isn’t used in the United States, so you won’t see it on your “Payment method” screen. Here you pay each ride with cash or card.',
           'Promo codes still work the same way: add them in your account and they’re applied to your next eligible ride.',
+          'Where Divoox Balance is available, gifts from Divoox (like a welcome gift when you confirm your mobile number) have an expiration date, while a prepayment never expires. Gifts that expire first are used first, and you get a notice 3 days before a gift expires and on the day it expires.',
         ],
         preguntas: [
           'Can I use Divoox Balance in the United States?',
@@ -498,6 +503,12 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       ),
     ],
     'divoox-balance': [
+      foto(
+        'pago-saldo-regalo',
+        'es',
+        'La tarjeta Saldo Divoox con lo disponible, cuánto es regalo y cuánto prepagado, y la línea «Incluye … de regalo que vence el …».',
+        'Ves cuánto es regalo y cuándo vence.',
+      ),
       foto(
         'pago-saldo-todo',
         'es',

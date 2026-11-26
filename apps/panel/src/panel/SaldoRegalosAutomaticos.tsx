@@ -164,13 +164,17 @@ export function SaldoRegalosAutomaticos({ idioma }: { idioma: Idioma }) {
       ) : (
         <>
           {datos.reglas.length === 0 ? <p className="pista">{t.sinReglas}</p> : null}
-          <ul className="lista-simple" data-testid="saldo-regalos-reglas">
+          <div className="formulario" data-testid="saldo-regalos-reglas">
             {datos.reglas.map((r) => {
               const pct = r.presupuesto
                 ? Math.min(100, Math.round((r.gastado / r.presupuesto) * 100))
                 : 0;
               return (
-                <li key={r.id} className="flex-tarjeta" data-testid={`regla-${r.tipo}-${r.zonaId}`}>
+                <div
+                  key={r.id}
+                  className="flex-tarjeta"
+                  data-testid={`regla-${r.tipo}-${r.zonaId}`}
+                >
                   <p>
                     <Insignia tono={r.encendida ? 'hecho' : 'apagado'}>
                       {r.encendida ? t.encendida : t.apagada}
@@ -215,10 +219,10 @@ export function SaldoRegalosAutomaticos({ idioma }: { idioma: Idioma }) {
                   >
                     {t.cambiar}
                   </button>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
           <FormRegla
             key={editar?.id ?? 'nueva'}
             base={editar}
