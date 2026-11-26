@@ -301,6 +301,11 @@ const es = {
     comida: 'Tipo de comida',
     tituloActivo: 'Comida a domicilio en {lugar} con Divoox',
     tituloPronto: 'Divoox llega muy pronto a {lugar}',
+    // C-PAIS-ABIERTO-SIN-PRONTO: país con un servicio abierto (sale del servidor, no de este texto).
+    tituloAbierto: 'Ya estamos en {lugar}',
+    textoAbierto:
+      'Divoox ya funciona en {lugar} con {servicios}. Descarga la app y pídelo desde tu celular.',
+    descargar: 'Descarga la app',
     textoActivo:
       'Pide de los restaurantes de {lugar}, síguelo en el mapa y recíbelo en tu puerta. Comisiones justas para los restaurantes y el 100 % de la propina para el repartidor.',
     textoPronto:
@@ -629,6 +634,10 @@ const en: Textos = {
     comida: 'Cuisine',
     tituloActivo: 'Food delivery in {lugar} with Divoox',
     tituloPronto: 'Divoox is coming soon to {lugar}',
+    tituloAbierto: 'Now in {lugar}',
+    textoAbierto:
+      'Divoox is now live in {lugar} with {servicios}. Download the app and request it from your phone.',
+    descargar: 'Get the app',
     textoActivo:
       'Order from {lugar} restaurants, track it on the map, and get it at your door. Fair commissions for restaurants and 100% of the tip for the driver.',
     textoPronto:

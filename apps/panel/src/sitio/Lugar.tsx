@@ -16,6 +16,7 @@ import {
 } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
+import { fraseServicios, listaHumana, usePaisesAbiertos } from './paisesAbiertos';
 
 /**
  * Páginas por país, por ciudad y por tipo de comida (/country/x, /city/x, /food/x).
@@ -28,6 +29,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const ciudad = tipo === 'city' ? ciudadDe(slug ?? '') : null;
   const cocina = tipo === 'food' ? cocinaDe(slug ?? '') : null;
   const estadoCiudad = useCiudadesEnVivo();
+  const estadoPais = usePaisesAbiertos();
 
   if (cocina) {
     const nombre = enIdioma(cocina.nombre, idioma);
@@ -63,7 +65,12 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const nombre = enIdioma(lugar.nombre, idioma);
   // Dentro de una frase en inglés: «in the Netherlands», no «in Netherlands».
   const frase = pais ? paisEnFrase(pais, idioma) : nombre;
-  const activo = (ciudad ? estadoCiudad(ciudad) : lugar.estado) === 'activo';
+  // C-PAIS-ABIERTO-SIN-PRONTO: un país con un servicio abierto (Venezuela con Moto) dice «Ya estamos»
+  // con lo que de verdad funciona allí; nunca «muy pronto» ni promete lo que no está abierto.
+  const ep = pais ? estadoPais(pais) : null;
+  const abierto = ep?.abierto ?? false;
+  const serviciosAbiertos = ep?.servicios ?? [];
+  const activo = (ciudad ? estadoCiudad(ciudad) : (ep?.estado ?? lugar.estado)) === 'activo';
   const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug) : [];
   const paisDeCiudad = ciudad ? PAISES.find((p) => p.slug === ciudad.pais) : null;
   const region = pais?.region ? (REGIONES.find((r) => r.id === pais.region) ?? null) : null;
@@ -74,7 +81,16 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
 
   return (
     <>
-      <BannerArriba idioma={idioma} lugar={nombre} activo={activo} />
+      <BannerArriba
+        idioma={idioma}
+        lugar={nombre}
+        activo={activo}
+        servicios={
+          abierto
+            ? serviciosAbiertos.map((x) => (idioma === 'en' ? x.en : x.es)).join(' · ')
+            : undefined
+        }
+      />
       <main className="lugar">
         <Enlace a="/" className="docs-volver">
           {t.volver}
@@ -82,12 +98,35 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
         <span className={`ld-etiqueta ${activo ? 'lugar-activo' : 'lugar-pronto'}`}>
           <Icono nombre={activo ? 'listo' : 'reloj'} tamano={14} /> {activo ? t.activo : t.pronto}
         </span>
-        <h1>{(activo ? t.tituloActivo : t.tituloPronto).replace('{lugar}', frase)}</h1>
+        <h1>
+          {(abierto ? t.tituloAbierto : activo ? t.tituloActivo : t.tituloPronto).replace(
+            '{lugar}',
+            frase,
+          )}
+        </h1>
         <p className="ld-entrada">
-          {(activo ? t.textoActivo : t.textoPronto).replace(/\{lugar\}/g, frase)}
+          {abierto
+            ? t.textoAbierto
+                .replace(/\{lugar\}/g, frase)
+                .replace('{servicios}', fraseServicios(serviciosAbiertos, idioma))
+            : (activo ? t.textoActivo : t.textoPronto).replace(/\{lugar\}/g, frase)}
           {paisDeCiudad ? ` ${t.enPais.replace('{pais}', paisEnFrase(paisDeCiudad, idioma))}` : ''}
         </p>
-        {pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
+        {abierto && (
+          <section className="lugar-abierto">
+            <Enlace a="/download" className="lugar-descargar">
+              <Icono nombre="moto" tamano={18} /> {t.descargar}
+            </Enlace>
+          </section>
+        )}
+        {abierto && pais && (
+          // Sin nombrar ciudades (C-SIN-LISTA-DE-CIUDADES): solo los datos del país.
+          <section className="lugar-datos">
+            <h2>{t.datos.replace('{lugar}', frase)}</h2>
+            <DatosPais pais={pais} idioma={idioma} region={region} t={t} />
+          </section>
+        )}
+        {!abierto && pais?.primerasCiudades && pais.primerasCiudades.length > 0 && (
           <section className="lugar-datos">
             <h2>{t.primerasCiudades.replace('{lugar}', frase)}</h2>
             <p>
@@ -99,26 +138,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
                 ),
               )}
             </p>
-            <dl>
-              {pais.idioma && (
-                <>
-                  <dt>{t.idioma}</dt>
-                  <dd>{enIdioma(pais.idioma, idioma)}</dd>
-                </>
-              )}
-              {pais.moneda && (
-                <>
-                  <dt>{t.moneda}</dt>
-                  <dd>{enIdioma(pais.moneda, idioma)}</dd>
-                </>
-              )}
-              {region && (
-                <>
-                  <dt>{t.region}</dt>
-                  <dd>{enIdioma(region.nombre, idioma)}</dd>
-                </>
-              )}
-            </dl>
+            <DatosPais pais={pais} idioma={idioma} region={region} t={t} />
           </section>
         )}
         {ciudadesDelPais.length > 0 && (
@@ -134,14 +154,16 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
             </ul>
           </section>
         )}
-        <section className="lugar-publicos">
-          <h2>{t.tresPublicos}</h2>
-          <ul>
-            <li>{t.paraComensales}</li>
-            <li>{t.paraRestaurantes}</li>
-            <li>{t.paraRepartidores}</li>
-          </ul>
-        </section>
+        {!abierto && (
+          <section className="lugar-publicos">
+            <h2>{t.tresPublicos}</h2>
+            <ul>
+              <li>{t.paraComensales}</li>
+              <li>{t.paraRestaurantes}</li>
+              <li>{t.paraRepartidores}</li>
+            </ul>
+          </section>
+        )}
         {pais && !activo && (
           <section className="lugar-franquicia">
             <h2>{t.franquiciaTitulo.replace('{lugar}', nombre)}</h2>
@@ -149,9 +171,13 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
             <Enlace a="/franchise">{t.franquiciaEnlace}</Enlace>
           </section>
         )}
-        <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
-        <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
-        <FormEspera tipo="repartidor" idioma={idioma} titulo={t.quieroRepartir} />
+        {!abierto && (
+          <>
+            <FormEspera tipo="comensal" idioma={idioma} titulo={t.avisame} />
+            <FormEspera tipo="restaurante" idioma={idioma} titulo={t.quieroRestaurante} />
+            <FormEspera tipo="repartidor" idioma={idioma} titulo={t.quieroRepartir} />
+          </>
+        )}
         {vecinos.length > 0 && region && (
           <nav className="lugar-vecinos" aria-label={t.otrosPaises.replace('{region}', '')}>
             <h2>{t.otrosPaises.replace('{region}', enIdioma(region.nombre, idioma))}</h2>
@@ -169,9 +195,40 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   );
 }
 
-/** «A, B y C» / «A, B, and C». */
-function listaHumana(xs: string[], idioma: Idioma): string {
-  if (xs.length < 2) return xs.join('');
-  const y = idioma === 'en' ? (xs.length > 2 ? ', and ' : ' and ') : ' y ';
-  return `${xs.slice(0, -1).join(', ')}${y}${xs.at(-1) ?? ''}`;
+type TextosLugar = (typeof TEXTOS_SITIO)['es']['lugar'];
+
+/** Idioma de la app, moneda y región del país. */
+function DatosPais({
+  pais,
+  idioma,
+  region,
+  t,
+}: {
+  pais: DatosLugar;
+  idioma: Idioma;
+  region: (typeof REGIONES)[number] | null;
+  t: TextosLugar;
+}) {
+  return (
+    <dl>
+      {pais.idioma && (
+        <>
+          <dt>{t.idioma}</dt>
+          <dd>{enIdioma(pais.idioma, idioma)}</dd>
+        </>
+      )}
+      {pais.moneda && (
+        <>
+          <dt>{t.moneda}</dt>
+          <dd>{enIdioma(pais.moneda, idioma)}</dd>
+        </>
+      )}
+      {region && (
+        <>
+          <dt>{t.region}</dt>
+          <dd>{enIdioma(region.nombre, idioma)}</dd>
+        </>
+      )}
+    </dl>
+  );
 }

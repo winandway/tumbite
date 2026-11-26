@@ -2838,6 +2838,31 @@ button {
   align-items: center;
   gap: 6px;
 }
+/* C-PAIS-ABIERTO-SIN-PRONTO: el botón «Descarga la app» de un país abierto. */
+.lugar-abierto {
+  margin: 8px 0 28px;
+}
+.lugar .lugar-descargar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  background: var(--primario);
+  color: #fff;
+  font-family: Poppins, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+}
+.lugar .lugar-descargar:hover {
+  background: #101010;
+}
+.lugar .lugar-descargar:focus-visible {
+  outline: 3px solid #101010;
+  outline-offset: 2px;
+}
 .lugar-activo {
   background: #e7f8ee !important;
   color: #157347 !important;
