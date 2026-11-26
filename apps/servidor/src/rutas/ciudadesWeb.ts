@@ -4,7 +4,8 @@ import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { entornoDe } from '../entorno';
-import { paisesAbiertos } from './servicios';
+import { abiertosParaLaWeb } from './servicios';
+import { SERVICIOS_TARIFAS_PUBLICAS, tarifasPublicasConCache } from './tarifasWeb';
 
 /**
  * F17 (29 oct 2026): el estado público de cada ciudad en la web sale del servidor. Encender una
@@ -33,9 +34,26 @@ ciudadesWeb.get('/web/ciudades', async (c) => {
  * páginas prearmadas (título, descripción y tarjeta social). Solo lee, con caché de borde.
  */
 ciudadesWeb.get('/web/paises', async (c) => {
-  const paises = await paisesAbiertos(base(c), entornoDe(c.req.url));
+  // C-CIUDAD-ABIERTA-SIN-PRONTO: también cada ciudad pública con lo que tiene abierto (por su clave).
+  const { paises, ciudades } = await abiertosParaLaWeb(base(c), entornoDe(c.req.url));
   c.header('Cache-Control', 'public, max-age=300');
-  return c.json({ paises });
+  return c.json({ paises, ciudades });
+});
+
+/**
+ * C-TARIFAS-PUBLICAS (25 nov 2026, Richard: que Google diga cuánto cuesta un mototaxi en El Vigía): los
+ * precios fijos de una ciudad pública, de los MISMOS datos que cobra el sistema. Solo lee, con caché.
+ */
+ciudadesWeb.get('/web/tarifas/:ciudad', async (c) => {
+  const clave = slugValido.safeParse(c.req.param('ciudad'));
+  // Solo los servicios con precios públicos (hoy, Moto): lo demás no toca la base.
+  const servicio = z.enum(SERVICIOS_TARIFAS_PUBLICAS).safeParse(c.req.query('servicio') ?? 'moto');
+  if (!clave.success || !servicio.success)
+    throw new ErrorDatos('Esa ciudad no existe.', 'ciudad', 404);
+  const t = await tarifasPublicasConCache(base(c), clave.data, servicio.data, entornoDe(c.req.url));
+  c.header('Cache-Control', 'public, max-age=300');
+  if (!t) return c.json({ error: 'Sin precios publicados en esa ciudad.' }, 404);
+  return c.json(t);
 });
 
 ciudadesWeb.get('/admin/web/ciudades', async (c) => {

@@ -9,6 +9,10 @@ import { describe, expect, it } from 'vitest';
  * no dice dónde está; al que su zona no tiene servicio se le dice «aún no llegamos a tu zona» y se
  * le ofrece avisarle. Camila sí puede contestarlo cuando se lo preguntan.
  *
+ * Cambio del 25 nov 2026 (orden de Richard): la WEB PÚBLICA sí tiene páginas de ciudad y la del país
+ * las enlaza (C-CIUDAD-ABIERTA-SIN-PRONTO, `apps/panel/src/sitio/CiudadPublica.tsx`). Esta prueba sigue
+ * igual para las APPS, el registro, la pantalla de entrar y la portada.
+ *
  * Comprobado en ROJO: devolviendo `DondeFunciona` a packages/movil/src/Acceso.tsx y la frase
  * «Hoy ya funciona en» al buscador de la portada, las dos pruebas fallan.
  */

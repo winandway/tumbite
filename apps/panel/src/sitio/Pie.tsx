@@ -7,7 +7,7 @@ import { BotonGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
-import { usePaisesAbiertos } from './paisesAbiertos';
+import { useCiudadesAbiertas, usePaisesAbiertos } from './paisesAbiertos';
 import {
   CANAL_YOUTUBE,
   TEXTOS_VIDEO,
@@ -42,6 +42,15 @@ export function Pie({
   const estadoCiudad = useCiudadesEnVivo();
   // C-PAIS-ABIERTO-SIN-PRONTO: un país abierto (Venezuela con Moto) va en verde, nunca «muy pronto».
   const estadoPais = usePaisesAbiertos();
+  // C-CIUDAD-ABIERTA-SIN-PRONTO: una ciudad con clave (Venezuela) va en verde si tiene algo abierto;
+  // si no, sin etiqueta: nunca «muy pronto».
+  const ciudadAbierta = useCiudadesAbiertas();
+  const estadoDeLaCiudad = (c: (typeof CIUDADES)[number]) =>
+    c.clave
+      ? ciudadAbierta(c, PAISES.find((p) => p.slug === c.pais)?.codigo).abierta
+        ? ('activo' as const)
+        : null
+      : estadoCiudad(c);
   const activo = (
     <span className="pie-activo">
       <Icono nombre="listo" tamano={12} /> {t.activo}
@@ -52,7 +61,7 @@ export function Pie({
       ? CIUDADES.map((c) => ({
           a: `/city/${c.slug}`,
           nombre: enIdioma(c.nombre, idioma),
-          estado: estadoCiudad(c),
+          estado: estadoDeLaCiudad(c),
         }))
       : pestana === 'paises'
         ? PAISES.map((p) => ({

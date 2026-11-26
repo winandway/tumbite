@@ -240,10 +240,38 @@ export async function paisesAbiertos(
   db: Db,
   entorno: Entorno | null,
 ): Promise<Record<string, ServicioAbierto[]>> {
+  return (await abiertosParaLaWeb(db, entorno)).paises;
+}
+
+/**
+ * C-CIUDAD-ABIERTA-SIN-PRONTO (25 nov 2026, orden de Richard: la web pública sí tiene páginas de
+ * ciudad) — Venezuela y todos los países. La clave pública de una ciudad: el nombre de su zona sin
+ * acentos, en minúsculas y con guiones («El Vigía» → «el-vigia»). Nunca el id interno de la zona.
+ */
+export const claveCiudadPublica = (nombre: string) =>
+  nombre
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+export type AbiertosWeb = {
+  paises: Record<string, ServicioAbierto[]>;
+  /** Por país, cada ciudad pública (por su clave) con lo que tiene abierto HOY. */
+  ciudades: Record<string, Record<string, ServicioAbierto[]>>;
+};
+
+/**
+ * Los países y las ciudades con al menos un servicio abierto al público, con la misma regla del
+ * catálogo sin sesión. Una consulta, la de las aperturas y, por servicio con conductor o comercio y
+ * ciudad, la de si hay quien lo tome. Sin zonas de pruebas ni ids internos.
+ */
+export async function abiertosParaLaWeb(db: Db, entorno: Entorno | null): Promise<AbiertosWeb> {
   const [{ results }, aperturas] = await Promise.all([
     db
       .prepare(
-        `SELECT s.*, z.pais AS pais, z.id AS zona_id, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
+        `SELECT s.*, z.pais AS pais, z.id AS zona_id, z.nombre AS zona_nombre, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
                 EXISTS (SELECT 1 FROM servicios_implementados si WHERE si.servicio_id = s.id) AS implementado,
                 0 AS piloto, 0 AS solo_prueba,
                 EXISTS (SELECT 1 FROM tarifas_viaje t WHERE t.servicio_id = s.id AND t.zona_id = z.id AND t.activa = 1) AS con_tarifa
@@ -254,11 +282,12 @@ export async function paisesAbiertos(
             AND ${sinZonasDePrueba('z.nombre')}
           ORDER BY z.pais, s.orden, s.id`,
       )
-      .all<Servicio & { pais: string; zona_id: string }>(),
+      .all<Servicio & { pais: string; zona_id: string; zona_nombre: string }>(),
     entorno === 'pruebas' ? Promise.resolve(null) : aperturasVigentes(db),
   ]);
   const ahora = ahoraSql();
   const porPais: Record<string, ServicioAbierto[]> = {};
+  const porCiudad: Record<string, Record<string, ServicioAbierto[]>> = {};
   for (const s of results) {
     if (estadoEfectivo(s, ahora) !== 'disponible') continue;
     if (
@@ -267,16 +296,32 @@ export async function paisesAbiertos(
       !aperturas.some(([sv, p]) => sv === s.id && p === s.pais)
     )
       continue;
-    const lista = (porPais[s.pais] ??= []);
-    if (lista.some((x) => x.id === s.id)) continue;
+    const clave = claveCiudadPublica(s.zona_nombre ?? '');
+    let enCiudad: ServicioAbierto[] | null = null;
+    if (clave) {
+      const delPais = (porCiudad[s.pais] ??= {});
+      enCiudad = new Map(Object.entries(delPais)).get(clave) ?? [];
+      Object.assign(delPais, { [clave]: enCiudad });
+    }
+    if (enCiudad?.some((x) => x.id === s.id)) continue;
     // C-SERVICIO-SIN-OFERTA: encendido pero sin quien lo tome (Envíos sin conductores, Comida sin
     // restaurantes aprobados) no cuenta como abierto: el cliente tampoco lo puede pedir.
     if (SERVICIOS_CON_CONDUCTOR.has(s.id) && !(await hayQuienLoTome(db, s.zona_id, s.id))) continue;
     if (COMERCIOS_DE_SERVICIO.has(s.id) && !(await hayComerciosEnZona(db, s.zona_id, s.id)))
       continue;
-    lista.push({ id: s.id, es: s.nombre_es, en: s.nombre_en });
+    const item = { id: s.id, es: s.nombre_es, en: s.nombre_en };
+    enCiudad?.push(item);
+    const lista = (porPais[s.pais] ??= []);
+    if (!lista.some((x) => x.id === s.id)) lista.push(item);
   }
-  return Object.fromEntries(Object.entries(porPais).filter(([, lista]) => lista.length > 0));
+  const conAlgo = <T extends unknown[]>(o: Record<string, T>) =>
+    Object.fromEntries(Object.entries(o).filter(([, xs]) => xs.length > 0));
+  const ciudades = Object.fromEntries(
+    Object.entries(porCiudad)
+      .map(([pais, cs]) => [pais, conAlgo(cs)] as const)
+      .filter(([, cs]) => Object.keys(cs).length > 0),
+  );
+  return { paises: conAlgo(porPais), ciudades };
 }
 
 /** El estado efectivo de UN servicio en una zona (lo usan las cotizaciones de viaje). */

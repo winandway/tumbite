@@ -69,7 +69,9 @@ export function CiudadesWeb({ idioma }: { idioma: Idioma }) {
         </p>
       ) : null}
       <ul className="lista">
-        {CIUDADES.map((c) => {
+        {/* C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades con clave (Venezuela) dicen lo que tiene abierto
+            su zona; no se encienden aquí. */}
+        {CIUDADES.filter((c) => !c.clave).map((c) => {
           const nombre = enIdioma(c.nombre, idioma);
           const activa = (estados[c.slug] ?? c.estado) === 'activo';
           return (

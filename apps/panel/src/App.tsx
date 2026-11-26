@@ -130,7 +130,8 @@ export function App() {
         <Agente ruta={ruta} idioma={idioma} />
       </Suspense>
     );
-  if (/^\/(country|city|food)\/[a-z-]+$/.test(ruta))
+  // C-TARIFAS-PUBLICAS: también /city/<ciudad>/prices.
+  if (/^\/(country|city|food)\/[a-z-]+$/.test(ruta) || /^\/city\/[a-z-]+\/prices$/.test(ruta))
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <PaginaLugar ruta={ruta} idioma={idioma} />

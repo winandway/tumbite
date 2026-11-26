@@ -1373,6 +1373,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Before accepting rides, take a selfie with your helmet on.',
   ],
   ['Esa ciudad no existe.', 'That city doesn’t exist.'],
+  // C-TARIFAS-PUBLICAS: la página de precios de una ciudad sin precios publicados.
+  ['Sin precios publicados en esa ciudad.', 'No prices posted for that city.'],
   [
     'La propina se puede agregar hasta 7 días después del viaje.',
     'You can add a tip up to 7 days after the ride.',
