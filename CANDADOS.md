@@ -23,6 +23,14 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
   4. Prueba para las dos guardas que sobrevivían: el total confirmado de la carga masiva y el cuadre del cierre de cuenta.
   5. **Devolución de un apartado de antes de los lotes:** se clasifica con el criterio de la migración: prepago hasta donde alcance lo prepagado que todavía no está en un lote de prepago (`PREPAGO_SIN_LOTE`), el resto regalo sin fecha (dos lotes `devolucion`).
 
+- **Segunda devolución del revisor (26 nov 2026), cada punto visto en rojo (`saldoLotes.test.ts`, bloques «revisión 2»):**
+  1. **CRÍTICO, la devolución creaba dinero:** con un apartado de antes de los lotes, liberar dos veces (o sobrante + rechazo repetidos) volvía a crear los lotes heredados (el libro en 1000 y los lotes en 1400). Ahora TODA la devolución (`sentenciasDevolver`: consumos, prórroga y lotes heredados) va atada al ID del movimiento que nace en ESE intento (`movimientoId`): si la devolución ya estaba, su movimiento tiene otro ID y no se repite nada. Pruebas: liberar dos veces y sobrante + rechazo repetidos, libro = lotes.
+  2. **Lecturas de la carga masiva:** los candidatos ya no materializan el conteo de viajes de todas las operaciones; con filtro de viajes se cuenta por cliente candidato por el índice `operaciones_cliente` (subconsulta correlacionada, en la base), y la página trae sus viajes con un IN sobre sus ids (`viajesDe`). Prueba con EXPLAIN (sin MATERIALIZE ni recorrido de `operaciones`).
+  3. **El reloj** mira hasta 20 cargas en curso y avanza hasta 3 que SÍ tienen cupo: las frenadas por el tope de su persona no ocupan el lugar.
+  4. **El tope de 24 h** cuenta por la fecha de cada movimiento acreditado de cargas masivas (referencia `masiva:`, índices de autor y de fecha del libro), no por la fecha en que nació la carga.
+  5. Pruebas propias para el tope por persona dentro de la sentencia que escribe (lectura de cupo vieja forzada) y para la guarda del cursor (lectura vieja de la carga: no vuelve a contar lo revisado).
+  6. **El resumen del panel** suma lo de quien todavía no pasó a lotes con UNA agregación del libro por cliente y un NOT IN con subconsulta (no una búsqueda por movimiento).
+
 ## C-SALDO-BIENVENIDA · «<Ciudad>: X de Saldo Divoox a cada cliente nuevo» al confirmar el celular (26 nov 2026, Richard: «si se registran de manera masiva… va a haber usuarios al que no le vamos a agregar porque se nos olvidó») — todos los países, por ciudad; NACE APAGADA · servidor y panel (Configuración)
 
 - **Qué es:** regla por ciudad (`saldo_reglas_regalo`, tipo `bienvenida`): monto, vigencia (30 días por defecto), presupuesto total, tope de 24 horas, encendida o no. Se edita en Configuración → «Regalos automáticos de Saldo Divoox» (`SaldoRegalosAutomaticos.tsx`), con borrador y auditoría.
