@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
 import { SQL_TASA_EJEMPLO } from './tasaEjemplo';
@@ -333,9 +334,7 @@ for (const idioma of ['es', 'en'] as const) {
       }
       // El equipo lo ve en «Regalos en revisión» con el motivo, y lo aprueba.
       {
-        const { ruta: rutaPanel } = (await (
-          await request.get('/datos/admin/ruta', { headers: h(admin.token) })
-        ).json()) as { ruta: string | null };
+        const rutaPanel = await rutaSuperadmin(request, h(admin.token));
         const ctxRev = await browser.newContext({ viewport: { width: 1280, height: 900 } });
         await ctxRev.addCookies([
           { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },
@@ -456,9 +455,7 @@ for (const idioma of ['es', 'en'] as const) {
       }
 
       // El superadmin: el cupón con su gasto en vivo y el crédito del conductor.
-      const { ruta } = (await (
-        await request.get('/datos/admin/ruta', { headers: h(admin.token) })
-      ).json()) as { ruta: string | null };
+      const ruta = await rutaSuperadmin(request, h(admin.token));
       const panel = await browser.newContext({ viewport: { width: 1280, height: 900 } });
       await panel.addCookies([
         { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },

@@ -1,5 +1,6 @@
 import { dejarConectado, deslizar } from './deslizar';
 import { execFileSync } from 'node:child_process';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -2333,11 +2334,7 @@ for (const idioma of ['en', 'es'] as const) {
             ).ok(),
           ).toBe(true);
         // La bandeja en la pantalla del superadmin (en el idioma de la corrida).
-        const ruta = (
-          (await (await request.get('/datos/admin/ruta', { headers: auth })).json()) as {
-            ruta: string | null;
-          }
-        ).ruta;
+        const ruta = await rutaSuperadmin(request, auth);
         const supCtx = await nuevoContexto('computadora');
         const sup = await supCtx.newPage();
         await sup.goto('/panel');
