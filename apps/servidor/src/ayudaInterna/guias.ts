@@ -1754,6 +1754,7 @@ const quienPagaViajes: Record<IdiomaAyuda, Guia> = {
       'Cada viaje guarda el valor con que se cotizó. Cambiar la palanca vale para los viajes que se piden desde ese momento; los que ya están en curso siguen como empezaron. Cada cambio queda en la auditoría de Dinero con tu nombre, el valor de antes y el de después.',
       'Solo ven la tarifa los pasajeros con la app que la muestra en su línea (la de hoy y la web). Quien todavía tiene una app vieja sigue viajando como siempre, con el conductor pagando la comisión: nunca se cobra una tarifa que la persona no puede ver. Los envíos de paquetes no llevan tarifa. Donde no hay comisión del saldo (Estados Unidos hoy) la palanca no cambia nada.',
       'Una ciudad puede tener su propia regla: elige la ciudad y el valor. «Como el resto del país» le quita la regla propia y vuelve a seguir la del país.',
+      'El Vigía tiene la suya desde el 25 nov 2026: «conductor». Allí el pasajero paga el precio del tabulador de la calle (los precios de la zona, en Viajes) y Divoox saca su 10 % de ese precio, del saldo del conductor; en Viajes, cada ruta dice cuánto le queda al conductor, de día y de noche (C-TABULADOR-VIGIA).',
     ],
     capturas: [
       capQuienPaga(
@@ -1785,6 +1786,7 @@ const quienPagaViajes: Record<IdiomaAyuda, Guia> = {
       'Each ride keeps the value it was quoted with. Changing the switch applies to rides requested from that moment on; rides already in progress stay as they started. Every change is logged in the Money audit with your name, the value before and the value after.',
       'Only riders with an app that shows the fee on its own line (today’s app and the web) see it. Anyone still on an older app rides as always, with the driver paying the fee: we never charge a fee the person cannot see. Package deliveries carry no fee. Where there is no balance fee (the United States today) the switch changes nothing.',
       'A city can have its own rule: choose the city and the value. “Same as the rest of the country” removes the city rule and follows the country again.',
+      'El Vigía has its own since Nov 25, 2026: “driver.” There the rider pays the street price list (the local fixed prices, in Rides) and Divoox takes its 10% from that price, out of the driver’s balance; in Rides, each route shows what the driver keeps, by day and at night (C-TABULADOR-VIGIA).',
     ],
     capturas: [
       capQuienPaga(
