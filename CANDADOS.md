@@ -716,6 +716,14 @@ Recorrido real: registro del conductor desde cero en Driver de pruebas, Verifica
 - **Cómo se comprueba:** `apps/servidor/src/rutas/documentoSinReverso.test.ts` (vista en ROJO antes del arreglo): Venezuela con moto recibe cara, documento por delante, licencia por los dos lados y seguro (4 papeles); sin vehículo, documento por delante y cara (2); envía por el asistente y por el flujo viejo; el reverso en «repetir» queda libre; Estados Unidos y Colombia siguen pidiendo el reverso.
 - **Qué NO tocar:** la app no decide los pasos, los recibe del servidor; no volver a poner `doc_reverso` fijo en `pasosDe`. Las capturas de Docs del asistente en Venezuela todavía muestran el paso del reverso (pendiente de rehacer).
 
+## C-LICENCIA-SIN-REVERSO · En Venezuela la licencia también va solo por delante (26 nov 2026) — Venezuela
+
+- **Qué pasaba:** el asistente de fotos le pedía a un conductor de moto de Venezuela el reverso de la licencia. Richard: «la licencia de Venezuela tiene una sola cara… si la parte trasera no está, entonces que sea conforme con el frente». Con eso se podía quedar trabado un conductor.
+- **Arreglo:** la política de fábrica de Venezuela (`politicaPlazoDeFabrica`, en `packages/compartido/src/plazoPapeles.ts`) quita `doc_reverso` y `licencia_reverso`. Todo lo demás (pasos del asistente, envío a revisión, lo que te falta, WhatsApp, Camila, ficha del equipo, pedir otra foto) sale de esa lista: no hay otra regla. La carta médica siempre fue una sola foto en «Tus papeles». La app Driver dibuja los pasos que le manda el servidor, así que no hubo que compilar.
+- **En producción el 26 nov:** cero conductores trabados por un reverso (cuatro licencias de moto aprobadas por «Tus papeles», tres cédulas solo con frente).
+- **Candado:** `apps/servidor/src/rutas/documentoSinReverso.test.ts` (Venezuela con moto: cara, cédula, licencia y seguro, sin reversos; la ficha no muestra reversos; pedir el reverso da 409; «lo que te falta» no nombra reversos). Estados Unidos y Colombia siguen pidiendo los dos lados.
+- **No tocar:** no agregar reglas de reverso sueltas en pantallas; un país nuevo sin reverso se agrega en `sinReverso` de su política.
+
 ## C-CASA-POR-DEFECTO · Fotos de la entrada: casa por defecto y un selector visible de casa o edificio (Richard en su iPhone, 21 nov 2026) — todos los países
 
 - **Qué pasaba:** al llegar a «Fotos de la entrada» le salía «Es un edificio o conjunto» con los pasos de edificio, y para decir que era una casa había que encontrar un enlace pequeño «Cambiar». Sus palabras: «hay más casas que edificios… por defecto debería estar la casa».
