@@ -75,7 +75,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         resumen:
           'Después de ver el precio, la pantalla «Método de pago» te muestra el monto a pagar y eliges cómo pagas antes de solicitar.',
         explicacion: [
-          'Al tocar «Continuar» en Moto, Carro o Envíos llegas a «Método de pago». Arriba ves el monto a pagar en grande; en Venezuela, también en bolívares con la tasa del día y su fecha.',
+          'Al tocar «Continuar» en Moto, Carro o Envíos llegas a «Método de pago». Arriba ves el monto a pagar en grande; en Venezuela, también en bolívares con la tasa del día y su fecha. De noche, en las ciudades con tarifa nocturna, ese monto ya la trae y debajo dice «Incluye la tarifa nocturna» con su porcentaje: tu Saldo Divoox se descuenta de ese total.',
           'Debajo ves las formas de pago de tu ciudad. En Venezuela: tu Saldo Divoox, Pago Móvil y efectivo. Con Pago Móvil le pagas al conductor y ves sus datos cuando acepta; con efectivo le pagas al terminar.',
           'Si en ese momento no hay conductores cerca que reciban Pago Móvil, la opción sale con «Aún no disponible para este viaje» y la app elige efectivo por ti. No pierdes nada de lo que escribiste.',
           'El botón «Solicitar» dice cuánto pagas en mano. Si algo cambió mientras elegías, la app te lo dice en la misma pantalla y puedes elegir otra forma de pago.',
@@ -292,7 +292,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         resumen:
           'After you see the price, the “Payment method” screen shows the amount to pay and you choose how you’ll pay before you request.',
         explicacion: [
-          'When you tap “Continue” on Moto, Car or Deliveries, you get to “Payment method.” At the top you see the amount to pay in large type.',
+          'When you tap “Continue” on Moto, Car or Deliveries, you get to “Payment method.” At the top you see the amount to pay in large type. At night, in cities with a night fare, that amount already includes it and the line below says “Includes the night fare” with its percentage: your Divoox Balance comes off that total.',
           'Below it are the payment methods available in your city. In the United States: cash or card. With cash, you pay the driver when the ride ends; with a card, we hold the price when you request and charge it when the ride ends.',
           'If a method can’t be used for a ride, it shows “Not available for this trip yet” and the app picks another one for you. Nothing you entered is lost.',
           'The “Request” button shows what you’ll pay. If something changed while you were choosing, the app tells you on the same screen and you can pick another method.',
