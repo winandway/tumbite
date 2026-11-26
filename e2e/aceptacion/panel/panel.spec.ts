@@ -54,7 +54,11 @@ async function linea(id: string, fn: () => Promise<string>) {
     const detalle = await fn();
     anotar(ROBOT, id, 'verde', detalle, await captura(id));
   } catch (e) {
-    anotar(ROBOT, id, 'rojo', e instanceof Error ? e.message : String(e), await captura(id));
+    const m = e instanceof Error ? e.message : String(e);
+    // «NO-SE-PUDO:» = no había con qué probar la línea (no es un fallo del producto).
+    if (m.startsWith('NO-SE-PUDO:'))
+      anotar(ROBOT, id, 'omitida', m.replace('NO-SE-PUDO:', '').trim(), await captura(id));
+    else anotar(ROBOT, id, 'rojo', m, await captura(id));
   }
 }
 
@@ -316,15 +320,33 @@ test('A6 abrir la campana: el número va a cero', async () => {
     const antes = (await num.count()) ? Number((await num.textContent())?.replace(/\D/g, '')) : 0;
     if (!antes) {
       throw new Error(
-        'no había avisos sin leer para comprobar el cero (la campana ya estaba en cero)',
+        'NO-SE-PUDO: no había avisos sin leer para comprobar el cero (la campana ya estaba en cero)',
       );
     }
+    const abierta = new Date().toISOString().slice(0, 19).replace('T', ' ');
     await campana.click();
     await expect(page.locator('.pd-campana-caja')).toBeVisible();
-    await expect(num).toHaveCount(0);
+    // Si no llega a cero, se dice QUÉ aviso quedó sin leer y cuándo nació frente al momento de abrirla:
+    // uno que nació después es un aviso nuevo de verdad (no un fallo); uno de antes sí es el fallo.
+    const quePaso = async (cuando: string) => {
+      const r = await api('GET', '/datos/panel/avisos', undefined, { token: adm.token });
+      const sin = (r.d.campana?.avisos ?? []).filter((a: { leido: boolean }) => !a.leido);
+      return `${cuando}: quedaron ${sin.length} sin leer (abierta a las ${abierta} UTC): ${sin
+        .map((a: { en: string; texto: string }) => `«${a.texto}» de ${a.en}`)
+        .join('; ')}`;
+    };
+    await expect(num)
+      .toHaveCount(0)
+      .catch(async () => {
+        throw new Error(await quePaso('al abrirla'));
+      });
     // Y sigue en cero al volver a cargar.
     await ir('');
-    await expect(page.getByTestId('campana').locator('.pd-campana-numero')).toHaveCount(0);
+    await expect(page.getByTestId('campana').locator('.pd-campana-numero'))
+      .toHaveCount(0)
+      .catch(async () => {
+        throw new Error(await quePaso('al recargar'));
+      });
     return `la campana tenía ${antes} sin leer, al abrirla quedó en cero y sigue en cero al recargar`;
   });
 });
