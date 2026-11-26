@@ -119,3 +119,39 @@ describe('C-METODO-PAGO-PANTALLA: la pantalla existe y Pedir viaje lleva a ella'
     expect(s).not.toContain('C-PAGO-MOVIL-VIAJE: solo los métodos del país');
   });
 });
+
+describe('C-METODO-PAGO-PANTALLA (revisión): nada se tapa ni cambia en silencio', () => {
+  it('I3: los errores de pedir salen dentro de «Método de pago» y una reserva nunca pasa a «ahora»', () => {
+    const s = leer('PedirMoto.tsx');
+    const pedir = s.slice(
+      s.indexOf('async function pedir('),
+      s.indexOf('setTrabajando(true);', s.indexOf('async function pedir(')),
+    );
+    expect(pedir).toContain('setErrorPago(tn.horaCerca)');
+    expect(pedir).toContain('setErrorPago(');
+    expect(pedir).not.toContain("cambiar('cuando', '')");
+    expect(pedir).not.toMatch(/setError\(t\.eligeHora\)/);
+  });
+
+  it('«Pedir otra vez la misma ruta» también pasa por «Método de pago»', () => {
+    const s = leer('ConfirmarMismaRuta.tsx');
+    expect(s).toContain('<MetodoPago');
+    expect(s).toContain('setVerPago(true)');
+    expect(s).toContain('usarSaldo: true');
+  });
+
+  it('el monto en bolívares va centrado bajo la cifra grande', () => {
+    expect(leer('MetodoPago.tsx')).toMatch(/soloLocal\s+centrado/);
+  });
+
+  it('I4: borrar la cuenta con Saldo Divoox avisa el monto y pide confirmarlo (las tres apps)', () => {
+    const s = readFileSync(
+      join(__dirname, '..', '..', '..', '..', 'packages', 'movil', 'src', 'OpcionesCuenta.tsx'),
+      'utf8',
+    );
+    expect(s).toContain('/datos/cuentas/yo/saldo-divoox');
+    expect(s).toContain('testID="borrar-saldo-aviso"');
+    expect(s).toContain('?saldo=acepto');
+    expect(s).toMatch(/\(saldo === 0 \|\| aceptaSaldo\)/);
+  });
+});

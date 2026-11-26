@@ -5416,7 +5416,7 @@ CREATE TABLE IF NOT EXISTS saldo_cliente_movimientos (
   cliente_id TEXT NOT NULL,
   monto INTEGER NOT NULL CHECK (monto <> 0),
   moneda TEXT NOT NULL DEFAULT 'USD',
-  concepto TEXT NOT NULL CHECK (concepto IN ('regalo', 'recarga', 'uso_viaje', 'devolucion', 'ajuste')),
+  concepto TEXT NOT NULL CHECK (concepto IN ('regalo', 'recarga', 'uso_viaje', 'devolucion', 'ajuste', 'cierre_cuenta')),
   referencia TEXT NOT NULL UNIQUE,
   operacion_id TEXT,
   autor_id TEXT,
@@ -5439,6 +5439,9 @@ CREATE TABLE IF NOT EXISTS usos_saldo_divoox (
   apartado INTEGER NOT NULL CHECK (apartado > 0),
   moneda TEXT NOT NULL DEFAULT 'USD',
   pais TEXT NOT NULL,
+  -- Antifraude (igual que el regalo): la huella del aparato que pidió y cuándo lo tomó el conductor.
+  aparato TEXT,
+  tomado_en TEXT,
   estado TEXT NOT NULL DEFAULT 'apartado' CHECK (estado IN ('apartado', 'cobrado', 'liberado', 'en_revision')),
   motivos TEXT NOT NULL DEFAULT '[]',
   detalle TEXT NOT NULL DEFAULT '',
@@ -5447,5 +5450,7 @@ CREATE TABLE IF NOT EXISTS usos_saldo_divoox (
   cerrado_en TEXT,
   motivo TEXT
 );
-CREATE INDEX IF NOT EXISTS usos_saldo_divoox_abiertos ON usos_saldo_divoox(creado_en) WHERE estado IN ('apartado', 'en_revision');
+-- Por estado y fecha: lo usan el reloj (`estado = 'apartado'`, del más viejo al más nuevo), la
+-- revisión del equipo y el canario. Un índice parcial con `IN (...)` SQLite no lo usa para `= 'apartado'`.
+CREATE INDEX IF NOT EXISTS usos_saldo_divoox_estado ON usos_saldo_divoox(estado, creado_en);
 CREATE INDEX IF NOT EXISTS usos_saldo_divoox_conductor ON usos_saldo_divoox(conductor_id, estado) WHERE conductor_id IS NOT NULL;

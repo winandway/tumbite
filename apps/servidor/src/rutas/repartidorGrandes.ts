@@ -9,6 +9,7 @@ import {
   distanciaKm,
   metrosEntre,
   minutosDeViaje,
+  pagaEnMano,
   requisitosDestacado,
   resumenAnual,
   resumenEtiquetas,
@@ -307,7 +308,8 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
               COALESCE(v.total_final_centavos, q.total, 0) AS total, COALESCE(q.moneda, 'USD') AS moneda,
               v.ref_monto,
               COALESCE((SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id
-                          AND rg.estado <> 'liberado'), 0) AS regalo
+                          AND rg.estado <> 'liberado'), 0) AS regalo,
+              COALESCE(v.saldo_divoox, 0) AS saldo
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
         WHERE o.conductor_id = ? AND v.estado = 'terminado' AND v.metodo_pago <> 'tarjeta'
@@ -324,6 +326,7 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       moneda: string;
       ref_monto: number | null;
       regalo: number;
+      saldo: number;
     }>();
   const viajesEnMano = enMano
     .map((v) => ({
@@ -333,8 +336,9 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
       metodoPago: v.metodo_pago,
       terminadoEn: v.terminado_en,
       moneda: v.moneda,
-      // Lo que el pasajero le dio en mano: el total final menos lo que cubrió el regalo de Divoox.
-      monto: Math.max(0, Number(v.total) - Math.min(Number(v.regalo), Number(v.total))),
+      // Lo que el pasajero le dio en mano, con la cuenta única (C-SALDO-CLIENTE): el total final menos
+      // el regalo de Divoox y menos lo que cubrió su Saldo Divoox (eso lo paga Divoox, aparte).
+      monto: pagaEnMano(Number(v.total), { monto: Number(v.regalo) }, Number(v.saldo)),
       // En Venezuela, los bolívares cobrados con la tasa fijada del viaje (C-BS-EN-MANO).
       montoLocal: v.ref_monto == null ? null : Number(v.ref_monto),
     }))

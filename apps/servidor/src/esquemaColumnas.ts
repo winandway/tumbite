@@ -3566,6 +3566,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "apartado",
     "moneda",
     "pais",
+    "aparato",
+    "tomado_en",
     "estado",
     "motivos",
     "detalle",

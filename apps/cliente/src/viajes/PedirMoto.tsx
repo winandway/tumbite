@@ -69,6 +69,9 @@ import {
   paradasListas,
 } from './Paradas';
 
+/** Una reserva a menos de 30 minutos ya no se puede hacer (se elige otra hora). */
+const reservaMuyCerca = (iso: string) => Date.parse(iso) < Date.now() + 30 * 60_000;
+
 const distancia = (m: number, i: Idioma) =>
   i === 'en' ? `${((m / 1000) * 0.621371).toFixed(1)} mi` : `${(m / 1000).toFixed(1)} km`;
 
@@ -383,19 +386,26 @@ export function PedirMoto({
     // C-ENVIO-SIN-SILENCIO (31 oct 2026, Richard en TestFlight): «Enviar» no hacía nada porque la
     // casilla de prohibidos no estaba marcada y el aviso salía arriba, fuera de la vista. Se avisa
     // aquí, junto al botón, antes de mandar nada.
+    // C-METODO-PAGO-PANTALLA: todo lo que frena el pedido se dice DENTRO de «Método de pago», en
+    // palabras; el pedido no sale hasta que se corrige.
     if (servicio === 'envios') {
-      // C-FORMULARIO-POR-PASOS: si algo de un paso anterior quedó mal, se vuelve a ese paso.
+      // C-FORMULARIO-POR-PASOS: si algo de un paso anterior quedó mal, ese paso queda listo para
+      // corregirlo al volver (con su error al lado de cada casilla).
       for (const clave of ['paquete', 'recibe'] as const)
         if (!validarPasoEnvio(clave)) {
           cambiar('pasoEnvio', clave);
-          return;
+          return setErrorPago(
+            tn.faltaPaso(
+              new Map(
+                Object.entries(TEXTOS_PASOS_ENVIO[idioma === 'en' ? 'en' : 'es'].titulos),
+              ).get(clave) ?? '',
+            ),
+          );
         }
     }
-    // Una hora recuperada del borrador que ya quedó muy cerca se vuelve a elegir.
-    if (cuando && Date.parse(cuando) < Date.now() + 30 * 60_000) {
-      cambiar('cuando', '');
-      return setError(t.eligeHora);
-    }
+    // Una hora reservada que ya quedó muy cerca: se pide otra. NUNCA se cambia en silencio una
+    // reserva por un viaje de ahora (la hora se queda como está hasta que la persona la cambie).
+    if (cuando && reservaMuyCerca(cuando)) return setErrorPago(tn.horaCerca);
     setTrabajando(true);
     try {
       const r = await api.pedir<{
@@ -1440,6 +1450,13 @@ function textosPedirNuevo(idioma: Idioma, servicio: 'moto' | 'carro' | 'envios')
     eligeDestino: en ? 'Choose your destination' : 'Elige tu destino',
     // C-METODO-PAGO-PANTALLA: del precio a la pantalla «Método de pago».
     continuar: en ? 'Continue' : 'Continuar',
+    faltaPaso: (paso: string) =>
+      en
+        ? `Something is missing in “${paso}.” Go back to complete it.`
+        : `Falta completar «${paso}». Vuelve para completarlo.`,
+    horaCerca: en
+      ? 'The time you scheduled is too soon. Go back and pick a later time, or choose “Now.”'
+      : 'La hora que reservaste ya está muy cerca. Vuelve y elige otra hora, o «Ahora».',
     solicitarEnvio: en ? 'Request delivery' : 'Solicitar envío',
     solicitar: (c: CategoriaViaje) =>
       servicio === 'carro'

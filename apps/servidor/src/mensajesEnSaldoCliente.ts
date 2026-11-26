@@ -52,4 +52,12 @@ export const MENSAJES_EN_SALDO_CLIENTE: [string, string][] = [
     'Este saldo ya fue revisado. Actualiza la pantalla.',
     'This balance was already reviewed. Refresh the screen.',
   ],
+  [
+    'Ya tomaste todos los viajes pagados con Saldo Divoox permitidos por hoy. Este viaje pasará a otro conductor.',
+    'You’ve taken all the trips paid with Divoox Balance allowed for today. This trip will go to another driver.',
+  ],
+  [
+    'Tienes Saldo Divoox. Si borras tu cuenta lo pierdes; confirma que lo entiendes para seguir.',
+    'You have Divoox Balance. If you delete your account, you lose it; confirm you understand to continue.',
+  ],
 ];

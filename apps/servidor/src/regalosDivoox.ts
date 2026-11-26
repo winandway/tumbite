@@ -335,7 +335,8 @@ export async function liberarRegalo(db: D1Database, operacionId: string, motivo:
   return Number(r.meta.changes ?? 0) > 0;
 }
 
-async function alerta(
+/** Una alerta antifraude para el reporte del equipo (regalos y, C-SALDO-CLIENTE, Saldo Divoox). */
+export async function alerta(
   db: D1Database,
   a: {
     tipo: string;

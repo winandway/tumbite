@@ -20,10 +20,12 @@ type Api = {
  */
 export function useUbicacionConRegalo(
   api: Api,
-  viaje: { id: string; estado: string; regalo?: unknown } | null,
+  viaje: { id: string; estado: string; regalo?: unknown; saldoDivoox?: number } | null,
 ) {
   const id = viaje?.id ?? null;
-  const activo = Boolean(viaje?.regalo) && viaje?.estado === 'en_curso';
+  // C-SALDO-CLIENTE: también con el viaje pagado con Saldo Divoox (mismas protecciones).
+  const activo =
+    (Boolean(viaje?.regalo) || (viaje?.saldoDivoox ?? 0) > 0) && viaje?.estado === 'en_curso';
   useEffect(() => {
     if (!id || !activo) return;
     let vivo = true;

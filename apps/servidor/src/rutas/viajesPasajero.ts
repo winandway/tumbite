@@ -787,12 +787,7 @@ export async function cotizarParaCliente(
     : null;
   // C-BS-EN-MANO: lo que pagaría en mano (el precio menos el regalo), en dólares y en bolívares con
   // la tasa fijada; la tasa va aparte para las categorías y la subida de tarifa (la app la usa).
-  const enMano = montoEnMano(
-    Math.max(0, desglose.total - (regalo?.monto ?? 0)),
-    fila.moneda,
-    zona.pais,
-    tasaLocal,
-  );
+  const enMano = montoEnMano(pagaEnMano(desglose.total, regalo), fila.moneda, zona.pais, tasaLocal);
   // C-SALDO-CLIENTE: el Saldo Divoox disponible, solo donde el país lo tiene encendido y el viaje es
   // en su moneda (dólares). La pantalla «Método de pago» hace la cuenta en vivo con `cuentaConSaldo`.
   const perfil = perfilPasajeros(zona.pais);
@@ -986,7 +981,8 @@ viajesPasajero.post('/viajes', async (c) => {
       if (regalo) await liberarRegalo(db, op, 'saldo_no_alcanza');
       throw new ErrorDatos(mensaje, 'metodoPago', estado);
     };
-    if (!cuenta.cubreTodo && d.metodoPago === 'saldo')
+    // M2: si el regalo ya cubre todo, no hay resto: «saldo» no es «no alcanza» (el regalo se queda).
+    if (cuenta.resto > 0 && d.metodoPago === 'saldo')
       await falla(
         'Tu Saldo Divoox no alcanza para todo el viaje. Elige cómo pagas el resto: Pago Móvil o Efectivo.',
       );
@@ -996,6 +992,7 @@ viajesPasajero.post('/viajes', async (c) => {
         clienteId: u.id,
         monto: cuenta.saldoUsado,
         pais: paisViaje?.pais ?? 'VE',
+        aparato: await aparatoDe(c),
       });
       if (!apartado)
         await falla(
@@ -1005,6 +1002,7 @@ viajesPasajero.post('/viajes', async (c) => {
       saldoUsado = cuenta.saldoUsado;
     }
     if (cuenta.cubreTodo) metodoPago = 'saldo';
+    // Sin nada que pagar ni con saldo (el regalo lo cubrió), el viaje va como en mano con cero.
     else if (d.metodoPago === 'saldo') metodoPago = 'efectivo';
   }
   const deshacerSaldo = async (motivo: string) => {
@@ -1048,6 +1046,8 @@ viajesPasajero.post('/viajes', async (c) => {
     pinEntrega,
     exigirSinActivo: true,
     conductorPreferidoId,
+    // C-SALDO-CLIENTE: lo que cubre el saldo nace con el viaje, en el mismo lote.
+    saldoDivoox: saldoUsado,
   });
   // C-MOTO-CIUDAD: el código para empezar según la ciudad y la hora (se decide al pedir).
   // C-ENVIOS: un envío no lleva código al recoger (lleva foto); el PIN es de quien recibe.
@@ -1058,12 +1058,6 @@ viajesPasajero.post('/viajes', async (c) => {
       (!regalo && saldoUsado === 0 && !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id))))
   )
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(op).run();
-  // C-SALDO-CLIENTE: el viaje guarda cuánto cubre el saldo (todas las pantallas lo leen de aquí).
-  if (creado && saldoUsado > 0)
-    await db
-      .prepare('UPDATE viajes SET saldo_divoox = ? WHERE operacion_id = ?')
-      .bind(saldoUsado, op)
-      .run();
   if (!creado) {
     if (regalo) await liberarRegalo(db, op, 'no_creado');
     await deshacerSaldo('no_creado');
@@ -1606,7 +1600,9 @@ viajesPasajero.post('/viajes/:id/mi-ubicacion', async (c) => {
         WHERE o.id = ?1 AND o.cliente_id = ?2 AND v.estado = 'en_curso' AND r.lat IS NOT NULL
           AND r.ubicacion_en > datetime('now', '-2 minutes')
           AND (v.pasajero_ubicacion_en IS NULL OR v.pasajero_ubicacion_en < datetime('now', '-45 seconds'))
-          AND EXISTS (SELECT 1 FROM usos_cupon_divoox x WHERE x.operacion_id = o.id AND x.estado = 'apartado')`,
+          AND (EXISTS (SELECT 1 FROM usos_cupon_divoox x WHERE x.operacion_id = o.id AND x.estado = 'apartado')
+               -- C-SALDO-CLIENTE: el viaje pagado con saldo se mide igual que el del regalo.
+               OR EXISTS (SELECT 1 FROM usos_saldo_divoox s WHERE s.operacion_id = o.id AND s.estado = 'apartado'))`,
     )
     .bind(id, u.id)
     .first<{ lat: number; lng: number }>();

@@ -134,6 +134,7 @@ export type RespuestaCierre = {
   saldoDivoox?: number;
   /** C-REGALO-VIAJE-REAL: el regalo quedó en revisión del equipo; todavía no se acredita. */
   regaloEnRevision?: boolean;
+  saldoEnRevision?: boolean;
   referencia?: Referencia | null;
   enMano?: Monto | null;
 };
@@ -296,7 +297,7 @@ export function ViajeActivo({
       style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 10, padding: 10, gap: 2 }}
     >
       <Text style={{ color: COLOR.aviso, fontWeight: '800', fontSize: 17 }}>
-        {t.regaloEnRevision}
+        {respuesta?.saldoEnRevision ? t.pagoEnRevision : t.regaloEnRevision}
       </Text>
       <Text style={{ color: COLOR.aviso, fontSize: 13 }}>{t.regaloEnRevisionAyuda}</Text>
     </View>

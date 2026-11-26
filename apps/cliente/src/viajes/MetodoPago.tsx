@@ -188,6 +188,7 @@ export function MetodoPago({
               idioma={i}
               quien="pasajero"
               soloLocal
+              centrado
               testID="pago-monto-bs"
             />
           ) : null}

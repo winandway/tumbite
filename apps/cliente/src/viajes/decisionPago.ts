@@ -34,7 +34,7 @@ export function decisionDePago(
     ...cuenta,
     metodoValido,
     /** Falta elegir cómo pagar el resto (o lo elegido ya no se puede usar). */
-    falta: !cuenta.cubreTodo && !metodoValido,
+    falta: cuenta.resto > 0 && !metodoValido,
     cuerpo: {
       metodoPago: cuenta.cubreTodo ? 'saldo' : elegido.metodo,
       ...(conSaldo ? { usarSaldo: true } : {}),

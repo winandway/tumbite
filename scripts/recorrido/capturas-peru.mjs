@@ -220,10 +220,9 @@ try {
     fullPage: true,
     clip: { x: 0, y: desde, width: c.viewportSize().width, height: precio.fin + 90 - desde },
   });
-  await c
-    .getByRole('button', { name: /Pedir|Solicitar/ })
-    .last()
-    .click();
+  // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita.
+  await c.getByTestId('pedir-boton').click();
+  await c.getByTestId('pago-solicitar').click();
   await espera(2_500);
   const viaje = (await pasajero('GET', '/datos/viajes/actual')).viaje;
   if (!viaje) throw new Error('el pasajero no quedó con un viaje');

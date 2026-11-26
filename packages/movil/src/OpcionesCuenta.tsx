@@ -1,8 +1,8 @@
 import { Modal } from './Hoja';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text } from './diseno';
 import { Pressable, TextInput, View } from 'react-native';
-import { enIdioma } from '@tumbite/compartido';
+import { enIdioma, formatearMonto } from '@tumbite/compartido';
 import { useSesion } from './sesion';
 import { Boton, C, e } from './ui';
 import { PreferenciaSms } from './CasillaSms';
@@ -22,6 +22,10 @@ const T = {
     borrada: 'Tu cuenta quedó borrada',
     borradaDetalle: 'Borramos tu cuenta y tus datos personales. Gracias por haber usado Divoox.',
     entendido: 'Entendido',
+    // C-SALDO-CLIENTE (I4): el aviso del Saldo Divoox antes de borrar.
+    saldoAviso: (m: string) =>
+      `Tienes ${m} de Saldo Divoox. Si borras tu cuenta lo pierdes; si es dinero que recargaste, escríbenos antes para devolvértelo.`,
+    saldoAcepto: 'Entiendo que pierdo mi Saldo Divoox',
   },
   en: {
     titulo: 'Your account',
@@ -37,6 +41,9 @@ const T = {
     borrada: 'Your account was deleted',
     borradaDetalle: 'We deleted your account and your personal data. Thanks for using Divoox.',
     entendido: 'OK',
+    saldoAviso: (m: string) =>
+      `You have ${m} of Divoox Balance. If you delete your account, you lose it; if it’s money you topped up, write to us first so we can refund it.`,
+    saldoAcepto: 'I understand I lose my Divoox Balance',
   },
 };
 
@@ -105,11 +112,28 @@ export function ConfirmarBorrado({
   const [error, setError] = useState('');
   const [borrando, setBorrando] = useState(false);
   const [borrada, setBorrada] = useState(false);
+  // C-SALDO-CLIENTE (I4): con Saldo Divoox, el aviso con el monto y la confirmación explícita.
+  const [saldo, setSaldo] = useState(0);
+  const [aceptaSaldo, setAceptaSaldo] = useState(false);
+  useEffect(() => {
+    if (!visible) return;
+    let vivo = true;
+    api
+      .pedir<{ disponible: number }>('GET', '/datos/cuentas/yo/saldo-divoox')
+      .then((r) => {
+        if (vivo) setSaldo(Number(r.disponible ?? 0));
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [visible, api]);
 
   // Al cerrar se limpia lo escrito: la próxima vez se vuelve a escribir la palabra.
   function cerrar() {
     setEscrito('');
     setError('');
+    setAceptaSaldo(false);
     alCerrar();
   }
 
@@ -117,7 +141,7 @@ export function ConfirmarBorrado({
     setError('');
     setBorrando(true);
     try {
-      await api.pedir('DELETE', '/datos/cuentas/yo');
+      await api.pedir('DELETE', `/datos/cuentas/yo${saldo > 0 ? '?saldo=acepto' : ''}`);
       setBorrada(true);
     } catch (x) {
       setError(x instanceof Error ? x.message : String(x));
@@ -155,6 +179,38 @@ export function ConfirmarBorrado({
               {t.borrar}
             </Text>
             <Text style={{ color: C.gris }}>{t.explicacion}</Text>
+            {saldo > 0 ? (
+              <View style={{ gap: 8 }} testID="borrar-saldo-aviso">
+                <Text style={{ fontWeight: '700' }}>
+                  {t.saldoAviso(formatearMonto(saldo, 'USD', idioma))}
+                </Text>
+                <Pressable
+                  onPress={() => setAceptaSaldo((x) => !x)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: aceptaSaldo }}
+                  aria-checked={aceptaSaldo}
+                  testID="borrar-saldo-acepto"
+                  style={{
+                    flexDirection: 'row',
+                    gap: 10,
+                    alignItems: 'center',
+                    paddingVertical: 6,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: aceptaSaldo ? C.exito : '#6B7078',
+                      backgroundColor: aceptaSaldo ? C.exito : '#fff',
+                    }}
+                  />
+                  <Text style={{ flex: 1 }}>{t.saldoAcepto}</Text>
+                </Pressable>
+              </View>
+            ) : null}
             <TextInput
               value={escrito}
               onChangeText={setEscrito}
@@ -169,7 +225,7 @@ export function ConfirmarBorrado({
                 {error}
               </Text>
             ) : null}
-            {escrito.trim().toUpperCase() === t.palabra ? (
+            {escrito.trim().toUpperCase() === t.palabra && (saldo === 0 || aceptaSaldo) ? (
               <Boton texto={t.confirmar} cargando={borrando} alTocar={() => void borrar()} />
             ) : null}
             <Boton texto={t.cancelar} secundario alTocar={cerrar} />

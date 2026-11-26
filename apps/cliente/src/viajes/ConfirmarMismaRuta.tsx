@@ -36,6 +36,7 @@ import {
 } from './mismaRuta';
 import { marcarRelleno } from './relleno';
 import { TEXTOS_MIS_VIAJES, TEXTOS_MOTO } from './textos';
+import { MetodoPago } from './MetodoPago';
 
 /**
  * C-MISMA-RUTA (15 nov 2026) — todos los países. La hoja «De X a Y, ¿confirmas?» (pantalla 8 del
@@ -171,25 +172,38 @@ function Contenido({
     return () => clearTimeout(r);
   }, [cot]);
 
-  async function pedir() {
+  // C-METODO-PAGO-PANTALLA: «Sí, pedir ahora» también pasa por «Método de pago» (así puede usar el
+  // Saldo Divoox y ve si Pago Móvil está disponible). Arranca con la forma de pago de la vez pasada.
+  const [verPago, setVerPago] = useState(false);
+  const [metodoElegido, setMetodoElegido] = useState<string | null>(null);
+  const [usarSaldo, setUsarSaldo] = useState(true);
+  const [errorPago, setErrorPago] = useState('');
+  async function pedir(elegido: { metodoPago: string; usarSaldo?: boolean }) {
     if (!cot) return;
     const pedido = pedidoMismaRuta(viaje, cot);
     if (!pedido) return void cotizar();
     setError('');
+    setErrorPago('');
     setPidiendo(true);
     try {
       const r = await api.pedir<{ viaje: { id: string }; pago?: Omit<Cobro, 'pedidoId'> }>(
         'POST',
         '/datos/viajes',
-        pedido.cuerpo,
+        {
+          ...pedido.cuerpo,
+          metodoPago: elegido.metodoPago,
+          ...(elegido.usarSaldo ? { usarSaldo: true } : {}),
+          ...(cot.regalo && elegido.metodoPago !== 'tarjeta' ? { regalo: cot.regalo.codigo } : {}),
+        },
       );
+      setVerPago(false);
       if (r.pago) {
         setCobro({ ...r.pago, pedidoId: r.viaje.id, viajeId: r.viaje.id });
         return;
       }
       alPedir(r.viaje.id, viaje.servicio);
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      setErrorPago(x instanceof ErrorApi ? x.message : String(x));
       // Si el precio venció entre medio, se trae uno nuevo.
       void cotizar();
     } finally {
@@ -339,7 +353,10 @@ function Contenido({
           <Boton
             tipo="principal"
             texto={t.pedirAhora}
-            alTocar={() => void pedir()}
+            alTocar={() => {
+              setErrorPago('');
+              setVerPago(true);
+            }}
             cargando={pidiendo}
             testID="misma-ruta-confirmar"
           />
@@ -360,6 +377,30 @@ function Contenido({
           />
         ) : null}
       </>
+      <Modal
+        visible={verPago && cot != null && !cobro}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setVerPago(false)}
+        testID="misma-ruta-metodo-pago"
+      >
+        {verPago && cot ? (
+          <MetodoPago
+            cotizacion={cot}
+            idioma={idioma}
+            metodo={metodoElegido ?? pago?.cuerpo.metodoPago ?? 'efectivo'}
+            cambiarMetodo={(m) => setMetodoElegido(m)}
+            usarSaldo={usarSaldo}
+            cambiarUsarSaldo={setUsarSaldo}
+            reserva={false}
+            textoBoton={t.pedirAhora}
+            trabajando={pidiendo}
+            error={errorPago}
+            alSolicitar={(elegido) => void pedir(elegido)}
+            volver={() => setVerPago(false)}
+          />
+        ) : null}
+      </Modal>
     </ScrollView>
   );
 }

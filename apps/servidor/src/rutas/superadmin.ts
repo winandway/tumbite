@@ -1623,7 +1623,8 @@ superadmin.post('/admin/usuarios/:id/borrar', async (c) => {
   if (!u) throw new ErrorDatos('Esa cuenta no existe o ya está borrada.', undefined, 404);
   if (/^revisor[.+]/i.test(u.correo) && u.correo.toLowerCase().endsWith('@windoce.com'))
     throw new ErrorDatos('Las cuentas de revisión de las tiendas no se borran.', undefined, 409);
-  await borrarCuenta(c.env, db, u);
+  // C-SALDO-CLIENTE (I4): el equipo borra a sabiendas; el saldo se cierra y el prepago queda en la bandeja.
+  await borrarCuenta(c.env, db, u, { saldoAceptado: true });
   const [local = '', dominio = ''] = u.correo.split('@');
   await db
     .prepare(

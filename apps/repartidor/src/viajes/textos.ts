@@ -157,6 +157,8 @@ export const TEXTOS_VIAJE = {
       // C-SALDO-CLIENTE: con Saldo Divoox del pasajero.
       divooxPagaSaldoAyuda: 'Por el Saldo Divoox del pasajero. Va a tus ganancias al terminar.',
       regaloEnRevision: 'Divoox está revisando este regalo',
+      // C-SALDO-CLIENTE: el pago con Saldo Divoox del pasajero en revisión.
+      pagoEnRevision: 'Divoox está revisando este pago',
       regaloEnRevisionAyuda: 'Nuestro equipo lo revisa y te avisa. No tienes que hacer nada.',
       pagaConTarjeta: 'Precio del viaje · lo paga con tarjeta, no cobras en mano',
       pagoMovilPregunta: '¿Te llegó el pago móvil del pasajero? Monto del viaje:',
@@ -324,6 +326,7 @@ export const TEXTOS_VIAJE = {
       divooxPagaSaldoAyuda:
         'For the rider’s Divoox Balance. It goes to your earnings when you finish.',
       regaloEnRevision: 'Divoox is reviewing this gift',
+      pagoEnRevision: 'Divoox is reviewing this payment',
       regaloEnRevisionAyuda:
         'Our team is reviewing it and will let you know. There’s nothing you need to do.',
       pagaConTarjeta: 'Ride fare · paid by card, nothing to collect',

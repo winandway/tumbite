@@ -183,6 +183,15 @@ export async function cargarSaldoCliente(
   }
   const id = nuevoId();
   const concepto = conceptoDeMotivo(p.motivo);
+  const pais =
+    (
+      await db
+        .prepare(
+          'SELECT z.pais FROM usuarios u LEFT JOIN zonas z ON z.id = u.zona_id WHERE u.id = ?',
+        )
+        .bind(p.clienteId)
+        .first<{ pais: string | null }>()
+    )?.pais ?? 'VE';
   const motivo = `${NOMBRE_MOTIVO_CARGA[p.motivo]}${p.nota.trim() ? ` · ${p.nota.trim()}` : ''}`;
   const [ins] = await db.batch([
     db
@@ -224,6 +233,27 @@ export async function cargarSaldoCliente(
         }),
         id,
       ),
+    // M4: el prepago del cliente es dinero que Divoox YA recibió: su entrada queda en el libro de
+    // Divoox (bolsillo «directo», concepto propio), aparte de los regalos, en el mismo lote.
+    ...(p.motivo === 'prepago'
+      ? [
+          db
+            .prepare(
+              `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia, autor_id)
+               SELECT ?, ?, 'directo', ?, '${MONEDA_SALDO_DIVOOX}', ?, 'saldo_cliente_prepago_recibido', ?, ?
+                WHERE EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE id = ?)`,
+            )
+            .bind(
+              crypto.randomUUID(),
+              CUENTA_TUMBITE,
+              pais,
+              p.monto,
+              `saldo-cliente-prepago:${id}`,
+              p.autorId,
+              id,
+            ),
+        ]
+      : []),
   ]);
   if (!ins?.meta.changes)
     throw new ErrorDatos(
@@ -283,6 +313,54 @@ export async function movimientosSaldoCliente(db: D1Database, clienteId: string,
   }));
 }
 
+/**
+ * C-SALDO-CLIENTE (I4): al borrar la cuenta, el saldo que quede se cierra a cero con un movimiento
+ * `cierre_cuenta` (el libro sigue cuadrando y se ve quién y cuándo). Si parte de ese saldo era dinero
+ * que el cliente prepagó (no un regalo), se abre un caso en la bandeja de dinero del equipo para
+ * devolvérselo. Idempotente (referencia por cliente).
+ */
+export async function cerrarSaldoAlBorrar(db: D1Database, clienteId: string) {
+  const saldo = await saldoDeCliente(db, clienteId);
+  if (saldo <= 0) return { cerrado: 0, porDevolver: 0 };
+  const f = await db
+    .prepare(
+      `SELECT COALESCE(SUM(monto), 0) AS prepago FROM saldo_cliente_movimientos
+        WHERE cliente_id = ? AND moneda = '${MONEDA_SALDO_DIVOOX}' AND concepto = 'recarga'`,
+    )
+    .bind(clienteId)
+    .first<{ prepago: number }>();
+  // Se devuelve lo prepagado, nunca más de lo que queda (lo gastado primero se toma como regalo).
+  const porDevolver = Math.max(0, Math.min(saldo, Number(f?.prepago ?? 0)));
+  const ref = `cierre-cuenta:${clienteId}`;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, motivo)
+         SELECT ?, ?, -?, '${MONEDA_SALDO_DIVOOX}', 'cierre_cuenta', ?, 'Cuenta borrada' WHERE ${ALCANZA('?2', '?3')}`,
+      )
+      .bind(nuevoId(), clienteId, saldo, ref),
+    ...(porDevolver > 0
+      ? [
+          db
+            .prepare(
+              `INSERT OR IGNORE INTO incidencias_dinero (id, tipo, referencia, cuenta_id, pais, moneda, monto_esperado, monto_recibido, detalle)
+               SELECT ?, 'saldo_cliente_por_devolver', ?, ?, 'VE', '${MONEDA_SALDO_DIVOOX}', ?, 0, ?
+                WHERE EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE referencia = ?)`,
+            )
+            .bind(
+              crypto.randomUUID(),
+              `saldo-cliente-devolver:${clienteId}`,
+              clienteId,
+              porDevolver,
+              `El cliente borró su cuenta con ${formatearMonto(saldo, 'USD', 'es')} de Saldo Divoox; ${formatearMonto(porDevolver, 'USD', 'es')} era prepago suyo. Hay que devolvérselo.`,
+              ref,
+            ),
+        ]
+      : []),
+  ]);
+  return { cerrado: saldo, porDevolver };
+}
+
 // ───────────────────────── El saldo en un viaje ─────────────────────────
 
 /**
@@ -292,7 +370,13 @@ export async function movimientosSaldoCliente(db: D1Database, clienteId: string,
  */
 export async function apartarSaldoViaje(
   db: D1Database,
-  p: { operacionId: string; clienteId: string; monto: number; pais: string },
+  p: {
+    operacionId: string;
+    clienteId: string;
+    monto: number;
+    pais: string;
+    aparato?: string | null;
+  },
 ): Promise<boolean> {
   if (!Number.isSafeInteger(p.monto) || p.monto <= 0) return false;
   const ref = `viaje:${p.operacionId}:uso`;
@@ -305,41 +389,107 @@ export async function apartarSaldoViaje(
       .bind(nuevoId(), p.clienteId, p.monto, ref, p.operacionId),
     db
       .prepare(
-        `INSERT OR IGNORE INTO usos_saldo_divoox (operacion_id, cliente_id, monto, apartado, moneda, pais)
-         SELECT ?1, ?2, ?3, ?3, '${MONEDA_SALDO_DIVOOX}', ?4
+        `INSERT OR IGNORE INTO usos_saldo_divoox (operacion_id, cliente_id, monto, apartado, moneda, pais, aparato)
+         SELECT ?1, ?2, ?3, ?3, '${MONEDA_SALDO_DIVOOX}', ?4, ?6
           WHERE EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE referencia = ?5)`,
       )
-      .bind(p.operacionId, p.clienteId, p.monto, p.pais, ref),
+      .bind(p.operacionId, p.clienteId, p.monto, p.pais, ref, p.aparato ?? null),
   ]);
   return Boolean(mov?.meta.changes);
 }
 
+/** Viajes pagados con Saldo Divoox que un conductor puede tomar en 24 horas (como el tope del regalo). */
+export const TOPE_DIARIO_SALDO_CONDUCTOR = 10;
+
 /**
- * Antes de que un conductor acepte un viaje pagado (en parte) con Saldo Divoox: no puede ser el que
- * lo pidió (su misma cuenta o su mismo celular). Es la misma llave del regalo: así nadie cambia su
- * propio saldo por dinero con un viaje de mentira.
+ * Antes de que un conductor acepte un viaje pagado (en parte) con Saldo Divoox, las mismas llaves del
+ * regalo por código (`tomarRegaloConductor`): no puede ser quien lo pidió (su cuenta, su celular o su
+ * aparato) ni pasar el tope diario de viajes con saldo; cada intento frenado deja su alerta para el
+ * reporte del equipo. Si pasa, el uso queda a su nombre. Lanza 409 con el motivo.
  */
 export async function tomarSaldoConductor(
   db: D1Database,
   operacionId: string,
   conductorId: string,
+  aparatoConductor: string | null = null,
 ) {
   const f = await db
     .prepare(
-      `SELECT u.cliente_id, cli.telefono_canonico AS tel_cliente, yo.telefono_canonico AS tel_conductor
+      `SELECT u.cliente_id, u.aparato, u.conductor_id, cli.telefono_canonico AS tel_cliente,
+              yo.telefono_canonico AS tel_conductor
          FROM usos_saldo_divoox u LEFT JOIN usuarios cli ON cli.id = u.cliente_id
          LEFT JOIN usuarios yo ON yo.id = ?2
         WHERE u.operacion_id = ?1 AND u.estado = 'apartado'`,
     )
     .bind(operacionId, conductorId)
-    .first<{ cliente_id: string; tel_cliente: string | null; tel_conductor: string | null }>();
-  if (!f) return;
-  if (f.cliente_id === conductorId || (f.tel_cliente != null && f.tel_cliente === f.tel_conductor))
+    .first<{
+      cliente_id: string;
+      aparato: string | null;
+      conductor_id: string | null;
+      tel_cliente: string | null;
+      tel_conductor: string | null;
+    }>();
+  if (!f || f.conductor_id === conductorId) return;
+  const { alerta } = await import('./regalosDivoox');
+  const propio =
+    f.cliente_id === conductorId ||
+    (f.tel_cliente != null && f.tel_cliente === f.tel_conductor) ||
+    (aparatoConductor != null && f.aparato != null && aparatoConductor === f.aparato);
+  if (propio) {
+    await alerta(db, {
+      tipo: 'saldo_propio',
+      operacionId,
+      clienteId: f.cliente_id,
+      conductorId,
+      detalle:
+        'El conductor intentó tomar un viaje pagado con el Saldo Divoox de su propia cuenta, teléfono o aparato.',
+    });
     throw new ErrorDatos(
       'No puedes tomar un viaje pagado con el Saldo Divoox de tu propia cuenta o tu propio teléfono.',
       undefined,
       409,
     );
+  }
+  const hoy = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM usos_saldo_divoox WHERE conductor_id = ? AND estado <> 'liberado' AND tomado_en > datetime('now', '-1 day')",
+    )
+    .bind(conductorId)
+    .first<{ n: number }>();
+  if (Number(hoy?.n ?? 0) >= TOPE_DIARIO_SALDO_CONDUCTOR) {
+    await alerta(db, {
+      tipo: 'saldo_tope_diario',
+      operacionId,
+      clienteId: f.cliente_id,
+      conductorId,
+      detalle: `El conductor llegó al tope de ${TOPE_DIARIO_SALDO_CONDUCTOR} viajes pagados con Saldo Divoox en 24 horas.`,
+    });
+    throw new ErrorDatos(
+      'Ya tomaste todos los viajes pagados con Saldo Divoox permitidos por hoy. Este viaje pasará a otro conductor.',
+      undefined,
+      409,
+    );
+  }
+  await db
+    .prepare(
+      "UPDATE usos_saldo_divoox SET conductor_id = ?, tomado_en = datetime('now') WHERE operacion_id = ? AND estado = 'apartado'",
+    )
+    .bind(conductorId, operacionId)
+    .run();
+}
+
+/** El conductor no se quedó con el viaje (lo soltó u otro lo tomó): el uso deja de estar a su nombre. */
+export async function soltarSaldoConductor(
+  db: D1Database,
+  operacionId: string,
+  conductorId: string,
+) {
+  await db
+    .prepare(
+      "UPDATE usos_saldo_divoox SET conductor_id = NULL, tomado_en = NULL WHERE operacion_id = ? AND conductor_id = ? AND estado = 'apartado'",
+    )
+    .bind(operacionId, conductorId)
+    .run();
 }
 
 /** Lo que el Saldo Divoox cubre (apartado o cobrado) en una operación, o 0. */
@@ -587,7 +737,13 @@ export async function barrerSaldos(db: D1Database) {
          FROM usos_saldo_divoox u
          LEFT JOIN operaciones o ON o.id = u.operacion_id
          LEFT JOIN viajes v ON v.operacion_id = u.operacion_id
-        WHERE u.estado = 'apartado' LIMIT 100`,
+        WHERE u.estado = 'apartado'
+          -- Solo lo que se puede cerrar o devolver ya: un viaje en curso no ocupa el lugar de otro.
+          AND (o.estado_general IN ('cancelada', 'sin_conductor')
+               OR (o.estado_general = 'terminada' AND v.total_final_centavos IS NOT NULL
+                   AND v.terminado_en <= datetime('now', '-${MINUTOS_RELOJ_ESPERA} minutes'))
+               OR (o.id IS NULL AND u.creado_en < datetime('now', '-30 minutes')))
+        ORDER BY u.creado_en LIMIT 100`,
     )
     .all<{
       operacion_id: string;

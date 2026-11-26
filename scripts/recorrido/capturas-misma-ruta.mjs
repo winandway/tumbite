@@ -145,6 +145,8 @@ async function correr(M, idioma) {
   // ───────── 3. «Sí, pedir ahora» → la pantalla de espera de siempre (el viaje es en efectivo o
   // tarjeta según el viaje anterior; con tarjeta se queda en la autorización y no se fotografía)
   await c.getByTestId('misma-ruta-confirmar').click();
+  // C-METODO-PAGO-PANTALLA: también pasa por «Método de pago».
+  await c.getByTestId('pago-solicitar').click();
   await c.waitForURL(/\/ride\?/, { timeout: 30_000 });
   await espera(2_500);
   await foto('espera');

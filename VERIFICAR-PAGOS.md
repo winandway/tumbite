@@ -9,6 +9,8 @@
 - **Probado en pantalla, en local (25 nov):** la pantalla en la app web real del cliente contra el servidor local (sin saldo con Pago Móvil apagado, saldo parcial, saldo que cubre todo, métodos de EE. UU.) y el panel «Saldo de clientes».
 - **🔴 Sin probar:** en el sitio de pruebas, en las apps nativas y en la calle; ninguna carga ni ningún viaje con dinero real; el pago real al conductor de lo cubierto por saldo (sale por el mismo camino del regalo: pago móvil del equipo o «Pasar a mi saldo»). No anunciar el Saldo Divoox hasta probarlo en el sitio de pruebas y con un viaje real mirado por el equipo.
 - **Canario:** pieza `saldo_clientes` de `/datos/salud`.
+- **Contabilidad (M4):** el prepago real del cliente entra al libro de Divoox (`saldo_cliente_prepago_recibido`, bolsillo `directo`); los regalos no tienen entrada (los paga Divoox al consumirse, `saldo_divoox_pagado`). Al borrar una cuenta con saldo: movimiento `cierre_cuenta` y, si había prepago, caso `saldo_cliente_por_devolver` en la bandeja de dinero (devolución a mano por el equipo, 🔴 sin probar con dinero real).
+- **Revisión del 25 nov:** 11 pruebas más en `saldoCliente.test.ts` (26 en total), cada una vista en rojo: regalo + saldo en el mismo viaje, «Pasar a mi saldo» con saldo y mixto, ganancias en mano, billetera ligada, aparato y tope diario, no-show, cerrar contra liberar a la vez, dos pedidos a la vez, reloj con más de 100, borrar cuenta y prepago en el libro.
 
 ## 🔴 Tarifa de servicio de Divoox en los viajes (C-QUIEN-PAGA-VIAJES, 23 nov 2026): quién paga la comisión, conductor, cliente o mitad · Venezuela en «cliente» · probado con pruebas automáticas, en local en pantalla y con el guion del sitio de pruebas · 🔴 NADA con dinero real
 

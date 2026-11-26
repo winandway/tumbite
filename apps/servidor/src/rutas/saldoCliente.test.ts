@@ -8,8 +8,10 @@ import {
   escenarioVe,
 } from '../pruebas/motoVe';
 import {
+  TOPE_DIARIO_SALDO_CONDUCTOR,
   apartarSaldoViaje,
   barrerSaldos,
+  liberarSaldoViaje,
   cerrarSaldoDeViaje,
   saldoDeCliente,
   saludSaldoClientes,
@@ -25,6 +27,7 @@ import { CUENTA_TUMBITE } from '../internacional/libro';
  */
 const DESTINO = { lat: 10.4806, lng: -66.8406, direccion: 'Destino' };
 const TASA = 236.4567;
+const APARATO = 'aparato-saldo-pasajero-1';
 
 async function preparar() {
   const e = await escenarioVe();
@@ -40,6 +43,7 @@ async function preparar() {
   const pasajero = (metodo: string, ruta: string, cuerpo?: unknown) =>
     e.m.llamar(metodo, ruta, cuerpo, e.cliente.token, {
       'idempotency-key': `pedir-saldo-${++n}-abcdef`,
+      'x-aparato': APARATO,
     });
   const cargar = (monto: number, extra: Record<string, unknown> = {}, token = e.admin.token) =>
     e.m.llamar(
@@ -581,5 +585,357 @@ describe('C-PAGO-MOVIL-DISPONIBLE: Pago Móvil solo si alguien cerca lo recibe',
       .bind(c.rep.id)
       .run();
     expect((await p.cotizar()).disponibles.pago_movil).toBe(false);
+  });
+});
+
+// ───────────── Devolución del revisor (25 nov 2026): piezas vecinas del saldo ─────────────
+
+async function conRegaloCodigo(p: P, valor: number) {
+  await p.e.m.DB.prepare(
+    "UPDATE usuarios SET telefono = '+584120000077', telefono_canonico = '584120000077' WHERE id = ?",
+  )
+    .bind(p.e.cliente.id)
+    .run();
+  const r = await p.e.m.llamar(
+    'POST',
+    '/datos/admin/regalos-divoox',
+    {
+      codigo: 'SALDOREG',
+      nombreEs: 'Regalo de prueba',
+      nombreEn: 'Test gift',
+      tipo: 'monto',
+      valor,
+      servicios: ['moto'],
+      zonas: ['VE-DC-CCS-PRUEBAS'],
+      venceEn: null,
+      presupuesto: 10_000,
+      bienvenida: true,
+    },
+    p.e.admin.token,
+  );
+  if (r.estado !== 201) {
+    // La zona de pruebas tiene otro id: se toma la de la cotización.
+    const z = await p.e.m.DB.prepare("SELECT id FROM zonas WHERE pais = 'VE' LIMIT 1").first<{
+      id: string;
+    }>();
+    const r2 = await p.e.m.llamar(
+      'POST',
+      '/datos/admin/regalos-divoox',
+      {
+        codigo: 'SALDOREG',
+        nombreEs: 'Regalo de prueba',
+        nombreEn: 'Test gift',
+        tipo: 'monto',
+        valor,
+        servicios: ['moto'],
+        zonas: [z?.id],
+        venceEn: null,
+        presupuesto: 10_000,
+        bienvenida: true,
+      },
+      p.e.admin.token,
+    );
+    expect(r2.estado).toBe(201);
+  }
+  await p.e.m.llamar(
+    'PATCH',
+    '/datos/admin/regalos-divoox/SALDOREG',
+    { activo: true },
+    p.e.admin.token,
+  );
+}
+
+describe('C-SALDO-CLIENTE (revisión): regalo por código y saldo en el mismo viaje', () => {
+  it('primero el regalo, después el saldo; el conductor pasa a su saldo lo de los dos (B1, mixto)', async () => {
+    const p = await preparar();
+    await conRegaloCodigo(p, 100);
+    await p.cargar(150);
+    const c = await conductorListoVe(p.e, 2000);
+    const q = await p.cotizar();
+    expect((q as { regalo?: { monto: number } }).regalo?.monto).toBe(100);
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'efectivo',
+      usarSaldo: true,
+      regalo: 'SALDOREG',
+    });
+    expect(v.estado).toBe(201);
+    const id = v.datos.viaje.id as string;
+    expect((await usoDe(p, id))?.apartado).toBe(150);
+    expect((await c.paso(id, 'aceptar')).estado).toBe(200);
+    await c.paso(id, 'llegue');
+    const pin = (await p.pasajero('GET', `/datos/viajes/${id}`)).datos.viaje.pin;
+    await c.paso(id, 'iniciar', { pin });
+    await recorrer(p, c.rep.id, id);
+    const fin = await c.paso(id, 'terminar');
+    expect(fin.datos).toMatchObject({
+      regaloDivoox: 100,
+      saldoDivoox: 150,
+      cobrarEnMano: q.total - 250,
+    });
+    // B1: «Pasar a mi saldo» toma lo del regalo Y lo del saldo del pasajero.
+    const pasa = await p.e.m.llamar('POST', '/datos/repartidor/regalos/a-saldo', {}, c.rep.token);
+    expect(pasa.estado).toBe(200);
+    expect(pasa.datos.monto).toBe(250);
+  });
+
+  it('B1: con solo lo acreditado por Saldo Divoox (0 de cupón) también se pasa a su saldo', async () => {
+    const p = await preparar();
+    await p.cargar(2000);
+    const c = await conductorListoVe(p.e, 2000);
+    const { id, q } = await hastaIniciar(p, c, { metodoPago: 'saldo', usarSaldo: true });
+    await recorrer(p, c.rep.id, id);
+    await c.paso(id, 'terminar');
+    const pasa = await p.e.m.llamar('POST', '/datos/repartidor/regalos/a-saldo', {}, c.rep.token);
+    expect(pasa.estado).toBe(200);
+    expect(pasa.datos.monto).toBe(q.total);
+  });
+
+  it('M2: si el regalo ya cubre todo, «saldo» no dice «no alcanza» ni suelta el regalo', async () => {
+    const p = await preparar();
+    await conRegaloCodigo(p, 2000);
+    await p.cargar(500);
+    await conductorListoVe(p.e, 2000);
+    const q = await p.cotizar();
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'saldo',
+      usarSaldo: true,
+      regalo: 'SALDOREG',
+    });
+    expect(v.estado).toBe(201);
+    const id = v.datos.viaje.id as string;
+    const uso = await p.e.m.DB.prepare(
+      'SELECT estado FROM usos_cupon_divoox WHERE operacion_id = ?',
+    )
+      .bind(id)
+      .first<{ estado: string }>();
+    expect(uso?.estado).toBe('apartado');
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBe(500);
+  });
+});
+
+describe('C-SALDO-CLIENTE (revisión): ganancias, billetera y antifraude del conductor', () => {
+  it('B2 e I1: el viaje todo con saldo no sale «en mano» y su crédito se liga al viaje', async () => {
+    const p = await preparar();
+    await p.cargar(2000);
+    const c = await conductorListoVe(p.e, 2000);
+    const { id, q } = await hastaIniciar(p, c, { metodoPago: 'saldo', usarSaldo: true });
+    await recorrer(p, c.rep.id, id);
+    await c.paso(id, 'terminar');
+    const g = await c.yo('GET', '/datos/repartidor/ganancias');
+    expect((g.datos.viajesEnMano as { viajeId: string }[]).some((v) => v.viajeId === id)).toBe(
+      false,
+    );
+    const b = await c.yo('GET', '/datos/billetera');
+    const m = (
+      b.datos.movimientos as { operacionId: string | null; origen: string | null; monto: number }[]
+    ).find((x) => x.origen === 'saldo_divoox');
+    expect(m).toMatchObject({ operacionId: id, monto: q.total });
+  });
+
+  it('B2: parte con saldo, en mano sale solo el resto', async () => {
+    const p = await preparar();
+    await p.cargar(100);
+    const c = await conductorListoVe(p.e, 2000);
+    const { id, q } = await hastaIniciar(p, c, { metodoPago: 'efectivo', usarSaldo: true });
+    await recorrer(p, c.rep.id, id);
+    await c.paso(id, 'terminar');
+    const g = await c.yo('GET', '/datos/repartidor/ganancias');
+    const fila = (g.datos.viajesEnMano as { viajeId: string; monto: number }[]).find(
+      (v) => v.viajeId === id,
+    );
+    expect(fila?.monto).toBe(q.total - 100);
+  });
+
+  it('I2: no toma un viaje con saldo pedido desde su mismo aparato, ni pasa el tope diario; deja alerta', async () => {
+    const p = await preparar();
+    await p.cargar(2000);
+    const c = await conductorListoVe(p.e, 2000);
+    const q = await p.cotizar();
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'saldo',
+      usarSaldo: true,
+    });
+    const id = v.datos.viaje.id as string;
+    const aceptar = (aparato: string) =>
+      p.e.m.crudo(`/datos/conductor/operaciones/${id}/aceptar`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${c.rep.token}`,
+          'content-type': 'application/json',
+          'idempotency-key': `aceptar-saldo-${aparato}-${id.slice(0, 6)}`,
+          'x-aparato': aparato,
+        },
+        body: '{}',
+      });
+    expect((await aceptar(APARATO)).status).toBe(409);
+    const propia = await p.e.m.DB.prepare(
+      "SELECT 1 FROM alertas_regalo WHERE tipo = 'saldo_propio' AND operacion_id = ?",
+    )
+      .bind(id)
+      .first();
+    expect(propia).not.toBeNull();
+    // El tope diario: ya tomó todos los viajes con saldo permitidos hoy.
+    for (let i = 0; i < TOPE_DIARIO_SALDO_CONDUCTOR; i++)
+      await p.e.m.DB.prepare(
+        `INSERT INTO usos_saldo_divoox (operacion_id, cliente_id, conductor_id, monto, apartado, pais, estado, tomado_en)
+         VALUES (?, 'otro-cliente', ?, 100, 100, 'VE', 'cobrado', datetime('now'))`,
+      )
+        .bind(`op-tope-${i}-xxxxxx`, c.rep.id)
+        .run();
+    expect((await aceptar('otro-aparato-1')).status).toBe(409);
+    const tope = await p.e.m.DB.prepare(
+      "SELECT 1 FROM alertas_regalo WHERE tipo = 'saldo_tope_diario' AND operacion_id = ?",
+    )
+      .bind(id)
+      .first();
+    expect(tope).not.toBeNull();
+  });
+});
+
+describe('C-SALDO-CLIENTE (revisión): no-show, carreras simultáneas y el reloj', () => {
+  it('I6: «no se presentó» devuelve el saldo apartado', async () => {
+    const p = await preparar();
+    await p.cargar(2000);
+    const c = await conductorListoVe(p.e, 2000);
+    const q = await p.cotizar();
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'saldo',
+      usarSaldo: true,
+    });
+    const id = v.datos.viaje.id as string;
+    await c.paso(id, 'aceptar');
+    await c.paso(id, 'llegue');
+    await p.e.m.DB.prepare(
+      "UPDATE viajes SET llego_en = datetime('now', '-20 minutes') WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    expect((await c.paso(id, 'no-se-presento')).estado).toBe(200);
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBe(2000);
+  });
+
+  it('I6: cerrar y liberar a la vez: el dinero sale una sola vez (o al conductor o de vuelta al cliente)', async () => {
+    const p = await preparar();
+    await p.cargar(2000);
+    const c = await conductorListoVe(p.e, 2000);
+    const { id, q } = await hastaIniciar(p, c, { metodoPago: 'saldo', usarSaldo: true });
+    await recorrer(p, c.rep.id, id);
+    await Promise.all([
+      cerrarSaldoDeViaje(p.e.m.DB, {
+        operacionId: id,
+        conductorId: c.rep.id,
+        maximo: q.total,
+        alTerminar: false,
+      }),
+      liberarSaldoViaje(p.e.m.DB, id, 'prueba'),
+    ]);
+    const cliente = await saldoDeCliente(p.e.m.DB, p.e.cliente.id);
+    const conductor = Number((await movimientoConductor(p, id))?.monto ?? 0);
+    expect(cliente + conductor).toBe(2000);
+    expect([0, q.total]).toContain(conductor);
+  });
+
+  it('I6: dos pedidos a la vez con el mismo saldo: uno pasa y el otro recibe un 409 en palabras', async () => {
+    const p = await preparar();
+    const q1 = await p.cotizar();
+    await p.cargar(q1.total);
+    const q2 = await p.cotizar();
+    const pedir = (id: string) =>
+      p.pasajero('POST', '/datos/viajes', {
+        cotizacionId: id,
+        metodoPago: 'efectivo',
+        usarSaldo: true,
+      });
+    const r = await Promise.all([pedir(q1.id), pedir(q2.id)]);
+    expect(r.map((x) => x.estado).sort()).toEqual([201, 409]);
+    expect(String(r.find((x) => x.estado === 409)?.datos.error ?? '').length).toBeGreaterThan(10);
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBe(0);
+    expect(await saludSaldoClientes(p.e.m.DB)).toBe('ok');
+  });
+
+  it('I5: el reloj usa su índice y no deja nada sin barrer aunque haya más de 100 viajes en curso', async () => {
+    const p = await preparar();
+    await p.cargar(1000);
+    const q = await p.cotizar();
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'efectivo',
+      usarSaldo: true,
+    });
+    const id = v.datos.viaje.id as string;
+    // 120 viajes «en curso» más viejos (sin nada que barrer) por delante del que sí hay que devolver.
+    for (let i = 0; i < 120; i++)
+      await p.e.m.DB.prepare(
+        `INSERT INTO usos_saldo_divoox (operacion_id, cliente_id, monto, apartado, pais, creado_en)
+         VALUES (?, 'otro', 100, 100, 'VE', datetime('now', '-1 minute'))`,
+      )
+        .bind(`op-vivo-${i}-xxxxxx`)
+        .run();
+    await p.e.m.DB.prepare(
+      "UPDATE usos_saldo_divoox SET creado_en = datetime('now') WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    const { cambiarEstadoViaje } = await import('../operaciones');
+    await cambiarEstadoViaje(p.e.m.DB, {
+      operacionId: id,
+      desde: 'buscando',
+      hacia: 'sin_conductor',
+      actor: 'sistema',
+      actorId: null,
+      clave: 'prueba-reloj-120',
+    });
+    await barrerSaldos(p.e.m.DB);
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBe(1000);
+    const plan = await p.e.m.DB.prepare(
+      "EXPLAIN QUERY PLAN SELECT operacion_id FROM usos_saldo_divoox WHERE estado = 'apartado' ORDER BY creado_en LIMIT 100",
+    ).all<{ detail: string }>();
+    const texto = plan.results.map((x) => x.detail).join(' | ');
+    expect(texto).toMatch(/usos_saldo_divoox_estado/);
+    expect(texto).not.toMatch(/TEMP B-TREE/);
+  });
+});
+
+describe('C-SALDO-CLIENTE (revisión): borrar la cuenta y el prepago', () => {
+  it('I4: con saldo pide confirmación; al borrar se cierra a cero y el prepago queda para devolver', async () => {
+    const p = await preparar();
+    await p.cargar(500);
+    await p.cargar(700, { motivo: 'prepago', comprobante: 'REF-PREPAGO-1' });
+    // M4: el prepago real entra al libro de Divoox, aparte de los regalos.
+    const libro = await p.e.m.DB.prepare(
+      "SELECT bolsillo, monto FROM libro WHERE concepto = 'saldo_cliente_prepago_recibido'",
+    ).all<{ bolsillo: string; monto: number }>();
+    expect(libro.results).toEqual([{ bolsillo: 'directo', monto: 700 }]);
+    const visto = await p.pasajero('GET', '/datos/cuentas/yo/saldo-divoox');
+    expect(visto.datos.disponible).toBe(1200);
+    const sinAceptar = await p.e.m.llamar(
+      'DELETE',
+      '/datos/cuentas/yo',
+      undefined,
+      p.e.cliente.token,
+    );
+    expect(sinAceptar.estado).toBe(409);
+    const borrado = await p.e.m.llamar(
+      'DELETE',
+      '/datos/cuentas/yo?saldo=acepto',
+      undefined,
+      p.e.cliente.token,
+    );
+    expect(borrado.estado).toBe(200);
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBe(0);
+    const cierre = await p.e.m.DB.prepare(
+      "SELECT monto FROM saldo_cliente_movimientos WHERE concepto = 'cierre_cuenta' AND cliente_id = ?",
+    )
+      .bind(p.e.cliente.id)
+      .first<{ monto: number }>();
+    expect(cierre?.monto).toBe(-1200);
+    const caso = await p.e.m.DB.prepare(
+      "SELECT tipo, monto_esperado FROM incidencias_dinero WHERE tipo = 'saldo_cliente_por_devolver'",
+    ).first<{ tipo: string; monto_esperado: number }>();
+    expect(caso?.monto_esperado).toBe(700);
   });
 });

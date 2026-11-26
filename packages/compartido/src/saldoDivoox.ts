@@ -20,6 +20,8 @@ export const CONCEPTOS_SALDO_CLIENTE = [
   'uso_viaje',
   'devolucion',
   'ajuste',
+  // Al borrar la cuenta: el saldo se cierra a cero (auditable; el prepago real se devuelve aparte).
+  'cierre_cuenta',
 ] as const;
 export type ConceptoSaldoCliente = (typeof CONCEPTOS_SALDO_CLIENTE)[number];
 

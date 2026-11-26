@@ -302,9 +302,9 @@ async function correr(M, idiomas) {
     await c.evaluate(() => globalThis.scrollBy(0, -24));
     await espera(600);
     await foto(c, 'cliente-paquete', idioma);
-    await c
-      .getByRole('button', { name: en ? 'Request delivery' : 'Solicitar envío', exact: true })
-      .click();
+    // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita.
+    await c.getByTestId('pedir-boton').click();
+    await c.getByTestId('pago-solicitar').click();
     await c.getByTestId('envio-pin').waitFor({ timeout: 60_000 });
     const pin = (await c.getByTestId('envio-pin').textContent())?.trim() ?? '';
     await espera(800);

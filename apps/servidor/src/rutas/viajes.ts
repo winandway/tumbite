@@ -60,6 +60,7 @@ import {
   cerrarSaldoDeViaje,
   liberarSaldoViaje,
   saldoDeOperacion,
+  soltarSaldoConductor,
   tomarSaldoConductor,
 } from '../saldoCliente';
 import { aparatoDe } from './regalosDivoox';
@@ -396,7 +397,7 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // quien ya llegó al tope de viajes con regalo del día.
   await tomarRegaloConductor(base(c), id, u.id, await aparatoDe(c));
   // C-SALDO-CLIENTE: tampoco un viaje pagado con el Saldo Divoox de su propia cuenta o teléfono.
-  await tomarSaldoConductor(base(c), id, u.id);
+  await tomarSaldoConductor(base(c), id, u.id, await aparatoDe(c));
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)
@@ -470,6 +471,7 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // No se lo quedó: lo apartado vuelve al prepago.
   await devolverReservaViaje(base(c), id, u.id, 'no_aceptado');
   await soltarRegaloConductor(base(c), id, u.id);
+  await soltarSaldoConductor(base(c), id, u.id);
   if (r.resultado === 'ocupado')
     throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
   if (r.resultado === 'otro_conductor')
@@ -503,6 +505,7 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
     await avisarPasoViaje(c.env, base(c), id, 'liberado');
     await devolverReservaViaje(base(c), id, u.id, 'soltado');
     await soltarRegaloConductor(base(c), id, u.id);
+    await soltarSaldoConductor(base(c), id, u.id);
   }
   if (!ok) {
     // Reintento de una liberación que ya se hizo: la misma respuesta.
@@ -736,6 +739,8 @@ viajes.post(
         totalFinal,
         regaloDivoox,
         regaloEnRevision: cierre.enRevision || saldo.enRevision,
+        // C-SALDO-CLIENTE: lo que se revisa es el pago con Saldo Divoox (Driver lo dice así).
+        saldoEnRevision: saldo.enRevision,
         saldoDivoox,
         cobrarEnMano,
         referencia: enMano?.local ?? null,

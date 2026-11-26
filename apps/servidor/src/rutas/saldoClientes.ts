@@ -112,6 +112,12 @@ saldoClientes.post('/admin/saldo-clientes/revisiones/:op', async (c) => {
   );
 });
 
+/** C-SALDO-CLIENTE (I4): el saldo de la cuenta propia, para el aviso de «Borrar la cuenta» (las tres apps). */
+saldoClientes.get('/cuentas/yo/saldo-divoox', async (c) => {
+  const u = exigir(c);
+  return c.json({ disponible: await saldoDeCliente(base(c), u.id), moneda: MONEDA_SALDO_DIVOOX });
+});
+
 /** Lo que la app del cliente ve de su Saldo Divoox (solo donde su país lo tiene). */
 saldoClientes.get('/cliente/saldo-divoox', async (c) => {
   const u = exigir(c, 'cliente');

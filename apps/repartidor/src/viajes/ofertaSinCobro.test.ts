@@ -45,3 +45,14 @@ describe('C-OFERTA-SIN-COBRO · con el viaje cubierto por el regalo no se pinta 
     expect(TEXTOS_VIAJE.en.oferta.noCobrasEnMano).toMatch(/Nothing to collect/);
   });
 });
+
+describe('C-SALDO-CLIENTE (revisión, M3): el pago con saldo en revisión no se llama «regalo»', () => {
+  it('dice «Divoox está revisando este pago»', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const v = readFileSync(join(__dirname, 'ViajeActivo.tsx'), 'utf8');
+    expect(v).toMatch(/respuesta\?\.saldoEnRevision \? t\.pagoEnRevision : t\.regaloEnRevision/);
+    expect(TEXTOS_VIAJE.es.activo.pagoEnRevision).toBe('Divoox está revisando este pago');
+    expect(TEXTOS_VIAJE.en.activo.pagoEnRevision).toBe('Divoox is reviewing this payment');
+  });
+});
