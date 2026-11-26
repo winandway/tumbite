@@ -6,7 +6,7 @@ import {
   nacimientoDeLecturas,
   perfilPasajeros,
 } from '@tumbite/compartido';
-import { ZONA_CONDUCTOR_SQL } from './cuentaPais';
+import { PAIS_CONDUCTOR_SQL, ZONA_CONDUCTOR_SQL } from './cuentaPais';
 import { guardarError } from './errores';
 
 /**
@@ -126,7 +126,7 @@ type Persona = {
 async function persona(db: Db, id: string): Promise<Persona | null> {
   const f = await db
     .prepare(
-      `SELECT u.fecha_nacimiento AS fecha, z.pais, z.id AS zona_id,
+      `SELECT u.fecha_nacimiento AS fecha, ${PAIS_CONDUCTOR_SQL} AS pais, z.id AS zona_id,
               (SELECT v.tipo FROM vehiculos v WHERE v.id = r.vehiculo_activo_id) AS vehiculo,
               EXISTS (SELECT 1 FROM cumplimientos c WHERE c.conductor_id = u.id AND c.vehiculo_id = ''
                         AND c.requisito = '${REQUISITO_EDAD}' AND c.estado = 'aprobado'

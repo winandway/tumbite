@@ -1,3 +1,5 @@
+import { entornoDeHost } from '@tumbite/compartido';
+import { pasarEsperaAlAbrir } from '../lugarEspera';
 import { frenarSinCelularConfirmado } from '../telefonoVuelta';
 import { exigirPuntoEnElPais } from '../destinoEnElPais';
 import { avisarPasoViaje } from '../avisosViaje';
@@ -418,6 +420,13 @@ viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
     motivo: d.motivo,
   });
   const estado = await encenderServicioEnZona(c, admin.id, d.servicio, d.zona.id, d.motivo);
+  // C-REGISTRO-TODO-EL-PAIS: los que esperan en esta ciudad pasan solos (nunca frena la apertura).
+  await pasarEsperaAlAbrir(
+    c.env,
+    db,
+    d.zona.id,
+    entornoDeHost(new URL(c.req.url).host) === 'produccion',
+  );
   return c.json(
     { zona: { id: d.zona.id, pais, moneda }, tarifa: fila ? tarifaPublica(fila) : null, estado },
     201,

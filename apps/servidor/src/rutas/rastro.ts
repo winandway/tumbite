@@ -107,12 +107,21 @@ rastroRutas.get('/admin/embudo', async (c) => {
     ? c.req.query('pais')!.toUpperCase()
     : null;
   const zona = c.req.query('zona')?.slice(0, 40) || null;
+  // C-REGISTRO-TODO-EL-PAIS: por el estado y la ciudad donde viven.
+  const estado = /^[A-Za-z]{1,3}$/.test(c.req.query('estado') ?? '')
+    ? c.req.query('estado')!.toUpperCase()
+    : null;
+  const lugarId = /^[a-z]{2,4}:[A-Za-z0-9_-]{1,24}$/.test(c.req.query('lugarId') ?? '')
+    ? c.req.query('lugarId')!
+    : null;
   return c.json({
     app,
     desde,
     hasta,
     pais,
     zona,
+    estado,
+    lugarId,
     // C-PERMISOS-FINOS: quien tiene una zona de trabajo ve solo las cuentas de su zona.
     ...(await embudoRegistro(base(c), {
       app,
@@ -120,6 +129,8 @@ rastroRutas.get('/admin/embudo', async (c) => {
       hasta,
       pais,
       zona,
+      estado,
+      lugarId,
       alcance: alcanceObjetoSql(
         accesoDe(c),
         app === 'repartidor' ? 'repartidor' : 'cliente',

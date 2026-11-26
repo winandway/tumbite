@@ -209,7 +209,7 @@ export async function pendientesDelMenu(
         (SELECT COUNT(*) FROM solicitudes_linea s WHERE s.estado = 'pendiente') AS lineas,
         (SELECT COUNT(*) FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id
            WHERE u.rol = 'repartidor' AND u.activo = 1 AND u.es_prueba = 0
-             AND ${zonaRealSql('d', 'u')} IS NULL${conductorD.sql}) AS sin_zona,
+             AND ${zonaRealSql('d', 'u')} IS NULL AND u.lugar_id IS NULL${conductorD.sql}) AS sin_zona,
         (SELECT COUNT(*) FROM emergencias_viaje e WHERE e.atendida_en IS NULL
            AND ${REAL('e.actor_id')}${viaje.sql}) AS emergencias`,
     )

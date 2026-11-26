@@ -69,6 +69,11 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // C-BARRA-ACTIVACION: la barra de activación del conductor (solo lee).
   'GET /admin/conductores/:id/activacion': 'repartidores.ver',
   'PUT /admin/conductores/:id/ciudad': 'repartidores.gestionar',
+  // C-REGISTRO-TODO-EL-PAIS: la lista de espera por ciudad (conteos), quiénes esperan en una ciudad
+  // y la ciudad donde vive una cuenta a medias (la pone el equipo).
+  'GET /admin/espera-ciudades': 'monitoreo.ver',
+  'GET /admin/espera-ciudades/personas': 'repartidores.ver',
+  'PUT /admin/usuarios/:id/lugar': 'repartidores.gestionar',
   // C-FECHA-GUARDADA: la fecha de nacimiento escrita a mano (con motivo y auditoría).
   'PUT /admin/conductores/:id/fecha-nacimiento': 'repartidores.gestionar',
   'GET /admin/conductores/:id/ciudades-destino': 'repartidores.ver',
@@ -349,6 +354,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/zonas/:id/areas': 'config.ver',
   'POST /admin/zonas/:id/areas': 'config.editar',
   'PATCH /admin/areas/:id': 'config.editar',
+  // C-REGISTRO-TODO-EL-PAIS: los que esperan en la ciudad pasan a la zona abierta.
+  'POST /admin/zonas/:id/pasar-espera': 'config.editar',
   'POST /admin/comida/ciudades': 'config.editar',
   'GET /admin/web/ciudades': 'config.ver',
   'PUT /admin/web/ciudades/:slug': 'config.editar',
@@ -553,6 +560,9 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/conductores/:id/pasajeros': ficha('repartidor'),
   'GET /admin/conductores/:id/activacion': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),
+  'GET /admin/espera-ciudades': CONSULTA,
+  'GET /admin/espera-ciudades/personas': CONSULTA,
+  'PUT /admin/usuarios/:id/lugar': ficha('persona'),
   'PUT /admin/conductores/:id/fecha-nacimiento': ficha('repartidor'),
   'GET /admin/conductores/:id/ciudades-destino': ficha('repartidor'),
   'GET /admin/conductores/:id/ciudad-base': ficha('repartidor'),
@@ -799,6 +809,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/zonas/:id/areas': CONFIG,
   'POST /admin/zonas/:id/areas': CONFIG,
   'PATCH /admin/areas/:id': CONFIG,
+  'POST /admin/zonas/:id/pasar-espera': CONFIG,
   'POST /admin/comida/ciudades': CONFIG,
   'GET /admin/web/ciudades': CONFIG,
   'PUT /admin/web/ciudades/:slug': CONFIG,

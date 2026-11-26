@@ -1,3 +1,4 @@
+import { lugarEscrito } from '@tumbite/compartido';
 import {
   PASOS_ANONIMOS,
   nombreConMarca,
@@ -649,13 +650,16 @@ export async function embudoRegistro(
     hasta: string;
     pais?: string | null;
     zona?: string | null;
+    /** C-REGISTRO-TODO-EL-PAIS: el estado y la ciudad donde viven (su lugar). */
+    estado?: string | null;
+    lugarId?: string | null;
     /** C-PERMISOS-FINOS: la condición de alcance de quien mira, sobre `u.id` (vacía con alcance total). */
     alcance?: { sql: string; valores: unknown[] };
   },
 ) {
   const al = f.alcance ?? { sql: '', valores: [] };
   // Con una zona elegida, o con alcance limitado, los pasos sin cuenta no se pueden atribuir: fuera.
-  const soloCuentas = Boolean(f.zona) || al.sql !== '';
+  const soloCuentas = Boolean(f.zona) || Boolean(f.estado) || Boolean(f.lugarId) || al.sql !== '';
   const rol = f.app === 'repartidor' ? 'repartidor' : 'cliente';
   const orden = pasosDe(f.app);
   // C-CORREO-NO-FRENA: el correo (al final y en segundo plano) no decide dónde se quedó cada persona.
@@ -665,11 +669,21 @@ export async function embudoRegistro(
          LEFT JOIN repartidores r ON r.usuario_id = u.id
          WHERE c.paso = 'cuenta' AND c.creado_en >= ?1 AND c.creado_en < date(?2, '+1 day')
            AND u.rol = ?3 AND u.es_prueba = 0
-           AND (?4 IS NULL OR c.pais = ?4)
-           AND (?5 IS NULL OR COALESCE(u.zona_id, r.zona_id) = ?5)${al.sql}`;
-  const valores = [f.desde, f.hasta, rol, f.pais ?? null, f.zona ?? null, ...al.valores];
+           AND (?4 IS NULL OR COALESCE(u.lugar_pais, c.pais) = ?4)
+           AND (?5 IS NULL OR COALESCE(u.zona_id, r.zona_id) = ?5)
+           AND (?6 IS NULL OR u.lugar_estado = ?6) AND (?7 IS NULL OR u.lugar_id = ?7)${al.sql}`;
+  const valores = [
+    f.desde,
+    f.hasta,
+    rol,
+    f.pais ?? null,
+    f.zona ?? null,
+    f.estado ?? null,
+    f.lugarId ?? null,
+    ...al.valores,
+  ];
   const ordenSql = `CASE e.paso ${deCuenta.map((p, i) => `WHEN '${p}' THEN ${i}`).join(' ')} ELSE -1 END`;
-  const [anon, cuentas, ultimos, porPais, hitos] = await db.batch<
+  const [anon, cuentas, ultimos, porPais, hitos, porLugar] = await db.batch<
     Record<string, string | number | null>
   >([
     db
@@ -707,6 +721,15 @@ export async function embudoRegistro(
           WHERE h.usuario_id IN (${cohorte}) GROUP BY h.hito, h.motivo ORDER BY 3 DESC LIMIT 60`,
       )
       .bind(...valores),
+    // C-REGISTRO-TODO-EL-PAIS: de dónde son las mismas cuentas (su ciudad) y cuántas esperan su ciudad.
+    db
+      .prepare(
+        `SELECT u.lugar_pais AS pais, u.lugar_estado AS estado, u.lugar_ciudad AS ciudad, u.lugar_id AS lugar_id,
+                COUNT(*) AS personas, SUM(u.lugar_espera = 1 AND u.zona_id IS NULL) AS en_espera
+           FROM usuarios u WHERE u.lugar_id IS NOT NULL AND u.id IN (${cohorte})
+          GROUP BY u.lugar_id ORDER BY 5 DESC LIMIT 30`,
+      )
+      .bind(...valores),
   ]);
   const cuenta = new Map<string, number>();
   if (!soloCuentas)
@@ -739,6 +762,19 @@ export async function embudoRegistro(
       hito: String(r.hito),
       motivo: String(r.motivo ?? ''),
       personas: Number(r.personas ?? 0),
+    })),
+    porLugar: (porLugar?.results ?? []).map((r) => ({
+      pais: String(r.pais),
+      estado: String(r.estado),
+      ciudad: String(r.ciudad),
+      lugarId: String(r.lugar_id),
+      lugarEscrito: lugarEscrito({
+        pais: String(r.pais) as 'VE' | 'US',
+        estado: String(r.estado),
+        ciudad: String(r.ciudad),
+      }),
+      personas: Number(r.personas ?? 0),
+      enEspera: Number(r.en_espera ?? 0),
     })),
   };
 }

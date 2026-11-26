@@ -35,6 +35,10 @@ export const esquemaRegistro = z
     // C-TELEFONO-AL-REGISTRARSE (22 nov 2026): la app trae la pantalla del código por SMS. Solo esas
     // cuentas quedan obligadas a confirmar el celular (las apps viejas no la tienen: nadie se atrapa).
     verificaTelefono: z.boolean().optional(),
+    // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): dónde vive (`LugarCuenta`, lugarCuenta.ts). Opcional: las
+    // apps viejas no lo mandan. El servidor lo lee con `leerLugarCuenta`; uno mal formado se ignora
+    // (queda en el registro de errores) y nunca impide crear la cuenta.
+    lugar: z.unknown().optional(),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

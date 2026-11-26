@@ -1,3 +1,5 @@
+import { leerLugar, lugarDeFila } from '../lugarEspera';
+import { lugarEscrito } from '@tumbite/compartido';
 import { avisarPasoComida } from '../avisosComida';
 import { rutaSinIds } from '../errores';
 import { type ClaveFalta, type Falta, queTeFalta } from '../queTeFalta';
@@ -370,6 +372,22 @@ function plazoDeFila(estado: string | null, vence: string | null) {
   };
 }
 
+/** C-REGISTRO-TODO-EL-PAIS: el lugar de una fila de la lista y si espera su ciudad. */
+function lugarDeLista(r: Record<string, unknown>) {
+  const lugar = lugarDeFila(r as never);
+  return {
+    lugar,
+    lugarEscrito: lugar ? lugarEscrito(lugar) : null,
+    enEspera: Number(r.sin_zona) === 1 && Boolean(lugar),
+    estadoZona:
+      Number(r.sin_zona) !== 1
+        ? ('con_zona' as const)
+        : lugar
+          ? ('en_espera' as const)
+          : ('sin_zona' as const),
+  };
+}
+
 superadmin.get('/admin/repartidores', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
@@ -383,7 +401,11 @@ superadmin.get('/admin/repartidores', async (c) => {
   const cuentas = sqlFiltroCuentas(c.req.query('cuentas'));
   if (cuentas) filtros.push(cuentas);
   // C-SIN-ZONA-VISIBLE: «sin zona» = sin ciudad real (ni invitación, ni elección, ni ubicación).
-  if (zona === 'sin_zona') filtros.push(`${zonaRealSql('d', 'u')} IS NULL`);
+  // C-REGISTRO-TODO-EL-PAIS: «en espera de su ciudad» = sin ciudad real pero dijo dónde vive; «sin
+  // zona» queda para quien todavía no dijo dónde vive (eso sí es tarea del equipo).
+  if (zona === 'sin_zona') filtros.push(`${zonaRealSql('d', 'u')} IS NULL AND u.lugar_id IS NULL`);
+  else if (zona === 'en_espera')
+    filtros.push(`${zonaRealSql('d', 'u')} IS NULL AND u.lugar_id IS NOT NULL`);
   else if (zona) {
     filtros.push('d.zona_id = ?');
     valores.push(zona);
@@ -404,6 +426,25 @@ superadmin.get('/admin/repartidores', async (c) => {
       filtros.push('u.nombre LIKE ?');
       valores.push(`${q}%`);
     }
+  }
+  // C-REGISTRO-TODO-EL-PAIS: por el país (el de su ciudad real o, si espera, el de donde vive), por
+  // el estado y por la ciudad donde vive.
+  const paisQ = (c.req.query('pais') ?? '').trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(paisQ)) {
+    filtros.push(
+      `COALESCE(CASE WHEN ${zonaRealSql('d', 'u')} IS NULL THEN u.lugar_pais END, (SELECT zp.pais FROM zonas zp WHERE zp.id = d.zona_id)) = ?`,
+    );
+    valores.push(paisQ);
+  }
+  const estadoQ = (c.req.query('estado') ?? '').trim().toUpperCase();
+  if (/^[A-Z]{1,3}$/.test(estadoQ)) {
+    filtros.push('u.lugar_estado = ?');
+    valores.push(estadoQ);
+  }
+  const lugarQ = (c.req.query('lugarId') ?? '').trim();
+  if (/^[a-z]{2,4}:[A-Za-z0-9_-]{1,24}$/.test(lugarQ)) {
+    filtros.push('u.lugar_id = ?');
+    valores.push(lugarQ);
   }
   if (despues) {
     filtros.push('d.codigo > ?');
@@ -430,7 +471,8 @@ superadmin.get('/admin/repartidores', async (c) => {
   }
   const { results } = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.correo, u.telefono, u.es_prueba, d.codigo, d.zona_id AS zonaId, ${zonaRealSql('d', 'u')} IS NULL AS sin_zona, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
+      `SELECT u.id, u.nombre, u.correo, u.telefono, u.es_prueba, d.codigo, d.zona_id AS zonaId, ${zonaRealSql('d', 'u')} IS NULL AS sin_zona,
+        u.lugar_pais, u.lugar_estado, u.lugar_municipio, u.lugar_ciudad, u.lugar_id, u.lugar_lat, u.lugar_lng, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
         (SELECT COUNT(*) FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado') AS entregas,
         x.vehiculo_tipo AS vehiculo, x.placa, x.seguro_vence, x.seguro_tumbite, x.licencia_vence, x.antecedentes,
         pp.estado AS plazo_estado, pp.vence_en AS plazo_vence
@@ -457,7 +499,10 @@ superadmin.get('/admin/repartidores', async (c) => {
       correo: String(r.correo),
       telefono: String(r.telefono ?? ''),
       zonaId: String(r.zonaId),
-      sinZona: Number(r.sin_zona) === 1,
+      // C-REGISTRO-TODO-EL-PAIS: «Sin zona» solo si tampoco dijo dónde vive; si lo dijo, «En espera de
+      // su ciudad», con su ciudad escrita.
+      ...lugarDeLista(r),
+      sinZona: Number(r.sin_zona) === 1 && !r.lugar_id,
       esPrueba: Number(r.es_prueba) === 1,
       conectado: Boolean(r.conectado),
       puntos: Number(r.puntos),
@@ -483,7 +528,7 @@ superadmin.get('/admin/repartidores', async (c) => {
               .prepare(
                 `SELECT COUNT(*) AS n FROM repartidores d JOIN usuarios u ON u.id = d.usuario_id
                   WHERE u.rol = 'repartidor' AND u.activo = 1 AND COALESCE(u.es_prueba, 0) = 0
-                    AND ${zonaRealSql('d', 'u')} IS NULL`,
+                    AND ${zonaRealSql('d', 'u')} IS NULL AND u.lugar_id IS NULL`,
               )
               .first<{ n: number }>()
           )?.n ?? 0,
@@ -673,7 +718,15 @@ superadmin.get('/admin/repartidores/:id', async (c) => {
       // C-SIN-ZONA-VISIBLE: sin ciudad real se dice «sin zona» (nunca la ciudad por defecto de la tabla).
       ...(await (async () => {
         const real = await zonaRealDe(db, id);
-        return { ciudad: real ? real.nombre : '', sinZona: !real };
+        // C-REGISTRO-TODO-EL-PAIS: dónde vive y, sin ciudad real, «en espera de su ciudad».
+        const lugar = (await leerLugar(db, id))?.lugar ?? null;
+        return {
+          ciudad: real ? real.nombre : '',
+          sinZona: !real && !lugar,
+          enEspera: !real && Boolean(lugar),
+          lugar,
+          lugarEscrito: lugar ? lugarEscrito(lugar) : null,
+        };
       })()),
       tipo: String(r.tipo),
       conectado: Boolean(r.conectado),

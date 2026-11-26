@@ -1,3 +1,5 @@
+import { saludEspera } from './lugarEspera';
+import { lugarCuenta } from './rutas/lugarCuenta';
 import { disparadoresPresentes } from './canarioLecturas';
 import { presupuestoVueltaPruebas, saludVueltasPruebas } from './vueltaPruebas';
 import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
@@ -621,6 +623,15 @@ app.get('/datos/salud', async (c) => {
       // Los banners del inicio no tumban el sitio: si no se pudo leer, «atrasado» (sin 503).
       return 'atrasado' as const;
     });
+  // C-REGISTRO-TODO-EL-PAIS: el último paso de los que esperan su ciudad a una zona abierta (una
+  // lectura por clave). Rojo si el último falló; no tumba el sitio (es de operación).
+  const espera = c.env.DB
+    ? await saludEspera(c.env.DB).catch((e: unknown) => {
+        console.error('salud: espera', e);
+        return { estado: 'error' as const, ultimoPaso: null };
+      })
+    : null;
+  if (espera) piezas.esperaCiudades = espera.estado;
   const rutas = await saludRutas(c.env, c.env.DB).catch((e: unknown) => {
     console.error('salud: rutas', e);
     return { estado: 'error' as const, consultasHoy: 0, tope: 0 };
@@ -667,6 +678,7 @@ app.get('/datos/salud', async (c) => {
           }
         : null,
       correoEntrante,
+      esperaCiudades: espera?.ultimoPaso ?? null,
       ultimoRespaldo: fechaRespaldo,
       version: VERSION_SERVIDOR,
     },
@@ -837,6 +849,8 @@ fijarAppCiudad(app);
 app.route('/datos', servicios);
 app.route('/datos', avisameServicio);
 app.route('/datos', conductorPapeles);
+// C-REGISTRO-TODO-EL-PAIS: el lugar donde vive la cuenta y la lista de espera por ciudad.
+app.route('/datos', lugarCuenta);
 app.route('/datos', activacion);
 app.route('/datos', verificacionConductor);
 app.route('/datos', serviciosConectados);

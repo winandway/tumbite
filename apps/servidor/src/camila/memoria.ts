@@ -1,5 +1,6 @@
 import { correoCanonico } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
+import { paisConLugarSql } from '../cuentaPais';
 import { TOPE_DIARIO_CENTAVOS, TOPE_MAXIMO_CENTAVOS } from './modelo';
 import type { IdiomaCamila } from './identidad';
 
@@ -85,7 +86,9 @@ export async function personaDeUsuario(db: D1Database, usuarioId: string) {
   if (ya) return ya;
   const u = await db
     .prepare(
-      `SELECT u.nombre, u.correo, u.idioma, u.telefono_canonico, u.correo_confirmado_en, z.pais, z.id AS zona_id
+      // C-REGISTRO-TODO-EL-PAIS: quien espera su ciudad (sin zona real) es del país donde vive.
+      `SELECT u.nombre, u.correo, u.idioma, u.telefono_canonico, u.correo_confirmado_en,
+              ${paisConLugarSql('z', 'r', 'u')} AS pais, z.id AS zona_id
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
          LEFT JOIN zonas z ON z.id = COALESCE(r.zona_id, u.zona_id) WHERE u.id = ?`,
     )

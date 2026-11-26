@@ -129,6 +129,8 @@ export async function aprobadosNoElegibles(
 export const PIEZAS_DE_OPERACION: ReadonlySet<string> = new Set([
   'aprobadosNoElegibles',
   'panicoZonas',
+  // C-REGISTRO-TODO-EL-PAIS: un paso fallido de los que esperan su ciudad no es una caída del sitio.
+  'esperaCiudades',
 ]);
 
 /** El canario se llama a menudo: el resultado se guarda en memoria unos minutos (sin escribir nada). */

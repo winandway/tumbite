@@ -1,7 +1,8 @@
 import { insistirPanicos } from '../panicoZona';
 import { revisarSaldoBajo } from '../saldoBajo';
 import { avisarPasoComida } from '../avisosComida';
-import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
+import { ZONA_CONDUCTOR_SQL, ZONA_REAL_SQL } from '../cuentaPais';
+import { CODIGO_EN_ESPERA_CIUDAD, MENSAJE_EN_ESPERA_CIUDAD } from '../lugarEspera';
 import { LIMPIEZA_AVISOS_ENVIADOS } from '../avisosGuardados';
 import {
   TAREA_CAMILA_LIMPIEZA,
@@ -1634,6 +1635,19 @@ export async function conectarRepartidor(
   if (d.conectado && d.lat != null && d.lng != null)
     await fijarZonaPorUbicacion(db, u.id, d.lat, d.lng);
   if (d.conectado) await alSaberseLaCiudad(c.env, db, u.id);
+  // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): quien espera su ciudad (dijo dónde vive y ahí todavía no
+  // hay zona) no se conecta: sin ciudad abierta no hay viajes. Se le dice eso, no un error raro.
+  if (d.conectado && !(await esRevisor(c, u.correo))) {
+    const espera = await db
+      .prepare(
+        `SELECT 1 FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
+          WHERE u.id = ? AND u.lugar_id IS NOT NULL AND ${ZONA_REAL_SQL} IS NULL`,
+      )
+      .bind(u.id)
+      .first();
+    if (espera)
+      throw new ErrorDatos(MENSAJE_EN_ESPERA_CIUDAD, 'ciudad', 409, CODIGO_EN_ESPERA_CIUDAD);
+  }
   const gracia = d.conectado ? await graciaDe(db, u.id) : null;
   if (
     gracia?.activa &&

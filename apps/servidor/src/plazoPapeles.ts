@@ -10,7 +10,7 @@ import { z } from 'zod';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
 import { type Idioma, notificar } from './notificaciones';
-import { ZONA_REAL_SQL } from './cuentaPais';
+import { ZONA_REAL_SQL, paisConLugarSql } from './cuentaPais';
 
 /**
  * C-PLAZO-PAPELES (19 nov 2026, decisión de Richard) — por país, por configuración.
@@ -90,8 +90,8 @@ type FilaGracia = {
   cfg: string | null;
 };
 
-const SQL_GRACIA = `SELECT u.id, z.pais, p.estado, p.vence_en,
-        (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg
+const SQL_GRACIA = `SELECT u.id, ${paisConLugarSql()} AS pais, p.estado, p.vence_en,
+        (SELECT valor FROM config WHERE clave = 'pais:' || ${paisConLugarSql()}) AS cfg
    FROM usuarios u
    LEFT JOIN repartidores r ON r.usuario_id = u.id
    LEFT JOIN zonas z ON z.id = COALESCE(${ZONA_REAL_SQL}, r.zona_id, 'US-FL-MIAMI')

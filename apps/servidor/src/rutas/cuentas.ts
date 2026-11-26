@@ -103,6 +103,9 @@ import {
   zonaPorUbicacionDelRegistro,
 } from '../cuentaPais';
 import { unirLineaQueEspera } from '../lineas';
+import { leerLugarCuenta } from '@tumbite/compartido';
+import { asignarCiudadElegida } from '../ciudadConductor';
+import { zonaDeLugar } from '../lugarEspera';
 import {
   algunSmsEncendido,
   anularCodigoAnterior,
@@ -360,9 +363,16 @@ cuentas.post('/registro', async (c) => {
   const telConMas = telefonoCanonico(d.telefono?.trim().startsWith('+') ? d.telefono : null);
   const invitacion =
     d.rol === 'repartidor' ? await invitacionQueEspera(db, d.correo, telConMas) : null;
+  // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): dónde vive (País → Estado → Ciudad). Opcional (apps viejas);
+  // uno mal formado se ignora y queda en el registro de errores: nunca impide crear la cuenta.
+  const lugar = leerLugarCuenta(d.lugar);
+  if (d.lugar != null && !lugar) console.error('registro: lugar mal formado, se ignora');
   const paisTel = paisParaTelefono(
     d.telefono,
-    invitacion?.pais ?? (d.paisTelefono && datosPais(d.paisTelefono) ? d.paisTelefono : null),
+    invitacion?.pais ??
+      (d.paisTelefono && datosPais(d.paisTelefono) ? d.paisTelefono : null) ??
+      lugar?.pais ??
+      null,
     c.req.header('cf-ipcountry'),
   );
   let tel: { telefono: string | null; canonico: string | null };
@@ -447,11 +457,38 @@ cuentas.post('/registro', async (c) => {
   if (d.invitacion && (rol === 'repartidor' || rol === 'cliente'))
     await codigoPara(db, rol, d.invitacion, 'invitacion');
   const id = nuevoId();
+  // C-REGISTRO-TODO-EL-PAIS: si su ciudad cae dentro de una zona abierta, esa es su ciudad (como
+  // elegirla en Driver). Si no, la cuenta se crea igual y queda en espera de su ciudad. Con lugar, la
+  // ubicación de la red ya no decide (la persona dijo dónde vive).
+  const produccion = entornoDeHost(new URL(c.req.url).host) === 'produccion';
+  const zonaLugar = lugar ? await zonaDeLugar(db, lugar, produccion) : null;
+  const zonaCuenta =
+    rol === 'repartidor'
+      ? (invitacion?.zonaId ??
+        (lugar
+          ? (zonaLugar?.id ?? null)
+          : // C-SIN-ZONA-VISIBLE: sin invitación, la ciudad de la ubicación del registro (solo si cae
+            // en una zona). Si no, «sin zona»: nunca una ciudad por defecto.
+            await zonaPorUbicacionDelRegistro(
+              db,
+              (c.req.raw as { cf?: { latitude?: unknown; longitude?: unknown } }).cf,
+            )))
+      : null;
+  const espera =
+    lugar &&
+    (rol === 'repartidor' || rol === 'cliente') &&
+    !(rol === 'repartidor' ? zonaCuenta : zonaLugar)
+      ? 1
+      : null;
   await db
     .prepare(
       // C-TELEFONO-AL-REGISTRARSE: la cuenta de cliente o de conductor creada en una app con la
       // pantalla del código queda obligada a confirmar su celular (la puerta decide si HOY se exige).
-      "INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico, zona_id, telefono_exigido_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END)",
+      // C-REGISTRO-TODO-EL-PAIS: el lugar va en la MISMA fila (ninguna escritura de más).
+      `INSERT INTO usuarios (id, correo, nombre, telefono, fecha_nacimiento, rol, idioma, clave_hash, correo_canonico, telefono_canonico, zona_id, telefono_exigido_en,
+         lugar_pais, lugar_estado, lugar_municipio, lugar_ciudad, lugar_id, lugar_lat, lugar_lng, lugar_en, lugar_espera)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') END,
+         ?, ?, ?, ?, ?, ?, ?, CASE WHEN ? IS NOT NULL THEN datetime('now') END, ?)`,
     )
     .bind(
       id,
@@ -464,18 +501,24 @@ cuentas.post('/registro', async (c) => {
       await hashClave(d.clave),
       correoUnico,
       telUnico,
-      // C-SIN-ZONA-VISIBLE: sin invitación, la ciudad de la ubicación del registro (solo si cae en
-      // una zona). Si no, «sin zona»: nunca una ciudad por defecto.
-      invitacion?.zonaId ??
-        (rol === 'repartidor'
-          ? await zonaPorUbicacionDelRegistro(
-              db,
-              (c.req.raw as { cf?: { latitude?: unknown; longitude?: unknown } }).cf,
-            )
-          : null),
+      zonaCuenta,
       d.verificaTelefono && (rol === 'cliente' || rol === 'repartidor') ? 1 : 0,
+      lugar?.pais ?? null,
+      lugar?.estado ?? null,
+      lugar?.municipio ?? null,
+      lugar?.ciudad ?? null,
+      lugar?.lugarId ?? null,
+      lugar?.lat ?? null,
+      lugar?.lng ?? null,
+      lugar?.lugarId ?? null,
+      espera,
     )
     .run();
+  // Su ciudad salió de su lugar: queda como ciudad elegida, con su ID y su plazo (como en Driver).
+  if (rol === 'repartidor' && !invitacion && zonaLugar && zonaCuenta === zonaLugar.id)
+    await asignarCiudadElegida(c.env, db, id, zonaLugar.id).catch((e: unknown) =>
+      console.error('registro: ciudad del lugar', e),
+    );
   // C-TERMINOS-ACTUALIZADOS: al crear la cuenta acepta los términos vigentes (casilla del registro).
   // C-CUENTA-UNICA: y los términos de SU papel, aparte (si después activa otro, acepta los de ese).
   await db.batch([
@@ -529,7 +572,7 @@ cuentas.post('/registro', async (c) => {
       c.env,
       db,
       { id, nombre: d.nombre, idioma: d.idioma },
-      c.req.header('cf-ipcountry'),
+      lugar?.pais ?? c.req.header('cf-ipcountry'),
     );
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));

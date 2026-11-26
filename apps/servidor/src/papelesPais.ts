@@ -10,7 +10,7 @@ import {
   perfilPasajeros,
 } from '@tumbite/compartido';
 import { z } from 'zod';
-import { ZONA_CONDUCTOR_SQL } from './cuentaPais';
+import { PAIS_CONDUCTOR_SQL, ZONA_CONDUCTOR_SQL } from './cuentaPais';
 import { politicaDesdeConfig } from './plazoPapeles';
 
 /**
@@ -87,7 +87,8 @@ export async function listaEncendidaDelConductor(
 ): Promise<{ pais: string; lista: ListaPapelesPais } | null> {
   const f = await db
     .prepare(
-      `SELECT z.pais, (SELECT valor FROM config WHERE clave = 'pais:' || z.pais) AS cfg
+      // C-REGISTRO-TODO-EL-PAIS: el país de su lugar si todavía espera su ciudad.
+      `SELECT ${PAIS_CONDUCTOR_SQL} AS pais, (SELECT valor FROM config WHERE clave = 'pais:' || ${PAIS_CONDUCTOR_SQL}) AS cfg
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
          JOIN zonas z ON z.id = ${ZONA_CONDUCTOR_SQL} WHERE u.id = ?`,
     )
