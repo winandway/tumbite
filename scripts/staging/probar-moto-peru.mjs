@@ -562,14 +562,18 @@ try {
   const noLlego = ok(await paso(v3.id, 'pago-movil', { recibido: false }), 'no me llegó');
   exigir(noLlego.estado === 'no_recibido', 'el «no me llegó» no quedó anotado');
   ok(await paso(v3.id, 'terminar'), 'terminar el viaje con Plin');
-  const bandeja = ok(
-    await equipo('GET', '/datos/admin/bandeja-dinero?tipo=pago_movil_viaje'),
-    'bandeja de soporte del dinero',
-  );
-  exigir(
-    JSON.stringify(bandeja).includes(v3.id),
-    'el «no me llegó» no abrió un caso en la bandeja de soporte',
-  );
+  // La bandeja va de lo más viejo a lo nuevo, de 50 en 50: con muchas pasadas acumuladas en pruebas
+  // el caso nuevo cae en una página siguiente. Se recorren todas las páginas hasta encontrarlo.
+  let encontrado = false;
+  for (let pagina = 0; pagina < 100 && !encontrado; pagina++) {
+    const bandeja = ok(
+      await equipo('GET', `/datos/admin/bandeja-dinero?tipo=pago_movil_viaje&pagina=${pagina}`),
+      'bandeja de soporte del dinero',
+    );
+    encontrado = JSON.stringify(bandeja.casos ?? []).includes(v3.id);
+    if (!bandeja.hayMas?.pago_movil_viaje) break;
+  }
+  exigir(encontrado, 'el «no me llegó» no abrió un caso en la bandeja de soporte');
   casos.push(
     `viaje con Plin de ${v3.total} céntimos a un conductor con Yape: «no me llegó» abrió un caso para soporte`,
   );
