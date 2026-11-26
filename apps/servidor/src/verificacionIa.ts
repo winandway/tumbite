@@ -204,24 +204,40 @@ const confianzaCero = z.preprocess((x) => confianzaDe(x) ?? 0, z.number().min(0)
 const siNo = (porDefecto: boolean) =>
   z.preprocess((x) => (typeof x === 'boolean' ? x : porDefecto), z.boolean());
 
-const esquemaFoto = z.object({
-  clase: z.enum(CLASES_DE_FOTO),
-  legible: siNo(false),
-  vencido: z.preprocess(
-    (x) => (x === 'si' || x === 'no' ? x : 'no_se_ve'),
-    z.enum(['si', 'no', 'no_se_ve']),
-  ),
-  pais: texto(40),
-  nombre: texto(120),
-  numero: texto(40),
-  vence: texto(12),
-  // C-NACIMIENTO-DEL-DOCUMENTO: en la MISMA lectura (ninguna llamada más), con su propia confianza.
-  nacimiento: fechaIso,
-  // C-CONFIANZA-LEIDA: número o texto, de 0 a 100 o de 0 a 1 (se pasa a 0–100); sin ella, 0.
-  confianzaNacimiento: confianzaCero,
-  fotoDeOtraFoto: siNo(false),
-  confianza: confianzaCero,
-});
+const VENCIDOS: readonly unknown[] = ['si', 'no', 'no_se_ve'];
+
+/**
+ * Un `vencido` que no es «si», «no» ni «no_se_ve» se lee como «no_se_ve», pero queda marcado: esa foto
+ * nunca sale en verde (la mira una persona). El «no_se_ve» de verdad sigue como siempre.
+ */
+const esquemaFoto = z.preprocess(
+  (x) =>
+    x && typeof x === 'object'
+      ? {
+          ...(x as Record<string, unknown>),
+          vencidoDesconocido: !VENCIDOS.includes((x as Record<string, unknown>).vencido),
+        }
+      : x,
+  z.object({
+    clase: z.enum(CLASES_DE_FOTO),
+    legible: siNo(false),
+    vencido: z.preprocess(
+      (x) => (x === 'si' || x === 'no' ? x : 'no_se_ve'),
+      z.enum(['si', 'no', 'no_se_ve']),
+    ),
+    pais: texto(40),
+    nombre: texto(120),
+    numero: texto(40),
+    vence: texto(12),
+    // C-NACIMIENTO-DEL-DOCUMENTO: en la MISMA lectura (ninguna llamada más), con su propia confianza.
+    nacimiento: fechaIso,
+    // C-CONFIANZA-LEIDA: número o texto, de 0 a 100 o de 0 a 1 (se pasa a 0–100); sin ella, 0.
+    confianzaNacimiento: confianzaCero,
+    fotoDeOtraFoto: siNo(false),
+    confianza: confianzaCero,
+    vencidoDesconocido: z.boolean().default(false),
+  }),
+);
 export type LecturaFoto = z.infer<typeof esquemaFoto>;
 
 const JSON_FOTO = {
@@ -284,13 +300,15 @@ const SIN_IA: ResultadoFoto = {
 type LecturaParaColor = Pick<
   LecturaFoto,
   'clase' | 'legible' | 'vencido' | 'fotoDeOtraFoto' | 'confianza'
->;
+> & { vencidoDesconocido?: boolean };
 
 export function colorDeFoto(paso: PasoVerificacion, l: LecturaParaColor): ColorIa {
   const esperada = claseDePaso(paso);
   if (l.clase !== esperada) return l.confianza >= 60 ? 'rojo' : 'amarillo';
   if (l.vencido === 'si') return 'rojo';
   if (!l.legible || l.fotoDeOtraFoto || l.confianza < CONFIANZA_VERDE) return 'amarillo';
+  // C-LECTURA-TOLERANTE: un vencimiento que no se entendió no puede quedar en verde.
+  if (l.vencidoDesconocido) return 'amarillo';
   return 'verde';
 }
 

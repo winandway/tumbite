@@ -196,7 +196,7 @@ describe('C-LECTURA-TOLERANTE: nada obligatorio tumba la lectura de una foto que
     const cara = await leer('cara', {
       clase: 'cara',
       legible: true,
-      vencido: null,
+      vencido: 'no_se_ve',
       pais: null,
       nombre: null,
       numero: null,
@@ -219,5 +219,23 @@ describe('C-LECTURA-TOLERANTE: nada obligatorio tumba la lectura de una foto que
     expect(vehiculo.lectura).not.toBeNull();
     expect(vehiculo.color).toBe('rojo');
     expect(vehiculo.lectura?.nacimiento).toBe('');
+  });
+
+  it('un «vencido» que no se entiende nunca deja la foto en verde (la mira una persona)', async () => {
+    const base = {
+      clase: 'licencia_frente',
+      legible: true,
+      nombre: 'Conductor Uno',
+      nacimiento: '',
+      confianzaNacimiento: 0,
+      confianza: 95,
+    };
+    for (const vencido of [null, 'tal vez', 'vigente', 42]) {
+      const r = await leer('licencia_frente', { ...base, vencido });
+      expect(r.color, String(vencido)).toBe('amarillo');
+      expect(r.lectura?.vencido).toBe('no_se_ve');
+    }
+    // El «no_se_ve» de verdad sigue como siempre: en verde si lo demás está bien.
+    expect((await leer('licencia_frente', { ...base, vencido: 'no_se_ve' })).color).toBe('verde');
   });
 });

@@ -72,16 +72,23 @@ const mismo = (a: unknown, b: unknown) => {
 };
 
 /**
- * C-BORRADOR-SIN-AVISO-VACIO (Richard, 25 nov 2026: «Recuperamos lo que estabas escribiendo» sin haber
- * escrito nada) — todos los formularios. ¿Lo guardado es igual a lo que ya estaba (en blanco, o lo que
- * vino del servidor)? Entonces no es un borrador: ni se guarda ni se avisa. Los campos sensibles no
- * cuentan. Pura (lleva su prueba).
- */
-/**
- * La marca que viaja con cada borrador: los campos que el formulario tenía al guardarlo (incluidos los
- * que crecen solos, como una lista que se agrega). Así se distingue un campo de hoy de una clave vieja.
+ * La marca que viaja con cada borrador: qué campos DECLARABA el formulario al guardarlo (los de su base)
+ * y cuáles había agregado por su cuenta (campos que crecen, como una fila nueva de una lista). Así, al
+ * leer, un campo que el formulario declaraba y ya no declara no vuelve, y uno que crece se conserva.
  */
 export const CAMPOS_BORRADOR = '__campos';
+
+export function marcaDeCampos(
+  valores: Record<string, unknown>,
+  base: Record<string, unknown>,
+): { declarados: string[]; libres: string[] } {
+  const declarados = Object.keys(base);
+  const deBase = new Set(declarados);
+  return {
+    declarados,
+    libres: Object.keys(valores).filter((k) => !deBase.has(k) && k !== CAMPOS_BORRADOR),
+  };
+}
 
 /** ¿Tiene algo escrito? Texto con letras, un número, un sí, una lista u objeto con algo. */
 function conContenido(x: unknown): boolean {
@@ -93,23 +100,26 @@ function conContenido(x: unknown): boolean {
 }
 
 /**
- * Lo guardado, solo con los campos que el formulario tiene hoy: los de su base, los que la marca dice
- * que el formulario tenía al guardar y, en un formulario de campos libres (base sin campos), todos.
- * Lo de una versión vieja (sin marca y fuera de la base) se descarta.
+ * Lo guardado, solo con los campos que el formulario tiene hoy. Si el formulario declara sus campos
+ * (base con claves): los de su base y los que crecieron solos (`libres` de la marca); un campo que la
+ * marca dice declarado y hoy ya no está, o una clave vieja sin marca, se descarta. Un formulario de
+ * campos libres (base sin claves) conserva todo.
  */
 export function soloCamposDe<T extends Record<string, unknown>>(
   datos: Partial<T> & { [CAMPOS_BORRADOR]?: unknown },
   base: T,
 ): Partial<T> {
-  const marca = new Map(Object.entries(datos)).get(CAMPOS_BORRADOR);
-  const deMarca = Array.isArray(marca) ? marca.map(String) : [];
   const deBase = Object.keys(base);
-  const campos = new Set([...deBase, ...deMarca]);
-  return Object.fromEntries(
-    Object.entries(datos).filter(
-      ([k]) => k !== CAMPOS_BORRADOR && (!deBase.length || campos.has(k)),
-    ),
-  ) as Partial<T>;
+  const sinMarca = Object.entries(datos).filter(([k]) => k !== CAMPOS_BORRADOR);
+  if (!deBase.length) return Object.fromEntries(sinMarca) as Partial<T>;
+  const marca = new Map(Object.entries(datos)).get(CAMPOS_BORRADOR);
+  const libresMarca =
+    marca && typeof marca === 'object' && !Array.isArray(marca)
+      ? new Map(Object.entries(marca)).get('libres')
+      : null;
+  const libres = new Set(Array.isArray(libresMarca) ? libresMarca.map(String) : []);
+  const campos = new Set(deBase);
+  return Object.fromEntries(sinMarca.filter(([k]) => campos.has(k) || libres.has(k))) as Partial<T>;
 }
 
 /**
@@ -209,7 +219,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
         ? almacen.borrar(llave)
         : almacen.guardar(
             llave,
-            JSON.stringify({ ...copia, [CAMPOS_BORRADOR]: Object.keys(copia) }),
+            JSON.stringify({ ...copia, [CAMPOS_BORRADOR]: marcaDeCampos(copia, baseRef.current) }),
           ),
     ).catch((e) => console.warn('borrador: no se pudo guardar', e));
   }, [almacen, llave]);

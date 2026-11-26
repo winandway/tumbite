@@ -156,4 +156,44 @@ describe('C-BORRADOR-SIN-AVISO-VACIO', () => {
       expect(localStorage.getItem(llaveBorrador('f-libre', 'yo'))).toContain('tope_VE'),
     );
   });
+
+  it('un campo que el formulario declaraba y hoy ya no declara no vuelve; los libres conservan todo', async () => {
+    const llave = llaveBorrador('f-quitado', 'yo');
+    // La versión anterior del formulario declaraba «apodo» y guardó su borrador.
+    const antes = renderHook(() =>
+      useBorrador({
+        formulario: 'f-quitado',
+        cuenta: 'yo',
+        inicial: { zonaId: '', motivo: '', apodo: '' },
+        almacen: almacenNavegador,
+        esperaMs: 5,
+      }),
+    );
+    await espera();
+    act(() =>
+      antes.result.current.setValores({ zonaId: 'VE-1', motivo: 'Se mudó', apodo: 'Viejo' }),
+    );
+    await waitFor(() => expect(localStorage.getItem(llave)).toContain('Viejo'));
+    antes.unmount();
+    // La versión de hoy ya no lo declara: no vuelve.
+    const { result } = renderHook(() =>
+      useBorrador({ formulario: 'f-quitado', cuenta: 'yo', inicial, almacen: almacenNavegador }),
+    );
+    await waitFor(() => expect(result.current.recuperado).toBe(true));
+    expect(result.current.valores).toEqual({ zonaId: 'VE-1', motivo: 'Se mudó' });
+    // Un formulario de campos libres conserva todo lo guardado.
+    localStorage.setItem(
+      llaveBorrador('f-libre-2', 'yo'),
+      JSON.stringify({ tope_VE: '25', __campos: { declarados: [], libres: ['tope_VE'] } }),
+    );
+    const libre = renderHook(() =>
+      useBorrador({
+        formulario: 'f-libre-2',
+        cuenta: 'yo',
+        inicial: {} as Record<string, string>,
+        almacen: almacenNavegador,
+      }),
+    );
+    await waitFor(() => expect(libre.result.current.valores).toEqual({ tope_VE: '25' }));
+  });
 });
