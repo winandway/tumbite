@@ -32,6 +32,10 @@ export const TEXTOS_VIAJE = {
       // C-CUPON-DIVOOX: el pasajero trae un regalo que paga Divoox.
       regaloOferta:
         'Con regalo de Divoox: el pasajero paga menos en mano y Divoox te paga {monto}.',
+      // C-SALDO-CLIENTE: el pasajero paga (parte o todo) con su Saldo Divoox.
+      saldoOferta:
+        'Paga en parte con su Saldo Divoox: cobras en mano solo el resto y Divoox te paga {monto}.',
+      saldoOfertaTodo: 'Paga con su Saldo Divoox: no cobras en mano y Divoox te paga {monto}.',
       recoger: 'Recoger en',
       llevar: 'Llevar a',
       aceptar: 'Aceptar viaje',
@@ -150,6 +154,8 @@ export const TEXTOS_VIAJE = {
       sinCobroEnMano: 'No cobras nada en mano: este viaje lo paga Divoox.',
       divooxPagaCorto: 'Divoox te paga {monto}',
       divooxPagaAyuda: 'Por el regalo del pasajero. Va a tus ganancias al terminar.',
+      // C-SALDO-CLIENTE: con Saldo Divoox del pasajero.
+      divooxPagaSaldoAyuda: 'Por el Saldo Divoox del pasajero. Va a tus ganancias al terminar.',
       regaloEnRevision: 'Divoox está revisando este regalo',
       regaloEnRevisionAyuda: 'Nuestro equipo lo revisa y te avisa. No tienes que hacer nada.',
       pagaConTarjeta: 'Precio del viaje · lo paga con tarjeta, no cobras en mano',
@@ -200,6 +206,10 @@ export const TEXTOS_VIAJE = {
       cobraEnMano: 'You collect in hand',
       regaloOferta:
         'With a Divoox gift: the rider pays less in person and Divoox pays you {monto}.',
+      saldoOferta:
+        'Paying partly with their Divoox Balance: you collect only the rest in hand and Divoox pays you {monto}.',
+      saldoOfertaTodo:
+        'Paying with their Divoox Balance: nothing to collect in hand and Divoox pays you {monto}.',
       recoger: 'Pick up at',
       llevar: 'Drop off at',
       aceptar: 'Accept ride',
@@ -311,6 +321,8 @@ export const TEXTOS_VIAJE = {
       sinCobroEnMano: 'Nothing to collect in hand: Divoox pays for this ride.',
       divooxPagaCorto: 'Divoox pays you {monto}',
       divooxPagaAyuda: 'For the rider’s gift. It goes to your earnings when you finish.',
+      divooxPagaSaldoAyuda:
+        'For the rider’s Divoox Balance. It goes to your earnings when you finish.',
       regaloEnRevision: 'Divoox is reviewing this gift',
       regaloEnRevisionAyuda:
         'Our team is reviewing it and will let you know. There’s nothing you need to do.',

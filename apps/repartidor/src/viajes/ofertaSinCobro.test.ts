@@ -30,7 +30,12 @@ describe('C-OFERTA-SIN-COBRO · con el viaje cubierto por el regalo no se pinta 
     expect(v).toMatch(/testID="viaje-cobra-sin-cobro"/);
   });
   it('con todo cubierto, la línea del regalo de la oferta no habla de pagar menos en mano', () => {
-    expect(s).toMatch(/sinCobro \? t\.regaloOfertaTodo : t\.regaloOferta/);
+    expect(s).toMatch(/sinCobro\s*\?\s*t\.regaloOfertaTodo\s*:\s*t\.regaloOferta/);
+    // C-SALDO-CLIENTE: con el Saldo Divoox del pasajero, su propia línea (todo o parte).
+    expect(s).toMatch(
+      /sinCobro\s*\?\s*textos\.oferta\.saldoOfertaTodo\s*:\s*textos\.oferta\.saldoOferta/,
+    );
+    expect(TEXTOS_VIAJE.es.oferta.saldoOfertaTodo).not.toMatch(/menos en mano/);
     expect(TEXTOS_VIAJE.es.oferta.regaloOfertaTodo).toMatch(/Divoox te paga \{monto\}/);
     expect(TEXTOS_VIAJE.es.oferta.regaloOfertaTodo).not.toMatch(/menos en mano/);
     expect(TEXTOS_VIAJE.en.oferta.regaloOfertaTodo).toMatch(/Divoox pays you \{monto\}/);

@@ -13,9 +13,7 @@ import {
   type TamanoPaquete,
   type Idioma,
   enIdioma,
-  esPagoACelular,
   formatearMonto,
-  nombreFormaPago,
   pagaEnMano,
   textoReferencia,
   textoAMonto,
@@ -62,6 +60,7 @@ import { BuscarDestino } from './BuscarDestino';
 import { LugaresFila } from './LugaresFila';
 import { useLugares } from './useLugares';
 import { InvitacionFotoEntrada } from './FotoEntradaViaje';
+import { MetodoPago } from './MetodoPago';
 import {
   EditorParadas,
   PARADAS_SIN_SABER,
@@ -111,6 +110,8 @@ export function PedirMoto({
       destinoApto: '',
       // C-VIAJE-TARJETA: cómo paga el viaje.
       metodo: 'efectivo',
+      // C-SALDO-CLIENTE: usar el Saldo Divoox si hay (encendido por defecto, como las billeteras).
+      usarSaldo: true,
       // C-CARRO-CATEGORIAS: en Carro, económico, Comfort, Premium o XL (lo que ofrezca la ciudad).
       categoria: 'estandar',
       // C-VIAJE-PARADAS: las paradas intermedias escritas (lista en texto, para el borrador).
@@ -198,6 +199,9 @@ export function PedirMoto({
   // C-VIAJE-TARJETA: con tarjeta, el cobro abierto y la hoja de pago de siempre (la de Comida).
   const [cobro, setCobro] = useState<(Cobro & { viajeId: string }) | null>(null);
   const tarjeta = v.metodo === 'tarjeta';
+  // C-METODO-PAGO-PANTALLA: la pantalla «Método de pago» (entre el precio y la solicitud) y su error.
+  const [verPago, setVerPago] = useState(false);
+  const [errorPago, setErrorPago] = useState('');
   // C-VIAJE-PROGRAMADO: la reserva hecha (para el aviso verde) y la lista que se refresca.
   const [reservado, setReservado] = useState<string | null>(null);
   const [vueltaLista, setVueltaLista] = useState(0);
@@ -372,9 +376,10 @@ export function PedirMoto({
     return !motivo && !f.size;
   }
 
-  async function pedir() {
+  async function pedir(pago: { metodoPago: string; usarSaldo?: boolean }) {
     if (!cotizacion) return;
     setError('');
+    setErrorPago('');
     // C-ENVIO-SIN-SILENCIO (31 oct 2026, Richard en TestFlight): «Enviar» no hacía nada porque la
     // casilla de prohibidos no estaba marcada y el aviso salía arriba, fuera de la vista. Se avisa
     // aquí, junto al botón, antes de mandar nada.
@@ -399,10 +404,14 @@ export function PedirMoto({
         programado?: boolean;
       }>('POST', '/datos/viajes', {
         cotizacionId: cotizacion.id,
-        // Un método recuperado del borrador que esta ciudad no tiene vuelve a efectivo.
-        metodoPago: (cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).some((m) => m === v.metodo)
-          ? v.metodo
-          : 'efectivo',
+        // C-METODO-PAGO-PANTALLA: lo elegido en «Método de pago» (un método recuperado del borrador
+        // que esta ciudad no tiene vuelve a efectivo; con todo pagado con saldo, «saldo»).
+        metodoPago:
+          pago.metodoPago === 'saldo' ||
+          (cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).some((m) => m === pago.metodoPago)
+            ? pago.metodoPago
+            : 'efectivo',
+        ...(pago.usarSaldo ? { usarSaldo: true } : {}),
         ...(servicio === 'envios'
           ? {
               paquete: {
@@ -418,8 +427,11 @@ export function PedirMoto({
         // C-CONDUCTOR-CONFIANZA: solo si la persona eligió («Pedir primero a»).
         ...(v.confianza ? { confianza: v.confianza } : {}),
         // C-CUPON-DIVOOX: el regalo que vio; si ya no está, el servidor avisa en vez de pedir a ciegas.
-        ...(cotizacion.regalo && !tarjeta ? { regalo: cotizacion.regalo.codigo } : {}),
+        ...(cotizacion.regalo && pago.metodoPago !== 'tarjeta'
+          ? { regalo: cotizacion.regalo.codigo }
+          : {}),
       });
+      setVerPago(false);
       if (r.programado) {
         await b.limpiar();
         setCotizacion(null);
@@ -434,7 +446,9 @@ export function PedirMoto({
       await b.limpiar();
       alPedir(r.viaje.id);
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      // C-METODO-PAGO-PANTALLA: el error se dice en la pantalla de pago, que sigue abierta con todo lo
+      // elegido (p. ej. Pago Móvil ya no disponible: la nueva cotización lo apaga y pasa a Efectivo).
+      setErrorPago(x instanceof ErrorApi ? x.message : String(x));
       // C-CONDUCTOR-CONFIANZA: si lo quitó en otra pantalla, vuelve a «que elija el servidor».
       if (x instanceof ErrorApi && x.campo === 'confianza') cambiar('confianza', '');
       // Si el precio venció entre medio, se trae uno nuevo.
@@ -486,20 +500,26 @@ export function PedirMoto({
     conCotizacion: Boolean(cotizacion),
     sinServicio: sinServicioEn !== '' && sinServicioEn === claveRuta,
   });
+  // C-METODO-PAGO-PANTALLA: el botón final (en la pantalla de pago) dice lo de siempre; el de aquí,
+  // con precio, lleva a «Método de pago».
+  const textoSolicitar = cuando
+    ? t.reservar
+    : servicio === 'envios'
+      ? tn.solicitarEnvio
+      : servicio === 'carro'
+        ? textoPedirViaje
+        : tn.solicitar(categoria);
   const textoBoton = sinDestino
     ? tn.eligeDestino
-    : cuando
-      ? t.reservar
-      : servicio === 'envios'
-        ? tn.solicitarEnvio
-        : servicio === 'carro'
-          ? textoPedirViaje
-          : tn.solicitar(categoria);
+    : estadoBoton === 'pedir'
+      ? tn.continuar
+      : textoSolicitar;
   const alBoton = () => {
     if (estadoBoton === 'elegir_destino') return setBuscando('destino');
     if (estadoBoton === 'apagado') return;
     if (estadoBoton === 'cotizar') return void cotizar();
-    void pedir();
+    setErrorPago('');
+    setVerPago(true);
   };
 
   return (
@@ -1091,38 +1111,7 @@ export function PedirMoto({
               {distancia(cotizacion.distanciaM, idioma)} ·{' '}
               {Math.max(1, Math.round(cotizacion.duracionS / 60))} {t.min}
             </Text>
-            <View
-              style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}
-              accessibilityRole="radiogroup"
-            >
-              {/* C-PAGO-MOVIL-VIAJE: solo los métodos del país de la ciudad (Venezuela: pago móvil). */}
-              {(cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).map((m) => (
-                <Pildora
-                  key={m}
-                  texto={
-                    m === 'tarjeta'
-                      ? t.pagoTarjeta
-                      : m === 'pago_movil'
-                        ? t.pagoMovil
-                        : esPagoACelular(m)
-                          ? nombreFormaPago(m, idioma)
-                          : t.pagoEfectivo
-                  }
-                  activa={v.metodo === m}
-                  alTocar={() => cambiar('metodo', m)}
-                  rol="radio"
-                />
-              ))}
-            </View>
-            <Text style={{ color: C.secundario, fontWeight: '700' }}>
-              {tarjeta
-                ? t.tarjetaAyuda
-                : v.metodo === 'pago_movil'
-                  ? t.pagoMovilAyuda
-                  : esPagoACelular(v.metodo)
-                    ? t.celularAyuda(nombreFormaPago(v.metodo, idioma))
-                    : t.efectivo}
-            </Text>
+            {/* C-METODO-PAGO-PANTALLA: cómo se paga se elige en su pantalla, después de «Continuar». */}
             {deudaPendiente ? (
               <Text style={{ color: '#666B73' }}>
                 {t.deuda}{' '}
@@ -1276,6 +1265,31 @@ export function PedirMoto({
         ) : null}
         {ver('ruta') ? extras : null}
       </ScrollView>
+      {/* C-METODO-PAGO-PANTALLA: «Método de pago», entre el precio y la solicitud. */}
+      <Modal
+        visible={verPago && cotizacion != null && !cobro}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setVerPago(false)}
+        testID="moto-metodo-pago"
+      >
+        {verPago && cotizacion ? (
+          <MetodoPago
+            cotizacion={cotizacion}
+            idioma={idioma}
+            metodo={v.metodo}
+            cambiarMetodo={(m) => cambiar('metodo', m)}
+            usarSaldo={v.usarSaldo !== false}
+            cambiarUsarSaldo={(x) => cambiar('usarSaldo', x)}
+            reserva={Boolean(cuando)}
+            textoBoton={textoSolicitar}
+            trabajando={trabajando}
+            error={errorPago}
+            alSolicitar={(pago) => void pedir(pago)}
+            volver={() => setVerPago(false)}
+          />
+        ) : null}
+      </Modal>
       {cobro?.clavePublica ? null : (
         <SafeAreaView
           edges={['bottom']}
@@ -1424,6 +1438,8 @@ function textosPedirNuevo(idioma: Idioma, servicio: 'moto' | 'carro' | 'envios')
     detalles: en ? 'Package details' : 'Detalles del paquete',
     rastrear: en ? 'Track a package' : 'Rastrear un paquete',
     eligeDestino: en ? 'Choose your destination' : 'Elige tu destino',
+    // C-METODO-PAGO-PANTALLA: del precio a la pantalla «Método de pago».
+    continuar: en ? 'Continue' : 'Continuar',
     solicitarEnvio: en ? 'Request delivery' : 'Solicitar envío',
     solicitar: (c: CategoriaViaje) =>
       servicio === 'carro'
