@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { esHostDePruebasInternas } from './vistaPrevia';
 import type { Env } from './env';
 import { type Variables, base } from './sesion';
 import { ErrorDatos } from './validar';
@@ -180,7 +181,8 @@ export async function restaurarDesdeRespaldo(db: D1Database, almacen: R2Bucket, 
 
 respaldo.post('/respaldo/restaurar', async (c) => {
   const host = new URL(c.req.url).hostname;
-  if (!HOSTS_PRUEBAS.has(host)) return c.json({ error: 'Solo en el sitio de pruebas.' }, 403);
+  if (!esHostDePruebasInternas(HOSTS_PRUEBAS, host))
+    return c.json({ error: 'Solo en el sitio de pruebas.' }, 403);
   const secreto = c.env.RELOJ_SECRETO;
   if (!secreto || c.req.header('x-reloj-secreto') !== secreto)
     return c.json({ error: 'no autorizado' }, 401);

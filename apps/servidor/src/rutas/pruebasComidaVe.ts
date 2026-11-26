@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { esHostDePruebasInternas } from '../vistaPrevia';
 import { CIUDAD_PRUEBAS_EL_VIGIA, VERSION_TERMINOS } from '@tumbite/compartido';
 import { hashClave, nuevoToken, sha256 } from '../cripto';
 import type { Env } from '../env';
@@ -41,7 +42,7 @@ export const pruebasComidaVe = new Hono<{ Bindings: Env; Variables: Variables }>
 pruebasComidaVe.use('/interno/pruebas/comida-ve/*', async (c, next) => {
   const secreto = c.env.RELOJ_SECRETO;
   if (
-    !HOSTS_PRUEBAS.has(new URL(c.req.url).hostname) ||
+    !esHostDePruebasInternas(HOSTS_PRUEBAS, new URL(c.req.url).hostname) ||
     !secreto ||
     !(await iguales(c.req.header('x-reloj-secreto') ?? '', secreto))
   )

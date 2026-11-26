@@ -1,4 +1,5 @@
 import { borrarRewardsDe } from '../rewards/sombra';
+import { esHostDePruebasInternas } from '../vistaPrevia';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -62,7 +63,7 @@ diagnostico.use('/interno/diagnostico/*', async (c, next) => {
   const host = new URL(c.req.url).hostname;
   const secreto = c.env.RELOJ_SECRETO;
   if (
-    !HOSTS_PRUEBAS.has(host) ||
+    !esHostDePruebasInternas(HOSTS_PRUEBAS, host) ||
     !secreto ||
     !(await iguales(c.req.header('x-reloj-secreto') ?? '', secreto))
   )

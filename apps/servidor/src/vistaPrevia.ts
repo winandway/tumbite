@@ -17,6 +17,15 @@ import type { Env } from './env';
  */
 export const CLAVE_MARCA_VISTA_PREVIA = 'vista_previa_base';
 
+/**
+ * Las rutas internas de pruebas (diagnóstico, guiones, restaurar respaldos) solo existen en el sitio de
+ * pruebas compartido, en la computadora y en las vistas previas por rama (estas, además, con el
+ * candado de su base de arriba). En producción, nunca.
+ */
+export function esHostDePruebasInternas(fijos: ReadonlySet<string>, host: string): boolean {
+  return fijos.has(host) || esHostVistaPrevia(host);
+}
+
 let confirmada: string | null = null;
 
 /** Solo para pruebas: olvida la base ya confirmada en este proceso. */
@@ -28,7 +37,8 @@ export async function baseDeVistaPreviaValida(
   env: Pick<Env, 'DB' | 'VISTA_PREVIA_BASE'>,
 ): Promise<string | null> {
   const nombre = env.VISTA_PREVIA_BASE ?? '';
-  if (!nombre.startsWith(PREFIJO_VISTA_PREVIA)) return 'el worker no dice cuál es su base de vista previa';
+  if (!nombre.startsWith(PREFIJO_VISTA_PREVIA))
+    return 'el worker no dice cuál es su base de vista previa';
   if (!env.DB) return 'la vista previa no tiene base';
   if (confirmada === nombre) return null;
   const fila = await env.DB.prepare('SELECT valor FROM config WHERE clave = ?')

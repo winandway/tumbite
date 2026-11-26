@@ -33,7 +33,12 @@ import { aceptarTerminos, enPaso } from './registroPorPasos';
 const RAIZ = join(__dirname, '..', '..');
 const STAGING = Boolean(process.env.RECORRIDO_URL);
 const AUTORIZADO_STAGING = process.env.RECORRIDO_INTERNACIONAL === 'autorizado';
-if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRIDO_URL ?? ''))
+if (
+  STAGING &&
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    process.env.RECORRIDO_URL ?? '',
+  )
+)
   throw new Error('El recorrido internacional remoto solo corre contra el sitio de pruebas.');
 test.skip(
   STAGING && !AUTORIZADO_STAGING,
