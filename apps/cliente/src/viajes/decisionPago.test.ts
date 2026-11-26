@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CotizacionViaje } from '@tumbite/compartido';
-import { decisionDePago, metodoDisponible } from './metodoPago';
+import { decisionDePago, metodoDisponible } from './decisionPago';
 
 /**
  * C-METODO-PAGO-PANTALLA y C-SALDO-CLIENTE (25 nov 2026, Venezuela): la pantalla «Método de pago»

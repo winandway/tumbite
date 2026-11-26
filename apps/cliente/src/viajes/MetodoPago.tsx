@@ -15,7 +15,7 @@ import {
 import { C, COLOR, Icono, MontoEnMano, type NombreIcono, Text } from '@tumbite/movil';
 import { IMG_COMIDA } from '../comida/recursos';
 import { BotonGrande } from './BotonGrande';
-import { decisionDePago, metodoDisponible } from './metodoPago';
+import { decisionDePago, metodoDisponible } from './decisionPago';
 
 /**
  * C-METODO-PAGO-PANTALLA (25 nov 2026, Venezuela; sirve a todos los países con los métodos de su

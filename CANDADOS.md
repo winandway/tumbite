@@ -7251,8 +7251,8 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 
 ## C-METODO-PAGO-PANTALLA (25 nov 2026) — Venezuela; sirve a todos los países
 
-- **Qué es:** la pantalla «Método de pago» de la app de clientes (`apps/cliente/src/viajes/MetodoPago.tsx`, decisión pura en `metodoPago.ts`), entre el precio («Continuar») y la solicitud, en Moto, Carro y Envíos: «Monto a pagar» con `MontoEnMano`, tarjeta del Saldo Divoox con el isotipo y su desglose en vivo, las formas de pago del país como radio y «Solicitar …» abajo. Lo elegido vive en el borrador (`metodo`, `usarSaldo`); un error del servidor se dice en la misma pantalla.
-- **Pruebas:** `apps/cliente/src/viajes/metodoPago.test.ts` (textos es/en, tres opciones, sin «pronto», la cuenta igual a la del servidor). Capturas reales con `scripts/recorrido/capturas-metodo-pago.mjs`.
+- **Qué es:** la pantalla «Método de pago» de la app de clientes (`apps/cliente/src/viajes/MetodoPago.tsx`, decisión pura en `decisionPago.ts`), entre el precio («Continuar») y la solicitud, en Moto, Carro y Envíos: «Monto a pagar» con `MontoEnMano`, tarjeta del Saldo Divoox con el isotipo y su desglose en vivo, las formas de pago del país como radio y «Solicitar …» abajo. Lo elegido vive en el borrador (`metodo`, `usarSaldo`); un error del servidor se dice en la misma pantalla.
+- **Pruebas:** `apps/cliente/src/viajes/decisionPago.test.ts` (textos es/en, tres opciones, sin «pronto», la cuenta igual a la del servidor). Capturas reales con `scripts/recorrido/capturas-metodo-pago.mjs`.
 - **Qué NO tocar:** no volver a poner las píldoras de pago en la tarjeta del precio; los guiones e2e que pedían con un solo toque ahora tocan «Continuar» y después «Solicitar» (`pago-solicitar`).
 
 ## C-PAGO-MOVIL-DISPONIBLE (25 nov 2026) — Venezuela
