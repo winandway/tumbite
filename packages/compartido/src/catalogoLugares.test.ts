@@ -222,7 +222,7 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro', () => {
     const conLugar = { ...datos, lugar: JSON.stringify(maracaibo) };
     expect(validarRegistro(conLugar, 'en', ['lugar'])).toEqual([]);
     expect(filasParaRevisar(conLugar, 'es', ['lugar'])).toEqual([
-      { campo: 'lugar', etiqueta: 'Dónde vives', valor: 'Maracaibo, Zulia' },
+      { campo: 'lugar', etiqueta: 'Ciudad', valor: 'Maracaibo, Zulia' },
     ]);
     const novi = aLugarCuenta(delEstado('US', 'MI').find((l) => l.ciudad === 'Novi')!);
     expect(

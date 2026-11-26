@@ -189,6 +189,7 @@ import {
   HojaDriver,
   PildoraGanancias,
   SegmentadoDriver,
+  AvisoLugarCuenta,
 } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
@@ -3835,6 +3836,8 @@ export function Inicio() {
   ) : null;
   const arribaSinFranja = !estado?.activo ? (
     <View style={{ gap: 10 }}>
+      {/* C-REGISTRO-TODO-EL-PAIS: su ciudad, y si espera que abramos ahí, dicho con claridad. */}
+      <AvisoLugarCuenta rol="repartidor" />
       <QueTeFalta
         api={api}
         idioma={idioma}

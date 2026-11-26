@@ -66,7 +66,7 @@ const ES = {
     invitacion: 'Código de invitación',
     correo: 'Correo',
     clave: 'Contraseña',
-    lugar: 'Dónde vives',
+    lugar: 'Ciudad',
   },
   errores: {
     correoVacio: 'Escribe tu correo.',
@@ -120,7 +120,7 @@ const EN: typeof ES = {
     invitacion: 'Invitation code',
     correo: 'Email',
     clave: 'Password',
-    lugar: 'Where you live',
+    lugar: 'City',
   },
   errores: {
     correoVacio: 'Enter your email.',
