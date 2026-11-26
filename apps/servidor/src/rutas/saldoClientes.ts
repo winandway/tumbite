@@ -308,7 +308,12 @@ saldoClientes.put('/admin/saldo-regalos/masiva-topes', async (c) => {
   const u = exigir(c, 'admin');
   const d = await leerCuerpo(
     c,
-    z.object({ porCliente: z.number().int().min(1), porCarga: z.number().int().min(1) }),
+    z.object({
+      porCliente: z.number().int().min(1),
+      porCarga: z.number().int().min(1),
+      porDiaPersona: z.number().int().min(1),
+      porDiaGlobal: z.number().int().min(1),
+    }),
   );
   return c.json({ topes: await guardarTopesMasiva(base(c), d, u.id) });
 });

@@ -104,4 +104,12 @@ export const MENSAJES_EN_SALDO_CLIENTE: [string, string][] = [
     'Esa carga ya no está en curso. Actualiza la pantalla.',
     'That batch is no longer in progress. Refresh the screen.',
   ],
+  [
+    'Esa carga pasa tu tope de cargas masivas de 24 horas. Hazla más pequeña o espera a mañana.',
+    'That batch is over your 24-hour bulk gift limit. Make it smaller or wait until tomorrow.',
+  ],
+  [
+    'Esa carga pasa el tope de cargas masivas de 24 horas del equipo. Hazla más pequeña o espera a mañana.',
+    'That batch is over the team’s 24-hour bulk gift limit. Make it smaller or wait until tomorrow.',
+  ],
 ];

@@ -1587,7 +1587,7 @@ const saldoCargaMasiva: Record<IdiomaAyuda, Guia> = {
       'Para confirmar hay que ESCRIBIR el total. Si la lista cambió entre la vista previa y la confirmación, el sistema no deja seguir y pide verla otra vez.',
       'La carga corre por tandas y muestra su avance. Si cierras la ventana, el sistema la sigue solo. Repetirla no le acredita dos veces a nadie, y nunca pasa del total confirmado. Los clientes que se registran después de confirmar no entran.',
       'Cada cliente recibe un aviso. El regalo vence en los días que pongas y se gasta antes que el prepago del cliente.',
-      'Topes: un tope por cliente y otro por carga, que se cambian en «Topes de la carga masiva» sin pasar el máximo de Divoox. La carga queda en la auditoría con tu nombre, el motivo y los filtros.',
+      'Topes: por cliente, por carga y de 24 horas (lo que reparte cada persona del equipo y todo el equipo). Se cambian en «Topes de la carga masiva» sin pasar el máximo de Divoox. Si una carga llega al tope de 24 horas, se frena sin saltarse a nadie y sigue sola cuando vuelve a haber cupo. La carga queda en la auditoría y en el libro con tu nombre, el motivo y los filtros.',
     ],
     capturas: [
       capSaldoCliente(
@@ -1621,7 +1621,7 @@ const saldoCargaMasiva: Record<IdiomaAyuda, Guia> = {
       'To confirm you have to TYPE the total. If the list changed between the preview and the confirmation, the system won’t continue and asks you to see it again.',
       'The batch runs in rounds and shows its progress. If you close the window, the system keeps going on its own. Repeating it never gives anyone a gift twice, and it never goes over the confirmed total. Customers who sign up after you confirm aren’t included.',
       'Each customer gets a notice. The gift expires after the days you set and is used before the customer’s prepayment.',
-      'Limits: one per customer and one per batch, changed in “Bulk gift limits” without going over the Divoox maximum. The batch is recorded in the audit log with your name, the reason and the filters.',
+      'Limits: per customer, per batch and over 24 hours (what each team member and the whole team give out). Change them in “Bulk gift limits” without going over the Divoox maximum. If a batch reaches the 24-hour limit, it pauses without skipping anyone and continues on its own when there’s room again. The batch is recorded in the audit log and the ledger under your name, with the reason and the filters.',
     ],
     capturas: [
       capSaldoCliente(

@@ -23,6 +23,8 @@ import {
   sentenciasConsumir,
   sentenciasDevolver,
   avisarVencimientos,
+  CLAVE_MIGRACION_LOTES,
+  reintentarMigracionLotes,
   vencerLotes,
 } from './saldoLotes';
 import { continuarCargasMasivas } from './saldoRegalos';
@@ -233,9 +235,9 @@ export async function cargarSaldoCliente(
         `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, autor_id, motivo, comprobante)
          SELECT ?1, ?2, ?3, '${MONEDA_SALDO_DIVOOX}', ?4, ?5, ?6, ?7, ?8
           WHERE (SELECT COALESCE(SUM(monto), 0) FROM saldo_cliente_movimientos
-                  WHERE autor_id = ?6 AND monto > 0 AND creado_en > datetime('now', '-1 day')) + ?3 <= ?9
+                  WHERE autor_id = ?6 AND monto > 0 AND creado_en > datetime('now', '-1 day') AND referencia LIKE 'carga:%') + ?3 <= ?9
             AND (SELECT COALESCE(SUM(monto), 0) FROM saldo_cliente_movimientos
-                  WHERE cliente_id = ?2 AND autor_id IS NOT NULL AND monto > 0 AND creado_en > datetime('now', '-1 day')) + ?3 <= ?10`,
+                  WHERE cliente_id = ?2 AND autor_id IS NOT NULL AND monto > 0 AND creado_en > datetime('now', '-1 day') AND referencia LIKE 'carga:%') + ?3 <= ?10`,
       )
       .bind(
         id,
@@ -611,7 +613,17 @@ export async function saldoDeOperacion(db: D1Database, operacionId: string): Pro
  * El viaje no se hizo (cancelado, sin conductor, no se presentó sin cargo, no se pudo crear): lo
  * apartado vuelve ENTERO al saldo. Una sola vez.
  */
+/** C-SALDO-LOTES: antes de devolver a los lotes de una operación, el saldo de antes de su cliente pasa a lotes. */
+async function asegurarLotesDeOperacion(db: D1Database, operacionId: string) {
+  const u = await db
+    .prepare('SELECT cliente_id FROM usos_saldo_divoox WHERE operacion_id = ?')
+    .bind(operacionId)
+    .first<{ cliente_id: string }>();
+  if (u) await asegurarLotes(db, u.cliente_id);
+}
+
 export async function liberarSaldoViaje(db: D1Database, operacionId: string, motivo: string) {
+  await asegurarLotesDeOperacion(db, operacionId);
   const ref = `viaje:${operacionId}:devolucion`;
   const r = await db.batch([
     // Vuelve lo apartado menos lo que ya volvió como sobrante (si el cierre se cortó a mitad).
@@ -641,8 +653,8 @@ export async function liberarSaldoViaje(db: D1Database, operacionId: string, mot
       )
       .bind(operacionId, operacionId, 'liberado'),
   ]);
-  // La que cambia el uso a «liberado» va después del movimiento y de las tres de los lotes.
-  return Number(r[4]?.meta.changes ?? 0) > 0;
+  // La que cambia el uso a «liberado» es la penúltima (la última pone el viaje en 0).
+  return Number(r[r.length - 2]?.meta.changes ?? 0) > 0;
 }
 
 /** Acredita al conductor lo cubierto por el saldo (estado de origen `desde`), en un lote. */
@@ -727,6 +739,7 @@ export async function cerrarSaldoDeViaje(
   // El total final bajó: lo que sobra de lo apartado vuelve al saldo del cliente (una vez), a los
   // mismos lotes (primero el prepago, al final el regalo que vence antes: C-SALDO-LOTES).
   if (monto < apartado) {
+    await asegurarLotesDeOperacion(db, p.operacionId);
     const ref = `viaje:${p.operacionId}:sobrante`;
     await db.batch([
       db
@@ -825,8 +838,9 @@ export async function resolverRevisionSaldo(
     await auditoria.run();
     return { pagado: Number(u.monto) };
   }
+  await asegurarLotesDeOperacion(db, p.operacionId);
   const ref = `viaje:${p.operacionId}:rechazo`;
-  const [, , , , cambio] = await db.batch([
+  const lote = await db.batch([
     db
       .prepare(
         `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, operacion_id, motivo)
@@ -849,6 +863,8 @@ export async function resolverRevisionSaldo(
     db.prepare('UPDATE viajes SET saldo_divoox = 0 WHERE operacion_id = ?').bind(p.operacionId),
     auditoria,
   ]);
+  // La que cambia el uso a «liberado» va antes de las dos últimas (el viaje en 0 y la auditoría).
+  const cambio = lote[lote.length - 3];
   if (!cambio?.meta.changes)
     throw new ErrorDatos('Este saldo ya fue revisado. Actualiza la pantalla.', undefined, 409);
   return { pagado: 0 };
@@ -929,9 +945,13 @@ export const TAREA_SALDO_LOTES = {
   critica: false,
   cada: 'hora' as const,
   // Hasta 100 lotes vencidos (movimiento + consumo + el lote) y 400 marcas de aviso con sus avisos.
-  escriturasEsperadas: 1_200,
+  // Hasta 6.000 lotes vencidos (movimiento, consumo y lote: 18.000) y 2.000 marcas de aviso con un aviso
+  // por cliente (hasta 4.000 más).
+  escriturasEsperadas: 22_000,
   correr: async (env: Env, db: D1Database) =>
-    (await vencerLotes(db)) + (await avisarVencimientos(env, db)),
+    (await reintentarMigracionLotes(db)) +
+    (await vencerLotes(db)) +
+    (await avisarVencimientos(env, db)),
 };
 
 /**
@@ -958,7 +978,9 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
   // negativo y, C-SALDO-LOTES, sus lotes suman lo mismo que su libro (si ya tiene lotes).
   const c = await db
     .prepare(
-      `SELECT COALESCE(SUM(s < 0), 0) AS negativos, COALESCE(SUM(hay AND s <> l), 0) AS lotes_descuadre FROM (
+      `SELECT COALESCE(SUM(s < 0), 0) AS negativos, COALESCE(SUM(hay AND s <> l), 0) AS lotes_descuadre,
+              COALESCE(SUM(NOT hay), 0) AS sin_lotes,
+              (SELECT valor FROM config WHERE clave = '${CLAVE_MIGRACION_LOTES}') AS migracion FROM (
          SELECT (SELECT COALESCE(SUM(m.monto), 0) FROM saldo_cliente_movimientos m
                   WHERE m.cliente_id = r.cliente_id AND m.moneda = r.moneda) AS s,
                 (SELECT COALESCE(SUM(l.restante), 0) FROM saldo_cliente_lotes l
@@ -967,7 +989,12 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
            FROM (SELECT DISTINCT cliente_id, moneda FROM saldo_cliente_movimientos
                    INDEXED BY saldo_cliente_movimientos_fecha WHERE creado_en > datetime('now', '-1 day')) r)`,
     )
-    .first<{ negativos: number; lotes_descuadre: number }>();
+    .first<{
+      negativos: number;
+      lotes_descuadre: number;
+      sin_lotes: number;
+      migracion: string | null;
+    }>();
   // El libro de Divoox cuadra con el saldo (C-LECTURAS-SALUD): cada uso cobrado de 7 días tiene su
   // asiento contra Divoox (índice `usos_saldo_divoox_cerrado`: estado + cerrado_en), cada prepago de 7
   // días su entrada (índice `saldo_cliente_movimientos_concepto`: concepto + creado_en) y nunca se
@@ -1003,6 +1030,10 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
     Number(l?.sin_entrada ?? 0) > 0 ||
     Number(l?.neto ?? 0) < 0 ||
     Number(c?.lotes_descuadre ?? 0) > 0 ||
+    // Clientes que se movieron con libro y sin lotes (un saldo de antes que no pasó) o la última pasada
+    // a lotes falló (el reloj la reintenta cada hora).
+    Number(c?.sin_lotes ?? 0) > 0 ||
+    (c?.migracion != null && !/"ok":true/.test(c.migracion)) ||
     Number(lt?.sin_vencer ?? 0) > 0;
   const malos =
     (descuadre ? 1 : 0) +
@@ -1017,7 +1048,13 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
 export async function resumenSaldoClientes(db: D1Database) {
   const f = await db
     .prepare(
-      `SELECT (SELECT COALESCE(SUM(monto), 0) FROM saldo_cliente_movimientos WHERE moneda = '${MONEDA_SALDO_DIVOOX}') AS disponible,
+      // C-SALDO-LOTES: lo disponible son los lotes vigentes (un regalo vencido no cuenta aunque el reloj
+      // todavía no lo haya barrido) más el libro de quien todavía no pasó a lotes.
+      `SELECT (SELECT COALESCE(SUM(restante), 0) FROM saldo_cliente_lotes
+                WHERE moneda = '${MONEDA_SALDO_DIVOOX}' AND restante > 0 AND (vence_en IS NULL OR vence_en > datetime('now')))
+            + (SELECT COALESCE(SUM(m.monto), 0) FROM saldo_cliente_movimientos m
+                WHERE m.moneda = '${MONEDA_SALDO_DIVOOX}'
+                  AND NOT EXISTS (SELECT 1 FROM saldo_cliente_lotes l WHERE l.cliente_id = m.cliente_id)) AS disponible,
               (SELECT COALESCE(SUM(apartado), 0) FROM usos_saldo_divoox WHERE estado = 'apartado') AS apartado,
               (SELECT COUNT(*) FROM usos_saldo_divoox WHERE estado = 'en_revision') AS en_revision`,
     )

@@ -70,9 +70,14 @@ const T = {
     entregado: 'Entregado',
     estado: 'Estado',
     topesTitulo: 'Topes de la carga masiva',
-    topes: (c: string, t: string) => `Hasta ${c} por cliente y ${t} por carga.`,
+    topes: (c: string, t: string, p: string, g: string) =>
+      `Hasta ${c} por cliente y ${t} por carga. En 24 horas: ${p} por persona del equipo y ${g} entre todo el equipo.`,
     porCliente: 'Por cliente (dólares)',
     porCarga: 'Por carga (dólares)',
+    porDiaPersona: 'Por persona del equipo, en 24 horas (dólares)',
+    porDiaGlobal: 'Todo el equipo, en 24 horas (dólares)',
+    frenada:
+      'La carga llegó al tope de 24 horas: sigue sola cuando vuelva a haber cupo. Nadie se queda sin su regalo.',
     maximo: (m: string) => `Máximo de Divoox: ${m}.`,
     guardar: 'Guardar los topes',
     guardado: 'Guardado.',
@@ -130,9 +135,14 @@ const T = {
     entregado: 'Given',
     estado: 'Status',
     topesTitulo: 'Bulk gift limits',
-    topes: (c: string, t: string) => `Up to ${c} per customer and ${t} per batch.`,
+    topes: (c: string, t: string, p: string, g: string) =>
+      `Up to ${c} per customer and ${t} per batch. In 24 hours: ${p} per team member and ${g} for the whole team.`,
     porCliente: 'Per customer (dollars)',
     porCarga: 'Per batch (dollars)',
+    porDiaPersona: 'Per team member, in 24 hours (dollars)',
+    porDiaGlobal: 'Whole team, in 24 hours (dollars)',
+    frenada:
+      'The batch reached the 24-hour limit: it continues on its own when there’s room again. Nobody misses their gift.',
     maximo: (m: string) => `Divoox maximum: ${m}.`,
     guardar: 'Save the limits',
     guardado: 'Saved.',
@@ -144,7 +154,7 @@ const T = {
 type Textos = (typeof T)['es'];
 
 type Zona = { id: string; nombre: string; pais: string };
-type Topes = { porCliente: number; porCarga: number };
+type Topes = { porCliente: number; porCarga: number; porDiaPersona: number; porDiaGlobal: number };
 type Carga = {
   id: string;
   autor: string | null;
@@ -154,6 +164,8 @@ type Carga = {
   clientes: number;
   total: number;
   estado: 'en_curso' | 'terminada' | 'detenida';
+  /** La tanda se frenó por un tope de 24 horas (el reloj la sigue sola). */
+  frenadaPorTope?: boolean;
   acreditados: number;
   entregado: number;
   creadoEn: string;
@@ -367,7 +379,14 @@ function FormMasiva({
   }
   return (
     <div data-testid="saldo-masiva-form">
-      <p className="pista">{t.topes(dinero(topes.porCliente), dinero(topes.porCarga))}</p>
+      <p className="pista">
+        {t.topes(
+          dinero(topes.porCliente),
+          dinero(topes.porCarga),
+          dinero(topes.porDiaPersona),
+          dinero(topes.porDiaGlobal),
+        )}
+      </p>
       <AvisoBorrador
         visible={b.recuperado}
         idioma={idioma}
@@ -610,7 +629,10 @@ function Avance({
         );
         if (!vivo) return;
         setActual(r.carga);
-        if (r.carga.estado === 'en_curso') reloj = setTimeout(() => void siguiente(), 800);
+        // Frenada por el tope de 24 horas: no se insiste desde la pantalla (el reloj la sigue sola).
+        if (r.carga.estado === 'en_curso' && !r.carga.frenadaPorTope)
+          reloj = setTimeout(() => void siguiente(), 800);
+        else if (r.carga.estado === 'en_curso') return;
         else alTerminar(r.carga.estado === 'terminada' ? t.hecho : null);
       } catch (x) {
         if (vivo) alError(x instanceof ErrorApi ? x.message : String(x));
@@ -641,6 +663,11 @@ function Avance({
         <span style={{ width: `${pct}%` }} />
       </div>
       <p className="pista">{t.progreso(actual.acreditados, actual.clientes)}</p>
+      {actual.frenadaPorTope ? (
+        <p className="pista" data-testid="masiva-frenada">
+          {t.frenada}
+        </p>
+      ) : null}
       <button
         type="button"
         className="boton secundario"
@@ -746,6 +773,8 @@ function FormTopesMasiva({
     inicial: {
       porCliente: String(topes.porCliente / 100),
       porCarga: String(topes.porCarga / 100),
+      porDiaPersona: String(topes.porDiaPersona / 100),
+      porDiaGlobal: String(topes.porDiaGlobal / 100),
     },
     almacen: almacenNavegador,
   });
@@ -757,6 +786,8 @@ function FormTopesMasiva({
       await pedir('PUT', '/datos/admin/saldo-regalos/masiva-topes', {
         porCliente: aCentavos(b.valores.porCliente),
         porCarga: aCentavos(b.valores.porCarga),
+        porDiaPersona: aCentavos(b.valores.porDiaPersona),
+        porDiaGlobal: aCentavos(b.valores.porDiaGlobal),
       });
       await b.limpiar();
       alGuardar();
@@ -777,6 +808,8 @@ function FormTopesMasiva({
           [
             ['porCliente', t.porCliente, b.valores.porCliente, maximos.porCliente],
             ['porCarga', t.porCarga, b.valores.porCarga, maximos.porCarga],
+            ['porDiaPersona', t.porDiaPersona, b.valores.porDiaPersona, maximos.porDiaPersona],
+            ['porDiaGlobal', t.porDiaGlobal, b.valores.porDiaGlobal, maximos.porDiaGlobal],
           ] as const
         ).map(([k, etiqueta, valor, maximo]) => (
           <label key={k} className="campo">

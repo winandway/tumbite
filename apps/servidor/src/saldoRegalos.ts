@@ -395,14 +395,20 @@ export async function acreditarBienvenida(
 }
 
 /** El movimiento del libro que nace con un lote de regalo (mismo monto, misma referencia). */
-function sentenciaMovimientoDeLote(db: D1Database, loteId: string, motivo: string) {
+function sentenciaMovimientoDeLote(
+  db: D1Database,
+  loteId: string,
+  motivo: string,
+  /** Quién lo hizo (la carga masiva); la bienvenida y la fidelidad son automáticas: sin autor. */
+  autorId: string | null = null,
+) {
   return db
     .prepare(
-      `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, motivo)
-       SELECT ?1, l.cliente_id, l.monto_inicial, l.moneda, 'regalo', l.movimiento_ref, ?2
+      `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, motivo, autor_id)
+       SELECT ?1, l.cliente_id, l.monto_inicial, l.moneda, 'regalo', l.movimiento_ref, ?2, ?4
          FROM saldo_cliente_lotes l WHERE l.id = ?3 AND l.monto_inicial > 0`,
     )
-    .bind(nuevoId(), motivo.slice(0, 160), loteId);
+    .bind(nuevoId(), motivo.slice(0, 160), loteId, autorId);
 }
 
 /** Al confirmar el celular: la bienvenida con la ciudad de la cuenta (si la tiene). Nunca frena. */
@@ -503,7 +509,16 @@ export async function contarViajeFidelidad(
         .bind(loteId, op.cliente_id, `fidelidad:${op.regla}:${op.cliente_id}:${numero}`, op.regla),
       sentenciaMovimientoDeLote(db, loteId, `Regalo por tus viajes (${numero})`),
     ]);
-    if (!lote?.meta.changes) return { numero, premio: false };
+    if (!lote?.meta.changes) {
+      // No se pierde en silencio: queda la alerta para el equipo, como en la bienvenida.
+      await alerta(db, {
+        tipo: 'saldo_fidelidad_sin_presupuesto',
+        operacionId: p.operacionId,
+        clienteId: op.cliente_id,
+        detalle: `El regalo por viajes (viaje ${numero}) no se acreditó: la regla de la ciudad llegó a su presupuesto del mes o al tope de regalos por persona al mes.`,
+      }).catch((e: unknown) => console.error('saldo: alerta de fidelidad sin presupuesto', e));
+      return { numero, premio: false };
+    }
     const l = await db
       .prepare('SELECT monto_inicial, vence_en FROM saldo_cliente_lotes WHERE id = ?')
       .bind(loteId)
@@ -533,9 +548,29 @@ export type FiltrosMasiva = {
   celularVerificado: boolean;
 };
 
-export type TopesMasiva = { porCliente: number; porCarga: number };
-export const TOPES_MASIVA_INICIALES: TopesMasiva = { porCliente: 500, porCarga: 50_000 };
-export const TOPES_MASIVA_MAXIMOS: TopesMasiva = { porCliente: 2_000, porCarga: 500_000 };
+/**
+ * Topes de la carga masiva (centavos de dólar): por cliente, por carga, y lo que una persona del equipo
+ * y todo el equipo reparten en 24 horas con cargas masivas. No se mezclan con los topes de las cargas a
+ * mano (esos cuentan solo las cargas a mano) ni con los de la bienvenida y la fidelidad (por regla).
+ */
+export type TopesMasiva = {
+  porCliente: number;
+  porCarga: number;
+  porDiaPersona: number;
+  porDiaGlobal: number;
+};
+export const TOPES_MASIVA_INICIALES: TopesMasiva = {
+  porCliente: 500,
+  porCarga: 50_000,
+  porDiaPersona: 50_000,
+  porDiaGlobal: 100_000,
+};
+export const TOPES_MASIVA_MAXIMOS: TopesMasiva = {
+  porCliente: 2_000,
+  porCarga: 500_000,
+  porDiaPersona: 500_000,
+  porDiaGlobal: 1_000_000,
+};
 const CLAVE_TOPES_MASIVA = 'saldo_masiva_topes';
 /** Clientes por tanda (cada uno: un lote, un movimiento y su aviso). */
 export const TANDA_MASIVA = 50;
@@ -564,13 +599,43 @@ export async function leerTopesMasiva(db: D1Database): Promise<TopesMasiva> {
       TOPES_MASIVA_MAXIMOS.porCliente,
     ),
     porCarga: uno(g.porCarga, TOPES_MASIVA_INICIALES.porCarga, TOPES_MASIVA_MAXIMOS.porCarga),
+    porDiaPersona: uno(
+      g.porDiaPersona,
+      TOPES_MASIVA_INICIALES.porDiaPersona,
+      TOPES_MASIVA_MAXIMOS.porDiaPersona,
+    ),
+    porDiaGlobal: uno(
+      g.porDiaGlobal,
+      TOPES_MASIVA_INICIALES.porDiaGlobal,
+      TOPES_MASIVA_MAXIMOS.porDiaGlobal,
+    ),
   };
+}
+
+/**
+ * Lo repartido con cargas masivas en las últimas 24 horas (todo el equipo y la persona). Las cargas de
+ * esa ventana se buscan por su fecha (índice) y sus lotes por la regla (índice): no recorre tablas.
+ */
+const SQL_MASIVA_HOY = (autor: string) =>
+  `(SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l
+     WHERE l.origen = 'masiva' AND l.creado_en > datetime('now', '-1 day')
+       AND l.regla_id IN (SELECT k.id FROM saldo_cargas_masivas k INDEXED BY saldo_cargas_masivas_fecha
+                           WHERE k.creado_en > datetime('now', '-8 days') ${autor ? `AND k.autor_id = ${autor}` : ''}))`;
+
+async function repartidoHoy(db: D1Database, autorId: string) {
+  const f = await db
+    .prepare(`SELECT ${SQL_MASIVA_HOY('?1')} AS persona, ${SQL_MASIVA_HOY('')} AS global`)
+    .bind(autorId)
+    .first<{ persona: number; global: number }>();
+  return { persona: Number(f?.persona ?? 0), global: Number(f?.global ?? 0) };
 }
 
 export async function guardarTopesMasiva(db: D1Database, t: TopesMasiva, autorId: string) {
   for (const [k, v, max] of [
     ['porCliente', t.porCliente, TOPES_MASIVA_MAXIMOS.porCliente],
     ['porCarga', t.porCarga, TOPES_MASIVA_MAXIMOS.porCarga],
+    ['porDiaPersona', t.porDiaPersona, TOPES_MASIVA_MAXIMOS.porDiaPersona],
+    ['porDiaGlobal', t.porDiaGlobal, TOPES_MASIVA_MAXIMOS.porDiaGlobal],
   ] as const) {
     if (!Number.isSafeInteger(v) || v <= 0)
       throw new ErrorDatos('Escribe un tope mayor que cero.', k, 422);
@@ -606,9 +671,12 @@ export async function guardarTopesMasiva(db: D1Database, t: TopesMasiva, autorId
 function sqlCandidatos(limite: number) {
   return `SELECT * FROM (
       SELECT u.id, u.nombre, u.creado_en, u.telefono_verificado_en IS NOT NULL AS verificado,
-             (SELECT COUNT(*) FROM operaciones o WHERE o.cliente_id = u.id
-                 AND o.tipo_operacion = 'viaje_pasajero' AND o.estado_general = 'terminada') AS viajes
+             COALESCE(v.n, 0) AS viajes
         FROM usuarios u INDEXED BY usuarios_rol_creado
+        -- Los viajes terminados de todos los clientes en UNA consulta agregada (no uno por uno).
+        LEFT JOIN (SELECT o.cliente_id, COUNT(*) AS n FROM operaciones o
+                    WHERE o.tipo_operacion = 'viaje_pasajero' AND o.estado_general = 'terminada'
+                    GROUP BY o.cliente_id) v ON v.cliente_id = u.id
        WHERE u.rol = 'cliente' AND u.activo = 1 AND u.creado_en <= ?1
          AND (?2 IS NULL OR u.creado_en >= ?2)
          AND (?3 IS NULL OR u.creado_en < date(?3, '+1 day'))
@@ -667,8 +735,23 @@ export async function vistaPreviaMasiva(
   p: { filtros: FiltrosMasiva; monto: number; pagina?: string | null },
 ) {
   const ahora = (await db.prepare(AHORA_SQL).first<{ ahora: string }>())?.ahora ?? '';
-  // Contar: hasta el máximo de una carga, más uno para decir «más de…».
-  const todos = await candidatos(db, p.filtros, ahora, CURSOR_INICIAL, MAX_CLIENTES_CARGA + 1);
+  // Contar en la base (hasta el máximo de una carga, más uno para decir «más de…»), sin traer las filas.
+  const f = p.filtros;
+  const cuenta = await db
+    .prepare(`SELECT COUNT(*) AS n FROM (${sqlCandidatos(MAX_CLIENTES_CARGA + 1)})`)
+    .bind(
+      ahora,
+      f.desde,
+      f.hasta,
+      f.celularVerificado ? 1 : 0,
+      f.zonaId,
+      f.viajesMin,
+      f.viajesMax,
+      CURSOR_INICIAL.fecha,
+      CURSOR_INICIAL.id,
+    )
+    .first<{ n: number }>();
+  const todos = { length: Number(cuenta?.n ?? 0) };
   const clientes = Math.min(todos.length, MAX_CLIENTES_CARGA);
   const desde = p.pagina ? leerCursor(p.pagina) : CURSOR_INICIAL;
   const pagina = (await candidatos(db, p.filtros, ahora, desde, 51)).slice(0, 51);
@@ -733,6 +816,19 @@ export async function crearCargaMasiva(
     );
   if (previa.total > topes.porCarga)
     throw new ErrorDatos('Ese total pasa el tope por carga masiva.', 'totalEscrito', 422);
+  const hoy = await repartidoHoy(db, p.autorId);
+  if (hoy.persona + previa.total > topes.porDiaPersona)
+    throw new ErrorDatos(
+      'Esa carga pasa tu tope de cargas masivas de 24 horas. Hazla más pequeña o espera a mañana.',
+      'totalEscrito',
+      422,
+    );
+  if (hoy.global + previa.total > topes.porDiaGlobal)
+    throw new ErrorDatos(
+      'Esa carga pasa el tope de cargas masivas de 24 horas del equipo. Hazla más pequeña o espera a mañana.',
+      'totalEscrito',
+      422,
+    );
   if (p.totalEscrito !== previa.total)
     throw new ErrorDatos(
       'El total escrito no coincide con el de la lista de ahora. Revisa la vista previa y escríbelo otra vez.',
@@ -740,7 +836,8 @@ export async function crearCargaMasiva(
       409,
     );
   const id = nuevoId();
-  await db.batch([
+  // Dos confirmaciones a la vez con la misma clave: la segunda devuelve la carga que ya nació.
+  const insertar = db.batch([
     db
       .prepare(
         `INSERT INTO saldo_cargas_masivas (id, autor_id, motivo, filtros_json, monto, vigencia_dias, clientes, total, corte_en, idempotencia)
@@ -776,6 +873,17 @@ export async function crearCargaMasiva(
         }),
       ),
   ]);
+  try {
+    await insertar;
+  } catch (e) {
+    if (!/UNIQUE/i.test(String(e))) throw e;
+    const otra = await db
+      .prepare('SELECT id FROM saldo_cargas_masivas WHERE idempotencia = ?')
+      .bind(p.idempotencia)
+      .first<{ id: string }>();
+    if (!otra) throw e;
+    return { carga: await cargaMasiva(db, otra.id), repetida: true };
+  }
   await procesarTandaMasiva(env, db, id);
   return { carga: await cargaMasiva(db, id), repetida: false };
 }
@@ -845,30 +953,42 @@ export async function procesarTandaMasiva(env: Env | undefined, db: D1Database, 
   const c = await db
     .prepare('SELECT * FROM saldo_cargas_masivas WHERE id = ?')
     .bind(cargaId)
-    .first<FilaCarga>();
+    .first<FilaCarga & { autor_id: string }>();
   if (!c) throw new ErrorDatos('Esa carga no existe.', undefined, 404);
   if (c.estado !== 'en_curso') return cargaMasiva(db, cargaId);
   const filtros = JSON.parse(c.filtros_json) as FiltrosMasiva;
-  const desde = c.cursor ? leerCursor(c.cursor) : CURSOR_INICIAL;
-  const tanda = await candidatos(db, filtros, c.corte_en, desde, TANDA_MASIVA);
-  const refs = tanda.map((x) => `masiva:${cargaId}:${x.id}`);
-  const previos = new Set(
-    refs.length
-      ? (
-          await db
-            .prepare(
-              `SELECT movimiento_ref FROM saldo_cliente_lotes WHERE movimiento_ref IN (${refs.map(() => '?').join(',')})`,
-            )
-            .bind(...refs)
-            .all<{ movimiento_ref: string }>()
-        ).results.map((r) => r.movimiento_ref)
-      : [],
+  // C-SALDO-MASIVO: los topes de 24 horas (la persona que la hizo y todo el equipo). Sin cupo hoy, la
+  // carga espera sin avanzar y el reloj la sigue cuando se libere (nadie se queda sin su regalo).
+  const topes = await leerTopesMasiva(db);
+  const hoy = await repartidoHoy(db, c.autor_id);
+  const cupo = Math.min(
+    Math.floor((topes.porDiaPersona - hoy.persona) / Number(c.monto)),
+    Math.floor((topes.porDiaGlobal - hoy.global) / Number(c.monto)),
   );
+  if (cupo <= 0) return { ...(await cargaMasiva(db, cargaId)), frenadaPorTope: true };
+  const limite = Math.min(TANDA_MASIVA, cupo);
+  const desde = c.cursor ? leerCursor(c.cursor) : CURSOR_INICIAL;
+  const tanda = await candidatos(db, filtros, c.corte_en, desde, limite);
+  const refDe = (clienteId: string) => `masiva:${cargaId}:${clienteId}`;
+  const conLote = async () =>
+    new Set(
+      tanda.length
+        ? (
+            await db
+              .prepare(
+                `SELECT movimiento_ref FROM saldo_cliente_lotes WHERE movimiento_ref IN (${tanda.map(() => '?').join(',')})`,
+              )
+              .bind(...tanda.map((x) => refDe(x.id)))
+              .all<{ movimiento_ref: string }>()
+          ).results.map((r) => r.movimiento_ref)
+        : [],
+    );
+  const previos = await conLote();
   for (const x of tanda) await asegurarLotes(db, x.id);
   const sentencias: D1PreparedStatement[] = [];
   const nuevos: { clienteId: string; loteId: string }[] = [];
   for (const x of tanda) {
-    const ref = `masiva:${cargaId}:${x.id}`;
+    const ref = refDe(x.id);
     if (previos.has(ref)) continue;
     const loteId = nuevoId();
     nuevos.push({ clienteId: x.id, loteId });
@@ -880,34 +1000,44 @@ export async function procesarTandaMasiva(env: Env | undefined, db: D1Database, 
                   datetime('now', '+' || c.vigencia_dias || ' days'), ?4
              FROM saldo_cargas_masivas c
             WHERE c.id = ?5 AND c.estado = 'en_curso'
-              AND (SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l WHERE l.regla_id = c.id) + c.monto <= c.total`,
+              -- El total confirmado (el presupuesto de la carga) y los topes de 24 horas, en la MISMA
+              -- sentencia que escribe: dos tandas a la vez no los pasan.
+              AND (SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l WHERE l.regla_id = c.id) + c.monto <= c.total
+              AND ${SQL_MASIVA_HOY('c.autor_id')} + c.monto <= ?6
+              AND ${SQL_MASIVA_HOY('')} + c.monto <= ?7`,
         )
-        .bind(loteId, x.id, filtros.zonaId, ref, cargaId),
-      sentenciaMovimientoDeLote(db, loteId, `Carga masiva · ${c.motivo}`),
+        .bind(loteId, x.id, filtros.zonaId, ref, cargaId, topes.porDiaPersona, topes.porDiaGlobal),
+      // El movimiento queda a nombre de quien hizo la carga (auditoría del libro).
+      sentenciaMovimientoDeLote(db, loteId, `Carga masiva · ${c.motivo}`, c.autor_id),
     );
   }
-  const ultimo = tanda.at(-1);
-  const terminada = tanda.length < TANDA_MASIVA;
-  sentencias.push(
-    db
-      .prepare(
-        `UPDATE saldo_cargas_masivas SET cursor = ?1, revisados = revisados + ?2,
-                acreditados = (SELECT COUNT(*) FROM saldo_cliente_lotes l WHERE l.regla_id = ?3),
-                estado = CASE WHEN ?4 = 1 OR (SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l WHERE l.regla_id = ?3) + monto > total
-                              THEN 'terminada' ELSE estado END,
-                terminado_en = CASE WHEN ?4 = 1 OR (SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l WHERE l.regla_id = ?3) + monto > total
-                                    THEN datetime('now') ELSE terminado_en END
-          WHERE id = ?3 AND cursor = ?5 AND estado = 'en_curso'`,
-      )
-      .bind(
-        ultimo ? `${ultimo.creado_en}|${ultimo.id}` : c.cursor,
-        tanda.length,
-        cargaId,
-        terminada ? 1 : 0,
-        c.cursor,
-      ),
-  );
-  await db.batch(sentencias);
+  if (sentencias.length) await db.batch(sentencias);
+  // El cursor avanza solo hasta el último cliente que YA tiene su regalo, sin saltarse a nadie: si un
+  // tope frenó a alguien en medio de la tanda, la próxima empieza por él.
+  const hechos = await conLote();
+  const primeroSin = tanda.findIndex((x) => !hechos.has(refDe(x.id)));
+  const hasta = primeroSin === -1 ? tanda.length - 1 : primeroSin - 1;
+  const ultimo = tanda.slice(0, hasta + 1).at(-1);
+  const completa = hasta === tanda.length - 1;
+  const terminada = completa && tanda.length < limite;
+  await db
+    .prepare(
+      `UPDATE saldo_cargas_masivas SET cursor = ?1, revisados = revisados + ?2,
+              acreditados = (SELECT COUNT(*) FROM saldo_cliente_lotes l WHERE l.regla_id = ?3),
+              estado = CASE WHEN ?4 = 1 OR (SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l WHERE l.regla_id = ?3) + monto > total
+                            THEN 'terminada' ELSE estado END,
+              terminado_en = CASE WHEN ?4 = 1 OR (SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l WHERE l.regla_id = ?3) + monto > total
+                                  THEN datetime('now') ELSE terminado_en END
+        WHERE id = ?3 AND cursor = ?5 AND estado = 'en_curso'`,
+    )
+    .bind(
+      ultimo ? `${ultimo.creado_en}|${ultimo.id}` : c.cursor,
+      hasta + 1,
+      cargaId,
+      terminada ? 1 : 0,
+      c.cursor,
+    )
+    .run();
   if (nuevos.length) {
     const zona = filtros.zonaId ? await zonaHoraria(db, filtros.zonaId) : 'America/Caracas';
     const { results } = await db
@@ -924,7 +1054,9 @@ export async function procesarTandaMasiva(env: Env | undefined, db: D1Database, 
         tipo: 'masiva',
       });
   }
-  return cargaMasiva(db, cargaId);
+  // Frenada por un tope de 24 horas: alguien quedó esperando, o la tanda fue más corta por falta de cupo.
+  const frenadaPorTope = !completa || (limite < TANDA_MASIVA && !terminada);
+  return { ...(await cargaMasiva(db, cargaId)), frenadaPorTope };
 }
 
 /** El reloj sigue las cargas en curso si el panel se cerró (una tanda por carga y vuelta). */

@@ -200,12 +200,42 @@ export function sentenciasMigrarLotes(db: D1Database, clienteId: string | null) 
   ];
 }
 
-/** Una vez por versión (esquema.ts): todos los saldos de antes a lotes, en un lote. */
+/** Cómo quedó la última pasada de los saldos de antes a lotes (la lee el canario y el reloj). */
+export const CLAVE_MIGRACION_LOTES = 'saldo_lotes_migracion';
+
+/**
+ * Todos los saldos de antes a lotes, en un lote (el arranque de cada versión y, si falló, el reloj cada
+ * hora hasta que salga). Deja su marca en `config`: «ok» o el error. Una falla NO se queda en un
+ * mensaje de la consola: el canario `saldo_clientes` se pone en rojo y el reloj la reintenta.
+ */
 export async function migrarSaldosALotes(db: D1Database): Promise<number> {
-  const r = await db.batch(sentenciasMigrarLotes(db, null));
-  const n = r.reduce((s, x) => s + Number(x.meta?.changes ?? 0), 0);
-  if (n) console.warn(`saldo: ${n} lotes creados a partir de saldos de antes (C-SALDO-LOTES)`);
-  return n;
+  const marca = (v: object) =>
+    db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(CLAVE_MIGRACION_LOTES, JSON.stringify(v));
+  try {
+    const r = await db.batch([...sentenciasMigrarLotes(db, null), marca({ ok: true })]);
+    const n = r.slice(0, -1).reduce((s, x) => s + Number(x.meta?.changes ?? 0), 0);
+    if (n) console.warn(`saldo: ${n} lotes creados a partir de saldos de antes (C-SALDO-LOTES)`);
+    return n;
+  } catch (e) {
+    await marca({ ok: false, error: String(e).slice(0, 200) })
+      .run()
+      .catch(() => null);
+    throw e;
+  }
+}
+
+/** El reloj: si la última pasada a lotes falló, se reintenta (sin marca o en «ok», no hace nada). */
+export async function reintentarMigracionLotes(db: D1Database): Promise<number> {
+  const f = await db
+    .prepare('SELECT valor FROM config WHERE clave = ?')
+    .bind(CLAVE_MIGRACION_LOTES)
+    .first<{ valor: string }>();
+  if (!f || /"ok":true/.test(f.valor)) return 0;
+  return migrarSaldosALotes(db);
 }
 
 /**
@@ -255,6 +285,17 @@ export function sentenciasConsumir(
   );
 }
 
+/**
+ * Lo prepagado por el cliente (sus recargas del libro) que todavía no está en ningún lote de prepago:
+ * el dinero suyo que se gastó antes de los lotes. Mide «hasta dónde alcanza lo prepagado» para lo que
+ * vuelve de una operación de antes de los lotes (columna `m` = el movimiento que vuelve).
+ */
+const PREPAGO_SIN_LOTE = `MAX(0,
+    (SELECT COALESCE(SUM(r.monto), 0) FROM saldo_cliente_movimientos r
+      WHERE r.cliente_id = m.cliente_id AND r.moneda = m.moneda AND r.concepto = 'recarga')
+  - (SELECT COALESCE(SUM(pl.monto_inicial), 0) FROM saldo_cliente_lotes pl
+      WHERE pl.cliente_id = m.cliente_id AND pl.moneda = m.moneda AND pl.tipo = 'prepago'))`;
+
 /** «Todo lo que salió para esta operación» (devolución completa). */
 export const DEVOLVER_TODO = Number.MAX_SAFE_INTEGER;
 
@@ -295,16 +336,25 @@ export function sentenciasDevolver(
             AND vence_en IS NOT NULL AND vence_en <= datetime('now')`,
       )
       .bind(p.referencia),
-    // Una operación de antes de los lotes: lo que vuelve es un lote propio (regalo sin vencimiento).
-    db
-      .prepare(
-        `INSERT OR IGNORE INTO saldo_cliente_lotes (id, cliente_id, moneda, tipo, origen, monto_inicial, restante, movimiento_ref)
-         SELECT ?1, m.cliente_id, m.moneda, 'regalo', 'devolucion', m.monto, m.monto, m.referencia
-           FROM saldo_cliente_movimientos m
-          WHERE m.referencia = ?2 AND m.monto > 0
-            AND NOT EXISTS (SELECT 1 FROM saldo_cliente_consumos c WHERE c.operacion_id = ?3)`,
-      )
-      .bind(nuevoId(), p.referencia, p.operacionId),
+    // Una operación de antes de los lotes (sin consumos): lo que vuelve se clasifica con el MISMO
+    // criterio de la migración: es prepago hasta donde alcance lo prepagado que todavía no está en un
+    // lote de prepago, y el resto es regalo sin vencimiento. Dos lotes, uno por parte.
+    // Primero el regalo (se mide antes de que nazca el lote de prepago) y después el prepago.
+    ...(['regalo', 'prepago'] as const).map((tipo) =>
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO saldo_cliente_lotes (id, cliente_id, moneda, tipo, origen, monto_inicial, restante, movimiento_ref)
+           SELECT ?1, x.cliente_id, x.moneda, '${tipo}', 'devolucion', x.parte, x.parte, x.ref
+             FROM (SELECT m.cliente_id, m.moneda,
+                          ${tipo === 'prepago' ? "m.referencia || ':prepago'" : 'm.referencia'} AS ref,
+                          ${tipo === 'prepago' ? '' : 'm.monto - '}MIN(m.monto, ${PREPAGO_SIN_LOTE}) AS parte
+                     FROM saldo_cliente_movimientos m
+                    WHERE m.referencia = ?2 AND m.monto > 0
+                      AND NOT EXISTS (SELECT 1 FROM saldo_cliente_consumos c WHERE c.operacion_id = ?3)) x
+            WHERE x.parte > 0`,
+        )
+        .bind(nuevoId(), p.referencia, p.operacionId),
+    ),
   ];
 }
 
@@ -357,8 +407,15 @@ export const SQL_PARTE_DE_USO = (tipo: TipoLote) =>
 
 // ───────────────────────── Vencer y avisar ─────────────────────────
 
-/** Lotes por vuelta del reloj (cada hora): lo que no alcance queda para la siguiente. */
-export const LOTES_POR_VUELTA = 100;
+/** Lotes por tanda (una consulta y un lote de sentencias) y el tope de lotes por vuelta del reloj. */
+export const LOTES_POR_TANDA = 100;
+/**
+ * Hasta 6.000 lotes vencidos por vuelta (60 tandas): una carga masiva del tamaño máximo (5.000) vence
+ * en la misma hora. Tres filas por lote (movimiento, consumo y el lote): unas 18.000 escrituras.
+ */
+export const VENCER_POR_VUELTA = 6_000;
+/** Avisos por vuelta (lotes marcados): 2.000 por hora, de sobra para avisar antes de que venzan. */
+export const AVISOS_POR_VUELTA = 2_000;
 
 /**
  * Vence lo que quedaba de los regalos cuya fecha pasó: un movimiento «vencimiento» por lote (auditable
@@ -366,20 +423,21 @@ export const LOTES_POR_VUELTA = 100;
  * `clienteId`, solo los suyos (antes de cerrar una cuenta). Idempotente: la referencia lleva la fecha.
  */
 export async function vencerLotes(db: D1Database, p: { clienteId?: string } = {}) {
-  const { results } = await db
-    .prepare(
-      `SELECT id, vence_en FROM saldo_cliente_lotes INDEXED BY saldo_cliente_lotes_vencer
-        WHERE vence_en IS NOT NULL AND restante > 0 AND vence_en <= datetime('now')
-          ${p.clienteId ? 'AND cliente_id = ?1' : ''}
-        ORDER BY vence_en LIMIT ${LOTES_POR_VUELTA}`,
-    )
-    .bind(...(p.clienteId ? [p.clienteId] : []))
-    .all<{ id: string; vence_en: string }>();
   let n = 0;
-  for (const l of results) {
-    const ref = `vencimiento:${l.id}:${l.vence_en}`;
-    try {
-      const [mov] = await db.batch([
+  for (let vistos = 0; vistos < VENCER_POR_VUELTA; vistos += LOTES_POR_TANDA) {
+    const { results } = await db
+      .prepare(
+        `SELECT id, vence_en FROM saldo_cliente_lotes INDEXED BY saldo_cliente_lotes_vencer
+          WHERE vence_en IS NOT NULL AND restante > 0 AND vence_en <= datetime('now')
+            ${p.clienteId ? 'AND cliente_id = ?1' : ''}
+          ORDER BY vence_en LIMIT ${LOTES_POR_TANDA}`,
+      )
+      .bind(...(p.clienteId ? [p.clienteId] : []))
+      .all<{ id: string; vence_en: string }>();
+    if (!results.length) break;
+    const sentencias = (l: { id: string; vence_en: string }) => {
+      const ref = `vencimiento:${l.id}:${l.vence_en}`;
+      return [
         db
           .prepare(
             `INSERT OR IGNORE INTO saldo_cliente_movimientos (id, cliente_id, monto, moneda, concepto, referencia, motivo)
@@ -395,12 +453,29 @@ export async function vencerLotes(db: D1Database, p: { clienteId?: string } = {}
               WHERE m.referencia = ?3 AND NOT EXISTS (SELECT 1 FROM saldo_cliente_consumos c WHERE c.referencia = ?3)`,
           )
           .bind(nuevoId(), l.id, ref),
-      ]);
-      if (mov?.meta.changes) n++;
+      ];
+    };
+    let vencidos = 0;
+    try {
+      // La tanda entera en un lote de sentencias (un viaje a la base).
+      const r = await db.batch(results.flatMap(sentencias));
+      vencidos = r.filter((x, k) => k % 2 === 0 && x.meta?.changes).length;
     } catch (e) {
-      // Un lote que no se pudo vencer no frena a los demás; el canario lo ve si se queda.
-      console.error('saldo: no se pudo vencer un lote', l.id, String(e));
+      // Si un lote frena la tanda, se sigue de a uno: los demás no esperan por él.
+      console.error('saldo: la tanda del vencimiento falló; se sigue de a uno', String(e));
+      for (const l of results) {
+        try {
+          const [mov] = await db.batch(sentencias(l));
+          if (mov?.meta.changes) vencidos++;
+        } catch (e2) {
+          // El canario lo ve si se queda sin vencer.
+          console.error('saldo: no se pudo vencer un lote', l.id, String(e2));
+        }
+      }
     }
+    n += vencidos;
+    // Nada se movió en toda la tanda: no se lee la misma otra vez (el canario dice si se quedó).
+    if (!vencidos || results.length < LOTES_POR_TANDA) break;
   }
   return n;
 }
@@ -424,7 +499,16 @@ const ZONA_POR_DEFECTO = 'America/Caracas';
  */
 export async function avisarVencimientos(env: Env | undefined, db: D1Database) {
   let avisos = 0;
-  for (const cual of ['hoy', '3d'] as const) {
+  let marcados = 0;
+  // «Hoy» primero; cada pasada marca sus lotes y sale de su índice: se repite hasta vaciarlo o llegar al
+  // tope de la vuelta.
+  const pasadas = Array.from(
+    { length: Math.ceil(AVISOS_POR_VUELTA / 200) },
+    () => ['hoy', '3d'] as const,
+  ).flat();
+  const vacios = new Set<string>();
+  for (const cual of pasadas) {
+    if (vacios.has(cual) || marcados >= AVISOS_POR_VUELTA) continue;
     const columna = cual === 'hoy' ? 'aviso_hoy_en' : 'aviso_3d_en';
     const indice = cual === 'hoy' ? 'saldo_cliente_lotes_avisohoy' : 'saldo_cliente_lotes_aviso3';
     const desde = cual === 'hoy' ? "datetime('now')" : "datetime('now', '+1 day')";
@@ -438,7 +522,12 @@ export async function avisarVencimientos(env: Env | undefined, db: D1Database) {
           ORDER BY l.vence_en LIMIT 200`,
       )
       .all<{ id: string; cliente_id: string; restante: number; vence_en: string; zona: string }>();
-    if (!results.length) continue;
+    if (!results.length) {
+      vacios.add(cual);
+      continue;
+    }
+    if (results.length < 200) vacios.add(cual);
+    marcados += results.length;
     const porCliente = new Map<string, { monto: number; venceEn: string; zona: string }>();
     for (const r of results) {
       const ya = porCliente.get(r.cliente_id);

@@ -120,8 +120,13 @@ describe('C-SALDO-MASIVO: la carga masiva', () => {
       if (p.metodo === 'POST' && p.ruta.endsWith('/masiva')) return { carga: { id: 'c1' } };
       return {
         cargas: [],
-        topes: { porCliente: 500, porCarga: 50_000 },
-        maximos: { porCliente: 2_000, porCarga: 500_000 },
+        topes: { porCliente: 500, porCarga: 50_000, porDiaPersona: 50_000, porDiaGlobal: 100_000 },
+        maximos: {
+          porCliente: 2_000,
+          porCarga: 500_000,
+          porDiaPersona: 500_000,
+          porDiaGlobal: 1_000_000,
+        },
       };
     });
     render(<SaldoCargaMasiva idioma="es" />);
