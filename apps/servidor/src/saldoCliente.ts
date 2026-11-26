@@ -819,9 +819,13 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
   const f = await db
     .prepare(
       `SELECT
-         (SELECT COUNT(*) FROM (SELECT 1 FROM saldo_cliente_movimientos GROUP BY cliente_id, moneda HAVING SUM(monto) < 0 LIMIT 1)) AS negativos,
-         (SELECT COUNT(*) FROM usos_saldo_divoox u LEFT JOIN operaciones o ON o.id = u.operacion_id
-           WHERE u.estado = 'apartado' AND o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
+         (SELECT COUNT(*) FROM (SELECT 1 FROM (SELECT DISTINCT cliente_id, moneda FROM saldo_cliente_movimientos
+             INDEXED BY saldo_cliente_movimientos_fecha WHERE creado_en > datetime('now', '-1 day')) r
+           WHERE (SELECT SUM(m.monto) FROM saldo_cliente_movimientos m
+                   WHERE m.cliente_id = r.cliente_id AND m.moneda = r.moneda) < 0 LIMIT 1)) AS negativos,
+         (SELECT COUNT(*) FROM usos_saldo_divoox u INDEXED BY usos_saldo_divoox_estado
+           LEFT JOIN operaciones o ON o.id = u.operacion_id
+           WHERE u.estado = 'apartado' AND u.creado_en > datetime('now', '-30 days') AND o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
              AND o.actualizado_en < datetime('now', '-1 hour')) AS colgados,
          (SELECT COUNT(*) FROM usos_saldo_divoox u WHERE u.estado = 'cobrado' AND u.monto > 0
              AND u.cerrado_en > datetime('now', '-7 days')
@@ -830,9 +834,14 @@ export async function saludSaldoClientes(db: D1Database): Promise<'ok' | 'error'
              AND u.creado_en < datetime('now', '-7 days')) AS olvidadas`,
     )
     .first<{ negativos: number; colgados: number; sin_credito: number; olvidadas: number }>();
-  // El libro de Divoox cuadra con el saldo (C-LECTURAS-SALUD: por índices, nunca el libro entero):
-  // cada uso cobrado de 7 días tiene su asiento contra Divoox, cada prepago de 7 días su entrada, y
-  // nunca se devolvió más prepago del que entró (bolsillo «directo», por su índice de concepto).
+  // El libro de Divoox cuadra con el saldo (C-LECTURAS-SALUD): cada uso cobrado de 7 días tiene su
+  // asiento contra Divoox (índice `usos_saldo_divoox_cerrado`: estado + cerrado_en), cada prepago de 7
+  // días su entrada (índice `saldo_cliente_movimientos_concepto`: concepto + creado_en) y nunca se
+  // devolvió más prepago del que entró (índice parcial `libro_directo`). Arriba, «negativos» mira solo
+  // los clientes que se movieron en el último día (índice `saldo_cliente_movimientos_fecha`) y suma su
+  // libro por `saldo_cliente_movimientos_cliente`: la base ya no deja pasar un saldo negativo (disparador),
+  // esto es la segunda llave. «colgados» mira los apartados de 30 días (un colgado se ve en rojo desde
+  // la primera hora y el reloj lo cierra). Nada recorre las tablas enteras (prueba con 50.000).
   const l = await db
     .prepare(
       `SELECT

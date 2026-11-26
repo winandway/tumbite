@@ -89,6 +89,7 @@ const T = {
       excedente_devuelto: 'El repartidor ya lo devolvió',
       // C-SALDO-CLIENTE: el prepago del cliente que borró su cuenta.
       saldo_devuelto: 'Ya le devolvimos el prepago (escribe la referencia)',
+      saldo_no_corresponde: 'No corresponde devolverlo (escribe por qué)',
       confirmar_restaurante: 'El restaurante confirmó el pago',
     } as Record<string, string>,
     montos: {
@@ -155,6 +156,7 @@ const T = {
       resolver: 'Mark resolved',
       excedente_devuelto: 'The driver already returned it',
       saldo_devuelto: 'We refunded the prepayment (enter the reference)',
+      saldo_no_corresponde: 'No refund is due (write why)',
       confirmar_restaurante: 'The restaurant confirmed the payment',
     } as Record<string, string>,
     montos: {

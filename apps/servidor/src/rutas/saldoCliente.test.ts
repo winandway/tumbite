@@ -1023,6 +1023,57 @@ describe('C-SALDO-CLIENTE (ajustes finales): borrar la cuenta sin callejón y de
     expect(await saludSaldoClientes(p.e.m.DB)).toBe('error');
   });
 
+  it('2b: el caso del prepago no se cierra con «resolver»: solo devolviendo con referencia o diciendo por qué no corresponde', async () => {
+    const p = await preparar();
+    await p.cargar(500, { motivo: 'prepago', comprobante: 'REF-PREPAGO-2' });
+    expect(
+      (await p.e.m.llamar('DELETE', '/datos/cuentas/yo?saldo=acepto', undefined, p.e.cliente.token))
+        .estado,
+    ).toBe(200);
+    const lista = await p.e.m.llamar(
+      'GET',
+      '/datos/admin/bandeja-dinero?tipo=incidencia',
+      undefined,
+      p.e.admin.token,
+    );
+    const caso = (lista.datos.casos as { clave: string; acciones: string[] }[]).find((x) =>
+      x.acciones.includes('saldo_devuelto'),
+    );
+    // El panel pinta los botones que manda el servidor: «Marcar resuelto» no aparece.
+    expect(caso?.acciones).toEqual(['tomar', 'nota', 'saldo_devuelto', 'saldo_no_corresponde']);
+    const accion = (accion: string, nota: string, idem: string) =>
+      p.e.m.llamar(
+        'POST',
+        `/datos/admin/bandeja-dinero/${encodeURIComponent(caso?.clave ?? '')}/acciones`,
+        { accion, nota, idempotencia: idem },
+        p.e.admin.token,
+      );
+    expect((await accion('resolver', 'Ya quedó listo', 'resolver-1-abc')).estado).toBe(409);
+    const sinRef = await accion('saldo_devuelto', 'Le devolvimos el dinero', 'devolver-2-abc');
+    expect(sinRef.estado).toBe(422);
+    expect(sinRef.datos.error).toMatch(/referencia|reference/);
+    const no = await accion(
+      'saldo_no_corresponde',
+      'El cliente pidió por escrito no recibir la devolución (correo del 25 nov)',
+      'no-corresponde-1',
+    );
+    expect(no.estado).toBe(200);
+    const inc = await p.e.m.DB.prepare(
+      "SELECT estado FROM incidencias_dinero WHERE tipo = 'saldo_cliente_por_devolver'",
+    ).first<{ estado: string }>();
+    expect(inc?.estado).toBe('resuelta');
+    const aud = await p.e.m.DB.prepare(
+      "SELECT actor_id, detalle_json FROM finanzas_auditoria WHERE accion = 'saldo_cliente.no_corresponde_devolver'",
+    ).first<{ actor_id: string; detalle_json: string }>();
+    expect(aud?.actor_id).toBe(p.e.admin.id);
+    expect(JSON.parse(aud?.detalle_json ?? '{}')).toMatchObject({ porDevolver: 500 });
+    // Sin dinero movido: ningún asiento de devolución.
+    const asiento = await p.e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM libro WHERE concepto = 'saldo_cliente_prepago_devuelto'",
+    ).first<{ n: number }>();
+    expect(asiento?.n).toBe(0);
+  });
+
   it('3: el cierre del saldo va en el mismo lote que el borrado: si el borrado falla, el saldo sigue', async () => {
     const p = await preparar();
     await p.cargar(900);

@@ -2,6 +2,7 @@ import { ErrorDatos } from '../validar';
 import { anotarEvento } from '../manager';
 import { libroDePedido, sentenciaLibro } from './libro';
 import { confirmarPagoLocalRestaurante } from './pagoLocal';
+import { sentenciaAuditoriaFin } from '../finanzas/politicas';
 
 /**
  * C-BANDEJA-DINERO (19 oct 2026): la bandeja de soporte del cobro en mano. Requisito antes de
@@ -284,7 +285,9 @@ const FUENTES: readonly Fuente[] = [
             textos.es,
           ),
           detalleEn: textos.en,
-          acciones: ['tomar', 'nota', 'saldo_devuelto', 'resolver'],
+          // Sin «resolver» suelto: se cierra solo devolviendo (con la referencia, deja su asiento) o
+          // diciendo por qué no corresponde (queda en la auditoría financiera con la nota).
+          acciones: ['tomar', 'nota', 'saldo_devuelto', 'saldo_no_corresponde'],
         };
       }
       const conocido = f.incidencia_tipo === 'recarga_monto_distinto';
@@ -502,12 +505,24 @@ export async function accionCaso(
     throw new ErrorDatos('Ese caso ya está resuelto.', undefined, 409);
   const nota = p.nota.trim().slice(0, 1000);
   if (
-    ['resolver', 'excedente_devuelto', 'saldo_devuelto', 'confirmar_restaurante', 'nota'].includes(
-      p.accion,
-    ) &&
+    [
+      'resolver',
+      'excedente_devuelto',
+      'saldo_devuelto',
+      'saldo_no_corresponde',
+      'confirmar_restaurante',
+      'nota',
+    ].includes(p.accion) &&
     nota.length < 5
   )
     throw new ErrorDatos('Escribe qué pasó y con qué evidencia.', 'nota', 422);
+  // C-SALDO-CLIENTE: la devolución del prepago se marca con la referencia del pago (sus números).
+  if (p.accion === 'saldo_devuelto' && !/\d{4,}/.test(nota))
+    throw new ErrorDatos(
+      'Escribe la referencia del pago con el que le devolviste el prepago (al menos 4 números).',
+      'nota',
+      422,
+    );
   // Primero el historial con su clave única: si ya existe, la acción ya se hizo.
   const h = await db
     .prepare(
@@ -570,6 +585,24 @@ export async function accionCaso(
           )
           .bind(id),
       ]);
+  }
+  // C-SALDO-CLIENTE: no corresponde devolver (por ejemplo, el cliente renunció por escrito o el pago
+  // original no existe): el caso se cierra sin mover dinero y queda en la auditoría financiera.
+  if (p.accion === 'saldo_no_corresponde' && p.clave.startsWith('incidencia:')) {
+    const id = p.clave.slice('incidencia:'.length);
+    await db.batch([
+      sentenciaAuditoriaFin(db, {
+        actorId: p.autorId,
+        accion: 'saldo_cliente.no_corresponde_devolver',
+        objeto: p.clave,
+        detalle: { porDevolver: caso.montos.porDevolver ?? 0, moneda: caso.moneda, nota },
+      }),
+      db
+        .prepare(
+          "UPDATE incidencias_dinero SET estado = 'resuelta', resuelta_en = datetime('now') WHERE id = ?",
+        )
+        .bind(id),
+    ]);
   }
   if (p.accion === 'confirmar_restaurante' && caso.pedidoId)
     await confirmarPagoLocalRestaurante(db, caso.pedidoId, `soporte:${p.autorId}`);

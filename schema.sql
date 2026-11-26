@@ -252,6 +252,9 @@ CREATE TABLE IF NOT EXISTS movimientos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS movimientos_usuario ON movimientos(usuario_id, creado_en);
+-- C-SALDO-CLIENTE: «¿ya se le acreditó esto?» (`referencia = ?`, al pagar el saldo y en el canario)
+-- por índice; solo guarda las filas con referencia.
+CREATE INDEX IF NOT EXISTS movimientos_referencia ON movimientos(referencia) WHERE referencia IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS movimientos_unico ON movimientos(usuario_id, pedido_id, concepto) WHERE pedido_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS cuentas_stripe (
@@ -5458,6 +5461,10 @@ CREATE TABLE IF NOT EXISTS saldo_cliente_movimientos (
 CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_cliente ON saldo_cliente_movimientos(cliente_id, moneda, creado_en);
 -- Las cargas del equipo por persona y día (topes diarios): solo las filas con autor.
 CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_autor ON saldo_cliente_movimientos(autor_id, creado_en) WHERE autor_id IS NOT NULL;
+-- El canario del saldo (`saludSaldoClientes`): los prepagos de 7 días por concepto y los clientes que
+-- se movieron en el último día, sin recorrer la tabla entera.
+CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_concepto ON saldo_cliente_movimientos(concepto, creado_en);
+CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_fecha ON saldo_cliente_movimientos(creado_en);
 -- Los disparadores (inmutable y nunca negativo) los crea esquemaSaldoCliente.ts al arrancar.
 -- El saldo usado en cada viaje: se APARTA al pedir (sale del saldo), se LIBERA si el viaje no se hizo
 -- (vuelve como devolución) y se COBRA al terminar (se le acredita al conductor como ganancia). Lo
@@ -5485,3 +5492,5 @@ CREATE TABLE IF NOT EXISTS usos_saldo_divoox (
 -- revisión del equipo y el canario. Un índice parcial con `IN (...)` SQLite no lo usa para `= 'apartado'`.
 CREATE INDEX IF NOT EXISTS usos_saldo_divoox_estado ON usos_saldo_divoox(estado, creado_en);
 CREATE INDEX IF NOT EXISTS usos_saldo_divoox_conductor ON usos_saldo_divoox(conductor_id, estado) WHERE conductor_id IS NOT NULL;
+-- El canario: los usos cobrados de los últimos 7 días por la fecha de cierre (no la de creación).
+CREATE INDEX IF NOT EXISTS usos_saldo_divoox_cerrado ON usos_saldo_divoox(estado, cerrado_en);

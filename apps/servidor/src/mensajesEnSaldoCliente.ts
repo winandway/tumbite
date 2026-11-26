@@ -60,4 +60,8 @@ export const MENSAJES_EN_SALDO_CLIENTE: [string, string][] = [
     'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/es/delete-account.',
     'You have Divoox Balance and you lose it if you delete your account. To delete your account with Divoox Balance, update the app or do it at divoox.com/delete-account.',
   ],
+  [
+    'Escribe la referencia del pago con el que le devolviste el prepago (al menos 4 números).',
+    'Enter the reference of the payment you used to refund the prepayment (at least 4 digits).',
+  ],
 ];
