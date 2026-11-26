@@ -52,7 +52,7 @@ const T = {
     lista: 'Foto lista',
     siguiente: 'Siguiente',
     opcionalTexto:
-      'Si tu licencia tiene parte de atrás, súbela también. Es opcional: con el frente basta.',
+      'Si tu licencia tiene parte de atrás, súbela también. Es opcional: con el frente basta. Puede mostrar datos de salud; solo se usa para verificar tu licencia.',
     saltar: 'Saltar este paso',
     opcionalCorta: 'Opcional',
     revisar: 'Revisar mis papeles',
@@ -101,7 +101,7 @@ const T = {
     lista: 'Photo ready',
     siguiente: 'Next',
     opcionalTexto:
-      'If your license has a back side, upload it too. It’s optional: the front is enough.',
+      'If your license has a back side, upload it too. It’s optional: the front is enough. It may show health details; it’s only used to verify your license.',
     saltar: 'Skip this step',
     opcionalCorta: 'Optional',
     revisar: 'Review my documents',

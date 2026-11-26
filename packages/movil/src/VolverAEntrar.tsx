@@ -10,7 +10,17 @@ import { COLOR } from './tokens';
  * apps: la flecha de volver arriba y el gesto del sistema (el botón atrás de Android y deslizar
  * desde el borde izquierdo en iPhone).
  */
-export function EncabezadoVolver({ texto, alVolver }: { texto: string; alVolver: () => void }) {
+export function EncabezadoVolver({
+  texto,
+  alVolver,
+  claro,
+}: {
+  texto: string;
+  alVolver: () => void;
+  /** Sobre la franja de color de la app (C-ACCESO-CON-CABECERA): flecha y texto en blanco. */
+  claro?: boolean;
+}) {
+  const color = claro ? '#FFFFFF' : COLOR.negro;
   return (
     <Pressable
       testID="volver-a-entrar"
@@ -27,8 +37,8 @@ export function EncabezadoVolver({ texto, alVolver }: { texto: string; alVolver:
         marginBottom: 4,
       }}
     >
-      <Text style={{ fontSize: 22, lineHeight: 24, color: COLOR.negro }}>←</Text>
-      <Text style={{ fontSize: 15, fontWeight: '700', color: COLOR.negro }}>{texto}</Text>
+      <Text style={{ fontSize: 22, lineHeight: 24, color }}>←</Text>
+      <Text style={{ fontSize: 15, fontWeight: '700', color }}>{texto}</Text>
     </Pressable>
   );
 }
