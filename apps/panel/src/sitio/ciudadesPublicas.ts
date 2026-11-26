@@ -44,6 +44,8 @@ export const TEXTOS_CIUDAD = {
     dondeHoy: 'Hoy Divoox funciona en',
     dondeHoyFin: 'La app te dice si llega a tu zona antes de pedir.',
     comoPedir: 'Cómo se pide un viaje',
+    // En una ciudad sin servicio, el mismo paso a paso sin afirmar que ya existe ahí.
+    comoPedirCerrada: 'Así funciona Divoox donde ya está activo',
     pasosPedir: [
       'Descarga Divoox y crea tu cuenta con tu número de celular.',
       'Escribe a dónde vas: la app te dice si hay servicio en tu zona y te muestra el precio antes de pedir.',
@@ -79,6 +81,7 @@ export const TEXTOS_CIUDAD = {
     dondeHoy: 'Today Divoox runs in',
     dondeHoyFin: 'The app tells you whether it covers your area before you request.',
     comoPedir: 'How to request a ride',
+    comoPedirCerrada: 'How Divoox works where it is already live',
     pasosPedir: [
       'Download Divoox and create your account with your phone number.',
       'Enter where you are going: the app tells you whether your area is covered and shows the price before you request.',

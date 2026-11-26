@@ -400,8 +400,8 @@ export const CIUDADES: Lugar[] = [
         'Tucaní',
         'tucani',
         'Mérida',
-        'Tucaní es la capital del municipio Caracciolo Parra Olmedo, en el estado Mérida, sobre la Carretera Panamericana en la zona del Sur del Lago. Es un pueblo agrícola y ganadero, de paso para quien viaja entre El Vigía, Caja Seca y el oriente del Zulia.',
-        'Tucaní is the seat of the Caracciolo Parra Olmedo municipality in Mérida state, on the Pan-American Highway in the South of Lake Maracaibo region. It is a farming and cattle town, a stop on the way between El Vigía, Caja Seca and eastern Zulia.',
+        'Tucaní es la capital del municipio Caracciolo Parra Olmedo, en el estado Mérida, sobre la Carretera Panamericana en la zona del Sur del Lago. Es un pueblo agrícola y ganadero, de paso para quien viaja entre El Vigía y Caja Seca, ya en el sureste del Zulia.',
+        'Tucaní is the seat of the Caracciolo Parra Olmedo municipality in Mérida state, on the Pan-American Highway in the South of Lake Maracaibo region. It is a farming and cattle town, a stop on the way between El Vigía and Caja Seca, in southeastern Zulia.',
       ],
       [
         'caracas',
@@ -456,8 +456,8 @@ export const CIUDADES: Lugar[] = [
         'Maracay',
         'maracay',
         'Aragua',
-        'Maracay es la capital del estado Aragua, en el centro del país, junto al Lago de Valencia. La llaman la ciudad jardín y es la puerta del Parque Nacional Henri Pittier, que baja hasta las playas de la costa aragüeña.',
-        'Maracay is the capital of Aragua state, in central Venezuela, next to Lake Valencia. It is known as the garden city and is the gateway to Henri Pittier National Park, which runs down to the beaches of the Aragua coast.',
+        'Maracay es la capital del estado Aragua, en el centro del país, cerca del Lago de Valencia. La llaman la ciudad jardín y es la puerta del Parque Nacional Henri Pittier, que baja hasta las playas de la costa aragüeña.',
+        'Maracay is the capital of Aragua state, in central Venezuela, near Lake Valencia. It is known as the garden city and is the gateway to Henri Pittier National Park, which runs down to the beaches of the Aragua coast.',
       ],
       [
         'puerto-la-cruz',
@@ -472,8 +472,8 @@ export const CIUDADES: Lugar[] = [
         'Ciudad Guayana',
         'ciudad-guayana',
         'Bolívar',
-        'Ciudad Guayana, en el estado Bolívar, une Puerto Ordaz y San Félix donde el río Caroní se junta con el Orinoco. Es el gran polo de la industria del hierro, el acero y el aluminio de Venezuela, cerca de la represa de Guri.',
-        'Ciudad Guayana, in Bolívar state, joins Puerto Ordaz and San Félix where the Caroní River meets the Orinoco. It is the hub of Venezuela’s iron, steel and aluminum industry, near the Guri Dam.',
+        'Ciudad Guayana, en el estado Bolívar, une Puerto Ordaz y San Félix donde el río Caroní se junta con el Orinoco. Es el gran polo de la industria del hierro, el acero y el aluminio de Venezuela.',
+        'Ciudad Guayana, in Bolívar state, joins Puerto Ordaz and San Félix where the Caroní River meets the Orinoco. It is the hub of Venezuela’s iron, steel and aluminum industry.',
       ],
     ] as const
   ).map(([slug, nombre, clave, estadoRegion, sobreEs, sobreEn]): Lugar => ({

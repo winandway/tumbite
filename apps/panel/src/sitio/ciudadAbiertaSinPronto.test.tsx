@@ -141,6 +141,13 @@ describe('C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades de Venezuela', () => {
         );
         expect(entrada).toMatch(idioma === 'es' ? /Sé de los primeros/ : /Be one of the first/);
         entradas.add(entrada.slice(0, 155));
+        // «Cómo se pide» no suena a que ya existe aquí: lleva la frase puente honesta.
+        const pasos = /<section class="lugar-pasos"[^>]*><h2>([\s\S]*?)<\/h2>/.exec(html)?.[1];
+        expect(pasos, `${idioma} ${c.slug}`).toBe(
+          idioma === 'es'
+            ? 'Así funciona Divoox donde ya está activo'
+            : 'How Divoox works where it is already live',
+        );
         expect(c.sobre?.[idioma]).toBeTruthy();
         expect(visible(html)).toContain(c.sobre![idioma].slice(0, 40));
       }
@@ -149,6 +156,16 @@ describe('C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades de Venezuela', () => {
       );
       expect(entradas.size).toBe(cerradas.length);
     }
+  });
+
+  it('los datos de cada ciudad son precisos (revisión del 25 nov): Maracay cerca del lago, sin Guri en Ciudad Guayana, Caja Seca en el sureste del Zulia', () => {
+    const sobre = (slug: string, i: 'es' | 'en') =>
+      VENEZUELA.find((c) => c.slug === slug)?.sobre?.[i] ?? '';
+    expect(sobre('maracay', 'es')).toContain('cerca del Lago de Valencia');
+    expect(sobre('maracay', 'en')).toContain('near Lake Valencia');
+    for (const i of ['es', 'en'] as const) expect(sobre('ciudad-guayana', i)).not.toMatch(/Guri/);
+    expect(sobre('tucani', 'es')).toContain('Caja Seca, ya en el sureste del Zulia');
+    expect(sobre('tucani', 'en')).toContain('Caja Seca, in southeastern Zulia');
   });
 
   it('manda el servidor: si El Vigía se cierra, su página ya no dice que funciona (ni «pronto»)', async () => {

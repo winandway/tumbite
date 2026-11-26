@@ -125,7 +125,7 @@ export function PaginaCiudadPublica({ ciudad, idioma }: { ciudad: Lugar; idioma:
           </p>
         ) : null}
         <section className="lugar-pasos">
-          <h2>{t.comoPedir}</h2>
+          <h2>{estado.abierta ? t.comoPedir : t.comoPedirCerrada}</h2>
           <ol>
             {t.pasosPedir.map((p) => (
               <li key={p}>{r(p, { pagos })}</li>
