@@ -101,7 +101,7 @@ export const GUIA_REGISTRO_CIUDAD: Record<Idioma, Guia> = {
       'Termina tu registro. Si en tu ciudad todavía no hay viajes, tu cuenta queda creada igual y te avisamos apenas abramos.',
       'Si vas a conducir, entra a tu cuenta y déjala lista mientras esperas: tu foto, tu vehículo y tus papeles.',
     ],
-    nota: 'Si no encuentras tu ciudad, prueba sin acentos o con el nombre del municipio, o elige la ciudad más cercana y escríbenos a soporte.',
+    nota: 'Si no encuentras tu ciudad, prueba sin acentos o con el nombre del municipio, o elige la ciudad más cercana y escríbenos a soporte. Si vives en un país que no está en la lista, toca «Otro país»: te registras igual y te ubicamos en tu ciudad con tu ubicación.',
   },
   en: {
     id: 'sign-up-from-any-city',
@@ -163,7 +163,7 @@ export const GUIA_REGISTRO_CIUDAD: Record<Idioma, Guia> = {
       'Finish signing up. If there are no trips in your city yet, your account is still created and we let you know as soon as we open.',
       'If you are going to drive, sign in and get your account ready while you wait: your photo, your vehicle and your documents.',
     ],
-    nota: 'If you can’t find your city, try without accents or with the county name, or pick the closest city and write to support.',
+    nota: 'If you can’t find your city, try without accents or with the county name, or pick the closest city and write to support. If you live in a country that isn’t on the list, tap “Another country”: you still sign up, and we place you in your city using your location.',
   },
 };
 

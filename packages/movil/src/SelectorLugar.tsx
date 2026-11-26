@@ -42,6 +42,8 @@ export function SelectorLugar({
   error,
   testID = 'selector-lugar',
   etiqueta,
+  otroPais = false,
+  alElegirOtroPais,
 }: {
   valor: LugarCuenta | null;
   alElegir: (l: LugarCuenta) => void;
@@ -51,15 +53,21 @@ export function SelectorLugar({
   testID?: string;
   /** Otra etiqueta arriba de la casilla (p. ej. «Tu ciudad» en Driver). */
   etiqueta?: string;
+  /** C-REGISTRO-OTRO-PAIS: eligió «Otro país» (vive fuera del catálogo). */
+  otroPais?: boolean;
+  /** Si viene, la lista de países ofrece «Otro país» al final (solo en el registro). */
+  alElegirOtroPais?: () => void;
 }) {
   const t = textosSelectorLugar(idioma);
   const [abierto, setAbierto] = useState(false);
+  const elegido = Boolean(valor) || otroPais;
+  const texto = valor ? lugarEscrito(valor) : otroPais ? t.otroPais : t.elegir;
   return (
     <View style={e.campo}>
       <Text style={e.etiqueta}>{etiqueta ?? t.etiqueta}</Text>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${etiqueta ?? t.etiqueta}: ${valor ? lugarEscrito(valor) : t.elegir}`}
+        accessibilityLabel={`${etiqueta ?? t.etiqueta}: ${texto}`}
         testID={testID}
         onPress={() => setAbierto(true)}
         style={[
@@ -70,16 +78,21 @@ export function SelectorLugar({
       >
         <Icono nombre="location-outline" color={COLOR.textoSuave} />
         <Text
-          style={{ flex: 1, fontSize: 16, color: valor ? COLOR.texto : COLOR.textoTenue }}
+          style={{ flex: 1, fontSize: 16, color: elegido ? COLOR.texto : COLOR.textoTenue }}
           // El lugar se lee entero («Salinas, California (CA)»): en dos renglones si no cabe, nunca cortado.
           numberOfLines={2}
         >
-          {valor ? `${banderaDe(valor.pais)} ${lugarEscrito(valor)}` : t.elegir}
+          {valor ? `${banderaDe(valor.pais)} ${lugarEscrito(valor)}` : texto}
         </Text>
         <Text style={{ color: COLOR.textoSuave, fontWeight: '600' }}>
-          {valor ? t.cambiar : '▾'}
+          {elegido ? t.cambiar : '▾'}
         </Text>
       </Pressable>
+      {otroPais && !valor ? (
+        <Text style={{ color: COLOR.textoSuave, fontSize: 13, marginTop: 6 }}>
+          {t.otroPaisAyuda}
+        </Text>
+      ) : null}
       {error ? <Text style={e.error}>{error}</Text> : null}
       <Modal
         visible={abierto}
@@ -98,6 +111,13 @@ export function SelectorLugar({
                 setAbierto(false);
                 alElegir(l);
               }}
+              alElegirOtroPais={
+                alElegirOtroPais &&
+                (() => {
+                  setAbierto(false);
+                  alElegirOtroPais();
+                })
+              }
             />
           ) : null}
         </SafeAreaView>
@@ -117,12 +137,15 @@ export function PanelSelectorLugar({
   alElegir,
   alCerrar,
   titulo,
+  alElegirOtroPais,
 }: {
   idioma: Idioma;
   paisSugerido?: string | null;
   inicial?: LugarCuenta | null;
   alElegir: (l: LugarCuenta) => void;
   alCerrar?: () => void;
+  /** C-REGISTRO-OTRO-PAIS: «Otro país» al final de la lista de países. */
+  alElegirOtroPais?: () => void;
   /** Título propio del primer paso (p. ej. «¿Dónde vives?»). */
   titulo?: string;
 }) {
@@ -225,6 +248,14 @@ export function PanelSelectorLugar({
               />
             ))
           : null}
+        {s.paso === 'pais' && alElegirOtroPais ? (
+          <Fila
+            testID="selector-lugar-pais-otro"
+            texto={t.otroPais}
+            alTocar={alElegirOtroPais}
+            flecha
+          />
+        ) : null}
 
         {s.cargando && s.paso !== 'pais' && (s.paso !== 'estado' || s.consulta) ? (
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', paddingVertical: 12 }}>

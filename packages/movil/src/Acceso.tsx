@@ -25,6 +25,7 @@ import {
   pasoDeCasilla,
   pasoVigente,
   lugarDeBorrador,
+  LUGAR_OTRO_PAIS,
   type CasillaRegistro,
   type FalloCasilla,
   type PasoDeFormulario,
@@ -50,6 +51,7 @@ import { SelectorPaisTelefono, usePaisSugerido } from './SelectorPaisTelefono';
 import { useInvitacionLider } from './invitacionLider';
 import { ActivarPapel } from './ActivarPapel';
 import { SelectorLugar } from './SelectorLugar';
+import { marcarOtroPais } from './LugarCuenta';
 
 const INICIAL = {
   nombre: '',
@@ -437,6 +439,8 @@ export function Acceso({
         setError({ mensaje: t.rolEquivocado });
         return;
       }
+      // C-REGISTRO-OTRO-PAIS: dijo «Otro país»; al entrar no se le vuelve a preguntar dónde vive.
+      if (porPasos && v.lugar === LUGAR_OTRO_PAIS) marcarOtroPais(sesion.usuario.id);
       await b.limpiar();
       await alEntrar(sesion.token, sesion.usuario);
     } catch (x) {
@@ -564,6 +568,8 @@ export function Acceso({
       <SelectorLugar
         valor={lugarDeBorrador(v.lugar)}
         alElegir={(l) => cambiar('lugar', JSON.stringify(l))}
+        otroPais={v.lugar === LUGAR_OTRO_PAIS}
+        alElegirOtroPais={() => cambiar('lugar', LUGAR_OTRO_PAIS)}
         idioma={idioma}
         paisSugerido={paisSugerido}
         error={errorDe('lugar')}

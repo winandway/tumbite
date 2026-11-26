@@ -22,6 +22,7 @@ import {
   useBorrador,
   enIdiomaDireccion,
   lugarDeBorrador,
+  LUGAR_OTRO_PAIS,
 } from '@tumbite/compartido';
 import { SelectorLugar } from '../SelectorLugar';
 import { api } from './api';
@@ -271,6 +272,8 @@ export function Acceso({
             <SelectorLugar
               valor={lugarDeBorrador(v.lugar)}
               alElegir={(l) => cambiar('lugar', JSON.stringify(l))}
+              otroPais={v.lugar === LUGAR_OTRO_PAIS}
+              alElegirOtroPais={() => cambiar('lugar', LUGAR_OTRO_PAIS)}
               idioma={idioma}
               paisSugerido={v.paisTelefono}
               etiqueta={etiquetaLugar}

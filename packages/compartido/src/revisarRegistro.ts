@@ -1,6 +1,7 @@
 import { leerTelefono, mensajeTelefono, telefonoParaMostrar } from './pais/telefono';
 import type { Idioma } from './idiomas';
 import { lugarEscrito, type LugarCuenta } from './lugarCuenta';
+import { textosSelectorLugar } from './selectorLugar';
 
 /**
  * C-REVISA-TUS-DATOS (19 nov 2026, orden de Richard) — todos los países. Al crear la cuenta, nada se
@@ -11,6 +12,18 @@ import { lugarEscrito, type LugarCuenta } from './lugarCuenta';
  *
  * La sugerencia del dominio mal escrito (gmial.com → gmail.com) vive en `sugerirCorreo.ts`.
  */
+
+/**
+ * C-REGISTRO-OTRO-PAIS (26 nov 2026): el catálogo de «¿Dónde vives?» trae Venezuela y Estados Unidos,
+ * pero Divoox también trabaja en otros países (Colombia, Perú). Quien vive en otro país toca «Otro
+ * país» y se registra como siempre: el borrador guarda esta marca, al servidor no va ningún lugar y la
+ * ciudad sale de su ubicación (como antes del selector). Nunca un registro trancado por el país.
+ */
+export const LUGAR_OTRO_PAIS = 'otro-pais';
+
+/** ¿Ya dijo dónde vive? (una ciudad del catálogo u «Otro país»). */
+export const lugarRespondido = (texto: string | null | undefined) =>
+  texto === LUGAR_OTRO_PAIS || lugarDeBorrador(texto) !== null;
 
 /** El lugar guardado en el borrador (texto JSON) → objeto; null si no hay o no sirve. */
 export function lugarDeBorrador(texto: string | null | undefined): LugarCuenta | null {
@@ -245,7 +258,7 @@ export function validarRegistro(
     else if (campo === 'invitacion') {
       const codigo = (datos.invitacion ?? '').trim();
       fallo(campo, codigo && !/^[A-Z0-9-]{1,20}$/i.test(codigo) ? e.invitacion : null);
-    } else if (campo === 'lugar') fallo(campo, lugarDeBorrador(datos.lugar) ? null : e.lugar);
+    } else if (campo === 'lugar') fallo(campo, lugarRespondido(datos.lugar) ? null : e.lugar);
     // La fecha la valida su propia casilla (CampoFecha): a medias queda vacía y no bloquea.
   }
   return fallos;
@@ -301,9 +314,13 @@ export function filasParaRevisar(
         etiqueta: t.fechaNacimiento,
         valor: fechaParaLeer(datos.fechaNacimiento, idioma),
       });
-    else if (campo === 'lugar' && lugarDeBorrador(datos.lugar)) {
+    else if (campo === 'lugar' && lugarRespondido(datos.lugar)) {
       const l = lugarDeBorrador(datos.lugar);
-      if (l) filas.push({ campo, etiqueta: t.lugar, valor: lugarEscrito(l) });
+      filas.push({
+        campo,
+        etiqueta: t.lugar,
+        valor: l ? lugarEscrito(l) : textosSelectorLugar(idioma).otroPais,
+      });
     } else if (campo === 'invitacion' && datos.invitacion?.trim())
       filas.push({ campo, etiqueta: t.invitacion, valor: datos.invitacion.trim().toUpperCase() });
   }

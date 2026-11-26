@@ -9,6 +9,9 @@ import {
   soloNumerosTelefono,
   textosRevisar,
   validarRegistro,
+  lugarDeBorrador,
+  lugarRespondido,
+  LUGAR_OTRO_PAIS,
   type CasillaRegistro,
 } from './revisarRegistro';
 
@@ -169,5 +172,22 @@ describe('los textos de la pantalla, completos en los dos idiomas', () => {
     expect(Object.keys(textosRevisar('en').errores)).toEqual(
       Object.keys(textosRevisar('es').errores),
     );
+  });
+});
+
+describe('C-REGISTRO-OTRO-PAIS: quien vive fuera del catálogo se registra igual (26 nov 2026)', () => {
+  it('«Otro país» cuenta como respondido; vacío no', () => {
+    expect(lugarRespondido(LUGAR_OTRO_PAIS)).toBe(true);
+    expect(lugarRespondido('')).toBe(false);
+    expect(validarRegistro({ ...DATOS, lugar: LUGAR_OTRO_PAIS }, 'es', ['lugar'])).toEqual([]);
+    expect(validarRegistro({ ...DATOS, lugar: '' }, 'es', ['lugar'])).toHaveLength(1);
+  });
+  it('en «Revisa tus datos» se lee «Otro país», y nunca viaja como lugar', () => {
+    const filas = filasParaRevisar({ ...DATOS, lugar: LUGAR_OTRO_PAIS }, 'es', ['lugar']);
+    expect(filas).toEqual([{ campo: 'lugar', etiqueta: 'Ciudad', valor: 'Otro país' }]);
+    expect(filasParaRevisar({ ...DATOS, lugar: LUGAR_OTRO_PAIS }, 'en', ['lugar'])[0]!.valor).toBe(
+      'Another country',
+    );
+    expect(lugarDeBorrador(LUGAR_OTRO_PAIS)).toBeNull();
   });
 });

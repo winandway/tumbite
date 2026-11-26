@@ -4,6 +4,7 @@ import { type Browser, type BrowserContext, type Page, expect, test } from './fi
 import { sinDesbordes } from './desbordes';
 import { sqlLocal } from './sqlLocal';
 import { TEXTOS } from './textos';
+import { elegirLugar, LUGAR_MIAMI } from './registroPorPasos';
 
 /**
  * C-FORMULARIO-POR-PASOS y C-DESBORDES-360 (24 nov 2026, orden de Richard; todos los países). Crear la
@@ -92,7 +93,16 @@ for (const idioma of ['es', 'en'] as const)
       await foto(p, `${app.nombre}-registro-${idioma}`);
       await p.getByTestId('pasos-siguiente').click();
 
-      // Paso 2: el correo, con su error al lado si está mal.
+      // Paso 2 (C-REGISTRO-TODO-EL-PAIS): dónde vive. Sin elegir no avanza y lo dice a su lado.
+      await expect(p.getByTestId('pasos-paso-lugar')).toBeVisible();
+      await p.getByTestId('pasos-siguiente').click();
+      await expect(p.getByText(en ? 'Choose where you live.' : 'Elige dónde vives.')).toBeVisible();
+      await expect(p.getByTestId('pasos-paso-lugar')).toBeVisible();
+      await elegirLugar(p);
+      await sinDesbordes(p, `${app.nombre} paso de la ciudad`, form);
+      await p.getByTestId('pasos-siguiente').click();
+
+      // Paso 3: el correo, con su error al lado si está mal.
       await expect(p.getByTestId('pasos-paso-correo')).toBeVisible();
       await p.getByLabel(L.correo).fill(en ? 'email@' : 'correo@');
       await p.getByTestId('pasos-siguiente').click();
@@ -103,7 +113,7 @@ for (const idioma of ['es', 'en'] as const)
       await foto(p, `pasos-registro-${app.nombre}-2-${idioma}`);
       await p.getByTestId('pasos-siguiente').click();
 
-      // Paso 3: el celular (opcional) y la casilla de los SMS.
+      // Paso 4: el celular (opcional) y la casilla de los SMS.
       await expect(p.getByTestId('pasos-paso-celular')).toBeVisible();
       await p.getByRole('textbox', { name: L.celular, exact: true }).fill('3055550144');
       await sinDesbordes(p, `${app.nombre} paso 3`, form);
@@ -118,12 +128,14 @@ for (const idioma of ['es', 'en'] as const)
       );
       await p.getByTestId('pasos-atras').click();
       await p.getByTestId('pasos-atras').click();
+      await p.getByTestId('pasos-atras').click();
       await expect(p.getByLabel(L.nombreCompleto)).toHaveValue(en ? 'Jordan Lee' : 'Ana López');
       await p.getByTestId('pasos-siguiente').click();
       await p.getByTestId('pasos-siguiente').click();
       await p.getByTestId('pasos-siguiente').click();
+      await p.getByTestId('pasos-siguiente').click();
 
-      // Paso 4: la contraseña (con su ojito); corta, no avanza.
+      // Paso 5: la contraseña (con su ojito); corta, no avanza.
       await expect(p.getByTestId('pasos-paso-clave')).toBeVisible();
       await p.getByLabel(L.clave, { exact: true }).fill('corta');
       await p.getByTestId('pasos-siguiente').click();
@@ -133,7 +145,7 @@ for (const idioma of ['es', 'en'] as const)
       await foto(p, `pasos-registro-${app.nombre}-4-${idioma}`);
       await p.getByTestId('pasos-siguiente').click();
 
-      // Paso 5: sin marcar los términos, «Continuar» dice por qué junto al botón.
+      // Paso 6: sin marcar los términos, «Continuar» dice por qué junto al botón.
       await expect(p.getByTestId('pasos-paso-final')).toBeVisible();
       await p.getByTestId('registro-continuar').click();
       await expect(p.getByTestId('acceso-error')).toBeVisible();
@@ -172,6 +184,8 @@ test.describe('Envíos y Flex por pasos', () => {
             correo: `pasos.${nombre.split(' ')[0]?.toLowerCase()}.${id}@recorrido.test`,
             clave: DATOS!.clave,
             rol: 'cliente',
+            // Vive en Miami (C-REGISTRO-TODO-EL-PAIS): la app no le pregunta «¿Dónde vives?».
+            lugar: LUGAR_MIAMI,
           },
         });
         expect(r.ok(), await r.text()).toBe(true);

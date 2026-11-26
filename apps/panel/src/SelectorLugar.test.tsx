@@ -169,6 +169,26 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro web', () => {
     ).toEqual([]);
   });
 
+  it('C-REGISTRO-OTRO-PAIS: quien vive en otro país toca «Otro país» y se registra igual, sin lugar', async () => {
+    const cuerpos = servidor();
+    render(<Acceso idioma="es" alEntrar={() => undefined} />);
+    await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
+    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await userEvent.click(screen.getByTestId('registro-lugar'));
+    await userEvent.click(screen.getByTestId('selector-lugar-pais-otro'));
+    expect(screen.getByTestId('registro-lugar').textContent).toContain('Otro país');
+    expect(screen.getByText('Te ubicamos en tu ciudad con tu ubicación.')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-segura-1');
+    await userEvent.click(screen.getAllByRole('checkbox')[0]!);
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(screen.getByTestId('revisar-lugar').textContent).toBe('Otro país');
+    await userEvent.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
+    await waitFor(() => expect(cuerpos).toHaveLength(1));
+    // Al servidor no va ningún lugar: la ciudad sale de su ubicación, como antes del selector.
+    expect(cuerpos[0]!.lugar).toBeUndefined();
+  });
+
   it('sin ciudad no se pasa a revisar, y lo dice al lado de la casilla', async () => {
     servidor();
     render(<Acceso idioma="en" alEntrar={() => undefined} />);

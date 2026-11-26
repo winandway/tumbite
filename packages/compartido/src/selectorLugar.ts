@@ -37,6 +37,9 @@ const ES = {
   elegir: 'Elige tu ciudad',
   cambiar: 'Cambiar',
   tituloPais: 'Elige tu país',
+  // C-REGISTRO-OTRO-PAIS: quien vive fuera de los países del catálogo se registra igual.
+  otroPais: 'Otro país',
+  otroPaisAyuda: 'Te ubicamos en tu ciudad con tu ubicación.',
   tituloEstado: 'Elige tu estado',
   tituloCiudad: 'Elige tu ciudad o pueblo',
   tituloMunicipioVE: 'Elige tu municipio',
@@ -84,6 +87,8 @@ const EN: typeof ES = {
   elegir: 'Choose your city',
   cambiar: 'Change',
   tituloPais: 'Choose your country',
+  otroPais: 'Another country',
+  otroPaisAyuda: 'We’ll place you in your city using your location.',
   tituloEstado: 'Choose your state',
   tituloCiudad: 'Choose your city or town',
   tituloMunicipioVE: 'Choose your municipality',

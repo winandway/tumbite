@@ -147,3 +147,9 @@
   font-size: 0.7rem;
   margin: 16px 0 0;
 }
+/* C-REGISTRO-OTRO-PAIS: la línea bajo la casilla cuando eligió «Otro país». */
+.selector-lugar-ayuda {
+  color: #666b73;
+  font-size: 0.85rem;
+  margin: 6px 0 0;
+}

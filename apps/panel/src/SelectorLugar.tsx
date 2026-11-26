@@ -34,6 +34,8 @@ export function SelectorLugar({
   paisSugerido,
   error,
   etiqueta,
+  otroPais = false,
+  alElegirOtroPais,
 }: {
   valor: LugarCuenta | null;
   alElegir: (l: LugarCuenta) => void;
@@ -41,6 +43,10 @@ export function SelectorLugar({
   paisSugerido?: string | null;
   error?: string;
   etiqueta?: string;
+  /** C-REGISTRO-OTRO-PAIS: eligió «Otro país» (vive fuera del catálogo). */
+  otroPais?: boolean;
+  /** Si viene, la lista de países ofrece «Otro país» al final (solo en el registro). */
+  alElegirOtroPais?: () => void;
 }) {
   const t = textosSelectorLugar(idioma);
   const [abierto, setAbierto] = useState(false);
@@ -58,11 +64,16 @@ export function SelectorLugar({
         data-testid="registro-lugar"
         onClick={() => setAbierto(true)}
       >
-        <span className={valor ? '' : 'selector-lugar-vacio'}>
-          {valor ? `${bandera(valor.pais)} ${lugarEscrito(valor)}` : t.elegir}
+        <span className={valor || otroPais ? '' : 'selector-lugar-vacio'}>
+          {valor
+            ? `${bandera(valor.pais)} ${lugarEscrito(valor)}`
+            : otroPais
+              ? t.otroPais
+              : t.elegir}
         </span>
-        <span className="selector-lugar-accion">{valor ? t.cambiar : '▾'}</span>
+        <span className="selector-lugar-accion">{valor || otroPais ? t.cambiar : '▾'}</span>
       </button>
+      {otroPais && !valor && <p className="selector-lugar-ayuda">{t.otroPaisAyuda}</p>}
       {error && <p className="error-campo">{error}</p>}
       {abierto &&
         // Fuera de la casilla (en el cuerpo de la página): no hereda sus estilos ni queda tapada.
@@ -76,6 +87,13 @@ export function SelectorLugar({
               setAbierto(false);
               alElegir(l);
             }}
+            alElegirOtroPais={
+              alElegirOtroPais &&
+              (() => {
+                setAbierto(false);
+                alElegirOtroPais();
+              })
+            }
           />,
           document.body,
         )}
@@ -89,12 +107,14 @@ function VentanaLugar({
   inicial,
   alElegir,
   alCerrar,
+  alElegirOtroPais,
 }: {
   idioma: Idioma;
   paisSugerido?: string | null;
   inicial: LugarCuenta | null;
   alElegir: (l: LugarCuenta) => void;
   alCerrar: () => void;
+  alElegirOtroPais?: () => void;
 }) {
   const t = textosSelectorLugar(idioma);
   const s = useSelectorLugar({ catalogo: CATALOGO_LUGARES_WEB, paisSugerido, inicial, alElegir });
@@ -159,6 +179,7 @@ function VentanaLugar({
           <button
             type="button"
             className="selector-lugar-volver"
+            data-testid="selector-lugar-volver"
             aria-label={s.paso === 'pais' ? t.cerrar : t.volver}
             onClick={() => {
               if (!s.volver()) alCerrar();
@@ -217,6 +238,7 @@ function VentanaLugar({
                 key={p}
                 type="button"
                 className="selector-lugar-fila"
+                data-testid={`selector-lugar-pais-${p}`}
                 onClick={() => s.elegirPais(p)}
               >
                 <span>
@@ -225,6 +247,17 @@ function VentanaLugar({
                 <span aria-hidden>›</span>
               </button>
             ))}
+          {s.paso === 'pais' && alElegirOtroPais && (
+            <button
+              type="button"
+              className="selector-lugar-fila"
+              data-testid="selector-lugar-pais-otro"
+              onClick={alElegirOtroPais}
+            >
+              <span>{t.otroPais}</span>
+              <span aria-hidden>›</span>
+            </button>
+          )}
           {s.cargando && s.paso !== 'pais' && (s.paso !== 'estado' || s.consulta) && (
             <p className="selector-lugar-nota">{t.cargando}</p>
           )}
@@ -263,6 +296,7 @@ function VentanaLugar({
                   key={x.codigo}
                   type="button"
                   className="selector-lugar-fila"
+                  data-testid={`selector-lugar-estado-${x.codigo}`}
                   onClick={() => s.elegirEstado(x.codigo)}
                 >
                   <span>{estadoEscrito(s.pais!, x)}</span>

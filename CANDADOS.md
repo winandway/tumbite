@@ -2,6 +2,19 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-REGISTRO-OTRO-PAIS · quien vive fuera de Venezuela y Estados Unidos se registra igual (26 nov 2026) — todos los países
+
+- **Qué se rompía:** el paso «¿Dónde vives?» es obligatorio y su catálogo trae solo Venezuela y Estados Unidos. Un conductor, cliente o restaurante de Colombia o de Perú no podía pasar del segundo paso: registro trancado por el país (lo destapó `internacional.spec.ts`, cobro en mano en COP).
+- **Arreglo:** «Otro país» al final de la lista de países, en la web (`apps/panel/src/SelectorLugar.tsx`) y en las apps (`packages/movil/src/SelectorLugar.tsx`), con la misma marca del borrador `LUGAR_OTRO_PAIS` (`revisarRegistro.ts`). `lugarRespondido` la acepta en la validación, «Revisa tus datos» dice «Otro país», y al servidor NO va ningún lugar: la ciudad sale de la ubicación, como antes del selector. La pregunta «¿Dónde vives?» de las cuentas viejas (`PreguntaLugar`) también la ofrece y no vuelve a preguntar. La guía pública lo dice en es y en.
+- **Pruebas (rojo comprobado):** `apps/panel/src/SelectorLugar.test.tsx` («Otro país» se registra sin lugar; rojo quitando el botón y quitando la marca de `lugarRespondido`), `packages/compartido/src/revisarRegistro.test.ts`, y en el recorrido `internacional.spec.ts` (Colombia con «Otro país», Venezuela con Caracas).
+- **Qué NO tocar:** no mandar un lugar inventado para «Otro país» (el servidor solo admite VE y US); cuando se sume un país al catálogo, se agrega a `PAISES_CON_CATALOGO` y «Otro país» queda para los demás.
+
+## C-RECORRIDO-ELIGE-CIUDAD y C-CELULAR-DE-GUION-REINTENTO (26 nov 2026, pasada 45878257110) — todos los países
+
+- **Qué se rompía:** cuatro pruebas del recorrido. Tres porque el registro de Driver, de clientes y del panel tiene el paso de la ciudad y los guiones no lo llenaban; una (LAN-2a) porque el celular de guion sale al azar, las cuentas del sitio de pruebas se quedan y el servidor compara las diez últimas cifras: a veces el número ya tenía cuenta (409).
+- **Arreglo:** `elegirLugar` en `e2e/recorrido/registroPorPasos.ts` (una sola pieza: la llaman `enPaso` y `aceptarTerminos`; por defecto Miami, dentro de US-FL-MIAMI; también «Otro país»). La web del panel ahora tiene los mismos testID que las apps (`selector-lugar-pais-XX`, `selector-lugar-estado-XX`, `selector-lugar-volver`). Las cuentas por API que abren la app llevan `lugar: LUGAR_MIAMI` para que no salga la pregunta. `registrarPausado` saca otro celular de guion y reintenta si el registro contesta 409 por el teléfono.
+- **Qué NO tocar:** el reintento solo cambia números de guion («+1» y diez cifras de `celularDePrueba`), nunca uno que la prueba eligió a propósito.
+
 ## C-REGISTRO-TODO-EL-PAIS (remates de versión final) · Driver en espera no se contradice y el panel dice los que no pudieron pasar (26 nov 2026) — Venezuela y Estados Unidos
 
 - **Qué se rompía:** en el inicio de Driver de una cuenta EN ESPERA de su ciudad, arriba decía «Tu cuenta quedó creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos» y debajo «Te faltan 2 pasos para empezar», «Tómate la foto de tu cara para empezar… Con ella ya puedes conectarte y trabajar» y «Todavía no puedes conectarte · Termina tus papeles y te avisamos en cuanto tu cuenta quede activa». En inglés, además, el aviso decía «Your account is ready» con pasos pendientes. Y en Zonas, la respuesta del paso traía `fallaron` pero el panel no lo mostraba: parecía que no quedaba nadie.

@@ -80,6 +80,25 @@ export function useLugarCuenta() {
 
 const llavePreguntado = (cuenta: string) => `divoox.lugar-preguntado.${cuenta}`;
 const llaveVisto = (cuenta: string) => `divoox.lugar-espera-visto.${cuenta}`;
+const llaveOtroPais = (cuenta: string) => `divoox.lugar-otro-pais.${cuenta}`;
+
+/**
+ * C-REGISTRO-OTRO-PAIS (26 nov 2026): la cuenta dijo «Otro país» (vive fuera del catálogo). Ni la
+ * pregunta «¿Dónde vives?» ni la tarjeta de su ciudad se le vuelven a mostrar en este teléfono: su
+ * ciudad sale de la ubicación. Se guarda en memoria al momento (la app la lee al abrir el inicio,
+ * antes de que termine de guardarse) y en el teléfono para las próximas veces.
+ */
+const otroPaisEnMemoria = new Set<string>();
+export function marcarOtroPais(cuenta: string) {
+  if (!cuenta) return;
+  otroPaisEnMemoria.add(cuenta);
+  void Promise.resolve(almacenTelefono.guardar(llaveOtroPais(cuenta), '1')).catch(() => undefined);
+}
+function useOtroPais(cuenta: string): boolean | null {
+  const marca = useMarca(cuenta ? llaveOtroPais(cuenta) : '');
+  if (otroPaisEnMemoria.has(cuenta)) return true;
+  return marca.valor;
+}
 
 /** Lee una marca guardada en el teléfono (null mientras se lee). */
 function useMarca(llave: string) {
@@ -118,13 +137,15 @@ export function PreguntaLugar({ rol }: { rol: 'cliente' | 'repartidor' }) {
   const t = textosSelectorLugar(idioma);
   const { datos, cambiar } = useLugarCuenta();
   const preguntado = useMarca(usuario ? llavePreguntado(usuario.id) : '');
+  const otroPais = useOtroPais(usuario?.id ?? '');
   const paisSugerido = usePaisSugerido();
   const [despues, setDespues] = useState<RespuestaLugarCuenta | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const abierta =
     Boolean(usuario) &&
-    ((datos !== null && datos.lugar === null && preguntado.valor === false) || despues !== null);
+    ((datos !== null && datos.lugar === null && preguntado.valor === false && otroPais === false) ||
+      despues !== null);
   const cerrar = () => {
     preguntado.poner();
     setDespues(null);
@@ -164,6 +185,11 @@ export function PreguntaLugar({ rol }: { rol: 'cliente' | 'repartidor' }) {
               paisSugerido={paisSugerido}
               titulo={t.preguntaTitulo}
               alCerrar={cerrar}
+              // C-REGISTRO-OTRO-PAIS: quien vive en otro país lo dice y no se le vuelve a preguntar.
+              alElegirOtroPais={() => {
+                if (usuario) marcarOtroPais(usuario.id);
+                cerrar();
+              }}
               alElegir={(l) => {
                 setGuardando(true);
                 setError('');
@@ -211,10 +237,14 @@ export function AvisoLugarCuenta({
   const t = textosSelectorLugar(idioma);
   const { datos, cambiar } = useLugarCuenta();
   const visto = useMarca(usuario && rol === 'cliente' ? llaveVisto(usuario.id) : '');
+  const otroPais = useOtroPais(usuario?.id ?? '');
+  const [otroAhora, setOtroAhora] = useState(false);
   const paisSugerido = usePaisSugerido();
   const [error, setError] = useState('');
   if (!datos || !usuario) return null;
   if (datos.lugar && !datos.enEspera) return null;
+  // C-REGISTRO-OTRO-PAIS: dijo que vive en otro país (o todavía no se sabe): la tarjeta no estorba.
+  if (!datos.lugar && (otroAhora || otroPais !== false)) return null;
   // En la app de clientes, sin lugar pregunta una sola vez la ventana (PreguntaLugar), no el inicio.
   if (rol === 'cliente' && !datos.lugar) return null;
   if (rol === 'cliente' && datos.lugar && visto.valor !== false) return null;
@@ -259,6 +289,15 @@ export function AvisoLugarCuenta({
         etiqueta={t.tuCiudad}
         error={error || undefined}
         testID="aviso-lugar-selector"
+        // Sin lugar todavía: quien vive en otro país lo dice y la tarjeta se va.
+        alElegirOtroPais={
+          datos.lugar
+            ? undefined
+            : () => {
+                marcarOtroPais(usuario.id);
+                setOtroAhora(true);
+              }
+        }
       />
       {rol === 'cliente' && datos.lugar ? (
         <Pressable onPress={visto.poner} accessibilityRole="button" testID="aviso-lugar-entendido">
