@@ -4,6 +4,8 @@ import {
   type Idioma,
   MOTIVOS_CARGA_SALDO,
   type MotivoCargaSaldo,
+  NOMBRE_ORIGEN_LOTE,
+  type OrigenLoteSaldo,
   almacenNavegador,
   enIdioma,
   formatearMonto,
@@ -12,6 +14,7 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { AyudaAqui } from './AyudaAqui';
 import { pedir } from './api';
+import { SaldoCargaMasiva } from './SaldoCargaMasiva';
 
 /**
  * C-SALDO-CLIENTE (25 nov 2026, Venezuela): «Saldo de clientes». El equipo busca al cliente con el
@@ -45,7 +48,18 @@ const T = {
       uso_viaje: 'Pagó un viaje',
       devolucion: 'Devolución',
       ajuste: 'Ajuste',
+      cierre_cuenta: 'Cuenta borrada',
+      vencimiento: 'Venció el regalo',
     } as Record<string, string>,
+    desglose: (r: string, p: string) => `Regalo ${r} · Prepago ${p}`,
+    vence: (m: string, f: string) => `Vencen ${m} el ${f}`,
+    lotes: 'De qué está hecho su saldo',
+    origen: 'Origen',
+    quedan: 'Quedan',
+    venceCol: 'Vence',
+    noVence: 'No vence',
+    prorrogado: 'con prórroga',
+    vigencia: 'Vence en (días, solo regalos; vacío = no vence)',
     cargarA: (n: string) => `Cargar saldo a ${n}`,
     montoDolares: 'Monto (dólares)',
     motivo: 'Motivo',
@@ -103,7 +117,18 @@ const T = {
       uso_viaje: 'Paid a ride',
       devolucion: 'Refund',
       ajuste: 'Adjustment',
+      cierre_cuenta: 'Account deleted',
+      vencimiento: 'Gift expired',
     } as Record<string, string>,
+    desglose: (r: string, p: string) => `Gift ${r} · Prepaid ${p}`,
+    vence: (m: string, f: string) => `${m} expires on ${f}`,
+    lotes: 'What their balance is made of',
+    origen: 'Source',
+    quedan: 'Left',
+    venceCol: 'Expires',
+    noVence: 'Doesn’t expire',
+    prorrogado: 'extended',
+    vigencia: 'Expires in (days, gifts only; blank = doesn’t expire)',
     cargarA: (n: string) => `Add balance to ${n}`,
     montoDolares: 'Amount (dollars)',
     motivo: 'Reason',
@@ -167,6 +192,19 @@ type Datos = {
 type Ficha = {
   cliente: { id: string; nombre: string; ciudad: string | null };
   saldo: number;
+  regalo: number;
+  prepago: number;
+  proximoVence: { monto: number; venceEn: string } | null;
+  lotes: {
+    id: string;
+    tipo: string;
+    origen: OrigenLoteSaldo;
+    monto: number;
+    restante: number;
+    vencido: number;
+    venceEn: string | null;
+    prorrogado: boolean;
+  }[];
   movimientos: {
     id: string;
     monto: number;
@@ -290,6 +328,8 @@ export function SuperSaldoClientes({ idioma }: { idioma: Idioma }) {
               }}
             />
           ) : null}
+          {/* C-SALDO-MASIVO: regalar a muchos clientes de una vez, con vista previa y tandas. */}
+          <SaldoCargaMasiva idioma={idioma} />
           <Revisiones datos={datos} t={t} dinero={dinero} alResolver={recargar} />
           <FormTopes
             key={JSON.stringify(datos.topes)}
@@ -355,6 +395,13 @@ function FichaCliente({
       <p>
         {t.saldo}: <strong data-testid="saldo-cliente-saldo">{dinero(ficha.saldo)}</strong>
       </p>
+      {/* C-SALDO-LOTES: cuánto es regalo, cuánto prepago y lo que vence primero. */}
+      <p className="pista" data-testid="saldo-cliente-desglose">
+        {t.desglose(dinero(ficha.regalo), dinero(ficha.prepago))}
+        {ficha.proximoVence
+          ? ` · ${t.vence(dinero(ficha.proximoVence.monto), ficha.proximoVence.venceEn.slice(0, 10))}`
+          : ''}
+      </p>
       <FormCarga
         clienteId={ficha.cliente.id}
         nombre={ficha.cliente.nombre}
@@ -364,6 +411,39 @@ function FichaCliente({
         topes={topes}
         alTerminar={alCargar}
       />
+      {ficha.lotes.length ? (
+        <>
+          <h4>{t.lotes}</h4>
+          <div className="tabla-ancha">
+            <table className="tabla" aria-label={t.lotes} data-testid="saldo-cliente-lotes">
+              <thead>
+                <tr>
+                  <th>{t.origen}</th>
+                  <th>{t.monto}</th>
+                  <th>{t.quedan}</th>
+                  <th>{t.venceCol}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ficha.lotes.map((l) => (
+                  <tr key={l.id}>
+                    <td>
+                      {NOMBRE_ORIGEN_LOTE[idioma === 'en' ? 'en' : 'es'][l.origen] ?? l.origen}
+                    </td>
+                    <td>{dinero(l.monto)}</td>
+                    <td>{dinero(l.restante)}</td>
+                    <td>
+                      {l.venceEn
+                        ? `${l.venceEn.slice(0, 10)}${l.prorrogado ? ` (${t.prorrogado})` : ''}`
+                        : t.noVence}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
       <h4>{t.movimientos}</h4>
       {ficha.movimientos.length === 0 ? (
         <p className="pista">{t.sinMovimientos}</p>
@@ -429,6 +509,7 @@ function FormCarga({
       motivo: 'carrera_regalo',
       nota: '',
       comprobante: '',
+      vigencia: '',
       clave: claveNueva(),
     },
     almacen: almacenNavegador,
@@ -451,6 +532,10 @@ function FormCarga({
         motivo,
         nota: b.valores.nota,
         comprobante: b.valores.comprobante,
+        // C-SALDO-LOTES: un regalo puede vencer; el prepago nunca.
+        ...(motivo !== 'prepago' && Number(b.valores.vigencia) > 0
+          ? { vigenciaDias: Math.min(365, Math.floor(Number(b.valores.vigencia))) }
+          : {}),
         idempotencia: b.valores.clave || claveNueva(),
       });
       await b.limpiar();
@@ -538,6 +623,20 @@ function FormCarga({
               onChange={(e) => b.cambiar('comprobante', e.target.value)}
             />
           </label>
+          {motivo !== 'prepago' ? (
+            <label className="campo">
+              {t.vigencia}
+              <input
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="365"
+                step="1"
+                value={b.valores.vigencia}
+                onChange={(e) => b.cambiar('vigencia', e.target.value)}
+              />
+            </label>
+          ) : null}
           <label className="campo">
             {t.nota}
             <input value={b.valores.nota} onChange={(e) => b.cambiar('nota', e.target.value)} />

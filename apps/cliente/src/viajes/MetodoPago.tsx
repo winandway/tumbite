@@ -15,7 +15,12 @@ import {
 import { C, COLOR, Icono, MontoEnMano, type NombreIcono, Text } from '@tumbite/movil';
 import { IMG_COMIDA } from '../comida/recursos';
 import { BotonGrande } from './BotonGrande';
-import { decisionDePago, metodoDisponible } from './decisionPago';
+import {
+  decisionDePago,
+  lineaOrigenSaldo,
+  lineaRegaloPorVencer,
+  metodoDisponible,
+} from './decisionPago';
 
 /**
  * C-METODO-PAGO-PANTALLA (25 nov 2026, Venezuela; sirve a todos los países con los métodos de su
@@ -259,6 +264,17 @@ export function MetodoPago({
                 testID="pago-saldo-usar"
               />
             </View>
+            {/* C-SALDO-LOTES: el regalo que está por vencer y, si hay de los dos, cuánto es regalo y cuánto prepago. */}
+            {lineaOrigenSaldo(saldo, idioma) ? (
+              <Text style={{ color: COLOR.textoSuave, fontSize: 13 }} testID="pago-saldo-origen">
+                {lineaOrigenSaldo(saldo, idioma)}
+              </Text>
+            ) : null}
+            {lineaRegaloPorVencer(saldo, idioma) ? (
+              <Text style={{ color: COLOR.textoSuave, fontSize: 13 }} testID="pago-saldo-vence">
+                {lineaRegaloPorVencer(saldo, idioma)}
+              </Text>
+            ) : null}
             {reserva && saldo.disponible > 0 ? (
               <Text style={{ color: COLOR.textoSuave, fontSize: 13 }}>{t.saldoSoloAhora}</Text>
             ) : null}

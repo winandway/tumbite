@@ -1,4 +1,11 @@
-import { type CotizacionViaje, cuentaConSaldo } from '@tumbite/compartido';
+import {
+  type CotizacionViaje,
+  type Idioma,
+  cuentaConSaldo,
+  formatearFechaHora,
+  formatearMonto,
+  zonaDelNavegador,
+} from '@tumbite/compartido';
 
 /**
  * C-METODO-PAGO-PANTALLA y C-SALDO-CLIENTE (25 nov 2026): la decisión de la pantalla «Método de
@@ -40,4 +47,41 @@ export function decisionDePago(
       ...(conSaldo ? { usarSaldo: true } : {}),
     },
   };
+}
+
+/**
+ * C-SALDO-LOTES (26 nov 2026): la línea discreta de la tarjeta del Saldo Divoox cuando un regalo vence
+ * pronto: «Incluye 3,00 $ de regalo que vence el 28 nov». Null si no hay nada por vencer pronto.
+ */
+export function lineaRegaloPorVencer(
+  saldo: CotizacionViaje['saldoDivoox'],
+  idioma: Idioma,
+  zona: string = zonaDelNavegador(),
+): string | null {
+  const v = saldo?.vencePronto;
+  if (!saldo || !v || v.monto <= 0) return null;
+  const i = idioma === 'en' ? 'en' : 'es';
+  const m = formatearMonto(v.monto, saldo.moneda, i);
+  const f = formatearFechaHora(v.venceEn, {
+    idioma: i,
+    formato: i === 'en' ? '12' : '24',
+    zona,
+    estilo: 'fecha',
+  });
+  return i === 'en'
+    ? `Includes ${m} gift that expires on ${f}`
+    : `Incluye ${m} de regalo que vence el ${f}`;
+}
+
+/** De qué está hecho el saldo, solo si hay regalo Y prepago: «Regalo 3,00 $ · Prepagado 2,00 $». */
+export function lineaOrigenSaldo(
+  saldo: CotizacionViaje['saldoDivoox'],
+  idioma: Idioma,
+): string | null {
+  if (!saldo || !saldo.regalo || !saldo.prepago) return null;
+  const i = idioma === 'en' ? 'en' : 'es';
+  const m = (c: number) => formatearMonto(c, saldo.moneda, i);
+  return i === 'en'
+    ? `Gift ${m(saldo.regalo)} · Prepaid ${m(saldo.prepago)}`
+    : `Regalo ${m(saldo.regalo)} · Prepagado ${m(saldo.prepago)}`;
 }
