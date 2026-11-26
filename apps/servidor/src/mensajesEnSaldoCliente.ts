@@ -57,7 +57,7 @@ export const MENSAJES_EN_SALDO_CLIENTE: [string, string][] = [
     'You’ve taken all the trips paid with Divoox Balance allowed for today. This trip will go to another driver.',
   ],
   [
-    'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/delete-account.',
+    'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/es/delete-account.',
     'You have Divoox Balance and you lose it if you delete your account. To delete your account with Divoox Balance, update the app or do it at divoox.com/delete-account.',
   ],
 ];

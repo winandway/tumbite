@@ -66,7 +66,7 @@ export async function borrarCuenta(
   const saldoDivoox = await saldoDeCliente(db, u.id);
   if (saldoDivoox > 0 && !opciones.saldoAceptado)
     throw new ErrorDatos(
-      'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/delete-account.',
+      'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/es/delete-account.',
       'saldoDivoox',
       409,
     );

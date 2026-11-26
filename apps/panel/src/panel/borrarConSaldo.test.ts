@@ -16,6 +16,8 @@ describe('C-SALDO-CLIENTE: borrar la cuenta en la web con Saldo Divoox', () => {
     expect(s).toContain('data-testid="borrar-saldo-acepto"');
     expect(s).toContain("'/datos/cuentas/yo?saldo=acepto'");
     expect(s).toMatch(/disabled=\{!aceptaSaldo\}/);
+    // Si no se pudo leer el saldo, no se borra como si fuera 0 (C-VIGIA-SALDO-CIRCUITO, revisión).
+    expect(s).not.toMatch(/saldo-divoox'\)\.catch\(\s*\(\) => \(\{ disponible: 0 \}\)/);
   });
 
   it('la página de borrar la cuenta lo dice en los dos idiomas', () => {

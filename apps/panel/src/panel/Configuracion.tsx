@@ -255,9 +255,13 @@ export function Configuracion({
   const [aceptaSaldo, setAceptaSaldo] = useState(false);
   async function borrar() {
     if (saldoBorrar == null) {
-      const r = await pedir<{ disponible: number }>('GET', '/datos/cuentas/yo/saldo-divoox').catch(
-        () => ({ disponible: 0 }),
-      );
+      // Si no se pudo leer el saldo, se dice y no se sigue: nunca se borra a ciegas creyendo que es 0.
+      let r: { disponible: number };
+      try {
+        r = await pedir<{ disponible: number }>('GET', '/datos/cuentas/yo/saldo-divoox');
+      } catch (x) {
+        return falla(x);
+      }
       if (r.disponible > 0) return setSaldoBorrar(r.disponible);
     } else if (!aceptaSaldo) return;
     const escrito = window.prompt(t.confirmarBorrar) ?? '';

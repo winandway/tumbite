@@ -403,11 +403,17 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // quien ya llegó al tope de viajes con regalo del día.
   await tomarRegaloConductor(base(c), id, u.id, await aparatoDe(c));
   // C-SALDO-CLIENTE: tampoco un viaje pagado con el Saldo Divoox de su propia cuenta o teléfono.
+  // Si algo de aquí hasta aceptar lo frena (su propio saldo, su tope o su prepago que no alcanza para
+  // la comisión), el regalo y el saldo que quedaron a su nombre se sueltan: no le cuentan para su tope
+  // del día y el viaje queda libre para el siguiente conductor (C-VIGIA-SALDO-CIRCUITO).
+  const soltarLoTomado = async () => {
+    await soltarRegaloConductor(base(c), id, u.id);
+    await soltarSaldoConductor(base(c), id, u.id);
+  };
   try {
     await tomarSaldoConductor(base(c), id, u.id, await aparatoDe(c));
   } catch (e) {
-    // El regalo que quedó a su nombre se suelta también: no le cuenta para su tope del día.
-    await soltarRegaloConductor(base(c), id, u.id);
+    await soltarLoTomado();
     throw e;
   }
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
@@ -441,12 +447,14 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
       // servicio que el pasajero le paga en mano y que el saldo entrega a Divoox).
       valor: info.total - Number(info.tarifa_servicio ?? 0),
     });
-    if (!reserva.ok)
+    if (!reserva.ok) {
+      await soltarLoTomado();
       throw new ErrorDatos(
         'Tu saldo prepago no alcanza para la comisión de este viaje. Recarga para aceptarlo.',
         undefined,
         409,
       );
+    }
     // C-SALDO-BAJO: si con esta comisión le queda poco saldo, se le avisa una vez.
     await revisarSaldoBajo(c.env, base(c), {
       quien: 'conductor',

@@ -103,8 +103,8 @@ async function elVigia() {
       desglose: DesgloseViaje;
     };
   };
-  const conductor = () =>
-    conductorListoEn(e, { zonaId: EVG.id, origen: CENTRO, saldo: 1000, nombre: 'Conductor Vigía' });
+  const conductor = (saldo = 1000) =>
+    conductorListoEn(e, { zonaId: EVG.id, origen: CENTRO, saldo, nombre: 'Conductor Vigía' });
   return { e, fijarNoche, pasajero, cargar, cotizar, conductor };
 }
 type V = Awaited<ReturnType<typeof elVigia>>;
@@ -415,4 +415,60 @@ describe('C-VIGIA-SALDO-CIRCUITO: tabulador de El Vigía + Saldo Divoox + Métod
     expect(await prepago(c)).toMatchObject({ disponible: 1000, reservado: 0 });
     await cuadra(v);
   });
+
+  it('(f) un conductor cuyo prepago no alcanza para la comisión no se queda con el viaje pagado con saldo (no le cuenta para su tope) y otro lo toma', async () => {
+    const v = await elVigia();
+    await v.fijarNoche(true);
+    await v.cargar(1000);
+    const pobre = await v.conductor(1000);
+    const q = await v.cotizar();
+    const p = await v.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'saldo',
+      usarSaldo: true,
+    });
+    expect(p.estado).toBe(201);
+    const id = p.datos.viaje.id as string;
+    // Le llega la oferta y, antes de tocar «Aceptar», su prepago se gasta (otra reserva, un ajuste).
+    const ofertas = (await pobre.yo('GET', '/datos/conductor/operaciones/ofertas')).datos
+      .ofertas as { operacionId: string }[];
+    expect(ofertas.some((o) => o.operacionId === id)).toBe(true);
+    await v.e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('ajuste-prueba-1', ?, 'prepago', 'VE', 'USD', -1000, 'ajuste_prueba', 'ajuste-prueba-1')",
+    )
+      .bind(pobre.rep.id)
+      .run();
+    expect((await prepago(pobre)).disponible).toBe(0);
+    const r = await pobre.paso(id, 'aceptar');
+    expect(r.estado).toBe(409);
+    expect(String(r.datos.error)).toMatch(/prepago|prepaid/);
+    const uso = await v.e.m.DB.prepare(
+      'SELECT estado, conductor_id, tomado_en FROM usos_saldo_divoox WHERE operacion_id = ?',
+    )
+      .bind(id)
+      .first();
+    expect(uso).toEqual({ estado: 'apartado', conductor_id: null, tomado_en: null });
+    const bueno = await v.conductor(1000);
+    // Él la deja pasar y el viaje se le ofrece al siguiente.
+    expect((await pobre.yo('POST', `/datos/conductor/operaciones/${id}/rechazar`)).estado).toBe(
+      200,
+    );
+    const acepta = await bueno.paso(id, 'aceptar');
+    expect(acepta.estado, JSON.stringify(acepta.datos)).toBe(200);
+    await hastaIniciar2(v, bueno, id);
+    await recorrer(v, bueno, id);
+    expect((await bueno.paso(id, 'terminar')).datos).toMatchObject({
+      cobrarEnMano: 0,
+      saldoDivoox: 390,
+    });
+    expect((await acreditado(v, id)).mov).toEqual({ usuario_id: bueno.rep.id, monto: 390 });
+    await cuadra(v);
+  });
 });
+
+/** «Llegué» e «iniciar» de un viaje ya aceptado. */
+async function hastaIniciar2(v: V, c: Cond, id: string) {
+  expect((await c.paso(id, 'llegue')).estado).toBe(200);
+  const pin = (await v.pasajero('GET', `/datos/viajes/${id}`)).datos.viaje.pin;
+  expect((await c.paso(id, 'iniciar', { pin })).estado).toBe(200);
+}

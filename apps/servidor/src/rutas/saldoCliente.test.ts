@@ -950,12 +950,14 @@ describe('C-SALDO-CLIENTE (ajustes finales): borrar la cuenta sin callejón y de
       'x-idioma': 'es',
     });
     expect(es.estado).toBe(409);
-    expect(es.datos.error).toContain('divoox.com/delete-account');
+    // La dirección en español es la de la página en español (/es/…); la de inglés, sin prefijo.
+    expect(es.datos.error).toContain('divoox.com/es/delete-account');
     expect(es.datos.error).toContain('actualiza la app');
     const en = await p.e.m.llamar('DELETE', '/datos/cuentas/yo', undefined, p.e.cliente.token, {
       'x-idioma': 'en',
     });
     expect(en.datos.error).toContain('divoox.com/delete-account');
+    expect(en.datos.error).not.toContain('/es/');
     expect(en.datos.error).toContain('update the app');
   });
 
