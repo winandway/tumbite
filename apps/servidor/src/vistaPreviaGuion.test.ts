@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { nombreVistaPrevia as nombreCompartido } from '@tumbite/compartido';
 // @ts-expect-error módulo .mjs sin tipos (lo usa el guion de vistas previas)
@@ -77,7 +78,9 @@ describe('C-VISTA-PREVIA-RAMA: reglas del guion', () => {
 
   it('el flujo de ramas apaga la fila compartida y no empuja a ningún sitio publicado', () => {
     const y = readFileSync(
-      new URL('../../../.github/workflows/vista-previa-rama.yml', import.meta.url),
+      fileURLToPath(
+        new URL('../../../.github/workflows/vista-previa-rama.yml', import.meta.url).href,
+      ),
       'utf8',
     );
     expect(y).toContain('group: vista-previa-${{ github.ref_name }}');
@@ -87,7 +90,7 @@ describe('C-VISTA-PREVIA-RAMA: reglas del guion', () => {
       .join('\n');
     expect(sinComentarios).not.toMatch(/yapanel-pruebas|yapanel-build|group: publicar/);
     const viejo = readFileSync(
-      new URL('../../../.github/workflows/pruebas-rama.yml', import.meta.url),
+      fileURLToPath(new URL('../../../.github/workflows/pruebas-rama.yml', import.meta.url).href),
       'utf8',
     );
     expect(viejo).toContain("if: ${{ vars.VISTA_PREVIA_POR_RAMA != 'si' }}");
