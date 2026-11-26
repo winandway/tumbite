@@ -425,13 +425,20 @@ viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
       )
       .bind(admin.id, d.zona.id)
       .run();
-  const fila = await guardarTarifaViaje(db, admin.id, {
-    servicio: d.servicio,
-    zona: d.zona.id,
-    tarifa,
-    dePrueba: true,
-    motivo: d.motivo,
-  });
+  // C-TABULADOR-VIGIA: volver a abrir una ciudad que ya tiene su tarifa (la del tabulador de El Vigía,
+  // con su tarifa nocturna, o la que puso el equipo) NO la cambia por la de mercado: solo una tarifa
+  // escrita a propósito la reemplaza. Antes, un segundo «abrir» (o el guion del sitio de pruebas
+  // cuando una cotización fallaba) borraba el 0,46 $/km y el +30 % de noche.
+  const yaTenia = d.tarifa ? null : await tarifaActiva(db, d.servicio, d.zona.id);
+  const fila =
+    yaTenia ??
+    (await guardarTarifaViaje(db, admin.id, {
+      servicio: d.servicio,
+      zona: d.zona.id,
+      tarifa,
+      dePrueba: true,
+      motivo: d.motivo,
+    }));
   const estado = await encenderServicioEnZona(c, admin.id, d.servicio, d.zona.id, d.motivo);
   return c.json(
     { zona: { id: d.zona.id, pais, moneda }, tarifa: fila ? tarifaPublica(fila) : null, estado },

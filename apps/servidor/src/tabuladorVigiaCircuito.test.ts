@@ -144,6 +144,36 @@ describe('C-TABULADOR-VIGIA: el precio en El Vigía', () => {
     expect(Number(c.desglose.calculado)).toBeGreaterThan(300);
   });
 
+  it('volver a abrir El Vigía sin escribir tarifa no borra la del tabulador (0,46 $/km y +30 % de noche)', async () => {
+    const e = await escenario();
+    const otra = await e.m.llamar(
+      'POST',
+      '/datos/admin/viajes/ciudades',
+      {
+        servicio: 'moto',
+        zona: {
+          id: EVG.id,
+          nombre: EVG.nombre,
+          lat: EVG.lat,
+          lng: EVG.lng,
+          radioKm: EVG.radioKm,
+          zonaHoraria: EVG.zonaHoraria,
+        },
+        motivo: 'Otra vez El Vigía (como el guion del sitio de pruebas)',
+      },
+      e.admin.token,
+    );
+    expect(otra.estado, JSON.stringify(otra.datos)).toBe(201);
+    const t = await e.m.DB.prepare(
+      "SELECT por_km, recargo_noche_pb FROM tarifas_viaje WHERE zona_id = ? AND servicio_id = 'moto' AND activa = 1",
+    )
+      .bind(EVG.id)
+      .first<{ por_km: number; recargo_noche_pb: number }>();
+    expect(t).toEqual({ por_km: 46, recargo_noche_pb: 3000 });
+    await e.fijarNoche(true);
+    expect((await e.cotizar(lugar('KM 9'))).total).toBe(390);
+  });
+
   it('el fijo nunca sube el precio: si lo calculado es más barato, gana lo calculado', async () => {
     const e = await escenario();
     await e.fijarNoche(false);

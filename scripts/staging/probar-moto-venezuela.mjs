@@ -212,6 +212,12 @@ try {
     origen: ORIGEN,
     destino: DESTINO,
   });
+  // Un tropiezo pasajero (demasiados intentos, un error del servidor) no es «la ciudad está cerrada»:
+  // la vuelta se para ahí en vez de volver a abrir la ciudad (C-TABULADOR-VIGIA).
+  exigir(
+    prueba.estado !== 429 && prueba.estado < 500,
+    `cotizar en ${CIUDAD.nombre} falló (${prueba.estado}); no se vuelve a abrir la ciudad por eso`,
+  );
   if (prueba.estado !== 201) {
     const abrir = () =>
       equipo('POST', '/datos/admin/viajes/ciudades', {
@@ -498,6 +504,8 @@ try {
       }),
       `cotizar con la palanca en «${valor}»`,
     ).cotizacion;
+    // Vale de día y de noche: el precio del viaje sale del desglose del servidor, que ya trae la
+    // tarifa nocturna (C-RECARGO-NOCHE); la comisión y la tarifa de servicio se calculan sobre él.
     const precio = cot.desglose.precioViaje;
     const comision = Math.round(precio / 10);
     const tarifa = valor === 'cliente' ? comision : Math.floor(comision / 2);
@@ -524,7 +532,7 @@ try {
     const e = await hacerViaje(vv, comision);
     await terminarYComprobar(vv, e.antes, comision);
     casos.push(
-      `palanca «${valor}»: el pasajero pagó ${cot.total} (viaje ${precio} + tarifa ${tarifa}); el conductor se quedó ${cot.total - comision} y su saldo entregó ${comision} a Divoox`,
+      `palanca «${valor}»${cot.recargoNoche ? ` (de noche, +${cot.recargoNoche.pb / 100} %)` : ' (de día)'}: el pasajero pagó ${cot.total} (viaje ${precio} + tarifa ${tarifa}); el conductor se quedó ${cot.total - comision} y su saldo entregó ${comision} a Divoox`,
     );
   }
 
