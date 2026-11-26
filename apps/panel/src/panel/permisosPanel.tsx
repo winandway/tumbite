@@ -114,6 +114,8 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   'gift-codes': 'dinero.ver',
   'driver-balance': 'dinero.ver',
   signups: 'monitoreo.ver',
+  // C-REGISTRO-TODO-EL-PAIS: la lista de espera por ciudad son personas (conductores y clientes).
+  'city-waitlist': 'repartidores.ver',
   agents: 'dinero.ver',
   referrals: 'dinero.ver',
   lines: 'dinero.ver',

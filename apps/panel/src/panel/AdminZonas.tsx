@@ -19,6 +19,8 @@ import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { AyudaAqui } from './AyudaAqui';
 import { usePreferencias } from './usePreferencias';
 import { pedir } from './api';
+import { AvisoPasaron, PasarEspera } from './PasarEspera';
+import { pasaronDeRespuesta } from './esperaCiudad';
 
 type Zona = {
   id: string;
@@ -152,6 +154,8 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
   const [conAreas, setConAreas] = useState<string | null>(null);
+  // C-REGISTRO-TODO-EL-PAIS: cuántos de la lista de espera pasaron a la zona al encenderla.
+  const [pasaron, setPasaron] = useState<{ zona: string; n: number } | null>(null);
   // C-ZONA-MUNICIPIO: el filtro por municipio, guardado por empleado (C-FILTROS-GUARDADOS).
   const pref = usePreferencias('zonas', { municipio: '' });
   const filtro = pref.valores.municipio ?? '';
@@ -183,8 +187,16 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   }, []);
 
   async function alternar(z: Zona) {
-    await pedir('PATCH', `/datos/admin/zonas/${z.id}`, { activa: !z.activa });
-    await cargar();
+    setError(null);
+    setPasaron(null);
+    try {
+      const r = await pedir<unknown>('PATCH', `/datos/admin/zonas/${z.id}`, { activa: !z.activa });
+      const n = pasaronDeRespuesta(r);
+      if (!z.activa && n != null) setPasaron({ zona: z.id, n });
+      await cargar();
+    } catch (e) {
+      setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) });
+    }
   }
 
   // C-FOTO-PUERTA: el interruptor por zona de la primera foto obligatoria (de fábrica apagado).
@@ -315,6 +327,8 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
               </span>
               <span>{t.fotoPuertaAyuda}</span>
             </label>
+            {pasaron?.zona === z.id ? <AvisoPasaron n={pasaron.n} idioma={idioma} /> : null}
+            {z.activa ? <PasarEspera zonaId={z.id} idioma={idioma} alPasar={cargar} /> : null}
             <MunicipioZona
               zona={z}
               cuenta={usuario.id}

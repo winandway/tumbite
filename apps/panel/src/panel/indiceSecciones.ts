@@ -183,6 +183,20 @@ export const SINONIMOS_SECCIONES: Readonly<Record<string, Palabras>> = {
     ],
     en: ['funnel', 'sign-ups', 'signups', 'drop-off', 'new accounts', 'onboarding'],
   },
+  // C-REGISTRO-TODO-EL-PAIS: cuántos esperan en cada ciudad sin zona abierta.
+  'city-waitlist': {
+    es: [
+      'espera por ciudad',
+      'lista de espera',
+      'ciudades',
+      'dónde abrir',
+      'sin zona',
+      'en espera',
+      'estado',
+      'municipio',
+    ],
+    en: ['waitlist by city', 'waiting', 'cities', 'where to open', 'no zone', 'state', 'county'],
+  },
   'driver-balance': {
     es: ['saldo', 'recargas', 'recargar', 'billetera', 'ganancias de conductores', 'prepago'],
     en: ['balance', 'top-ups', 'top up', 'wallet', 'driver earnings', 'prepaid'],
