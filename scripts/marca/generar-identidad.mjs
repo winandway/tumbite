@@ -198,6 +198,14 @@ const CABECERAS = [
 for (const ruta of CABECERAS)
   await png(join(RAIZ, ruta), { svg: LOGO_CLARO, ancho: 1218, alto: 300, escala: 1 });
 
+// 4a. C-ACCESO-CON-CABECERA: el logo para la franja de color de «Entrar» de Driver (azul petróleo) y
+// Restaurants (negro), el mismo de su pantalla de arranque: letras blancas y la X roja.
+for (const ruta of [
+  'apps/repartidor/assets/driver/logo-oscuro.png',
+  'apps/restaurante/assets/rest/logo-oscuro.png',
+])
+  await png(join(RAIZ, ruta), { svg: LOGO_OSCURO, ancho: 1218, alto: 300, escala: 1 });
+
 // 4b. El logo de los correos y de las páginas sueltas del servidor (van sobre gris claro).
 await png(join(MARCA_WEB, 'divoox-logo-correo.png'), {
   svg: LOGO_CLARO,

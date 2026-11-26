@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-ACCESO-CON-CABECERA · «Entrar» de Driver y Restaurants sigue en el color del arranque, con el logo blanco (26 nov 2026, Richard) — todos los países · apps (y su versión web)
+
+- **Qué se veía:** al abrir la Driver, el arranque azul petróleo mostraba bien el logo; al pasar a «Sign in» el fondo saltaba a blanco y el logo «desaparecía». Palabras de Richard: «el logo sale bien con un fondo… debería mantenerse el azul petróleo».
+- **Qué se hizo:** `Acceso` recibe `cabecera` (color). Con portada y cabecera, la franja de arriba (idioma, «← Volver a entrar» en blanco y la portada) va sobre ese color y las casillas sobre blanco; el borde de abajo no se pinta. Driver pasa `#1F4D69` y Restaurants `#101010`, los mismos de `expo-splash-screen` en su `app.json`, con `IMG.logoOscuro` (`logo-oscuro.png`, generado del vector 02 por `generar-identidad.mjs`). Vale para «Entrar» y «Crear cuenta»; «¿Olvidaste tu contraseña?» abre la página web (logo para fondo claro, en petróleo). La app de clientes no cambia: entra a su inicio con franja roja y logo blanco.
+- **Prueba:** `apps/servidor/src/logoFondoClaro.test.ts` (bloque C-ACCESO-CON-CABECERA): color de la franja igual al del arranque, logo blanco en la franja, «volver» en blanco y casillas sobre blanco. **Vista en ROJO** quitando la franja de Driver.
+- **Qué NO tocar:** si cambia el color del arranque de una app, cambia también su `COLOR_ARRANQUE_*`; nunca poner el logo de letras negras o petróleo sobre la franja.
+
 ## C-LOGO-FONDO-CLARO · Sobre fondo claro, las letras del logo van en azul petróleo y la X en rojo (26 nov 2026, Richard vio la Driver de pruebas) — todos los países · apps, web, panel, Docs y correos
 
 - **Qué se rompió y cómo se veía:** en «Sign in / For drivers» de la Driver de pruebas, Richard vio el logo «transparente sobre fondo blanco»: no se veían las letras, solo los puntos y la X roja. En el emulador y en la web el logo salía con letras negras sobre blanco (no se pudo reproducir); la causa más probable es un teléfono que oscurece las apps por su cuenta, donde el negro desaparece. Orden de Richard: sobre fondo claro, las letras en el AZUL PETRÓLEO de la marca (#1F4D69, `MARCA.colores.logistica`) y la X en rojo, en todas las plataformas.

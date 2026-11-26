@@ -131,3 +131,50 @@ describe('C-LOGO-FONDO-CLARO: el logo de letras blancas solo va sobre fondo oscu
       expect(readFileSync(raiz(r), 'utf8')).toContain('/marca/divoox-logo-correo.png');
   });
 });
+
+/**
+ * C-ACCESO-CON-CABECERA (26 nov 2026, Richard: «el logo sale bien con un fondo… debería mantenerse
+ * el azul petróleo»). Del arranque a «Entrar» no hay salto a blanco: la franja de arriba de «Entrar»,
+ * «Crear cuenta» y «Olvidé mi contraseña» lleva el MISMO color del arranque de la app, con el logo de
+ * letras blancas. Driver: azul petróleo; Restaurants: negro.
+ */
+describe('C-ACCESO-CON-CABECERA: «Entrar» sigue en el color del arranque', () => {
+  const colorArranque = (app: string) =>
+    (
+      JSON.parse(readFileSync(raiz(`apps/${app}/app.json`), 'utf8')) as {
+        expo: { plugins: unknown[] };
+      }
+    ).expo.plugins
+      .filter((p): p is [string, { backgroundColor: string }] => Array.isArray(p))
+      .find((p) => p[0] === 'expo-splash-screen')?.[1].backgroundColor;
+
+  it.each([
+    ['repartidor', 'COLOR_ARRANQUE_DRIVER', '#1F4D69'],
+    ['restaurante', 'COLOR_ARRANQUE_REST', '#101010'],
+  ])('%s: la franja usa el color exacto del arranque y el logo blanco', (app, nombre, color) => {
+    expect(colorArranque(app)).toBe(color);
+    const entrada = readFileSync(raiz(`apps/${app}/src/app/index.tsx`), 'utf8');
+    expect(entrada).toContain(`const ${nombre} = '${color}';`);
+    expect(entrada).toContain(`cabecera={${nombre}}`);
+    expect(entrada).toContain('source={IMG.logoOscuro}');
+    expect(entrada).not.toMatch(/source=\{IMG\.logo\}/);
+    const t = tintas(
+      `apps/${app}/assets/${app === 'repartidor' ? 'driver' : 'rest'}/logo-oscuro.png`,
+    );
+    expect(
+      t.blanco / t.opacos,
+      'el logo de la franja tiene que ser de letras blancas',
+    ).toBeGreaterThan(0.4);
+    expect(t.rojo).toBeGreaterThan(0.1);
+  });
+
+  it('la franja pinta idioma, volver y portada sobre el color, y las casillas sobre blanco', () => {
+    const acceso = readFileSync(raiz('packages/movil/src/Acceso.tsx'), 'utf8');
+    expect(acceso).toMatch(/portada && cabecera \?/);
+    expect(acceso).toMatch(/testID="acceso-cabecera"\s*style=\{\{ backgroundColor: cabecera/);
+    expect(acceso).toMatch(
+      /<EncabezadoVolver texto=\{textoVolver\} alVolver=\{aEntrar\} claro \/>/,
+    );
+    expect(acceso).toMatch(/flexGrow: 1, backgroundColor: '#FFFFFF', padding: 24/);
+  });
+});
