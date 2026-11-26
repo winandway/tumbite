@@ -46,6 +46,12 @@ async function main() {
     console.warn(`estado-paises: sin respuesta de ${origen}; queda lo guardado`, e?.message ?? e);
   }
   if (!datos) return;
+  // Una respuesta válida pero sin ningún país (un mal minuto de la base) no cierra los países ya
+  // abiertos: cerrar un país es una decisión, y se hace vaciando el archivo a mano.
+  if (!Object.keys(datos.paises).length) {
+    console.warn(`estado-paises: ${origen} respondió sin países; queda lo guardado`);
+    return;
+  }
   const nuevo = `${JSON.stringify(datos, null, 2)}\n`;
   // Solo se escribe si cambió (sin fecha adentro): compilar no ensucia el repositorio.
   if (readFileSync(archivo, 'utf8') === nuevo) return;
