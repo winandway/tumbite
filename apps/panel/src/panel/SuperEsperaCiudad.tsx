@@ -29,12 +29,15 @@ import {
  * `GET /datos/admin/espera-ciudades/personas?lugarId=`. El país, el estado y el «quién» se guardan
  * por empleado (C-FILTROS-GUARDADOS); lo escrito en el buscador no se guarda nunca.
  */
+/** Una fila de `GET /datos/admin/espera-ciudades/personas` (servidor, parte B). Sin código: quien
+ * espera su ciudad todavía no tiene ID (sin ciudad real no hay ID). */
 type Persona = {
   id: string;
   rol: 'repartidor' | 'cliente' | string;
-  codigo?: string | null;
   nombre: string;
-  alta?: string | null;
+  creadoEn?: string | null;
+  /** Papeles que ya subió (los conductores avanzan su registro mientras esperan). */
+  papeles?: number;
 };
 
 const T = {
@@ -71,6 +74,7 @@ const T = {
       'Todavía no hay cuentas aquí: solo personas anotadas en la web con su correo (las ves en «Lista de espera»).',
     rol: { repartidor: 'Conductor', cliente: 'Cliente' } as Record<string, string>,
     alta: 'Se registró',
+    papeles: (n: number) => (n === 1 ? '1 papel subido' : `${n} papeles subidos`),
     abrirFicha: 'Abrir su ficha',
     cargando: 'Cargando…',
   },
@@ -107,6 +111,7 @@ const T = {
       'No accounts here yet: only people who left their email on the website (see “Waitlist”).',
     rol: { repartidor: 'Driver', cliente: 'Customer' } as Record<string, string>,
     alta: 'Signed up',
+    papeles: (n: number) => (n === 1 ? '1 document uploaded' : `${n} documents uploaded`),
     abrirFicha: 'Open their file',
     cargando: 'Loading…',
   },
@@ -370,15 +375,15 @@ function PersonasCiudad({
         <ul className="super-lista">
           {res.personas.map((p) => (
             <li key={p.id}>
-              <Enlace a={ficha(p)}>
-                {p.codigo ? `${p.codigo} · ` : ''}
-                {p.nombre}
-              </Enlace>{' '}
+              <Enlace a={ficha(p)}>{p.nombre}</Enlace>{' '}
               <Insignia tono="apagado">
                 {new Map(Object.entries(t.rol)).get(p.rol) ?? p.rol}
               </Insignia>{' '}
               <small className="suave">
-                {t.alta}: {fechaSuper(p.alta ?? null, idioma, { estilo: 'fecha' })}
+                {t.alta}: {fechaSuper(p.creadoEn ?? null, idioma, { estilo: 'fecha' })}
+                {p.rol === 'repartidor' && typeof p.papeles === 'number'
+                  ? ` · ${t.papeles(p.papeles)}`
+                  : ''}
               </small>
             </li>
           ))}

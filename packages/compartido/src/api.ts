@@ -8,6 +8,8 @@ export type RespuestaLugarCuenta = {
   lugar: LugarCuenta | null;
   zona: { id: string; nombre: string } | null;
   enEspera: boolean;
+  /** «Maracaibo, Zulia» (el servidor lo escribe; null sin lugar). */
+  lugarEscrito?: string | null;
 };
 
 /** Error del servidor contado en palabras claras, con el campo que falló si lo hay. */

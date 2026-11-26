@@ -10,12 +10,13 @@ import {
   estadoLugarCuenta,
   sumaEspera,
   textoPasaron,
+  pasoDeRespuesta,
 } from './esperaCiudad';
 import { SuperEsperaCiudad } from './SuperEsperaCiudad';
 import { InsigniaLugar } from './LugarCuentaPanel';
 import { PasarEspera } from './PasarEspera';
 import { PonerCiudadCuenta } from './PonerCiudadCuenta';
-import { sugerirCiudades, type FilaCatalogo } from './SelectorLugarPanel';
+import { elegirCiudad, respuestaCatalogo } from '../pruebasLugar';
 
 /**
  * C-REGISTRO-TODO-EL-PAIS, parte C (25 nov 2026; Venezuela y Estados Unidos). Candados del panel:
@@ -190,11 +191,11 @@ describe('C-REGISTRO-TODO-EL-PAIS (parte C): la pantalla «Lista de espera por c
               {
                 id: 'u1',
                 rol: 'repartidor',
-                codigo: 'VE-MAR-000001',
                 nombre: 'Conductor Ejemplo',
-                alta: '2026-11-20T12:00:00Z',
+                creadoEn: '2026-11-20 12:00:00',
+                papeles: 2,
               },
-              { id: 'u2', rol: 'cliente', nombre: 'Cliente Ejemplo', alta: null },
+              { id: 'u2', rol: 'cliente', nombre: 'Cliente Ejemplo', creadoEn: null },
             ],
           }
         : { total: 23, ciudades: CIUDADES },
@@ -250,7 +251,16 @@ describe('C-REGISTRO-TODO-EL-PAIS (parte C): Zonas pasa a los que esperan', () =
   afterEach(() => vi.unstubAllGlobals());
 
   it('«Pasar a los que esperan» llama al servidor y dice en verde cuántos pasaron', async () => {
-    const llamadas = simularServidor(() => ({ pasaronDeEspera: 14 }));
+    const llamadas = simularServidor(() => ({
+      zonaId: 'VE-ZU-MARACAIBO',
+      pasaron: 14,
+      conductores: 10,
+      clientes: 4,
+      revisados: 14,
+      quedan: 0,
+      siguiente: null,
+      motivo: null,
+    }));
     render(<PasarEspera zonaId="VE-ZU-MARACAIBO" idioma="es" />);
     await userEvent.click(screen.getByRole('button', { name: 'Pasar a los que esperan' }));
     const aviso = await screen.findByTestId('pasaron-espera');
@@ -263,40 +273,75 @@ describe('C-REGISTRO-TODO-EL-PAIS (parte C): Zonas pasa a los que esperan', () =
   });
 });
 
-const CATALOGO_ZULIA: FilaCatalogo[] = [
-  ['gn:3630000', 'San Francisco', 'San Francisco', 10.56, -71.64, 300000],
-  ['gn:3633009', 'Maracaibo', 'Maracaibo', 10.63, -71.64, 1500000],
-  ['3633010', 'Mara', 'Mara', 10.9, -71.7, 50000],
-];
+describe('C-REGISTRO-TODO-EL-PAIS: el paso va de a un lote (contrato del servidor)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('lee el paso solo o dentro de «espera», y nada si no vino', () => {
+    const paso = { pasaron: 3, quedan: 7, siguiente: 'u5', motivo: null };
+    expect(pasoDeRespuesta(paso)).toEqual(paso);
+    expect(pasoDeRespuesta({ ok: true, espera: paso })).toEqual(paso);
+    expect(pasoDeRespuesta({ ok: true, espera: null })).toBeNull();
+    expect(pasoDeRespuesta({ pasaronDeEspera: 3 })).toBeNull();
+  });
+
+  it('con «quedan N» muestra «Seguir», que manda desde dónde seguir y suma lo que pasó', async () => {
+    const llamadas = simularServidor((l) =>
+      (l.cuerpo as { desde?: string } | undefined)?.desde === 'u5'
+        ? { pasaron: 2, quedan: 0, siguiente: null, motivo: null }
+        : { pasaron: 3, quedan: 7, siguiente: 'u5', motivo: null },
+    );
+    render(<PasarEspera zonaId="VE-ZU-MARACAIBO" idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Pasar a los que esperan' }));
+    expect(await screen.findByTestId('pasaron-espera')).toHaveTextContent(
+      '3 personas de la lista de espera pasaron a esta zona. Camila les avisa. Quedan 7 por revisar',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Seguir' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('pasaron-espera')).toHaveTextContent(
+        '5 personas de la lista de espera pasaron a esta zona.',
+      ),
+    );
+    expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull();
+    expect(llamadas.at(-1)?.cuerpo).toEqual({ desde: 'u5' });
+  });
+
+  it('una zona apagada lo dice en palabras, sin verde', async () => {
+    simularServidor(() => ({ pasaron: 0, quedan: 0, siguiente: null, motivo: 'zona_cerrada' }));
+    render(<PasarEspera zonaId="VE-ZU-MARACAIBO" idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Pasar a los que esperan' }));
+    const aviso = await screen.findByTestId('pasaron-espera');
+    expect(aviso).toHaveTextContent('Esta zona está apagada');
+    expect(aviso).not.toHaveClass('ok');
+  });
+});
 
 describe('C-REGISTRO-TODO-EL-PAIS (parte C): «Poner su ciudad» desde la ficha', () => {
   beforeEach(() => window.localStorage.clear());
   afterEach(() => vi.unstubAllGlobals());
 
-  it('sugiere desde la primera letra, sin acentos, las más pobladas primero', () => {
-    expect(sugerirCiudades(CATALOGO_ZULIA, 'mar').map((f) => f[1])).toEqual(['Maracaibo', 'Mara']);
-    expect(sugerirCiudades(CATALOGO_ZULIA, 'SAN fr').map((f) => f[1])).toEqual(['San Francisco']);
-    expect(sugerirCiudades(CATALOGO_ZULIA, '')).toEqual([]);
-  });
-
-  it('lee el catálogo fijo del estado y manda un lugar del contrato', async () => {
-    const llamadas = simularServidor((l) =>
-      l.url === '/lugares/VE/V.json'
-        ? CATALOGO_ZULIA
-        : {
-            lugar: (l.cuerpo as { lugar: unknown }).lugar,
-            zona: null,
-            enEspera: true,
-          },
+  it('usa la pieza común del registro (catálogo real) y manda el lugar del contrato con su motivo', async () => {
+    const llamadas = simularServidor((l) => ({
+      lugar: (l.cuerpo as { lugar: unknown }).lugar,
+      zona: null,
+      enEspera: true,
+      lugarEscrito: 'Maracaibo, Zulia',
+    }));
+    const falso = globalThis.fetch;
+    vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
+      Promise.resolve(respuestaCatalogo(String(url)) ?? falso(url, init)),
     );
     const alGuardar = vi.fn();
     render(<PonerCiudadCuenta id="u9" idioma="es" alCerrar={() => {}} alGuardar={alGuardar} />);
-    const form = screen.getByTestId('poner-ciudad');
-    await userEvent.selectOptions(within(form).getByRole('combobox', { name: 'País' }), 'VE');
-    await userEvent.selectOptions(within(form).getByRole('combobox', { name: 'Estado' }), 'V');
-    await userEvent.type(within(form).getByRole('searchbox'), 'marac');
-    await userEvent.click(await within(form).findByRole('option', { name: /Maracaibo/ }));
-    await userEvent.click(within(form).getByRole('button', { name: 'Guardar su ciudad' }));
+    const guardar = screen.getByRole('button', { name: 'Guardar su ciudad' });
+    expect(guardar).toBeDisabled();
+    await elegirCiudad('maracaibo', 'Maracaibo');
+    // Sin motivo no se guarda (el servidor lo exige para la auditoría).
+    expect(guardar).toBeDisabled();
+    await userEvent.type(
+      screen.getByLabelText('Motivo (queda en el registro)'),
+      'Lo dijo por el chat de soporte',
+    );
+    await userEvent.click(guardar);
     await waitFor(() => expect(alGuardar).toHaveBeenCalled());
     expect(alGuardar).toHaveBeenCalledWith(
       'Listo. Quedó en la lista de espera de Maracaibo, Zulia.',
@@ -305,16 +350,14 @@ describe('C-REGISTRO-TODO-EL-PAIS (parte C): «Poner su ciudad» desde la ficha'
     expect(put).toMatchObject({
       url: '/datos/admin/usuarios/u9/lugar',
       cuerpo: {
-        lugar: {
-          pais: 'VE',
-          estado: 'V',
-          municipio: 'Maracaibo',
-          ciudad: 'Maracaibo',
-          lugarId: 'gn:3633009',
-          lat: 10.63,
-          lng: -71.64,
-        },
+        motivo: 'Lo dijo por el chat de soporte',
+        lugar: { pais: 'VE', estado: 'V', ciudad: 'Maracaibo' },
       },
     });
+  });
+
+  it('el selector propio del panel ya no existe: una sola pieza para todos', () => {
+    const archivos = import.meta.glob('./SelectorLugarPanel.tsx');
+    expect(Object.keys(archivos)).toEqual([]);
   });
 });

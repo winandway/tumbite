@@ -226,6 +226,26 @@ describe('C-REGISTRO-TODO-EL-PAIS · (b) ciudad sin zona: en espera, nunca error
       e.admin.token,
     );
     expect(sinZona.datos.repartidores).toHaveLength(1);
+    // El embudo: dónde viven las cuentas del período, cuántas esperan su ciudad y cuántas no lo dijeron.
+    const hoy = new Date().toISOString().slice(0, 10);
+    const embudo = await e.m.llamar(
+      'GET',
+      `/datos/admin/embudo?app=repartidor&desde=${hoy}&hasta=${hoy}&pais=VE&estado=V`,
+      undefined,
+      e.admin.token,
+    );
+    expect(embudo.estado).toBe(200);
+    expect(embudo.datos.porLugar).toEqual([
+      expect.objectContaining({ lugarEscrito: 'Maracaibo, Zulia', personas: 2, enEspera: 2 }),
+    ]);
+    const todo = await e.m.llamar(
+      'GET',
+      `/datos/admin/embudo?app=repartidor&desde=${hoy}&hasta=${hoy}`,
+      undefined,
+      e.admin.token,
+    );
+    expect(todo.datos.sinLugar).toBeGreaterThanOrEqual(1);
+    expect(todo.datos.porLugar.every((l: { lugarId: string }) => l.lugarId !== 'null')).toBe(true);
     for (const q of ['marac', 'zulia']) {
       const b = await e.m.llamar('GET', `/datos/admin/buscar?q=${q}`, undefined, e.admin.token);
       const grupo = b.datos.grupos.find((g: { tipo: string }) => g.tipo === 'repartidores');

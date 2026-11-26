@@ -94,7 +94,6 @@ const T = {
     // C-REGISTRO-TODO-EL-PAIS: «Sin zona» se parte en dos: espera su ciudad, o no dijo dónde vive.
     enEspera: 'En espera de su ciudad',
     sinCiudad: 'Sin ciudad',
-    sinZonaTodos: 'Sin zona (en espera y sin ciudad)',
     vive: 'Dónde vive',
     avisoSinZona: (n: number) =>
       n === 1
@@ -250,7 +249,6 @@ const T = {
     sinZona: 'No zone',
     enEspera: 'Waiting for their city',
     sinCiudad: 'No city',
-    sinZonaTodos: 'No zone (waiting and no city)',
     vive: 'Lives in',
     avisoSinZona: (n: number) =>
       n === 1
@@ -703,8 +701,9 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
       const p = new URLSearchParams();
       p.set('cuentas', cu);
       if (z) p.set('zona', z);
-      if (lp) p.set('lugarPais', lp);
-      if (le) p.set('lugarEstado', le);
+      // C-REGISTRO-TODO-EL-PAIS: país y estado donde vive (contrato del servidor: `pais`, `estado`).
+      if (lp) p.set('pais', lp);
+      if (le) p.set('estado', le);
       if (pl) p.set('plazo', pl);
       if (texto) p.set('q', texto);
       if (despues) p.set('despues', despues);
@@ -713,10 +712,9 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
         const nuevas = (new Map(Object.entries(r)).get(clave) ?? []) as T[];
         setFilas((viejas) => (despues ? [...(viejas ?? []), ...nuevas] : nuevas));
         setSiguiente((r.siguiente as string | null) ?? null);
-        // C-REGISTRO-TODO-EL-PAIS: el aviso cuenta solo a los que no dijeron dónde viven (los que
-        // esperan su ciudad no son un pendiente del equipo). Un servidor de antes manda solo `sinZona`.
-        if (typeof r.sinCiudad === 'number') setSinZona(r.sinCiudad);
-        else if (typeof r.sinZona === 'number') setSinZona(r.sinZona);
+        // C-REGISTRO-TODO-EL-PAIS: el servidor cuenta en `sinZona` solo a los que no dijeron dónde
+        // viven (los que esperan su ciudad no son un pendiente del equipo).
+        if (typeof r.sinZona === 'number') setSinZona(r.sinZona);
         setError('');
       } catch (e) {
         setError(e instanceof ErrorApi ? e.message : String(e));
@@ -783,10 +781,10 @@ export function SelectorCiudad({
       <option value="">{t.todas}</option>
       {conSinZona ? (
         <>
-          {/* C-REGISTRO-TODO-EL-PAIS: los que esperan su ciudad y los que no dijeron dónde viven. */}
-          <option value="sin_zona">{t.sinZonaTodos}</option>
+          {/* C-REGISTRO-TODO-EL-PAIS: «sin_zona» = no dijo dónde vive (tarea del equipo, la que cuenta
+              el número del menú); «en_espera» = dijo dónde vive y su ciudad todavía no abre. */}
+          <option value="sin_zona">{t.sinCiudad}</option>
           <option value="en_espera">{t.enEspera}</option>
-          <option value="sin_ciudad">{t.sinCiudad}</option>
         </>
       ) : null}
       {x?.ciudades.map((z) => (
@@ -854,10 +852,10 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
       </div>
       <AvisoFiltrosGuardados visible={b.guardados} idioma={idioma} restablecer={b.restablecer} />
       <AvisoNoElegibles base={base} idioma={idioma} />
-      {b.sinZona > 0 && b.zona !== 'sin_ciudad' ? (
+      {b.sinZona > 0 && b.zona !== 'sin_zona' ? (
         <p className="aviso-alarma" role="status" data-testid="aviso-sin-zona">
           {t.avisoSinZona(b.sinZona)}{' '}
-          <button type="button" className="enlace" onClick={() => b.setZona('sin_ciudad')}>
+          <button type="button" className="enlace" onClick={() => b.setZona('sin_zona')}>
             {t.verSinZona}
           </button>
         </p>
@@ -1182,14 +1180,14 @@ export function SuperRepartidor({
         />{' '}
         {r.conectado ? (r.recibeViajes === false ? t.conectadoSinViajes : t.enLinea) : t.fueraLinea}
         {' · '}
-        {r.sinZona ? (
+        {r.sinZona || r.enEspera ? (
           <>
             {r.lugar ? lugarCorto(r.lugar) : null} <InsigniaLugar fila={r} idioma={idioma} />
           </>
         ) : (
           r.ciudad
         )}
-        {!r.sinZona && r.lugar ? ` · ${t.vive}: ${lugarCorto(r.lugar)}` : ''}
+        {!r.sinZona && !r.enEspera && r.lugar ? ` · ${t.vive}: ${lugarCorto(r.lugar)}` : ''}
         {r.linea ? ` · ${(r.linea.rol === 'lider' ? t.liderDe : t.miembroDe)(r.linea.nombre)}` : ''}
       </p>
       {r.recibeViajes === false && r.falta ? (

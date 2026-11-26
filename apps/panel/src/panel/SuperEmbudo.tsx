@@ -10,7 +10,7 @@ import {
   pasoQueNoFrena,
 } from '@tumbite/compartido';
 import { AyudaAqui } from './AyudaAqui';
-import { FiltroLugar } from './LugarCuentaPanel';
+import { FiltroEstadoLugar } from './LugarCuentaPanel';
 import { ciudadEscrita } from './esperaCiudad';
 import { CampoFecha } from './CampoFecha';
 import { pedir } from './api';
@@ -40,7 +40,7 @@ type Embudo = {
     estado: string;
     ciudad: string;
     lugarId: string;
-    cuentas: number;
+    personas: number;
     enEspera: number;
   }[];
   sinLugar?: number;
@@ -153,20 +153,14 @@ export function dondeSeQuedanMas(pasos: { paso: string; seQuedan: number | null 
 export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   // La app y la zona elegidas se recuerdan por empleado (C-FILTROS-GUARDADOS).
-  const pref = usePreferencias('embudo', {
-    servicio: 'repartidor',
-    zona: '',
-    pais: '',
-    region: '',
-  });
-  const lugarPais =
-    pref.valores.pais === 'VE' || pref.valores.pais === 'US' ? pref.valores.pais : '';
-  const lugarEstado = lugarPais ? (pref.valores.region ?? '') : '';
+  // C-REGISTRO-TODO-EL-PAIS: «region» es el estado donde VIVE (solo con Venezuela o Estados Unidos).
+  const pref = usePreferencias('embudo', { servicio: 'repartidor', zona: '', region: '' });
   const app = pref.valores.servicio === 'cliente' ? 'cliente' : 'repartidor';
   const zona = pref.valores.zona ?? '';
   const [desde, setDesde] = useState(() => iso(new Date(Date.now() - 29 * 86_400_000)));
   const [hasta, setHasta] = useState(() => iso(new Date()));
   const [pais, setPais] = useState('');
+  const lugarEstado = pais === 'VE' || pais === 'US' ? (pref.valores.region ?? '') : '';
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [res, setRes] = useState<{ consulta: string; x?: Embudo; error?: string } | null>(null);
   useEffect(() => {
@@ -176,7 +170,7 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
   }, []);
   const consulta = `app=${app}&desde=${desde}&hasta=${hasta}${pais ? `&pais=${pais}` : ''}${
     zona ? `&zona=${encodeURIComponent(zona)}` : ''
-  }${lugarPais ? `&lugarPais=${lugarPais}` : ''}${lugarEstado ? `&lugarEstado=${lugarEstado}` : ''}`;
+  }${lugarEstado ? `&estado=${lugarEstado}` : ''}`;
   useEffect(() => {
     if (!pref.listo) return;
     let vivo = true;
@@ -238,15 +232,14 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
             ))}
           </select>
         </label>
-        <FiltroLugar
-          pais={lugarPais}
-          estado={lugarEstado}
-          cambiar={(p, e) => {
-            pref.cambiar('pais', p);
-            pref.cambiar('region', e);
-          }}
-          idioma={idioma}
-        />
+        {pais === 'VE' || pais === 'US' ? (
+          <FiltroEstadoLugar
+            pais={pais}
+            estado={lugarEstado}
+            cambiar={(e) => pref.cambiar('region', e)}
+            idioma={idioma}
+          />
+        ) : null}
       </div>
       {error ? <p role="alert">{error}</p> : null}
       {!x && !error ? <p role="status">…</p> : null}
@@ -344,7 +337,7 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
                   {x.porLugar.map((l) => (
                     <tr key={l.lugarId} data-lugar={l.lugarId}>
                       <td>{ciudadEscrita(l)}</td>
-                      <td>{l.cuentas}</td>
+                      <td>{l.personas}</td>
                       <td>
                         {l.enEspera > 0 ? <Insignia tono="pendiente">{l.enEspera}</Insignia> : '—'}
                       </td>

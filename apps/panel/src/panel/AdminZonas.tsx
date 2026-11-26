@@ -1,5 +1,5 @@
 import { Insignia } from './diseno/Insignia';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ErrorApi,
   type Idioma,
@@ -19,8 +19,8 @@ import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { AyudaAqui } from './AyudaAqui';
 import { usePreferencias } from './usePreferencias';
 import { pedir } from './api';
-import { AvisoPasaron, PasarEspera } from './PasarEspera';
-import { pasaronDeRespuesta } from './esperaCiudad';
+import { PasarEspera } from './PasarEspera';
+import { type PasoEspera, pasoDeRespuesta } from './esperaCiudad';
 
 type Zona = {
   id: string;
@@ -155,7 +155,11 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   const [aviso, setAviso] = useState('');
   const [conAreas, setConAreas] = useState<string | null>(null);
   // C-REGISTRO-TODO-EL-PAIS: cuántos de la lista de espera pasaron a la zona al encenderla.
-  const [pasaron, setPasaron] = useState<{ zona: string; n: number } | null>(null);
+  const [pasaron, setPasaron] = useState<{ zona: string; paso: PasoEspera; vez: number } | null>(
+    null,
+  );
+  // Cada respuesta nueva arranca el aviso de cero (la clave de la pieza).
+  const vueltas = useRef(0);
   // C-ZONA-MUNICIPIO: el filtro por municipio, guardado por empleado (C-FILTROS-GUARDADOS).
   const pref = usePreferencias('zonas', { municipio: '' });
   const filtro = pref.valores.municipio ?? '';
@@ -191,8 +195,8 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
     setPasaron(null);
     try {
       const r = await pedir<unknown>('PATCH', `/datos/admin/zonas/${z.id}`, { activa: !z.activa });
-      const n = pasaronDeRespuesta(r);
-      if (!z.activa && n != null) setPasaron({ zona: z.id, n });
+      const paso = pasoDeRespuesta(r);
+      if (!z.activa && paso) setPasaron({ zona: z.id, paso, vez: (vueltas.current += 1) });
       await cargar();
     } catch (e) {
       setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) });
@@ -327,8 +331,16 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
               </span>
               <span>{t.fotoPuertaAyuda}</span>
             </label>
-            {pasaron?.zona === z.id ? <AvisoPasaron n={pasaron.n} idioma={idioma} /> : null}
-            {z.activa ? <PasarEspera zonaId={z.id} idioma={idioma} alPasar={cargar} /> : null}
+            {z.activa ? (
+              <PasarEspera
+                // Una respuesta nueva al encenderla arranca el aviso de cero.
+                key={pasaron?.zona === z.id ? pasaron.vez : 'sin-paso'}
+                zonaId={z.id}
+                idioma={idioma}
+                inicial={pasaron?.zona === z.id ? pasaron.paso : null}
+                alPasar={cargar}
+              />
+            ) : null}
             <MunicipioZona
               zona={z}
               cuenta={usuario.id}

@@ -137,24 +137,70 @@ export function textoLugar(e: EstadoLugar, idioma: Idioma): string {
 export const nombrePaisCatalogo = (p: 'VE' | 'US', idioma: Idioma) =>
   p === 'VE' ? 'Venezuela' : idioma === 'en' ? 'United States' : 'Estados Unidos';
 
-/** Cuántos pasaron de la lista de espera a la zona (lo que responde el servidor), en palabras. */
-export function textoPasaron(n: number, idioma: Idioma): string {
-  if (idioma === 'en')
-    return n === 1
-      ? '1 person on the waitlist moved into this zone. Camila lets them know.'
-      : n > 0
-        ? `${n} people on the waitlist moved into this zone. Camila lets them know.`
-        : 'Nobody on the waitlist lives inside this zone.';
-  return n === 1
-    ? '1 persona de la lista de espera pasó a esta zona. Camila le avisa.'
-    : n > 0
-      ? `${n} personas de la lista de espera pasaron a esta zona. Camila les avisa.`
-      : 'Nadie de la lista de espera vive dentro de esta zona.';
+/**
+ * El resultado de pasar a los que esperan (servidor, `ResultadoPaso` de lugarEspera.ts): viene solo en
+ * `POST /admin/zonas/:id/pasar-espera` y dentro de `espera` al encender una zona o guardar un área.
+ * Va de a un lote con tope: si `quedan`, se sigue con `desde: siguiente`.
+ */
+export type PasoEspera = {
+  pasaron: number;
+  quedan: number;
+  siguiente: string | null;
+  motivo: 'zona_cerrada' | 'zona_excluida' | null;
+};
+
+const entero = (v: unknown) =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null;
+
+/** Lee el paso de una respuesta del servidor (null si no vino: zona apagada, servidor de antes). */
+export function pasoDeRespuesta(r: unknown): PasoEspera | null {
+  if (!r || typeof r !== 'object') return null;
+  const o = r as Record<string, unknown>;
+  const x = (o.espera && typeof o.espera === 'object' ? o.espera : o) as Record<string, unknown>;
+  const pasaron = entero(x.pasaron);
+  if (pasaron == null) return null;
+  return {
+    pasaron,
+    quedan: entero(x.quedan) ?? 0,
+    siguiente: typeof x.siguiente === 'string' && x.siguiente ? x.siguiente : null,
+    motivo: x.motivo === 'zona_cerrada' || x.motivo === 'zona_excluida' ? x.motivo : null,
+  };
 }
 
-/** Lee el número `pasaronDeEspera` de una respuesta del servidor (null si no vino). */
-export function pasaronDeRespuesta(r: unknown): number | null {
-  if (!r || typeof r !== 'object') return null;
-  const v = (r as Record<string, unknown>).pasaronDeEspera;
-  return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null;
+/** Cuántos pasaron de la lista de espera a la zona y cuántos quedan por revisar, en palabras. */
+export function textoPasaron(n: number, idioma: Idioma, quedan = 0): string {
+  const resto =
+    quedan > 0
+      ? idioma === 'en'
+        ? ` ${quedan} more still to check: tap “Keep going”.`
+        : ` Quedan ${quedan} por revisar: toca «Seguir».`
+      : '';
+  if (idioma === 'en')
+    return (
+      (n === 1
+        ? '1 person on the waitlist moved into this zone. Camila lets them know.'
+        : n > 0
+          ? `${n} people on the waitlist moved into this zone. Camila lets them know.`
+          : 'Nobody on the waitlist lives inside this zone.') + resto
+    );
+  return (
+    (n === 1
+      ? '1 persona de la lista de espera pasó a esta zona. Camila le avisa.'
+      : n > 0
+        ? `${n} personas de la lista de espera pasaron a esta zona. Camila les avisa.`
+        : 'Nadie de la lista de espera vive dentro de esta zona.') + resto
+  );
+}
+
+/** Por qué no pasó nadie, cuando el servidor lo dice. */
+export function textoMotivoPaso(m: PasoEspera['motivo'], idioma: Idioma): string {
+  if (m === 'zona_cerrada')
+    return idioma === 'en'
+      ? 'This zone is off: turn it on first.'
+      : 'Esta zona está apagada: enciéndela primero.';
+  if (m === 'zona_excluida')
+    return idioma === 'en'
+      ? 'This is a review or test zone: nobody on the waitlist moves into it.'
+      : 'Esta zona es de revisión o de pruebas: nadie de la lista de espera pasa a ella.';
+  return '';
 }

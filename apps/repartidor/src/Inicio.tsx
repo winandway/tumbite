@@ -3,6 +3,7 @@ import { CuentaCobro } from './cobros/CuentaCobro';
 import { RecargaTarjeta } from './cobros/RecargaTarjeta';
 import { ubicacionParaConectar } from './ubicacionParaConectar';
 import { comoLlegar } from './comoLlegar';
+import { esperaSuCiudad } from './esperaSuCiudad';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -40,6 +41,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
 import {
   ErrorApi,
+  MARCA,
   type Idioma,
   type Nivel,
   enIdioma,
@@ -782,6 +784,8 @@ export function Inicio() {
     texto: string;
     campo?: string;
     servicio?: string;
+    /** C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre. No es un fallo: se dice con calma. */
+    calma?: boolean;
   } | null>(null);
   useEffect(() => {
     if (!motivoConexion) return;
@@ -1398,8 +1402,8 @@ export function Inicio() {
     setCambiando(true);
     const conectando = !estado?.conectado;
     // C-FOTO-CARA-A-LA-VISTA: el motivo de no poder conectarse va pegado a la barra, a la vista.
-    const motivo = (texto: string, campo?: string) =>
-      conectando ? setMotivoConexion({ texto, campo }) : setError(texto);
+    const motivo = (texto: string, campo?: string, calma?: boolean) =>
+      conectando ? setMotivoConexion({ texto, campo, calma }) : setError(texto);
     try {
       if (estado?.conectado) {
         await api.pedir('POST', '/datos/repartidor/conectar', { conectado: false });
@@ -1418,7 +1422,7 @@ export function Inicio() {
       else if (r.avisoComida) setAviso(r.avisoComida);
       await cargar();
     } catch (x) {
-      if (x instanceof ErrorApi) motivo(x.message, x.campo);
+      if (x instanceof ErrorApi) motivo(x.message, x.campo, esperaSuCiudad(x));
       else motivo(t.ubicacionTarda);
     } finally {
       setCambiando(false);
@@ -1457,6 +1461,7 @@ export function Inicio() {
         texto: x instanceof ErrorApi ? x.message : t.ubicacionTarda,
         campo: x instanceof ErrorApi ? x.campo : undefined,
         servicio: id,
+        calma: x instanceof ErrorApi && esperaSuCiudad(x),
       });
       return false;
     } finally {
@@ -3883,7 +3888,16 @@ export function Inicio() {
         gap: 10,
       }}
     >
-      <Text style={[e.error, { marginBottom: 0 }]}>{motivoConexion.texto}</Text>
+      <Text
+        testID={motivoConexion.calma ? 'motivo-espera-ciudad' : undefined}
+        style={
+          motivoConexion.calma
+            ? { color: MARCA.colores.texto, fontSize: 15, lineHeight: 21, marginBottom: 0 }
+            : [e.error, { marginBottom: 0 }]
+        }
+      >
+        {motivoConexion.texto}
+      </Text>
       {accionMotivo === 'cara' ? (
         <Boton
           texto={idioma === 'en' ? 'Take my photo' : 'Tomar mi foto'}

@@ -721,13 +721,14 @@ export async function embudoRegistro(
           WHERE h.usuario_id IN (${cohorte}) GROUP BY h.hito, h.motivo ORDER BY 3 DESC LIMIT 60`,
       )
       .bind(...valores),
-    // C-REGISTRO-TODO-EL-PAIS: de dónde son las mismas cuentas (su ciudad) y cuántas esperan su ciudad.
+    // C-REGISTRO-TODO-EL-PAIS: de dónde son las mismas cuentas (su ciudad), cuántas esperan su ciudad y
+    // (el grupo sin lugar, siempre primero) cuántas no dijeron dónde viven.
     db
       .prepare(
         `SELECT u.lugar_pais AS pais, u.lugar_estado AS estado, u.lugar_ciudad AS ciudad, u.lugar_id AS lugar_id,
                 COUNT(*) AS personas, SUM(u.lugar_espera = 1 AND u.zona_id IS NULL) AS en_espera
-           FROM usuarios u WHERE u.lugar_id IS NOT NULL AND u.id IN (${cohorte})
-          GROUP BY u.lugar_id ORDER BY 5 DESC LIMIT 30`,
+           FROM usuarios u WHERE u.id IN (${cohorte})
+          GROUP BY u.lugar_id ORDER BY (u.lugar_id IS NULL) DESC, 5 DESC LIMIT 31`,
       )
       .bind(...valores),
   ]);
@@ -763,18 +764,22 @@ export async function embudoRegistro(
       motivo: String(r.motivo ?? ''),
       personas: Number(r.personas ?? 0),
     })),
-    porLugar: (porLugar?.results ?? []).map((r) => ({
-      pais: String(r.pais),
-      estado: String(r.estado),
-      ciudad: String(r.ciudad),
-      lugarId: String(r.lugar_id),
-      lugarEscrito: lugarEscrito({
-        pais: String(r.pais) as 'VE' | 'US',
+    // Las cuentas que no dijeron dónde viven (las de antes): el grupo sin lugar.
+    sinLugar: Number((porLugar?.results ?? []).find((r) => r.lugar_id == null)?.personas ?? 0),
+    porLugar: (porLugar?.results ?? [])
+      .filter((r) => r.lugar_id != null)
+      .map((r) => ({
+        pais: String(r.pais),
         estado: String(r.estado),
         ciudad: String(r.ciudad),
-      }),
-      personas: Number(r.personas ?? 0),
-      enEspera: Number(r.en_espera ?? 0),
-    })),
+        lugarId: String(r.lugar_id),
+        lugarEscrito: lugarEscrito({
+          pais: String(r.pais) as 'VE' | 'US',
+          estado: String(r.estado),
+          ciudad: String(r.ciudad),
+        }),
+        personas: Number(r.personas ?? 0),
+        enEspera: Number(r.en_espera ?? 0),
+      })),
   };
 }

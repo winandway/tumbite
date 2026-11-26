@@ -96,3 +96,35 @@ export function FiltroLugar({
     </>
   );
 }
+
+/** Solo el estado donde vive (cuando el país ya se eligió en otro filtro, como en el Embudo). */
+export function FiltroEstadoLugar({
+  pais,
+  estado,
+  cambiar,
+  idioma,
+}: {
+  pais: 'VE' | 'US';
+  estado: string;
+  cambiar: (estado: string) => void;
+  idioma: Idioma;
+}) {
+  const t = enIdioma(T, idioma);
+  return (
+    <label>
+      {t.estado}
+      <select
+        value={estado}
+        onChange={(e) => cambiar(e.target.value)}
+        data-testid="filtro-lugar-estado"
+      >
+        <option value="">{t.todos}</option>
+        {estadosDelPais(pais).map((e) => (
+          <option key={e.codigo} value={e.codigo}>
+            {pais === 'US' ? `${e.nombre} (${e.codigo})` : e.nombre}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
