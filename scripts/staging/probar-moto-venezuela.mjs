@@ -200,6 +200,8 @@ async function terminarYComprobar(v, antes, comision) {
   return despues;
 }
 
+/** Lo que tenía Moto en la ciudad antes de la palanca (se devuelve al final). */
+let quienPagaMotoAntes = null;
 try {
   await cerrarColgados();
   // Con nada colgado, el alta del conductor vuelve a empezar (su saldo y su libro se quedan).
@@ -470,11 +472,19 @@ try {
 
   // 8. C-QUIEN-PAGA-VIAJES: la palanca, en la ciudad de la vuelta (el resto del país no se toca), con
   // la app de hoy (que muestra la tarifa de servicio aparte). Un viaje por valor, de punta a punta.
+  // C-QUIEN-PAGA-SERVICIO: la regla de Moto de la ciudad manda sobre la de todos (en El Vigía la
+  // semilla del tabulador la deja en «conductor»): la palanca se mueve en la de Moto y al final vuelve
+  // a lo que había (nunca se borra la regla del tabulador).
+  quienPagaMotoAntes =
+    ok(await equipo('GET', '/datos/admin/finanzas/quien-paga'), 'leer quién paga').reglas.find(
+      (r) => r.pais === 'VE' && r.ciudad === CIUDAD.id && r.servicio === 'moto',
+    )?.valor ?? 'del_pais';
   for (const valor of ['cliente', 'mitad']) {
     ok(
       await equipo('PUT', '/datos/admin/finanzas/quien-paga', {
         pais: 'VE',
         ciudad: CIUDAD.id,
+        servicio: 'moto',
         valor,
       }),
       `palanca en «${valor}»`,
@@ -523,12 +533,14 @@ try {
   exigir(salud.piezas?.viajes === 'ok', `salud viajes: ${salud.piezas?.viajes}`);
   casos.push('la salud de servicios y viajes sigue en verde');
 } finally {
-  // C-QUIEN-PAGA-VIAJES: la ciudad de la vuelta vuelve a seguir la regla del país.
-  await equipo('PUT', '/datos/admin/finanzas/quien-paga', {
-    pais: 'VE',
-    ciudad: CIUDAD.id,
-    valor: 'del_pais',
-  }).catch(() => null);
+  // C-QUIEN-PAGA-VIAJES: Moto en la ciudad de la vuelta vuelve a lo que tenía antes de la palanca.
+  if (quienPagaMotoAntes)
+    await equipo('PUT', '/datos/admin/finanzas/quien-paga', {
+      pais: 'VE',
+      ciudad: CIUDAD.id,
+      servicio: 'moto',
+      valor: quienPagaMotoAntes,
+    }).catch(() => null);
   await cerrarColgados().catch(() => null);
   const l = await interno('limpiar');
   casos.push(l.d.ok ? 'nadie quedó conectado ni con sesión' : 'LA LIMPIEZA FALLÓ');
