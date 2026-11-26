@@ -1728,6 +1728,14 @@ export const MENSAJES_EN = new Map<string, string>([
     'This vehicle’s photos, plate and documents aren’t complete yet: it can’t be approved without them.',
   ],
   [
+    'No hay una fecha leída de su documento para usar.',
+    'There’s no date read from their ID to use.',
+  ],
+  [
+    'Esta persona ya tiene una fecha de nacimiento guardada.',
+    'This person already has a saved date of birth.',
+  ],
+  [
     'Esa fecha no es válida para una persona que trabaja.',
     'That date isn’t valid for a working person.',
   ],

@@ -77,13 +77,26 @@ const mismo = (a: unknown, b: unknown) => {
  * vino del servidor)? Entonces no es un borrador: ni se guarda ni se avisa. Los campos sensibles no
  * cuentan. Pura (lleva su prueba).
  */
+/** Lo guardado, solo con los campos que el formulario tiene hoy (si los declara). */
+export function soloCamposDe<T extends Record<string, unknown>>(
+  datos: Partial<T>,
+  base: T,
+): Partial<T> {
+  const campos = new Set(Object.keys(base));
+  if (!campos.size) return datos;
+  return Object.fromEntries(Object.entries(datos).filter(([k]) => campos.has(k))) as Partial<T>;
+}
+
 export function borradorSinCambios<T extends Record<string, unknown>>(
   valores: Partial<T>,
   base: T,
   sensibles: readonly (keyof T)[] = [],
 ): boolean {
   const fuera = new Set<string>(sensibles.map(String));
-  const claves = new Set([...Object.keys(valores), ...Object.keys(base)]);
+  // Un campo que el formulario ya no tiene (de una versión vieja) no cuenta como escrito. Solo en un
+  // formulario de campos libres (base sin campos) cuenta todo lo guardado.
+  const deBase = Object.keys(base);
+  const claves = new Set(deBase.length ? deBase : Object.keys(valores));
   const v = new Map(Object.entries(valores));
   const b = new Map(Object.entries(base));
   return [...claves].every((k) => fuera.has(k) || !v.has(k) || mismo(v.get(k), b.get(k)));
@@ -107,6 +120,9 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
   const inicialRef = useRef(inicial);
   // Lo que ya está guardado de verdad (en blanco, o lo que vino del servidor). Igual a esto = no es borrador.
   const baseRef = useRef<T>(inicial);
+  // C-BORRADOR-SIN-AVISO-VACIO: la base también como estado, para decidir el aviso al dibujar (cuando
+  // la base llega tarde del servidor, el aviso se va solo si lo recuperado resultó igual).
+  const [base, setBase] = useState<T>(inicial);
   const sensiblesRef = useRef(sensibles);
   const valoresRef = useRef<T>(inicial);
   useEffect(() => {
@@ -130,7 +146,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
             void Promise.resolve(almacen.borrar(llave)).catch(() => {});
             return;
           }
-          setValores({ ...baseRef.current, ...datos });
+          setValores({ ...baseRef.current, ...soloCamposDe(datos, baseRef.current) });
           recuperadoRef.current = true;
           setRecuperado(true);
         } catch {
@@ -189,6 +205,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
   const cargar = useCallback(
     (v: T) => {
       baseRef.current = v;
+      setBase(v);
       pendiente.current = null;
       void Promise.resolve(almacen.borrar(llave)).catch(() => {});
       setValores(v);
@@ -205,6 +222,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
   const cargarBase = useCallback(
     (v: T) => {
       baseRef.current = v;
+      setBase(v);
       if (!recuperadoRef.current) {
         setValores(v);
         return;
@@ -226,6 +244,7 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     pendiente.current = null;
     await almacen.borrar(llave);
     baseRef.current = inicialRef.current;
+    setBase(inicialRef.current);
     setValores(inicialRef.current);
     recuperadoRef.current = false;
     setRecuperado(false);
@@ -251,7 +270,8 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     setValores,
     cargar,
     cargarBase,
-    recuperado,
+    // El aviso sale solo si lo recuperado difiere de lo que el formulario tendría sin borrador.
+    recuperado: recuperado && !borradorSinCambios(valores, base, sensibles),
     limpiar,
     empezarDeNuevo,
   };

@@ -28,6 +28,7 @@ const T = {
       `Su documento parece decir ${f}${n == null ? '' : ` (${n} % de confianza)`}: compárala con la foto.`,
     confirmada: 'confirmada al aprobar la identidad',
     escribir: 'Escribir la fecha',
+    usar: 'Usar esta fecha',
     fecha: 'Fecha de nacimiento',
     motivo: 'Motivo (queda en el registro)',
     motivoEjemplo: 'De dónde sale la fecha',
@@ -45,6 +46,7 @@ const T = {
       `Their ID seems to say ${f}${n == null ? '' : ` (${n}% confidence)`}: compare it with the photo.`,
     confirmada: 'confirmed when the identity was approved',
     escribir: 'Enter the date',
+    usar: 'Use this date',
     fecha: 'Date of birth',
     motivo: 'Reason (kept in the log)',
     motivoEjemplo: 'Where the date comes from',
@@ -85,6 +87,21 @@ export function FechaNacimientoFicha({
   });
   const edad = edadEnAnios(fecha);
   const deDocumento = Boolean(fecha && datos?.nacimiento === fecha);
+
+  /** «Usar esta fecha»: la leída de su documento, en un toque (el servidor la toma de lo leído). */
+  async function usarLeida() {
+    setError('');
+    setEnviando(true);
+    try {
+      await pedir('PUT', `/datos/admin/conductores/${id}/fecha-nacimiento`, { usarLeida: true });
+      await b.limpiar();
+      alGuardar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   async function guardar() {
     setError('');
@@ -132,10 +149,21 @@ export function FechaNacimientoFicha({
           {t.propuesta(datos.nacimiento, datos.confianzaNacimiento)}
         </small>
       ) : null}{' '}
-      {!abierto ? (
+      {datos?.nacimiento ? (
         <button
           type="button"
           className="boton chico"
+          disabled={enviando}
+          onClick={() => void usarLeida()}
+          data-testid="usar-fecha"
+        >
+          {t.usar}
+        </button>
+      ) : null}{' '}
+      {!abierto ? (
+        <button
+          type="button"
+          className="boton secundario chico"
           onClick={() => setAbierto(true)}
           data-testid="escribir-fecha"
         >
@@ -201,6 +229,11 @@ export function FechaNacimientoFicha({
           </div>
         </form>
       )}
+      {error && !abierto ? (
+        <p className="error-general" role="alert">
+          {error}
+        </p>
+      ) : null}
     </span>
   );
 }

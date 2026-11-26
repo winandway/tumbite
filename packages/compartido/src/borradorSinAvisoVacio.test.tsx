@@ -72,4 +72,45 @@ describe('C-BORRADOR-SIN-AVISO-VACIO', () => {
     expect(result.current.recuperado).toBe(false);
     expect(localStorage.getItem(llave)).toBeNull();
   });
+
+  it('un borrador de una versión vieja (con campos que el formulario ya no tiene) no avisa', async () => {
+    const llave = llaveBorrador('f-viejo', 'yo');
+    localStorage.setItem(llave, JSON.stringify({ zonaId: '', motivo: '', paso: 'confirmar' }));
+    const { result } = renderHook(() =>
+      useBorrador({ formulario: 'f-viejo', cuenta: 'yo', inicial, almacen: almacenNavegador }),
+    );
+    await espera();
+    expect(result.current.recuperado).toBe(false);
+    expect(result.current.valores).toEqual(inicial);
+  });
+
+  it('valor inicial que llega tarde: lo que el formulario pone al cargar sus datos apaga el aviso', async () => {
+    const llave = llaveBorrador('f-tarde', 'yo');
+    // Lo guardado: una ciudad que, al llegar los datos, ya no se puede elegir.
+    localStorage.setItem(llave, JSON.stringify({ zonaId: 'CIUDAD-CERRADA', motivo: '' }));
+    const { result } = renderHook(() =>
+      useBorrador({ formulario: 'f-tarde', cuenta: 'yo', inicial, almacen: almacenNavegador }),
+    );
+    await waitFor(() => expect(result.current.valores.zonaId).toBe('CIUDAD-CERRADA'));
+    // Llegan los datos y el formulario descarta lo que ya no sirve: queda igual que sin borrador.
+    act(() => result.current.setValores({ zonaId: '', motivo: '' }));
+    expect(result.current.recuperado).toBe(false);
+    // Y con la base del servidor que llega tarde e igual a lo recuperado, tampoco.
+    const otra = llaveBorrador('f-servidor-tarde', 'yo');
+    localStorage.setItem(otra, JSON.stringify({ zonaId: 'VE-1', motivo: 'Guardado' }));
+    const b = renderHook(() =>
+      useBorrador({
+        formulario: 'f-servidor-tarde',
+        cuenta: 'yo',
+        inicial,
+        almacen: almacenNavegador,
+      }),
+    );
+    await waitFor(() => expect(b.result.current.valores.zonaId).toBe('VE-1'));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+      b.result.current.cargarBase({ zonaId: 'VE-1', motivo: 'Guardado' });
+    });
+    expect(b.result.current.recuperado).toBe(false);
+  });
 });

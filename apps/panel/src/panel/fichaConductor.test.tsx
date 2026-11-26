@@ -399,3 +399,32 @@ describe('C-EDAD-POR-PAIS, C-FECHA-GUARDADA y C-CRUCES-DOCUMENTO en la ficha', (
     );
   });
 });
+
+describe('«Usar esta fecha» y el borrador de una ciudad que ya no se puede elegir', () => {
+  it('la fecha leída sale con «Usar esta fecha» y un toque la guarda (el servidor la toma de lo leído)', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      detalle: {
+        datosDocumento: { nacimiento: '1974-03-10', confianzaNacimiento: 60, estado: 'propuesta' },
+      },
+    });
+    render(<RevisionConductor id="con-1" base="/panel/x" idioma="es" enFicha />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Usar esta fecha' }));
+    await waitFor(() =>
+      expect(
+        llamadas.find((l) => l.url === '/datos/admin/conductores/con-1/fecha-nacimiento')?.cuerpo,
+      ).toEqual({ usarLeida: true }),
+    );
+  });
+
+  it('un borrador con una ciudad que ya no está no deja «Recuperamos…» sobre la casilla vacía', async () => {
+    servidor([]);
+    const llave = llaveBorrador('ciudad-conductor-con-1', 'superadmin');
+    localStorage.setItem(llave, JSON.stringify({ zonaId: 'CIUDAD-CERRADA', motivo: '' }));
+    render(
+      <CambiarCiudadConductor id="con-1" idioma="es" alCerrar={() => {}} alCambiar={() => {}} />,
+    );
+    await waitFor(() => expect(localStorage.getItem(llave)).toBeNull());
+    expect(screen.queryByText(/Recuperamos lo que estabas escribiendo/)).toBeNull();
+  });
+});
