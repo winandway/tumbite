@@ -35,7 +35,7 @@ import { PLANTILLAS_FALTA, PLANTILLA_FALTA_CATEGORIA } from '../whatsappPlantill
  *   gasto del día) y sus ajustes. Cambiar algo exige alcance total y queda en auditoria_admin.
  * - POST /admin/camila/whatsapp/:id: «Mandarle por WhatsApp lo que le falta» de la ficha y de
  *   Verificaciones. `soloVista` arma el texto exacto sin enviar ni escribir; enviar exige `confirmar`.
- *   Saltar las 24 horas exige `saltarEspera` (el panel lo pregunta); el consentimiento nunca se salta.
+ *   Las 24 horas entre mensajes y el consentimiento nunca se saltan, tampoco a mano.
  * - GET/POST /admin/camila/whatsapp/zona/:zona: «a todos los trabados de esta zona», con vista previa
  *   y confirmación. Nunca se manda con un guion a mano contra producción: se manda desde aquí.
  */
