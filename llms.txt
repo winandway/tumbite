@@ -2,6 +2,10 @@
 
 > Divoox is a delivery startup by Windoce, LLC, a Delaware company with offices in Novi, Michigan (United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: https://divoox.com/contact.
 
+## Where Divoox is live
+
+- Live today in Venezuela: Moto, Car, Delivery. https://divoox.com/country/venezuela
+
 ## Main pages
 
 - [Divoox · Food, stores and packages delivered](https://divoox.com/): Your favorite local restaurants, with drivers who truly earn.
@@ -61,6 +65,8 @@
 - [Compliments and reasons when you rate · Divoox](https://divoox.com/docs/ordering/compliments-and-reasons): With 5 stars you pick what went well; with 3 or fewer, what went wrong. One tap, no typing.
 - [Request a motorcycle ride · Divoox](https://divoox.com/docs/ordering/ride-moto): Choose where you’re going, see the price before you confirm, and follow your driver on the map until they arrive.
 - [Paying, canceling and tipping on Moto · Divoox](https://divoox.com/docs/ordering/ride-moto-pago): Pay with cash or card, cancel for free at the start, and tip your driver when the ride ends.
+- [Choosing how you pay for a ride · Divoox](https://divoox.com/docs/ordering/payment-method): After you see the price, the “Payment method” screen shows the amount to pay and you choose how you’ll pay before you request.
+- [Your Divoox Balance](https://divoox.com/docs/ordering/divoox-balance): Divoox Balance is credit for paying rides in some countries. It isn’t used in the United States: here you pay with cash or card.
 - [Your safety on rides · Divoox](https://divoox.com/docs/ordering/ride-seguridad): Share your ride live, choose trusted contacts and get help with one tap.
 - [Request a car (taxi) with Divoox Car](https://divoox.com/docs/ordering/ride-car): Request a Car or a six-seat Car XL, see the fixed price before you confirm, and follow your driver until they arrive.
 - [Pay, tip, and see your rides in Car · Divoox](https://divoox.com/docs/ordering/ride-car-pay): Pay by card or with cash, tip your driver when you arrive, and find the receipt and help in “My rides.”
@@ -280,6 +286,18 @@
 - [Divoox is coming soon to Orlando](https://divoox.com/city/orlando): We’re getting ready to launch in Orlando: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in
 - [Divoox is coming soon to Tampa](https://divoox.com/city/tampa): We’re getting ready to launch in Tampa: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
 - [Divoox is coming soon to Ocala](https://divoox.com/city/ocala): We’re getting ready to launch in Ocala: restaurants, drivers, and hungry neighbors. Sign up and we’ll tell you first when we open. Part of our network in t
+- [Divoox in El Vigía](https://divoox.com/city/el-vigia): El Vigía (Mérida): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Dr
+- [Divoox in Tucaní](https://divoox.com/city/tucani): Tucaní (Mérida): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Driv
+- [Divoox in Caracas](https://divoox.com/city/caracas): Caracas (Distrito Capital): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in 
+- [Divoox in Maracaibo](https://divoox.com/city/maracaibo): Maracaibo (Zulia): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Dr
+- [Divoox in Valencia](https://divoox.com/city/valencia-venezuela): Valencia (Carabobo): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox 
+- [Divoox in Barquisimeto](https://divoox.com/city/barquisimeto): Barquisimeto (Lara): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox 
+- [Divoox in Mérida](https://divoox.com/city/merida-venezuela): Mérida (Mérida): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Driv
+- [Divoox in San Cristóbal](https://divoox.com/city/san-cristobal-venezuela): San Cristóbal (Táchira): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Div
+- [Divoox in Maracay](https://divoox.com/city/maracay): Maracay (Aragua): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Dri
+- [Divoox in Puerto La Cruz](https://divoox.com/city/puerto-la-cruz): Puerto La Cruz (Anzoátegui): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in
+- [Divoox in Ciudad Guayana](https://divoox.com/city/ciudad-guayana): Ciudad Guayana (Bolívar): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Di
+
 
 ## Food types
 
