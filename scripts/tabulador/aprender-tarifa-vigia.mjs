@@ -102,24 +102,23 @@ const pendienteMc = (n * sxy - sx * sy) / (n * sxx - sx * sx);
 const baseMc = (sy - pendienteMc * sx) / n;
 
 /**
- * La regla (decidida el 25 nov 2026): base 0 (el mínimo de 1 $ cubre lo corto, así ningún viaje urbano
- * se encarece) y el por-km MÁS ALTO que deja el calculado por debajo o igual a la calle en al menos el
- * 90 % de los destinos medidos con punto seguro, sin pasar 1,10 $ a 3 km. El 10 % que queda por encima
- * son tramos que la calle cobra barato (la vía Táchira): ahí manda el precio fijo de la hoja.
- * También se guarda la envolvente estricta (ningún destino por encima), solo para comparar.
+ * La regla (decidida por el coordinador el 25 nov 2026, devolución del revisor): base 0, por minuto
+ * 0, mínimo 1 $ y el por-km = la MEDIANA de los dólares por km de los destinos con punto seguro (sin
+ * las carreras cortas ni los puntos «revisar»), redondeada al centavo. Con la mediana, donde el
+ * calculado pasa la hoja gana el fijo (el pasajero paga la hoja) y donde queda por debajo queda
+ * cerca: el tabulador se usa de verdad y el conductor cobra como en la calle. La regla anterior (el
+ * por-km más alto que deja el 90 % por debajo de la calle: 0,33 $) dejaba el calculado entre un 25 y
+ * un 50 % por debajo de la hoja en unos 70 destinos: el tabulador casi no se usaba.
  */
 const seguros = medidos.filter((p) => !p.revisar);
-const encimaCon = (base, porKm) =>
-  seguros.filter((p) => Math.max(100, base + porKm * p.km) > p.precio).length;
+const medianaSegura = mediana(seguros.map((p) => p.porKm));
+const TARIFA = { base: 0, porKm: Math.round(medianaSegura * 100), porMinuto: 0, minimo: 100 };
+const calculado = (km) => Math.max(TARIFA.minimo, Math.round(TARIFA.base + TARIFA.porKm * km));
+/** Lo que cobra la app de día: el menor entre la hoja y el calculado (umbral 0 en El Vigía). */
+const cobraApp = (p) => (p.km == null ? p.precio : Math.min(p.precio, calculado(p.km)));
 let estricta = null;
 for (let porKm = 80; porKm >= 10 && !estricta; porKm--)
-  if (encimaCon(0, porKm) === 0) estricta = porKm;
-let elegido = null;
-for (let porKm = 80; porKm >= 10 && !elegido; porKm--)
-  if (encimaCon(0, porKm) <= Math.floor(seguros.length * 0.1) && 3 * porKm <= 110) elegido = porKm;
-if (!elegido) throw new Error('No hay tarifa que cumpla la regla');
-const TARIFA = { base: 0, porKm: elegido, porMinuto: 0, minimo: 100 };
-const calculado = (km) => Math.max(TARIFA.minimo, Math.round(TARIFA.base + TARIFA.porKm * km));
+  if (seguros.every((p) => Math.max(100, porKm * p.km) <= p.precio)) estricta = porKm;
 
 let md = `# Tabulador de El Vigía (moto taxi) y la tarifa aprendida
 
@@ -146,11 +145,18 @@ Distancia medida con Google Routes desde el centro de El Vigía (Plaza Bolívar,
 hasta el punto de cada destino. «Revisar» = el punto es aproximado (Google no lo ubicó con confianza):
 su km también lo es. En el panel se corrige el punto y queda desmarcado.
 
-| Vía | Destino | km | Precio | $ por km | Punto |
-|---|---|---:|---:|---:|---|
+«Cobra la app» = lo que paga el pasajero de día desde el centro: el menor entre la hoja y el calculado
+con la tarifa de la sección 4 (en El Vigía el fijo gana siempre que no sea más caro). «Contra la calle»
+= cuánto menos que la hoja (0 = igual que la calle). De noche, las dos columnas llevan un 30 % más.
+
+| Vía | Destino | km | Hoja | $ por km | Cobra la app | Contra la calle | Punto |
+|---|---|---:|---:|---:|---:|---:|---|
 `;
-for (const p of puntos)
-  md += `| ${VIAS[p.via]} | ${p.nombre} | ${f1(p.km)} | ${p.precio / 100} $ | ${f2(p.porKm)} | ${p.revisar ? 'revisar' : 'ok'} |\n`;
+for (const p of puntos) {
+  const app = cobraApp(p);
+  const dif = app - p.precio;
+  md += `| ${VIAS[p.via]} | ${p.nombre} | ${f1(p.km)} | ${p.precio / 100} $ | ${f2(p.porKm)} | ${f2(app / 100)} $ | ${dif === 0 ? '0' : `${f2(dif / 100)} $ (${Math.round((dif / p.precio) * 100)} %)`} | ${p.revisar ? 'revisar' : 'ok'} |\n`;
+}
 
 md += `\n## 3. Promedio y mediana por vía ($ por km)\n\n| Vía | Destinos medidos | Promedio | Mediana |\n|---|---:|---:|---:|\n`;
 for (const [via, nombre] of Object.entries(VIAS)) {
@@ -159,6 +165,15 @@ for (const [via, nombre] of Object.entries(VIAS)) {
 }
 const todos = medidos.map((p) => p.porKm);
 md += `| Todas, sin carreras cortas | ${todos.length} | ${f2(promedio(todos))} | ${f2(mediana(todos))} |\n`;
+md += `| Con punto seguro, sin carreras cortas | ${seguros.length} | ${f2(promedio(seguros.map((p) => p.porKm)))} | ${f2(medianaSegura)} |\n`;
+
+md += `\n### Precio de la app contra la hoja, por vía (de día, desde el centro)\n\n| Vía | Destinos | Igual a la hoja | Por debajo | Suma de la hoja | Suma de la app | La app cobra |\n|---|---:|---:|---:|---:|---:|---:|\n`;
+for (const [via, nombre] of Object.entries(VIAS)) {
+  const xs = puntos.filter((p) => p.via === via);
+  const hoja = xs.reduce((a, p) => a + p.precio, 0);
+  const app = xs.reduce((a, p) => a + cobraApp(p), 0);
+  md += `| ${nombre} | ${xs.length} | ${xs.filter((p) => cobraApp(p) === p.precio).length} | ${xs.filter((p) => cobraApp(p) < p.precio).length} | ${f2(hoja / 100)} $ | ${f2(app / 100)} $ | ${Math.round((app / hoja) * 100)} % de la hoja |\n`;
+}
 
 const encima = seguros.filter((p) => calculado(p.km) > p.precio);
 const cortosMedidos = puntos.filter((p) => p.via === 'cortas' && p.km != null);
@@ -171,25 +186,26 @@ md += `
 - **Por minuto: 0** (el precio no depende del tráfico: como en la calle, se sabe antes de salir).
 - Recargo nocturno: +30 % de 9 pm a 6 am (C-RECARGO-NOCHE).
 
-Cómo se eligió: base 0 (el mínimo de 1 $ ya cubre lo corto, así ningún viaje urbano se encarece) y
-el por km más alto que deja el calculado por debajo o igual a la calle en al menos el 90 % de los
-${seguros.length} destinos medidos con punto seguro (sin las carreras cortas ni los puntos «revisar»), sin
-pasar 1,10 $ a 3 km. Por mínimos cuadrados habría salido base ${f2(baseMc / 100)} $ y ${f2(pendienteMc / 100)} $
-por km, pero esa recta pasa el precio de la calle en la mitad de los destinos, y Richard pidió lo
-contrario: que la app nunca cobre más que la calle. La recta que no pasa NINGÚN destino sería de
-${f2((estricta ?? 0) / 100)} $ por km: con ella el calculado gana en casi todos los destinos de la lista (gana
-siempre el más bajo) y el conductor cobraría bastante menos que en la calle en los viajes largos.
+Cómo se eligió: el por km es la MEDIANA de los dólares por km de los ${seguros.length} destinos con punto
+seguro (sin las carreras cortas ni los puntos «revisar»): ${medianaSegura.toFixed(4).replace('.', ',')} $, redondeada al
+centavo. Base 0 y por minuto 0 (como en la calle, el precio se sabe antes de salir) y mínimo 1 $ (la
+carrera corta de la hoja). En El Vigía el pasajero paga el MENOR entre la hoja y el calculado: con la
+mediana, en la mitad de los destinos el calculado pasa la hoja y gana el fijo (el pasajero paga
+exactamente el tabulador), y en la otra mitad el calculado queda cerca, apenas por debajo. Así el
+tabulador se usa de verdad y el conductor cobra como en la calle.
 
-Destinos con punto seguro donde el calculado pasaría el tabulador (ahí manda el precio fijo de la hoja): ${encima.length ? encima.map((p) => p.nombre).join(', ') : 'ninguno'}.
-En las carreras cortas (dentro del casco) el calculado pasa la hoja en: ${encimaCortas.length ? encimaCortas.map((p) => `${p.nombre} (${f2(calculado(p.km) / 100)} $ contra ${p.precio / 100} $)`).join(', ') : 'ninguna'};
-ahí manda el precio fijo de la hoja (gana siempre el más bajo).
+Por qué no otras rectas: la de mínimos cuadrados (base ${f2(baseMc / 100)} $ y ${f2(pendienteMc / 100)} $ por km) cobra
+1 $ de base aun en lo corto. La más alta que no pasa NINGÚN destino (${f2((estricta ?? 0) / 100)} $ por km) y la que dejaba
+el 90 % por debajo de la calle (0,33 $, la primera versión) dejaban el calculado muy por debajo de la
+hoja en la mayoría de los destinos: casi nunca se cobraba el tabulador y el conductor perdía.
 
-Por qué una sola recta y no una por tramo: el modelo de tarifa tiene un solo por-km. La calle cobra
-unos 0,40-0,50 $ por km en los tramos largos de Mérida, El Zulia y la Panamericana, y menos en la vía
-Táchira (mediana 0,36); dentro del casco cobra 1 $ hasta unos 4 o 5 km. Se eligió el valor que no
-encarece los viajes urbanos (con base 0, hasta 3 km sale el mínimo de 1 $) y que queda por debajo de la
-calle en casi todos los destinos; en los viajes largos el calculado queda algo más barato que la calle,
-y en los destinos de la lista el pasajero paga el más bajo de los dos.
+Lo que no cubre una sola recta: la vía Táchira cobra menos por km (mediana 0,36) y ahí el fijo gana
+casi siempre; dentro del casco la calle cobra 1 $ hasta unos 4 km, y un viaje urbano FUERA de la lista
+sale por km (por ejemplo 3 km = ${f2(calculado(3) / 100)} $): los barrios de la lista sí cobran su precio de la hoja.
+
+Destinos con punto seguro donde el calculado pasa la hoja (ahí la app cobra la hoja): ${encima.length}.
+En las carreras cortas el calculado pasa la hoja en ${encimaCortas.length} de ${cortosMedidos.length}; ahí también
+cobra la hoja.
 
 ### Calculado contra calle (destinos medidos)
 
@@ -213,6 +229,8 @@ console.log(
   pendienteMc.toFixed(2),
   'estricta',
   estricta,
+  'mediana segura',
+  medianaSegura,
 );
 for (const [via, nombre] of Object.entries(VIAS)) {
   const xs = puntos.filter((p) => p.via === via && p.porKm != null).map((p) => p.porKm);

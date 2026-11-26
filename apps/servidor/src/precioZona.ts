@@ -195,7 +195,8 @@ async function contextoReparto(
   });
   return {
     // Envíos y las apps de antes van siempre con «conductor» (como la cotización).
-    quienPaga: servicio === 'envios' ? 'conductor' : await quienPagaViaje(db, zona.pais, zona.id),
+    quienPaga:
+      servicio === 'envios' ? 'conductor' : await quienPagaViaje(db, zona.pais, zona.id, servicio),
     regla: pol && pol.modalidad === 'prepago' ? pol.regla : null,
     descuentoPb: pol?.descuentoPb ?? 0,
     tarifa: fila ? filaATarifa(fila) : null,

@@ -43,7 +43,32 @@ const RUTAS: RutaPrecio[] = [
   ruta({ id: 'r4', nombre: 'Plaza de llegada', precio: 500, grupo: null, zona: 'US-FL-MIAMI' }),
 ];
 
-function servidor() {
+const TARIFA_VIGIA = {
+  id: 't1',
+  servicio: 'moto',
+  zona: 'VE-MER-ELVIGIA',
+  zonaNombre: 'El Vigía',
+  moneda: 'USD',
+  base: 0,
+  porKm: 46,
+  porMinuto: 0,
+  minimo: 100,
+  cargoFijo: 0,
+  porMinutoEspera: 5,
+  cargoCancelacion: 50,
+  cargoNoSePresento: 50,
+  esperaGratisS: 180,
+  cancelacionGratisS: 120,
+  redondeo: 1,
+  esperaParadaGratisS: 120,
+  umbralPrecioZonaPb: 0,
+  recargoNochePb: 3000,
+  dePrueba: false,
+  activa: true,
+  creadaEn: '2026-11-25 00:00:00',
+};
+
+function servidor(tarifas: unknown[] = []) {
   const llamadas: { url: string; metodo: string; cuerpo: unknown }[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const u = String(url);
@@ -60,7 +85,7 @@ function servidor() {
     if (u.includes('/datos/admin/viajes/ajustes'))
       return new Response(JSON.stringify({ ajustes: [] }));
     if (u.includes('/datos/admin/viajes'))
-      return new Response(JSON.stringify({ emergencias: [], viajes: [], tarifas: [] }));
+      return new Response(JSON.stringify({ emergencias: [], viajes: [], tarifas }));
     return new Response(JSON.stringify({}));
   });
   return llamadas;
@@ -196,5 +221,73 @@ describe('C-RECARGO-NOCHE: la tarifa de la ciudad en el panel', () => {
         nocheHastaH: 6,
       });
     });
+  });
+
+  const pintar = () =>
+    render(
+      <SesionArmazon.Provider value={SESION}>
+        <SuperViajes base="/panel/super" idioma="es" />
+      </SesionArmazon.Provider>,
+    );
+  const enviada = (llamadas: { url: string; metodo: string; cuerpo: unknown }[]) =>
+    llamadas.find((l) => l.metodo === 'POST' && l.url.includes('/tarifas'))?.cuerpo as
+      { tarifa: Record<string, number>; dePrueba: boolean } | undefined;
+
+  it('«Cambiar esta tarifa» carga lo guardado: guardar sin tocar nada conserva el recargo, el umbral 0 y que no es de prueba', async () => {
+    const llamadas = servidor([TARIFA_VIGIA]);
+    pintar();
+    await userEvent.click(await screen.findByTestId('tarifa-cambiar-esta'));
+    expect(screen.getByTestId('tarifa-recargo-noche')).toHaveValue('30');
+    expect(screen.getByTestId('tarifa-umbral-zona')).toHaveValue('0');
+    const form = screen.getByTestId('tarifa-recargo-noche').closest('form') as HTMLElement;
+    await userEvent.type(within(form).getByLabelText('Motivo del cambio'), 'Solo la espera');
+    await userEvent.click(within(form).getByRole('button', { name: 'Guardar tarifa' }));
+    await waitFor(() =>
+      expect(enviada(llamadas)).toMatchObject({
+        dePrueba: false,
+        tarifa: { porKm: 46, minimo: 100, umbralPrecioZonaPb: 0, recargoNochePb: 3000 },
+      }),
+    );
+  });
+
+  it('al escribir la ciudad con el formulario vacío, nace con la tarifa guardada', async () => {
+    servidor([TARIFA_VIGIA]);
+    pintar();
+    const form = (await screen.findByTestId('tarifa-recargo-noche')).closest('form') as HTMLElement;
+    await screen.findByTestId('tarifa-cambiar-esta');
+    await userEvent.type(
+      within(form).getByLabelText('Código de la ciudad (por ejemplo US-FL-MIAMI)'),
+      'VE-MER-ELVIGIA',
+    );
+    expect(screen.getByTestId('tarifa-recargo-noche')).toHaveValue('30');
+    expect(within(form).getByLabelText('Por kilómetro')).toHaveValue('0.46');
+    expect(screen.getByText(/Cargamos la tarifa guardada/)).toBeInTheDocument();
+  });
+
+  it('un valor fuera de rango se dice en palabras y no se guarda nada', async () => {
+    const llamadas = servidor([TARIFA_VIGIA]);
+    pintar();
+    await userEvent.click(await screen.findByTestId('tarifa-cambiar-esta'));
+    const form = screen.getByTestId('tarifa-recargo-noche').closest('form') as HTMLElement;
+    await userEvent.clear(screen.getByTestId('tarifa-recargo-noche'));
+    await userEvent.type(screen.getByTestId('tarifa-recargo-noche'), '150');
+    await userEvent.type(within(form).getByLabelText('Motivo del cambio'), 'Prueba');
+    await userEvent.click(within(form).getByRole('button', { name: 'Guardar tarifa' }));
+    expect(await screen.findByText('La tarifa nocturna va de 0 a 100 %.')).toBeInTheDocument();
+    await userEvent.clear(screen.getByTestId('tarifa-recargo-noche'));
+    await userEvent.type(screen.getByTestId('tarifa-recargo-noche'), '30');
+    await userEvent.type(screen.getByTestId('tarifa-noche-desde'), '25');
+    await userEvent.click(within(form).getByRole('button', { name: 'Guardar tarifa' }));
+    expect(
+      await screen.findByText('Las horas de la noche van de 0 a 23, sin decimales.'),
+    ).toBeInTheDocument();
+    await userEvent.clear(screen.getByTestId('tarifa-noche-desde'));
+    await userEvent.clear(screen.getByTestId('tarifa-umbral-zona'));
+    await userEvent.type(screen.getByTestId('tarifa-umbral-zona'), 'diez');
+    await userEvent.click(within(form).getByRole('button', { name: 'Guardar tarifa' }));
+    expect(
+      await screen.findByText('El porcentaje de los precios de la zona va de 0 a 90.'),
+    ).toBeInTheDocument();
+    expect(enviada(llamadas)).toBeUndefined();
   });
 });

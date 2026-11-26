@@ -5352,13 +5352,16 @@ CREATE INDEX IF NOT EXISTS cargas_saldo_restaurante_rest ON cargas_saldo_restaur
 -- «mitad». Una fila por país (ciudad = '') y, si hace falta, por ciudad (id de la zona). Sin fila:
 -- «conductor». El porcentaje sale siempre de la política de comisión; aquí solo se dice quién lo carga.
 -- Cada viaje guarda el valor con que nació (en su cotización): cambiarlo no toca viajes en curso.
+-- C-QUIEN-PAGA-SERVICIO (25 nov 2026): la regla puede ser de un solo servicio ('' = todos). Las bases
+-- con la clave vieja (pais, ciudad) se rehacen al arrancar (esquemaQuienPaga.ts).
 CREATE TABLE IF NOT EXISTS quien_paga_viajes (
   pais TEXT NOT NULL,
   ciudad TEXT NOT NULL DEFAULT '',
+  servicio TEXT NOT NULL DEFAULT '',
   valor TEXT NOT NULL CHECK (valor IN ('conductor', 'cliente', 'mitad')),
   cambiado_por TEXT,
   cambiado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (pais, ciudad)
+  PRIMARY KEY (pais, ciudad, servicio)
 );
 -- Valor inicial (Richard, 23 nov 2026): en Venezuela la paga el cliente. Solo si no hay fila (un
 -- cambio hecho desde el panel nunca se pisa al publicar).

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { distanciaKm } from '@tumbite/compartido';
 import { CASCO_EL_VIGIA, TABULADOR_EL_VIGIA, VIAS_TABULADOR } from './tabuladorElVigia';
 import { TARIFA_APRENDIDA_VIGIA } from './semillaTabuladorVigia';
 
@@ -127,7 +128,7 @@ describe('C-TABULADOR-VIGIA: los precios del tabulador, exactos', () => {
       expect(d.lat).toBeLessThan(9.6);
       expect(d.lng).toBeGreaterThan(-72.7);
       expect(d.lng).toBeLessThan(-70.5);
-      expect(d.radioKm).toBeGreaterThanOrEqual(0.4);
+      expect(d.radioKm).toBeGreaterThanOrEqual(0.15);
       expect(d.radioKm).toBeLessThanOrEqual(6);
       expect(typeof d.revisar).toBe('boolean');
       // Las carreras cortas son barrios: radio chico.
@@ -135,6 +136,21 @@ describe('C-TABULADOR-VIGIA: los precios del tabulador, exactos', () => {
     }
     expect(CASCO_EL_VIGIA.radioKm).toBeGreaterThanOrEqual(3);
     expect(CASCO_EL_VIGIA.radioKm).toBeLessThanOrEqual(4);
+  });
+
+  it('dos lugares de precio distinto no se pisan, y dos puntos seguros nunca comparten la latitud o la longitud exacta', () => {
+    const solapes: string[] = [];
+    const repetidos: string[] = [];
+    for (const [i, a] of TABULADOR_EL_VIGIA.entries())
+      for (const b of TABULADOR_EL_VIGIA.slice(i + 1)) {
+        if (a.precio !== b.precio && distanciaKm(a, b) < a.radioKm + b.radioKm)
+          solapes.push(`${a.nombre} / ${b.nombre}`);
+        // Un punto interpolado a mano (copiado de otro) tiene que estar marcado «revisar».
+        if (!a.revisar && !b.revisar && (a.lat === b.lat || a.lng === b.lng))
+          repetidos.push(`${a.nombre} / ${b.nombre}`);
+      }
+    expect(solapes).toEqual([]);
+    expect(repetidos).toEqual([]);
   });
 
   it('el documento interno trae la hoja tal cual y la MISMA tarifa que siembra la base', () => {

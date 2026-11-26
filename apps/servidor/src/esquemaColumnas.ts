@@ -3513,6 +3513,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "quien_paga_viajes": [
     "pais",
     "ciudad",
+    "servicio",
     "valor",
     "cambiado_por",
     "cambiado_en"

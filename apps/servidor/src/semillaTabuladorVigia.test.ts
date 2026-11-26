@@ -6,9 +6,16 @@ import {
   RECARGO_NOCHE_VIGIA_PB,
   TARIFA_APRENDIDA_VIGIA,
   TOPE_ESCRITURAS_SEMILLA_VIGIA,
+  CADUCA_SEMILLA_MS,
   exigirPresupuestoSemilla,
+  leerMarcaSemilla,
+  saludTabuladorVigia,
+  semillaPorCorrer,
   sembrarTabuladorVigia,
 } from './semillaTabuladorVigia';
+import { reiniciarEsquema } from './esquema';
+import { rehacerQuienPaga } from './esquemaQuienPaga';
+import { quienPagaViaje } from './finanzas/quienPaga';
 import { TOPE_RUTAS_POR_ZONA } from './precioZona';
 import { TABULADOR_EL_VIGIA } from './tabuladorElVigia';
 
@@ -17,10 +24,9 @@ import { TABULADOR_EL_VIGIA } from './tabuladorElVigia';
  * idempotente, sin pisar lo del equipo, sin fallar si la zona todavía no existe, y con su presupuesto
  * de escrituras medido.
  */
-async function escenario({ abrir = true } = {}) {
-  const m = mundo({}, { host: 'staging.tumbite.com' });
-  const admin = await m.cuenta('admin', 'Soporte Divoox');
-  if (abrir) {
+async function abrirElVigia(e: { m: ReturnType<typeof mundo>; admin: { token: string } }) {
+  {
+    const { m, admin } = e;
     const r = await m.llamar(
       'POST',
       '/datos/admin/viajes/ciudades',
@@ -40,6 +46,12 @@ async function escenario({ abrir = true } = {}) {
     );
     expect(r.estado, JSON.stringify(r.datos)).toBe(201);
   }
+}
+
+async function escenario({ abrir = true } = {}) {
+  const m = mundo({}, { host: 'staging.tumbite.com' });
+  const admin = await m.cuenta('admin', 'Soporte Divoox');
+  if (abrir) await abrirElVigia({ m, admin });
   const contar = async () =>
     Number(
       (
@@ -300,18 +312,149 @@ describe('C-TABULADOR-VIGIA: la semilla de El Vigía', () => {
     expect(() => exigirPresupuestoSemilla(TOPE_ESCRITURAS_SEMILLA_VIGIA + 1)).toThrow(/tope/);
   });
 
-  it('si el lote falla, suelta la marca y no deja nada a medias', async () => {
+  it('si el lote falla, la marca queda en «error» (canario en rojo), no deja nada a medias y se reintenta', async () => {
     const e = await escenario();
-    const batch = e.m.DB.batch.bind(e.m.DB);
     const espia = vi.spyOn(e.m.DB, 'batch').mockImplementationOnce(async () => {
       throw new Error('D1 caído');
     });
     await expect(sembrarTabuladorVigia(e.m.DB)).rejects.toThrow('D1 caído');
     espia.mockRestore();
-    expect(await e.marca()).toBeNull();
+    expect(leerMarcaSemilla((await e.marca())?.valor)?.estado).toBe('error');
+    expect(await saludTabuladorVigia(e.m.DB)).toBe('error');
     expect(await e.contar()).toBe(0);
-    void batch;
     // Y a la siguiente sí corre.
     expect((await sembrarTabuladorVigia(e.m.DB))?.rutas).toBeGreaterThan(83);
+    expect(await saludTabuladorVigia(e.m.DB)).toBe('ok');
+  });
+});
+
+describe('C-TABULADOR-VIGIA: el reintento real de la semilla (arranques con el mismo código)', () => {
+  const pieza = async (m: ReturnType<typeof mundo>) =>
+    (await m.llamar('GET', '/datos/salud')).datos.piezas.tabuladorVigia as string;
+
+  it('la zona llega DESPUÉS de publicar: el arranque siguiente siembra sin otra publicación; el canario pasa de pendiente a ok', async () => {
+    const e = await escenario({ abrir: false });
+    // La migración ya corrió y dejó su huella sin la zona: nada sembrado, canario «pendiente».
+    expect(await pieza(e.m)).toBe('pendiente');
+    expect(await e.marca()).toBeNull();
+    await abrirElVigia(e);
+    // Un servidor nuevo con el MISMO código (misma huella): el reintento propio siembra.
+    reiniciarEsquema();
+    expect(await pieza(e.m)).toBe('ok');
+    expect(await e.contar()).toBeGreaterThan(83);
+    // Y el arranque siguiente no vuelve a sembrar ni a duplicar.
+    const n = await e.contar();
+    reiniciarEsquema();
+    await pieza(e.m);
+    expect(await e.contar()).toBe(n);
+  });
+
+  it('una marca «corriendo» colgada (servidor cortado a mitad) caduca y se reintenta; una reciente no', async () => {
+    const e = await escenario();
+    const poner = (desde: number) =>
+      e.m.DB.prepare('INSERT OR REPLACE INTO config (clave, valor) VALUES (?, ?)')
+        .bind(
+          CLAVE_SEMILLA_TABULADOR_VIGIA,
+          JSON.stringify({ estado: 'corriendo', desde: new Date(desde).toISOString() }),
+        )
+        .run();
+    await poner(Date.now() - 60_000);
+    reiniciarEsquema();
+    expect(await pieza(e.m)).toBe('pendiente');
+    expect(await e.contar()).toBe(0);
+    await poner(Date.now() - CADUCA_SEMILLA_MS - 60_000);
+    expect(await saludTabuladorVigia(e.m.DB)).toBe('error');
+    reiniciarEsquema();
+    expect(await pieza(e.m)).toBe('ok');
+    expect(await e.contar()).toBeGreaterThan(83);
+    // La marca vieja de antes («corriendo» suelto) también caduca.
+    expect(semillaPorCorrer(leerMarcaSemilla('corriendo'))).toBe(true);
+  });
+
+  it('una marca en «error» se reintenta en el arranque siguiente', async () => {
+    const e = await escenario();
+    await e.m.DB.prepare('INSERT INTO config (clave, valor) VALUES (?, ?)')
+      .bind(
+        CLAVE_SEMILLA_TABULADOR_VIGIA,
+        JSON.stringify({ estado: 'error', error: 'D1 caído', cuando: new Date().toISOString() }),
+      )
+      .run();
+    reiniciarEsquema();
+    expect(await pieza(e.m)).toBe('ok');
+  });
+});
+
+describe('C-QUIEN-PAGA-SERVICIO: en El Vigía paga el conductor SOLO en Moto', () => {
+  it('Moto en El Vigía: conductor; Carro en El Vigía: sigue como el país (cliente)', async () => {
+    const e = await escenario();
+    await sembrarTabuladorVigia(e.m.DB);
+    expect(await quienPagaViaje(e.m.DB, 'VE', EVG.id, 'moto')).toBe('conductor');
+    expect(await quienPagaViaje(e.m.DB, 'VE', EVG.id, 'carro')).toBe('cliente');
+    expect(await quienPagaViaje(e.m.DB, 'VE', EVG.id)).toBe('cliente');
+    // El panel lo lista como «solo Moto» y cambiar la regla de la ciudad entera no lo toca.
+    const lista = await e.m.llamar(
+      'GET',
+      '/datos/admin/finanzas/quien-paga',
+      undefined,
+      e.admin.token,
+    );
+    expect(lista.datos.reglas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          pais: 'VE',
+          ciudad: EVG.id,
+          servicio: 'moto',
+          valor: 'conductor',
+        }),
+      ]),
+    );
+    const ciudad = await e.m.llamar(
+      'PUT',
+      '/datos/admin/finanzas/quien-paga',
+      { pais: 'VE', ciudad: EVG.id, valor: 'mitad' },
+      e.admin.token,
+    );
+    expect(ciudad.estado).toBe(200);
+    expect(await quienPagaViaje(e.m.DB, 'VE', EVG.id, 'carro')).toBe('mitad');
+    expect(await quienPagaViaje(e.m.DB, 'VE', EVG.id, 'moto')).toBe('conductor');
+    // «Como el resto» para Moto quita solo la regla de Moto.
+    const quitar = await e.m.llamar(
+      'PUT',
+      '/datos/admin/finanzas/quien-paga',
+      { pais: 'VE', ciudad: EVG.id, servicio: 'moto', valor: 'del_pais' },
+      e.admin.token,
+    );
+    expect(quitar.estado).toBe(200);
+    expect(await quienPagaViaje(e.m.DB, 'VE', EVG.id, 'moto')).toBe('mitad');
+  });
+
+  it('una base con la clave vieja (país, ciudad) se rehace sin perder reglas, una sola vez', async () => {
+    const e = await escenario({ abrir: false });
+    await e.m.DB.batch([
+      e.m.DB.prepare('DROP TABLE quien_paga_viajes'),
+      e.m.DB.prepare(
+        `CREATE TABLE quien_paga_viajes (pais TEXT NOT NULL, ciudad TEXT NOT NULL DEFAULT '',
+          valor TEXT NOT NULL CHECK (valor IN ('conductor', 'cliente', 'mitad')), cambiado_por TEXT,
+          cambiado_en TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY (pais, ciudad))`,
+      ),
+      e.m.DB.prepare(
+        "INSERT INTO quien_paga_viajes (pais, ciudad, valor) VALUES ('VE', '', 'cliente'), ('VE', 'VE-X', 'mitad')",
+      ),
+    ]);
+    expect(await rehacerQuienPaga(e.m.DB)).toBe(true);
+    expect(await rehacerQuienPaga(e.m.DB)).toBe(false);
+    const filas = await e.m.DB.prepare(
+      'SELECT pais, ciudad, servicio, valor FROM quien_paga_viajes ORDER BY ciudad',
+    ).all();
+    expect(filas.results).toEqual([
+      { pais: 'VE', ciudad: '', servicio: '', valor: 'cliente' },
+      { pais: 'VE', ciudad: 'VE-X', servicio: '', valor: 'mitad' },
+    ]);
+    // Ya admite una regla de un solo servicio en la misma ciudad.
+    await e.m.DB.prepare(
+      "INSERT INTO quien_paga_viajes (pais, ciudad, servicio, valor) VALUES ('VE', 'VE-X', 'moto', 'conductor')",
+    ).run();
+    expect(await quienPagaViaje(e.m.DB, 'VE', 'VE-X', 'moto')).toBe('conductor');
+    expect(await quienPagaViaje(e.m.DB, 'VE', 'VE-X', 'carro')).toBe('mitad');
   });
 });

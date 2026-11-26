@@ -157,6 +157,28 @@ for (const [via, nombre, dolares, tipo] of DESTINOS) {
   });
 }
 
+// Dos lugares de precio distinto no se pisan: si sus círculos se tocan, los dos se achican hasta la
+// mitad de la distancia que los separa (con 20 m de aire y nunca por debajo de 150 m). Los de igual
+// precio sí se pueden tocar: el pasajero paga lo mismo.
+const distKm = (a, b) => {
+  const r = (x) => (x * Math.PI) / 180;
+  const h =
+    Math.sin(r(b.lat - a.lat) / 2) ** 2 +
+    Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(r(b.lng - a.lng) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+};
+for (let i = 0; i < filas.length; i++)
+  for (let j = i + 1; j < filas.length; j++) {
+    const a = filas[i];
+    const b = filas[j];
+    if (a.precio === b.precio) continue;
+    const d = distKm(a, b);
+    if (d >= a.radioKm + b.radioKm) continue;
+    const tope = Math.max(0.15, Math.floor((d / 2 - 0.02) * 100) / 100);
+    a.radioKm = Math.min(a.radioKm, tope);
+    b.radioKm = Math.min(b.radioKm, tope);
+  }
+
 const lineas = filas.map(
   (f) =>
     `  { via: '${f.via}', nombre: ${JSON.stringify(f.nombre)}, precio: ${f.precio}, lat: ${f.lat}, lng: ${f.lng}, radioKm: ${f.radioKm}, revisar: ${f.revisar} },`,

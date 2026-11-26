@@ -18,8 +18,15 @@ import {
  *
  * - Corre en la migración de arranque. Si la zona no existe o no tiene tarifa de Moto en dólares, no
  *   hace nada y NO pone la marca: lo intenta otra vez en la siguiente publicación.
- * - La marca (`config`) se toma ANTES de escribir (`INSERT OR IGNORE`): dos servidores a la vez, solo
- *   uno corre. Si el lote falla, la marca se borra y se reintenta.
+ * - La marca (`config`) se toma ANTES de escribir (`INSERT OR IGNORE`, o cambiando una marca vieja con
+ *   la condición de que siga igual): dos servidores a la vez, solo uno corre. Si el lote falla, la marca
+ *   queda en «error» (el canario lo dice) y se reintenta. Una marca «corriendo» de más de
+ *   CADUCA_SEMILLA_MS (un servidor que se cortó a mitad) caduca y se reintenta.
+ * - Reintento propio: además de la migración, cada servidor que arranca mira la marca y si la zona
+ *   existe en la MISMA consulta de la huella (`SQL_ARRANQUE` en `migrar`, esquema.ts) y, si falta
+ *   sembrar, corre la semilla.
+ * - Canario: pieza `tabuladorVigia` de /datos/salud: ok (sembrado), pendiente (sin zona o corriendo) o
+ *   error (falló o quedó colgada).
  * - Nunca pisa lo del equipo: una ruta que ya existe (mismo lugar o mismo nombre) no se duplica, quién
  *   paga se siembra solo si la ciudad no tiene su propia fila, y después de la marca la tarifa y las
  *   rutas son del panel (otra publicación no las toca).
@@ -29,9 +36,62 @@ import {
 export const CLAVE_SEMILLA_TABULADOR_VIGIA = 'semilla:tabulador-el-vigia:1';
 export const ZONA_TABULADOR_VIGIA = 'VE-MER-ELVIGIA';
 export const TOPE_ESCRITURAS_SEMILLA_VIGIA = 200;
+/** Una marca «corriendo» más vieja que esto es de un servidor que se cortó: caduca. */
+export const CADUCA_SEMILLA_MS = 10 * 60_000;
+
+type MarcaSemilla =
+  | { estado: 'corriendo'; desde: string }
+  | { estado: 'error'; error: string; cuando: string }
+  | { estado: 'sembrado'; hecha: true; [k: string]: unknown };
+
+/** Lee la marca guardada (también las de antes: 'corriendo' suelto y `{ hecha: true }`). */
+export function leerMarcaSemilla(valor: string | null | undefined): MarcaSemilla | null {
+  if (valor == null) return null;
+  if (valor === 'corriendo') return { estado: 'corriendo', desde: '1970-01-01T00:00:00.000Z' };
+  try {
+    const m = JSON.parse(valor) as Record<string, unknown>;
+    if (m.hecha === true) return { ...m, estado: 'sembrado', hecha: true };
+    if (m.estado === 'corriendo') return { estado: 'corriendo', desde: String(m.desde ?? '') };
+    return {
+      estado: 'error',
+      error: String(m.error ?? 'marca ilegible'),
+      cuando: String(m.cuando ?? ''),
+    };
+  } catch {
+    return { estado: 'error', error: 'marca ilegible', cuando: '' };
+  }
+}
+
+/** ¿Hay que correr la semilla con esta marca? (sin marca, error o «corriendo» caducada). */
+export function semillaPorCorrer(m: MarcaSemilla | null, ahora = Date.now()): boolean {
+  if (!m) return true;
+  if (m.estado === 'sembrado') return false;
+  if (m.estado === 'error') return true;
+  const desde = Date.parse(m.desde);
+  return !Number.isFinite(desde) || ahora - desde > CADUCA_SEMILLA_MS;
+}
+
+const leerMarca = async (db: D1Database) =>
+  leerMarcaSemilla(
+    (
+      await db
+        .prepare('SELECT valor FROM config WHERE clave = ?')
+        .bind(CLAVE_SEMILLA_TABULADOR_VIGIA)
+        .first<{ valor: string }>()
+    )?.valor,
+  );
+
+/** Canario: ok (sembrado), pendiente (sin marca o corriendo) o error (falló o quedó colgada). */
+export async function saludTabuladorVigia(db: D1Database): Promise<'ok' | 'pendiente' | 'error'> {
+  const m = await leerMarca(db);
+  if (!m) return 'pendiente';
+  if (m.estado === 'sembrado') return 'ok';
+  if (m.estado === 'error') return 'error';
+  return semillaPorCorrer(m) ? 'error' : 'pendiente';
+}
 
 /** La tarifa aprendida (centavos de dólar). Ver docs/TABULADOR-EL-VIGIA.md, sección 4. */
-export const TARIFA_APRENDIDA_VIGIA = { base: 0, porKm: 33, porMinuto: 0, minimo: 100 } as const;
+export const TARIFA_APRENDIDA_VIGIA = { base: 0, porKm: 46, porMinuto: 0, minimo: 100 } as const;
 /** +30 % de noche (21:00 a 06:00, hora de Venezuela: las horas por defecto). */
 export const RECARGO_NOCHE_VIGIA_PB = 3000;
 
@@ -140,11 +200,26 @@ export async function sembrarTabuladorVigia(db: D1Database): Promise<ResultadoSe
   if (!zona) return null;
   const tarifa = await tarifaActiva(db, 'moto', zona.id);
   if (!tarifa || tarifa.moneda.toUpperCase() !== 'USD') return null;
+  const corriendo = JSON.stringify({ estado: 'corriendo', desde: new Date().toISOString() });
   const marca = await db
-    .prepare("INSERT OR IGNORE INTO config (clave, valor) VALUES (?, 'corriendo')")
-    .bind(CLAVE_SEMILLA_TABULADOR_VIGIA)
+    .prepare('INSERT OR IGNORE INTO config (clave, valor) VALUES (?, ?)')
+    .bind(CLAVE_SEMILLA_TABULADOR_VIGIA, corriendo)
     .run();
-  if (!Number(marca.meta?.changes ?? 0)) return null;
+  if (!Number(marca.meta?.changes ?? 0)) {
+    // Ya hay marca: solo se toma si está en error o caducada, y solo si nadie la cambió entre medio.
+    const vieja = await db
+      .prepare('SELECT valor FROM config WHERE clave = ?')
+      .bind(CLAVE_SEMILLA_TABULADOR_VIGIA)
+      .first<{ valor: string }>();
+    if (!vieja || !semillaPorCorrer(leerMarcaSemilla(vieja.valor))) return null;
+    const tomada = await db
+      .prepare(
+        "UPDATE config SET valor = ?, actualizado_en = datetime('now') WHERE clave = ? AND valor = ?",
+      )
+      .bind(corriendo, CLAVE_SEMILLA_TABULADOR_VIGIA, vieja.valor)
+      .run();
+    if (!Number(tomada.meta?.changes ?? 0)) return null;
+  }
   try {
     const { results: existentes } = await db
       .prepare(
@@ -195,12 +270,13 @@ export async function sembrarTabuladorVigia(db: D1Database): Promise<ResultadoSe
           r.revisar ? 1 : 0,
         ),
     );
-    // Quién paga la comisión en El Vigía: el conductor (solo si la ciudad no tiene ya su fila).
+    // Quién paga la comisión de MOTO en El Vigía: el conductor (Carro sigue como estaba; solo si la
+    // ciudad no tiene ya su regla de Moto).
     sentencias.push(
       db
         .prepare(
-          `INSERT OR IGNORE INTO quien_paga_viajes (pais, ciudad, valor, cambiado_por)
-           VALUES (?, ?, 'conductor', 'C-TABULADOR-VIGIA')`,
+          `INSERT OR IGNORE INTO quien_paga_viajes (pais, ciudad, servicio, valor, cambiado_por)
+           VALUES (?, ?, 'moto', 'conductor', 'C-TABULADOR-VIGIA')`,
         )
         .bind(zona.pais, zona.id),
     );
@@ -282,12 +358,19 @@ export async function sembrarTabuladorVigia(db: D1Database): Promise<ResultadoSe
     );
     return resultado;
   } catch (e) {
-    // Sin la marca, la próxima publicación lo intenta otra vez.
+    // La marca queda en «error»: el canario lo dice y el próximo arranque lo intenta otra vez.
     await db
-      .prepare('DELETE FROM config WHERE clave = ?')
-      .bind(CLAVE_SEMILLA_TABULADOR_VIGIA)
+      .prepare("UPDATE config SET valor = ?, actualizado_en = datetime('now') WHERE clave = ?")
+      .bind(
+        JSON.stringify({
+          estado: 'error',
+          error: String(e).slice(0, 300),
+          cuando: new Date().toISOString(),
+        }),
+        CLAVE_SEMILLA_TABULADOR_VIGIA,
+      )
       .run()
-      .catch((x: unknown) => console.error('semilla El Vigía: no se pudo soltar la marca', x));
+      .catch((x: unknown) => console.error('semilla El Vigía: no se pudo anotar el error', x));
     throw e;
   }
 }

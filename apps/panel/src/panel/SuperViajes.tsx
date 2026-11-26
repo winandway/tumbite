@@ -76,6 +76,13 @@ const T = {
     nocheLista: (pct: string, desde: number, hasta: number) =>
       `de noche +${pct} % (${desde}:00 a ${hasta}:00)`,
     umbralLista: (pct: string) => `precios de la zona si son ${pct} % más baratos`,
+    // C-TARIFA-PRECARGADA (25 nov 2026): el formulario nace con lo guardado y dice el error en palabras.
+    cambiarEsta: 'Cambiar esta tarifa',
+    precargada: 'Cargamos la tarifa guardada de esa ciudad: cambia solo lo que haga falta.',
+    malUmbral: 'El porcentaje de los precios de la zona va de 0 a 90.',
+    malRecargo: 'La tarifa nocturna va de 0 a 100 %.',
+    malHora: 'Las horas de la noche van de 0 a 23, sin decimales.',
+    malKm: 'La distancia máxima va desde 5 km (o déjala vacía).',
     xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
     comfort: 'Carro Comfort: veces el precio del carro (vacío = sin Comfort; 1,3 = un 30 % más)',
@@ -145,6 +152,12 @@ const T = {
     nocheLista: (pct: string, desde: number, hasta: number) =>
       `at night +${pct}% (${desde}:00 to ${hasta}:00)`,
     umbralLista: (pct: string) => `local fixed prices when ${pct}% cheaper`,
+    cambiarEsta: 'Change this pricing',
+    precargada: 'We loaded the saved pricing for that city: change only what you need.',
+    malUmbral: 'The local fixed price percentage goes from 0 to 90.',
+    malRecargo: 'The night fare goes from 0 to 100%.',
+    malHora: 'Night hours go from 0 to 23, whole numbers only.',
+    malKm: 'The maximum distance starts at 5 km (or leave it empty).',
     xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
     // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
     comfort: 'Car Comfort: times the car price (empty = no Comfort; 1.3 = 30% more)',
@@ -192,7 +205,40 @@ type Tarifa = Record<(typeof MONTOS)[number], number> & {
   recargoNochePb?: number;
   nocheDesdeH?: number;
   nocheHastaH?: number;
+  esperaParadaGratisS?: number;
+  valorMaximo?: number;
+  kmMaximo?: number;
 };
+
+/** C-TARIFA-PRECARGADA: los valores guardados de una tarifa, como se escriben en el formulario. */
+export function valoresDeTarifa(x: Tarifa): Record<string, string> {
+  const montos = Object.fromEntries(
+    MONTOS.map((k) => [k, montoATexto(Number(new Map(Object.entries(x)).get(k) ?? 0), x.moneda)]),
+  );
+  const factor = (pb?: number) => (pb ? String(pb / 10_000) : '');
+  return {
+    ...montos,
+    servicio: x.servicio ?? 'moto',
+    zona: x.zona,
+    moneda: x.moneda,
+    esperaGratis: String(x.esperaGratisS / 60),
+    cancelacionGratis: String(x.cancelacionGratisS / 60),
+    redondeo: String(x.redondeo),
+    xl: factor(x.xlPb),
+    comfort: factor(x.comfortPb),
+    premium: factor(x.premiumPb),
+    topeDinamico: (x.topeDinamicoPb ?? 10_000) > 10_000 ? factor(x.topeDinamicoPb) : '',
+    esperaParada: String((x.esperaParadaGratisS ?? 120) / 60),
+    valorMaximo: x.valorMaximo != null ? montoATexto(x.valorMaximo, x.moneda) : '',
+    kmMaximo: x.kmMaximo != null ? String(x.kmMaximo) : '',
+    umbralZona: x.umbralPrecioZonaPb != null ? String(x.umbralPrecioZonaPb / 100) : '',
+    recargoNoche: x.recargoNochePb ? String(x.recargoNochePb / 100) : '',
+    nocheDesde: x.nocheDesdeH != null ? String(x.nocheDesdeH) : '',
+    nocheHasta: x.nocheHastaH != null ? String(x.nocheHastaH) : '',
+    motivo: '',
+  };
+}
+
 type Datos = {
   emergencias: Record<string, unknown>[];
   viajes: Record<string, unknown>[];
@@ -277,6 +323,23 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
     }
   }
 
+  /** C-TARIFA-PRECARGADA: la tarifa activa guardada de esa ciudad y servicio. */
+  const guardadaDe = (zona: string, servicio: string) =>
+    datos?.tarifas.find(
+      (x) => x.zona === zona.trim().toUpperCase() && (x.servicio ?? 'moto') === servicio,
+    );
+  /** Al elegir ciudad o servicio con el formulario sin montos, nace con lo guardado. */
+  function cambiarCiudadOServicio(campo: 'zona' | 'servicio', valor: string) {
+    const v = { ...b.valores, [campo]: valor };
+    const x = guardadaDe(v.zona, v.servicio);
+    if (x && !v.base.trim() && !v.porKm.trim() && !v.minimo.trim()) {
+      b.cargar({ ...valoresDeTarifa(x), zona: v.zona, motivo: v.motivo } as typeof b.valores);
+      setAviso(t.precargada);
+      return;
+    }
+    b.cambiar(campo, valor);
+  }
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setFalla('');
@@ -308,27 +371,37 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
     // C-ENVIOS: tope del valor declarado de un paquete en esta ciudad.
     if (v.valorMaximo.trim()) tarifa.valorMaximo = textoAMonto(v.valorMaximo, m);
     // C-DESTINO-EN-EL-PAIS: tope de seguridad de km de esta ciudad y servicio (vacío = el alto).
-    if (Math.round(veces(v.kmMaximo)) >= 5) tarifa.kmMaximo = Math.round(veces(v.kmMaximo));
+    if (v.kmMaximo.trim() && veces(v.kmMaximo) >= 5)
+      tarifa.kmMaximo = Math.round(veces(v.kmMaximo));
+    // C-TARIFA-PRECARGADA: lo escrito fuera de rango se dice en palabras; nunca se omite en silencio
+    // (omitirlo borraba el recargo o el umbral guardados).
+    const escrito = (x: string) => x.trim() !== '';
+    const enRango = (x: string, min: number, max: number) =>
+      Number.isFinite(veces(x)) && veces(x) >= min && veces(x) <= max;
+    if (escrito(v.umbralZona) && !enRango(v.umbralZona, 0, 90)) return setFalla(t.malUmbral);
+    if (escrito(v.recargoNoche) && !enRango(v.recargoNoche, 0, 100)) return setFalla(t.malRecargo);
+    for (const h of [v.nocheDesde, v.nocheHasta])
+      if (escrito(h) && !(enRango(h, 0, 23) && Number.isInteger(veces(h))))
+        return setFalla(t.malHora);
+    if (
+      escrito(v.kmMaximo) &&
+      !(enRango(v.kmMaximo, 5, 5000) && Number.isInteger(veces(v.kmMaximo)))
+    )
+      return setFalla(t.malKm);
     // C-PRECIO-ZONA: el umbral de los precios de la zona, en por ciento (vacío = 10 %).
-    if (v.umbralZona.trim() && veces(v.umbralZona) >= 0 && veces(v.umbralZona) <= 90)
-      tarifa.umbralPrecioZonaPb = Math.round(veces(v.umbralZona) * 100);
+    if (escrito(v.umbralZona)) tarifa.umbralPrecioZonaPb = Math.round(veces(v.umbralZona) * 100);
     // C-RECARGO-NOCHE: la tarifa nocturna en por ciento (vacío o 0 = sin recargo) y sus horas.
-    if (v.recargoNoche.trim() && veces(v.recargoNoche) > 0 && veces(v.recargoNoche) <= 100)
+    if (escrito(v.recargoNoche) && veces(v.recargoNoche) > 0)
       tarifa.recargoNochePb = Math.round(veces(v.recargoNoche) * 100);
-    const hora = (x: string) => {
-      const n = Number(x.trim());
-      return x.trim() && Number.isInteger(n) && n >= 0 && n <= 23 ? n : null;
-    };
-    const desde = hora(v.nocheDesde);
-    const hasta = hora(v.nocheHasta);
-    if (desde != null) tarifa.nocheDesdeH = desde;
-    if (hasta != null) tarifa.nocheHastaH = hasta;
+    if (escrito(v.nocheDesde)) tarifa.nocheDesdeH = veces(v.nocheDesde);
+    if (escrito(v.nocheHasta)) tarifa.nocheHastaH = veces(v.nocheHasta);
     try {
       await api.pedir('POST', '/datos/admin/viajes/tarifas', {
         servicio: v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto',
         zona: v.zona.trim().toUpperCase(),
         tarifa,
-        dePrueba: true,
+        // Se queda como estaba la tarifa guardada de esa ciudad (una nueva nace de prueba).
+        dePrueba: guardadaDe(v.zona, v.servicio)?.dePrueba ?? true,
         motivo: v.motivo,
       });
       await b.limpiar();
@@ -460,7 +533,18 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
                 : ''}
               {x.servicio === 'carro' && (x.topeDinamicoPb ?? 10_000) > 10_000 ? (
                 <DinamicaCiudad zona={x.zona} idioma={idioma} />
-              ) : null}
+              ) : null}{' '}
+              <button
+                type="button"
+                className="boton secundario"
+                data-testid="tarifa-cambiar-esta"
+                onClick={() => {
+                  b.cargar(valoresDeTarifa(x) as typeof b.valores);
+                  setAviso(t.precargada);
+                }}
+              >
+                {t.cambiarEsta}
+              </button>
             </li>
           ))}
         </ul>
@@ -477,7 +561,7 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
           <span>{t.servicio}</span>
           <select
             value={b.valores.servicio}
-            onChange={(e) => b.cambiar('servicio', e.target.value)}
+            onChange={(e) => cambiarCiudadOServicio('servicio', e.target.value)}
           >
             <option value="moto">Moto</option>
             <option value="carro">{t.carro}</option>
@@ -486,7 +570,10 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
         </label>
         <label className="campo">
           <span>{t.ciudad}</span>
-          <input value={b.valores.zona} onChange={(e) => b.cambiar('zona', e.target.value)} />
+          <input
+            value={b.valores.zona}
+            onChange={(e) => cambiarCiudadOServicio('zona', e.target.value)}
+          />
         </label>
         <label className="campo">
           <span>{t.moneda}</span>

@@ -239,11 +239,12 @@ finanzasAdmin.get('/admin/finanzas/quien-paga', async (c) => {
   const [filas, zonas] = await Promise.all([
     db
       .prepare(
-        'SELECT pais, ciudad, valor, cambiado_por, cambiado_en FROM quien_paga_viajes ORDER BY pais, ciudad LIMIT 500',
+        'SELECT pais, ciudad, servicio, valor, cambiado_por, cambiado_en FROM quien_paga_viajes ORDER BY pais, ciudad, servicio LIMIT 500',
       )
       .all<{
         pais: string;
         ciudad: string;
+        servicio: string;
         valor: string;
         cambiado_por: string | null;
         cambiado_en: string;
@@ -256,6 +257,8 @@ finanzasAdmin.get('/admin/finanzas/quien-paga', async (c) => {
     reglas: filas.results.map((f) => ({
       pais: f.pais,
       ciudad: f.ciudad || null,
+      // C-QUIEN-PAGA-SERVICIO: null = la regla vale para Moto y Carro.
+      servicio: f.servicio || null,
       valor: f.valor,
       cambiadoEn: f.cambiado_en,
     })),
@@ -275,41 +278,44 @@ finanzasAdmin.put('/admin/finanzas/quien-paga', async (c) => {
         .regex(/^[A-Z]{2}$/, { error: 'Elige el país.' }),
       /** Vacío o ausente: todo el país. */
       ciudad: z.string().trim().max(60).optional(),
+      /** C-QUIEN-PAGA-SERVICIO: vacío o ausente = Moto y Carro. */
+      servicio: z.enum(['', 'moto', 'carro']).optional(),
       /** «del_pais»: la ciudad deja su regla propia y sigue la del país. */
       valor: z.enum([...QUIEN_PAGA, 'del_pais']),
     }),
   );
   const db = base(c);
   const ciudad = d.ciudad ?? '';
+  const servicio = d.servicio ?? '';
   if (ciudad) {
     const z0 = await db
       .prepare('SELECT 1 FROM zonas WHERE id = ? AND pais = ?')
       .bind(ciudad, d.pais)
       .first();
     if (!z0) throw new ErrorDatos('Esa ciudad no es de ese país.', 'ciudad', 422);
-  } else if (d.valor === 'del_pais')
+  } else if (d.valor === 'del_pais' && !servicio)
     throw new ErrorDatos('Elige quién paga en todo el país.', 'valor', 422);
   const antes = await db
-    .prepare('SELECT valor FROM quien_paga_viajes WHERE pais = ? AND ciudad = ?')
-    .bind(d.pais, ciudad)
+    .prepare('SELECT valor FROM quien_paga_viajes WHERE pais = ? AND ciudad = ? AND servicio = ?')
+    .bind(d.pais, ciudad, servicio)
     .first<{ valor: string }>();
   await db.batch([
     d.valor === 'del_pais'
       ? db
-          .prepare('DELETE FROM quien_paga_viajes WHERE pais = ? AND ciudad = ?')
-          .bind(d.pais, ciudad)
+          .prepare('DELETE FROM quien_paga_viajes WHERE pais = ? AND ciudad = ? AND servicio = ?')
+          .bind(d.pais, ciudad, servicio)
       : db
           .prepare(
-            `INSERT INTO quien_paga_viajes (pais, ciudad, valor, cambiado_por, cambiado_en)
-             VALUES (?, ?, ?, ?, datetime('now'))
-             ON CONFLICT (pais, ciudad) DO UPDATE SET valor = excluded.valor,
+            `INSERT INTO quien_paga_viajes (pais, ciudad, servicio, valor, cambiado_por, cambiado_en)
+             VALUES (?, ?, ?, ?, ?, datetime('now'))
+             ON CONFLICT (pais, ciudad, servicio) DO UPDATE SET valor = excluded.valor,
                cambiado_por = excluded.cambiado_por, cambiado_en = excluded.cambiado_en`,
           )
-          .bind(d.pais, ciudad, d.valor, u.id),
+          .bind(d.pais, ciudad, servicio, d.valor, u.id),
     sentenciaAuditoriaFin(db, {
       actorId: u.id,
       accion: 'quien_paga.cambiar',
-      objeto: ciudad ? `${d.pais}:${ciudad}` : d.pais,
+      objeto: `${ciudad ? `${d.pais}:${ciudad}` : d.pais}${servicio ? `:${servicio}` : ''}`,
       detalle: { antes: antes?.valor ?? (ciudad ? 'del_pais' : 'conductor'), despues: d.valor },
     }),
   ]);

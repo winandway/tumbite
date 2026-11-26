@@ -614,7 +614,7 @@ export async function cotizarParaCliente(
   // Solo viajes de personas (Moto y Carro): los envíos siguen como siempre.
   const quienPaga =
     d.tarifaServicio && d.servicio !== 'envios'
-      ? await quienPagaViaje(db, zona.pais, zona.id)
+      ? await quienPagaViaje(db, zona.pais, zona.id, d.servicio)
       : 'conductor';
   const conTarifa = async (dg: DesgloseViaje): Promise<DesgloseViaje> => {
     const t = await tarifaServicioViaje(db, {
@@ -662,7 +662,11 @@ export async function cotizarParaCliente(
     // noche el precio nunca pasa el de la zona por (1 + recargo).
     return conRecargoNoche(deDia, t, cuando, zona.zonaHoraria);
   };
-  const desglose = await conTarifa(precioDe(tarifa, d.categoria));
+  const desglose: DesgloseViaje = {
+    ...(await conTarifa(precioDe(tarifa, d.categoria))),
+    // C-RECARGO-NOCHE: la hora reservada que declaró la app (para comprobarla al pedir).
+    ...(d.programadoPara ? { horaPrecio: d.programadoPara } : {}),
+  };
   // C-PRECIO-ZONA: si la ruta tiene precio de ida y vuelta, se ofrece (la vuelta estimada como el
   // doble del trayecto, sin otra consulta de rutas). Al elegirla, la app vuelve a cotizar con
   // `idaVuelta` y ese es el precio fijo.
@@ -823,24 +827,23 @@ export async function cotizarParaCliente(
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
 
 /**
- * C-RECARGO-NOCHE: la reserva cae de noche si y solo si la cotización lleva la tarifa nocturna. Solo
- * cuenta en las ciudades con recargo (las demás reservan como siempre).
+ * C-RECARGO-NOCHE: la cotización que declaró su hora (`horaPrecio`, app nueva) solo vale para un viaje
+ * en la misma franja (noche o día) que esa hora. Sin hora declarada no se comprueba nada: vale el precio
+ * mostrado (las apps de la tienda no la mandan y nunca quedan sin salida). Solo en ciudades con recargo.
  */
 export function exigirNocheDeLaReserva(
   cot: { tarifa_json: string | null; desglose_json: string | null },
-  programadoPara: string,
+  programadoPara: string | null,
   zonaHoraria: string | null | undefined,
+  ahora: Date = new Date(),
 ): void {
   const t = tarifaDeCopia(cot.tarifa_json);
   if (!t?.recargoNochePb) return;
-  const conRecargo = recargoGuardado(cot.desglose_json) > 0;
-  const deNoche = esHoraDeNoche(
-    new Date(programadoPara),
-    zonaHoraria ?? 'UTC',
-    t.nocheDesdeH,
-    t.nocheHastaH,
-  );
-  if (deNoche !== conRecargo)
+  const declarada = horaDeclarada(cot.desglose_json);
+  if (!declarada) return;
+  const zona = zonaHoraria ?? 'UTC';
+  const noche = (x: Date) => esHoraDeNoche(x, zona, t.nocheDesdeH, t.nocheHastaH);
+  if (noche(new Date(declarada)) !== noche(programadoPara ? new Date(programadoPara) : ahora))
     throw new ErrorDatos(
       'El precio cambia a esa hora por la tarifa nocturna. Revisa el precio antes de reservar.',
       'cotizacionId',
@@ -848,13 +851,14 @@ export function exigirNocheDeLaReserva(
     );
 }
 
-/** C-RECARGO-NOCHE: la tarifa nocturna que quedó en el desglose de una cotización (0 si no hay). */
-function recargoGuardado(json: string | null): number {
+/** C-RECARGO-NOCHE: la hora reservada que declaró la cotización (null si no la declaró). */
+function horaDeclarada(json: string | null): string | null {
   try {
-    return Number((JSON.parse(json ?? '{}') as DesgloseViaje).recargoNoche ?? 0);
+    const h = (JSON.parse(json ?? '{}') as DesgloseViaje).horaPrecio;
+    return typeof h === 'string' && !Number.isNaN(Date.parse(h)) ? h : null;
   } catch (e) {
     console.error('viajes: desglose dañado en la cotización', e);
-    return 0;
+    return null;
   }
 }
 
@@ -921,10 +925,10 @@ viajesPasajero.post('/viajes', async (c) => {
     .prepare('SELECT pais, zona_horaria FROM zonas WHERE id = ?')
     .bind(cot.zona_id)
     .first<{ pais: string; zona_horaria: string | null }>();
-  // C-RECARGO-NOCHE: un viaje reservado lleva la tarifa de SU hora. Si la cotización se hizo con otra
-  // hora (de día para una reserva de noche, o al revés), se vuelve a cotizar: nunca se cobra de más ni
-  // de menos en silencio.
-  if (d.programadoPara) exigirNocheDeLaReserva(cot, d.programadoPara, paisViaje?.zona_horaria);
+  // C-RECARGO-NOCHE: si la cotización declaró su hora (app nueva) y la franja de ESA hora no es la del
+  // viaje que se pide, hay que volver a cotizar. Sin hora declarada (app de antes, o un viaje para
+  // ahora cotizado a las 20:59 y pedido a las 21:05), vale el precio que la persona vio.
+  exigirNocheDeLaReserva(cot, d.programadoPara ?? null, paisViaje?.zona_horaria);
   if (!perfilPasajeros(paisViaje?.pais).metodosPago.includes(d.metodoPago))
     throw new ErrorDatos('Ese método de pago no está disponible en tu ciudad.', 'metodoPago', 422);
   if (

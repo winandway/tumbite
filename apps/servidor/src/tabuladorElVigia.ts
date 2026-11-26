@@ -40,7 +40,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 200,
     lat: 8.6066,
     lng: -71.63288,
-    radioKm: 0.45,
+    radioKm: 0.24,
     revisar: false,
   },
   {
@@ -49,7 +49,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 300,
     lat: 8.6,
     lng: -71.626,
-    radioKm: 0.45,
+    radioKm: 0.42,
     revisar: true,
   },
   {
@@ -65,8 +65,8 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     via: 'merida',
     nombre: 'Palmita',
     precio: 700,
-    lat: 8.54193,
-    lng: -71.59762,
+    lat: 8.5423,
+    lng: -71.598,
     radioKm: 2,
     revisar: false,
   },
@@ -74,8 +74,8 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     via: 'merida',
     nombre: 'Mesa Bolívar',
     precio: 1500,
-    lat: 8.47365,
-    lng: -71.59762,
+    lat: 8.4757,
+    lng: -71.5979,
     radioKm: 2,
     revisar: false,
   },
@@ -220,7 +220,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 300,
     lat: 8.65382,
     lng: -71.6679,
-    radioKm: 0.45,
+    radioKm: 0.36,
     revisar: false,
   },
   {
@@ -229,7 +229,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 400,
     lat: 8.65829,
     lng: -71.66263,
-    radioKm: 0.45,
+    radioKm: 0.36,
     revisar: false,
   },
   {
@@ -571,7 +571,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 400,
     lat: 8.6419,
     lng: -71.6146,
-    radioKm: 0.45,
+    radioKm: 0.39,
     revisar: true,
   },
   {
@@ -580,7 +580,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 500,
     lat: 8.64306,
     lng: -71.62202,
-    radioKm: 0.45,
+    radioKm: 0.31,
     revisar: false,
   },
   {
@@ -589,7 +589,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 300,
     lat: 8.63717,
     lng: -71.62055,
-    radioKm: 0.45,
+    radioKm: 0.31,
     revisar: false,
   },
   {
@@ -652,7 +652,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 100,
     lat: 8.61897,
     lng: -71.64888,
-    radioKm: 0.45,
+    radioKm: 0.34,
     revisar: false,
   },
   {
@@ -679,7 +679,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 200,
     lat: 8.60382,
     lng: -71.63731,
-    radioKm: 0.45,
+    radioKm: 0.31,
     revisar: false,
   },
   {
@@ -697,7 +697,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 100,
     lat: 8.6144,
     lng: -71.6825,
-    radioKm: 0.45,
+    radioKm: 0.42,
     revisar: false,
   },
   {
@@ -706,7 +706,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 200,
     lat: 8.618,
     lng: -71.6897,
-    radioKm: 0.45,
+    radioKm: 0.42,
     revisar: false,
   },
   {
@@ -715,7 +715,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 100,
     lat: 8.59624,
     lng: -71.63322,
-    radioKm: 0.45,
+    radioKm: 0.35,
     revisar: false,
   },
   {
@@ -724,7 +724,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 200,
     lat: 8.592,
     lng: -71.628,
-    radioKm: 0.45,
+    radioKm: 0.35,
     revisar: true,
   },
   {
@@ -751,7 +751,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 100,
     lat: 8.60981,
     lng: -71.63655,
-    radioKm: 0.45,
+    radioKm: 0.24,
     revisar: false,
   },
   {
@@ -778,7 +778,7 @@ export const TABULADOR_EL_VIGIA: readonly DestinoTabulador[] = [
     precio: 200,
     lat: 8.6234,
     lng: -71.64397,
-    radioKm: 0.45,
+    radioKm: 0.34,
     revisar: false,
   },
 ];

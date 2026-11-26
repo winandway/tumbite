@@ -208,6 +208,11 @@ export type DesgloseViaje = {
    */
   recargoNoche?: number;
   recargoNochePb?: number;
+  /**
+   * C-RECARGO-NOCHE: la hora reservada con que se cotizó (solo si la app la declaró). Sin ella, la
+   * cotización vale como se mostró (apps de antes, o un viaje para ahora).
+   */
+  horaPrecio?: string;
 };
 
 /** Redondeo de la mitad hacia arriba al paso de la tarifa. */
@@ -304,6 +309,21 @@ export function conRecargoNoche(
     recargoNoche: recargo,
     recargoNochePb: t.recargoNochePb ?? 0,
   };
+}
+
+/**
+ * C-RECARGO-NOCHE: un precio que se RECALCULA a mitad de viaje (paradas, espera al cerrar) lleva el
+ * recargo con que nació el viaje (`pb` guardado en su desglose; 0 = viaje de día), nunca el de la hora
+ * del recálculo: la noche la decidió la hora de la cotización o de la reserva.
+ */
+export function conRecargoDelViaje(
+  dg: DesgloseViaje,
+  pb: number,
+  t: Pick<TarifaViaje, 'redondeo'>,
+): DesgloseViaje {
+  const recargo = recargoNocheDe(dg.total, { recargoNochePb: pb, redondeo: t.redondeo });
+  if (recargo <= 0) return dg;
+  return { ...dg, total: dg.total + recargo, recargoNoche: recargo, recargoNochePb: pb };
 }
 
 /** C-RECARGO-NOCHE: cuánto suma la noche a un precio (redondeado hacia abajo al paso de la ciudad). */

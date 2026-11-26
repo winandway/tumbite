@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from './app';
 import { conciliarPedidos } from './conciliacion';
-import { CLAVE_HUELLA_ESQUEMA, reiniciarEsquema } from './esquema';
+import { CLAVE_HUELLA_ESQUEMA, SQL_ARRANQUE, reiniciarEsquema } from './esquema';
 import { contarFilas } from './presupuestoFilas';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { crearBasePruebas } from './pruebas/d1';
@@ -63,10 +63,14 @@ describe('C-LECTURAS-POR-PETICION · ninguna ruta recorre una tabla grande', () 
       .bind(CLAVE_HUELLA_ESQUEMA)
       .first<{ valor: string }>();
     expect(huella?.valor).toMatch(/:pruebas$/);
-    // Otro servidor (otro aislado) con el mismo código: lee una fila y sigue.
+    // Otro servidor (otro aislado) con el mismo código: UNA consulta (la huella, y con ella la marca
+    // de la semilla de El Vigía y si esa zona existe: C-TABULADOR-VIGIA) y sigue.
     reiniciarEsquema();
     const otra = await medidor.medir(() => m.llamar('GET', '/datos/version'));
-    expect(otra.lecturas.map((l) => l.sql)).toEqual(['SELECT valor FROM config WHERE clave = ?']);
+    expect(otra.lecturas.map((l) => l.sql)).toEqual([
+      SQL_ARRANQUE.replace(/\s+/g, ' ').slice(0, 160),
+    ]);
+    expect(otra.total).toBeLessThanOrEqual(3);
     // Código nuevo (otra huella): la revisión completa vuelve a correr una vez.
     await m.DB.prepare('UPDATE config SET valor = ? WHERE clave = ?')
       .bind('de-otro-codigo', CLAVE_HUELLA_ESQUEMA)

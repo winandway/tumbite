@@ -15,7 +15,7 @@
 ## Tabulador de El Vigía y tarifa nocturna (encargo de Richard, 25 nov 2026) — Venezuela, El Vigía, Moto · rama `fase-tabulador-vigia`, sin subir
 
 - [x] [para: desarrollador] Tabulador de la calle como precios fijos (83 destinos por vía, 126 rutas con los regresos de la zona), tarifa aprendida (base 0, 0,33 $/km, mínimo 1 $), umbral 0, comisión del conductor en El Vigía, tarifa nocturna +30 %, panel con lo que le queda al conductor, Docs es/en (C-TABULADOR-VIGIA, C-RECARGO-NOCHE).
-- [ ] [para: revisor-calidad] Revisar la rama `fase-tabulador-vigia` una vez antes de publicar (dinero: comisión y precio del pasajero en El Vigía).
+- [ ] [para: revisor-calidad] Revisar otra vez la rama `fase-tabulador-vigia` (devolución del 25 nov corregida: los ocho puntos, ver C-TABULADOR-VIGIA y C-RECARGO-NOCHE en CANDADOS).
 - [ ] [para: desarrollador] Al publicar: mirar en el sitio de pruebas que la semilla corrió (Viajes → Precios de la zona, El Vigía por vías) y pedir un viaje de prueba de día y otro de noche; compilar la app de clientes para la línea «Tarifa nocturna».
 - [ ] [para: jefe-operaciones] Repartir al equipo de la ciudad: corregir en el panel los 17 puntos marcados «Revisar punto en el mapa» de El Vigía.
 

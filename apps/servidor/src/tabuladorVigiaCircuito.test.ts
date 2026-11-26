@@ -2,8 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { CIUDAD_EL_VIGIA as EVG, type DesgloseViaje, horaLocal } from '@tumbite/compartido';
 import { mundo } from './pruebas/ayuda';
 import { conductorDeMoto } from './pruebas/conductorMoto';
-import { conPrecioZona } from './precioZona';
+import { TOPE_RUTAS_POR_ZONA, conPrecioZona } from './precioZona';
+
+/**
+ * Lecturas (filas) que puede gastar una cotización de Moto en El Vigía con sus rutas (medido: 171,
+ * con las 126 rutas; el tope deja lugar a las que agregue el equipo hasta TOPE_RUTAS_POR_ZONA).
+ */
+const PRESUPUESTO_LECTURAS_COTIZAR = 250;
 import { saludLibro } from './internacional/libro';
+import { medidorDeLecturas } from './pruebas/lecturas';
+import { exigirNocheDeLaReserva } from './rutas/viajesPasajero';
 import { sembrarTabuladorVigia } from './semillaTabuladorVigia';
 import { TABULADOR_EL_VIGIA } from './tabuladorElVigia';
 
@@ -20,8 +28,15 @@ const lugar = (nombre: string) => {
   return { lat: d.lat, lng: d.lng, direccion: nombre };
 };
 
-async function escenario() {
-  const m = mundo({}, { host: 'staging.tumbite.com' });
+async function escenario({ medir = false } = {}) {
+  let medidor: ReturnType<typeof medidorDeLecturas> | null = null;
+  const m = mundo(
+    {},
+    {
+      host: 'staging.tumbite.com',
+      ...(medir ? { envolver: (db: D1Database) => (medidor = medidorDeLecturas(db)).db } : {}),
+    },
+  );
   const admin = await m.cuenta('admin', 'Soporte Divoox');
   const cliente = await m.cuenta('cliente', 'Pasajero El Vigía');
   const r = await m.llamar(
@@ -76,7 +91,7 @@ async function escenario() {
       desglose: DesgloseViaje;
     };
   };
-  return { m, admin, cliente, fijarNoche, cotizar };
+  return { m, admin, cliente, fijarNoche, cotizar, medidor: () => medidor };
 }
 type E = Awaited<ReturnType<typeof escenario>>;
 
@@ -161,31 +176,129 @@ describe('C-TABULADOR-VIGIA: el precio en El Vigía', () => {
     expect(corto.precioZona).toBe(false);
   });
 
-  it('una reserva se cotiza con SU hora; si la cotización era de otra hora, hay que volver a cotizar', async () => {
+  it('app nueva: la reserva se cotiza con SU hora; si se pide para otra franja, hay que volver a cotizar', async () => {
     const e = await escenario();
     // Ahora es de día y dentro de 3 horas es de noche.
     await e.fijarNoche(true, 3);
-    const hora = new Date(Date.now() + 3 * 3_600_000 + 5 * 60_000).toISOString();
-    const deDia = await e.cotizar(lugar('KM 9'));
-    expect(deDia.total).toBe(300);
+    const noche = new Date(Date.now() + 3 * 3_600_000 + 5 * 60_000).toISOString();
+    const dia = new Date(Date.now() + 3_600_000).toISOString();
+    const deNoche = await e.cotizar(lugar('KM 9'), { programadoPara: noche });
+    expect(deNoche.total).toBe(390);
+    expect(deNoche.desglose.horaPrecio).toBe(noche);
     const mal = await e.m.llamar(
       'POST',
       '/datos/viajes',
-      { cotizacionId: deDia.id, metodoPago: 'efectivo', programadoPara: hora },
+      { cotizacionId: deNoche.id, metodoPago: 'efectivo', programadoPara: dia },
       e.cliente.token,
     );
     expect(mal.estado).toBe(409);
     expect(mal.datos.campo).toBe('cotizacionId');
     expect(String(mal.datos.error)).toMatch(/tarifa nocturna|night fare/);
-    const deNoche = await e.cotizar(lugar('KM 9'), { programadoPara: hora });
-    expect(deNoche.total).toBe(390);
     const bien = await e.m.llamar(
       'POST',
       '/datos/viajes',
-      { cotizacionId: deNoche.id, metodoPago: 'efectivo', programadoPara: hora },
+      { cotizacionId: deNoche.id, metodoPago: 'efectivo', programadoPara: noche },
       e.cliente.token,
     );
     expect(bien.estado, JSON.stringify(bien.datos)).toBe(201);
+  });
+
+  it('app de la tienda (cotiza sin hora): la reserva de noche se crea con el precio que vio, sin 409', async () => {
+    const e = await escenario();
+    await e.fijarNoche(true, 3);
+    const noche = new Date(Date.now() + 3 * 3_600_000 + 5 * 60_000).toISOString();
+    const vieja = await e.cotizar(lugar('KM 9'));
+    expect(vieja.total).toBe(300);
+    expect(vieja.desglose.horaPrecio).toBeUndefined();
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: vieja.id, metodoPago: 'efectivo', programadoPara: noche },
+      e.cliente.token,
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(201);
+    const q = await e.m.DB.prepare('SELECT total FROM cotizaciones_viaje WHERE id = ?')
+      .bind(vieja.id)
+      .first<{ total: number }>();
+    expect(q?.total).toBe(300);
+  });
+
+  it('cotizado a las 20:59 y pedido a las 21:05 sin reserva: se cobra lo mostrado; con hora declarada de día y pedido de noche, se vuelve a cotizar', () => {
+    const tarifa = JSON.stringify({
+      base: 0,
+      porKm: 46,
+      porMinuto: 0,
+      minimo: 100,
+      recargoNochePb: 3000,
+    });
+    const a = (h: number, m: number) => new Date(Date.UTC(2026, 10, 26, h + 4, m));
+    const sinHora = { tarifa_json: tarifa, desglose_json: JSON.stringify({ total: 300 }) };
+    expect(() => exigirNocheDeLaReserva(sinHora, null, EVG.zonaHoraria, a(21, 5))).not.toThrow();
+    const conHora = {
+      tarifa_json: tarifa,
+      desglose_json: JSON.stringify({ total: 300, horaPrecio: a(20, 59).toISOString() }),
+    };
+    expect(() => exigirNocheDeLaReserva(conHora, null, EVG.zonaHoraria, a(20, 59))).not.toThrow();
+    expect(() => exigirNocheDeLaReserva(conHora, null, EVG.zonaHoraria, a(21, 5))).toThrow(
+      /tarifa nocturna/,
+    );
+    // Una ciudad sin recargo nunca lo comprueba.
+    const sinRecargo = {
+      ...conHora,
+      tarifa_json: JSON.stringify({ base: 0, porKm: 46, porMinuto: 0, minimo: 100 }),
+    };
+    expect(() => exigirNocheDeLaReserva(sinRecargo, null, EVG.zonaHoraria, a(21, 5))).not.toThrow();
+  });
+
+  it('de noche, cambiar las paradas y la espera conservan el 30 % del viaje', async () => {
+    const e = await escenario();
+    await e.fijarNoche(true);
+    const cond = await conductorDeMoto(e.m, CENTRO, EVG.id);
+    await recargar(e, cond.token, 1000);
+    // Un destino FUERA del tabulador (con precio de la zona no se pueden cambiar paradas).
+    const fuera = { lat: 8.58, lng: -71.6, direccion: 'Destino fuera de la lista' };
+    const cot = await e.cotizar(fuera);
+    expect(cot.precioZona).toBe(false);
+    expect(cot.recargoNoche?.pb).toBe(3000);
+    const v = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: cot.id, metodoPago: 'efectivo' },
+      e.cliente.token,
+    );
+    expect(v.estado, JSON.stringify(v.datos)).toBe(201);
+    const id = v.datos.viaje.id as string;
+    // Aunque sea de día cuando se cambian las paradas, el viaje nació de noche.
+    await e.fijarNoche(false);
+    const cambio = await e.m.llamar(
+      'POST',
+      `/datos/viajes/${id}/paradas`,
+      { paradas: [{ lat: 8.6, lng: -71.62, direccion: 'Una parada' }], confirmar: false },
+      e.cliente.token,
+    );
+    expect(cambio.estado, JSON.stringify(cambio.datos)).toBe(200);
+    const dg = cambio.datos.cambio.desglose as DesgloseViaje;
+    expect(dg.recargoNochePb).toBe(3000);
+    expect(dg.recargoNoche).toBe(Math.floor(((dg.total - (dg.recargoNoche ?? 0)) * 3000) / 10_000));
+    expect(cambio.datos.cambio.totalNuevo).toBe(dg.total);
+    // La espera: 10 minutos (3 gratis) a 0,05 por minuto = 0,35, más el 30 % = 0,45.
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    await e.m.DB.prepare(
+      "UPDATE viajes SET llego_en = datetime('now', '-10 minutes') WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    const pin = (await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    expect(await cond.paso(id, 'terminar')).toBe(200);
+    const fin = await e.m.DB.prepare(
+      'SELECT total_final_centavos AS t FROM viajes WHERE operacion_id = ?',
+    )
+      .bind(id)
+      .first<{ t: number }>();
+    expect(fin?.t).toBe(cot.total + 45);
   });
 
   it('el panel dice lo que paga el pasajero, lo de Divoox y lo que le queda al conductor, de día y de noche', async () => {
@@ -330,5 +443,23 @@ describe('C-RECARGO-NOCHE: la app del pasajero', () => {
     expect(textos).toContain("recargoNoche: 'Tarifa nocturna'");
     expect(textos).toContain("recargoNoche: 'Night fare'");
     expect(leer('cliente', 'src', 'viajes', 'MisViajes.tsx')).toContain("'recargoNoche',");
+  });
+});
+
+describe('C-TABULADOR-VIGIA: lecturas por cotización con las rutas de El Vigía', () => {
+  it('cotizar con ~126 rutas en la zona queda dentro del presupuesto de lecturas', async () => {
+    const e = await escenario({ medir: true });
+    await e.fijarNoche(false);
+    await e.cotizar(lugar('KM 9'));
+    const medidor = e.medidor();
+    if (!medidor) throw new Error('sin medidor');
+    const r = await medidor.medir(() => e.cotizar(lugar('KM 9')));
+    const rutas = r.lecturas.filter((l) => l.sql.includes('FROM rutas_precio_zona'));
+    // Medido el 25 nov 2026: 171 filas, 126 de ellas las rutas de la zona (una sola consulta).
+    expect(rutas).toHaveLength(1);
+    expect(rutas[0]?.filas ?? 0).toBeLessThanOrEqual(TOPE_RUTAS_POR_ZONA);
+    expect(r.total, r.lecturas.map((l) => `${l.filas} ${l.sql}`).join('\n')).toBeLessThanOrEqual(
+      PRESUPUESTO_LECTURAS_COTIZAR,
+    );
   });
 });

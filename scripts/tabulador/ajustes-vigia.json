@@ -152,5 +152,15 @@
     "lng": -72.2261,
     "radioKm": 6,
     "motivo": "San Cristóbal (ciudad grande: radio de 6 km)"
+  },
+  "merida:Mesa Bolívar": {
+    "lat": 8.4757,
+    "lng": -71.5979,
+    "motivo": "plaza de Mesa Bolívar (comprobado: está sobre la misma carretera norte-sur que La Palmita, por eso casi la misma longitud)"
+  },
+  "merida:Palmita": {
+    "lat": 8.5423,
+    "lng": -71.598,
+    "motivo": "Plaza Bolívar de La Palmita"
   }
 }
