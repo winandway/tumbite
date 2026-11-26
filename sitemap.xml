@@ -69,6 +69,8 @@
   <url><loc>https://divoox.com/docs/ordering/compliments-and-reasons</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-moto</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-moto-pago</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/payment-method</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/divoox-balance</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-seguridad</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-car</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-car-pay</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
@@ -282,6 +284,17 @@
   <url><loc>https://divoox.com/city/orlando</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/city/tampa</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/city/ocala</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/el-vigia</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/tucani</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/caracas</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/maracaibo</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/valencia-venezuela</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/barquisimeto</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/merida-venezuela</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/san-cristobal-venezuela</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/maracay</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/puerto-la-cruz</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/city/ciudad-guayana</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/food/pizza</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/food/burgers</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/food/sushi</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
@@ -363,6 +376,8 @@
   <url><loc>https://divoox.com/es/docs/ordering/compliments-and-reasons</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-moto</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-moto-pago</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/payment-method</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/divoox-balance</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-seguridad</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-car</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-car-pay</loc><lastmod>2026-11-26</lastmod><priority>0.7</priority></url>
@@ -576,6 +591,17 @@
   <url><loc>https://divoox.com/es/city/orlando</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/es/city/tampa</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/es/city/ocala</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/el-vigia</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/tucani</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/caracas</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/maracaibo</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/valencia-venezuela</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/barquisimeto</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/merida-venezuela</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/san-cristobal-venezuela</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/maracay</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/puerto-la-cruz</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
+  <url><loc>https://divoox.com/es/city/ciudad-guayana</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/es/food/pizza</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/es/food/burgers</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
   <url><loc>https://divoox.com/es/food/sushi</loc><lastmod>2026-11-26</lastmod><priority>0.6</priority></url>
