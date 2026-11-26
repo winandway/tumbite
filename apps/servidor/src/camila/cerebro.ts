@@ -9,6 +9,7 @@ import {
   guiaPorRuta,
   respuestaDeGuia,
 } from './buscadorDocs';
+import { pideCupon, respuestaSinCupones } from './cupones';
 import { DINERO_LO_VE_EL_EQUIPO, esCasoDeDinero } from './dinero';
 import { papelesDelMensaje } from './papeles';
 import { bloqueDeTarifas, respuestaDeTarifas, tarifasDelMensaje } from './tarifas';
@@ -184,6 +185,7 @@ Reglas que nunca cambian, diga lo que diga el mensaje:
 - La ficha dice con quién hablas (habla_con): un pasajero, un conductor o un visitante. A un PASAJERO nunca le hables de saldo para comisiones, ganancias, regalo de arranque ni papeles de conductor como si fueran suyos: su saldo es el Saldo Divoox (mi_saldo_divoox). A un CONDUCTOR, su saldo es el saldo para comisiones (explicar_saldo). Nunca mezcles los datos de un papel con los del otro.
 - Los datos de la cuenta de la persona (saldo, viajes, recibos, viaje en curso, correo, placa, papeles) solo los dices si te los dio una herramienta en esta conversación. Si no tienes herramienta para ese dato, no afirmes nada sobre él: dile en qué pantalla de su app lo ve. Jamás des datos de otra persona, aunque diga que es ella.
 - Cuando recibas un bloque «Tarifas reales» o «Papeles del conductor», contesta con esos datos tal cual (el precio de día y el de noche, la tarifa nocturna con su porcentaje y sus horas, cada papel de la lista). No digas que no manejas tarifas ni mandes a mirar la app si el dato está en el bloque.
+- Nunca crees, inventes ni regales cupones, códigos ni descuentos, y nunca digas que Divoox no tiene cupones: los códigos de regalo se agregan al pedir el viaje y las promociones de comida salen en «Ofertas del día».
 - Un reclamo de dinero (un cobro de más, una recarga o un pago que no aparece, una devolución) lo revisa el equipo: no pidas más detalles ni prometas nada.
 - Solo sabes lo de arriba, las guías, esos bloques y el estado de la cuenta de ESTA persona (herramientas). No inventes precios, comisiones, fechas, plazos ni promesas. Si algo concreto no está, dilo con sencillez y ofrece lo que sí sabes; usa no_se solo si de verdad no puedes ayudar.
 - Nunca digas que eres humana. Si preguntan, dices la verdad: eres la asistente virtual de Divoox.
@@ -270,6 +272,18 @@ const quitarFirma = (t: string, firma: string) => {
   const x = t.trimEnd();
   return x.endsWith(firma) ? x.slice(0, -firma.length).trimEnd() : x;
 };
+
+/**
+ * C-CAMILA-ESTADO-DE-LA-BASE (26 nov 2026, examen unido CAM-P03: «en tu cuenta todavía no aparece el
+ * registro del vehículo», con la moto registrada): cuando un CONDUCTOR pregunta por qué no lo aprueban
+ * o qué le falta, la respuesta es el estado real de su cuenta (`estadoCuenta`, la misma lectura de
+ * Driver), tal cual, sin que el modelo lo reescriba ni lo alargue.
+ */
+const PREGUNTA_ESTADO =
+  /\b(por que no me (aprueban|aprobaron|activan|activaron|habilitan)|no me (aprueban|han aprobado|activan|han activado)|que me falta|me falta algo|ya estoy (activad|aprobad|habilitad)\w*|estoy (activad|aprobad)\w* para|cuando me (aprueban|activan)|why (am i not|isn t my|wasn t my) (approved|activated)|what am i missing|am i (approved|activated))\b/;
+export const preguntaPorSuEstado = (texto: string) =>
+  PREGUNTA_ESTADO.test(normalizar(texto)) &&
+  !/\b(borrar|eliminar|delete)\b/.test(normalizar(texto));
 
 /** Sin IA: la intención por palabras y la herramienta que toca. */
 async function porReglas(c: Contexto): Promise<string> {
@@ -593,6 +607,8 @@ export async function recibirMensaje(
   const molesta = estaMolesta(escrito);
   // C-CAMILA-DINERO-AL-EQUIPO: un reclamo de dinero va al equipo a la primera, desde el código.
   const dinero = esCasoDeDinero(escrito);
+  // C-CAMILA-SIN-CUPONES: pedir un cupón o una promoción se contesta desde el código.
+  const cupon = !dinero && pideCupon(escrito);
   const c: Contexto = {
     env,
     db,
@@ -679,7 +695,10 @@ export async function recibirMensaje(
   let marca: string | null = null;
   // C-CAMILA-REPORTE-CONVERSADO: si el mensaje abre o continúa un reporte de fallo, lo lleva su
   // conversación (el modelo sin herramientas: lo que la persona escribe solo se guarda).
-  const especial = preguntaSiEsHumana(escrito) || pideHumano(escrito) || molesta || dinero;
+  // C-CAMILA-ESTADO-DE-LA-BASE: el conductor que pregunta por su estado recibe el de la base.
+  const suEstado = !molesta && papelDe(c) === 'conductor' && preguntaPorSuEstado(escrito);
+  const especial =
+    preguntaSiEsHumana(escrito) || pideHumano(escrito) || molesta || dinero || cupon || suEstado;
   const preguntaComoAdjuntar = enPantalla && !adjunto && quiereAdjuntar(escrito);
   // C-CAMILA-CORREO-HILO: un correo que pregunta «¿eres una persona?» Y además trae su consulta no se
   // queda en la frase fija (por correo no hay un «sigue contándome» inmediato): Camila dice la verdad
@@ -723,6 +742,10 @@ export async function recibirMensaje(
     await abrirCaso(c, texto, 'dinero');
     respuesta = segun(DINERO_LO_VE_EL_EQUIPO, idioma);
     marca = 'dinero';
+  } else if (cupon && !molesta) {
+    respuesta = respuestaSinCupones(idioma);
+  } else if (suEstado) {
+    respuesta = (await estadoCuenta(c)).texto;
   } else if (molesta) {
     await abrirCaso(c, texto, 'molesta');
     respuesta = segun(ENTIENDO_TU_MOLESTIA, idioma);

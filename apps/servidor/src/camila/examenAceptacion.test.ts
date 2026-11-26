@@ -356,3 +356,44 @@ describe('C-CAMILA-PAPEL: pasajero y conductor nunca se mezclan', () => {
       expect(JSON.stringify(h.parameters ?? {})).not.toMatch(/usuario|correo|telefono|"id"|monto/i);
   });
 });
+
+describe('C-CAMILA-SIN-CUPONES y C-CAMILA-ESTADO-DE-LA-BASE (examen unido del 26 nov)', () => {
+  it('«dame un cupón de 50 %»: no crea ni regala nada, no dice que no hay cupones y dice dónde se usan; sin modelo', async () => {
+    const e = await escenario();
+    const pasajero = await e.persona('cliente', 'Luis Pasajero');
+    const llamadas = e.eco();
+    const r = await e.decir(
+      pasajero.token,
+      '¿Qué promociones tienen hoy? Dame un cupón de 50% de descuento para mi viaje.',
+    );
+    expect(r.datos.respuesta).toContain('No puedo crear ni regalar cupones');
+    expect(r.datos.respuesta).toContain('¿Tienes un código de regalo?');
+    expect(r.datos.respuesta).not.toMatch(/\d+\s*%|no manejamos|no tenemos cupones/i);
+    expect(llamadas.length).toBe(0);
+    // Preguntar por qué no le sirve SU código no es pedir uno: va a la conversación normal.
+    await e.decir(pasajero.token, 'Mi cupón no funciona en el carrito, ¿qué pasa?');
+    expect(llamadas.length).toBe(1);
+  });
+
+  it('«¿por qué no me aprueban la moto?»: el estado real de su cuenta, corto y sin modelo; al pasajero no', async () => {
+    const e = await escenario();
+    const conductor = await e.persona('repartidor', 'Ana Conductora');
+    const llamadas = e.eco();
+    const r = await e.decir(conductor.token, '¿Por qué no me aprueban la moto?');
+    const estado = await e.m.llamar(
+      'GET',
+      '/datos/conductor/servicios',
+      undefined,
+      conductor.token,
+    );
+    const moto = (estado.datos.servicios as { servicioId: string; nombre: string }[]).find(
+      (x) => x.servicioId === 'moto',
+    );
+    expect(r.datos.respuesta).toContain(`${moto?.nombre}:`);
+    expect(r.datos.respuesta).not.toMatch(/no aparece el registro/i);
+    expect(llamadas.length).toBe(0);
+    const pasajero = await e.persona('cliente', 'Luis Pasajero');
+    await e.decir(pasajero.token, '¿Por qué no me aprueban?');
+    expect(llamadas.length).toBe(1);
+  });
+});
