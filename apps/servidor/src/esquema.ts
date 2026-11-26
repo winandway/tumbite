@@ -5,6 +5,7 @@ import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_AGENTES } from './esquemaAgentes';
+import { ESQUEMA_SALDO_CLIENTE } from './esquemaSaldoCliente';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
 import {
@@ -435,6 +436,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['sesiones', 'actua_como', 'TEXT'],
   ['dispositivos', 'app', 'TEXT'],
   ['puentes_sesion', 'papel', 'TEXT'],
+  // C-SALDO-CLIENTE (25 nov 2026, Venezuela): cuánto del viaje cubre el Saldo Divoox del pasajero
+  // (apartado al pedir, ajustado al terminar, 0 si el viaje no se hizo). Todas las pantallas lo leen.
+  ['viajes', 'saldo_divoox', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 /**
@@ -714,6 +718,8 @@ async function asegurarFase3(db: D1Database): Promise<void> {
     ...ESQUEMA_FLEX,
     ...ESQUEMA_AGENTES,
     ...ESQUEMA_CUENTA_UNICA,
+    // C-SALDO-CLIENTE: el libro del Saldo Divoox, inmutable y nunca en negativo.
+    ...ESQUEMA_SALDO_CLIENTE,
   ];
   const nombres = todo
     .map((sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1])
@@ -770,6 +776,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         ESQUEMA_FLEX,
         ESQUEMA_AGENTES,
         ESQUEMA_CUENTA_UNICA,
+        ESQUEMA_SALDO_CLIENTE,
         COLUMNAS_DEL_ESQUEMA,
         CONFIG_DINERO_INICIAL,
         [...serviciosImplementados(entorno)],

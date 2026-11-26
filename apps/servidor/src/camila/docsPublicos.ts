@@ -736,7 +736,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Abre Divoox y toca «Moto».",
    "Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.",
-   "Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu ciudad (en Venezuela, efectivo o pago móvil).",
+   "Mira el precio fijo y toca «Continuar»: en «Método de pago» eliges cómo pagas con los métodos de tu ciudad (en Venezuela, tu Saldo Divoox, Pago Móvil o efectivo).",
    "Toca «Solicitar moto». Cuando el conductor acepte, verás sus datos y su ubicación.",
    "Al subirte, comprueba la placa y, si la app te muestra un código, díselo al conductor."
   ],
@@ -746,19 +746,19 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "ordering/ride-moto-pago",
   "titulo": "Pagar, cancelar y dejar propina en Moto",
-  "resumen": "Paga en efectivo, con tarjeta o por pago móvil (según tu país), cancela gratis al principio y deja propina cuando termine el viaje.",
+  "resumen": "Paga con tu Saldo Divoox, en efectivo, con tarjeta o por Pago Móvil (según tu país), cancela gratis al principio y deja propina cuando termine el viaje.",
   "preguntas": [
    "¿Cuánto cuesta cancelar un viaje en moto?",
    "¿Puedo dejar propina?",
    "¿Qué pasa si debo un cargo de un viaje en efectivo?"
   ],
   "pasos": [
-   "Elige cómo pagas antes de pedir: la app te muestra solo los métodos de tu ciudad.",
+   "Toca «Continuar» y, en «Método de pago», elige cómo pagas: la app te muestra solo los métodos de tu ciudad.",
    "Para cancelar, toca «Cancelar viaje»: la app te dice si es gratis o cuánto cuesta.",
    "Al terminar, califica el viaje y, si pagaste con tarjeta, deja propina si quieres. Va entera al conductor.",
    "Si cancelaste tarde un viaje en efectivo, el cargo se suma a tu próximo viaje."
   ],
-  "cuerpo": "Con tarjeta, apartamos el precio al pedir y lo cobramos al terminar. En efectivo, le pagas al conductor al llegar. Donde existe el pago móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de pago móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó. En Venezuela todo lo que pagas en mano se ve en dólares y en bolívares: antes de confirmar, durante el viaje, al terminar y en tu recibo. La tasa queda fijada al pedir el viaje, así tú y tu conductor ven exactamente el mismo monto aunque la tasa cambie después; la app te dice qué tasa se usó y de qué día. Si tienes un regalo de Divoox, ves la diferencia que te toca pagar en las dos monedas. Si ese día no hay tasa disponible, la app lo dice y pagas en dólares. Cancelar es gratis mientras buscamos conductor y durante los primeros minutos después de que acepta. Después, la app te dice antes cuánto cuesta cancelar; ese cargo es para el conductor que fue a buscarte. Si el conductor espera más de lo incluido en el punto de recogida, se suma un pequeño cargo por minuto, como en los demás servicios de transporte."
+  "cuerpo": "Después de ver el precio tocas «Continuar» y llegas a «Método de pago»: ahí ves el monto a pagar y eliges cómo pagas antes de solicitar. Está en su propia guía, «Elegir cómo pagas un viaje». Con tarjeta, apartamos el precio al pedir y lo cobramos al terminar. En efectivo, le pagas al conductor al llegar. Donde existe el Pago Móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de Pago Móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó. Si en ese momento no hay conductores cerca que reciban Pago Móvil, la opción sale con «Aún no disponible para este viaje» y puedes pagar en efectivo. En Venezuela también puedes pagar con tu Saldo Divoox: si alcanza, pagas todo con saldo; si no, usas lo que tienes y el resto lo pagas en efectivo o por Pago Móvil. Está en la guía «Tu Saldo Divoox». En Venezuela todo lo que pagas en mano se ve en dólares y en bolívares: antes de confirmar, durante el viaje, al terminar y en tu recibo. La tasa queda fijada al pedir el viaje, así tú y tu conductor ven exactamente el mismo monto aunque la tasa cambie después; la app te dice qué tasa se usó y de qué día. Si tienes un regalo de Divoox, ves la diferencia que te toca pagar en las dos monedas. Si ese día no hay tasa disponible, la app lo dice y pagas en dólares. Cancelar es gratis mientras buscamos conductor y durante los primeros minutos después de que acepta. Después, la app te dice antes cuánto cuesta cancelar; ese cargo es para el conductor que fue a buscarte. Si el conductor espera más de lo incluido…"
  },
  {
   "idioma": "es",
@@ -3490,7 +3490,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Open Divoox and tap “Moto”.",
    "Confirm your pickup point (you can move it on the map) and enter your destination.",
-   "Check the upfront price and choose how to pay: the app shows the methods available in your city (in the United States, cash or card).",
+   "Check the upfront price and tap “Continue”: on “Payment method” you choose how to pay with the methods available in your city (in the United States, cash or card).",
    "Tap “Request moto”. When a driver accepts, you’ll see their details and location.",
    "When you get on, check the plate and, if the app shows a code, tell it to the driver."
   ],
@@ -3507,12 +3507,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "What happens if I owe a fee from a cash ride?"
   ],
   "pasos": [
-   "Choose how you pay before you request: the app only shows the methods available in your city.",
+   "Tap “Continue” and, on “Payment method,” choose how you pay: the app only shows the methods available in your city.",
    "To cancel, tap “Cancel ride”: the app tells you whether it’s free or what it costs.",
    "When the ride ends, rate it and leave a tip if you like: in the app if you paid by card, or handed to your driver if you paid in cash. It all goes to the driver.",
    "If you canceled a cash ride late, the fee is added to your next ride."
   ],
-  "cuerpo": "With a card, we hold the price when you request and charge it when the ride ends. With cash, you pay the driver when you arrive. You pick cash or card on the same screen where you see the price, before you request. During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay. Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up. If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services."
+  "cuerpo": "After you see the price, tap “Continue” to open “Payment method”: it shows the amount to pay and you choose how you’ll pay before you request. It has its own guide, “Choosing how you pay for a ride.” With a card, we hold the price when you request and charge it when the ride ends. With cash, you pay the driver when you arrive. During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay. Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up. If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services."
  },
  {
   "idioma": "en",

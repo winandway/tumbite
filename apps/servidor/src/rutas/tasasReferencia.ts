@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
+  pagaEnMano,
   HORAS_VIGENCIA_TASA,
   MONEDA_REFERENCIA,
   type Referencia,
@@ -630,7 +631,7 @@ export async function cobroEnManoDeViaje(
   const f = await db
     .prepare(
       `SELECT v.total_final_centavos AS total, v.metodo_pago, v.ref_tasa, v.ref_fecha, v.ref_monto,
-              z.pais, q.moneda,
+              z.pais, q.moneda, COALESCE(v.saldo_divoox, 0) AS saldo,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id
                  AND rg.estado <> 'liberado') AS regalo
          FROM viajes v JOIN operaciones o ON o.id = v.operacion_id JOIN zonas z ON z.id = o.zona_id
@@ -647,10 +648,12 @@ export async function cobroEnManoDeViaje(
       pais: string;
       moneda: string | null;
       regalo: number | null;
+      saldo: number | null;
     }>();
   if (!f || f.total == null) return null;
   const total = Number(f.total);
-  const cobrarEnMano = Math.max(0, total - Math.min(Number(f.regalo ?? 0), total));
+  // C-SALDO-CLIENTE: la misma cuenta de todas las pantallas: total − regalo − Saldo Divoox.
+  const cobrarEnMano = pagaEnMano(total, { monto: Number(f.regalo ?? 0) }, Number(f.saldo ?? 0));
   if (f.metodo_pago === 'tarjeta') return { cobrarEnMano, enMano: null };
   const enMano = montoEnMano(
     cobrarEnMano,

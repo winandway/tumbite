@@ -3544,5 +3544,34 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "negocio_id",
     "persona_id",
     "creado_en"
+  ],
+  "saldo_cliente_movimientos": [
+    "id",
+    "cliente_id",
+    "monto",
+    "moneda",
+    "concepto",
+    "referencia",
+    "operacion_id",
+    "autor_id",
+    "motivo",
+    "comprobante",
+    "creado_en"
+  ],
+  "usos_saldo_divoox": [
+    "operacion_id",
+    "cliente_id",
+    "conductor_id",
+    "monto",
+    "apartado",
+    "moneda",
+    "pais",
+    "estado",
+    "motivos",
+    "detalle",
+    "resuelto_por",
+    "creado_en",
+    "cerrado_en",
+    "motivo"
   ]
 };

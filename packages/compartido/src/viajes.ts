@@ -511,6 +511,16 @@ export type CotizacionViaje = {
   totalAnterior?: number;
   /** C-CUPON-DIVOOX: el regalo que paga Divoox en este viaje si se paga en mano (o null). */
   regalo?: import('./regaloDivoox').RegaloDivoox | null;
+  /**
+   * C-SALDO-CLIENTE: el Saldo Divoox disponible del pasajero (solo donde el país lo tiene encendido;
+   * null o ausente = la tarjeta del saldo no aparece en la pantalla «Método de pago»).
+   */
+  saldoDivoox?: import('./saldoDivoox').SaldoDivooxCotizacion | null;
+  /**
+   * C-PAGO-MOVIL-DISPONIBLE: por cada método del país, si se puede usar en ESTE viaje (Pago Móvil
+   * solo si en la zona hay un conductor conectado que lo tenga cargado). Ausente = todos disponibles.
+   */
+  disponibles?: Partial<Record<import('./perfilPasajeros').MetodoPagoViaje, boolean>>;
   /** C-PRECIO-ZONA: el precio es el fijo de la zona (etiqueta de ruta), no el calculado. */
   precioZona?: boolean;
   /** C-PRECIO-ZONA: el lugar de destino de la ruta («hasta»), para decirlo en la app. */

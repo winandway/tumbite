@@ -132,6 +132,8 @@ type FilaListaPasajero = FilaLista &
   FilaRegaloPasajero & {
     origenLat: number | null;
     origenLng: number | null;
+    /** C-SALDO-CLIENTE: lo que cubrió el Saldo Divoox. */
+    saldoDivoox: number;
     destinoLat: number | null;
     destinoLng: number | null;
     conductorNombre: string | null;
@@ -153,6 +155,8 @@ viajesHistorial.get('/viajes/historial', async (c) => {
               EXISTS (SELECT 1 FROM conductores_confianza k WHERE k.cliente_id = o.cliente_id
                         AND k.conductor_id = o.conductor_id) AS deConfianza,
               v.rutina_id AS rutinaId, v.menor_nombre AS menor,
+              -- C-SALDO-CLIENTE: lo que pagó con su Saldo Divoox.
+              COALESCE(v.saldo_divoox, 0) AS saldoDivoox,
               -- C-PRECIO-CON-REGALO: el regalo del viaje, para mostrar el precio como en la tarjeta.
               ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
@@ -250,6 +254,8 @@ viajesHistorial.get('/conductor/viajes/historial', async (c) => {
 });
 
 type FilaRecibo = FilaRegaloPasajero & {
+  /** C-SALDO-CLIENTE: lo que cubrió el Saldo Divoox. */
+  saldo_divoox: number | null;
   id: string;
   servicio: string;
   categoria: string | null;
@@ -290,6 +296,7 @@ async function filaRecibo(db: D1Database, id: string, quien: 'cliente' | 'conduc
               u.nombre AS conductor, h.marca, h.modelo, h.color, h.placa, h.plazas, h.tipo AS vehiculo_tipo,
               v.ref_tasa AS refTasa, v.ref_fecha AS refFecha, v.ref_monto AS refMonto,
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
+              COALESCE(v.saldo_divoox, 0) AS saldo_divoox,
               ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -329,6 +336,8 @@ function recibo(f: FilaRecibo) {
     moneda: f.moneda,
     // C-PRECIO-CON-REGALO: lo que pagó Divoox (el recibo dice lo que se pagó de verdad).
     regalo: regaloPasajero(f),
+    // C-SALDO-CLIENTE: lo que pagó con su Saldo Divoox.
+    saldoDivoox: Number(f.saldo_divoox ?? 0),
     desglose: desgloseDe(f.desglose_json),
     // C-PRECIO-ZONA: el viaje fue con el precio fijo de la zona («Precio de la zona»).
     precioZona: desgloseDe(f.desglose_json).precioZona != null,

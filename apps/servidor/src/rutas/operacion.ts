@@ -1,3 +1,4 @@
+import { TAREA_SALDO_CLIENTES } from '../saldoCliente';
 import { insistirPanicos } from '../panicoZona';
 import { revisarSaldoBajo } from '../saldoBajo';
 import { avisarPasoComida } from '../avisosComida';
@@ -3599,6 +3600,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   TAREA_VIAJES_FIJOS,
   // C-CUPON-DIVOOX: libera los regalos de lo que no se hizo y cierra los que se cortaron.
   TAREA_REGALOS,
+  // C-SALDO-CLIENTE: devuelve el Saldo Divoox de los viajes que no se hicieron y cierra los cortados.
+  TAREA_SALDO_CLIENTES,
   // C-REFERIDOS-EQUIPOS: los premios de referidos que ya se ganaron y los vencidos.
   TAREA_REFERIDOS,
   // C-CAMILA-APRENDE: los lunes arma la lista semanal de lo que Camila no supo (una vez por semana).

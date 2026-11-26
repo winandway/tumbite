@@ -1,6 +1,7 @@
 import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
 import { MENSAJES_EN_LINEAS } from './mensajesEnLineas';
 import { MENSAJES_EN_REGALOS } from './mensajesEnRegalos';
+import { MENSAJES_EN_SALDO_CLIENTE } from './mensajesEnSaldoCliente';
 import { MENSAJES_EN_AGENTES } from './mensajesEnAgentes';
 import { MENSAJES_EN_BANNERS } from './mensajesEnBanners';
 import { MENSAJES_EN_CAMILA } from './mensajesEnCamila';
@@ -88,6 +89,7 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-PERMISOS-FINOS (MON-5): los del equipo interno viven en su propio archivo.
   ...MENSAJES_EN_EQUIPO,
   ...MENSAJES_EN_REGALOS,
+  ...MENSAJES_EN_SALDO_CLIENTE,
   ...MENSAJES_EN_LINEAS,
   ...MENSAJES_EN_AGENTES,
   ...MENSAJES_EN_BANNERS,
