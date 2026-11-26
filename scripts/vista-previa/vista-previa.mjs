@@ -17,7 +17,14 @@
 /* eslint-disable security/detect-non-literal-fs-filename -- rutas del paquete y de una carpeta temporal propia */
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { appendFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
@@ -28,6 +35,7 @@ import {
   WORKER_CONOCIDO,
   configWorker,
   nombreVistaPrevia,
+  sqlSemillaConfig,
   urlAvisoStripe,
   urlVistaPrevia,
   validarBaseVistaPrevia,
@@ -185,6 +193,11 @@ async function abrir() {
     nombre,
     `INSERT INTO config (clave, valor) VALUES ('vista_previa_base', '${nombre}') ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
   );
+  // Los ajustes de pruebas que los guiones dan por hechos (solo los que falten).
+  const semilla = JSON.parse(
+    readFileSync(new URL('./semilla-config.json', import.meta.url), 'utf8'),
+  );
+  sql(nombre, sqlSemillaConfig(semilla));
 
   // 3) El almacén de archivos compartido de las vistas previas (se vacía solo a los 14 días).
   const almacenes = wrangler(['r2', 'bucket', 'list'], { silencio: true });
@@ -217,7 +230,12 @@ async function abrir() {
     const config = configWorker({ nombre, idBase: base.uuid, paquete, commit });
     writeFileSync(join(dir, 'wrangler.json'), JSON.stringify(config, null, 2));
     const reloj = process.env.RELOJ_SECRETO_VISTA || randomBytes(24).toString('hex');
-    const secretos = { RELOJ_SECRETO: reloj, ...llavesStripePrueba() };
+    const secretos = {
+      RELOJ_SECRETO: reloj,
+      // La dirección privada del superadmin sale de esta semilla (C-SUPERADMIN): una propia, al azar.
+      ADMIN_SEMILLA: randomBytes(24).toString('hex'),
+      ...llavesStripePrueba(),
+    };
     if (secretos.STRIPE_SECRET_KEY)
       secretos.STRIPE_WEBHOOK_SECRET = await avisoStripe(secretos.STRIPE_SECRET_KEY, nombre);
     writeFileSync(join(dir, 'secretos.json'), JSON.stringify(secretos));

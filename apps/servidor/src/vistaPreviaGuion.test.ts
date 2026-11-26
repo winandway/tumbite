@@ -11,6 +11,7 @@ import * as reglas from '../../../scripts/vista-previa/reglas.mjs';
  * toca la base de producción ni la del sitio de pruebas compartido, y cada rama tiene la suya.
  */
 const r = reglas as {
+  sqlSemillaConfig: (s: Record<string, unknown>) => string;
   EVENTOS_STRIPE: string[];
   urlAvisoStripe: (nombre: string) => string;
   BASES_PROHIBIDAS: { nombre: string; id: string }[];
@@ -74,6 +75,22 @@ describe('C-VISTA-PREVIA-RAMA: reglas del guion', () => {
     expect(r.urlAvisoStripe('divoox-preview-textos')).toBe(
       'https://divoox-preview-textos.windoce1.workers.dev/datos/stripe/aviso',
     );
+  });
+
+  it('la siembra de ajustes solo agrega lo que falta y no lleva llaves ni dinero real', () => {
+    const semilla = JSON.parse(
+      readFileSync(
+        fileURLToPath(
+          new URL('../../../scripts/vista-previa/semilla-config.json', import.meta.url).href,
+        ),
+        'utf8',
+      ),
+    ) as Record<string, unknown>;
+    expect(semilla.promociones_restaurante).toEqual({ encendidas: true });
+    const sql = r.sqlSemillaConfig(semilla);
+    expect(sql.split('\n').every((l) => l.startsWith('INSERT OR IGNORE INTO config'))).toBe(true);
+    expect(JSON.stringify(semilla)).not.toMatch(/sk_|pk_|whsec_|ydk_|vista_previa_base/);
+    expect(r.sqlSemillaConfig({ "a'b": "x'y" })).toContain("'a''b'");
   });
 
   it('el nombre del guion y el del servidor salen iguales de la misma rama', () => {

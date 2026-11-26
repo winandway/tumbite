@@ -63,7 +63,12 @@ cd /Users/windocellc/Divoox && node scripts/vista-previa/vista-previa.mjs cerrar
 2. Se le aplica `schema.sql`, igual que la plataforma en cada publicación (solo crea lo que falta).
 3. Se le escribe la marca `config.vista_previa_base = divoox-preview-<rama>` (el candado de abajo).
 4. Al primer pedido, el servidor corre sus migraciones y semillas de siempre.
-5. Los guiones crean sus propias cuentas de prueba (correos `.invalid`/`.test`, celulares ficticios)
+5. Se siembran los ajustes de pruebas que los guiones dan por hechos (promociones encendidas,
+   recargas con tarjeta en EE. UU., anuncios, Plus, etc.), solo si faltan:
+   `scripts/vista-previa/semilla-config.json` (copiados del sitio compartido el 26 nov 2026).
+   El worker lleva además los ajustes del sitio de pruebas: foto de control siempre, flota propia y
+   alcohol sin horario, y su propia semilla de administración (la dirección privada del superadmin).
+6. Los guiones crean sus propias cuentas de prueba (correos `.invalid`/`.test`, celulares ficticios)
    y la ciudad de pruebas de Venezuela, **El Vigía** (`VE-MER-ELVIGIA`). No hay datos reales.
 
 ## Los candados (que una vista previa nunca escriba en producción)

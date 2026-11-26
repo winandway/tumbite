@@ -78,6 +78,11 @@ export function configWorker({ nombre, idBase, paquete, commit }) {
       // Sin envíos reales: los guiones usan números y correos ficticios.
       WHATSAPP_PRESUPUESTO_DIA_USD: '0',
       RETIROS_APAGADOS: '1',
+      // Como el sitio de pruebas compartido (y el recorrido local, scripts/recorrido/preparar.mjs): la
+      // foto de control se pide siempre, la flota propia está encendida y el alcohol no tiene horario.
+      SELFIE_CONTROL_SIEMPRE: '1',
+      FLOTA_PROPIA: '1',
+      ALCOHOL_SIN_HORARIO: '1',
     },
   };
 }
@@ -104,4 +109,20 @@ export const EVENTOS_STRIPE = [
 
 export function urlAvisoStripe(nombre) {
   return `${urlVistaPrevia(nombre)}/datos/stripe/aviso`;
+}
+
+/**
+ * La siembra de ajustes (`config`) de una vista previa: los interruptores que el sitio de pruebas
+ * compartido tiene encendidos desde el panel y que los guiones dan por hechos (promociones, recargas
+ * con tarjeta en EE. UU., etc.). Solo se escriben si faltan: lo que una prueba cambie, se queda.
+ * Nada de dinero real ni secretos: son ajustes de pruebas (scripts/vista-previa/semilla-config.json).
+ */
+export function sqlSemillaConfig(semilla) {
+  const comillas = (t) => `'${String(t).replace(/'/g, "''")}'`;
+  return Object.entries(semilla)
+    .map(
+      ([clave, valor]) =>
+        `INSERT OR IGNORE INTO config (clave, valor) VALUES (${comillas(clave)}, ${comillas(JSON.stringify(valor))});`,
+    )
+    .join('\n');
 }
