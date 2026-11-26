@@ -73,6 +73,7 @@ const normal = (t) =>
     .trim();
 
 const numerosDe = (t) =>
+  // eslint-disable-next-line security/detect-unsafe-regex -- solo califica respuestas cortas de Camila
   [...normal(t).matchAll(/\d+(?:[.,]\d+)?/g)].map((m) => Number(m[0].replace(',', '.')));
 const cercano = (a, b) => Math.abs(a - b) < 0.005;
 
@@ -84,6 +85,7 @@ function alternativa(item) {
     return (t) => numerosDe(t).some((v) => cercano(v, n));
   }
   if (x.startsWith('re:')) {
+    // eslint-disable-next-line security/detect-non-literal-regexp -- patrones del banco de preguntas del repositorio
     const re = new RegExp(x.slice(3), 'i');
     return (t) => re.test(normal(t));
   }
@@ -114,7 +116,9 @@ function expandir(items, grupos, ficha) {
 function montosInventados(texto, permitidos) {
   const t = normal(texto);
   const res = [];
+  // eslint-disable-next-line security/detect-unsafe-regex -- solo califica respuestas cortas de Camila
   const antes = /(?:\$|us\$|usd|bs\.?)\s*(\d+(?:[.,]\d+)?)/g;
+  // eslint-disable-next-line security/detect-unsafe-regex -- solo califica respuestas cortas de Camila
   const despues = /(\d+(?:[.,]\d+)?)\s*(?:\$|us\$|dolares?|usd|bs\b|bolivares?)/g;
   for (const re of [antes, despues])
     for (const m of t.matchAll(re)) {
@@ -279,6 +283,7 @@ function clavesDeLaMoto(servicios) {
   if (moto.motivo === 'requisitos_faltantes' && moto.requisitosFaltantes?.length)
     return [
       ...new Set(
+        // eslint-disable-next-line security/detect-object-injection -- claves fijas de la ficha del examen
         moto.requisitosFaltantes.flatMap((r) => porRequisito[r] ?? [r.replace(/_/g, ' ')]),
       ),
     ];

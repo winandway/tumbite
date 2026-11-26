@@ -119,6 +119,7 @@ test('A1 conductor nuevo con papeles y moto en una pantalla', async () => {
       'Barra de activación',
     ])
       expect(t, `la ficha no dice «${x}»`).toContain(x);
+    // eslint-disable-next-line security/detect-unsafe-regex -- texto corto de la propia pantalla del panel
     const crudos = [...t.matchAll(/\b[a-z]{2,}(?:_[a-z0-9]+)+\b/g)].map((m) => m[0]);
     expect(crudos, `códigos crudos a la vista: ${crudos.join(', ')}`).toEqual([]);
     return 'identidad, papeles y moto (con su placa) en la misma ficha, todo en palabras, sin códigos crudos';

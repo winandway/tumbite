@@ -134,6 +134,7 @@ export async function codigoCelular(usuarioId) {
     if (hash && hash !== '-') {
       for (let n = 0; n < 1_000_000; n++) {
         const c = String(n).padStart(6, '0');
+        // eslint-disable-next-line security/detect-possible-timing-attacks -- no es una clave: busca el código de prueba de una cuenta de robot
         if (createHash('sha256').update(`${usuarioId}:${c}`).digest('hex') === hash) return c;
       }
     }
@@ -161,7 +162,11 @@ export function anotar(robot, linea, estado, detalle, captura) {
     robot,
     linea,
     estado,
-    detalle: String(detalle ?? '').slice(0, 800),
+    // Sin los colores de la terminal (Playwright los pone en sus errores).
+    detalle: String(detalle ?? '')
+      // eslint-disable-next-line no-control-regex
+      .replace(/\u001b\[[0-9;]*m/g, '')
+      .slice(0, 800),
     captura,
     cuando: new Date().toISOString(),
   };
@@ -188,6 +193,7 @@ export function cerrarSeccion(robot, titulos, extra = {}) {
   const lineas = ids.map((id) => {
     const de = filas.filter((f) => f.linea === id);
     if (!de.length)
+      // eslint-disable-next-line security/detect-object-injection -- ids de líneas del propio parte
       return { id, titulo: titulos[id] ?? id, estado: 'no-se-pudo', motivo: 'no llegó a correr' };
     const estado = de.some((f) => f.estado === 'rojo')
       ? 'rojo'
@@ -196,6 +202,7 @@ export function cerrarSeccion(robot, titulos, extra = {}) {
         : 'no-se-pudo';
     return {
       id,
+      // eslint-disable-next-line security/detect-object-injection -- ids de líneas del propio parte
       titulo: titulos[id] ?? id,
       estado,
       motivo: de

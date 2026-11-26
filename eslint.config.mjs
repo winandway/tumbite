@@ -53,6 +53,9 @@ export default tseslint.config(
       // Lee la llave del navegador de ~/.config y escribe las paletas en identidad-divoox/.
       'scripts/marca/opciones-mapa.mjs',
       'scripts/tiendas/*.mjs',
+      // Los robots de aceptación escriben su parte en registros/aceptacion/<fecha> y ~/Gerencia/partes,
+      // y leen sus preguntas y recorridos del repositorio: rutas armadas desde la raíz, no del usuario.
+      'scripts/aceptacion/*.mjs',
     ],
     rules: { 'security/detect-non-literal-fs-filename': 'off' },
   },

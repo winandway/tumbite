@@ -30,7 +30,9 @@ describe('C-ROBOT-NOCTURNO · los robots solo van al sitio de pruebas', () => {
   });
 
   it('la pieza común rechaza producción y acepta el sitio de pruebas', async () => {
-    const { sitioDePruebas } = (await import('../../../scripts/aceptacion/comun.mjs')) as {
+    // Ruta en variable: es un .mjs sin tipos y aquí solo hace falta una función.
+    const pieza = '../../../scripts/aceptacion/comun.mjs';
+    const { sitioDePruebas } = (await import(/* @vite-ignore */ pieza)) as {
       sitioDePruebas: () => string;
     };
     for (const malo of ['https://divoox.com', 'https://tumbite.com', 'https://www.divoox.com']) {
