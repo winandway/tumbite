@@ -6,9 +6,12 @@ import { EL_VIGIA, abrirComida, escenarioVe } from './pruebas/comidaVe';
 import { AJUSTES_REZAGADOS_DE_FABRICA, candidatos } from './rezagados';
 import {
   LOTE_ESPERA,
+  PRESUPUESTO_PASO_AL_ABRIR,
   PRESUPUESTO_PASO_ESPERA,
   PRESUPUESTO_REGISTRO_CON_LUGAR,
   pasarEspera,
+  pasarEsperaAlAbrir,
+  saludEspera,
 } from './lugarEspera';
 
 /**
@@ -502,9 +505,210 @@ describe('C-REGISTRO-TODO-EL-PAIS · (e) las cuentas de prueba y de revisión no
       e.admin.token,
     );
     expect(abrir.datos.espera).toMatchObject({ pasaron: 0 });
+    // Tampoco se cuentan en la lista de espera (a propósito: quedan en espera para siempre).
+    const lista = await e.m.llamar('GET', '/datos/admin/espera-ciudades', undefined, e.admin.token);
+    expect(lista.datos.total).toBe(0);
     expect(await fila(e.m, prueba.id)).toMatchObject({ lugar_espera: 1, zona_id: null });
     expect(await fila(e.m, nuestra.id)).toMatchObject({ lugar_espera: 1, zona_id: null });
     const rev = await pasarEspera({} as never, e.m.DB, 'VE-ZZ-REVIEW', { produccion: false });
     expect(rev.pasaron).toBe(0);
+  });
+});
+
+// ───────────── Arreglos del revisor de calidad (25-26 nov 2026), vistos en ROJO antes de arreglar ─────────────
+
+const ZONA_MARACAIBO = `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
+  VALUES ('VE-ZUL-MARACAIBO', 'Maracaibo', 'VE', 'USD', 'America/Caracas', 10.6427, -71.6125, 20, 1)`;
+
+const avisosDe = async (m: M, id: string) =>
+  Number(
+    (
+      await m.DB.prepare(
+        `SELECT COUNT(*) AS n FROM camila_mensajes x JOIN camila_personas p ON p.id = x.persona_id
+          WHERE p.usuario_id = ? AND x.autor = 'camila' AND x.texto LIKE '%Maracaibo%'`,
+      )
+        .bind(id)
+        .first<{ n: number }>()
+    )?.n ?? 0,
+  );
+
+/** Dentro de la caja de la zona de Maracaibo (20 km) pero fuera de su círculo: la esquina. */
+const ESQUINA: LugarCuenta = {
+  ...MARACAIBO,
+  ciudad: 'Esquina de prueba',
+  lugarId: 'gn:9000001',
+  lat: 10.7927,
+  lng: -71.4625,
+};
+
+describe('C-REGISTRO-TODO-EL-PAIS · (f) un fallo con un conductor no frena el lote ni lo deja a medias', () => {
+  it('falla la asignación del segundo: el primero y el tercero pasan y se les avisa una vez; el segundo sigue en espera y pasa al reintentar', async () => {
+    const e = await escenarioVe();
+    expect((await abrirComida(e)).estado).toBe(201);
+    const tres = [];
+    for (let i = 0; i < 3; i++) tres.push((await registrar(e.m, 'repartidor', MARACAIBO)).id);
+    const orden = (
+      await e.m.DB.prepare(`SELECT id FROM usuarios WHERE id IN (?, ?, ?) ORDER BY id`)
+        .bind(...tres)
+        .all<{ id: string }>()
+    ).results.map((x) => x.id);
+    const [uno, dos, tresId] = orden as [string, string, string];
+    await e.m.DB.prepare(ZONA_MARACAIBO).run();
+    // La ficha del segundo no se puede escribir (como un fallo de la base a mitad del paso).
+    for (const ev of ['INSERT', 'UPDATE'])
+      await e.m.DB.prepare(
+        `CREATE TRIGGER falla_${ev.toLowerCase()} BEFORE ${ev} ON repartidores WHEN NEW.usuario_id = '${dos}'
+           BEGIN SELECT RAISE(ABORT, 'falla de prueba'); END`,
+      ).run();
+    const env = e.m.extra as never;
+    const r = await pasarEsperaAlAbrir(env, e.m.DB, 'VE-ZUL-MARACAIBO', false);
+    expect(r).toMatchObject({ pasaron: 2, conductores: 2, fallaron: 1 });
+    expect(await fila(e.m, uno)).toMatchObject({ zona_id: 'VE-ZUL-MARACAIBO', lugar_espera: null });
+    expect(await fila(e.m, tresId)).toMatchObject({
+      zona_id: 'VE-ZUL-MARACAIBO',
+      lugar_espera: null,
+    });
+    // El que falló NO queda a medias: sin zona en la cuenta y todavía en espera (se reintenta).
+    expect(await fila(e.m, dos)).toMatchObject({ zona_id: null, lugar_espera: 1 });
+    expect(await avisosDe(e.m, uno)).toBe(1);
+    expect(await avisosDe(e.m, tresId)).toBe(1);
+    expect(await avisosDe(e.m, dos)).toBe(0);
+    // El fallo queda a la vista: registro de errores y canario en rojo.
+    expect(
+      await e.m.DB.prepare("SELECT 1 FROM errores_servidor WHERE metodo = 'ESPERA'").first(),
+    ).toBeTruthy();
+    expect((await saludEspera(e.m.DB)).estado).toBe('error');
+    for (const ev of ['insert', 'update']) await e.m.DB.prepare(`DROP TRIGGER falla_${ev}`).run();
+    const otra = await pasarEsperaAlAbrir(env, e.m.DB, 'VE-ZUL-MARACAIBO', false);
+    expect(otra).toMatchObject({ pasaron: 1, fallaron: 0 });
+    const f = await fila(e.m, dos);
+    expect(f).toMatchObject({
+      zona_id: 'VE-ZUL-MARACAIBO',
+      rz: 'VE-ZUL-MARACAIBO',
+      lugar_espera: null,
+    });
+    expect(String(f?.codigo)).toMatch(/^VE-[A-Z]{3}-\d{6}$/);
+    expect(await avisosDe(e.m, uno)).toBe(1);
+    expect(await avisosDe(e.m, dos)).toBe(1);
+    expect((await saludEspera(e.m.DB)).estado).toBe('ok');
+  });
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS · (g) al abrir, varios lotes con su cursor y un tope fijo', () => {
+  it('con 110 en la caja (30 fuera del círculo): al abrir revisa 100, el resto queda para «Seguir», y todos los de dentro pasan', async () => {
+    const e = await escenarioVe();
+    expect((await abrirComida(e)).estado).toBe(201);
+    const dentro: string[] = [];
+    const fuera: string[] = [];
+    for (let i = 0; i < 30; i++) fuera.push((await registrar(e.m, 'cliente', ESQUINA)).id);
+    for (let i = 0; i < 80; i++)
+      dentro.push((await registrar(e.m, i % 2 ? 'cliente' : 'repartidor', MARACAIBO)).id);
+    await e.m.DB.prepare(ZONA_MARACAIBO).run();
+    const medida = contarFilas(e.m.DB);
+    const env = e.m.extra as never;
+    const r = await pasarEsperaAlAbrir(env, medida.db, 'VE-ZUL-MARACAIBO', false);
+    expect(r).toMatchObject({ revisados: 100, quedan: 10 });
+    expect(r?.siguiente).toBeTruthy();
+    expect(r?.pasaron).toBeGreaterThanOrEqual(70);
+    // Medido el 26 nov: 413 filas con 76 que pasaron de 100 revisadas (ver CANDADOS.md).
+    expect(medida.cuenta.escritas).toBeLessThanOrEqual(PRESUPUESTO_PASO_AL_ABRIR);
+    expect((await saludEspera(e.m.DB)).ultimoPaso).toMatchObject({ quedan: 10 });
+    // «Seguir» desde el panel: sigue donde quedó y termina.
+    const seguir = await e.m.llamar(
+      'POST',
+      '/datos/admin/zonas/VE-ZUL-MARACAIBO/pasar-espera',
+      { desde: r?.siguiente },
+      e.admin.token,
+    );
+    expect(seguir.estado).toBe(200);
+    expect(seguir.datos).toMatchObject({ quedan: 0, siguiente: null });
+    expect((r?.pasaron ?? 0) + Number(seguir.datos.pasaron)).toBe(80);
+    for (const id of dentro) expect((await fila(e.m, id))?.lugar_espera).toBeNull();
+    for (const id of fuera) expect((await fila(e.m, id))?.lugar_espera).toBe(1);
+  }, 120_000);
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS · (h) la ubicación no le da una zona de otro país a quien dijo dónde vive', () => {
+  it('vive en Maracaibo y su GPS cae en una zona de EE. UU.: sigue en espera, sin zona ajena', async () => {
+    const e = await escenarioVe();
+    expect((await abrirComida(e)).estado).toBe(201);
+    await e.m.DB.prepare(
+      `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
+       VALUES ('US-CA-GILROY', 'Gilroy', 'US', 'USD', 'America/Los_Angeles', 37.0058, -121.5683, 20, 1)`,
+    ).run();
+    const c = await registrar(e.m, 'repartidor', MARACAIBO);
+    const por = await e.m.llamar(
+      'POST',
+      '/datos/conductor/zona-por-ubicacion',
+      { lat: GILROY.lat, lng: GILROY.lng },
+      c.token,
+    );
+    expect(por.datos.cambio).toBe(false);
+    const con = await e.m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: GILROY.lat, lng: GILROY.lng },
+      c.token,
+    );
+    expect(con.estado).toBe(409);
+    expect(con.datos.codigo).toBe('en_espera_ciudad');
+    expect(await fila(e.m, c.id)).toMatchObject({ zona_id: null, lugar_espera: 1 });
+    // De su país sí: su GPS en El Vigía (zona abierta de Venezuela) le da esa zona, como siempre.
+    const ve = await registrar(e.m, 'repartidor', MARACAIBO);
+    const aqui = await e.m.llamar(
+      'POST',
+      '/datos/conductor/zona-por-ubicacion',
+      { lat: EL_VIGIA_LUGAR.lat, lng: EL_VIGIA_LUGAR.lng },
+      ve.token,
+    );
+    expect(aqui.datos).toMatchObject({ cambio: true });
+    expect(await fila(e.m, ve.id)).toMatchObject({ zona_id: EL_VIGIA.id, lugar_espera: null });
+  });
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS · (i) «Pasar a los que esperan» lee su cuerpo de verdad', () => {
+  it('sin cuerpo se acepta; un «desde» mal formado responde 422', async () => {
+    const e = await escenarioVe();
+    expect((await abrirComida(e)).estado).toBe(201);
+    await e.m.DB.prepare(ZONA_MARACAIBO).run();
+    const url = '/datos/admin/zonas/VE-ZUL-MARACAIBO/pasar-espera';
+    expect((await e.m.llamar('POST', url, undefined, e.admin.token)).estado).toBe(200);
+    expect((await e.m.llamar('POST', url, {}, e.admin.token)).estado).toBe(200);
+    expect((await e.m.llamar('POST', url, { desde: null }, e.admin.token)).estado).toBe(200);
+    expect((await e.m.llamar('POST', url, { desde: 25 }, e.admin.token)).estado).toBe(422);
+    expect((await e.m.llamar('POST', url, { desde: "x' OR 1=1 --" }, e.admin.token)).estado).toBe(
+      422,
+    );
+    expect((await e.m.llamar('POST', url, ['raro'], e.admin.token)).estado).toBe(422);
+  });
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS · (j) un lugar con coordenadas falsas no entra', () => {
+  it('Maracaibo con el punto de Miami: el registro lo ignora y el cambio de lugar responde 422', async () => {
+    const m = mundo();
+    const falso = { ...MARACAIBO, lat: 25.7617, lng: -80.1918 };
+    const c = await registrar(m, 'repartidor', falso);
+    expect(c.r.estado).toBe(201);
+    expect(await fila(m, c.id)).toMatchObject({ lugar_id: null, lugar_espera: null });
+    const r = await m.llamar('PUT', '/datos/cuentas/lugar', { lugar: falso }, c.token);
+    expect(r.estado).toBe(422);
+    // El de verdad sí.
+    const bien = await m.llamar('PUT', '/datos/cuentas/lugar', { lugar: MARACAIBO }, c.token);
+    expect(bien.estado).toBe(200);
+  });
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS · (k) borrar la cuenta borra dónde vivía', () => {
+  it('las columnas del lugar quedan vacías', async () => {
+    const m = mundo();
+    const c = await registrar(m, 'repartidor', MARACAIBO);
+    expect((await m.llamar('DELETE', '/datos/cuentas/yo', undefined, c.token)).estado).toBe(200);
+    const f = await m.DB.prepare(
+      `SELECT lugar_pais, lugar_estado, lugar_municipio, lugar_ciudad, lugar_id, lugar_lat, lugar_lng,
+              lugar_en, lugar_espera, lugar_paso_en FROM usuarios WHERE id = ?`,
+    )
+      .bind(c.id)
+      .first<Record<string, unknown>>();
+    expect(Object.values(f ?? { x: 1 }).every((v) => v === null)).toBe(true);
   });
 });

@@ -5,7 +5,6 @@ import {
   alcanceEsTotal,
   entornoDeHost,
   estadosDelPais,
-  leerLugarCuenta,
   lugarEscrito,
   sinAcentos,
 } from '@tumbite/compartido';
@@ -16,11 +15,13 @@ import {
   aplicarLugar,
   leerLugar,
   lugarDeFila,
-  pasarEspera,
+  leerLugarDeFuera,
+  pasarEsperaLotes,
   respuestaLugar,
   zonaDeLugar,
 } from '../lugarEspera';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
+import { SQL_CUENTA_INTERNA } from '../whatsappFalta';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { HORAS_ENTRE_CAMBIOS_CIUDAD } from './conductorPapeles';
 
@@ -43,7 +44,7 @@ const cuerpoLugar = z.object({ lugar: z.unknown() });
 
 /** El lugar que llegó, o 422 con su motivo (la app solo manda lugares del catálogo). */
 function lugarValido(x: unknown): LugarCuenta {
-  const l = leerLugarCuenta(x);
+  const l = leerLugarDeFuera(x);
   if (!l)
     throw new ErrorDatos(
       'Elige tu país, tu estado y tu ciudad de la lista.',
@@ -163,9 +164,13 @@ const filtrosEspera = z.object({
   rol: z.enum(['repartidor', 'cliente']).optional().catch(undefined),
 });
 
-/** Las cuentas EN ESPERA: con lugar, sin zona y todavía esperando. Reales (sin las de prueba). */
-const EN_ESPERA = `u.lugar_espera = 1 AND u.zona_id IS NULL AND u.activo = 1 AND u.es_prueba = 0
-  AND u.rol IN ('repartidor', 'cliente')`;
+/**
+ * Las cuentas EN ESPERA: con lugar, sin zona y todavía esperando. Reales: sin las de prueba, las
+ * nuestras ni las de los revisores de las tiendas (las mismas que el paso nunca toca; quedan en espera
+ * para siempre a propósito y no se cuentan).
+ */
+const EN_ESPERA = `u.lugar_espera = 1 AND u.zona_id IS NULL AND u.activo = 1 AND NOT ${SQL_CUENTA_INTERNA('u')}
+  AND u.correo NOT IN (SELECT correo FROM revisores) AND u.rol IN ('repartidor', 'cliente')`;
 
 /**
  * `GET /datos/admin/espera-ciudades?pais=&estado=&rol=`: cuántos esperan en cada ciudad (conductores y
@@ -358,22 +363,47 @@ lugarCuenta.put('/admin/usuarios/:id/lugar', async (c) => {
 
 /**
  * `POST /datos/admin/zonas/:id/pasar-espera` `{ desde? }`: vuelve a pasar a la zona a los que esperan
- * en ella (también corre solo al abrirla o al guardar un área). De a un lote: si `quedan`, se llama de
- * nuevo con `desde: siguiente`. Idempotente.
+ * en ella (también corre solo al abrirla o al guardar un área). Hasta LOTES_AL_ABRIR lotes (100 cuentas)
+ * por llamada: si `quedan`, se llama de nuevo con `desde: siguiente` («Seguir»). Idempotente.
  */
 lugarCuenta.post('/admin/zonas/:id/pasar-espera', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
-  const d = await leerCuerpo(
-    c,
-    z.object({
-      desde: z.string().trim().max(64).nullable().optional(),
-    }),
-  ).catch(() => ({ desde: null }));
+  // Sin cuerpo (o `{}`) es «desde el principio», a propósito. Lo que sí llega se valida: un «desde»
+  // mal formado responde 422 (antes cualquier error de lectura se tragaba y empezaba de cero).
+  const texto = (await c.req.text()).trim();
+  let cuerpo: unknown = {};
+  if (texto) {
+    try {
+      cuerpo = JSON.parse(texto);
+    } catch {
+      throw new ErrorDatos('No pudimos leer los datos enviados.', undefined, 422);
+    }
+  }
+  const leido = z
+    .object({
+      desde: z
+        .string()
+        .trim()
+        .regex(/^[A-Za-z0-9_-]{1,64}$/, 'Ese «desde» no es un número de cuenta.')
+        .nullable()
+        .optional(),
+    })
+    .strict()
+    .safeParse(cuerpo);
+  if (!leido.success)
+    throw new ErrorDatos(
+      leido.error.issues[0]?.message ?? 'Datos inválidos.',
+      leido.error.issues[0]?.path.join('.') || 'desde',
+      422,
+    );
   const zona = c.req.param('id');
   if (!(await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(zona).first()))
     throw new ErrorDatos('Esa zona no existe.', undefined, 404);
   return c.json(
-    await pasarEspera(c.env, db, zona, { desde: d.desde ?? null, produccion: enProduccion(c) }),
+    await pasarEsperaLotes(c.env, db, zona, {
+      desde: leido.data.desde ?? null,
+      produccion: enProduccion(c),
+    }),
   );
 });

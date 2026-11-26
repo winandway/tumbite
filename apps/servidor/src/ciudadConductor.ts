@@ -37,9 +37,13 @@ export async function fijarZonaPorUbicacion(
   const zona = aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null;
   if (!zona) return null;
   const cuenta = await db
-    .prepare('SELECT zona_id FROM usuarios WHERE id = ?')
+    .prepare('SELECT zona_id, lugar_pais FROM usuarios WHERE id = ?')
     .bind(usuarioId)
-    .first<{ zona_id: string | null }>();
+    .first<{ zona_id: string | null; lugar_pais: string | null }>();
+  // C-REGISTRO-TODO-EL-PAIS: quien dijo en qué país vive solo recibe por GPS una zona de ESE país (el
+  // venezolano de viaje en Miami no queda en Miami). Para cambiar de país, soporte.
+  if (cuenta?.lugar_pais && aqui.zona?.pais.toUpperCase() !== cuenta.lugar_pais.toUpperCase())
+    return null;
   if (zona === ficha?.zona_id && cuenta?.zona_id) return null;
   await db.batch([
     db.prepare(ALTA_REPARTIDOR).bind(usuarioId),
@@ -58,6 +62,13 @@ export async function fijarZonaPorUbicacion(
   return zona;
 }
 
+/** La ficha del conductor con su ciudad elegida (también la usa el paso de los que esperan). */
+export const SQL_FICHA_CIUDAD_ELEGIDA =
+  // C-REGRESO-PASAJERO: la ciudad que elige es también su ciudad base (a la que vuelve).
+  `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en, zona_base_id) VALUES (?1, ?2, datetime('now'), ?2)
+   ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, ciudad_elegida_en = excluded.ciudad_elegida_en,
+     zona_base_id = excluded.zona_base_id`;
+
 /**
  * La ciudad ELEGIDA del conductor (la de `PUT /conductor/ciudad`): cuenta, ficha de repartidor
  * (ciudad, `ciudad_elegida_en` y ciudad base) y, con su ciudad ya real, su ID y su plazo
@@ -74,14 +85,7 @@ export async function asignarCiudadElegida(
     db
       .prepare('UPDATE usuarios SET zona_id = ?, lugar_espera = NULL WHERE id = ?')
       .bind(zonaId, usuarioId),
-    db
-      .prepare(
-        // C-REGRESO-PASAJERO: la ciudad que elige es también su ciudad base (a la que vuelve).
-        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en, zona_base_id) VALUES (?1, ?2, datetime('now'), ?2)
-         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, ciudad_elegida_en = excluded.ciudad_elegida_en,
-           zona_base_id = excluded.zona_base_id`,
-      )
-      .bind(usuarioId, zonaId),
+    db.prepare(SQL_FICHA_CIUDAD_ELEGIDA).bind(usuarioId, zonaId),
   ]);
   await alSaberseLaCiudad(env, db, usuarioId);
 }

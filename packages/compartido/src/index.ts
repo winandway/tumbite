@@ -147,5 +147,6 @@ export * from './rastro';
 export * from './pagoComidaVista';
 export * from './campanaVista';
 export * from './lugarCuenta';
+export * from './lugarEnSuEstado';
 export * from './catalogoLugares';
 export * from './selectorLugar';

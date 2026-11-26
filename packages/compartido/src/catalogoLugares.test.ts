@@ -13,6 +13,8 @@ import {
 } from './catalogoLugares';
 import { ESTADOS_US, ESTADOS_VE, leerLugarCuenta, type PaisConCatalogo } from './lugarCuenta';
 import { esquemaRegistro } from './esquemas';
+import { CAJAS_ESTADOS } from './cajasEstados';
+import { lugarEnSuEstado } from './lugarEnSuEstado';
 import { buscarEstados, paisesParaElegir } from './selectorLugar';
 import { filasParaRevisar, validarRegistro } from './revisarRegistro';
 
@@ -262,5 +264,58 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro', () => {
     expect(
       filasParaRevisar({ ...datos, lugar: JSON.stringify(novi) }, 'en', ['lugar'])[0]?.valor,
     ).toBe('Novi, Michigan (MI)');
+  });
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS: el punto del lugar tiene que caer en su estado (coordenadas falsas)', () => {
+  it('ningún lugar real del catálogo (estados y principales) queda fuera de la caja de su estado', () => {
+    let total = 0;
+    const fuera: string[] = [];
+    for (const [pais, estados] of [
+      ['VE', ESTADOS_VE],
+      ['US', ESTADOS_US],
+    ] as const) {
+      const todos = [...estados.flatMap((e) => delEstado(pais, e.codigo)), ...principales(pais)];
+      for (const l of todos) {
+        total++;
+        if (!lugarEnSuEstado(aLugarCuenta(l))) fuera.push(`${pais}-${l.estado} ${l.ciudad}`);
+      }
+      // Una caja por estado del contrato, y ninguna de más.
+      expect(
+        Object.keys(CAJAS_ESTADOS)
+          .filter((k) => k.startsWith(`${pais}-`))
+          .sort(),
+      ).toEqual(estados.map((e) => `${pais}-${e.codigo}`).sort());
+    }
+    expect(fuera).toEqual([]);
+    expect(total).toBeGreaterThan(50_000);
+  });
+
+  it('un lugar con el punto de otro sitio no pasa: Maracaibo en Miami, Caracas marcada como Zulia, Gilroy en el mar', () => {
+    const maracaibo = {
+      pais: 'VE',
+      estado: 'V',
+      ciudad: 'Maracaibo',
+      lugarId: 'gn:3633009',
+    } as const;
+    expect(lugarEnSuEstado({ ...maracaibo, lat: 10.643, lng: -71.613 })).toBe(true);
+    expect(lugarEnSuEstado({ ...maracaibo, lat: 25.762, lng: -80.192 })).toBe(false);
+    expect(lugarEnSuEstado({ ...maracaibo, lat: 10.481, lng: -66.904 })).toBe(false);
+    expect(
+      lugarEnSuEstado({
+        pais: 'US',
+        estado: 'CA', // Gilroy, con la longitud en el mar
+        lat: 37.006,
+        lng: -140,
+      }),
+    ).toBe(false);
+    expect(
+      lugarEnSuEstado({
+        pais: 'US',
+        estado: 'XX',
+        lat: 0,
+        lng: 0,
+      }),
+    ).toBe(false);
   });
 });

@@ -1499,6 +1499,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t confirm you’re a person. Reload the page and try again.',
   ],
   ['No pudimos leer los datos enviados.', 'We couldn’t read the information sent.'],
+  ['Ese «desde» no es un número de cuenta.', 'That “from” value is not an account number.'],
   [
     'Primero toma la foto de la entrega en la puerta.',
     'First take the delivery photo at the door.',

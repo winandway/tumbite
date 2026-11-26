@@ -103,9 +103,8 @@ import {
   zonaPorUbicacionDelRegistro,
 } from '../cuentaPais';
 import { unirLineaQueEspera } from '../lineas';
-import { leerLugarCuenta } from '@tumbite/compartido';
 import { asignarCiudadElegida } from '../ciudadConductor';
-import { zonaDeLugar } from '../lugarEspera';
+import { leerLugarDeFuera, zonaDeLugar } from '../lugarEspera';
 import {
   algunSmsEncendido,
   anularCodigoAnterior,
@@ -365,7 +364,7 @@ cuentas.post('/registro', async (c) => {
     d.rol === 'repartidor' ? await invitacionQueEspera(db, d.correo, telConMas) : null;
   // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): dónde vive (País → Estado → Ciudad). Opcional (apps viejas);
   // uno mal formado se ignora y queda en el registro de errores: nunca impide crear la cuenta.
-  const lugar = leerLugarCuenta(d.lugar);
+  const lugar = leerLugarDeFuera(d.lugar);
   if (d.lugar != null && !lugar) console.error('registro: lugar mal formado, se ignora');
   const paisTel = paisParaTelefono(
     d.telefono,

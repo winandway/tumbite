@@ -1,7 +1,12 @@
-import { type LugarCuenta, lugarEscrito } from '@tumbite/compartido';
+import {
+  type LugarCuenta,
+  leerLugarCuenta,
+  lugarEnSuEstado,
+  lugarEscrito,
+} from '@tumbite/compartido';
 import { mensajeDeCamila } from './camila/cerebro';
 import { personaDeUsuario } from './camila/memoria';
-import { asignarCiudadElegida } from './ciudadConductor';
+import { alSaberseLaCiudad, asignarCiudadElegida } from './ciudadConductor';
 import { zonaRealDe } from './cuentaPais';
 import type { Env } from './env';
 import { guardarError } from './errores';
@@ -26,6 +31,19 @@ import { SQL_CUENTA_INTERNA, evaluarVarios } from './whatsappFalta';
 export const LOTE_ESPERA = 25;
 /** Cuántas filas puede escribir, como mucho, una llamada del paso (lo comprueba su prueba). */
 export const PRESUPUESTO_PASO_ESPERA = LOTE_ESPERA * 20;
+/**
+ * Cuántos lotes revisa, como mucho, abrir una zona o tocar «Seguir» (100 cuentas). Lo que sobre queda
+ * para «Seguir», con su número en la respuesta y en el canario. Con un tope fijo, una zona con miles
+ * esperando no se come la petición ni el presupuesto de escrituras.
+ */
+export const LOTES_AL_ABRIR = 4;
+/**
+ * Tope de filas escritas de abrir una zona (los cuatro lotes, 100 cuentas); lo comprueba su prueba.
+ * Medido el 26 nov: 413 filas con 76 que pasaron (unas 5 por persona: cuenta, ficha, ID, plazo,
+ * Camila) más el canario. 10 por cuenta revisada deja margen para un lote todo de conductores y sigue
+ * a la mitad de lo que se permitía por lote suelto (20 por cuenta).
+ */
+export const PRESUPUESTO_PASO_AL_ABRIR = LOTES_AL_ABRIR * LOTE_ESPERA * 10;
 /** Cuántas filas escribe, como mucho, un registro con lugar (lo comprueba su prueba). */
 export const PRESUPUESTO_REGISTRO_CON_LUGAR = 40;
 
@@ -35,6 +53,16 @@ const ZONA_DE_PRUEBA = /\((pruebas|test)\)/i;
 export const MENSAJE_EN_ESPERA_CIUDAD =
   'Tu cuenta quedó creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos. Mientras tanto, ya puedes subir tus papeles.';
 export const CODIGO_EN_ESPERA_CIUDAD = 'en_espera_ciudad';
+
+/**
+ * Un lugar que llega de una app o del panel, como lo acepta el servidor: el contrato
+ * (`leerLugarCuenta`) y, además, su punto dentro de la caja de su estado (`lugarEnSuEstado`). El
+ * servidor no confía en el `lat`/`lng` que le mandan: «Maracaibo» con el punto de Miami no entra.
+ */
+export function leerLugarDeFuera(x: unknown): LugarCuenta | null {
+  const l = leerLugarCuenta(x);
+  return l && lugarEnSuEstado(l) ? l : null;
+}
 
 export type ZonaDeLugar = { id: string; nombre: string; pais: string };
 
@@ -197,6 +225,8 @@ export type ResultadoPaso = {
   conductores: number;
   clientes: number;
   revisados: number;
+  /** Cuántas cuentas fallaron al pasar (siguen en espera y se reintentan en el próximo paso). */
+  fallaron: number;
   /** Cuántas cuentas en espera de esa zona quedan por revisar (siguen en la próxima llamada). */
   quedan: number;
   /** Desde dónde sigue la próxima llamada (`desde`), o null si ya no queda nada. */
@@ -253,7 +283,7 @@ export async function pasarEspera(
   env: Env,
   db: D1Database,
   zonaId: string,
-  o: { desde?: string | null; produccion: boolean; tope?: number },
+  o: { desde?: string | null; produccion: boolean; tope?: number; anotar?: boolean },
 ): Promise<ResultadoPaso> {
   const tope = Math.max(1, Math.min(o.tope ?? LOTE_ESPERA, LOTE_ESPERA));
   const vacio = (motivo: ResultadoPaso['motivo']): ResultadoPaso => ({
@@ -262,6 +292,7 @@ export async function pasarEspera(
     conductores: 0,
     clientes: 0,
     revisados: 0,
+    fallaron: 0,
     quedan: 0,
     siguiente: null,
     motivo,
@@ -301,35 +332,32 @@ export async function pasarEspera(
   );
   const lote = results.slice(0, tope);
   const pasados: Candidato[] = [];
+  let fallaron = 0;
+  let primerError: unknown = null;
   for (const cand of lote) {
     if (revisores.has(cand.correo.toLowerCase())) continue;
-    const zona = await zonaDeLugar(
-      db,
-      { pais: cand.lugar_pais as LugarCuenta['pais'], lat: cand.lugar_lat, lng: cand.lugar_lng },
-      o.produccion,
-    );
-    if (zona?.id !== z.id) continue;
-    if (cand.rol === 'repartidor') {
-      // La condición en la misma escritura: si otra llamada ya lo pasó, aquí no cambia nada.
-      const r = await db
-        .prepare(
-          "UPDATE usuarios SET zona_id = ?, lugar_espera = NULL, lugar_paso_en = datetime('now') WHERE id = ? AND lugar_espera = 1 AND zona_id IS NULL",
-        )
-        .bind(z.id, cand.id)
-        .run();
-      if (!r.meta.changes) continue;
-      await asignarCiudadElegida(env, db, cand.id, z.id);
-    } else {
-      const r = await db
-        .prepare(
-          "UPDATE usuarios SET lugar_espera = NULL, lugar_paso_en = datetime('now') WHERE id = ? AND lugar_espera = 1 AND zona_id IS NULL",
-        )
-        .bind(cand.id)
-        .run();
-      if (!r.meta.changes) continue;
+    // Cada cuenta por su lado: si una falla, queda en el registro de errores y en el canario, sigue en
+    // espera (su escritura es un solo lote: o pasa entera o no pasa) y el paso sigue con la siguiente.
+    try {
+      const zona = await zonaDeLugar(
+        db,
+        { pais: cand.lugar_pais as LugarCuenta['pais'], lat: cand.lugar_lat, lng: cand.lugar_lng },
+        o.produccion,
+      );
+      if (zona?.id !== z.id) continue;
+      if (await pasarUna(env, db, z.id, cand)) pasados.push(cand);
+    } catch (e) {
+      fallaron++;
+      primerError ??= e;
+      console.error('espera: no pasó una cuenta', z.id, cand.id, e);
+      await guardarError(db, 'ESPERA', `espera/${z.id}/${cand.id}`, e).catch((x: unknown) =>
+        console.error('espera: no se pudo guardar el error', x),
+      );
     }
-    pasados.push(cand);
   }
+  // Los que pasaron reciben su aviso SIEMPRE (antes de cualquier otra lectura que pudiera fallar),
+  // aunque otra cuenta del lote haya fallado.
+  await avisarCiudadAbierta(env, db, z, pasados);
   const ultimo = lote.at(-1)?.id ?? null;
   const quedan =
     results.length > tope && ultimo
@@ -342,35 +370,131 @@ export async function pasarEspera(
           )?.n ?? 0,
         )
       : 0;
-  await avisarCiudadAbierta(env, db, z, pasados);
   const resultado: ResultadoPaso = {
     zonaId: z.id,
     pasaron: pasados.length,
     conductores: pasados.filter((p) => p.rol === 'repartidor').length,
     clientes: pasados.filter((p) => p.rol !== 'repartidor').length,
     revisados: lote.length,
+    fallaron,
     quedan,
     siguiente: quedan ? ultimo : null,
     motivo: null,
   };
-  // El último paso, para el canario (una fila por llamada, solo si revisó a alguien).
-  if (lote.length)
-    await db
-      .prepare(
-        `INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
-      )
-      .bind(
-        CLAVE_ULTIMO_PASO,
-        JSON.stringify({
-          en: new Date().toISOString(),
-          zona: z.id,
-          pasaron: resultado.pasaron,
-          quedan,
-        }),
-      )
-      .run()
-      .catch((e: unknown) => console.error('espera: no se pudo anotar el último paso', e));
+  if (o.anotar !== false && lote.length)
+    await anotarPaso(db, resultado, primerError ? String(primerError) : null);
   return resultado;
+}
+
+/**
+ * Pasa UNA cuenta. El conductor en un solo lote de escritura (ficha con su ciudad elegida + cuenta con
+ * su zona), los dos con la condición «todavía en espera»: si algo falla, no cambia nada y la cuenta
+ * sigue en espera para el próximo paso; si otra llamada ya la pasó, aquí no cambia nada. Su ID y su
+ * plazo van después (`alSaberseLaCiudad`, de una sola vez); si eso falla, la cuenta ya está en su
+ * zona con su ficha y se completan solos al conectarse o al abrir Driver.
+ */
+async function pasarUna(env: Env, db: D1Database, zonaId: string, cand: Candidato) {
+  const espera = 'lugar_espera = 1 AND zona_id IS NULL';
+  if (cand.rol !== 'repartidor') {
+    const r = await db
+      .prepare(
+        `UPDATE usuarios SET lugar_espera = NULL, lugar_paso_en = datetime('now') WHERE id = ? AND ${espera}`,
+      )
+      .bind(cand.id)
+      .run();
+    return Boolean(r.meta.changes);
+  }
+  const [, cuenta] = await db.batch([
+    db
+      .prepare(
+        // La misma ficha que `asignarCiudadElegida` (ciudad elegida y ciudad base), solo si sigue en espera.
+        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en, zona_base_id)
+           SELECT ?1, ?2, datetime('now'), ?2 WHERE EXISTS (SELECT 1 FROM usuarios WHERE id = ?1 AND ${espera})
+           ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id,
+             ciudad_elegida_en = excluded.ciudad_elegida_en, zona_base_id = excluded.zona_base_id`,
+      )
+      .bind(cand.id, zonaId),
+    db
+      .prepare(
+        `UPDATE usuarios SET zona_id = ?, lugar_espera = NULL, lugar_paso_en = datetime('now') WHERE id = ? AND ${espera}`,
+      )
+      .bind(zonaId, cand.id),
+  ]);
+  if (!cuenta?.meta.changes) return false;
+  try {
+    await alSaberseLaCiudad(env, db, cand.id);
+  } catch (e) {
+    console.error('espera: ID o plazo pendientes (se completan al conectarse)', cand.id, e);
+    await guardarError(db, 'ESPERA', `espera/${zonaId}/${cand.id}/id`, e).catch(() => undefined);
+  }
+  return true;
+}
+
+/** El último paso, para el canario (una fila por llamada). Con `error`, el canario se pone en rojo. */
+async function anotarPaso(
+  db: D1Database,
+  r: Pick<ResultadoPaso, 'zonaId' | 'pasaron' | 'quedan' | 'fallaron'>,
+  error: string | null,
+) {
+  await db
+    .prepare(
+      `INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
+    )
+    .bind(
+      CLAVE_ULTIMO_PASO,
+      JSON.stringify({
+        en: new Date().toISOString(),
+        zona: r.zonaId,
+        pasaron: r.pasaron,
+        quedan: r.quedan,
+        ...(r.fallaron ? { fallaron: r.fallaron } : {}),
+        ...(error ? { error: error.slice(0, 200) } : {}),
+      }),
+    )
+    .run()
+    .catch((e: unknown) => console.error('espera: no se pudo anotar el último paso', e));
+}
+
+/**
+ * Varios lotes seguidos (hasta LOTES_AL_ABRIR), cada uno desde donde quedó el anterior: así las cuentas
+ * de la caja que no caen dentro de la zona no tapan a las demás. Lo que sobre queda en `quedan` y
+ * `siguiente` (para «Seguir»). El canario se anota una vez, con la suma.
+ */
+export async function pasarEsperaLotes(
+  env: Env,
+  db: D1Database,
+  zonaId: string,
+  o: { desde?: string | null; produccion: boolean; lotes?: number },
+): Promise<ResultadoPaso> {
+  const lotes = Math.max(1, Math.min(o.lotes ?? LOTES_AL_ABRIR, LOTES_AL_ABRIR));
+  let desde = o.desde ?? null;
+  let total: ResultadoPaso | null = null;
+  let error: string | null = null;
+  for (let i = 0; i < lotes; i++) {
+    let r: ResultadoPaso;
+    try {
+      r = await pasarEspera(env, db, zonaId, { desde, produccion: o.produccion, anotar: false });
+    } catch (e) {
+      // Un lote que falla entero: lo que ya pasó en los anteriores queda contado y anotado.
+      if (total) await anotarPaso(db, total, String(e));
+      throw e;
+    }
+    if (r.fallaron && !error) error = `${r.fallaron} cuenta(s) no pasaron (ver errores ESPERA)`;
+    total = total
+      ? {
+          ...r,
+          pasaron: total.pasaron + r.pasaron,
+          conductores: total.conductores + r.conductores,
+          clientes: total.clientes + r.clientes,
+          revisados: total.revisados + r.revisados,
+          fallaron: total.fallaron + r.fallaron,
+        }
+      : r;
+    if (!r.siguiente) break;
+    desde = r.siguiente;
+  }
+  if (total && total.revisados) await anotarPaso(db, total, error);
+  return total as ResultadoPaso;
 }
 
 /**
@@ -384,7 +508,7 @@ export async function pasarEsperaAlAbrir(
   produccion: boolean,
 ): Promise<ResultadoPaso | null> {
   try {
-    return await pasarEspera(env, db, zonaId, { produccion });
+    return await pasarEsperaLotes(env, db, zonaId, { produccion });
   } catch (e) {
     console.error('espera: no se pudo pasar a los que esperan', zonaId, e);
     await guardarError(db, 'ESPERA', `espera/${zonaId}`, e).catch(() => undefined);
@@ -483,6 +607,7 @@ export async function saludEspera(db: D1Database) {
     zona?: string;
     pasaron?: number;
     quedan?: number;
+    fallaron?: number;
     error?: string;
   } | null = null;
   try {

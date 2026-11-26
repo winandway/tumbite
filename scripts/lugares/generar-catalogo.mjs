@@ -34,6 +34,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import { cajasDesdeCatalogo, escribirCajas } from './cajas.mjs';
 import { compactar } from './formato.mjs';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -184,4 +185,10 @@ writeFileSync(
   'Lugares poblados de Venezuela y Estados Unidos: GeoNames (https://www.geonames.org), licencia CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).\n' +
     'Filtrados y compactados por Divoox (sin barrios ni lugares abandonados, coordenadas a 3 decimales).\n',
 );
+// Las cajas de los estados (coordenadas falsas), desde lo recién escrito.
+const cajas = escribirCajas(
+  cajasDesdeCatalogo(SALIDA),
+  join(RAIZ, 'packages', 'compartido', 'src', 'cajasEstados.ts'),
+);
+console.log(`Cajas de ${cajas} estados en packages/compartido/src/cajasEstados.ts`);
 console.log(`Listo: ${totalArchivos} archivos, ${Math.round(totalBytes / 1024)} KB en ${SALIDA}`);

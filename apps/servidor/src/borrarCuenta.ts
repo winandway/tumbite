@@ -148,7 +148,10 @@ export async function borrarCuenta(
     ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
     db
       .prepare(
-        "UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0, correo_canonico = NULL, telefono_canonico = NULL WHERE id = ?",
+        // C-REGISTRO-TODO-EL-PAIS: también dónde vivía (país, estado, ciudad, punto y su espera).
+        `UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0, correo_canonico = NULL, telefono_canonico = NULL,
+           lugar_pais = NULL, lugar_estado = NULL, lugar_municipio = NULL, lugar_ciudad = NULL, lugar_id = NULL,
+           lugar_lat = NULL, lugar_lng = NULL, lugar_en = NULL, lugar_espera = NULL, lugar_paso_en = NULL WHERE id = ?`,
       )
       .bind(`borrada-${u.id}@tumbite.invalid`, u.id),
     db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
