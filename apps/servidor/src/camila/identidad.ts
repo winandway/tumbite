@@ -19,9 +19,10 @@ export const FIRMA = {
 
 /**
  * C-FIRMA-EQUIPO (Gerencia, 26 nov 2026: Richard recibió por WhatsApp «Soporte Divoox, del equipo de
- * soporte de Divoox») — todos los países y canales. Cómo firma una persona del equipo: si su nombre ya
- * dice «Soporte» o la marca, la firma es solo «Soporte Divoox» («Divoox Support»); si es un nombre
- * propio, «María, de Soporte Divoox» («María, Divoox Support»). Siempre una sola línea. Pura.
+ * soporte de Divoox») — todos los países y canales. Cómo firma lo que escribe una PERSONA del equipo:
+ * con el nombre de atención de Camila › Ajustes (hoy «Samira»): «Samira, de Soporte Divoox» («Samira,
+ * Divoox Support»). Si el nombre está vacío o ya dice «Soporte» o la marca, solo «Soporte Divoox». Lo
+ * que responde la IA sigue firmado por Camila (FIRMA). Siempre una sola línea. Pura.
  */
 export function firmaDelEquipo(nombre: string | null | undefined, idioma: IdiomaCamila): string {
   const solo = idioma === 'en' ? 'Divoox Support' : 'Soporte Divoox';

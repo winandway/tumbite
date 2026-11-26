@@ -130,6 +130,10 @@ const T = {
     guardado: 'Ajustes guardados.',
     topeMalo: (m: string) => `El tope diario va de 0 a ${m}.`,
     regalosMalo: (n: number) => `Los regalos por día van de 0 a ${n}.`,
+    firma: 'Nombre con el que firma el equipo',
+    firmaAyuda: (n: string) =>
+      `Lo que responde una persona del equipo desde aquí sale firmado «${n ? `${n}, de Soporte Divoox` : 'Soporte Divoox'}». Lo que responde la IA sigue firmado por Camila. Déjalo vacío para firmar solo «Soporte Divoox».`,
+    firmaMala: 'El nombre de firma lleva solo letras y espacios, hasta 40.',
     cargando: 'Cargando…',
   },
   en: {
@@ -235,6 +239,10 @@ const T = {
     guardado: 'Settings saved.',
     topeMalo: (m: string) => `The daily limit goes from 0 to ${m}.`,
     regalosMalo: (n: number) => `Gifts per day go from 0 to ${n}.`,
+    firma: 'Name the team signs with',
+    firmaAyuda: (n: string) =>
+      `What a person on the team answers from here goes out signed «${n ? `${n}, Divoox Support` : 'Divoox Support'}». What the AI answers is still signed by Camila. Leave it empty to sign just «Divoox Support».`,
+    firmaMala: 'The signature name uses only letters and spaces, up to 40.',
     cargando: 'Loading…',
   },
 };
@@ -318,6 +326,7 @@ type Ajustes = {
   ia: boolean;
   topeDiarioCentavos: number;
   regalosPorDia: number;
+  nombreFirmaEquipo?: string;
 };
 
 const mensajeDe = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
@@ -1024,6 +1033,7 @@ function FormAjustes({
       ia: ajustes.ia,
       tope: String(ajustes.topeDiarioCentavos / 100),
       regalos: String(ajustes.regalosPorDia),
+      firma: ajustes.nombreFirmaEquipo ?? '',
     },
     almacen: almacenNavegador,
   });
@@ -1042,12 +1052,17 @@ function FormAjustes({
       return setError(t.topeMalo(maximo));
     if (!Number.isInteger(regalos) || regalos < 0 || regalos > limites.regalosPorDiaMaximo)
       return setError(t.regalosMalo(limites.regalosPorDiaMaximo));
+    const firma = String(v.firma).replace(/\s+/g, ' ').trim();
+    if (firma && (firma.length > 40 || !/^[\p{L}][\p{L} .'’-]*$/u.test(firma)))
+      return setError(t.firmaMala);
     setEnviando(true);
     try {
       await pedir('PUT', '/datos/admin/camila/ajustes', {
         ia: v.ia,
         topeDiarioCentavos: tope,
         regalosPorDia: regalos,
+        // Un servidor que todavía no tiene el ajuste no recibe un nombre vacío que lo borre.
+        ...(ajustes.nombreFirmaEquipo === undefined ? {} : { nombreFirmaEquipo: firma }),
       });
       await b.limpiar();
       setOk(t.guardado);
@@ -1101,6 +1116,16 @@ function FormAjustes({
         />
       </label>
       <p className="pista">{t.regalosAyuda(limites.regalosPorDiaMaximo)}</p>
+      <label className="campo">
+        {t.firma}
+        <input
+          value={v.firma}
+          maxLength={40}
+          autoComplete="off"
+          onChange={(e) => b.cambiar('firma', e.target.value)}
+        />
+      </label>
+      <p className="pista">{t.firmaAyuda(String(v.firma).trim())}</p>
       <Mensajes error={error} ok={ok} />
       <button type="submit" className="boton" disabled={enviando}>
         {t.guardar}
