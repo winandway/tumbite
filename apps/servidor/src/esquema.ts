@@ -26,6 +26,8 @@ import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
+import { sembrarTabuladorVigia } from './semillaTabuladorVigia';
+import { TABULADOR_EL_VIGIA } from './tabuladorElVigia';
 import {
   SQL_CANDIDATOS_SERVICIOS_VEHICULO,
   repararServiciosVehiculo,
@@ -114,6 +116,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['tarifas_viaje', 'km_maximo', 'INTEGER'],
   // C-PRECIO-ZONA (24 nov 2026): umbral del precio de la zona por ciudad y servicio (NULL = 10 %).
   ['tarifas_viaje', 'umbral_precio_zona_pb', 'INTEGER'],
+  // C-RECARGO-NOCHE (25 nov 2026): tarifa nocturna por ciudad y servicio (NULL = sin recargo, 21 a 6).
+  ['tarifas_viaje', 'recargo_noche_pb', 'INTEGER'],
+  ['tarifas_viaje', 'noche_desde_h', 'INTEGER'],
+  ['tarifas_viaje', 'noche_hasta_h', 'INTEGER'],
+  // C-TABULADOR-VIGIA (25 nov 2026): la vía de la ruta y «revisar el punto en el mapa».
+  ['rutas_precio_zona', 'grupo', 'TEXT'],
+  ['rutas_precio_zona', 'revisar', 'INTEGER NOT NULL DEFAULT 0'],
   ['cotizaciones_viaje', 'paradas_json', "TEXT NOT NULL DEFAULT '[]'"],
   ['vehiculos', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
   ['vehiculos', 'acepta_menores', 'INTEGER NOT NULL DEFAULT 1'],
@@ -803,6 +812,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(asegurarResumenCatalogo),
         SQL_MARCA_VIEJA,
         String(renombrarMarcaVieja),
+        String(sembrarTabuladorVigia),
+        TABULADOR_EL_VIGIA,
       ]),
     ) + `:${entorno ?? 'local'}`
   );
@@ -925,6 +936,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-NOMBRE-CON-MARCA: el equipo firma «Soporte Divoox» también en la base.
   await renombrarMarcaVieja(db).catch((e: unknown) =>
     console.error('esquema: renombrar la marca vieja del equipo falló', e),
+  );
+  // C-TABULADOR-VIGIA: una sola vez, el tabulador de moto de El Vigía y su tarifa (Venezuela).
+  await sembrarTabuladorVigia(db).catch((e: unknown) =>
+    console.error('esquema: la semilla del tabulador de El Vigía falló', e),
   );
 }
 

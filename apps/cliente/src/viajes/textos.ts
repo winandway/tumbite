@@ -98,6 +98,8 @@ export const TEXTOS_MOTO = {
     // C-PRECIO-ZONA: el precio fijo que se acostumbra en la zona para este trayecto.
     precioZona: 'Precio de la zona',
     precioZonaAyuda: 'El precio que se cobra siempre para ir hasta {lugar}.',
+    // C-RECARGO-NOCHE: de noche el viaje sube, y se dice antes de pedir.
+    tarifaNocturna: 'Tarifa nocturna (+{pct} %)',
     idaVuelta: 'Ida y vuelta',
     idaVueltaAyuda: 'El conductor te espera allá y te trae de vuelta al punto de recogida.',
     soloIda: 'Solo ida',
@@ -329,6 +331,7 @@ export const TEXTOS_MOTO = {
     precioFijo: 'Upfront price',
     precioZona: 'Local fixed price',
     precioZonaAyuda: 'The usual price people pay to go to {lugar}.',
+    tarifaNocturna: 'Night fare (+{pct}%)',
     idaVuelta: 'Round trip',
     idaVueltaAyuda: 'Your driver waits for you there and brings you back to your pickup spot.',
     soloIda: 'One way',
@@ -508,6 +511,8 @@ export const TEXTOS_MIS_VIAJES = {
       redondeo: 'Redondeo',
       // C-PRECIO-ZONA: el viaje fue con el precio fijo de la zona.
       precioZona: 'Precio de la zona',
+      // C-RECARGO-NOCHE: lo que sumó la tarifa nocturna.
+      recargoNoche: 'Tarifa nocturna',
       tarifaServicio: 'Tarifa de servicio de Divoox',
     } as Record<string, string>,
     total: 'Total',
@@ -608,6 +613,7 @@ export const TEXTOS_MIS_VIAJES = {
       cargoFijo: 'Booking fee',
       redondeo: 'Rounding',
       precioZona: 'Local fixed price',
+      recargoNoche: 'Night fare',
       tarifaServicio: 'Divoox service fee',
     } as Record<string, string>,
     total: 'Total',

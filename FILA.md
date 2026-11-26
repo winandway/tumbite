@@ -12,6 +12,13 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Tabulador de El Vigía y tarifa nocturna (encargo de Richard, 25 nov 2026) — Venezuela, El Vigía, Moto · rama `fase-tabulador-vigia`, sin subir
+
+- [x] [para: desarrollador] Tabulador de la calle como precios fijos (83 destinos por vía, 126 rutas con los regresos de la zona), tarifa aprendida (base 0, 0,33 $/km, mínimo 1 $), umbral 0, comisión del conductor en El Vigía, tarifa nocturna +30 %, panel con lo que le queda al conductor, Docs es/en (C-TABULADOR-VIGIA, C-RECARGO-NOCHE).
+- [ ] [para: revisor-calidad] Revisar la rama `fase-tabulador-vigia` una vez antes de publicar (dinero: comisión y precio del pasajero en El Vigía).
+- [ ] [para: desarrollador] Al publicar: mirar en el sitio de pruebas que la semilla corrió (Viajes → Precios de la zona, El Vigía por vías) y pedir un viaje de prueba de día y otro de noche; compilar la app de clientes para la línea «Tarifa nocturna».
+- [ ] [para: jefe-operaciones] Repartir al equipo de la ciudad: corregir en el panel los 17 puntos marcados «Revisar punto en el mapa» de El Vigía.
+
 ## Verificaciones con TODO y el menú por uso (encargo de Richard por Gerencia, 25 nov 2026) — todos los países · rama `fase-verificaciones-todo`, sin subir
 
 - [x] [para: desarrollador] Pestaña «Vehículos» en Verificaciones (esperan revisión y sin enviar, aprobar ahí mismo, número del menú por persona), Camila recuerda enviar el vehículo, menú por uso («Países y servicios» y «Para aprobar» al final, límites por moneda en Configuración), barra del vehículo coherente, foto real de la licencia, «Soporte Divoox» en la línea de tiempo, documento vencido claro y pedido por Camila, privacidad con ciudad base y regreso. Candados vistos en rojo.
