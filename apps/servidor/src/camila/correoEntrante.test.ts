@@ -454,7 +454,9 @@ describe('C-CAMILA-CORREO-PERSONA: lo que Camila no resuelve pasa a una persona,
     expect(salida.para).toBe('luis@correo.test');
     expect(salida.asunto).toBe('Re: Necesito ayuda');
     expect(salida.cabeceras?.['In-Reply-To']).toBe('<pide-persona@buzon.test>');
-    expect(salida.texto).toMatch(/Soporte Divoox, del equipo de soporte de Divoox/);
+    // C-FIRMA-EQUIPO: la cuenta ya se llama «Soporte Divoox»: firma solo eso, sin repetirse.
+    expect(salida.texto).toMatch(/\n\nSoporte Divoox\n\n/);
+    expect(salida.texto).not.toMatch(/del equipo de soporte/);
     expect(salida.texto).not.toMatch(/Camila Campos/);
     expect(salida.texto.trim().endsWith(PUEDES_RESPONDER.es)).toBe(true);
     // Mientras el equipo tiene el hilo, Camila no pisa la conversación: el correo queda en el hilo.

@@ -17,6 +17,21 @@ export const FIRMA = {
   en: 'Camila Campos, Divoox Support Team',
 } as const;
 
+/**
+ * C-FIRMA-EQUIPO (Gerencia, 26 nov 2026: Richard recibió por WhatsApp «Soporte Divoox, del equipo de
+ * soporte de Divoox») — todos los países y canales. Cómo firma una persona del equipo: si su nombre ya
+ * dice «Soporte» o la marca, la firma es solo «Soporte Divoox» («Divoox Support»); si es un nombre
+ * propio, «María, de Soporte Divoox» («María, Divoox Support»). Siempre una sola línea. Pura.
+ */
+export function firmaDelEquipo(nombre: string | null | undefined, idioma: IdiomaCamila): string {
+  const solo = idioma === 'en' ? 'Divoox Support' : 'Soporte Divoox';
+  const limpio = String(nombre ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!limpio || /soporte|support|divoox|tumbite/i.test(limpio)) return solo;
+  return idioma === 'en' ? `${limpio}, Divoox Support` : `${limpio}, de Soporte Divoox`;
+}
+
 /** Lo que dice cuando le preguntan si es una persona. Siempre la verdad. */
 export const VERDAD = {
   es: 'Te soy sincera: soy la asistente virtual de Divoox, no una persona. Te ayudo con todo lo que pueda, y si prefieres hablar con alguien del equipo, escribe «hablar con una persona» y te paso con ellos.',

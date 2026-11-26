@@ -9,6 +9,7 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { recibirMensaje } from '../camila/cerebro';
 import { usarPersonaDelChat } from './camilaFallos';
 import { enviarPorCanal } from '../camila/canales';
+import { firmaDelEquipo } from '../camila/identidad';
 import { recibirCorreo } from '../camila/correoEntrante';
 import { anotarErrorDeCorreo, hiloDeCorreo } from '../camila/correoHilo';
 import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
@@ -563,7 +564,7 @@ camila.post('/admin/camila/hilos/:persona/responder', async (c) => {
       .bind(yo.id, p.id),
   ]);
   const en = p.idioma === 'en';
-  const firma = `${yo.nombre}${en ? ', Divoox Support Team' : ', del equipo de soporte de Divoox'}`;
+  const firma = firmaDelEquipo(yo.nombre, en ? 'en' : 'es');
   // C-CAMILA-CORREO-HILO: por correo sale en el mismo hilo de la persona, firmado por quien responde.
   const porCorreo = p.canal_ultimo === 'correo';
   const salida = await enviarPorCanal(
