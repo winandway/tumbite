@@ -16,11 +16,17 @@ export function BannerArriba({
   idioma,
   lugar,
   activo: activoDado,
+  servicios: serviciosDados,
   estilo = 'desfile',
 }: {
   idioma: 'es' | 'en';
   lugar?: string;
   activo?: boolean;
+  /**
+   * C-PAIS-ABIERTO-SIN-PRONTO: lo que de verdad está abierto en ese lugar («Moto · Car»). Sin esto,
+   * la línea de siempre.
+   */
+  servicios?: string;
   /**
    * C-DESFILE-FLOTA (4 nov 2026, Richard): la avenida negra queda solo en «Cómo funciona»; en el
    * resto de las páginas va el desfile de la flota sobre la línea roja.
@@ -44,7 +50,7 @@ export function BannerArriba({
       : idioma === 'en'
         ? `Coming soon to ${lugar}`
         : `Muy pronto en ${lugar}`;
-  const servicios = idioma === 'en' ? 'Food delivery' : 'Comida a domicilio';
+  const servicios = serviciosDados || (idioma === 'en' ? 'Food delivery' : 'Comida a domicilio');
   if (estilo === 'desfile') return <DesfileFlota lema={lema} servicios={servicios} />;
   return (
     <div className="ld-banner ld-banner-arriba">

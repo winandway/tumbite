@@ -154,6 +154,8 @@ export const PAISES: Lugar[] = [
     moneda: { es: 'peso colombiano', en: 'Colombian peso' },
   },
   {
+    // C-PAIS-ABIERTO-SIN-PRONTO: «pronto» es solo lo de partida; si tiene un servicio abierto, la web
+    // lo muestra abierto con lo que diga el servidor (paisesAbiertos.ts). No se abre aquí a mano.
     slug: 'venezuela',
     nombre: { es: 'Venezuela', en: 'Venezuela' },
     estado: 'pronto',

@@ -7,6 +7,7 @@ import { BotonGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
+import { usePaisesAbiertos } from './paisesAbiertos';
 import {
   CANAL_YOUTUBE,
   TEXTOS_VIDEO,
@@ -39,6 +40,8 @@ export function Pie({
     </span>
   );
   const estadoCiudad = useCiudadesEnVivo();
+  // C-PAIS-ABIERTO-SIN-PRONTO: un país abierto (Venezuela con Moto) va en verde, nunca «muy pronto».
+  const estadoPais = usePaisesAbiertos();
   const activo = (
     <span className="pie-activo">
       <Icono nombre="listo" tamano={12} /> {t.activo}
@@ -55,7 +58,7 @@ export function Pie({
         ? PAISES.map((p) => ({
             a: `/country/${p.slug}`,
             nombre: enIdioma(p.nombre, idioma),
-            estado: p.estado,
+            estado: estadoPais(p).estado,
           }))
         : COCINAS.map((c) => ({
             a: `/food/${c.slug}`,
@@ -92,9 +95,9 @@ export function Pie({
                   <h3>{enIdioma(r.nombre, idioma)}</h3>
                   <ul className="pie-lugares">
                     {deRegion.map((p) => (
-                      <li key={p.slug} className={p.estado}>
+                      <li key={p.slug} className={estadoPais(p).estado}>
                         <Enlace a={`/country/${p.slug}`}>{enIdioma(p.nombre, idioma)}</Enlace>
-                        {p.estado === 'activo' ? activo : pronto}
+                        {estadoPais(p).estado === 'activo' ? activo : pronto}
                       </li>
                     ))}
                   </ul>

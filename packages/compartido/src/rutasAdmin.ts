@@ -150,6 +150,12 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/camila/recordatorios': 'tickets.ver',
   'PUT /admin/camila/recordatorios': 'tickets.configurar',
   'POST /admin/camila/recordatorios/:id/mensaje': 'tickets.responder',
+  // C-WHATSAPP-FALTA: el mensaje «te falta» por WhatsApp (estado del canal, ajustes, uno y la zona).
+  'GET /admin/camila/whatsapp': 'tickets.ver',
+  'PUT /admin/camila/whatsapp': 'tickets.configurar',
+  'POST /admin/camila/whatsapp/:id': 'tickets.responder',
+  'GET /admin/camila/whatsapp/zona/:zona': 'tickets.ver',
+  'POST /admin/camila/whatsapp/zona/:zona': 'tickets.responder',
   // C-CAMILA-FALLOS: fallos reportados y preguntas de diagnóstico (de toda la empresa: alcance total).
   'GET /admin/camila/fallos': 'tickets.ver',
   'GET /admin/camila/fallos/:id': 'tickets.ver',
@@ -615,6 +621,12 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/camila/recordatorios': CONSULTA,
   'PUT /admin/camila/recordatorios': CONSULTA,
   'POST /admin/camila/recordatorios/:id/mensaje': ficha('persona'),
+  'GET /admin/camila/whatsapp': CONFIG,
+  'PUT /admin/camila/whatsapp': CONFIG,
+  'POST /admin/camila/whatsapp/:id': ficha('repartidor'),
+  // La zona entera exige alcance total en la ruta (como «Recordatorios de registro»).
+  'GET /admin/camila/whatsapp/zona/:zona': CONSULTA,
+  'POST /admin/camila/whatsapp/zona/:zona': CONSULTA,
   'GET /admin/camila/fallos': CONSULTA,
   'GET /admin/camila/fallos/:id': CONSULTA,
   'GET /admin/camila/fallos/:id/captura/:reporte': CONSULTA,

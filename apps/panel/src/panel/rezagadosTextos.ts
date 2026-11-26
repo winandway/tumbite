@@ -40,6 +40,13 @@ const T = {
       servicio: 'Conectarse por primera vez',
       linea: 'Unirse a su línea',
       correo: 'Confirmar su correo',
+      // C-WHATSAPP-FALTA: los pasos que solo dice el mensaje «te falta» por WhatsApp.
+      actualizar: 'Actualizar Divoox Driver',
+      cara: 'La foto de su cara',
+      documento: 'La foto de su documento',
+      placa: 'La placa de su vehículo',
+      vehiculo_corregir: 'Corregir su vehículo',
+      conectarse: 'Conectarse en la app',
     } as Record<string, string>,
     recordatorio: {
       clave: 'ayuda para entrar a su cuenta',
@@ -54,11 +61,18 @@ const T = {
       linea: 'recordatorio de su línea',
       correo: 'recordatorio de su correo',
       libre: 'mensaje escrito por el equipo',
+      actualizar: 'lo que le falta: actualizar Driver',
+      cara: 'lo que le falta: la foto de su cara',
+      documento: 'lo que le falta: la foto de su documento',
+      placa: 'lo que le falta: la placa de su vehículo',
+      vehiculo_corregir: 'lo que le falta: corregir su vehículo',
+      conectarse: 'lo que le falta: conectarse',
     } as Record<string, string>,
     canal: {
       correo: 'Correo',
       sms: 'SMS',
       aviso: 'Aviso en la app',
+      whatsapp: 'WhatsApp',
       equipo: 'Campana del equipo',
     } as Record<string, string>,
     equipoFalta: {
@@ -70,10 +84,12 @@ const T = {
       zona_ajena: 'Revisar su ciudad: se registró desde otro país',
       documento_vencido: 'Revisar su documento: parece vencido y está aprobado',
     } as Record<string, string>,
-    unCanal: { correo: 'un correo', sms: 'un SMS', aviso: 'un aviso en la app' } as Record<
-      string,
-      string
-    >,
+    unCanal: {
+      correo: 'un correo',
+      sms: 'un SMS',
+      aviso: 'un aviso en la app',
+      whatsapp: 'un WhatsApp',
+    } as Record<string, string>,
     estado: {
       enviado: 'enviado',
       entregado: 'entregado',
@@ -107,6 +123,12 @@ const T = {
       servicio: 'Go online for the first time',
       linea: 'Join their line',
       correo: 'Confirm their email',
+      actualizar: 'Update Divoox Driver',
+      cara: 'Their face photo',
+      documento: 'Their ID photo',
+      placa: 'Their vehicle’s plate',
+      vehiculo_corregir: 'Fix their vehicle',
+      conectarse: 'Go online in the app',
     } as Record<string, string>,
     recordatorio: {
       clave: 'help signing in',
@@ -121,11 +143,18 @@ const T = {
       linea: 'line reminder',
       correo: 'email reminder',
       libre: 'message written by the team',
+      actualizar: 'what is missing: update Driver',
+      cara: 'what is missing: their face photo',
+      documento: 'what is missing: their ID photo',
+      placa: 'what is missing: their vehicle’s plate',
+      vehiculo_corregir: 'what is missing: fix their vehicle',
+      conectarse: 'what is missing: go online',
     } as Record<string, string>,
     canal: {
       correo: 'Email',
       sms: 'SMS',
       aviso: 'App notification',
+      whatsapp: 'WhatsApp',
       equipo: 'Team bell',
     } as Record<string, string>,
     equipoFalta: {
@@ -137,10 +166,12 @@ const T = {
       zona_ajena: 'Check their city: they signed up from another country',
       documento_vencido: 'Check their document: it looks expired and is approved',
     } as Record<string, string>,
-    unCanal: { correo: 'an email', sms: 'an SMS', aviso: 'an app notification' } as Record<
-      string,
-      string
-    >,
+    unCanal: {
+      correo: 'an email',
+      sms: 'an SMS',
+      aviso: 'an app notification',
+      whatsapp: 'a WhatsApp message',
+    } as Record<string, string>,
     estado: {
       enviado: 'sent',
       entregado: 'delivered',

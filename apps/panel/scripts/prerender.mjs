@@ -43,6 +43,16 @@ try {
   );
   const { PAISES, CIUDADES, COCINAS } = await vite.ssrLoadModule('/src/sitio/cobertura.ts');
   const { PREGUNTAS_COMO_FUNCIONA } = await vite.ssrLoadModule('/src/sitio/ComoFunciona.tsx');
+  const { PAISES_ABIERTOS_PUBLICADOS, estadoDePais } = await vite.ssrLoadModule(
+    '/src/sitio/paisesAbiertos.ts',
+  );
+  // C-PAIS-ABIERTO-SIN-PRONTO: las páginas de los países abiertos (según producción al compilar).
+  const paisesAbiertos = new Set(
+    PAISES.filter((p) => estadoDePais(p, PAISES_ABIERTOS_PUBLICADOS).abierto).map(
+      (p) => `/country/${p.slug}`,
+    ),
+  );
+  const paginasConPronto = [];
 
   // Datos estructurados (schema.org) que leen Google y los buscadores de IA.
   const ORGANIZACION = {
@@ -319,6 +329,16 @@ try {
             espanolEnIngles.push(`${url}: ${t.slice(0, 90)}`);
         }
       }
+      // Candado C-PAIS-ABIERTO-SIN-PRONTO: un país abierto no puede salir con «muy pronto» en su
+      // título, su descripción, su tarjeta social ni su contenido (el lema del desfile incluido).
+      if (paisesAbiertos.has(ruta)) {
+        const cabeza = pagina.slice(0, pagina.indexOf('</head>'));
+        const metas = [...cabeza.matchAll(/<(?:title|meta)[^>]*>(?:[^<]*<\/title>)?/g)].join(' ');
+        // Hasta el final del contenido: el pie lista aparte las ciudades que todavía no abren.
+        const cuerpo = html.slice(0, html.indexOf('</main>'));
+        if (/pronto|pr[oó]ximamente|coming soon|\bsoon\b/i.test(`${metas} ${cuerpo}`))
+          paginasConPronto.push(url);
+      }
       paginas.push({ ruta: url, base: ruta, lengua, titulo, descripcion });
       // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /country/colombia
       // tal cual, sin redirigir a /country/colombia/ (una barra de más rompe la canónica y el SEO).
@@ -328,6 +348,10 @@ try {
       n++;
     }
   console.log(`prerender: ${n} páginas públicas escritas en dist/`);
+  if (paginasConPronto.length)
+    throw new Error(
+      `Un país abierto sale con «muy pronto» (C-PAIS-ABIERTO-SIN-PRONTO):\n${paginasConPronto.join('\n')}`,
+    );
   if (espanolEnIngles.length) {
     throw new Error(
       `Hay texto en español en páginas en inglés (C-INGLES-PRINCIPAL):\n${espanolEnIngles.join('\n')}`,

@@ -35,7 +35,7 @@ import {
   sincronizarEdad,
 } from '../edadYDocumento';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { ZONA_INICIAL, zonaPara } from './zonas';
+import { ZONA_INICIAL, sinZonasDePrueba, zonaPara } from './zonas';
 import { exigirComisionEnMoneda } from '../finanzas/conductor';
 import {
   CATEGORIAS_CARRO,
@@ -224,6 +224,60 @@ function estadoSinTarifa(
   return 'disponible';
 }
 const ahoraSql = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
+
+export type ServicioAbierto = { id: string; es: string; en: string };
+
+/**
+ * C-PAIS-ABIERTO-SIN-PRONTO (25 nov 2026, todos los países): qué servicios están abiertos HOY al
+ * público en cada país, con la misma regla que ve un cliente sin sesión en el catálogo
+ * (`estadoEfectivo`): servicio encendido y construido, encendido en una ciudad activa que no es de
+ * pruebas, dentro de su horario y con tarifa si se cobra por ciudad. En producción, un servicio de
+ * pasajeros cuenta solo en un país abierto por el superadmin (C-MOTO-POR-PAIS). De aquí sale que
+ * la web diga «Ya estamos en Venezuela» y nunca «muy pronto» para un país abierto. Solo lee: una
+ * consulta y la de las aperturas; la ruta pública va con caché.
+ */
+export async function paisesAbiertos(
+  db: Db,
+  entorno: Entorno | null,
+): Promise<Record<string, ServicioAbierto[]>> {
+  const [{ results }, aperturas] = await Promise.all([
+    db
+      .prepare(
+        `SELECT s.*, z.pais AS pais, z.id AS zona_id, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
+                EXISTS (SELECT 1 FROM servicios_implementados si WHERE si.servicio_id = s.id) AS implementado,
+                0 AS piloto, 0 AS solo_prueba,
+                EXISTS (SELECT 1 FROM tarifas_viaje t WHERE t.servicio_id = s.id AND t.zona_id = z.id AND t.activa = 1) AS con_tarifa
+           FROM servicios_zona sz
+           JOIN servicios s ON s.id = sz.servicio_id
+           JOIN zonas z ON z.id = sz.zona_id
+          WHERE sz.estado = 'disponible' AND s.estado = 'disponible' AND z.activa = 1
+            AND ${sinZonasDePrueba('z.nombre')}
+          ORDER BY z.pais, s.orden, s.id`,
+      )
+      .all<Servicio & { pais: string; zona_id: string }>(),
+    entorno === 'pruebas' ? Promise.resolve(null) : aperturasVigentes(db),
+  ]);
+  const ahora = ahoraSql();
+  const porPais: Record<string, ServicioAbierto[]> = {};
+  for (const s of results) {
+    if (estadoEfectivo(s, ahora) !== 'disponible') continue;
+    if (
+      s.transporta_personas === 1 &&
+      aperturas &&
+      !aperturas.some(([sv, p]) => sv === s.id && p === s.pais)
+    )
+      continue;
+    const lista = (porPais[s.pais] ??= []);
+    if (lista.some((x) => x.id === s.id)) continue;
+    // C-SERVICIO-SIN-OFERTA: encendido pero sin quien lo tome (Envíos sin conductores, Comida sin
+    // restaurantes aprobados) no cuenta como abierto: el cliente tampoco lo puede pedir.
+    if (SERVICIOS_CON_CONDUCTOR.has(s.id) && !(await hayQuienLoTome(db, s.zona_id, s.id))) continue;
+    if (COMERCIOS_DE_SERVICIO.has(s.id) && !(await hayComerciosEnZona(db, s.zona_id, s.id)))
+      continue;
+    lista.push({ id: s.id, es: s.nombre_es, en: s.nombre_en });
+  }
+  return Object.fromEntries(Object.entries(porPais).filter(([, lista]) => lista.length > 0));
+}
 
 /** El estado efectivo de UN servicio en una zona (lo usan las cotizaciones de viaje). */
 export async function estadoServicioEnZona(

@@ -113,6 +113,9 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   vueltas_pruebas: 'sin_persona',
   vueltas_pruebas_rutas: 'sin_persona',
   zonas: 'sin_persona',
+  // C-WHATSAPP-ENTRANTE: el id de Meta de cada mensaje entrante y la huella (sha256) del número, sin el
+  // número ni el texto: evita procesar dos veces un reintento y frena a un número que escribe sin fin.
+  whatsapp_entrantes: 'antifraude',
   // Historial de la operación por número interno (estados, ofertas, asignaciones, habilitaciones), sin nombre, contacto, dirección ni texto de la persona; la cuenta a la que apunta queda como «Cuenta borrada»
   abandonos_repartidor: 'historial',
   ajustes_pedido: 'historial',

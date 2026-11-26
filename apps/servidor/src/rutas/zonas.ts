@@ -266,8 +266,9 @@ zonas.patch('/admin/zonas/:id', async (c) => {
  * C-DISPONIBLE-MUNDO: una zona interna de pruebas (su nombre lleva «(pruebas)», como la de Novi
  * donde prueba el equipo) sigue funcionando, pero no se le anuncia al público como ciudad abierta.
  */
-const SIN_ZONAS_DE_PRUEBA =
-  "lower(nombre) NOT LIKE '%(pruebas)%' AND lower(nombre) NOT LIKE '%(test)%'";
+export const sinZonasDePrueba = (columna = 'nombre') =>
+  `lower(${columna}) NOT LIKE '%(pruebas)%' AND lower(${columna}) NOT LIKE '%(test)%'`;
+const SIN_ZONAS_DE_PRUEBA = sinZonasDePrueba();
 
 /**
  * ¿Llega Divoox a este punto? Si no, en qué ciudades sí estamos y qué áreas abren pronto.
