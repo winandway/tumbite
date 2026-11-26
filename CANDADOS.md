@@ -48,6 +48,14 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Ajustes finales del revisor:** un `vencido` que no es «si», «no» ni «no_se_ve» se lee como «no_se_ve» pero queda marcado (`vencidoDesconocido`) y la foto nunca sale en verde: sale en amarillo para que la mire una persona; el «no_se_ve» de verdad sigue igual. La marca del borrador es `{declarados, libres}`: al leer, un formulario que declara sus campos conserva los de su base y los que crecieron solos; un campo que la marca dice declarado y hoy ya no está no vuelve. Los formularios de campos libres conservan todo.
 - **Cómo se comprueba:** `confianzaLeida.test.ts` (licencia con "", `null` y texto largo; cara y foto de vehículo con campos nulos; `vencido` desconocido en amarillo) y `borradorSinAvisoVacio.test.tsx` (campos que crecen e `inicial: {}` no pierden lo escrito; un campo que el formulario dejó de declarar no vuelve; los del aviso falso siguen en verde). **Vistas en ROJO** con las piezas anteriores.
 
+## C-BORRADOR-ELECCION-SOLA · Una elección de una lista, sola, no es un borrador (Gerencia en vivo, 26 nov 2026) — todos los países · compartido y panel
+
+- **Qué se rompió y cómo se veía:** con la versión del 25 nov ya publicada, «Cambiar ciudad» de la ficha del conductor seguía diciendo «Recuperamos lo que estabas escribiendo» en una pestaña nueva donde nadie escribió nada.
+- **Causa real:** mirado en el navegador real, el borrador guardado traía la ciudad elegida en la lista y el motivo vacío (guardado ya con la marca nueva de campos). Para la pieza eso era un cambio de verdad, así que lo devolvía con su aviso. Para la persona, haber tocado una lista no es «lo que estaba escribiendo».
+- **Qué se hizo:** la pieza única (`useBorrador`, `packages/compartido/src/borrador.ts`) acepta `noBastan`: campos que por sí solos no hacen borrador. Si solo cambiaron esos, no se guarda, lo ya guardado se borra al leer y no se avisa; si además hay algo escrito, vuelven junto con el texto. «Cambiar ciudad» declara `noBastan: ['zonaId']`.
+- **Cómo se comprueba:** `packages/compartido/src/borradorSinAvisoVacio.test.tsx`, bloque C-BORRADOR-ELECCION-SOLA (comprobado en rojo: sin el arreglo fallan dos pruebas). En vivo: abrir la ficha de un conductor, tres puntos, «Cambiar ciudad», elegir una ciudad, cerrar y volver a abrir: sin aviso y con la lista en «Elige una ciudad».
+- **Qué NO tocar:** un formulario nuevo con una lista y un texto obligatorio declara su lista en `noBastan`; no se resuelve borrando el borrador a mano en cada pantalla.
+
 ## C-BORRADOR-SIN-AVISO-VACIO (segunda parte) y C-USAR-FECHA-LEIDA · Sin «Recuperamos…» falso y «Usar esta fecha» (Gerencia en vivo, 25 nov 2026) — todos los formularios · compartido, panel y servidor
 
 - **Qué se veía:** en un navegador donde nadie escribió nada, «Cambiar ciudad» seguía diciendo «Recuperamos lo que estabas escribiendo» con la casilla vacía.

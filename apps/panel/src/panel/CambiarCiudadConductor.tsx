@@ -82,6 +82,8 @@ export function CambiarCiudadConductor({
     cuenta: 'superadmin',
     inicial: { zonaId: '', motivo: '' },
     almacen: almacenNavegador,
+    // C-BORRADOR-ELECCION-SOLA: la ciudad elegida sola no es «lo que estabas escribiendo».
+    noBastan: ['zonaId'],
   });
   const [destinos, setDestinos] = useState<Destinos | null>(null);
   const [paso, setPaso] = useState<'llenar' | 'confirmar'>('llenar');
