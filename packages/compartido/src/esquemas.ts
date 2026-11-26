@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { leerLugarCuenta } from './lugarCuenta';
 
 /** Esquemas de datos compartidos: el servidor valida con ellos y las apps los usan para sus tipos. */
 
