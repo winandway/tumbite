@@ -9,6 +9,7 @@ import {
   coincide,
   estadoLugarCuenta,
   sumaEspera,
+  textoFallaron,
   textoPasaron,
   pasoDeRespuesta,
 } from './esperaCiudad';
@@ -278,8 +279,9 @@ describe('C-REGISTRO-TODO-EL-PAIS: el paso va de a un lote (contrato del servido
 
   it('lee el paso solo o dentro de «espera», y nada si no vino', () => {
     const paso = { pasaron: 3, quedan: 7, siguiente: 'u5', motivo: null };
-    expect(pasoDeRespuesta(paso)).toEqual(paso);
-    expect(pasoDeRespuesta({ ok: true, espera: paso })).toEqual(paso);
+    expect(pasoDeRespuesta(paso)).toEqual({ ...paso, fallaron: 0 });
+    expect(pasoDeRespuesta({ ok: true, espera: paso })).toEqual({ ...paso, fallaron: 0 });
+    expect(pasoDeRespuesta({ ...paso, fallaron: 2 })?.fallaron).toBe(2);
     expect(pasoDeRespuesta({ ok: true, espera: null })).toBeNull();
     expect(pasoDeRespuesta({ pasaronDeEspera: 3 })).toBeNull();
   });
@@ -303,6 +305,60 @@ describe('C-REGISTRO-TODO-EL-PAIS: el paso va de a un lote (contrato del servido
     );
     expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull();
     expect(llamadas.at(-1)?.cuerpo).toEqual({ desde: 'u5' });
+  });
+
+  /**
+   * C-REGISTRO-TODO-EL-PAIS (26 nov): la respuesta trae `fallaron` (siguen en espera y se reintentan) y
+   * el panel no lo decía: parecía que no quedaba nadie. Comprobado en ROJO sin la línea ámbar.
+   */
+  it('los que no pudieron pasar se dicen en ámbar junto a «Quedan N», nunca en verde, y se suman', async () => {
+    simularServidor((l) =>
+      (l.cuerpo as { desde?: string } | undefined)?.desde === 'u5'
+        ? { pasaron: 2, quedan: 0, siguiente: null, motivo: null, fallaron: 1 }
+        : { pasaron: 3, quedan: 7, siguiente: 'u5', motivo: null, fallaron: 2 },
+    );
+    render(<PasarEspera zonaId="VE-ZU-MARACAIBO" idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Pasar a los que esperan' }));
+    expect(await screen.findByTestId('pasaron-espera')).toHaveTextContent('Quedan 7 por revisar');
+    const fallo = screen.getByTestId('fallaron-espera');
+    expect(fallo).toHaveTextContent('2 no pudieron pasar; siguen en espera y se reintentan.');
+    expect(fallo).toHaveClass('aviso-ambar');
+    expect(fallo).not.toHaveClass('ok');
+    await userEvent.click(screen.getByRole('button', { name: 'Seguir' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('fallaron-espera')).toHaveTextContent(
+        '3 no pudieron pasar; siguen en espera y se reintentan.',
+      ),
+    );
+    expect(textoFallaron(1, 'es')).toBe('1 no pudo pasar; sigue en espera y se reintenta.');
+    expect(textoFallaron(2, 'en')).toBe(
+      '2 couldn’t move in; they stay on the waitlist and are retried.',
+    );
+    expect(textoFallaron(1, 'en')).toBe(
+      '1 couldn’t move in; they stay on the waitlist and are retried.',
+    );
+  });
+
+  it('sin fallos no sale la línea ámbar (lo de siempre)', async () => {
+    simularServidor(() => ({ pasaron: 4, quedan: 0, siguiente: null, motivo: null, fallaron: 0 }));
+    render(<PasarEspera zonaId="VE-ZU-MARACAIBO" idioma="es" />);
+    await userEvent.click(screen.getByRole('button', { name: 'Pasar a los que esperan' }));
+    expect(await screen.findByTestId('pasaron-espera')).toHaveClass('ok');
+    expect(screen.queryByTestId('fallaron-espera')).toBeNull();
+  });
+
+  it('al abrir una zona o guardar un área, lo que respondió el servidor también dice los que fallaron', () => {
+    render(
+      <PasarEspera
+        zonaId="VE-ZU-MARACAIBO"
+        idioma="es"
+        conBoton={false}
+        inicial={{ pasaron: 5, quedan: 0, siguiente: null, motivo: null, fallaron: 1 }}
+      />,
+    );
+    expect(screen.getByTestId('fallaron-espera')).toHaveTextContent(
+      '1 no pudo pasar; sigue en espera y se reintenta.',
+    );
   });
 
   it('una zona apagada lo dice en palabras, sin verde', async () => {

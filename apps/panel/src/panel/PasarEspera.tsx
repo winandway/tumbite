@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { type Idioma, ErrorApi, enIdioma } from '@tumbite/compartido';
 import { pedir } from './api';
-import { type PasoEspera, pasoDeRespuesta, textoMotivoPaso, textoPasaron } from './esperaCiudad';
+import {
+  type PasoEspera,
+  pasoDeRespuesta,
+  textoFallaron,
+  textoMotivoPaso,
+  textoPasaron,
+} from './esperaCiudad';
 
 /**
  * C-REGISTRO-TODO-EL-PAIS, parte C (25 nov 2026; Venezuela y Estados Unidos). En Zonas: cuántos de
@@ -9,7 +15,8 @@ import { type PasoEspera, pasoDeRespuesta, textoMotivoPaso, textoPasaron } from 
  * `espera`), y el botón «Pasar a los que esperan» (`POST /datos/admin/zonas/:id/pasar-espera`) para
  * volver a correr el paso a mano. El servidor va de a un lote con tope: si quedan por revisar, se dice
  * «quedan N» y «Seguir» manda `{ desde: siguiente }` hasta terminar. El resultado va en verde: es un
- * éxito, aunque sean cero.
+ * éxito, aunque sean cero. Los que fallaron al pasar (26 nov) se dicen aparte, en ámbar: siguen en
+ * espera y se reintentan.
  */
 const T = {
   es: {
@@ -48,6 +55,7 @@ export function PasarEspera({
   const [paso, setPaso] = useState<PasoEspera | null>(inicial);
   // Lo que pasó en todas las vueltas de este mismo «Seguir».
   const [total, setTotal] = useState(inicial?.pasaron ?? 0);
+  const [fallaron, setFallaron] = useState(inicial?.fallaron ?? 0);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   async function pasar(desde: string | null) {
@@ -60,8 +68,9 @@ export function PasarEspera({
           `/datos/admin/zonas/${encodeURIComponent(zonaId)}/pasar-espera`,
           desde ? { desde } : {},
         ),
-      ) ?? { pasaron: 0, quedan: 0, siguiente: null, motivo: null };
+      ) ?? { pasaron: 0, quedan: 0, siguiente: null, motivo: null, fallaron: 0 };
       setTotal((n) => (desde ? n : 0) + r.pasaron);
+      setFallaron((n) => (desde ? n : 0) + (r.fallaron ?? 0));
       setPaso(r);
       alPasar?.();
     } catch (x) {
@@ -98,6 +107,11 @@ export function PasarEspera({
             {textoPasaron(total, idioma, sigue ? paso.quedan : 0)}
           </p>
         )
+      ) : null}
+      {paso && !paso.motivo && fallaron > 0 ? (
+        <p className="aviso-ambar" role="status" data-testid="fallaron-espera">
+          {textoFallaron(fallaron, idioma)}
+        </p>
       ) : null}
       {sigue ? (
         <span>

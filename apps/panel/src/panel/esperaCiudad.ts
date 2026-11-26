@@ -147,6 +147,8 @@ export type PasoEspera = {
   quedan: number;
   siguiente: string | null;
   motivo: 'zona_cerrada' | 'zona_excluida' | null;
+  /** Los que fallaron al pasar: siguen en espera y se reintentan en el próximo paso (0 si no vino). */
+  fallaron?: number;
 };
 
 const entero = (v: unknown) =>
@@ -164,7 +166,19 @@ export function pasoDeRespuesta(r: unknown): PasoEspera | null {
     quedan: entero(x.quedan) ?? 0,
     siguiente: typeof x.siguiente === 'string' && x.siguiente ? x.siguiente : null,
     motivo: x.motivo === 'zona_cerrada' || x.motivo === 'zona_excluida' ? x.motivo : null,
+    fallaron: entero(x.fallaron) ?? 0,
   };
+}
+
+/**
+ * Los que no pudieron pasar (un error con esa cuenta): siguen en espera y se reintentan. Va en ámbar,
+ * nunca en verde: no es un éxito ni algo que el equipo tenga que arreglar a mano.
+ */
+export function textoFallaron(n: number, idioma: Idioma): string {
+  if (idioma === 'en') return `${n} couldn’t move in; they stay on the waitlist and are retried.`;
+  return n === 1
+    ? '1 no pudo pasar; sigue en espera y se reintenta.'
+    : `${n} no pudieron pasar; siguen en espera y se reintentan.`;
 }
 
 /** Cuántos pasaron de la lista de espera a la zona y cuántos quedan por revisar, en palabras. */
