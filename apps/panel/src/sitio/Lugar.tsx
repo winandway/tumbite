@@ -19,7 +19,7 @@ import { useCiudadesEnVivo } from './ciudadesEnVivo';
 import { fraseServicios, listaHumana, useMapaCiudades, usePaisesAbiertos } from './paisesAbiertos';
 import { CiudadesDelPais, PaginaCiudadPublica, PaginaTarifas, Preguntas } from './CiudadPublica';
 import { TEXTOS_CIUDAD, ciudadConTarifas, preguntasPais } from './ciudadesPublicas';
-import { TARIFAS_PUBLICADAS } from './tarifasCiudades';
+import { type TarifasPublicas, useTarifas } from './tarifasCiudades';
 
 /**
  * Páginas por país, por ciudad y por tipo de comida (/country/x, /city/x, /food/x).
@@ -34,6 +34,17 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   const estadoCiudad = useCiudadesEnVivo();
   const estadoPais = usePaisesAbiertos();
   const mapaCiudades = useMapaCiudades();
+  // C-TARIFAS-PUBLICAS: en la página de un país, los precios de su primera ciudad abierta (si los hay).
+  const primeraAbierta = (() => {
+    const codigo = pais?.codigo;
+    const cs = codigo ? new Map(Object.entries(mapaCiudades)).get(codigo) : undefined;
+    return pais && cs
+      ? (CIUDADES.find(
+          (c) => c.pais === pais.slug && c.clave && new Map(Object.entries(cs)).has(c.clave),
+        ) ?? null)
+      : null;
+  })();
+  const tarifasPais = useTarifas(primeraAbierta?.clave ?? '');
 
   // C-TARIFAS-PUBLICAS: /city/el-vigia/prices (solo ciudades con clave; lo demás no existe).
   if (sub !== undefined) {
@@ -94,7 +105,9 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
   // Las ciudades con clave van en su propia sección (CiudadesDelPais), sin «muy pronto».
   const ciudadesDelPais = pais ? CIUDADES.filter((c) => c.pais === pais.slug && !c.clave) : [];
   const tc = enIdioma(TEXTOS_CIUDAD, idioma);
-  const conTarifas = pais ? ciudadConTarifas(pais.slug) : null;
+  const tarifasDelPais: Record<string, TarifasPublicas> =
+    primeraAbierta?.clave && tarifasPais ? { [primeraAbierta.clave]: tarifasPais } : {};
+  const conTarifas = pais ? ciudadConTarifas(pais.slug, tarifasDelPais) : null;
   const paisDeCiudad = ciudad ? PAISES.find((p) => p.slug === ciudad.pais) : null;
   const region = pais?.region ? (REGIONES.find((r) => r.id === pais.region) ?? null) : null;
   // Enlaces internos a los países de la misma región (ayudan a Google a recorrer el sitio).
@@ -162,7 +175,7 @@ export function PaginaLugar({ ruta, idioma }: { ruta: string; idioma: Idioma }) 
               titulo={tc.preguntas}
               preguntas={preguntasPais(pais, idioma, {
                 ciudades: mapaCiudades,
-                tarifas: TARIFAS_PUBLICADAS,
+                tarifas: tarifasDelPais,
               })}
             />
           </>

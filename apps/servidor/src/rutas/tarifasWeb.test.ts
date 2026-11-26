@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { CIUDAD_EL_VIGIA as EVG } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
 import { sembrarTabuladorVigia } from '../semillaTabuladorVigia';
+import { olvidarCacheTarifas } from './tarifasWeb';
 
 /**
  * C-TARIFAS-PUBLICAS y C-CIUDAD-ABIERTA-SIN-PRONTO (25 nov 2026, encargo de Richard) — Venezuela.
@@ -72,11 +73,13 @@ describe('C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades abiertas para la web', () =>
 });
 
 describe('C-TARIFAS-PUBLICAS: los precios de El Vigía salen de la base', () => {
+  beforeEach(() => olvidarCacheTarifas());
   it('sin el servicio abierto no se publica ningún precio', async () => {
     const { m } = await elVigia();
     await m.DB.prepare("UPDATE servicios_zona SET estado = 'suspendido' WHERE zona_id = ?")
       .bind(EVG.id)
       .run();
+    olvidarCacheTarifas();
     expect((await m.llamar('GET', '/datos/web/tarifas/el-vigia')).estado).toBe(404);
     expect((await m.llamar('GET', '/datos/web/tarifas/caracas')).estado).toBe(404);
   });
@@ -123,6 +126,8 @@ describe('C-TARIFAS-PUBLICAS: los precios de El Vigía salen de la base', () => 
     )
       .bind(EVG.id)
       .run();
+    // Pasados los 5 minutos de la caché (aquí, olvidándola) la página toma el precio nuevo.
+    olvidarCacheTarifas();
     const r = await m.llamar('GET', '/datos/web/tarifas/el-vigia');
     const xs = lugares(r.datos);
     expect(xs.find((l) => l.lugar === 'La Vega I')?.ida).toEqual({ dia: 250, noche: 325 });
@@ -148,5 +153,35 @@ describe('C-TARIFAS-PUBLICAS: los precios de El Vigía salen de la base', () => 
       n: number;
     }>();
     expect(despues?.n).toBe(antes?.n);
+  });
+
+  it('lecturas por visita: la primera lee, las siguientes no; una ciudad inexistente o un servicio que no existe no leen', async () => {
+    const { m } = await elVigia();
+    const prep = m.DB.prepare.bind(m.DB);
+    let consultas = 0;
+    m.DB.prepare = ((sql: string) => {
+      consultas++;
+      return prep(sql);
+    }) as typeof m.DB.prepare;
+    const medir = async (ruta: string) => {
+      consultas = 0;
+      const r = await m.llamar('GET', ruta);
+      return { estado: r.estado, consultas };
+    };
+    const primera = await medir('/datos/web/tarifas/el-vigia');
+    expect(primera.estado).toBe(200);
+    // Zonas, abiertos (y aperturas), tarifa, rutas, política y quién paga: acotado.
+    expect(primera.consultas).toBeGreaterThan(0);
+    expect(primera.consultas).toBeLessThanOrEqual(12);
+    expect(await medir('/datos/web/tarifas/el-vigia')).toEqual({ estado: 200, consultas: 0 });
+    expect(await medir('/datos/web/tarifas/caracas')).toEqual({ estado: 404, consultas: 0 });
+    expect(await medir('/datos/web/tarifas/el-vigia?servicio=carro')).toEqual({
+      estado: 404,
+      consultas: 0,
+    });
+    olvidarCacheTarifas();
+    // En frío, una ciudad que no existe cuesta una sola lectura (la lista de zonas).
+    expect(await medir('/datos/web/tarifas/no-existe')).toEqual({ estado: 404, consultas: 1 });
+    m.DB.prepare = prep;
   });
 });

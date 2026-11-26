@@ -111,25 +111,51 @@ export function validarTarifas(t) {
   return t;
 }
 
-/** Los precios de cada ciudad abierta, como los da producción. null = no se pudo (queda lo guardado). */
-async function tarifasDe(ciudades) {
-  const claves = Object.values(ciudades).flatMap((cs) =>
-    Object.entries(cs)
-      .filter(([, servicios]) => servicios.some((s) => s.id === 'moto'))
-      .map(([clave]) => clave),
-  );
+/**
+ * Los precios de cada ciudad con Moto abierta, como los da producción. `guardadas` son las del archivo.
+ * - Una ciudad que dejó de estar abierta se QUITA (nunca quedan precios viejos de algo cerrado).
+ * - 404 = esa ciudad no tiene precios publicados hoy: se quita.
+ * - Un fallo pasajero (red, 5xx, respuesta rara) de una ciudad que SIGUE abierta conserva lo guardado
+ *   de esa ciudad, y se avisa en el registro.
+ */
+export async function tarifasDe(ciudades, guardadas = {}, pedir = pedirTarifas) {
+  const claves = Object.values(ciudades)
+    .flatMap((cs) =>
+      Object.entries(cs)
+        .filter(([, servicios]) => servicios.some((s) => s.id === 'moto'))
+        .map(([clave]) => clave),
+    )
+    .sort();
   const tarifas = {};
-  for (const clave of claves.sort()) {
-    const r = await fetch(`${origen}/datos/web/tarifas/${clave}`, {
-      signal: AbortSignal.timeout(8000),
-    });
-    if (r.status === 404) continue;
-    if (!r.ok) throw new Error(`tarifas de ${clave}: ${r.status}`);
-    const t = validarTarifas(await r.json());
-    if (!t) throw new Error(`tarifas de ${clave}: respuesta rara`);
-    if (t.grupos.length || t.otros.length) tarifas[clave] = t;
+  const avisos = [];
+  for (const clave of claves) {
+    let r;
+    try {
+      r = await pedir(clave);
+    } catch (e) {
+      r = { error: e?.message ?? String(e) };
+    }
+    if (r.estado === 404) continue;
+    const t = r.datos ? validarTarifas(r.datos) : null;
+    if (t) {
+      if (t.grupos.length || t.otros.length) tarifas[clave] = t;
+      continue;
+    }
+    const antes = new Map(Object.entries(guardadas)).get(clave);
+    avisos.push(
+      `tarifas de ${clave}: ${r.error ?? (r.estado ? `respondió ${r.estado}` : 'respuesta rara')}; ${antes ? 'queda lo guardado' : 'sin precios guardados'}`,
+    );
+    if (antes) tarifas[clave] = antes;
   }
-  return { tarifas };
+  return { tarifas, avisos };
+}
+
+async function pedirTarifas(clave) {
+  const r = await fetch(`${origen}/datos/web/tarifas/${clave}`, {
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!r.ok) return { estado: r.status };
+  return { estado: r.status, datos: await r.json().catch(() => null) };
 }
 
 /** Escribe un archivo solo si cambió (sin fecha adentro: compilar no ensucia el repositorio). */
@@ -164,13 +190,15 @@ async function main() {
     console.log(
       `estado-paises: países abiertos según producción: ${Object.keys(datos.paises).join(', ') || 'ninguno'}`,
     );
+  // Un servidor de antes (sin ciudades) no confirma precios: no se toca lo guardado (vacío en el repo).
   if (!datos.ciudades) return;
-  try {
-    if (guardar(archivoTarifas, await tarifasDe(datos.ciudades)))
-      console.log('estado-paises: precios de las ciudades puestos al día');
-  } catch (e) {
-    console.warn('estado-paises: sin precios de producción; quedan los guardados', e?.message ?? e);
-  }
+  const guardadas = JSON.parse(readFileSync(archivoTarifas, 'utf8')).tarifas ?? {};
+  const { tarifas, avisos } = await tarifasDe(datos.ciudades, guardadas);
+  for (const a of avisos) console.warn(`estado-paises: ${a}`);
+  if (guardar(archivoTarifas, { tarifas }))
+    console.log(
+      `estado-paises: precios según producción: ${Object.keys(tarifas).join(', ') || 'ninguna ciudad'}`,
+    );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

@@ -66,6 +66,8 @@ function pedir(ciudad: string) {
 export function useTarifas(ciudad: string): TarifasPublicas | null {
   const [vivo, setVivo] = useState<TarifasPublicas | null | undefined>(undefined);
   useEffect(() => {
+    // Sin ciudad (una que no está abierta): no se pregunta nada.
+    if (!ciudad) return;
     let vigente = true;
     void pedir(ciudad).then((t) => {
       if (vigente && t !== undefined) setVivo(t);

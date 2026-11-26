@@ -38,7 +38,9 @@ export const TEXTOS_CIUDAD = {
     entradaAbierta:
       'En {ciudad} ya puedes pedir {servicios} con Divoox. Ves el precio antes de pedir, sigues a tu conductor en el mapa y pagas {pagos}.',
     entradaCerrada:
-      'Divoox es la app para pedir viajes en moto y en carro, comida a domicilio y envíos, y para ganar dinero como conductor. Aquí tienes cómo se pide, cómo se paga y cómo registrarte como conductor en {ciudad}.',
+      '{ciudad} ({estado}): aún no hay conductores de Divoox en la ciudad, así que todavía no se pueden pedir viajes aquí. Sé de los primeros: regístrate como conductor en Divoox Driver. Divoox es la app para pedir viajes en moto y en carro, comida y envíos.',
+    sobre: 'Sobre {ciudad}',
+    primerosTitulo: 'Sé de los primeros conductores de Divoox en {ciudad}',
     dondeHoy: 'Hoy Divoox funciona en',
     dondeHoyFin: 'La app te dice si llega a tu zona antes de pedir.',
     comoPedir: 'Cómo se pide un viaje',
@@ -71,7 +73,9 @@ export const TEXTOS_CIUDAD = {
     entradaAbierta:
       'In {ciudad} you can already request {servicios} with Divoox. You see the price before you request, follow your driver on the map, and pay {pagos}.',
     entradaCerrada:
-      'Divoox is the app to request motorbike and car rides, food delivery and package delivery, and to make money as a driver. Here is how to request a ride, how to pay, and how to sign up to drive in {ciudad}.',
+      '{ciudad} ({estado}): there are no Divoox drivers in the city yet, so rides cannot be requested here today. Be one of the first: sign up to drive in Divoox Driver. Divoox is the app for motorbike and car rides, food and package delivery.',
+    sobre: 'About {ciudad}',
+    primerosTitulo: 'Be one of the first Divoox drivers in {ciudad}',
     dondeHoy: 'Today Divoox runs in',
     dondeHoyFin: 'The app tells you whether it covers your area before you request.',
     comoPedir: 'How to request a ride',

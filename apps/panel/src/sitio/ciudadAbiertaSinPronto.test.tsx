@@ -9,9 +9,14 @@ import { olvidarCiudadesEnVivo } from './ciudadesEnVivo';
 import { RUTAS_TARIFAS } from './CiudadPublica';
 import { PaginaLugar } from './Lugar';
 import { CIUDADES_ABIERTAS_PUBLICADAS, olvidarPaisesAbiertos } from './paisesAbiertos';
-import { TARIFAS_PUBLICADAS, lugaresDe, olvidarTarifas } from './tarifasCiudades';
+import {
+  TARIFAS_PUBLICADAS,
+  type TarifasPublicas,
+  lugaresDe,
+  olvidarTarifas,
+} from './tarifasCiudades';
 // @ts-expect-error: guion de compilación en JavaScript, sin tipos.
-import { validar, validarTarifas } from '../../scripts/estado-paises.mjs';
+import { tarifasDe, validar, validarTarifas } from '../../scripts/estado-paises.mjs';
 
 /**
  * C-CIUDAD-ABIERTA-SIN-PRONTO y C-TARIFAS-PUBLICAS (25 nov 2026, encargo de Richard: que Google y los
@@ -23,6 +28,31 @@ import { validar, validarTarifas } from '../../scripts/estado-paises.mjs';
  * - Todas están en el mapa del sitio, con su versión en español y su hreflang.
  * - La página de tarifas lee los datos del sistema: si cambia un precio, cambia la página.
  */
+/** Unos precios como los que da el servidor (la forma real de `GET /datos/web/tarifas/:ciudad`). */
+const EL_VIGIA: TarifasPublicas = {
+  ciudad: 'el-vigia',
+  servicio: 'moto',
+  moneda: 'USD',
+  centro: 'El Vigía (casco urbano)',
+  grupos: [
+    {
+      grupo: 'Vía Mérida',
+      lugares: [
+        {
+          lugar: 'La Vega I',
+          ida: { dia: 200, noche: 260 },
+          regreso: { dia: 200, noche: 260 },
+          idaVuelta: null,
+        },
+        { lugar: 'Mérida', ida: { dia: 3000, noche: 3900 }, regreso: null, idaVuelta: null },
+      ],
+    },
+  ],
+  otros: [],
+  minimo: { dia: 100, noche: 130 },
+  noche: { recargoPb: 3000, desdeH: 21, hastaH: 6, zonaHoraria: 'America/Caracas' },
+  actualizado: '2026-11-25',
+};
 const PRONTO = /pronto|pr[oó]ximamente|coming soon|\bsoon\b|is coming|llega muy/i;
 const AFIRMA = /ya funciona|now live|ya disponible|now available|ya estamos en|now in /i;
 const VENEZUELA = Object.values(CIUDADES).filter((c) => c.pais === 'venezuela');
@@ -93,6 +123,34 @@ describe('C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades de Venezuela', () => {
         );
   });
 
+  it('cada ciudad sin servicio tiene su descripción única (empieza por su nombre), su texto propio y dice con honestidad que aún no hay conductores', () => {
+    for (const idioma of ['es', 'en'] as const) {
+      const entradas = new Set<string>();
+      for (const c of VENEZUELA) {
+        const html = renderToString(<PaginaLugar ruta={`/city/${c.slug}`} idioma={idioma} />);
+        // De este párrafo sale la meta descripción del HTML prearmado.
+        const entrada = (/<p class="ld-entrada"[^>]*>([\s\S]*?)<\/p>/.exec(html)?.[1] ?? '')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&#x27;|&quot;|&amp;/g, '');
+        if (CIUDADES_ABIERTAS_PUBLICADAS.VE?.[c.clave!]?.length) continue;
+        expect(entrada.startsWith(c.nombre[idioma]), `${idioma} ${c.slug}: ${entrada}`).toBe(true);
+        expect(entrada).toMatch(
+          idioma === 'es'
+            ? /aún no hay conductores de Divoox/
+            : /no Divoox drivers in the city yet/,
+        );
+        expect(entrada).toMatch(idioma === 'es' ? /Sé de los primeros/ : /Be one of the first/);
+        entradas.add(entrada.slice(0, 155));
+        expect(c.sobre?.[idioma]).toBeTruthy();
+        expect(visible(html)).toContain(c.sobre![idioma].slice(0, 40));
+      }
+      const cerradas = VENEZUELA.filter(
+        (c) => !CIUDADES_ABIERTAS_PUBLICADAS.VE?.[c.clave!]?.length,
+      );
+      expect(entradas.size).toBe(cerradas.length);
+    }
+  });
+
   it('manda el servidor: si El Vigía se cierra, su página ya no dice que funciona (ni «pronto»)', async () => {
     servidor({ paises: { VE: [{ id: 'moto', es: 'Moto', en: 'Moto' }] }, ciudades: {} });
     window.history.pushState(null, '', '/city/el-vigia');
@@ -130,7 +188,12 @@ describe('C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades de Venezuela', () => {
     // El hreflang en, es y x-default va en toda página (la única excepción es la de videos).
     expect(fuente).toMatch(/hreflang="x-default"/);
     expect(fuente).toMatch(/ruta === '\/docs\/videos' && !videosEnIdioma/);
-    expect(RUTAS_TARIFAS()).toContain('/city/el-vigia/prices');
+    // Solo entran las ciudades con precios confirmados por producción al publicar.
+    expect(RUTAS_TARIFAS()).toEqual(
+      Object.keys(TARIFAS_PUBLICADAS).map(
+        (k) => `/city/${CIUDADES.find((c) => c.clave === k)?.slug ?? k}/prices`,
+      ),
+    );
   });
 });
 
@@ -142,16 +205,27 @@ describe('C-TARIFAS-PUBLICAS: la página de tarifas lee los datos del sistema', 
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('el HTML prearmado sale de los precios guardados (no de un texto fijo)', () => {
-    const t = TARIFAS_PUBLICADAS['el-vigia']!;
-    const l = lugaresDe(t).find((x) => x.ida && x.ida.dia >= 1000)!;
-    const html = renderToString(<PaginaLugar ruta="/city/el-vigia/prices" idioma="en" />);
-    expect(html).toContain(l.lugar);
-    expect(html).toContain(`$${(l.ida!.dia / 100).toFixed(2)}`);
+  it('sin precios confirmados por producción al publicar, el HTML fijo no trae ninguno ni la página entra al mapa', () => {
+    // Lo guardado en el repositorio solo puede venir de producción (estado-paises.mjs): vacío, nada.
+    if (!Object.keys(TARIFAS_PUBLICADAS).length) {
+      expect(RUTAS_TARIFAS()).toEqual([]);
+      const html = renderToString(<PaginaLugar ruta="/city/el-vigia/prices" idioma="en" />);
+      expect(html).not.toMatch(/\$\d/);
+      expect(html).toMatch(/no fixed prices posted/);
+    }
+  });
+
+  it('sin respuesta del servidor y sin nada guardado, no muestra precios', async () => {
+    vi.stubGlobal('fetch', () => Promise.reject(new Error('sin red')));
+    window.history.pushState(null, '', '/city/el-vigia/prices');
+    render(<App />);
+    await new Promise((x) => setTimeout(x, 50));
+    if (!TARIFAS_PUBLICADAS['el-vigia'])
+      expect(document.querySelector('.tarifas-tabla')).toBeNull();
   });
 
   it('si cambia un precio en el servidor, cambia la página; sin precios, no inventa ninguno', async () => {
-    const t = structuredClone(TARIFAS_PUBLICADAS['el-vigia']!);
+    const t = structuredClone(EL_VIGIA);
     const l = lugaresDe(t)[0]!;
     l.ida = { dia: 777, noche: 1010 };
     servidor({ tarifas: { 'el-vigia': t } });
@@ -173,7 +247,7 @@ describe('C-TARIFAS-PUBLICAS: la página de tarifas lee los datos del sistema', 
   });
 
   it('el guion de compilación no guarda precios con datos internos ni rotos', () => {
-    const t = TARIFAS_PUBLICADAS['el-vigia'];
+    const t = EL_VIGIA;
     expect(validarTarifas(t)).toEqual(t);
     expect(
       validarTarifas({
@@ -197,5 +271,41 @@ describe('C-TARIFAS-PUBLICAS: la página de tarifas lee los datos del sistema', 
         ciudades: { VE: { 'el-vigia': [{ id: 'moto', es: 'Moto', en: 'Moto' }] } },
       })?.ciudades,
     ).toEqual({ VE: { 'el-vigia': [{ id: 'moto', es: 'Moto', en: 'Moto' }] } });
+  });
+
+  it('al compilar: una ciudad que dejó de estar abierta pierde sus precios; un fallo pasajero de una abierta conserva lo guardado', async () => {
+    const moto = [{ id: 'moto', es: 'Moto', en: 'Moto' }];
+    const guardadas = { 'el-vigia': EL_VIGIA, tucani: { ...EL_VIGIA, ciudad: 'tucani' } };
+    // Tucaní ya no está abierta: se quita aunque la petición de El Vigía falle.
+    const r1 = await tarifasDe({ VE: { 'el-vigia': moto } }, guardadas, async () => {
+      throw new Error('sin red');
+    });
+    expect(Object.keys(r1.tarifas)).toEqual(['el-vigia']);
+    expect(r1.tarifas['el-vigia']).toEqual(EL_VIGIA);
+    expect(r1.avisos.join(' ')).toMatch(/el-vigia.*queda lo guardado/);
+    // Una respuesta 500 también conserva lo guardado de la ciudad abierta.
+    const r2 = await tarifasDe({ VE: { 'el-vigia': moto } }, guardadas, async () => ({
+      estado: 500,
+    }));
+    expect(r2.tarifas['el-vigia']).toEqual(EL_VIGIA);
+    // 404 = sin precios publicados hoy: se quita.
+    const r3 = await tarifasDe({ VE: { 'el-vigia': moto } }, guardadas, async () => ({
+      estado: 404,
+    }));
+    expect(r3.tarifas).toEqual({});
+    // Respuesta buena: manda la de producción.
+    const nueva = { ...EL_VIGIA, actualizado: '2026-11-26' };
+    const r4 = await tarifasDe({ VE: { 'el-vigia': moto } }, guardadas, async () => ({
+      estado: 200,
+      datos: nueva,
+    }));
+    expect(r4.tarifas).toEqual({ 'el-vigia': nueva });
+    // Una ciudad abierta sin Moto no pide precios.
+    const r5 = await tarifasDe(
+      { VE: { tucani: [{ id: 'envios', es: 'Envíos', en: 'Delivery' }] } },
+      guardadas,
+      async () => ({ estado: 200, datos: nueva }),
+    );
+    expect(r5.tarifas).toEqual({});
   });
 });

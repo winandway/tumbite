@@ -65,20 +65,76 @@ type FilaRuta = {
 /** Lugar «sin nombre de ciudad» para comparar nombres («El Vigía (casco urbano)» = «el vigia»). */
 const llano = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
+/** Los servicios con página de precios públicos (hoy, solo Moto). */
+export const SERVICIOS_TARIFAS_PUBLICAS = ['moto'] as const;
+export type ServicioTarifasPublicas = (typeof SERVICIOS_TARIFAS_PUBLICAS)[number];
+
+type ZonaPublica = {
+  id: string;
+  nombre: string;
+  pais: string;
+  moneda: string;
+  zona_horaria: string;
+};
+
+/**
+ * Caché en la memoria del aislado (regla de la nube: mirar no escribe y lee lo menos posible). Cada
+ * ciudad y la lista de zonas públicas duran 5 minutos: una visita repetida, un robot o una ciudad que
+ * no existe no vuelven a leer la base. Lo mismo que promete la cabecera de la ruta.
+ */
+export const CACHE_TARIFAS_MS = 5 * 60_000;
+const cache = new Map<string, { hasta: number; valor: unknown }>();
+async function enCache<T>(llave: string, ahora: number, leer: () => Promise<T>): Promise<T> {
+  const g = cache.get(llave);
+  if (g && g.hasta > ahora) return g.valor as T;
+  const valor = await leer();
+  // Tope para que un robot que prueba claves al azar no llene la memoria.
+  if (cache.size > 500) cache.clear();
+  cache.set(llave, { hasta: ahora + CACHE_TARIFAS_MS, valor });
+  return valor;
+}
+/** Solo para las pruebas: olvida lo guardado en memoria. */
+export function olvidarCacheTarifas() {
+  cache.clear();
+}
+
+/** Las tarifas públicas de una ciudad, con caché de 5 minutos por entorno, ciudad y servicio. */
+export async function tarifasPublicasConCache(
+  db: D1Database,
+  clave: string,
+  servicio: ServicioTarifasPublicas,
+  entorno: Entorno | null,
+  ahora = Date.now(),
+): Promise<TarifasPublicas | null> {
+  const zonas = await enCache(`zonas:${entorno ?? ''}`, ahora, () => zonasPublicas(db));
+  // Una ciudad que no existe se contesta con la lista de zonas ya en memoria: sin otra lectura.
+  const zona = zonas.find((z) => claveCiudadPublica(z.nombre) === clave);
+  if (!zona) return null;
+  return enCache(`tarifas:${entorno ?? ''}:${clave}:${servicio}`, ahora, () =>
+    tarifasPublicas(db, clave, servicio, entorno, zona),
+  );
+}
+
+async function zonasPublicas(db: D1Database): Promise<ZonaPublica[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, nombre, pais, moneda, zona_horaria FROM zonas
+        WHERE activa = 1 AND ${sinZonasDePrueba('nombre')} ORDER BY id LIMIT 500`,
+    )
+    .all<ZonaPublica>();
+  return results;
+}
+
 export async function tarifasPublicas(
   db: D1Database,
   clave: string,
   servicio: string,
   entorno: Entorno | null,
+  zonaDada?: ZonaPublica,
 ): Promise<TarifasPublicas | null> {
   // La ciudad pública: una zona activa que no es de pruebas, con ese nombre.
-  const { results: zonas } = await db
-    .prepare(
-      `SELECT id, nombre, pais, moneda, zona_horaria FROM zonas
-        WHERE activa = 1 AND ${sinZonasDePrueba('nombre')} ORDER BY id LIMIT 500`,
-    )
-    .all<{ id: string; nombre: string; pais: string; moneda: string; zona_horaria: string }>();
-  const zona = zonas.find((z) => claveCiudadPublica(z.nombre) === clave);
+  const zona =
+    zonaDada ?? (await zonasPublicas(db)).find((z) => claveCiudadPublica(z.nombre) === clave);
   if (!zona) return null;
   const abiertos = await abiertosParaLaWeb(db, entorno);
   const delPais = new Map(Object.entries(abiertos.ciudades)).get(zona.pais) ?? {};

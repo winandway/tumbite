@@ -43,8 +43,14 @@ export function PaginaCiudadPublica({ ciudad, idioma }: { ciudad: Lugar; idioma:
     (c) => c.pais === ciudad.pais && c.clave && estadoCiudad(c, pais?.codigo).abierta,
   );
   const otras = CIUDADES.filter((c) => c.pais === ciudad.pais && c.clave && c.slug !== ciudad.slug);
-  const tieneTarifas = Boolean(ciudad.clave && CIUDADES_CON_TARIFAS.includes(ciudad.clave));
-  const desdeOtra = precioDesdeOtra(ciudad);
+  // C-TARIFAS-PUBLICAS: el enlace a los precios y «De El Vigía a Tucaní» solo con lo que confirme
+  // producción (lo guardado al publicar o, en el navegador, el servidor); una ciudad cerrada no pregunta.
+  const propias = useTarifas(estado.abierta && ciudad.clave ? ciudad.clave : '');
+  const otra = abiertasDelPais.find((c) => c.slug !== ciudad.slug && c.clave);
+  const deOtra = useTarifas(estado.abierta && otra?.clave ? otra.clave : '');
+  const tieneTarifas = Boolean(propias && (propias.grupos.length || propias.otros.length));
+  const desdeOtra =
+    otra?.clave && deOtra ? precioDesdeOtra(ciudad, { [otra.clave]: deOtra }) : null;
   return (
     <>
       <BannerArriba
@@ -74,7 +80,7 @@ export function PaginaCiudadPublica({ ciudad, idioma }: { ciudad: Lugar; idioma:
                 servicios: fraseServicios(estado.servicios, idioma),
                 pagos,
               })
-            : r(t.entradaCerrada, { ciudad: nombre })}
+            : r(t.entradaCerrada, { ciudad: nombre, estado: ciudad.estadoRegion ?? nombrePais })}
         </p>
         {!estado.abierta && abiertasDelPais.length > 0 ? (
           <p className="lugar-donde-hoy">
@@ -126,8 +132,14 @@ export function PaginaCiudadPublica({ ciudad, idioma }: { ciudad: Lugar; idioma:
             ))}
           </ol>
         </section>
+        {ciudad.sobre ? (
+          <section className="lugar-sobre">
+            <h2>{r(t.sobre, { ciudad: nombre })}</h2>
+            <p>{enIdioma(ciudad.sobre, idioma)}</p>
+          </section>
+        ) : null}
         <section className="lugar-manejar">
-          <h2>{t.manejar}</h2>
+          <h2>{estado.abierta ? t.manejar : r(t.primerosTitulo, { ciudad: nombre })}</h2>
           <p>{r(t.manejarTexto, { edad })}</p>
           <Enlace a="/download" className="lugar-descargar lugar-descargar-claro">
             <Icono nombre="moto" tamano={18} /> {t.descargarDriver}
