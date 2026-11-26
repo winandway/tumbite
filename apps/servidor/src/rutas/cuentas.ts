@@ -44,6 +44,7 @@ import {
 import { anotarAparato, codigoPara, vincularCliente } from '../programaReferidos';
 import { usarCodigoDeConductor } from '../lineas';
 import { huellaAparato } from '../regalosDivoox';
+import { alConfirmarCelular } from '../saldoRegalos';
 import { Hono } from 'hono';
 import {
   activarPapel,
@@ -1276,6 +1277,10 @@ cuentas.post('/telefono/verificar', async (c) => {
   const u = exigir(c);
   const { codigo } = await leerCuerpo(c, esquemaCodigo);
   await comprobarCodigo(base(c), u.id, codigo);
+  // C-SALDO-BIENVENIDA: el cliente nuevo que confirma su celular recibe la bienvenida de su ciudad (si
+  // la regla está encendida); sin ciudad, queda para su primera cotización. Nunca frena la respuesta.
+  if (u.rol === 'cliente')
+    await alConfirmarCelular(c.env, base(c), u.id, await huellaAparato(c.req.header('x-aparato')));
   return c.json({ ok: true });
 });
 

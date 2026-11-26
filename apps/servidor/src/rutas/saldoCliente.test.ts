@@ -263,7 +263,14 @@ describe('C-SALDO-CLIENTE: pagar el viaje con Saldo Divoox', () => {
     await p.cargar(2000);
     const c = await conductorListoVe(p.e, 2000);
     const q0 = await p.cotizar();
-    expect(q0.saldoDivoox).toEqual({ disponible: 2000, moneda: 'USD' });
+    // C-SALDO-LOTES: con su desglose (todo es regalo del equipo, sin fecha: no vence).
+    expect(q0.saldoDivoox).toEqual({
+      disponible: 2000,
+      moneda: 'USD',
+      regalo: 2000,
+      prepago: 0,
+      vencePronto: null,
+    });
     const { id, q } = await hastaIniciar(p, c, { metodoPago: 'saldo', usarSaldo: true });
     expect(q.total).toBeLessThan(2000);
     // Se apartó al pedir.

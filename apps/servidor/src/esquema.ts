@@ -5,7 +5,12 @@ import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_AGENTES } from './esquemaAgentes';
-import { ESQUEMA_SALDO_CLIENTE } from './esquemaSaldoCliente';
+import {
+  ESQUEMA_SALDO_CLIENTE,
+  MOVIMIENTOS_DDL,
+  rehacerSaldoClienteMovimientos,
+} from './esquemaSaldoCliente';
+import { migrarSaldosALotes, sentenciasMigrarLotes } from './saldoLotes';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
 import {
@@ -796,6 +801,9 @@ export function huellaEsquema(entorno: Entorno | null): string {
         ESQUEMA_AGENTES,
         ESQUEMA_CUENTA_UNICA,
         ESQUEMA_SALDO_CLIENTE,
+        MOVIMIENTOS_DDL,
+        String(rehacerSaldoClienteMovimientos),
+        String(sentenciasMigrarLotes),
         COLUMNAS_DEL_ESQUEMA,
         CONFIG_DINERO_INICIAL,
         [...serviciosImplementados(entorno)],
@@ -953,7 +961,13 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await rehacerAprobarVehiculo(db);
   // C-RASTRO: los pasos del registro los anota la base, y el viaje guarda dónde estaba el conductor.
   await asegurarRastro(db);
+  // C-SALDO-LOTES: el libro del saldo acepta «vencimiento» (antes de poner sus disparadores).
+  await rehacerSaldoClienteMovimientos(db);
   await asegurarFase3(db);
+  // C-SALDO-LOTES: los saldos de antes pasan a lotes (una vez; los ya pasados no se tocan).
+  await migrarSaldosALotes(db).catch((e: unknown) =>
+    console.error('esquema: pasar los saldos de clientes a lotes falló', e),
+  );
   await sincronizarPoliticaRequisitos(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);

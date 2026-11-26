@@ -22,6 +22,8 @@ export const CONCEPTOS_SALDO_CLIENTE = [
   'ajuste',
   // Al borrar la cuenta: el saldo se cierra a cero (auditable; el prepago real se devuelve aparte).
   'cierre_cuenta',
+  // C-SALDO-LOTES: lo que quedaba de un regalo de Divoox que venció (el prepago nunca vence).
+  'vencimiento',
 ] as const;
 export type ConceptoSaldoCliente = (typeof CONCEPTOS_SALDO_CLIENTE)[number];
 
@@ -37,6 +39,44 @@ export type SaldoDivooxCotizacion = {
   /** Lo que el pasajero tiene disponible ahora (centavos de dólar). */
   disponible: number;
   moneda: string;
+  /** C-SALDO-LOTES: cuánto de lo disponible es regalo de Divoox y cuánto prepagó el cliente. */
+  regalo?: number;
+  prepago?: number;
+  /** El regalo que vence primero, si vence pronto (lo demás no se anuncia en la pantalla de pago). */
+  vencePronto?: { monto: number; venceEn: string } | null;
+};
+
+/** C-SALDO-LOTES: de dónde vino cada crédito del saldo (lo ve el equipo; el cliente ve «regalo»). */
+export const ORIGENES_LOTE_SALDO = [
+  'bienvenida',
+  'masiva',
+  'fidelidad',
+  'regalo_manual',
+  'prepago',
+  'migracion',
+  'devolucion',
+] as const;
+export type OrigenLoteSaldo = (typeof ORIGENES_LOTE_SALDO)[number];
+
+export const NOMBRE_ORIGEN_LOTE: Record<'es' | 'en', Record<OrigenLoteSaldo, string>> = {
+  es: {
+    bienvenida: 'Regalo de bienvenida',
+    masiva: 'Regalo de Divoox',
+    fidelidad: 'Regalo por tus viajes',
+    regalo_manual: 'Regalo de Divoox',
+    prepago: 'Tu prepago',
+    migracion: 'Saldo anterior',
+    devolucion: 'Devolución',
+  },
+  en: {
+    bienvenida: 'Welcome gift',
+    masiva: 'Divoox gift',
+    fidelidad: 'Gift for your rides',
+    regalo_manual: 'Divoox gift',
+    prepago: 'Your prepayment',
+    migracion: 'Previous balance',
+    devolucion: 'Refund',
+  },
 };
 
 /**

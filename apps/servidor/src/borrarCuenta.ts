@@ -2,7 +2,8 @@ import type { Env } from './env';
 import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
 import { capturasDeCamila, sentenciasBorrarDeCamila } from './camila/memoria';
-import { liberarSaldoViaje, saldoDeCliente, sentenciasCierreSaldo } from './saldoCliente';
+import { liberarSaldoViaje, saldoLibroCliente, sentenciasCierreSaldo } from './saldoCliente';
+import { vencerLotes } from './saldoLotes';
 
 /**
  * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026): el borrado de una cuenta, en UNA sola pieza. Lo usan la app
@@ -84,7 +85,9 @@ export async function borrarCuenta(
   }
   // C-SALDO-CLIENTE (I4): con Saldo Divoox, el borrado NO se frena (las tiendas exigen poder borrar),
   // pero solo después del aviso con el monto y su confirmación explícita.
-  const saldoDivoox = await saldoDeCliente(db, u.id);
+  // C-SALDO-LOTES: lo vencido deja antes su movimiento; así el saldo que se cierra es el del libro.
+  await vencerLotes(db, { clienteId: u.id });
+  const saldoDivoox = await saldoLibroCliente(db, u.id);
   if (saldoDivoox > 0 && !opciones.saldoAceptado)
     throw new ErrorDatos(
       'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/es/delete-account.',
@@ -204,6 +207,8 @@ export async function borrarCuenta(
       )
       .bind(`borrada-${u.id}@tumbite.invalid`, u.id),
     db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
+    // C-SALDO-BIENVENIDA: la bienvenida que esperaba su primera cotización ya no hace falta.
+    db.prepare('DELETE FROM saldo_bienvenida_pendiente WHERE cliente_id = ?').bind(u.id),
     // C-ID-DEL-PAIS: los ID viejos del conductor se van con su cuenta.
     db.prepare('DELETE FROM codigos_repartidor_anteriores WHERE usuario_id = ?').bind(u.id),
     // C-KYC-AUTO: la huella de la cara se borra con la cuenta (la de mala conducta se queda).
@@ -594,7 +599,7 @@ async function siElSaldoCambia<T>(lote: Promise<T>): Promise<T> {
   try {
     return await lote;
   } catch (e) {
-    if (/CHECK constraint|saldo_insuficiente/i.test(String(e)))
+    if (/CHECK constraint|saldo_insuficiente|lote_/i.test(String(e)))
       throw new ErrorDatos(
         'Tu Saldo Divoox cambió mientras borrábamos tu cuenta. No se borró nada: vuelve a intentarlo.',
         'saldoDivoox',

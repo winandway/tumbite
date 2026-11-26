@@ -1,4 +1,5 @@
 import { avisarSiQuedoActivo } from '../activacion';
+import { alConfirmarCelular } from '../saldoRegalos';
 import {
   CLAVE_PAISES,
   canalesPara,
@@ -1234,6 +1235,9 @@ kyc.post('/admin/usuarios/:id/telefono/confirmar', async (c) => {
     .prepare("UPDATE usuarios SET telefono_verificado_en = datetime('now') WHERE id = ?")
     .bind(id)
     .run();
+  // C-SALDO-BIENVENIDA: confirmado a mano no hay aparato a la vista: la bienvenida (si su ciudad la
+  // tiene encendida) se decide en su primera cotización, con su aparato y la ciudad del viaje.
+  await alConfirmarCelular(c.env, db, id, null);
   return c.json({ ok: true });
 });
 

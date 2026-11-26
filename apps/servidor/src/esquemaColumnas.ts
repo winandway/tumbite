@@ -3589,5 +3589,88 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "cerrado_en",
     "motivo"
+  ],
+  "saldo_cliente_lotes": [
+    "id",
+    "cliente_id",
+    "moneda",
+    "tipo",
+    "origen",
+    "regla_id",
+    "zona_id",
+    "monto_inicial",
+    "restante",
+    "vencido",
+    "vence_en",
+    "movimiento_ref",
+    "aviso_3d_en",
+    "aviso_hoy_en",
+    "prorrogado_en",
+    "creado_en"
+  ],
+  "saldo_cliente_consumos": [
+    "id",
+    "lote_id",
+    "cliente_id",
+    "referencia",
+    "operacion_id",
+    "tipo",
+    "monto",
+    "creado_en"
+  ],
+  "saldo_reglas_regalo": [
+    "id",
+    "tipo",
+    "zona_id",
+    "monto",
+    "moneda",
+    "vigencia_dias",
+    "encendida",
+    "presupuesto",
+    "tope_diario",
+    "cada_viajes",
+    "tope_persona_mes",
+    "actualizado_por",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "saldo_bienvenidas": [
+    "cliente_id",
+    "telefono",
+    "aparato",
+    "regla_id",
+    "lote_id",
+    "monto",
+    "creado_en"
+  ],
+  "saldo_bienvenida_pendiente": [
+    "cliente_id",
+    "creado_en"
+  ],
+  "saldo_fidelidad_viajes": [
+    "operacion_id",
+    "regla_id",
+    "cliente_id",
+    "numero",
+    "creado_en"
+  ],
+  "saldo_cargas_masivas": [
+    "id",
+    "autor_id",
+    "motivo",
+    "filtros_json",
+    "monto",
+    "moneda",
+    "vigencia_dias",
+    "clientes",
+    "total",
+    "corte_en",
+    "estado",
+    "cursor",
+    "revisados",
+    "acreditados",
+    "idempotencia",
+    "creado_en",
+    "terminado_en"
   ]
 };

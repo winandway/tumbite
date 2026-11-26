@@ -216,6 +216,17 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   // pagado al conductor, por número interno, sin nombre). La política de privacidad lo declara.
   saldo_cliente_movimientos: 'dinero',
   usos_saldo_divoox: 'dinero',
+  // C-SALDO-LOTES: de qué está hecho el saldo (lotes y sus consumos), por número interno, sin nombre;
+  // al borrar la cuenta quedan en cero con su movimiento «cierre_cuenta» (contabilidad).
+  saldo_cliente_lotes: 'dinero',
+  saldo_cliente_consumos: 'dinero',
+  // C-SALDO-MASIVO / C-SALDO-FIDELIDAD: cargas del equipo y viajes contados, por número interno.
+  saldo_cargas_masivas: 'equipo',
+  saldo_fidelidad_viajes: 'dinero',
+  // C-SALDO-BIENVENIDA: la regla es configuración; la bienvenida guarda solo huellas (número y aparato)
+  // para que la misma persona no la reciba otra vez con otra cuenta (como el cupón de bienvenida).
+  saldo_reglas_regalo: 'sin_persona',
+  saldo_bienvenidas: 'antifraude',
   // Registro del trabajo del equipo interno (quién aprobó, cambió o vio qué)
   accesos_sensibles: 'equipo',
   acciones_equipo: 'equipo',

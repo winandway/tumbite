@@ -5450,7 +5450,9 @@ CREATE TABLE IF NOT EXISTS saldo_cliente_movimientos (
   cliente_id TEXT NOT NULL,
   monto INTEGER NOT NULL CHECK (monto <> 0),
   moneda TEXT NOT NULL DEFAULT 'USD',
-  concepto TEXT NOT NULL CHECK (concepto IN ('regalo', 'recarga', 'uso_viaje', 'devolucion', 'ajuste', 'cierre_cuenta')),
+  -- C-SALDO-LOTES (26 nov 2026): «vencimiento» = lo que quedaba de un regalo que venció. Las bases de
+  -- antes de esta regla rehacen la tabla al arrancar (esquemaSaldoCliente.ts, sin perder filas).
+  concepto TEXT NOT NULL CHECK (concepto IN ('regalo', 'recarga', 'uso_viaje', 'devolucion', 'ajuste', 'cierre_cuenta', 'vencimiento')),
   referencia TEXT NOT NULL UNIQUE,
   operacion_id TEXT,
   autor_id TEXT,
@@ -5494,3 +5496,121 @@ CREATE INDEX IF NOT EXISTS usos_saldo_divoox_estado ON usos_saldo_divoox(estado,
 CREATE INDEX IF NOT EXISTS usos_saldo_divoox_conductor ON usos_saldo_divoox(conductor_id, estado) WHERE conductor_id IS NOT NULL;
 -- El canario: los usos cobrados de los últimos 7 días por la fecha de cierre (no la de creación).
 CREATE INDEX IF NOT EXISTS usos_saldo_divoox_cerrado ON usos_saldo_divoox(estado, cerrado_en);
+
+-- C-SALDO-LOTES (26 nov 2026, todos los países; Venezuela primero). Cada crédito del Saldo Divoox es un
+-- LOTE con su origen y, si es un regalo, su vencimiento (el prepago del cliente nunca vence). El libro
+-- (`saldo_cliente_movimientos`) sigue siendo la verdad del saldo; los lotes dicen DE QUÉ está hecho:
+-- la suma de `restante` de los lotes de un cliente es siempre igual a la suma de su libro (canario).
+-- Al usar saldo se gasta primero el regalo que vence antes, después el regalo sin vencimiento y al
+-- final el prepago. Solo `saldoCliente.ts` y `saldoLotes.ts` escriben aquí.
+CREATE TABLE IF NOT EXISTS saldo_cliente_lotes (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL,
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  tipo TEXT NOT NULL CHECK (tipo IN ('regalo', 'prepago')),
+  origen TEXT NOT NULL CHECK (origen IN ('bienvenida', 'masiva', 'fidelidad', 'regalo_manual', 'prepago', 'migracion', 'devolucion')),
+  -- La regla de bienvenida o de fidelidad, o la carga masiva, que pagó este regalo (su presupuesto).
+  regla_id TEXT,
+  zona_id TEXT,
+  monto_inicial INTEGER NOT NULL CHECK (monto_inicial >= 0),
+  restante INTEGER NOT NULL CHECK (restante >= 0),
+  vencido INTEGER NOT NULL DEFAULT 0 CHECK (vencido >= 0),
+  vence_en TEXT,
+  -- La referencia del movimiento del libro que lo creó (una por lote: idempotencia).
+  movimiento_ref TEXT NOT NULL UNIQUE,
+  aviso_3d_en TEXT,
+  aviso_hoy_en TEXT,
+  prorrogado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (tipo = 'regalo' OR vence_en IS NULL)
+);
+CREATE INDEX IF NOT EXISTS saldo_cliente_lotes_cliente ON saldo_cliente_lotes(cliente_id, moneda);
+-- El presupuesto y el tope diario de cada regla o carga masiva (suma de lo entregado por regla y fecha).
+CREATE INDEX IF NOT EXISTS saldo_cliente_lotes_regla ON saldo_cliente_lotes(regla_id, creado_en) WHERE regla_id IS NOT NULL;
+-- El barrido del vencimiento y los avisos: solo los regalos con algo por vencer (parciales).
+CREATE INDEX IF NOT EXISTS saldo_cliente_lotes_vencer ON saldo_cliente_lotes(vence_en) WHERE vence_en IS NOT NULL AND restante > 0;
+CREATE INDEX IF NOT EXISTS saldo_cliente_lotes_aviso3 ON saldo_cliente_lotes(vence_en) WHERE vence_en IS NOT NULL AND restante > 0 AND aviso_3d_en IS NULL;
+CREATE INDEX IF NOT EXISTS saldo_cliente_lotes_avisohoy ON saldo_cliente_lotes(vence_en) WHERE vence_en IS NOT NULL AND restante > 0 AND aviso_hoy_en IS NULL;
+-- De qué lote salió (o a cuál volvió) cada movimiento: + sale del lote, − vuelve al lote. Inmutable. Un
+-- disparador baja (o sube) el `restante` del lote y frena si no alcanza o si el regalo ya venció.
+CREATE TABLE IF NOT EXISTS saldo_cliente_consumos (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL,
+  cliente_id TEXT NOT NULL,
+  referencia TEXT NOT NULL,
+  operacion_id TEXT,
+  tipo TEXT NOT NULL CHECK (tipo IN ('uso', 'devolucion', 'vencimiento', 'cierre')),
+  monto INTEGER NOT NULL CHECK (monto <> 0),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS saldo_cliente_consumos_ref ON saldo_cliente_consumos(referencia, lote_id);
+CREATE INDEX IF NOT EXISTS saldo_cliente_consumos_operacion ON saldo_cliente_consumos(operacion_id) WHERE operacion_id IS NOT NULL;
+-- C-SALDO-BIENVENIDA y C-SALDO-FIDELIDAD: las reglas por ciudad de los regalos automáticos. Nacen
+-- APAGADAS. Bienvenida: X a cada cliente nuevo al confirmar su celular (presupuesto total y tope de 24 h).
+-- Fidelidad: M cada N viajes reales (presupuesto del mes y premios por persona al mes).
+CREATE TABLE IF NOT EXISTS saldo_reglas_regalo (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('bienvenida', 'fidelidad')),
+  zona_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  vigencia_dias INTEGER NOT NULL DEFAULT 30 CHECK (vigencia_dias BETWEEN 1 AND 365),
+  encendida INTEGER NOT NULL DEFAULT 0 CHECK (encendida IN (0, 1)),
+  presupuesto INTEGER NOT NULL DEFAULT 0 CHECK (presupuesto >= 0),
+  tope_diario INTEGER,
+  cada_viajes INTEGER,
+  tope_persona_mes INTEGER,
+  actualizado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (tipo, zona_id)
+);
+-- Una bienvenida por persona, por número y por aparato (huellas sin nombre, como el cupón de bienvenida).
+CREATE TABLE IF NOT EXISTS saldo_bienvenidas (
+  cliente_id TEXT PRIMARY KEY,
+  telefono TEXT NOT NULL,
+  aparato TEXT NOT NULL,
+  regla_id TEXT NOT NULL,
+  lote_id TEXT NOT NULL,
+  monto INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS saldo_bienvenidas_telefono ON saldo_bienvenidas(telefono);
+CREATE UNIQUE INDEX IF NOT EXISTS saldo_bienvenidas_aparato ON saldo_bienvenidas(aparato);
+-- Confirmó su celular sin ciudad (o sin aparato): la bienvenida se decide en su primera cotización.
+CREATE TABLE IF NOT EXISTS saldo_bienvenida_pendiente (
+  cliente_id TEXT PRIMARY KEY,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- C-SALDO-FIDELIDAD: cada viaje real contado una sola vez por regla (el número del viaje en esa regla).
+CREATE TABLE IF NOT EXISTS saldo_fidelidad_viajes (
+  operacion_id TEXT PRIMARY KEY,
+  regla_id TEXT NOT NULL,
+  cliente_id TEXT NOT NULL,
+  numero INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS saldo_fidelidad_viajes_cliente ON saldo_fidelidad_viajes(regla_id, cliente_id);
+-- C-SALDO-MASIVO: las cargas masivas del equipo (filtros, monto por cliente, total confirmado, quién y
+-- por qué) y su avance por tandas (cursor reanudable). El total confirmado es su presupuesto.
+CREATE TABLE IF NOT EXISTS saldo_cargas_masivas (
+  id TEXT PRIMARY KEY,
+  autor_id TEXT NOT NULL,
+  motivo TEXT NOT NULL,
+  filtros_json TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  vigencia_dias INTEGER NOT NULL CHECK (vigencia_dias BETWEEN 1 AND 365),
+  clientes INTEGER NOT NULL CHECK (clientes > 0),
+  total INTEGER NOT NULL CHECK (total > 0),
+  corte_en TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'en_curso' CHECK (estado IN ('en_curso', 'terminada', 'detenida')),
+  cursor TEXT NOT NULL DEFAULT '',
+  revisados INTEGER NOT NULL DEFAULT 0,
+  acreditados INTEGER NOT NULL DEFAULT 0,
+  idempotencia TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  terminado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS saldo_cargas_masivas_en_curso ON saldo_cargas_masivas(creado_en) WHERE estado = 'en_curso';
+CREATE INDEX IF NOT EXISTS saldo_cargas_masivas_fecha ON saldo_cargas_masivas(creado_en);
