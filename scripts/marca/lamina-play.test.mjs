@@ -70,11 +70,17 @@ describe('C-LAMINA-PLAY-COLOR-APP', () => {
         readFileSync(join(import.meta.dirname, '..', '..', 'apps', app, 'assets', 'icon.png')),
       )
         .resize(512, 512)
+        .ensureAlpha(1)
         .png()
         .toBuffer();
       await expect(comprobarIcono(png, colorDeApp(app))).resolves.toBeUndefined();
     }
-    const negro = await lisa('#101010', { ancho: 512, alto: 512 });
+    const sinAlfa = await lisa(colorDeApp('repartidor'), { ancho: 512, alto: 512 });
+    await expect(comprobarIcono(sinAlfa, colorDeApp('repartidor'))).rejects.toThrow(/32 bits/);
+    const negro = await sharp(await lisa('#101010', { ancho: 512, alto: 512 }))
+      .ensureAlpha(1)
+      .png()
+      .toBuffer();
     await expect(comprobarIcono(negro, colorDeApp('repartidor'))).rejects.toThrow(
       /color de su app/,
     );

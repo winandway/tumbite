@@ -35,7 +35,12 @@ export const LAMINAS = [
     etiqueta: ['FOR CUSTOMERS', 'PARA CLIENTES'],
     // Sobre el rojo, el resalte va en el negro de la marca (el rojo desaparecería).
     resalte: '#101010',
-    frase: ['Moto rides, car rides and food, *in one tap*', 'Motos, carros y comida, *a un toque*'],
+    // Auditor de tiendas (26 nov): Moto y Carro no están abiertos en todos los países, así que la
+    // frase los nombra con «donde haya» (política de metadatos de Google Play).
+    frase: [
+      'Food, plus moto and car rides *where available*',
+      'Comida, motos y carros *donde haya*',
+    ],
   },
   {
     app: 'repartidor',
@@ -114,6 +119,9 @@ export async function comprobarIcono(png, colorEsperado, nombre = 'ícono') {
   const meta = await sharp(png).metadata();
   if (meta.width !== 512 || meta.height !== 512)
     throw new Error(`${nombre}: mide ${meta.width}×${meta.height}, Google Play pide 512×512`);
+  // Google Play pide el ícono en PNG de 32 bits con alfa (opaco).
+  if (meta.format !== 'png' || meta.channels !== 4)
+    throw new Error(`${nombre}: Google Play pide un PNG de 32 bits con alfa`);
   const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const esperado = aRgb(colorEsperado);
   for (const [x, y] of [

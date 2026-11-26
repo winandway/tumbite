@@ -9,8 +9,9 @@
 // Con ENTREGA=<carpeta> copia además las piezas ahí.
 // Uso: node scripts/marca/graficos-google-play.mjs
 import { chromium } from '@playwright/test';
-import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import sharp from 'sharp';
 import {
   ALTO,
   ANCHO,
@@ -43,8 +44,14 @@ for (const { app, carpeta, nombre, etiqueta, resalte, frase: frases } of LAMINAS
   await pagina.setContent(
     `<style>html,body{margin:0}</style><img src="data:image/png;base64,${icono}" width="512" height="512">`,
   );
+  // PNG de 32 bits con alfa, totalmente opaco (lo pide Google Play para el ícono).
   const rutaIcono = join(destino, 'icono-512.png');
-  await comprobarIcono(await pagina.screenshot({ path: rutaIcono }), fondo, `${carpeta} ícono`);
+  const iconoPng = await sharp(await pagina.screenshot())
+    .ensureAlpha(1)
+    .png()
+    .toBuffer();
+  writeFileSync(rutaIcono, iconoPng);
+  await comprobarIcono(iconoPng, fondo, `${carpeta} ícono`);
   copiar(rutaIcono, `${app}-icono-512.png`);
   for (const [idioma, etq, texto] of [
     ['English', etiqueta.at(0), frases.at(0)],
