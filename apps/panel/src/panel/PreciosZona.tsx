@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ErrorApi,
   type Idioma,
@@ -18,6 +18,12 @@ import { CampoDireccion } from '../sitio/CampoDireccion';
  * zona, desde (la zona entera o un punto), hasta (con el buscador de direcciones), servicio, precio y
  * el de ida y vuelta. Agregar, editar y apagar (apagar y editar, en el menú de tres puntos). El
  * pasajero paga el menor entre este precio y el calculado, si la diferencia pasa del umbral.
+ *
+ * C-TABULADOR-VIGIA (25 nov 2026): las rutas van agrupadas por vía, con buscador y «solo las que hay que
+ * revisar». Cada línea dice lo que paga el pasajero, la comisión de Divoox y lo que le queda al
+ * conductor (de día y de noche), calculado por el servidor con la comisión real de la ciudad. Las de
+ * punto aproximado dicen «Revisar punto en el mapa»: corregir el punto (o «Marcar como revisado») las
+ * desmarca.
  */
 const T = {
   es: {
@@ -53,6 +59,22 @@ const T = {
     faltaDesde: 'Elige el lugar de «Desde» en la lista, o marca «Desde cualquier punto».',
     faltaPrecio: 'Escribe el precio de ida.',
     guardada: 'Ruta guardada. Las cotizaciones nuevas ya la usan.',
+    via: 'Vía o grupo (por ejemplo «Vía Mérida»; vacío = sin grupo)',
+    sinVia: 'Sin vía',
+    buscarRuta: 'Buscar una ruta por lugar o ciudad',
+    soloRevisar: 'Solo las que hay que revisar',
+    revisarPunto: 'Revisar punto en el mapa',
+    marcarRevisado: 'Marcar como revisado',
+    verMapa: 'Ver en el mapa',
+    punto: 'Punto exacto (latitud, longitud): pégalo desde el mapa si hace falta',
+    puntoMal: 'El punto va como «8.6219, -71.6506» (latitud, coma, longitud).',
+    pasajero: 'Pasajero paga',
+    comision: 'Divoox',
+    conductor: 'Le queda al conductor',
+    noche: 'De noche',
+    rutasEn: (n: number) => (n === 1 ? '1 ruta' : `${n} rutas`),
+    porRevisar: (n: number) => (n === 1 ? '1 por revisar' : `${n} por revisar`),
+    sinCoincidencias: 'Ninguna ruta coincide con la búsqueda.',
   },
   en: {
     titulo: 'Local fixed prices',
@@ -87,6 +109,22 @@ const T = {
     faltaDesde: 'Pick the “From” place from the list, or check “From anywhere in the city”.',
     faltaPrecio: 'Type the one-way price.',
     guardada: 'Route saved. New quotes use it now.',
+    via: 'Road or group (for example “Vía Mérida”; empty = no group)',
+    sinVia: 'No road',
+    buscarRuta: 'Search a route by place or city',
+    soloRevisar: 'Only the ones to review',
+    revisarPunto: 'Check the point on the map',
+    marcarRevisado: 'Mark as reviewed',
+    verMapa: 'View on map',
+    punto: 'Exact point (latitude, longitude): paste it from the map if needed',
+    puntoMal: 'The point goes like “8.6219, -71.6506” (latitude, comma, longitude).',
+    pasajero: 'Rider pays',
+    comision: 'Divoox',
+    conductor: 'Driver keeps',
+    noche: 'At night',
+    rutasEn: (n: number) => (n === 1 ? '1 route' : `${n} routes`),
+    porRevisar: (n: number) => (n === 1 ? '1 to review' : `${n} to review`),
+    sinCoincidencias: 'No route matches the search.',
   },
 };
 
@@ -101,6 +139,15 @@ export type RutaPrecio = {
   precio: number;
   precioIdaVuelta: number | null;
   activa: boolean;
+  /** C-TABULADOR-VIGIA: la vía (null = sin grupo) y si el punto es aproximado. */
+  grupo?: string | null;
+  revisar?: boolean;
+  reparto?: {
+    pasajero: number;
+    comision: number;
+    conductor: number;
+    noche: { pasajero: number; comision: number; conductor: number } | null;
+  };
 };
 
 const VACIO = {
@@ -120,7 +167,34 @@ const VACIO = {
   hastaNombre: '',
   precio: '',
   idaVuelta: '',
+  grupo: '',
 };
+
+/** «8.6219, -71.6506» → el punto, o null si no se entiende. */
+export function leerPunto(x: string): { lat: number; lng: number } | null {
+  const partes = x
+    .trim()
+    .split(/[,;\s]+/)
+    .filter(Boolean);
+  // Solo dígitos, un punto decimal y un signo menos al principio (nada de exponentes ni letras).
+  if (
+    partes.length !== 2 ||
+    !partes.every((p) => /^-?[\d.]+$/.test(p) && Number.isFinite(Number(p)))
+  )
+    return null;
+  const lat = Number(partes[0]);
+  const lng = Number(partes[1]);
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
+const sinAcentos = (x: string) =>
+  x
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+const enlaceMapa = (l: { lat: number; lng: number }) =>
+  `https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`;
 
 const numero = (x: string) => Number(x.replace(',', '.'));
 
@@ -138,6 +212,25 @@ export function PreciosZona({
   const [aviso, setAviso] = useState('');
   const b = useBorrador({ formulario: 'precio-zona', inicial: VACIO, almacen: almacenNavegador });
   const v = b.valores;
+  const [busca, setBusca] = useState('');
+  const [soloRevisar, setSoloRevisar] = useState(false);
+  const grupos = useMemo(() => {
+    const q = sinAcentos(busca.trim());
+    const visibles = rutas.filter(
+      (r) =>
+        (!soloRevisar || r.revisar) &&
+        (!q ||
+          sinAcentos(
+            `${r.zona} ${r.grupo ?? ''} ${r.desde?.nombre ?? ''} ${r.hasta.nombre}`,
+          ).includes(q)),
+    );
+    const mapa = new Map<string, RutaPrecio[]>();
+    for (const r of visibles) {
+      const k = r.grupo ?? '';
+      mapa.set(k, [...(mapa.get(k) ?? []), r]);
+    }
+    return [...mapa.entries()];
+  }, [rutas, busca, soloRevisar]);
 
   const cargar = useCallback(() => {
     api
@@ -175,7 +268,28 @@ export function PreciosZona({
       hastaNombre: r.hasta.nombre,
       precio: montoATexto(r.precio, r.moneda),
       idaVuelta: r.precioIdaVuelta == null ? '' : montoATexto(r.precioIdaVuelta, r.moneda),
+      grupo: r.grupo ?? '',
     });
+  }
+
+  /** C-TABULADOR-VIGIA: «el punto ya está bien» sin moverlo. */
+  async function marcarRevisada(r: RutaPrecio) {
+    setFalla('');
+    try {
+      await api.pedir('PUT', `/datos/admin/viajes/precios-zona/${r.id}`, {
+        zona: r.zona,
+        servicio: r.servicio,
+        desde: r.desde,
+        hasta: r.hasta,
+        precio: r.precio,
+        precioIdaVuelta: r.precioIdaVuelta,
+        grupo: r.grupo ?? null,
+        revisado: true,
+      });
+      cargar();
+    } catch (x) {
+      setFalla(x instanceof ErrorApi ? x.message : String(x));
+    }
   }
 
   async function apagarOEncender(r: RutaPrecio) {
@@ -192,6 +306,7 @@ export function PreciosZona({
           hasta: r.hasta,
           precio: r.precio,
           precioIdaVuelta: r.precioIdaVuelta,
+          grupo: r.grupo ?? null,
           activa: true,
         });
       }
@@ -230,6 +345,7 @@ export function PreciosZona({
       precio: textoAMonto(v.precio, m),
       precioIdaVuelta:
         v.servicio !== 'envios' && v.idaVuelta.trim() ? textoAMonto(v.idaVuelta, m) : null,
+      grupo: v.grupo.trim() || null,
     };
     try {
       if (v.editando)
@@ -260,41 +376,56 @@ export function PreciosZona({
       {!rutas.length ? (
         <p>{t.sinRutas}</p>
       ) : (
-        <ul className="tarjetas">
-          {rutas.map((r) => (
-            <li
-              key={r.id}
-              data-testid="precio-zona-linea"
-              style={{
-                display: 'flex',
-                gap: 8,
-                alignItems: 'flex-start',
-                opacity: r.activa ? 1 : 0.6,
-              }}
-            >
-              <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
-                <strong>{r.zona}</strong> · {servicio(r.servicio)} ·{' '}
-                {r.desde ? r.desde.nombre : t.toda} → {r.hasta.nombre} ·{' '}
-                <strong>{montoATexto(r.precio, r.moneda)}</strong> {r.moneda}
-                {r.precioIdaVuelta != null
-                  ? ` · ${t.idaYVuelta} ${montoATexto(r.precioIdaVuelta, r.moneda)}`
-                  : ''}
-                {r.activa ? '' : ` · ${t.apagada}`}
-              </span>
-              <MenuTresPuntos
-                etiqueta={t.opciones}
-                opciones={[
-                  { texto: t.editar, alTocar: () => editar(r) },
-                  {
-                    texto: r.activa ? t.apagar : t.encender,
-                    peligro: r.activa,
-                    alTocar: () => void apagarOEncender(r),
-                  },
-                ]}
+        <>
+          <div className="flex-form" style={{ gap: 8 }}>
+            <label className="campo">
+              <span>{t.buscarRuta}</span>
+              <input
+                type="search"
+                data-testid="precio-zona-buscar"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
               />
-            </li>
-          ))}
-        </ul>
+            </label>
+            <label className="campo" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                data-testid="precio-zona-solo-revisar"
+                checked={soloRevisar}
+                onChange={(e) => setSoloRevisar(e.target.checked)}
+              />
+              <span>{t.soloRevisar}</span>
+            </label>
+          </div>
+          {!grupos.length ? <p>{t.sinCoincidencias}</p> : null}
+          {grupos.map(([grupo, lista]) => {
+            const revisar = lista.filter((r) => r.revisar).length;
+            return (
+              <section key={grupo || '-'} data-testid="precio-zona-grupo">
+                <h3 style={{ marginBottom: 4 }}>
+                  {grupo || t.sinVia}{' '}
+                  <small style={{ fontWeight: 400, color: '#666B73' }}>
+                    · {t.rutasEn(lista.length)}
+                    {revisar ? ` · ${t.porRevisar(revisar)}` : ''}
+                  </small>
+                </h3>
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                  {lista.map((r) => (
+                    <LineaRuta
+                      key={r.id}
+                      r={r}
+                      t={t}
+                      servicio={servicio(r.servicio)}
+                      editar={() => editar(r)}
+                      apagarOEncender={() => void apagarOEncender(r)}
+                      marcarRevisada={() => void marcarRevisada(r)}
+                    />
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </>
       )}
 
       <form className="flex-form" onSubmit={(e) => void guardar(e)} noValidate>
@@ -348,6 +479,16 @@ export function PreciosZona({
                 onChange={(e) => b.cambiar('desdeNombre', e.target.value)}
               />
             </label>
+            <CampoPunto
+              etiqueta={t.punto}
+              error={t.puntoMal}
+              testId="precio-zona-punto-desde"
+              lat={v.desdeLat}
+              lng={v.desdeLng}
+              cambiar={(p) =>
+                b.setValores((o) => ({ ...o, desdeLat: String(p.lat), desdeLng: String(p.lng) }))
+              }
+            />
             <label className="campo">
               <span>{t.radio}</span>
               <input
@@ -378,6 +519,16 @@ export function PreciosZona({
           <span>{t.nombreLugar}</span>
           <input value={v.hastaNombre} onChange={(e) => b.cambiar('hastaNombre', e.target.value)} />
         </label>
+        <CampoPunto
+          etiqueta={t.punto}
+          error={t.puntoMal}
+          testId="precio-zona-punto-hasta"
+          lat={v.hastaLat}
+          lng={v.hastaLng}
+          cambiar={(p) =>
+            b.setValores((o) => ({ ...o, hastaLat: String(p.lat), hastaLng: String(p.lng) }))
+          }
+        />
         <label className="campo">
           <span>{t.radio}</span>
           <input
@@ -395,6 +546,14 @@ export function PreciosZona({
             data-testid="precio-zona-precio"
             value={v.precio}
             onChange={(e) => b.cambiar('precio', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          <span>{t.via}</span>
+          <input
+            data-testid="precio-zona-via"
+            value={v.grupo}
+            onChange={(e) => b.cambiar('grupo', e.target.value)}
           />
         </label>
         {v.servicio === 'envios' ? null : (
@@ -423,5 +582,115 @@ export function PreciosZona({
         ) : null}
       </form>
     </section>
+  );
+}
+
+type Textos = (typeof T)['es'];
+
+/** Una ruta: lugares, precio y lo que le queda a cada uno (de día y de noche). */
+function LineaRuta({
+  r,
+  t,
+  servicio,
+  editar,
+  apagarOEncender,
+  marcarRevisada,
+}: {
+  r: RutaPrecio;
+  t: Textos;
+  servicio: string;
+  editar: () => void;
+  apagarOEncender: () => void;
+  marcarRevisada: () => void;
+}) {
+  const m = (n: number) => montoATexto(n, r.moneda);
+  return (
+    <li
+      data-testid="precio-zona-linea"
+      style={{
+        display: 'flex',
+        gap: 8,
+        alignItems: 'flex-start',
+        padding: '10px 0',
+        borderBottom: '1px solid #e3e5e8',
+        opacity: r.activa ? 1 : 0.6,
+      }}
+    >
+      <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+        <strong>{r.zona}</strong> · {servicio} · {r.desde ? r.desde.nombre : t.toda} →{' '}
+        {r.hasta.nombre} · <strong>{m(r.precio)}</strong> {r.moneda}
+        {r.precioIdaVuelta != null ? ` · ${t.idaYVuelta} ${m(r.precioIdaVuelta)}` : ''}
+        {r.activa ? '' : ` · ${t.apagada}`}
+        {r.reparto ? (
+          <span
+            data-testid="precio-zona-reparto"
+            style={{ display: 'block', color: '#666B73', fontSize: 14 }}
+          >
+            {t.pasajero} {m(r.reparto.pasajero)} · {t.comision} {m(r.reparto.comision)} ·{' '}
+            {t.conductor} <strong>{m(r.reparto.conductor)}</strong>
+            {r.reparto.noche
+              ? ` · ${t.noche}: ${t.pasajero.toLowerCase()} ${m(r.reparto.noche.pasajero)}, ${t.conductor.toLowerCase()} ${m(r.reparto.noche.conductor)}`
+              : ''}
+          </span>
+        ) : null}
+        {r.revisar ? (
+          <span data-testid="precio-zona-revisar" style={{ display: 'block', fontSize: 14 }}>
+            <strong>{t.revisarPunto}</strong> ·{' '}
+            <a href={enlaceMapa(r.hasta)} target="_blank" rel="noopener noreferrer">
+              {t.verMapa}
+            </a>
+          </span>
+        ) : null}
+      </span>
+      <MenuTresPuntos
+        etiqueta={t.opciones}
+        opciones={[
+          { texto: t.editar, alTocar: editar },
+          ...(r.revisar ? [{ texto: t.marcarRevisado, alTocar: marcarRevisada }] : []),
+          { texto: r.activa ? t.apagar : t.encender, peligro: r.activa, alTocar: apagarOEncender },
+        ]}
+      />
+    </li>
+  );
+}
+
+/** El punto exacto, escrito o pegado («lat, lng»); se guarda solo si se entiende. */
+function CampoPunto({
+  etiqueta,
+  error,
+  testId,
+  lat,
+  lng,
+  cambiar,
+}: {
+  etiqueta: string;
+  error: string;
+  testId: string;
+  lat: string;
+  lng: string;
+  cambiar: (p: { lat: number; lng: number }) => void;
+}) {
+  const actual = lat && lng ? `${lat}, ${lng}` : '';
+  // Lo escrito se muestra mientras el punto del formulario sea el que salió de eso; si el formulario
+  // cambia por otro lado (editar otra ruta, empezar de nuevo, elegir una dirección), se ve el nuevo.
+  const [estado, setEstado] = useState<{ texto: string; para: string } | null>(null);
+  const texto = estado && estado.para === actual ? estado.texto : actual;
+  const malo = texto.trim() !== '' && !leerPunto(texto);
+  return (
+    <label className="campo">
+      <span>{etiqueta}</span>
+      <input
+        data-testid={testId}
+        inputMode="decimal"
+        value={texto}
+        aria-invalid={malo}
+        onChange={(e) => {
+          const p = leerPunto(e.target.value);
+          setEstado({ texto: e.target.value, para: p ? `${p.lat}, ${p.lng}` : actual });
+          if (p) cambiar(p);
+        }}
+      />
+      {malo ? <small role="alert">{error}</small> : null}
+    </label>
   );
 }

@@ -7,6 +7,7 @@ import {
   RADIO_LLEGADA_M,
   type ServicioViaje,
   cargoEsperaParadas,
+  conRecargoDelViaje,
   cotizarViaje,
   esquemaCambiarParadas,
   esquemaTarifaViaje,
@@ -135,6 +136,8 @@ type ViajeParaCambiar = {
   quien_paga: string;
   /** C-PRECIO-ZONA: el viaje nació con el precio fijo de la zona (no NULL = sí). */
   precio_zona: number | null;
+  /** C-RECARGO-NOCHE: el recargo de noche con que nació el viaje (NULL = de día). */
+  recargo_noche_pb: number | null;
 };
 
 async function viajeParaCambiar(db: D1Database, id: string) {
@@ -145,6 +148,7 @@ async function viajeParaCambiar(db: D1Database, id: string) {
               q.id AS cot_id, q.total, q.moneda, q.tarifa_json, q.multiplicador_pb, v.ref_tasa, v.ref_fecha,
               ${SQL_TARIFA_SERVICIO} AS tarifa_servicio, ${SQL_QUIEN_PAGA} AS quien_paga,
               json_extract(q.desglose_json, '$.precioZona') AS precio_zona,
+              json_extract(q.desglose_json, '$.recargoNochePb') AS recargo_noche_pb,
               (SELECT k.autorizado FROM cobros_viaje k WHERE k.operacion_id = o.id) AS autorizado
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -226,7 +230,13 @@ export async function cambiarParadas(
   const ruta = await rutaParaCotizar(env, db, v.cliente_id, tarifa, origen, destino, todas);
   if (ruta.distanciaM > kmMaximoDe(v.servicio_id as ServicioViaje, tarifa) * 1000)
     throw new ErrorDatos('Con esas paradas el viaje queda demasiado largo.', 'paradas', 422);
-  const sinTarifa = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
+  // C-RECARGO-NOCHE: el precio nuevo lleva la noche con que nació el viaje (la de su cotización o su
+  // reserva), no la de la hora en que se cambian las paradas.
+  const sinTarifa = conRecargoDelViaje(
+    cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb)),
+    Number(v.recargo_noche_pb ?? 0),
+    tarifa,
+  );
   // C-QUIEN-PAGA-VIAJES: con el precio nuevo, la tarifa de servicio se recalcula con quién paga en
   // ESTE viaje (el valor con que nació, aunque el panel haya cambiado después).
   const quienPaga = esQuienPaga(v.quien_paga) ? v.quien_paga : 'conductor';

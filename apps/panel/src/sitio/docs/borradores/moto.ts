@@ -52,9 +52,11 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'En Venezuela todo lo que pagas en mano se ve en dólares y en bolívares: antes de confirmar, durante el viaje, al terminar y en tu recibo. La tasa queda fijada al pedir el viaje, así tú y tu conductor ven exactamente el mismo monto aunque la tasa cambie después; la app te dice qué tasa se usó y de qué día. Si tienes un regalo de Divoox, ves la diferencia que te toca pagar en las dos monedas. Si ese día no hay tasa disponible, la app lo dice y pagas en dólares.',
           'Cancelar es gratis mientras buscamos conductor y durante los primeros minutos después de que acepta. Después, la app te dice antes cuánto cuesta cancelar; ese cargo es para el conductor que fue a buscarte.',
           'Si el conductor espera más de lo incluido en el punto de recogida, se suma un pequeño cargo por minuto, como en los demás servicios de transporte.',
+          'En algunas ciudades el viaje sube un porcentaje fijo de noche (tarifa nocturna), como en la calle. Antes de pedir, la tarjeta del precio dice «Tarifa nocturna» con el porcentaje, y el precio que ves ya lo trae: es el que pagas, en efectivo, por pago móvil o con tarjeta. Si reservas, cuenta la hora de la reserva.',
         ],
         preguntas: [
           '¿Cuánto cuesta cancelar un viaje en moto?',
+          '¿Qué es la tarifa nocturna?',
           '¿Puedo dejar propina?',
           '¿Qué pasa si debo un cargo de un viaje en efectivo?',
         ],
@@ -218,9 +220,11 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'You pick cash or card on the same screen where you see the price, before you request. During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay.',
           'Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up.',
           'If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services.',
+          'In some cities, rides cost a set percentage more at night (night fare). Before you request, the price card says “Night fare” with the percentage, and the price you see already includes it: that is what you pay. If you book a ride for later, the booked time is what counts.',
         ],
         preguntas: [
           'How much does it cost to cancel a motorcycle ride?',
+          'What is the night fare?',
           'Can I leave a tip?',
           'What happens if I owe a fee from a cash ride?',
         ],

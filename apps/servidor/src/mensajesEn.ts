@@ -1704,6 +1704,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'No se pudo cambiar el vehículo. Intenta otra vez.',
     'We couldn’t switch your vehicle. Please try again.',
   ],
+  // C-RECARGO-NOCHE: una reserva cotizada con otra hora vuelve a cotizarse.
+  [
+    'El precio cambia a esa hora por la tarifa nocturna. Revisa el precio antes de reservar.',
+    'The price changes at that time because of the night fare. Check the price before you book.',
+  ],
   [
     'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
     'Passenger services (Moto and Car) can’t be turned on yet.',

@@ -3181,6 +3181,11 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   -- C-PRECIO-ZONA (24 nov 2026): diferencia mínima, en puntos básicos (1000 = 10 %), para que el
   -- precio de la zona reemplace al calculado. NULL = 1000.
   umbral_precio_zona_pb INTEGER,
+  -- C-RECARGO-NOCHE (25 nov 2026): recargo de noche en puntos básicos (3000 = +30 %; NULL = sin
+  -- recargo) y las horas locales en que empieza y termina la noche (NULL = 21 y 6).
+  recargo_noche_pb INTEGER,
+  noche_desde_h INTEGER,
+  noche_hasta_h INTEGER,
   de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
   motivo TEXT NOT NULL DEFAULT '',
@@ -3213,6 +3218,10 @@ CREATE TABLE IF NOT EXISTS rutas_precio_zona (
   precio INTEGER NOT NULL CHECK (precio > 0),
   precio_ida_vuelta INTEGER CHECK (precio_ida_vuelta IS NULL OR precio_ida_vuelta > 0),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
+  -- C-TABULADOR-VIGIA (25 nov 2026): la vía o grupo de la ruta («Vía Mérida»; NULL = sin grupo) y si
+  -- su punto es aproximado y hay que revisarlo en el mapa (editar la ruta lo desmarca).
+  grupo TEXT,
+  revisar INTEGER NOT NULL DEFAULT 0,
   -- Quién del equipo la creó o la cambió (sin clave foránea: no encarece borrar una cuenta; el
   -- detalle de cada cambio queda en auditoria_admin).
   creada_por TEXT,
@@ -5362,13 +5371,16 @@ CREATE INDEX IF NOT EXISTS cargas_saldo_restaurante_rest ON cargas_saldo_restaur
 -- «mitad». Una fila por país (ciudad = '') y, si hace falta, por ciudad (id de la zona). Sin fila:
 -- «conductor». El porcentaje sale siempre de la política de comisión; aquí solo se dice quién lo carga.
 -- Cada viaje guarda el valor con que nació (en su cotización): cambiarlo no toca viajes en curso.
+-- C-QUIEN-PAGA-SERVICIO (25 nov 2026): la regla puede ser de un solo servicio ('' = todos). Las bases
+-- con la clave vieja (pais, ciudad) se rehacen al arrancar (esquemaQuienPaga.ts).
 CREATE TABLE IF NOT EXISTS quien_paga_viajes (
   pais TEXT NOT NULL,
   ciudad TEXT NOT NULL DEFAULT '',
+  servicio TEXT NOT NULL DEFAULT '',
   valor TEXT NOT NULL CHECK (valor IN ('conductor', 'cliente', 'mitad')),
   cambiado_por TEXT,
   cambiado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  PRIMARY KEY (pais, ciudad)
+  PRIMARY KEY (pais, ciudad, servicio)
 );
 -- Valor inicial (Richard, 23 nov 2026): en Venezuela la paga el cliente. Solo si no hay fila (un
 -- cambio hecho desde el panel nunca se pisa al publicar).

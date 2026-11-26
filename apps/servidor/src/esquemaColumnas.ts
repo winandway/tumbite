@@ -1973,6 +1973,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "espera_parada_gratis_s",
     "km_maximo",
     "umbral_precio_zona_pb",
+    "recargo_noche_pb",
+    "noche_desde_h",
+    "noche_hasta_h",
     "de_prueba",
     "activa",
     "motivo",
@@ -1996,6 +1999,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "precio",
     "precio_ida_vuelta",
     "activa",
+    "grupo",
+    "revisar",
     "creada_por",
     "creada_en",
     "actualizada_por",
@@ -3516,6 +3521,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "quien_paga_viajes": [
     "pais",
     "ciudad",
+    "servicio",
     "valor",
     "cambiado_por",
     "cambiado_en"

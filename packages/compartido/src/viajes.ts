@@ -76,6 +76,14 @@ export const esquemaTarifaViaje = z
      * si es más barato por AL MENOS esta diferencia, en puntos básicos (1000 = 10 %). Sin él, 10 %.
      */
     umbralPrecioZonaPb: z.number().int().min(0).max(9000).optional(),
+    /**
+     * C-RECARGO-NOCHE (25 nov 2026, Richard): recargo de noche, en puntos básicos (3000 = +30 %), sobre
+     * el precio del viaje (el fijo de la zona o el calculado, el que gane). Sin él, 0 (sin recargo).
+     */
+    recargoNochePb: z.number().int().min(0).max(10_000).optional(),
+    /** C-RECARGO-NOCHE: hora local en que empieza y termina la noche (sin ellas, 21 a 6). */
+    nocheDesdeH: z.number().int().min(0).max(23).optional(),
+    nocheHastaH: z.number().int().min(0).max(23).optional(),
   })
   .refine((t) => t.minimo <= 100_000_000, { path: ['minimo'] });
 export type TarifaViaje = z.infer<typeof esquemaTarifaViaje>;
@@ -194,6 +202,17 @@ export type DesgloseViaje = {
   precioZonaId?: string;
   /** C-PRECIO-ZONA: el viaje es de ida y vuelta (la vuelta es una parada en el destino). */
   idaVuelta?: number;
+  /**
+   * C-RECARGO-NOCHE: lo que suma la tarifa nocturna (ya dentro de `total`) y su porcentaje en puntos
+   * básicos. Sin estos campos: viaje de día o ciudad sin recargo.
+   */
+  recargoNoche?: number;
+  recargoNochePb?: number;
+  /**
+   * C-RECARGO-NOCHE: la hora reservada con que se cotizó (solo si la app la declaró). Sin ella, la
+   * cotización vale como se mostró (apps de antes, o un viaje para ahora).
+   */
+  horaPrecio?: string;
 };
 
 /** Redondeo de la mitad hacia arriba al paso de la tarifa. */
@@ -233,6 +252,89 @@ export function cotizarViaje(
     redondeo: total - sinRedondeo,
     total,
   };
+}
+
+/** C-RECARGO-NOCHE: la noche por defecto, la misma de la seguridad del viaje (21:00 a 06:00). */
+export const NOCHE_DESDE_H = 21;
+export const NOCHE_HASTA_H = 6;
+
+/** La hora (0 a 23) en la zona horaria de la ciudad; si la zona no existe, la de UTC. */
+export function horaLocal(cuando: Date, zonaHoraria: string): number {
+  try {
+    return (
+      Number(
+        new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          hourCycle: 'h23',
+          timeZone: zonaHoraria,
+        })
+          .format(cuando)
+          .replace(/\D/g, ''),
+      ) % 24
+    );
+  } catch {
+    return cuando.getUTCHours();
+  }
+}
+
+/** ¿Es de noche a esa hora en la ciudad? La noche va de `desdeH` (incluida) a `hastaH` (sin incluir). */
+export function esHoraDeNoche(
+  cuando: Date,
+  zonaHoraria: string,
+  desdeH: number = NOCHE_DESDE_H,
+  hastaH: number = NOCHE_HASTA_H,
+): boolean {
+  if (desdeH === hastaH) return false;
+  const h = horaLocal(cuando, zonaHoraria);
+  return desdeH > hastaH ? h >= desdeH || h < hastaH : h >= desdeH && h < hastaH;
+}
+
+/**
+ * C-RECARGO-NOCHE (25 nov 2026, Richard): de noche, el precio del viaje (el que ganó entre el fijo de
+ * la zona y el calculado) sube el porcentaje de la tarifa. El recargo se redondea HACIA ABAJO al paso de
+ * la ciudad: de noche el precio nunca pasa el de día × (1 + recargo). Sin recargo o de día, igual.
+ */
+export function conRecargoNoche(
+  dg: DesgloseViaje,
+  t: Pick<TarifaViaje, 'recargoNochePb' | 'nocheDesdeH' | 'nocheHastaH' | 'redondeo'>,
+  cuando: Date,
+  zonaHoraria: string,
+): DesgloseViaje {
+  if (!esHoraDeNoche(cuando, zonaHoraria, t.nocheDesdeH, t.nocheHastaH)) return dg;
+  const recargo = recargoNocheDe(dg.total, t);
+  if (recargo <= 0) return dg;
+  return {
+    ...dg,
+    total: dg.total + recargo,
+    recargoNoche: recargo,
+    recargoNochePb: t.recargoNochePb ?? 0,
+  };
+}
+
+/**
+ * C-RECARGO-NOCHE: un precio que se RECALCULA a mitad de viaje (paradas, espera al cerrar) lleva el
+ * recargo con que nació el viaje (`pb` guardado en su desglose; 0 = viaje de día), nunca el de la hora
+ * del recálculo: la noche la decidió la hora de la cotización o de la reserva.
+ */
+export function conRecargoDelViaje(
+  dg: DesgloseViaje,
+  pb: number,
+  t: Pick<TarifaViaje, 'redondeo'>,
+): DesgloseViaje {
+  const recargo = recargoNocheDe(dg.total, { recargoNochePb: pb, redondeo: t.redondeo });
+  if (recargo <= 0) return dg;
+  return { ...dg, total: dg.total + recargo, recargoNoche: recargo, recargoNochePb: pb };
+}
+
+/** C-RECARGO-NOCHE: cuánto suma la noche a un precio (redondeado hacia abajo al paso de la ciudad). */
+export function recargoNocheDe(
+  precio: number,
+  t: Pick<TarifaViaje, 'recargoNochePb' | 'redondeo'>,
+): number {
+  const pb = t.recargoNochePb ?? 0;
+  if (pb <= 0 || precio <= 0) return 0;
+  const paso = Math.max(1, t.redondeo);
+  return Math.floor(Math.floor((precio * pb) / 10_000) / paso) * paso;
 }
 
 /** Lo que cuesta la espera: gratis hasta el límite y después por minuto empezado. */
@@ -283,6 +385,11 @@ export const esquemaCotizarViaje = z.object({
    * parada en el destino y el viaje termina donde empezó). Las apps de antes no lo mandan.
    */
   idaVuelta: z.boolean().optional(),
+  /**
+   * C-RECARGO-NOCHE: la hora reservada de un viaje programado: la tarifa nocturna se decide con ESA
+   * hora, no con la de ahora. Las apps de antes no lo mandan (se cotiza con la hora de ahora).
+   */
+  programadoPara: z.iso.datetime().optional(),
 });
 
 /** C-CARRO-XL: plazas mínimas del vehículo para un viaje XL. */
@@ -519,6 +626,8 @@ export type CotizacionViaje = {
   idaVuelta?: boolean;
   /** C-PRECIO-ZONA: la ruta tiene precio de ida y vuelta y se puede elegir (total con su tarifa). */
   ofertaIdaVuelta?: { total: number } | null;
+  /** C-RECARGO-NOCHE: la cotización lleva la tarifa nocturna (porcentaje en puntos básicos). */
+  recargoNoche?: { pb: number; monto: number } | null;
 };
 
 /**

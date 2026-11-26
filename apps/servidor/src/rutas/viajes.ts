@@ -33,7 +33,13 @@ import {
   reservaDeViaje,
   reservarComisionViaje,
 } from '../finanzas/conductor';
-import { cargoEspera, esPagoACelular, esquemaTarifaViaje, sinPlusCode } from '@tumbite/compartido';
+import {
+  cargoEspera,
+  esPagoACelular,
+  esquemaTarifaViaje,
+  recargoNocheDe,
+  sinPlusCode,
+} from '@tumbite/compartido';
 import {
   aceptarOperacion,
   cambiarEstadoViaje,
@@ -867,6 +873,7 @@ async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: strin
   const f = await db
     .prepare(
       `SELECT o.cliente_id, v.total_final_centavos, q.total, q.moneda, q.tarifa_json,
+              json_extract(q.desglose_json, '$.recargoNochePb') AS recargo_noche_pb,
               CAST((julianday(v.iniciado_en) - julianday(v.llego_en)) * 86400 AS INTEGER) AS espera_s
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE o.id = ?`,
@@ -878,6 +885,7 @@ async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: strin
       total: number | null;
       moneda: string | null;
       tarifa_json: string | null;
+      recargo_noche_pb: number | null;
       espera_s: number | null;
     }>();
   await cobrarReservaViaje(db, operacionId, conductorId);
@@ -888,6 +896,11 @@ async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: strin
     const tarifa = esquemaTarifaViaje.parse(JSON.parse(f.tarifa_json ?? '{}'));
     // C-VIAJE-PARADAS: la espera de más en cada parada se cobra igual que la de la recogida.
     espera = cargoEspera(tarifa, f.espera_s ?? 0) + (await cargoParadasDe(db, operacionId, tarifa));
+    // C-RECARGO-NOCHE: un viaje de noche cobra la espera con el mismo recargo que el viaje.
+    espera += recargoNocheDe(espera, {
+      recargoNochePb: Number(f.recargo_noche_pb ?? 0),
+      redondeo: tarifa.redondeo,
+    });
   } catch {
     console.error('viajes: copia de tarifa dañada al cerrar', operacionId);
   }

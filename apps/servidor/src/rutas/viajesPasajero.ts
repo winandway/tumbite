@@ -16,6 +16,8 @@ import {
   VIGENCIA_COTIZACION_S,
   cargoCancelacionViaje,
   cotizarViaje,
+  conRecargoNoche,
+  esHoraDeNoche,
   esquemaCotizarViaje,
   direccionConReferencia,
   esquemaTarifaViaje,
@@ -123,6 +125,9 @@ type FilaTarifa = {
   valor_maximo: number | null;
   km_maximo?: number | null;
   umbral_precio_zona_pb?: number | null;
+  recargo_noche_pb?: number | null;
+  noche_desde_h?: number | null;
+  noche_hasta_h?: number | null;
   de_prueba: number;
   activa: number;
   motivo: string;
@@ -154,6 +159,10 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     velocidadKmh: f.velocidad_kmh,
     ...(f.km_maximo != null ? { kmMaximo: f.km_maximo } : {}),
     ...(f.umbral_precio_zona_pb != null ? { umbralPrecioZonaPb: f.umbral_precio_zona_pb } : {}),
+    // C-RECARGO-NOCHE: la tarifa nocturna de la ciudad (sin ella, sin recargo; sin horas, 21 a 6).
+    ...(f.recargo_noche_pb ? { recargoNochePb: f.recargo_noche_pb } : {}),
+    ...(f.noche_desde_h != null ? { nocheDesdeH: f.noche_desde_h } : {}),
+    ...(f.noche_hasta_h != null ? { nocheHastaH: f.noche_hasta_h } : {}),
   };
 }
 
@@ -291,8 +300,8 @@ export async function guardarTarifaViaje(
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
            cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
            de_prueba, motivo, creada_por, xl_pb, valor_maximo, comfort_pb, premium_pb, espera_parada_gratis_s,
-           km_maximo, umbral_precio_zona_pb)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           km_maximo, umbral_precio_zona_pb, recargo_noche_pb, noche_desde_h, noche_hasta_h)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -323,6 +332,9 @@ export async function guardarTarifaViaje(
         t.esperaParadaGratisS,
         t.kmMaximo ?? null,
         t.umbralPrecioZonaPb ?? null,
+        t.recargoNochePb ?? null,
+        t.nocheDesdeH ?? null,
+        t.nocheHastaH ?? null,
       ),
     db
       .prepare(
@@ -602,7 +614,7 @@ export async function cotizarParaCliente(
   // Solo viajes de personas (Moto y Carro): los envíos siguen como siempre.
   const quienPaga =
     d.tarifaServicio && d.servicio !== 'envios'
-      ? await quienPagaViaje(db, zona.pais, zona.id)
+      ? await quienPagaViaje(db, zona.pais, zona.id, d.servicio)
       : 'conductor';
   const conTarifa = async (dg: DesgloseViaje): Promise<DesgloseViaje> => {
     const t = await tarifaServicioViaje(db, {
@@ -624,6 +636,8 @@ export async function cotizarParaCliente(
   // C-PRECIO-ZONA: el precio del viaje es el MENOR entre el de la zona y el calculado (si la
   // diferencia pasa del umbral de la tarifa). Solo la categoría estándar: Comfort, Premium y XL
   // siguen calculadas. La tarifa de servicio, la comisión y el regalo salen de este precio.
+  // C-RECARGO-NOCHE: la hora con que se decide la tarifa nocturna (la reservada, si es programado).
+  const cuando = d.programadoPara ? new Date(d.programadoPara) : new Date();
   const precioDe = (
     t: TarifaViaje,
     categoria: CategoriaViaje,
@@ -631,15 +645,28 @@ export async function cotizarParaCliente(
     vuelta = idaVuelta,
   ): DesgloseViaje => {
     const calculado = cotizarViaje(t, r, multiplicadorPb);
-    if (!rutaZona || categoria !== 'estandar') return calculado;
-    const precio = vuelta ? rutaZona.precio_ida_vuelta : rutaZona.precio;
-    if (precio == null) return calculado;
-    return conPrecioZona(calculado, precio, normal.umbralPrecioZonaPb, {
-      id: rutaZona.id,
-      idaVuelta: vuelta,
-    });
+    const precio =
+      !rutaZona || categoria !== 'estandar'
+        ? null
+        : vuelta
+          ? rutaZona.precio_ida_vuelta
+          : rutaZona.precio;
+    const deDia =
+      precio == null || !rutaZona
+        ? calculado
+        : conPrecioZona(calculado, precio, normal.umbralPrecioZonaPb, {
+            id: rutaZona.id,
+            idaVuelta: vuelta,
+          });
+    // C-RECARGO-NOCHE: primero el más bajo de los dos de día, después el recargo de la noche. Así de
+    // noche el precio nunca pasa el de la zona por (1 + recargo).
+    return conRecargoNoche(deDia, t, cuando, zona.zonaHoraria);
   };
-  const desglose = await conTarifa(precioDe(tarifa, d.categoria));
+  const desglose: DesgloseViaje = {
+    ...(await conTarifa(precioDe(tarifa, d.categoria))),
+    // C-RECARGO-NOCHE: la hora reservada que declaró la app (para comprobarla al pedir).
+    ...(d.programadoPara ? { horaPrecio: d.programadoPara } : {}),
+  };
   // C-PRECIO-ZONA: si la ruta tiene precio de ida y vuelta, se ofrece (la vuelta estimada como el
   // doble del trayecto, sin otra consulta de rutas). Al elegirla, la app vuelve a cotizar con
   // `idaVuelta` y ese es el precio fijo.
@@ -764,6 +791,10 @@ export async function cotizarParaCliente(
     ...(desglose.precioZona != null && rutaZona ? { lugarZona: rutaZona.hasta_nombre } : {}),
     idaVuelta,
     ofertaIdaVuelta,
+    // C-RECARGO-NOCHE: la app dice «Tarifa nocturna (+30 %)» en una línea clara antes de pedir.
+    recargoNoche: desglose.recargoNoche
+      ? { pb: desglose.recargoNochePb ?? 0, monto: desglose.recargoNoche }
+      : null,
     precioCambio: anterior != null && anterior.total !== desglose.total,
     ...(anterior != null && anterior.total !== desglose.total
       ? { totalAnterior: anterior.total }
@@ -794,6 +825,42 @@ export async function cotizarParaCliente(
 }
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
+
+/**
+ * C-RECARGO-NOCHE: la cotización que declaró su hora (`horaPrecio`, app nueva) solo vale para un viaje
+ * en la misma franja (noche o día) que esa hora. Sin hora declarada no se comprueba nada: vale el precio
+ * mostrado (las apps de la tienda no la mandan y nunca quedan sin salida). Solo en ciudades con recargo.
+ */
+export function exigirNocheDeLaReserva(
+  cot: { tarifa_json: string | null; desglose_json: string | null },
+  programadoPara: string | null,
+  zonaHoraria: string | null | undefined,
+  ahora: Date = new Date(),
+): void {
+  const t = tarifaDeCopia(cot.tarifa_json);
+  if (!t?.recargoNochePb) return;
+  const declarada = horaDeclarada(cot.desglose_json);
+  if (!declarada) return;
+  const zona = zonaHoraria ?? 'UTC';
+  const noche = (x: Date) => esHoraDeNoche(x, zona, t.nocheDesdeH, t.nocheHastaH);
+  if (noche(new Date(declarada)) !== noche(programadoPara ? new Date(programadoPara) : ahora))
+    throw new ErrorDatos(
+      'El precio cambia a esa hora por la tarifa nocturna. Revisa el precio antes de reservar.',
+      'cotizacionId',
+      409,
+    );
+}
+
+/** C-RECARGO-NOCHE: la hora reservada que declaró la cotización (null si no la declaró). */
+function horaDeclarada(json: string | null): string | null {
+  try {
+    const h = (JSON.parse(json ?? '{}') as DesgloseViaje).horaPrecio;
+    return typeof h === 'string' && !Number.isNaN(Date.parse(h)) ? h : null;
+  } catch (e) {
+    console.error('viajes: desglose dañado en la cotización', e);
+    return null;
+  }
+}
 
 function claveDe(c: Ctx, accion: string, id: string): string {
   const k = c.req.header('idempotency-key') ?? '';
@@ -832,7 +899,7 @@ viajesPasajero.post('/viajes', async (c) => {
   );
   const cot = await db
     .prepare(
-      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, tarifa_json, origen_lat, origen_lng, vence_en > datetime('now') AS vigente
+      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, tarifa_json, desglose_json, origen_lat, origen_lng, vence_en > datetime('now') AS vigente
          FROM cotizaciones_viaje WHERE id = ? AND cliente_id = ?`,
     )
     .bind(d.cotizacionId, u.id)
@@ -845,6 +912,7 @@ viajesPasajero.post('/viajes', async (c) => {
       total: number;
       moneda: string;
       tarifa_json: string | null;
+      desglose_json: string | null;
       origen_lat: number;
       origen_lng: number;
       vigente: number;
@@ -854,9 +922,13 @@ viajesPasajero.post('/viajes', async (c) => {
   if (!cot.vigente)
     throw new ErrorDatos('El precio venció. Vuelve a cotizar el viaje.', 'cotizacionId', 409);
   const paisViaje = await db
-    .prepare('SELECT pais FROM zonas WHERE id = ?')
+    .prepare('SELECT pais, zona_horaria FROM zonas WHERE id = ?')
     .bind(cot.zona_id)
-    .first<{ pais: string }>();
+    .first<{ pais: string; zona_horaria: string | null }>();
+  // C-RECARGO-NOCHE: si la cotización declaró su hora (app nueva) y la franja de ESA hora no es la del
+  // viaje que se pide, hay que volver a cotizar. Sin hora declarada (app de antes, o un viaje para
+  // ahora cotizado a las 20:59 y pedido a las 21:05), vale el precio que la persona vio.
+  exigirNocheDeLaReserva(cot, d.programadoPara ?? null, paisViaje?.zona_horaria);
   if (!perfilPasajeros(paisViaje?.pais).metodosPago.includes(d.metodoPago))
     throw new ErrorDatos('Ese método de pago no está disponible en tu ciudad.', 'metodoPago', 422);
   if (

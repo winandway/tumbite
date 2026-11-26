@@ -1,3 +1,4 @@
+import { saludTabuladorVigia } from './semillaTabuladorVigia';
 import { disparadoresPresentes } from './canarioLecturas';
 import { presupuestoVueltaPruebas, saludVueltasPruebas } from './vueltaPruebas';
 import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
@@ -490,6 +491,13 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {
       console.error('salud: viajes', e);
+      return 'error' as const;
+    });
+  // C-TABULADOR-VIGIA: la semilla del tabulador de El Vigía (ok = sembrado; pendiente = sin la zona
+  // o corriendo; error = falló o quedó colgada). Una lectura.
+  if (c.env.DB)
+    piezas.tabuladorVigia = await saludTabuladorVigia(c.env.DB).catch((e: unknown) => {
+      console.error('salud: tabulador de El Vigía', e);
       return 'error' as const;
     });
   // C-PANICO-CENTRAL: una zona activa sin responsable de pánico con teléfono, en rojo.

@@ -302,6 +302,8 @@ export function PedirMoto({
             // C-QUIEN-PAGA-VIAJES: esta app muestra la tarifa de servicio de Divoox en su línea.
             tarifaServicio: true,
             ...(vuelta ? { idaVuelta: true } : {}),
+            // C-RECARGO-NOCHE: una reserva se cotiza con SU hora (la tarifa nocturna depende de ella).
+            ...(cuando ? { programadoPara: cuando } : {}),
           },
         );
         setCotizacion(r.cotizacion);
@@ -333,6 +335,7 @@ export function PedirMoto({
       paradas,
       cambiar,
       idaVueltaEn,
+      cuando,
     ],
   );
 
@@ -969,6 +972,18 @@ export function PedirMoto({
               <Text testID="moto-precio-zona" style={{ color: '#666B73', fontSize: 13 }}>
                 {cotizacion.dePrueba ? `${t.precioZona} · ` : ''}
                 {t.precioZonaAyuda.replace('{lugar}', cotizacion.lugarZona ?? '')}
+              </Text>
+            ) : null}
+            {/* C-RECARGO-NOCHE: la tarifa nocturna, dicha en una línea clara antes de pedir. */}
+            {cotizacion.recargoNoche ? (
+              <Text testID="moto-tarifa-nocturna" style={{ color: '#666B73', fontSize: 13 }}>
+                {t.tarifaNocturna.replace(
+                  '{pct}',
+                  String(cotizacion.recargoNoche.pb / 100).replace(
+                    '.',
+                    idioma === 'es' ? ',' : '.',
+                  ),
+                )}
               </Text>
             ) : null}
             {cotizacion.ofertaIdaVuelta || cotizacion.idaVuelta ? (
