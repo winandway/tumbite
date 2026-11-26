@@ -77,29 +77,62 @@ const mismo = (a: unknown, b: unknown) => {
  * vino del servidor)? Entonces no es un borrador: ni se guarda ni se avisa. Los campos sensibles no
  * cuentan. Pura (lleva su prueba).
  */
-/** Lo guardado, solo con los campos que el formulario tiene hoy (si los declara). */
-export function soloCamposDe<T extends Record<string, unknown>>(
-  datos: Partial<T>,
-  base: T,
-): Partial<T> {
-  const campos = new Set(Object.keys(base));
-  if (!campos.size) return datos;
-  return Object.fromEntries(Object.entries(datos).filter(([k]) => campos.has(k))) as Partial<T>;
+/**
+ * La marca que viaja con cada borrador: los campos que el formulario tenía al guardarlo (incluidos los
+ * que crecen solos, como una lista que se agrega). Así se distingue un campo de hoy de una clave vieja.
+ */
+export const CAMPOS_BORRADOR = '__campos';
+
+/** ¿Tiene algo escrito? Texto con letras, un número, un sí, una lista u objeto con algo. */
+function conContenido(x: unknown): boolean {
+  if (x === null || x === undefined || x === false) return false;
+  if (typeof x === 'string') return x.trim() !== '';
+  if (Array.isArray(x)) return x.length > 0;
+  if (typeof x === 'object') return Object.keys(x).length > 0;
+  return true;
 }
 
+/**
+ * Lo guardado, solo con los campos que el formulario tiene hoy: los de su base, los que la marca dice
+ * que el formulario tenía al guardar y, en un formulario de campos libres (base sin campos), todos.
+ * Lo de una versión vieja (sin marca y fuera de la base) se descarta.
+ */
+export function soloCamposDe<T extends Record<string, unknown>>(
+  datos: Partial<T> & { [CAMPOS_BORRADOR]?: unknown },
+  base: T,
+): Partial<T> {
+  const marca = new Map(Object.entries(datos)).get(CAMPOS_BORRADOR);
+  const deMarca = Array.isArray(marca) ? marca.map(String) : [];
+  const deBase = Object.keys(base);
+  const campos = new Set([...deBase, ...deMarca]);
+  return Object.fromEntries(
+    Object.entries(datos).filter(
+      ([k]) => k !== CAMPOS_BORRADOR && (!deBase.length || campos.has(k)),
+    ),
+  ) as Partial<T>;
+}
+
+/**
+ * C-BORRADOR-SIN-AVISO-VACIO (Richard, 25 nov 2026: «Recuperamos lo que estabas escribiendo» sin haber
+ * escrito nada) — todos los formularios. ¿Lo que hay es igual a lo que el formulario tendría sin
+ * borrador? Los campos de la base se comparan con la base; un campo que el formulario tiene hoy y no
+ * está en su base (campos que crecen) cuenta como cambio si tiene algo escrito. Los campos sensibles no
+ * cuentan. `valores` ya viene solo con los campos de hoy (`soloCamposDe` al leer). Pura.
+ */
 export function borradorSinCambios<T extends Record<string, unknown>>(
   valores: Partial<T>,
   base: T,
   sensibles: readonly (keyof T)[] = [],
 ): boolean {
   const fuera = new Set<string>(sensibles.map(String));
-  // Un campo que el formulario ya no tiene (de una versión vieja) no cuenta como escrito. Solo en un
-  // formulario de campos libres (base sin campos) cuenta todo lo guardado.
-  const deBase = Object.keys(base);
-  const claves = new Set(deBase.length ? deBase : Object.keys(valores));
+  fuera.add(CAMPOS_BORRADOR);
   const v = new Map(Object.entries(valores));
   const b = new Map(Object.entries(base));
-  return [...claves].every((k) => fuera.has(k) || !v.has(k) || mismo(v.get(k), b.get(k)));
+  for (const [k, valor] of v) {
+    if (fuera.has(k)) continue;
+    if (b.has(k) ? !mismo(valor, b.get(k)) : conContenido(valor)) return false;
+  }
+  return true;
 }
 
 export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorrador<T>) {
@@ -136,17 +169,15 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
       .then((guardado) => {
         if (!vivo || !guardado) return;
         try {
-          const datos = JSON.parse(guardado) as Partial<T>;
+          const crudo = JSON.parse(guardado) as Partial<T>;
+          const datos =
+            crudo && typeof crudo === 'object' ? soloCamposDe(crudo, baseRef.current) : null;
           // Un borrador igual a lo que ya estaba (vacío o viejo) se tira sin avisar nada.
-          if (
-            !datos ||
-            typeof datos !== 'object' ||
-            borradorSinCambios(datos, baseRef.current, sensiblesRef.current)
-          ) {
+          if (!datos || borradorSinCambios(datos, baseRef.current, sensiblesRef.current)) {
             void Promise.resolve(almacen.borrar(llave)).catch(() => {});
             return;
           }
-          setValores({ ...baseRef.current, ...soloCamposDe(datos, baseRef.current) });
+          setValores({ ...baseRef.current, ...datos });
           recuperadoRef.current = true;
           setRecuperado(true);
         } catch {
@@ -174,7 +205,12 @@ export function useBorrador<T extends Record<string, unknown>>(op: OpcionesBorra
     // Un formulario igual a lo ya guardado (en blanco o lo que vino del servidor) no es borrador.
     const vacio = borradorSinCambios(copia as Partial<T>, baseRef.current, sensiblesRef.current);
     Promise.resolve(
-      vacio ? almacen.borrar(llave) : almacen.guardar(llave, JSON.stringify(copia)),
+      vacio
+        ? almacen.borrar(llave)
+        : almacen.guardar(
+            llave,
+            JSON.stringify({ ...copia, [CAMPOS_BORRADOR]: Object.keys(copia) }),
+          ),
     ).catch((e) => console.warn('borrador: no se pudo guardar', e));
   }, [almacen, llave]);
 

@@ -9,6 +9,12 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Qué se hizo:** el celular de guion sale con «+1». El «+» manda sobre el país de la conexión (0 rechazos de 120 desde cualquier país). La validación NO se relajó.
 - **Cómo se comprueba:** `packages/compartido/src/candadoCelularDeGuion.test.ts`, C-CELULAR-CON-PAIS, visto en ROJO sin el «+1».
 
+## C-LECTURA-TOLERANTE y borrador con campos que crecen (revisor, 25 nov 2026) — todos los países · servidor y compartido
+
+- **Qué se rompía:** (1) al hacer obligatorios `nacimiento` y `confianzaNacimiento` en el JSON pedido al modelo, una licencia sin esa fecha, un seguro, una cara o la foto de un vehículo podían traer `null`, «no visible» o una fecha en letras, y el esquema de lectura rechazaba TODA la lectura: la foto quedaba «sin IA» en silencio. (2) `borradorSinCambios` solo miraba los campos de la base: un formulario cuyo estado crece con campos fuera de su `inicial` daba «sin cambios» y perdía lo escrito.
+- **Qué se hizo:** (1) `esquemaFoto` (`verificacionIa.ts`) tolerante campo por campo: textos (`null` o largos → recortados o ''), `nacimiento` solo como fecha AAAA-MM-DD (lo demás → ''), confianzas con `confianzaDe` (sin número → 0), `vencido` desconocido → «no_se_ve», sí/no desconocido → su valor neutro; el texto le dice al modelo que deje la fecha vacía si la foto no la trae. `colorDeFoto` mira solo lo que decide el color. (2) `useBorrador`: cada borrador guarda la marca `__campos` (los campos que el formulario tenía al guardar); al leer se quedan los de la base, los de la marca y, en un formulario de campos libres, todos; las claves viejas sin marca se descartan (no traen el aviso falso). Un campo de hoy fuera de la base cuenta como cambio si tiene algo escrito.
+- **Cómo se comprueba:** `confianzaLeida.test.ts` (licencia con "", `null` y texto largo; cara y foto de vehículo con campos nulos) y `borradorSinAvisoVacio.test.tsx` (campos que crecen e `inicial: {}` no pierden lo escrito; los del aviso falso siguen en verde). **Vistas en ROJO** con las piezas anteriores.
+
 ## C-BORRADOR-SIN-AVISO-VACIO (segunda parte) y C-USAR-FECHA-LEIDA · Sin «Recuperamos…» falso y «Usar esta fecha» (Gerencia en vivo, 25 nov 2026) — todos los formularios · compartido, panel y servidor
 
 - **Qué se veía:** en un navegador donde nadie escribió nada, «Cambiar ciudad» seguía diciendo «Recuperamos lo que estabas escribiendo» con la casilla vacía.

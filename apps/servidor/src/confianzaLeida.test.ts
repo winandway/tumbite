@@ -145,3 +145,79 @@ describe('C-CONFIANZA-LEIDA: quien quedó con la fecha sin confianza se relee un
     expect(cursor?.valor).toBe('fin');
   });
 });
+
+describe('C-LECTURA-TOLERANTE: nada obligatorio tumba la lectura de una foto que no lo trae', () => {
+  async function leer(
+    paso: 'licencia_frente' | 'cara' | 'seguro',
+    respuesta: Record<string, unknown>,
+  ) {
+    const f: LlamadaIa = async () => ({
+      texto: JSON.stringify(respuesta),
+      entrada: 1300,
+      salida: 150,
+    });
+    usarModeloVerificacion(f);
+    const m = mundo();
+    const env = { DB: m.DB, GEMINI_API_KEY: 'llave-de-mentira-para-pruebas-000000' };
+    return comprobarFoto(env as never, m.DB, {
+      paso,
+      pais: 'VE',
+      ingles: false,
+      imagen: { bytes: PNG, mime: 'image/png' },
+      intentos: 0,
+    });
+  }
+
+  it('una licencia sin fecha de nacimiento: con "", con null y con texto largo se lee igual', async () => {
+    for (const nacimiento of [
+      '',
+      null,
+      'No visible: esta licencia no trae la fecha de nacimiento',
+    ]) {
+      const r = await leer('licencia_frente', {
+        clase: 'licencia_frente',
+        legible: true,
+        vencido: 'no',
+        nombre: 'Conductor Uno',
+        numero: 'L-123',
+        vence: '2031-01-01',
+        nacimiento,
+        confianzaNacimiento: nacimiento === null ? null : 0,
+        confianza: 95,
+      });
+      expect(r.color, String(nacimiento)).toBe('verde');
+      expect(r.lectura?.nacimiento).toBe('');
+      expect(r.lectura?.confianzaNacimiento).toBe(0);
+      expect(r.lectura?.numero).toBe('L-123');
+    }
+  });
+
+  it('una cara y la foto de un vehículo (campos nulos o raros) también se leen', async () => {
+    const cara = await leer('cara', {
+      clase: 'cara',
+      legible: true,
+      vencido: null,
+      pais: null,
+      nombre: null,
+      numero: null,
+      vence: 'no aplica en una foto de la cara',
+      nacimiento: 'no visible',
+      confianzaNacimiento: null,
+      fotoDeOtraFoto: null,
+      confianza: '0.93',
+    });
+    expect(cara.color).toBe('verde');
+    expect(cara.lectura).toMatchObject({ nacimiento: '', vencido: 'no_se_ve', confianza: 93 });
+    const vehiculo = await leer('seguro', {
+      clase: 'otra_cosa',
+      legible: true,
+      vencido: 'no_se_ve',
+      nacimiento: null,
+      confianzaNacimiento: 'n/a',
+      confianza: 90,
+    });
+    expect(vehiculo.lectura).not.toBeNull();
+    expect(vehiculo.color).toBe('rojo');
+    expect(vehiculo.lectura?.nacimiento).toBe('');
+  });
+});

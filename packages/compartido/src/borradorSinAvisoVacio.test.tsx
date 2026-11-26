@@ -113,4 +113,47 @@ describe('C-BORRADOR-SIN-AVISO-VACIO', () => {
     });
     expect(b.result.current.recuperado).toBe(false);
   });
+
+  it('un formulario con campos que crecen (fuera de su inicial) no pierde lo escrito', async () => {
+    const llave = llaveBorrador('f-dinamico', 'yo');
+    const inicialDinamico: Record<string, string> = { nombre: '' };
+    const a = renderHook(() =>
+      useBorrador({
+        formulario: 'f-dinamico',
+        cuenta: 'yo',
+        inicial: inicialDinamico,
+        almacen: almacenNavegador,
+        esperaMs: 5,
+      }),
+    );
+    await espera();
+    act(() => a.result.current.setValores({ nombre: '', extra_1: 'Pasillo de bebidas' }));
+    await waitFor(() => expect(localStorage.getItem(llave)).toContain('Pasillo de bebidas'));
+    a.unmount();
+    const b = renderHook(() =>
+      useBorrador({
+        formulario: 'f-dinamico',
+        cuenta: 'yo',
+        inicial: inicialDinamico,
+        almacen: almacenNavegador,
+      }),
+    );
+    await waitFor(() => expect(b.result.current.recuperado).toBe(true));
+    expect(b.result.current.valores.extra_1).toBe('Pasillo de bebidas');
+    // Y uno de campos libres (`inicial: {}`), igual.
+    const c = renderHook(() =>
+      useBorrador({
+        formulario: 'f-libre',
+        cuenta: 'yo',
+        inicial: {} as Record<string, string>,
+        almacen: almacenNavegador,
+        esperaMs: 5,
+      }),
+    );
+    await espera();
+    act(() => c.result.current.setValores({ tope_VE: '25' }));
+    await waitFor(() =>
+      expect(localStorage.getItem(llaveBorrador('f-libre', 'yo'))).toContain('tope_VE'),
+    );
+  });
 });
