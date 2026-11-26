@@ -11,14 +11,18 @@ appId: ${APP_ID}
       - tapOn:
           text: "Allow While Using App|Allow|Permitir al usar la app|Permitir"
           optional: true
-# «Cómo revisamos tus documentos»: el robot da el permiso, como la mayoría de los conductores.
-- tapOn:
-    text: "I give my permission.*|Doy mi permiso.*|Autorizo.*"
-    optional: true
-# El botón se enciende solo con la casilla marcada (AvisoIa.tsx).
-- tapOn:
-    id: "aviso-ia-casilla"
-    optional: true
-- tapOn:
-    id: "aviso-ia-aceptar"
-    optional: true
+# «Cómo revisamos tus documentos»: el robot da el permiso, como la mayoría de los conductores. Se toca
+# SOLO la casilla (tocar también su texto la marca y la desmarca) y después «Aceptar y continuar».
+- runFlow:
+    when:
+      visible:
+        id: "aviso-ia"
+    commands:
+      - tapOn:
+          id: "aviso-ia-casilla"
+      - extendedWaitUntil:
+          visible:
+            id: "aviso-ia-boton-listo"
+          timeout: 10000
+      - tapOn:
+          id: "aviso-ia-aceptar"

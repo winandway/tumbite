@@ -10,9 +10,18 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-export const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+/**
+ * La raíz del repositorio: se sube desde la carpeta actual hasta la que tiene esta pieza. Sin
+ * `import.meta`, porque Playwright convierte este archivo a CommonJS al cargar el robot del panel.
+ */
+export const RAIZ = (() => {
+  if (process.env.ACEPTACION_RAIZ) return resolve(process.env.ACEPTACION_RAIZ);
+  for (let d = process.cwd(); ; d = dirname(d)) {
+    if (existsSync(join(d, 'scripts/aceptacion/comun.mjs'))) return d;
+    if (dirname(d) === d) throw new Error('Corre los robots desde la carpeta del proyecto.');
+  }
+})();
 
 /** Solo el sitio de pruebas. Cualquier otro destino se rechaza antes de tocar nada. */
 export const SITIOS_PERMITIDOS = [

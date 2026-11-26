@@ -152,10 +152,12 @@ function motivoDeFallo(texto) {
   const paso = lineas.find((l) => /\.\.\. FAILED$/.test(l) && !/^Run /.test(l));
   const causa = lineas.find((l) => /^(Assertion is false|Element not found)/.test(l));
   const clave = paso ? `${paso.replace(/\.\.\. FAILED$/, '')}${causa ? ` (${causa})` : ''}` : null;
-  return (clave || lineas.at(-1) || 'falló sin decir por qué')
-    // eslint-disable-next-line no-control-regex
-    .replace(/\x1b\[[0-9;]*m/g, '')
-    .slice(0, 300);
+  return (
+    (clave || lineas.at(-1) || 'falló sin decir por qué')
+      // eslint-disable-next-line no-control-regex
+      .replace(/\x1b\[[0-9;]*m/g, '')
+      .slice(0, 300)
+  );
 }
 
 async function main() {
@@ -197,6 +199,7 @@ async function main() {
       };
       const parametros = Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]);
       process.stdout.write(`── ${id} ${ciudad.nombre} ${f.titulo} … `);
+      const foto = join(salidaPrueba, 'pantalla.png');
       const correr = () => {
         const r = spawnSync(
           'maestro',
@@ -207,6 +210,8 @@ async function main() {
             env: { ...process.env, MAESTRO_CLI_NO_ANALYTICS: '1' },
           },
         );
+        // Captura de cómo quedó la pantalla, pase o no pase (antes de cerrar la app).
+        spawnSync('xcrun', ['simctl', 'io', udid, 'screenshot', foto]);
         spawnSync('xcrun', ['simctl', 'terminate', udid, APPS[f.app]]);
         return r;
       };
@@ -217,9 +222,6 @@ async function main() {
         primera = motivoDeFallo(`${r.stdout}\n${r.stderr}`);
         r = correr();
       }
-      // Captura de cómo quedó la pantalla, pase o no pase.
-      const foto = join(salidaPrueba, 'pantalla.png');
-      spawnSync('xcrun', ['simctl', 'io', udid, 'screenshot', foto]);
       const verde = r.status === 0;
       const lugar = ciudades.length > 1 ? `${ciudad.nombre}: ` : '';
       const motivo = verde
@@ -268,6 +270,8 @@ async function main() {
   if (!solo) {
     const hechas = new Set(lineas.map((l) => l.id));
     for (const [id, titulo] of LINEAS_LISTA) {
+      // C12 y P8 (Camila) las mide el examen de Camila, en su propia sección del parte.
+      if (id === 'C12' || id === 'P8') continue;
       if (!hechas.has(id)) {
         lineas.push({
           id,

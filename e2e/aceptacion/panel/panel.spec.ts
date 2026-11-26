@@ -19,13 +19,13 @@ import {
   q,
   sql,
   URL_PRUEBAS,
-} from '../../scripts/aceptacion/base-pruebas.mjs';
+} from '../../../scripts/aceptacion/base-pruebas.mjs';
 import {
   CLAVE_ROBOT,
   crearConductor,
   crearPasajero,
   entrarSuperadmin,
-} from '../../scripts/aceptacion/panel-datos.mjs';
+} from '../../../scripts/aceptacion/panel-datos.mjs';
 
 const ROBOT = 'panel';
 const SELLO = Date.now().toString(36).toUpperCase().slice(-5);
