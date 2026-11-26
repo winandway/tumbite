@@ -147,7 +147,7 @@ try {
     await p.waitForTimeout(1500);
     await p.getByTestId('barra-activacion').scrollIntoViewIfNeeded();
     await foto('en-espera');
-    // Lo que puede ir subiendo mientras espera: la lista «Te faltan N pasos para empezar».
+    // Lo que puede ir dejando listo mientras espera: «Deja tu cuenta lista» y sus pasos.
     await p.getByTestId('que-te-falta').evaluate((e) => e.scrollIntoView({ block: 'start' }));
     await foto('papeles');
     await ctx.close();
