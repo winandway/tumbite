@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
 
@@ -202,11 +203,7 @@ for (const idioma of ['es', 'en'] as const) {
         .screenshot({ path: join(CARPETA, `driver-equipo-${idioma}.png`) });
 
     // El superadmin: los programas y el equipo con su ficha, su enlace y su QR.
-    const { ruta } = (await (
-      await request.get('/datos/admin/ruta', { headers: h(admin.token) })
-    ).json()) as {
-      ruta: string | null;
-    };
+    const ruta = await rutaSuperadmin(request, h(admin.token));
     const panel = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await panel.addCookies([
       { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },

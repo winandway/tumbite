@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
 import { SQL_TASA_EJEMPLO } from './tasaEjemplo';
@@ -48,9 +49,7 @@ for (const idioma of ['es', 'en'] as const) {
     sql("DELETE FROM tasas_modo WHERE pais = 'VE'");
     sql(SQL_TASA_EJEMPLO);
     const h = { authorization: `Bearer ${admin.token}` };
-    const { ruta } = (await (await request.get('/datos/admin/ruta', { headers: h })).json()) as {
-      ruta: string | null;
-    };
+    const ruta = await rutaSuperadmin(request, h);
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await ctx.addCookies([
       { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },

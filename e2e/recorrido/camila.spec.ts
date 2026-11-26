@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { devices, expect, test } from './fixtures';
@@ -309,9 +310,7 @@ for (const idioma of ['es', 'en'] as const) {
     sql(`UPDATE camila_personas SET nombre = '${C.visita}' WHERE id = '${visita}'`);
 
     // El superadmin: bandeja, conversación (responde en el mismo hilo), aprendizaje, líderes y ajustes.
-    const { ruta } = (await (
-      await request.get('/datos/admin/ruta', { headers: h(admin.token) })
-    ).json()) as { ruta: string | null };
+    const ruta = await rutaSuperadmin(request, h(admin.token));
     const panel = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await panel.addCookies([
       { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },
