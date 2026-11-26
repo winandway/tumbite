@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { leerLugarCuenta } from './lugarCuenta';
 
 /** Esquemas de datos compartidos: el servidor valida con ellos y las apps los usan para sus tipos. */
 
@@ -35,6 +36,13 @@ export const esquemaRegistro = z
     // C-TELEFONO-AL-REGISTRARSE (22 nov 2026): la app trae la pantalla del código por SMS. Solo esas
     // cuentas quedan obligadas a confirmar el celular (las apps viejas no la tienen: nadie se atrapa).
     verificaTelefono: z.boolean().optional(),
+    // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): dónde VIVE la persona (País → Estado → Ciudad, catálogo
+    // completo). Opcional para las apps viejas; uno mal formado llega como null y la cuenta se crea
+    // igual (se le pide la ciudad al volver a entrar). Nunca impide registrarse.
+    lugar: z
+      .unknown()
+      .optional()
+      .transform((x) => (x === undefined ? undefined : leerLugarCuenta(x))),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

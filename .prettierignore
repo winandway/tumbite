@@ -19,3 +19,6 @@ apps/servidor/src/camila/docsPublicos.ts
 # C-TERRITORIO-OFICIAL: datos generados por scripts/pais/generar-datos-pais.mjs (minificados a propósito).
 apps/panel/public/territorio/
 packages/compartido/src/pais/datos/
+
+# C-REGISTRO-TODO-EL-PAIS: catálogo de lugares generado por scripts/lugares/generar-catalogo.mjs (minificado a propósito).
+apps/panel/public/lugares/
