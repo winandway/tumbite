@@ -110,10 +110,12 @@ import { flex } from './flex';
 import { cupones } from './rutas/cupones';
 import { regalosDivoox } from './rutas/regalosDivoox';
 import { saldoConductores } from './rutas/saldoConductores';
+import { saldoClientes } from './rutas/saldoClientes';
 import { programaReferidos } from './rutas/programaReferidos';
 import { agentes } from './rutas/agentes';
 import { saludAgentes } from './agentes';
 import { saludRegalos } from './regalosDivoox';
+import { saludSaldoClientes } from './saldoCliente';
 import { camila } from './rutas/camila';
 import { camilaFallos } from './rutas/camilaFallos';
 import { saludCamila } from './camila/salud';
@@ -562,6 +564,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: regalos', e);
       return 'error' as const;
     });
+  // C-SALDO-CLIENTE: ningún Saldo Divoox en negativo y lo apartado cuadra con los viajes vivos.
+  if (c.env.DB)
+    piezas.saldo_clientes = await saludSaldoClientes(c.env.DB).catch((e: unknown) => {
+      console.error('salud: saldo de clientes', e);
+      return 'error' as const;
+    });
   // C-CAMILA-TOPE: Camila no gasta más IA que su tope ni da más regalos que los permitidos.
   if (c.env.DB)
     piezas.camila = await saludCamila(c.env.DB).catch((e: unknown) => {
@@ -921,6 +929,7 @@ app.route('/datos', favoritos);
 app.route('/datos', cupones);
 app.route('/datos', regalosDivoox);
 app.route('/datos', saldoConductores);
+app.route('/datos', saldoClientes);
 app.route('/datos', programaReferidos);
 // C-AGENTE-DIVOOX: el panel del agente, «Cobrar en efectivo» del conductor y Dinero → Agentes.
 app.route('/datos', agentes);

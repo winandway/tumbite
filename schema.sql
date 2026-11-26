@@ -5436,3 +5436,52 @@ CREATE TABLE IF NOT EXISTS suspensiones_negocio (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS suspensiones_negocio_persona ON suspensiones_negocio(persona_id);
+
+-- C-SALDO-CLIENTE (25 nov 2026, Venezuela): el Saldo Divoox del pasajero. Crédito prepagado en
+-- dólares que carga el equipo desde el panel (carrera de regalo, recarga de regalo o el prepago del
+-- cliente con su referencia) y que el pasajero usa en sus viajes. Libro PROPIO e INMUTABLE: el saldo es
+-- la suma de los movimientos; nada se cambia ni se borra (los disparadores lo impiden) y cada
+-- movimiento lleva una referencia única (idempotencia). Solo `saldoCliente.ts` escribe aquí.
+CREATE TABLE IF NOT EXISTS saldo_cliente_movimientos (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto <> 0),
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  concepto TEXT NOT NULL CHECK (concepto IN ('regalo', 'recarga', 'uso_viaje', 'devolucion', 'ajuste', 'cierre_cuenta')),
+  referencia TEXT NOT NULL UNIQUE,
+  operacion_id TEXT,
+  autor_id TEXT,
+  motivo TEXT NOT NULL DEFAULT '',
+  comprobante TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_cliente ON saldo_cliente_movimientos(cliente_id, moneda, creado_en);
+-- Las cargas del equipo por persona y día (topes diarios): solo las filas con autor.
+CREATE INDEX IF NOT EXISTS saldo_cliente_movimientos_autor ON saldo_cliente_movimientos(autor_id, creado_en) WHERE autor_id IS NOT NULL;
+-- Los disparadores (inmutable y nunca negativo) los crea esquemaSaldoCliente.ts al arrancar.
+-- El saldo usado en cada viaje: se APARTA al pedir (sale del saldo), se LIBERA si el viaje no se hizo
+-- (vuelve como devolución) y se COBRA al terminar (se le acredita al conductor como ganancia). Lo
+-- dudoso queda «en_revision» hasta que el equipo lo mire (mismas protecciones que el regalo).
+CREATE TABLE IF NOT EXISTS usos_saldo_divoox (
+  operacion_id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL,
+  conductor_id TEXT,
+  monto INTEGER NOT NULL CHECK (monto >= 0),
+  apartado INTEGER NOT NULL CHECK (apartado > 0),
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  pais TEXT NOT NULL,
+  -- Antifraude (igual que el regalo): la huella del aparato que pidió y cuándo lo tomó el conductor.
+  aparato TEXT,
+  tomado_en TEXT,
+  estado TEXT NOT NULL DEFAULT 'apartado' CHECK (estado IN ('apartado', 'cobrado', 'liberado', 'en_revision')),
+  motivos TEXT NOT NULL DEFAULT '[]',
+  detalle TEXT NOT NULL DEFAULT '',
+  resuelto_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrado_en TEXT,
+  motivo TEXT
+);
+-- Por estado y fecha: lo usan el reloj (`estado = 'apartado'`, del más viejo al más nuevo), la
+-- revisión del equipo y el canario. Un índice parcial con `IN (...)` SQLite no lo usa para `= 'apartado'`.
+CREATE INDEX IF NOT EXISTS usos_saldo_divoox_estado ON usos_saldo_divoox(estado, creado_en);
+CREATE INDEX IF NOT EXISTS usos_saldo_divoox_conductor ON usos_saldo_divoox(conductor_id, estado) WHERE conductor_id IS NOT NULL;

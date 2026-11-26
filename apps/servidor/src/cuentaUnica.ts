@@ -365,7 +365,9 @@ export async function revisarUnion(
       // No se mezclan saldos: la cuenta de cliente que se cierra no puede tener nada en su libro.
       db
         .prepare(
-          'SELECT 1 FROM libro WHERE cuenta_id = ? GROUP BY bolsillo, moneda HAVING SUM(monto) <> 0 LIMIT 1',
+          // C-SALDO-CLIENTE: tampoco su Saldo Divoox (su libro propio, inmutable: no se mueve).
+          `SELECT 1 WHERE EXISTS (SELECT 1 FROM libro WHERE cuenta_id = ?1 GROUP BY bolsillo, moneda HAVING SUM(monto) <> 0)
+              OR EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE cliente_id = ?1 GROUP BY moneda HAVING SUM(monto) <> 0)`,
         )
         .bind(b.id)
         .first(),
@@ -379,7 +381,10 @@ export async function revisarUnion(
     if (papel) frenos.push('La cuenta de conductor ya tiene su papel de cliente.');
     if (Number(enCurso?.n ?? 0) > 0)
       frenos.push('Hay un pedido o un viaje en curso. Espera a que termine.');
-    if (saldo) frenos.push('La cuenta de cliente tiene saldo o deuda. Resuélvelo antes de unir.');
+    if (saldo)
+      frenos.push(
+        'La cuenta de cliente tiene saldo (también Saldo Divoox) o deuda. Resuélvelo antes de unir.',
+      );
     if (yaUnida) frenos.push('Una de las dos cuentas ya fue unida antes.');
   }
   const cuenta = async (sql: string) =>

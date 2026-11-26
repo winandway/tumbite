@@ -2,6 +2,7 @@ import type { Env } from './env';
 import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
 import { capturasDeCamila, sentenciasBorrarDeCamila } from './camila/memoria';
+import { saldoDeCliente, sentenciasCierreSaldo } from './saldoCliente';
 
 /**
  * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026): el borrado de una cuenta, en UNA sola pieza. Lo usan la app
@@ -14,6 +15,11 @@ export async function borrarCuenta(
   env: Pick<Env, 'BUCKET'>,
   db: D1Database,
   u: { id: string; correo: string },
+  /**
+   * C-SALDO-CLIENTE (I4): la persona ya vio el aviso «Tienes X $ de Saldo Divoox; si borras tu cuenta lo
+   * pierdes» y lo confirmó. El superadmin (que borra por un correo equivocado) pasa true.
+   */
+  opciones: { saldoAceptado?: boolean } = {},
 ): Promise<void> {
   const activo = await db
     .prepare(
@@ -53,6 +59,15 @@ export async function borrarCuenta(
     throw new ErrorDatos(
       'Eres dueño de un restaurante en Divoox. Escríbenos a soporte para cerrarlo o traspasarlo antes de borrar tu cuenta.',
       undefined,
+      409,
+    );
+  // C-SALDO-CLIENTE (I4): con Saldo Divoox, el borrado NO se frena (las tiendas exigen poder borrar),
+  // pero solo después del aviso con el monto y su confirmación explícita.
+  const saldoDivoox = await saldoDeCliente(db, u.id);
+  if (saldoDivoox > 0 && !opciones.saldoAceptado)
+    throw new ErrorDatos(
+      'Tienes Saldo Divoox y, si borras tu cuenta, lo pierdes. Para borrar tu cuenta con Saldo Divoox, actualiza la app o hazlo desde divoox.com/delete-account.',
+      'saldoDivoox',
       409,
     );
   // C-BORRADO-SERVICIOS: las claves de las fotos de recogida y de entrega de sus pedidos (como
@@ -143,7 +158,12 @@ export async function borrarCuenta(
   // Primero los archivos y después las filas: si el almacén falla, el borrado se corta aquí y las
   // claves siguen en la base para reintentar (nunca queda una captura sin fila que la apunte).
   if (env.BUCKET && capturasCamila.length) await env.BUCKET.delete(capturasCamila);
+  // C-SALDO-CLIENTE (I4): el saldo se cierra a cero con su movimiento propio y, si había prepago real,
+  // queda un caso en la bandeja de dinero para devolverlo.
+  // En el MISMO lote que el borrado (atómico): si el borrado falla, el saldo no queda en cero.
+  const cierreSaldo = saldoDivoox > 0 ? (await sentenciasCierreSaldo(db, u.id)).sentencias : [];
   await db.batch([
+    ...cierreSaldo,
     // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
     ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
     db

@@ -14,9 +14,16 @@ export type RegaloDivoox = {
   bienvenida: boolean;
 };
 
-/** Lo que la persona paga en mano con el regalo aplicado (nunca menos de cero). */
-export const pagaEnMano = (total: number, regalo: { monto: number } | null | undefined) =>
-  Math.max(0, total - (regalo?.monto ?? 0));
+/**
+ * Lo que la persona paga en mano (nunca menos de cero): el total menos el regalo de Divoox y menos lo
+ * que cubre su Saldo Divoox (C-SALDO-CLIENTE). Es la ÚNICA cuenta de «en mano»: la usan el servidor
+ * (cotización, oferta, viaje en curso, cierre, pago móvil esperado, panel) y las apps.
+ */
+export const pagaEnMano = (
+  total: number,
+  regalo: { monto: number } | null | undefined,
+  saldo: number | null | undefined = 0,
+) => Math.max(0, total - (regalo?.monto ?? 0) - Math.max(0, saldo ?? 0));
 
 /** C-PRECIO-CON-REGALO: el regalo de un viaje como lo manda el servidor al pasajero. */
 export type RegaloDelViaje = {
@@ -36,16 +43,35 @@ export type RegaloDelViaje = {
 export function precioConRegalo(
   total: number | null | undefined,
   regalo: { monto: number; devuelto?: boolean } | null | undefined,
+  /** C-SALDO-CLIENTE: lo que cubrió el Saldo Divoox del pasajero en este viaje (o 0). */
+  saldo: number | null | undefined = 0,
 ) {
   if (total == null) return null;
   // Un viaje que no se hizo (cancelado, sin conductor) con el regalo devuelto a la cuenta: nadie
   // viajó, así que el precio va normal, sin tachar ni «Gratis» (y la pantalla dice que volvió).
   if (regalo?.devuelto)
-    return { total, tachado: false, regalo: 0, aPagar: total, gratis: false, devuelto: true };
+    return {
+      total,
+      tachado: false,
+      regalo: 0,
+      saldo: 0,
+      aPagar: total,
+      gratis: false,
+      devuelto: true,
+    };
   const cubre = Math.max(0, Math.min(total, regalo?.monto ?? 0));
-  const aPagar = pagaEnMano(total, regalo);
+  // C-SALDO-CLIENTE: el saldo va después del regalo, hasta donde alcance (nunca más que el resto).
+  const conSaldo = Math.max(0, Math.min(total - cubre, saldo ?? 0));
+  const aPagar = pagaEnMano(total, regalo, conSaldo);
   // El regalo que se muestra es lo que cubre de verdad (nunca más que el precio).
-  return { total, tachado: cubre > 0, regalo: cubre, aPagar, gratis: cubre > 0 && aPagar === 0 };
+  return {
+    total,
+    tachado: cubre > 0,
+    regalo: cubre,
+    saldo: conSaldo,
+    aPagar,
+    gratis: cubre > 0 && aPagar === 0 && conSaldo === 0,
+  };
 }
 
 /** El nombre del regalo en el idioma de la persona (con el código si no tiene nombre). */

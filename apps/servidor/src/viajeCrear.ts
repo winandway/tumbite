@@ -51,6 +51,8 @@ export type NuevoViaje = {
   /** C-VIAJES-FIJOS: el viaje fijo de donde nace y, si lleva a un menor, su nombre y su PIN fijo. */
   rutinaId?: string | null;
   menor?: { nombre: string; pin: string } | null;
+  /** C-SALDO-CLIENTE: lo que cubre el Saldo Divoox ya apartado; nace con el viaje, en el mismo lote. */
+  saldoDivoox?: number;
   /**
    * C-VIAJE-PROGRAMADO: el viaje nace en el MISMO lote que cambia la reserva (tomarla o cancelarla
    * tarde), y solo si la reserva quedó en ese estado. Así un corte a la mitad nunca deja una reserva
@@ -97,13 +99,13 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
            origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
            pasajeros, pin_recogida, metodo_pago, cotizacion_id, categoria, programado_para,
            conductor_preferido_id, rutina_id, menor_nombre, ref_tasa, ref_fecha,
-           origen_direccion_id)
+           origen_direccion_id, saldo_divoox)
          SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
                 destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria, ?7, ?8, ?9, ?10,
                 -- C-BS-EN-MANO: la tasa fijada al cotizar viaja con el viaje.
                 ref_tasa, ref_fecha,
                 -- C-FOTO-RECOGIDA: la dirección guardada de donde sale (o nada: punto suelto).
-                origen_direccion_id
+                origen_direccion_id, ?11
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1
             AND NOT EXISTS (SELECT 1 FROM viajes WHERE operacion_id = ?1)
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1)${conReserva}`,
@@ -120,6 +122,7 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
         v.conductorPreferidoId ?? null,
         v.rutinaId ?? null,
         v.menor?.nombre ?? null,
+        v.saldoDivoox ?? 0,
       ),
     // C-VIAJE-PARADAS: las paradas de la cotización nacen con el viaje, en su orden.
     db

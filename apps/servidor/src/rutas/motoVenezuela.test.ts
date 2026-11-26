@@ -496,6 +496,22 @@ describe('C-PAGO-MOVIL-VIAJE: el pasajero paga por pago móvil y el conductor co
     const e = await escenario();
     await abrirCaracas(e);
     const sinCuenta = await conductorListo(e, 500);
+    // C-PAGO-MOVIL-DISPONIBLE (25 nov 2026): sin nadie cerca con Pago Móvil cargado, la cotización lo
+    // apaga y pedirlo se frena con un mensaje claro (antes el viaje quedaba buscando a nadie).
+    const antes = await cotizar(e, { lat: 10.4806, lng: -66.8406 });
+    expect(antes.datos.cotizacion.disponibles).toEqual({ efectivo: true, pago_movil: false });
+    const frenado = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: antes.datos.cotizacion.id, metodoPago: 'pago_movil' },
+      e.cliente.token,
+    );
+    expect(frenado.estado).toBe(409);
+    expect(String(frenado.datos.error)).toMatch(
+      /Pago Móvil (ya no está disponible|is no longer available)/,
+    );
+    const conCuenta = await conductorListo(e, 500);
+    await cargarPagoMovil(conCuenta);
     const v = await pedirMoto(e, 'pago_movil');
     const ofertas = await sinCuenta.yo('GET', '/datos/conductor/operaciones/ofertas');
     expect(ofertas.datos.ofertas.some((o: { operacionId: string }) => o.operacionId === v.id)).toBe(
@@ -522,13 +538,7 @@ describe('C-PAGO-MOVIL-VIAJE: el pasajero paga por pago móvil y el conductor co
       );
       expect(r.estado).toBe(422);
     }
-    // El caso de «no me llegó»: otro conductor, con su pago móvil cargado, toma el viaje.
-    const conCuenta = await conductorListo(e, 500);
-    await cargarPagoMovil(conCuenta);
-    await e.m.DB.prepare("UPDATE ofertas_operacion SET estado = 'vencida' WHERE operacion_id = ?")
-      .bind(v.id)
-      .run();
-    await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    // El caso de «no me llegó»: el conductor con su pago móvil cargado recibió la oferta y la toma.
     expect((await conCuenta.paso(v.id, 'aceptar')).estado).toBe(200);
     expect((await conCuenta.paso(v.id, 'llegue')).estado).toBe(200);
     const pin = (await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token)).datos

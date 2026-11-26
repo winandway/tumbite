@@ -76,6 +76,7 @@ const es = {
     flexfinance: 'Flex · Dinero',
     'gift-codes': 'Regalos Divoox',
     'driver-balance': 'Saldo de conductores',
+    'customer-balance': 'Saldo de clientes',
     // C-RASTRO: el embudo del registro.
     signups: 'Embudo de registro',
     agents: 'Agentes',
@@ -182,6 +183,7 @@ const en: T = {
     flexfinance: 'Flex · Money',
     'gift-codes': 'Divoox gifts',
     'driver-balance': 'Driver balances',
+    'customer-balance': 'Customer balances',
     signups: 'Sign-up funnel',
     agents: 'Agents',
     referrals: 'Referrals and teams',

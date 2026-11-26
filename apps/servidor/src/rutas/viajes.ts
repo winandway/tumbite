@@ -62,6 +62,13 @@ import {
 /** Un texto de la base o null (columnas que pueden venir vacías). */
 const str = (x: unknown): string | null => (x == null ? null : String(x));
 import { revisarReferidos } from '../programaReferidos';
+import {
+  cerrarSaldoDeViaje,
+  liberarSaldoViaje,
+  saldoDeOperacion,
+  soltarSaldoConductor,
+  tomarSaldoConductor,
+} from '../saldoCliente';
 import { aparatoDe } from './regalosDivoox';
 import { SQL_TARIFA_SERVICIO } from '../finanzas/quienPaga';
 import {
@@ -192,7 +199,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
                    THEN (SELECT c.nombre FROM usuarios c WHERE c.id = o.cliente_id) END AS cliente_nombre,
               ${SQL_TARIFA_SERVICIO} AS tarifa_servicio,
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
-              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
+              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto,
+              COALESCE(v.saldo_divoox, 0) AS saldo_divoox
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -251,14 +259,18 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         pasajeros: Number(f.pasajeros),
         // C-CUPON-DIVOOX: parte del viaje la paga Divoox (el conductor cobra en mano solo el resto).
         regaloDivoox: f.regalo_monto == null ? 0 : Number(f.regalo_monto),
+        // C-SALDO-CLIENTE: lo que el pasajero paga con su Saldo Divoox (Divoox se lo paga al conductor).
+        saldoDivoox: Number(f.saldo_divoox ?? 0),
         // C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares con la tasa fijada del viaje.
         enMano:
           f.total == null || f.metodo_pago === 'tarjeta'
             ? null
             : montoEnMano(
-                pagaEnMano(Number(f.total), {
-                  monto: f.regalo_monto == null ? 0 : Number(f.regalo_monto),
-                }),
+                pagaEnMano(
+                  Number(f.total),
+                  { monto: f.regalo_monto == null ? 0 : Number(f.regalo_monto) },
+                  Number(f.saldo_divoox ?? 0),
+                ),
                 String(f.moneda ?? 'USD'),
                 str(f.pais),
                 tasas.at(i) ?? null,
@@ -315,7 +327,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               v.ref_tasa, v.ref_fecha,
               -- C-PRECIO-ZONA: con precio de la zona no se saltan paradas (la app esconde el botón).
               json_extract(q.desglose_json, '$.precioZona') IS NOT NULL AS precio_zona,
-              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
+              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto,
+              COALESCE(v.saldo_divoox, 0) AS saldo_divoox_viaje
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -327,8 +340,10 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
   if (!f) return c.json({ operacion: null });
   // C-CUPON-DIVOOX: «Cobra X · Divoox te paga Y».
   const regaloDivoox = f.regalo_monto == null ? 0 : Number(f.regalo_monto);
+  // C-SALDO-CLIENTE: «Cobras en mano X · Divoox te paga Y» también con el Saldo Divoox del pasajero.
+  const saldoDivoox = Number(f.saldo_divoox_viaje ?? 0);
   const cobrarEnMano =
-    f.total == null ? null : pagaEnMano(Number(f.total), { monto: regaloDivoox });
+    f.total == null ? null : pagaEnMano(Number(f.total), { monto: regaloDivoox }, saldoDivoox);
   // C-BS-EN-MANO: la tasa FIJADA del viaje (la misma que ve el pasajero), no la de este momento.
   const tasa = await tasaDeOperacion(base(c), str(f.pais), str(f.moneda), {
     tasa: f.ref_tasa == null ? null : Number(f.ref_tasa),
@@ -341,6 +356,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
       origen_direccion: paraMostrar(f.origen_direccion),
       destino_direccion: paraMostrar(f.destino_direccion),
       regalo_divoox: regaloDivoox,
+      saldo_divoox: saldoDivoox,
       cobrar_en_mano: cobrarEnMano,
       // C-QUIEN-PAGA-VIAJES: la tarifa de servicio que pagó el pasajero (va en lo que cobra) y la
       // comisión entera de Divoox apartada de su saldo (la tarifa más su parte, si la hay).
@@ -386,6 +402,14 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // C-CUPON-DIVOOX: un viaje con regalo no lo toma quien lo pidió (su cuenta, teléfono o aparato) ni
   // quien ya llegó al tope de viajes con regalo del día.
   await tomarRegaloConductor(base(c), id, u.id, await aparatoDe(c));
+  // C-SALDO-CLIENTE: tampoco un viaje pagado con el Saldo Divoox de su propia cuenta o teléfono.
+  try {
+    await tomarSaldoConductor(base(c), id, u.id, await aparatoDe(c));
+  } catch (e) {
+    // El regalo que quedó a su nombre se suelta también: no le cuenta para su tope del día.
+    await soltarRegaloConductor(base(c), id, u.id);
+    throw e;
+  }
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)
@@ -459,6 +483,7 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   // No se lo quedó: lo apartado vuelve al prepago.
   await devolverReservaViaje(base(c), id, u.id, 'no_aceptado');
   await soltarRegaloConductor(base(c), id, u.id);
+  await soltarSaldoConductor(base(c), id, u.id);
   if (r.resultado === 'ocupado')
     throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
   if (r.resultado === 'otro_conductor')
@@ -492,6 +517,7 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
     await avisarPasoViaje(c.env, base(c), id, 'liberado');
     await devolverReservaViaje(base(c), id, u.id, 'soltado');
     await soltarRegaloConductor(base(c), id, u.id);
+    await soltarSaldoConductor(base(c), id, u.id);
   }
   if (!ok) {
     // Reintento de una liberación que ya se hizo: la misma respuesta.
@@ -665,20 +691,45 @@ viajes.post(
             })
           : { monto: 0, enRevision: false };
       const regaloDivoox = cierre.monto;
-      const cobrarEnMano = totalFinal == null ? null : totalFinal - regaloDivoox;
-      if (cierre.enRevision)
+      // C-SALDO-CLIENTE: después del regalo, lo que cubre el Saldo Divoox del pasajero (hasta lo
+      // apartado; si el total bajó, lo que sobra vuelve a su saldo). Mismas protecciones del regalo.
+      const saldo =
+        totalFinal != null
+          ? await cerrarSaldoDeViaje(db, {
+              operacionId: id,
+              conductorId: u.id,
+              maximo: Math.max(0, totalFinal - regaloDivoox),
+              alTerminar: true,
+            })
+          : { monto: 0, enRevision: false };
+      const saldoDivoox = saldo.monto;
+      const cobrarEnMano =
+        totalFinal == null ? null : pagaEnMano(totalFinal, { monto: regaloDivoox }, saldoDivoox);
+      if (cierre.enRevision || saldo.enRevision)
         await notificar(c.env, db, { id: u.id, app: 'repartidor' }, (i) =>
-          i === 'es'
-            ? {
-                titulo: 'Divoox está revisando este regalo',
-                cuerpo:
-                  'No pudimos comprobar el recorrido de este viaje. Nuestro equipo lo revisa y te avisamos; no tienes que hacer nada.',
-              }
-            : {
-                titulo: 'Divoox is reviewing this gift',
-                cuerpo:
-                  'We couldn’t confirm the route of this trip. Our team is reviewing it and will let you know; there’s nothing you need to do.',
-              },
+          !cierre.enRevision
+            ? i === 'es'
+              ? {
+                  titulo: 'Divoox está revisando el pago de este viaje',
+                  cuerpo:
+                    'El pasajero pagó con su Saldo Divoox y no pudimos comprobar el recorrido. Nuestro equipo lo revisa y te avisamos; no tienes que hacer nada.',
+                }
+              : {
+                  titulo: 'Divoox is reviewing this trip’s payment',
+                  cuerpo:
+                    'The rider paid with their Divoox Balance and we couldn’t confirm the route. Our team is reviewing it and will let you know; there’s nothing you need to do.',
+                }
+            : i === 'es'
+              ? {
+                  titulo: 'Divoox está revisando este regalo',
+                  cuerpo:
+                    'No pudimos comprobar el recorrido de este viaje. Nuestro equipo lo revisa y te avisamos; no tienes que hacer nada.',
+                }
+              : {
+                  titulo: 'Divoox is reviewing this gift',
+                  cuerpo:
+                    'We couldn’t confirm the route of this trip. Our team is reviewing it and will let you know; there’s nothing you need to do.',
+                },
         ).catch((e: unknown) => console.error('viajes: aviso del regalo en revisión', e));
       // C-REFERIDOS-EQUIPOS: si el conductor o el pasajero son invitados, se revisa su premio (nunca frena).
       const cliente = await db
@@ -699,7 +750,10 @@ viajes.post(
         estado: paso.hacia,
         totalFinal,
         regaloDivoox,
-        regaloEnRevision: cierre.enRevision,
+        regaloEnRevision: cierre.enRevision || saldo.enRevision,
+        // C-SALDO-CLIENTE: lo que se revisa es el pago con Saldo Divoox (Driver lo dice así).
+        saldoEnRevision: saldo.enRevision,
+        saldoDivoox,
         cobrarEnMano,
         referencia: enMano?.local ?? null,
         enMano,
@@ -708,6 +762,8 @@ viajes.post(
     if (nombre === 'no-se-presento') {
       await devolverReservaViaje(db, id, u.id, 'no_se_presento');
       await liberarRegalo(db, id, 'no_se_presento');
+      // C-SALDO-CLIENTE: el saldo apartado vuelve entero (el cargo, si lo hay, va como deuda como hoy).
+      await liberarSaldoViaje(db, id, 'no_se_presento');
     }
     // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como
     // deuda para su próximo viaje (una sola por viaje).
@@ -790,7 +846,9 @@ viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
       u.id,
       d.recibido ? 'recibido' : 'no_recibido',
       d.referencia,
-      f.total == null ? null : pagaEnMano(f.total, await regaloDeOperacion(db, id)),
+      f.total == null
+        ? null
+        : pagaEnMano(f.total, await regaloDeOperacion(db, id), await saldoDeOperacion(db, id)),
       f.moneda,
     )
     .run();

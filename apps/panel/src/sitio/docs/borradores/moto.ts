@@ -35,7 +35,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         pasos: [
           'Abre Divoox y toca «Moto».',
           'Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.',
-          'Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu ciudad (en Venezuela, efectivo o pago móvil).',
+          'Mira el precio fijo y toca «Continuar»: en «Método de pago» eliges cómo pagas con los métodos de tu ciudad (en Venezuela, tu Saldo Divoox, Pago Móvil o efectivo).',
           'Toca «Solicitar moto». Cuando el conductor acepte, verás sus datos y su ubicación.',
           'Al subirte, comprueba la placa y, si la app te muestra un código, díselo al conductor.',
         ],
@@ -45,10 +45,12 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         id: 'ride-moto-pago',
         titulo: 'Pagar, cancelar y dejar propina en Moto',
         resumen:
-          'Paga en efectivo, con tarjeta o por pago móvil (según tu país), cancela gratis al principio y deja propina cuando termine el viaje.',
+          'Paga con tu Saldo Divoox, en efectivo, con tarjeta o por Pago Móvil (según tu país), cancela gratis al principio y deja propina cuando termine el viaje.',
         explicacion: [
+          'Después de ver el precio tocas «Continuar» y llegas a «Método de pago»: ahí ves el monto a pagar y eliges cómo pagas antes de solicitar. Está en su propia guía, «Elegir cómo pagas un viaje».',
           'Con tarjeta, apartamos el precio al pedir y lo cobramos al terminar. En efectivo, le pagas al conductor al llegar.',
-          'Donde existe el pago móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de pago móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó.',
+          'Donde existe el Pago Móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de Pago Móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó. Si en ese momento no hay conductores cerca que reciban Pago Móvil, la opción sale con «Aún no disponible para este viaje» y puedes pagar en efectivo.',
+          'En Venezuela también puedes pagar con tu Saldo Divoox: si alcanza, pagas todo con saldo; si no, usas lo que tienes y el resto lo pagas en efectivo o por Pago Móvil. Está en la guía «Tu Saldo Divoox».',
           'En Venezuela todo lo que pagas en mano se ve en dólares y en bolívares: antes de confirmar, durante el viaje, al terminar y en tu recibo. La tasa queda fijada al pedir el viaje, así tú y tu conductor ven exactamente el mismo monto aunque la tasa cambie después; la app te dice qué tasa se usó y de qué día. Si tienes un regalo de Divoox, ves la diferencia que te toca pagar en las dos monedas. Si ese día no hay tasa disponible, la app lo dice y pagas en dólares.',
           'Cancelar es gratis mientras buscamos conductor y durante los primeros minutos después de que acepta. Después, la app te dice antes cuánto cuesta cancelar; ese cargo es para el conductor que fue a buscarte.',
           'Si el conductor espera más de lo incluido en el punto de recogida, se suma un pequeño cargo por minuto, como en los demás servicios de transporte.',
@@ -61,10 +63,58 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           '¿Qué pasa si debo un cargo de un viaje en efectivo?',
         ],
         pasos: [
-          'Elige cómo pagas antes de pedir: la app te muestra solo los métodos de tu ciudad.',
+          'Toca «Continuar» y, en «Método de pago», elige cómo pagas: la app te muestra solo los métodos de tu ciudad.',
           'Para cancelar, toca «Cancelar viaje»: la app te dice si es gratis o cuánto cuesta.',
           'Al terminar, califica el viaje y, si pagaste con tarjeta, deja propina si quieres. Va entera al conductor.',
           'Si cancelaste tarde un viaje en efectivo, el cargo se suma a tu próximo viaje.',
+        ],
+      },
+      {
+        id: 'payment-method',
+        titulo: 'Elegir cómo pagas un viaje',
+        resumen:
+          'Después de ver el precio, la pantalla «Método de pago» te muestra el monto a pagar y eliges cómo pagas antes de solicitar.',
+        explicacion: [
+          'Al tocar «Continuar» en Moto, Carro o Envíos llegas a «Método de pago». Arriba ves el monto a pagar en grande; en Venezuela, también en bolívares con la tasa del día y su fecha.',
+          'Debajo ves las formas de pago de tu ciudad. En Venezuela: tu Saldo Divoox, Pago Móvil y efectivo. Con Pago Móvil le pagas al conductor y ves sus datos cuando acepta; con efectivo le pagas al terminar.',
+          'Si en ese momento no hay conductores cerca que reciban Pago Móvil, la opción sale con «Aún no disponible para este viaje» y la app elige efectivo por ti. No pierdes nada de lo que escribiste.',
+          'El botón «Solicitar» dice cuánto pagas en mano. Si algo cambió mientras elegías, la app te lo dice en la misma pantalla y puedes elegir otra forma de pago.',
+        ],
+        preguntas: [
+          '¿Dónde elijo cómo pago el viaje?',
+          '¿Por qué Pago Móvil dice «Aún no disponible para este viaje»?',
+          '¿Puedo pagar parte con saldo y parte en efectivo?',
+        ],
+        pasos: [
+          'Elige tu destino y mira el precio.',
+          'Toca «Continuar».',
+          'Si tienes Saldo Divoox, decide si lo usas con el interruptor.',
+          'Elige cómo pagas el resto: Pago Móvil o efectivo.',
+          'Toca «Solicitar».',
+        ],
+      },
+      {
+        id: 'divoox-balance',
+        titulo: 'Tu Saldo Divoox',
+        resumen:
+          'El Saldo Divoox es crédito en dólares para pagar tus viajes: si alcanza, pagas todo con saldo; si no, usas lo que tienes y el resto lo pagas en mano.',
+        explicacion: [
+          'Tu Saldo Divoox lo carga nuestro equipo: una carrera de regalo, una recarga de regalo o lo que pagaste por adelantado. Cuando te cargamos saldo, te llega un aviso con el monto.',
+          'En «Método de pago» ves tu saldo disponible en dólares y en bolívares, con el logo de Divoox. Con el interruptor encendido, primero se descuenta tu regalo de código (si tienes) y después tu saldo, hasta donde alcance.',
+          'Si el saldo cubre todo el viaje, no pagas nada en mano. Si no alcanza, la pantalla te dice cuánto usas y cuánto te queda por pagar, y eliges si el resto va por Pago Móvil o en efectivo.',
+          'El saldo se separa al pedir. Si cancelas, o si no encontramos conductor, vuelve completo a tu cuenta. Por ahora se usa en los viajes de ahora, no en las reservas.',
+        ],
+        preguntas: [
+          '¿Cómo consigo Saldo Divoox?',
+          '¿Qué pasa con mi saldo si cancelo el viaje?',
+          '¿Puedo usar el saldo en una reserva?',
+        ],
+        pasos: [
+          'Pide tu viaje y toca «Continuar».',
+          'En la tarjeta «Saldo Divoox», deja el interruptor encendido.',
+          'Mira cuánto usas y cuánto te queda por pagar.',
+          'Si queda algo por pagar, elige Pago Móvil o efectivo.',
+          'Toca «Solicitar».',
         ],
       },
       {
@@ -204,7 +254,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         pasos: [
           'Open Divoox and tap “Moto”.',
           'Confirm your pickup point (you can move it on the map) and enter your destination.',
-          'Check the upfront price and choose how to pay: the app shows the methods available in your city (in the United States, cash or card).',
+          'Check the upfront price and tap “Continue”: on “Payment method” you choose how to pay with the methods available in your city (in the United States, cash or card).',
           'Tap “Request moto”. When a driver accepts, you’ll see their details and location.',
           'When you get on, check the plate and, if the app shows a code, tell it to the driver.',
         ],
@@ -216,8 +266,9 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         resumen:
           'Pay with cash or card, cancel for free at the start, and tip your driver when the ride ends.',
         explicacion: [
+          'After you see the price, tap “Continue” to open “Payment method”: it shows the amount to pay and you choose how you’ll pay before you request. It has its own guide, “Choosing how you pay for a ride.”',
           'With a card, we hold the price when you request and charge it when the ride ends. With cash, you pay the driver when you arrive.',
-          'You pick cash or card on the same screen where you see the price, before you request. During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay.',
+          'During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay.',
           'Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up.',
           'If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services.',
           'In some cities, rides cost a set percentage more at night (night fare). Before you request, the price card says “Night fare” with the percentage, and the price you see already includes it: that is what you pay. If you book a ride for later, the booked time is what counts.',
@@ -229,10 +280,53 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'What happens if I owe a fee from a cash ride?',
         ],
         pasos: [
-          'Choose how you pay before you request: the app only shows the methods available in your city.',
+          'Tap “Continue” and, on “Payment method,” choose how you pay: the app only shows the methods available in your city.',
           'To cancel, tap “Cancel ride”: the app tells you whether it’s free or what it costs.',
           'When the ride ends, rate it and leave a tip if you like: in the app if you paid by card, or handed to your driver if you paid in cash. It all goes to the driver.',
           'If you canceled a cash ride late, the fee is added to your next ride.',
+        ],
+      },
+      {
+        id: 'payment-method',
+        titulo: 'Choosing how you pay for a ride',
+        resumen:
+          'After you see the price, the “Payment method” screen shows the amount to pay and you choose how you’ll pay before you request.',
+        explicacion: [
+          'When you tap “Continue” on Moto, Car or Deliveries, you get to “Payment method.” At the top you see the amount to pay in large type.',
+          'Below it are the payment methods available in your city. In the United States: cash or card. With cash, you pay the driver when the ride ends; with a card, we hold the price when you request and charge it when the ride ends.',
+          'If a method can’t be used for a ride, it shows “Not available for this trip yet” and the app picks another one for you. Nothing you entered is lost.',
+          'The “Request” button shows what you’ll pay. If something changed while you were choosing, the app tells you on the same screen and you can pick another method.',
+        ],
+        preguntas: [
+          'Where do I choose how to pay for a ride?',
+          'Can I pay for a ride with a card?',
+          'What does “Not available for this trip yet” mean?',
+        ],
+        pasos: [
+          'Choose your destination and check the price.',
+          'Tap “Continue.”',
+          'Choose cash or card.',
+          'Tap “Request.”',
+        ],
+      },
+      {
+        id: 'divoox-balance',
+        titulo: 'Your Divoox Balance',
+        resumen:
+          'Divoox Balance is credit for paying rides in some countries. It isn’t used in the United States: here you pay with cash or card.',
+        explicacion: [
+          'In some countries, our team can add Divoox Balance to your account (a gift ride, a gift top-up or a prepayment), and you use it on the “Payment method” screen.',
+          'Divoox Balance isn’t used in the United States, so you won’t see it on your “Payment method” screen. Here you pay each ride with cash or card.',
+          'Promo codes still work the same way: add them in your account and they’re applied to your next eligible ride.',
+        ],
+        preguntas: [
+          'Can I use Divoox Balance in the United States?',
+          'How do I pay for a ride in the United States?',
+        ],
+        pasos: [
+          'Request your ride and tap “Continue.”',
+          'On “Payment method,” choose cash or card.',
+          'Tap “Request.”',
         ],
       },
       {
@@ -362,6 +456,9 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
 const PUBLICADAS = new Set([
   'ride-moto',
   'ride-moto-pago',
+  // C-METODO-PAGO-PANTALLA y C-SALDO-CLIENTE (25 nov 2026): con sus capturas reales.
+  'payment-method',
+  'divoox-balance',
   'drive-moto',
   'drive-moto-alta',
   'drive-moto-saldo',
@@ -380,6 +477,46 @@ const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura
 
 const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
   es: {
+    'payment-method': [
+      foto(
+        'pago-metodos',
+        'es',
+        'La pantalla «Método de pago» con el monto a pagar en dólares y en bolívares, y las opciones Efectivo y Pago Móvil.',
+        'Eliges cómo pagas antes de solicitar.',
+      ),
+      foto(
+        'pago-sin-saldo',
+        'es',
+        'Pago Móvil apagado con «Aún no disponible para este viaje» y Efectivo elegido.',
+        'Si nadie cerca recibe Pago Móvil, la opción sale apagada.',
+      ),
+      foto(
+        'pago-saldo-parcial',
+        'es',
+        'El Saldo Divoox usado en parte y Pago Móvil elegido para el resto.',
+        'Puedes pagar parte con saldo y el resto en mano.',
+      ),
+    ],
+    'divoox-balance': [
+      foto(
+        'pago-saldo-todo',
+        'es',
+        'La tarjeta Saldo Divoox encendida: el saldo cubre todo el viaje y no pagas nada en mano.',
+        'Si tu saldo alcanza, pagas todo con saldo.',
+      ),
+      foto(
+        'pago-saldo-parcial',
+        'es',
+        'La tarjeta Saldo Divoox con lo que usas y lo que te queda por pagar en dólares y en bolívares.',
+        'Si no alcanza, ves cuánto usas y cuánto te falta.',
+      ),
+      foto(
+        'pago-sin-saldo',
+        'es',
+        'La tarjeta Saldo Divoox apagada con «Sin saldo por ahora».',
+        'Sin saldo, la tarjeta sale apagada.',
+      ),
+    ],
     'ride-moto': [
       foto(
         'cliente-pedir',
@@ -522,6 +659,46 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
     ],
   },
   en: {
+    'payment-method': [
+      foto(
+        'pago-metodos',
+        'en',
+        'The “Payment method” screen with the amount to pay and the Cash and Card options.',
+        'You choose how to pay before you request.',
+      ),
+      foto(
+        'pago-tarjeta',
+        'en',
+        'Card selected on “Payment method,” with the note that it’s charged when the ride ends.',
+        'With a card, we charge when the ride ends.',
+      ),
+      foto(
+        'pago-efectivo',
+        'en',
+        'Cash on “Payment method,” with the note that you pay the driver when the ride ends.',
+        'With cash, you pay the driver at the end.',
+      ),
+    ],
+    'divoox-balance': [
+      foto(
+        'pago-metodos',
+        'en',
+        'The “Payment method” screen in the United States, with Cash and Card only.',
+        'In the United States you pay with cash or card.',
+      ),
+      foto(
+        'pago-tarjeta',
+        'en',
+        'Card selected on “Payment method,” with the amount to pay.',
+        'Card is charged when the ride ends.',
+      ),
+      foto(
+        'pago-efectivo',
+        'en',
+        'Cash selected on “Payment method,” with the amount to pay.',
+        'Cash goes to the driver at the end.',
+      ),
+    ],
     'ride-moto': [
       foto(
         'cliente-pedir',

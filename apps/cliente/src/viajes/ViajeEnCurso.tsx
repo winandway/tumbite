@@ -65,6 +65,9 @@ export type ViajePasajero = {
   moneda: string | null;
   /** C-CUPON-DIVOOX: lo que paga Divoox con el regalo (el pasajero paga en mano el resto). */
   regalo?: RegaloDelViaje | null;
+  /** C-SALDO-CLIENTE: lo que cubre el Saldo Divoox (y lo que volvió si el viaje no se hizo). */
+  saldoDivoox?: number;
+  saldoDevuelto?: number | null;
   conductor: {
     nombre: string;
     ubicacion: { lat: number; lng: number } | null;
@@ -505,6 +508,7 @@ export function ViajeEnCurso({
               <PrecioCompacto
                 total={viaje.total}
                 regalo={viaje.regalo}
+                saldo={viaje.saldoDivoox ?? 0}
                 moneda={viaje.moneda ?? 'USD'}
                 idioma={idioma}
                 estilo={[LETRA.tarjeta, { fontFamily: 'Poppins_700Bold' }]}
@@ -802,6 +806,8 @@ export function ViajeEnCurso({
             }
             total={viaje.total}
             regalo={viaje.regalo}
+            saldo={viaje.saldoDivoox ?? 0}
+            saldoDevuelto={viaje.saldoDevuelto ?? null}
             moneda={viaje.moneda ?? 'USD'}
             idioma={idioma}
           />

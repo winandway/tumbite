@@ -1,6 +1,7 @@
 import { cuantosHay } from './canarioLecturas';
 import { avisarPasoViaje } from './avisosViaje';
 import { liberarRegalo } from './regalosDivoox';
+import { liberarSaldoViaje } from './saldoCliente';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import {
@@ -359,6 +360,35 @@ export async function conductoresConPagoMovil(
 }
 
 /**
+ * C-PAGO-MOVIL-DISPONIBLE (25 nov 2026, Venezuela): ¿hay en la zona AL MENOS UN conductor que podría
+ * tomar un viaje de este servicio (elegible: habilitado, con su vehículo y papeles, conectado con
+ * ubicación reciente) y que tenga cargada su cuenta para recibir `metodo`? Es el mismo filtro del
+ * despacho (`conductoresConPagoMovil`) en UNA lectura con LIMIT 1, para la cotización: si no hay
+ * nadie, la pantalla de pago apaga la opción en vez de dejar pedir un viaje que nadie puede tomar.
+ * No mira si está ocupado ahora: un conductor ocupado se libera en minutos.
+ */
+export async function hayConductorQueRecibe(
+  db: D1Database,
+  p: { servicioId: string; zonaId: string; pais: string; metodo: string },
+): Promise<boolean> {
+  const tipos = cuentasQueReciben(p.metodo);
+  if (!tipos.length || !p.pais) return false;
+  const f = await db
+    .prepare(
+      `SELECT 1 FROM conductores_elegibles e
+        WHERE e.servicio_id = ? AND e.zona_id = ? AND e.lat IS NOT NULL
+          AND e.ubicacion_en > datetime('now', ?)
+          AND EXISTS (SELECT 1 FROM cuentas_cobro k WHERE k.usuario_id = e.conductor_id
+                AND k.tipo IN (${tipos.map(() => '?').join(',')}) AND k.pais = ? AND k.activa = 1
+                AND k.activa_desde <= datetime('now'))
+        LIMIT 1`,
+    )
+    .bind(p.servicioId, p.zonaId, `-${MINUTOS_UBICACION_VIGENTE} minutes`, ...tipos, p.pais)
+    .first();
+  return f != null;
+}
+
+/**
  * Tarea del reloj (cada minuto): vence ofertas viejas, ofrece cada operación que busca a su mejor
  * candidato, y devuelve a «buscando» los viajes asignados cuyo conductor perdió la señal.
  * En producción no hay operaciones: no hace nada.
@@ -677,6 +707,8 @@ export async function repartirOperaciones(
     ) {
       // C-CUPON-DIVOOX: el regalo apartado vuelve al presupuesto del cupón.
       await liberarRegalo(db, v.id, 'sin_conductor');
+      // C-SALDO-CLIENTE: el Saldo Divoox apartado vuelve entero al pasajero.
+      await liberarSaldoViaje(db, v.id, 'sin_conductor');
       // C-VIAJE-TARJETA: sin conductor, la autorización de la tarjeta se anula entera.
       await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>
         console.error('viajes: anular cobro sin conductor', v.id, e),

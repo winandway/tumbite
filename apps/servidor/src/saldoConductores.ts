@@ -386,13 +386,14 @@ export async function cargasDeConductor(db: D1Database, conductorId: string) {
  * más de lo que tiene por cobrar de regalos.
  */
 export async function regalosASaldo(db: D1Database, conductorId: string) {
-  const { porCobrarRegalos, SIN_HEREDADOS } = await import('./regalosDivoox');
+  const { porCobrarRegalos, COBRADO_POR_DIVOOX } = await import('./regalosDivoox');
   const pendiente = await porCobrarRegalos(db, conductorId);
   if (!pendiente || pendiente.monto <= 0)
     throw new ErrorDatos('No tienes regalos por pasar a tu saldo.', undefined, 409);
   const cuenta = await cuentaDeConductor(db, conductorId);
   const id = nuevoId();
   const m = pendiente.monto;
+  // C-SALDO-CLIENTE: lo acreditado suma los regalos por código Y lo cubierto por el Saldo Divoox.
   // La carga nace SOLO si lo acreditado menos lo ya pagado o pasado sigue cubriendo el monto: dos
   // toques a la vez no pasan dos veces lo mismo.
   const [, , , mov] = await db.batch([
@@ -400,7 +401,7 @@ export async function regalosASaldo(db: D1Database, conductorId: string) {
       .prepare(
         `INSERT OR IGNORE INTO cargas_saldo_conductor (id, conductor_id, zona_id, pais, moneda, monto, tipo, motivo, autor_id)
          SELECT ?1, ?2, ?3, ?4, ?5, ?6, 'regalo_a_saldo', 'Regalos de pasajeros pasados al saldo', ?2
-          WHERE (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox WHERE conductor_id = ?2 AND estado = 'cobrado' AND moneda = ?5 ${SIN_HEREDADOS})
+          WHERE (SELECT COALESCE(SUM(monto), 0) FROM (${COBRADO_POR_DIVOOX}) WHERE conductor_id = ?2 AND moneda = ?5)
               - (SELECT COALESCE(SUM(monto), 0) FROM pagos_regalo_conductor WHERE conductor_id = ?2 AND moneda = ?5) >= ?6`,
       )
       .bind(id, conductorId, cuenta.zonaId, pendiente.pais, pendiente.moneda, m),

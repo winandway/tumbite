@@ -30,7 +30,12 @@ describe('C-OFERTA-SIN-COBRO · con el viaje cubierto por el regalo no se pinta 
     expect(v).toMatch(/testID="viaje-cobra-sin-cobro"/);
   });
   it('con todo cubierto, la línea del regalo de la oferta no habla de pagar menos en mano', () => {
-    expect(s).toMatch(/sinCobro \? t\.regaloOfertaTodo : t\.regaloOferta/);
+    expect(s).toMatch(/sinCobro\s*\?\s*t\.regaloOfertaTodo\s*:\s*t\.regaloOferta/);
+    // C-SALDO-CLIENTE: con el Saldo Divoox del pasajero, su propia línea (todo o parte).
+    expect(s).toMatch(
+      /sinCobro\s*\?\s*textos\.oferta\.saldoOfertaTodo\s*:\s*textos\.oferta\.saldoOferta/,
+    );
+    expect(TEXTOS_VIAJE.es.oferta.saldoOfertaTodo).not.toMatch(/menos en mano/);
     expect(TEXTOS_VIAJE.es.oferta.regaloOfertaTodo).toMatch(/Divoox te paga \{monto\}/);
     expect(TEXTOS_VIAJE.es.oferta.regaloOfertaTodo).not.toMatch(/menos en mano/);
     expect(TEXTOS_VIAJE.en.oferta.regaloOfertaTodo).toMatch(/Divoox pays you \{monto\}/);
@@ -38,5 +43,16 @@ describe('C-OFERTA-SIN-COBRO · con el viaje cubierto por el regalo no se pinta 
   it('el texto existe en español y en inglés', () => {
     expect(TEXTOS_VIAJE.es.oferta.noCobrasEnMano).toMatch(/No cobras nada en mano/);
     expect(TEXTOS_VIAJE.en.oferta.noCobrasEnMano).toMatch(/Nothing to collect/);
+  });
+});
+
+describe('C-SALDO-CLIENTE (revisión, M3): el pago con saldo en revisión no se llama «regalo»', () => {
+  it('dice «Divoox está revisando este pago»', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const v = readFileSync(join(__dirname, 'ViajeActivo.tsx'), 'utf8');
+    expect(v).toMatch(/respuesta\?\.saldoEnRevision \? t\.pagoEnRevision : t\.regaloEnRevision/);
+    expect(TEXTOS_VIAJE.es.activo.pagoEnRevision).toBe('Divoox está revisando este pago');
+    expect(TEXTOS_VIAJE.en.activo.pagoEnRevision).toBe('Divoox is reviewing this payment');
   });
 });
