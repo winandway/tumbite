@@ -197,3 +197,56 @@ describe('C-BORRADOR-SIN-AVISO-VACIO', () => {
     await waitFor(() => expect(libre.result.current.valores).toEqual({ tope_VE: '25' }));
   });
 });
+
+/**
+ * C-BORRADOR-ELECCION-SOLA (Gerencia, 26 nov 2026: en «Cambiar ciudad» seguía el aviso con solo una
+ * ciudad elegida en la lista y el motivo vacío, guardado ya con la versión nueva) — todos los países.
+ * Una elección de una lista, sola, no es «lo que estabas escribiendo»: no se guarda ni se avisa. Si
+ * además hay algo escrito, la elección vuelve junto con el texto.
+ */
+describe('C-BORRADOR-ELECCION-SOLA', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => cleanup());
+  const op = (formulario: string) => ({
+    formulario,
+    cuenta: 'superadmin',
+    inicial,
+    almacen: almacenNavegador,
+    noBastan: ['zonaId' as const],
+    esperaMs: 5,
+  });
+
+  it('un borrador ya guardado con solo la ciudad elegida se borra y no avisa', async () => {
+    const llave = llaveBorrador('ciudad-e1', 'superadmin');
+    localStorage.setItem(
+      llave,
+      JSON.stringify({
+        zonaId: 'VE-1',
+        motivo: '',
+        __campos: { declarados: ['zonaId', 'motivo'], libres: [] },
+      }),
+    );
+    const { result } = renderHook(() => useBorrador(op('ciudad-e1')));
+    await espera();
+    expect(result.current.recuperado).toBe(false);
+    expect(result.current.valores.zonaId).toBe('');
+    expect(localStorage.getItem(llave)).toBeNull();
+  });
+
+  it('elegir una ciudad sin escribir nada no deja borrador', async () => {
+    const llave = llaveBorrador('ciudad-e2', 'superadmin');
+    const { result } = renderHook(() => useBorrador(op('ciudad-e2')));
+    await espera();
+    act(() => result.current.cambiar('zonaId', 'VE-1'));
+    await espera();
+    expect(localStorage.getItem(llave)).toBeNull();
+  });
+
+  it('con el motivo escrito, la ciudad elegida vuelve junto con el texto', async () => {
+    const llave = llaveBorrador('ciudad-e3', 'superadmin');
+    localStorage.setItem(llave, JSON.stringify({ zonaId: 'VE-1', motivo: 'Se mudó' }));
+    const { result } = renderHook(() => useBorrador(op('ciudad-e3')));
+    await waitFor(() => expect(result.current.recuperado).toBe(true));
+    expect(result.current.valores).toMatchObject({ zonaId: 'VE-1', motivo: 'Se mudó' });
+  });
+});

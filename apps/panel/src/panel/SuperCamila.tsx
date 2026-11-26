@@ -10,6 +10,7 @@ import { AvisoBorrador } from './AvisoBorrador';
 import { AyudaAqui } from './AyudaAqui';
 import { FallosReportados, PreguntasDiagnostico } from './SuperCamilaFallos';
 import { pedir } from './api';
+import { palabra } from './diseno/palabras';
 
 /**
  * C-CAMILA-BUZON (17 nov 2026) — todos los países, primero El Vigía y Tucaní. El buzón de Camila
@@ -39,10 +40,16 @@ const T = {
     deTope: (g: string, t: string) => `${g} de ${t}`,
     llamadas: (n: number) => (n === 1 ? '1 consulta' : `${n} consultas`),
     regalos: (n: number) => (n === 1 ? '1 regalo de arranque' : `${n} regalos de arranque`),
-    motivo: { ayuda: 'Necesita ayuda', pide_persona: 'Pidió una persona' } as Record<
-      string,
-      string
-    >,
+    // C-SIN-CODIGOS-CRUDOS: cada motivo con el que el servidor abre un caso, dicho en palabras.
+    motivo: {
+      ayuda: 'Necesita ayuda',
+      pide_persona: 'Pidió una persona',
+      molesta: 'Está molesto',
+      no_supo: 'Camila no supo responder',
+      sin_permiso_ia: 'Sin permiso para la IA: lo atiende una persona',
+      respuesta_reportada: 'Reportó una respuesta de Camila',
+      fallo_sigue: 'Un fallo sigue sin resolverse',
+    } as Record<string, string>,
     abrir: 'Abrir la conversación',
     canal: {
       web: 'Web',
@@ -123,6 +130,10 @@ const T = {
     guardado: 'Ajustes guardados.',
     topeMalo: (m: string) => `El tope diario va de 0 a ${m}.`,
     regalosMalo: (n: number) => `Los regalos por día van de 0 a ${n}.`,
+    firma: 'Nombre con el que firma el equipo',
+    firmaAyuda: (n: string) =>
+      `Lo que responde una persona del equipo desde aquí sale firmado «${n ? `${n}, de Soporte Divoox` : 'Soporte Divoox'}». Lo que responde la IA sigue firmado por Camila. Déjalo vacío para firmar solo «Soporte Divoox».`,
+    firmaMala: 'El nombre de firma lleva solo letras y espacios, hasta 40.',
     cargando: 'Cargando…',
   },
   en: {
@@ -145,7 +156,15 @@ const T = {
     deTope: (g: string, t: string) => `${g} of ${t}`,
     llamadas: (n: number) => (n === 1 ? '1 request' : `${n} requests`),
     regalos: (n: number) => (n === 1 ? '1 starter gift' : `${n} starter gifts`),
-    motivo: { ayuda: 'Needs help', pide_persona: 'Asked for a person' } as Record<string, string>,
+    motivo: {
+      ayuda: 'Needs help',
+      pide_persona: 'Asked for a person',
+      molesta: 'Upset',
+      no_supo: 'Camila didn’t know the answer',
+      sin_permiso_ia: 'No AI permission: a person handles it',
+      respuesta_reportada: 'Reported one of Camila’s answers',
+      fallo_sigue: 'A failure is still unresolved',
+    } as Record<string, string>,
     abrir: 'Open the conversation',
     canal: {
       web: 'Web',
@@ -220,6 +239,10 @@ const T = {
     guardado: 'Settings saved.',
     topeMalo: (m: string) => `The daily limit goes from 0 to ${m}.`,
     regalosMalo: (n: number) => `Gifts per day go from 0 to ${n}.`,
+    firma: 'Name the team signs with',
+    firmaAyuda: (n: string) =>
+      `What a person on the team answers from here goes out signed «${n ? `${n}, Divoox Support` : 'Divoox Support'}». What the AI answers is still signed by Camila. Leave it empty to sign just «Divoox Support».`,
+    firmaMala: 'The signature name uses only letters and spaces, up to 40.',
     cargando: 'Loading…',
   },
 };
@@ -303,6 +326,7 @@ type Ajustes = {
   ia: boolean;
   topeDiarioCentavos: number;
   regalosPorDia: number;
+  nombreFirmaEquipo?: string;
 };
 
 const mensajeDe = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
@@ -473,7 +497,7 @@ function BandejaCamila({
                 <button type="button" className="camila-fila" onClick={() => abrir(c.persona_id)}>
                   <span className="camila-fila-cabeza">
                     <strong>{c.nombre || t.sinCuenta}</strong>
-                    <span className="camila-chip">{t.motivo[c.motivo] ?? c.motivo}</span>
+                    <span className="camila-chip">{palabra(t.motivo, c.motivo)}</span>
                     <small className="pista">
                       {t.canal[c.canal_ultimo] ?? c.canal_ultimo} ·{' '}
                       {fechaCamila(c.creado_en, idioma)}
@@ -745,7 +769,7 @@ function HiloEquipo({ t, idioma, persona }: { t: Textos; idioma: Idioma; persona
             {hilo.casos.map((c) => (
               <li key={c.id} className="camila-caso">
                 <span>
-                  <strong>{t.motivo[c.motivo] ?? c.motivo}</strong> ·{' '}
+                  <strong>{palabra(t.motivo, c.motivo)}</strong> ·{' '}
                   {t.estadoCaso[c.estado] ?? c.estado} · {fechaCamila(c.creado_en, idioma)}
                   <br />
                   {c.resumen}
@@ -1009,6 +1033,7 @@ function FormAjustes({
       ia: ajustes.ia,
       tope: String(ajustes.topeDiarioCentavos / 100),
       regalos: String(ajustes.regalosPorDia),
+      firma: ajustes.nombreFirmaEquipo ?? '',
     },
     almacen: almacenNavegador,
   });
@@ -1027,12 +1052,17 @@ function FormAjustes({
       return setError(t.topeMalo(maximo));
     if (!Number.isInteger(regalos) || regalos < 0 || regalos > limites.regalosPorDiaMaximo)
       return setError(t.regalosMalo(limites.regalosPorDiaMaximo));
+    const firma = String(v.firma).replace(/\s+/g, ' ').trim();
+    if (firma && (firma.length > 40 || !/^[\p{L}][\p{L} .'’-]*$/u.test(firma)))
+      return setError(t.firmaMala);
     setEnviando(true);
     try {
       await pedir('PUT', '/datos/admin/camila/ajustes', {
         ia: v.ia,
         topeDiarioCentavos: tope,
         regalosPorDia: regalos,
+        // Un servidor que todavía no tiene el ajuste no recibe un nombre vacío que lo borre.
+        ...(ajustes.nombreFirmaEquipo === undefined ? {} : { nombreFirmaEquipo: firma }),
       });
       await b.limpiar();
       setOk(t.guardado);
@@ -1086,6 +1116,16 @@ function FormAjustes({
         />
       </label>
       <p className="pista">{t.regalosAyuda(limites.regalosPorDiaMaximo)}</p>
+      <label className="campo">
+        {t.firma}
+        <input
+          value={v.firma}
+          maxLength={40}
+          autoComplete="off"
+          onChange={(e) => b.cambiar('firma', e.target.value)}
+        />
+      </label>
+      <p className="pista">{t.firmaAyuda(String(v.firma).trim())}</p>
       <Mensajes error={error} ok={ok} />
       <button type="submit" className="boton" disabled={enviando}>
         {t.guardar}

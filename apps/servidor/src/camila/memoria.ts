@@ -296,7 +296,23 @@ export type AjustesCamila = {
   topeDiarioCentavos: number;
   /** Cuántos regalos de arranque puede dar Camila al día como mucho (además del presupuesto). */
   regalosPorDia: number;
+  /**
+   * C-FIRMA-EQUIPO (Richard, 26 nov 2026): el nombre de atención con el que firma lo que escribe una
+   * PERSONA del equipo desde el panel («Samira, de Soporte Divoox»). Lo de la IA sigue firmado por
+   * Camila. Vacío: firma solo «Soporte Divoox».
+   */
+  nombreFirmaEquipo: string;
 };
+
+/** El nombre de firma, limpio: letras, espacios y apóstrofos, hasta 40. Lo demás no vale. */
+export const NOMBRE_FIRMA_MAXIMO = 40;
+export function limpiarNombreFirma(v: unknown): string {
+  const s = String(v ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, NOMBRE_FIRMA_MAXIMO);
+  return /^[\p{L}][\p{L} .'’-]*$/u.test(s) ? s : '';
+}
 
 /**
  * C-CAMILA-SIN-AVISO (18 nov 2026, regla de Richard para todo Divoox): Camila NUNCA dice por su cuenta
@@ -307,6 +323,7 @@ export const AJUSTES_CAMILA_INICIALES: AjustesCamila = {
   ia: true,
   topeDiarioCentavos: TOPE_DIARIO_CENTAVOS,
   regalosPorDia: 20,
+  nombreFirmaEquipo: 'Samira',
 };
 
 export const REGALOS_POR_DIA_MAXIMO = 50;
@@ -326,6 +343,10 @@ export async function leerAjustes(db: D1Database): Promise<AjustesCamila> {
         TOPE_MAXIMO_CENTAVOS,
       ),
       regalosPorDia: Math.min(Math.max(0, Number(v.regalosPorDia ?? 20)), REGALOS_POR_DIA_MAXIMO),
+      nombreFirmaEquipo:
+        v.nombreFirmaEquipo === undefined
+          ? AJUSTES_CAMILA_INICIALES.nombreFirmaEquipo
+          : limpiarNombreFirma(v.nombreFirmaEquipo),
     };
   } catch (e) {
     console.error('camila: ajustes ilegibles, van los de fábrica', e);
@@ -344,6 +365,7 @@ export async function guardarAjustes(db: D1Database, a: AjustesCamila) {
         ia: a.ia,
         topeDiarioCentavos: a.topeDiarioCentavos,
         regalosPorDia: a.regalosPorDia,
+        nombreFirmaEquipo: limpiarNombreFirma(a.nombreFirmaEquipo),
       }),
     )
     .run();

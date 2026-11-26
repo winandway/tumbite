@@ -65,27 +65,31 @@ function conNavegacionReintentada(p: Page): Page {
  * (`avisoIaUnico.test.ts` y `papeles/logica.test.ts`).
  */
 async function avisoIaContestado(c: BrowserContext) {
-  await c.route('**/datos/conductor/verificacion', async (ruta) => {
-    // Si la prueba ya cerró su contexto con esta lectura en vuelo, no hay a quién contestarle: se suelta
-    // sin tumbar la prueba (pasó en el sitio de pruebas: «Request context disposed»).
-    const r = await ruta.fetch().catch(() => null);
-    if (!r) return;
-    let cuerpo = (await r.json().catch(() => null)) as Record<string, unknown> | null;
-    if (ruta.request().method() === 'GET' && cuerpo?.avisoIaPendiente === true) {
-      const url = new URL(ruta.request().url());
-      const cabeceras = await ruta.request().allHeaders();
-      const ok = await c.request.post(`${url.origin}/datos/conductor/aviso-ia`, {
-        headers: {
-          ...(cabeceras.authorization ? { authorization: cabeceras.authorization } : {}),
-          ...(cabeceras.cookie ? { cookie: cabeceras.cookie } : {}),
-          'content-type': 'application/json',
-        },
-        data: { acepto: true, plataforma: 'web', desde: 'aviso' },
-      });
-      if (ok.ok()) cuerpo = { ...cuerpo, avisoIaPendiente: false, permisoIa: true };
-    }
-    await ruta.fulfill({ response: r, ...(cuerpo ? { json: cuerpo } : {}) });
-  });
+  // C-LICENCIA-REVERSO-OPCIONAL: «Tus papeles» la pide con `?opcionales=1`; el patrón la cubre con y sin.
+  await c.route(
+    (u) => u.pathname.endsWith('/datos/conductor/verificacion'),
+    async (ruta) => {
+      // Si la prueba ya cerró su contexto con esta lectura en vuelo, no hay a quién contestarle: se suelta
+      // sin tumbar la prueba (pasó en el sitio de pruebas: «Request context disposed»).
+      const r = await ruta.fetch().catch(() => null);
+      if (!r) return;
+      let cuerpo = (await r.json().catch(() => null)) as Record<string, unknown> | null;
+      if (ruta.request().method() === 'GET' && cuerpo?.avisoIaPendiente === true) {
+        const url = new URL(ruta.request().url());
+        const cabeceras = await ruta.request().allHeaders();
+        const ok = await c.request.post(`${url.origin}/datos/conductor/aviso-ia`, {
+          headers: {
+            ...(cabeceras.authorization ? { authorization: cabeceras.authorization } : {}),
+            ...(cabeceras.cookie ? { cookie: cabeceras.cookie } : {}),
+            'content-type': 'application/json',
+          },
+          data: { acepto: true, plataforma: 'web', desde: 'aviso' },
+        });
+        if (ok.ok()) cuerpo = { ...cuerpo, avisoIaPendiente: false, permisoIa: true };
+      }
+      await ruta.fulfill({ response: r, ...(cuerpo ? { json: cuerpo } : {}) });
+    },
+  );
 }
 function contextoReintentado(c: BrowserContext): BrowserContext {
   const nueva = c.newPage.bind(c);

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   type Verificacion,
+  avanceDeFotos,
   avisoDeLaIa,
   momentoDelPaso,
   pasoPendiente,
@@ -10,6 +11,7 @@ import {
   recorteAlMarco,
   siguientePaso,
   tarjetaPapeles,
+  todasLasExigidas,
 } from './logica';
 
 /**
@@ -46,6 +48,32 @@ const base = (tomadas: string[] = []): Verificacion => ({
   listos: 0,
   total: 4,
   puedeEnviar: false,
+});
+
+describe('C-LICENCIA-REVERSO-OPCIONAL: el reverso de la licencia se ofrece y nunca falta', () => {
+  // Venezuela: sin reverso de cédula; el de la licencia llega marcado como opcional.
+  const ve = (tomadas: string[]): Verificacion => {
+    const v = base(tomadas);
+    return {
+      ...v,
+      pasos: v.pasos
+        .filter((p) => p.paso !== 'doc_reverso')
+        .map((p) => (p.paso === 'licencia_reverso' ? { ...p, opcional: true } : p)),
+    };
+  };
+  const exigidas = ['cara', 'doc_frente', 'licencia_frente', 'seguro'];
+  it('se ofrece justo después del frente, pero no es «lo que falta»', () => {
+    expect(siguientePaso(ve(['cara', 'doc_frente', 'licencia_frente']), 'licencia_frente')).toBe(
+      'licencia_reverso',
+    );
+    expect(pasoPendiente(ve(exigidas))).toBeNull();
+    expect(siguientePaso(ve(exigidas), 'seguro')).toBeNull();
+  });
+  it('sin el reverso: avance completo y se puede enviar', () => {
+    expect(avanceDeFotos(ve(exigidas))).toEqual({ listas: 4, total: 4 });
+    expect(todasLasExigidas(ve(exigidas))).toBe(true);
+    expect(todasLasExigidas(ve(['cara', 'doc_frente']))).toBe(false);
+  });
 });
 
 describe('C-ASISTENTE-DRIVER: el orden y el avance', () => {

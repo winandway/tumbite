@@ -77,6 +77,19 @@ describe('C-SMS-VENEZUELA-TEXTOS · la compuerta', () => {
       expect(hablaDeDinero(t), t).toBe(false);
   });
 
+  it('C-SMS-ENLACE-NO-ES-DINERO: el código al azar de un enlace nunca se toma por un monto', () => {
+    // El código de seguimiento es aleatorio: a veces trae «9usd», «Bs5» o «4pen». La vuelta del
+    // sitio de pruebas del 26 nov 2026 cayó así, y en producción el aviso al destinatario no salía.
+    for (const codigo of ['Ab9usd', 'Bs5Qw12', 'k4pen', 'VES0abc', 'z1cop', 'USD7xy'])
+      for (const enlace of [`https://divoox.com/es/ride/${codigo}`, `divoox.com/t/${codigo}`]) {
+        const t = `Divoox: Paula te envio un paquete. Siguelo: ${enlace} PIN de entrega 1234.`;
+        expect(hablaDeDinero(t), t).toBe(false);
+        expect(textoParaSmsVenezuela(t).bloqueado, t).toBeUndefined();
+      }
+    // Un monto de verdad junto a un enlace sigue frenado.
+    expect(hablaDeDinero('Divoox: pagaste 12 USD. Mira: https://divoox.com/r/abc')).toBe(true);
+  });
+
   it('un texto largo se acorta a un SMS sin partir el enlace', () => {
     const enlace = `${SITIO}/es/ride/${codigo()}`;
     const r = textoParaSmsVenezuela(

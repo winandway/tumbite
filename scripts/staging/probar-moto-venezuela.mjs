@@ -200,6 +200,197 @@ async function terminarYComprobar(v, antes, comision) {
   return despues;
 }
 
+const saldoCliente = async () =>
+  ok(await pasajero('GET', '/datos/cliente/saldo-divoox'), 'saldo del pasajero');
+const disponibleCliente = async () => Number((await saldoCliente()).disponible ?? 0);
+
+/** El equipo carga Saldo Divoox al pasajero por el panel (repetir la misma llave no carga dos veces). */
+async function cargarSaldo(monto, nombre) {
+  const llave = `mtve-${nombre}-${VUELTA}`.replace(/[^A-Za-z0-9_-]/g, '-').slice(0, 80);
+  const cuerpo = {
+    monto,
+    motivo: 'recarga_regalo',
+    nota: 'Vuelta de pruebas',
+    idempotencia: llave,
+  };
+  const antes = await disponibleCliente();
+  ok(
+    await equipo('POST', `/datos/admin/saldo-clientes/${ids.cliente}/cargas`, cuerpo),
+    'cargar saldo',
+  );
+  const rep = await equipo('POST', `/datos/admin/saldo-clientes/${ids.cliente}/cargas`, cuerpo);
+  exigir(
+    rep.estado === 200 && rep.d.repetida,
+    'repetir la carga con la misma llave debió ser «repetida»',
+  );
+  const despues = await disponibleCliente();
+  exigir(
+    despues === antes + monto,
+    `la carga no llegó entera: ${antes} → ${despues} (carga ${monto})`,
+  );
+}
+
+/** Pide un viaje con saldo. Devuelve el viaje, lo que salió del saldo y lo que va en mano. */
+async function pedirConSaldo(metodoPago) {
+  const cot = ok(
+    await pasajero('POST', '/datos/viajes/cotizar', {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: DESTINO,
+      tarifaServicio: true,
+    }),
+    'cotizar con saldo',
+  ).cotizacion;
+  exigir(cot.saldoDivoox, 'la cotización no trae el Saldo Divoox del pasajero');
+  const antes = await disponibleCliente();
+  exigir(
+    cot.saldoDivoox.disponible === antes,
+    `la cotización dice ${cot.saldoDivoox.disponible} de saldo y el pasajero tiene ${antes}`,
+  );
+  const v = ok(
+    await pasajero('POST', '/datos/viajes', { cotizacionId: cot.id, metodoPago, usarSaldo: true }),
+    `pedir con saldo + ${metodoPago}`,
+  ).viaje;
+  const usado = Math.min(antes, cot.total);
+  const despues = await disponibleCliente();
+  exigir(
+    despues === antes - usado,
+    `al pedir se apartaron ${antes - despues} y debían ser ${usado}`,
+  );
+  return { v: { id: v.id, total: cot.total }, usado, resto: cot.total - usado, antes };
+}
+
+/** El conductor acepta; si su tope diario de viajes con saldo ya se llenó, devuelve null. */
+async function aceptarConSaldo(p) {
+  const oferta = ok(
+    await yo('GET', '/datos/conductor/operaciones/ofertas'),
+    'ofertas',
+  ).ofertas.find((o) => o.operacionId === p.v.id);
+  exigir(oferta, 'la oferta pagada con saldo no le llegó al conductor');
+  exigir(
+    oferta.saldoDivoox === p.usado && (oferta.enMano?.monto ?? 0) === p.resto,
+    `la oferta no cuadra: saldo ${oferta.saldoDivoox} (debía ${p.usado}), en mano ${oferta.enMano?.monto ?? 0} (debía ${p.resto})`,
+  );
+  const a = await paso(p.v.id, 'aceptar');
+  if (a.estado === 409 && /Saldo Divoox permitidos por hoy/.test(a.d.error ?? '')) return null;
+  ok(a, 'aceptar el viaje con saldo');
+  return true;
+}
+
+/** Un viaje con saldo de punta a punta. Devuelve null si el antifraude frenó al conductor. */
+async function viajeConSaldo(metodoPago, comision) {
+  const p = await pedirConSaldo(metodoPago);
+  const pre = await saldo();
+  if (!(await aceptarConSaldo(p))) {
+    ok(
+      await pedir('POST', `/datos/viajes/${p.v.id}/cancelar`, {}, tokens.cliente, {
+        'idempotency-key': `mtve-cancelar-tope-${metodoPago}-${VUELTA}`.slice(0, 80),
+      }),
+      'cancelar el viaje que el antifraude frenó',
+    );
+    return null;
+  }
+  exigir(
+    (await saldo()).reservado === comision,
+    `${metodoPago}: al aceptar se apartaron ${(await saldo()).reservado} y debían ser ${comision}`,
+  );
+  ok(
+    await yo('POST', '/datos/repartidor/ubicacion', { lat: ORIGEN.lat, lng: ORIGEN.lng }),
+    'ubicación',
+  );
+  ok(await paso(p.v.id, 'llegue'), 'llegué');
+  const vista = ok(
+    await pasajero('GET', `/datos/viajes/${p.v.id}`),
+    'el pasajero ve su viaje',
+  ).viaje;
+  exigir(
+    (vista.enMano?.monto ?? 0) === p.resto,
+    `${metodoPago}: el pasajero ve ${vista.enMano?.monto ?? 0} en mano (debía ${p.resto})`,
+  );
+  ok(await paso(p.v.id, 'iniciar', { pin: vista.pin }), 'iniciar con el código');
+  if (metodoPago === 'pago_movil')
+    ok(await paso(p.v.id, 'pago-movil', { recibido: true, referencia: '000000' }), 'sí me llegó');
+  const fin = ok(await paso(p.v.id, 'terminar'), `terminar con saldo + ${metodoPago}`);
+  exigir(
+    fin.cobrarEnMano === p.resto && fin.saldoDivoox === p.usado,
+    `${metodoPago}: al terminar en mano ${fin.cobrarEnMano} y saldo ${fin.saldoDivoox} (debían ${p.resto} y ${p.usado})`,
+  );
+  ok(await paso(p.v.id, 'terminar'), 'repetir «terminar» no cobra dos veces');
+  const despues = await saldo();
+  exigir(
+    despues.disponible === pre.disponible - comision && despues.reservado === 0,
+    `${metodoPago}: la comisión no salió una sola vez del prepago (${pre.disponible} → ${despues.disponible}, comisión ${comision})`,
+  );
+  return p;
+}
+
+async function saldoDivooxEnVivo() {
+  const cot0 = ok(
+    await pasajero('POST', '/datos/viajes/cotizar', {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: DESTINO,
+      tarifaServicio: true,
+    }),
+    'cotizar para medir el saldo',
+  ).cotizacion;
+  const T = cot0.total;
+  const comision = Math.round(T / 10);
+  exigir(
+    cot0.quienPaga === 'conductor',
+    `en ${CIUDAD.nombre} Moto debía pagarla el conductor (${cot0.quienPaga})`,
+  );
+  const frenado = (que) =>
+    casos.push(
+      `AVISO: el conductor de pruebas llegó al tope diario de viajes con Saldo Divoox (el antifraude frenó); ${que} se probó hasta pedir y se canceló`,
+    );
+
+  // (1) Todo con saldo: 0 en mano, Divoox le paga el viaje y la comisión sale una vez del prepago.
+  const s0 = await disponibleCliente();
+  if (s0 < T) await cargarSaldo(T - s0, 'entero');
+  const p1 = await viajeConSaldo('saldo', comision);
+  if (!p1) return frenado('el viaje todo con saldo');
+  exigir(p1.resto === 0, `con saldo de sobra quedó ${p1.resto} en mano`);
+  casos.push(
+    `todo con Saldo Divoox: el pasajero pagó ${T} con saldo, el conductor no cobró nada en mano y su prepago entregó ${comision} una sola vez`,
+  );
+
+  // (2) Cancelación: el saldo apartado vuelve entero.
+  if ((await disponibleCliente()) === 0) await cargarSaldo(100, 'cancelar');
+  const p2 = await pedirConSaldo('efectivo');
+  ok(
+    await pedir('POST', `/datos/viajes/${p2.v.id}/cancelar`, {}, tokens.cliente, {
+      'idempotency-key': `mtve-cancelar-saldo-${VUELTA}`.slice(0, 80),
+    }),
+    'cancelar el viaje con saldo',
+  );
+  exigir((await disponibleCliente()) === p2.antes, 'la cancelación no devolvió el saldo entero');
+  const vc = ok(await pasajero('GET', `/datos/viajes/${p2.v.id}`), 'el viaje cancelado').viaje;
+  exigir(
+    vc.saldoDevuelto === p2.usado,
+    `el viaje cancelado dice ${vc.saldoDevuelto} devuelto (debía ${p2.usado})`,
+  );
+  casos.push(`cancelado con saldo: volvieron los ${p2.usado} al Saldo Divoox del pasajero`);
+
+  // (3) y (4) Saldo parcial + efectivo y saldo parcial + Pago Móvil: en mano, solo el resto.
+  for (const metodo of ['efectivo', 'pago_movil']) {
+    const s = await disponibleCliente();
+    if (s >= T) {
+      casos.push(
+        `AVISO: quedaban ${s} de saldo, más que el viaje; el parcial con ${metodo} queda para la próxima vuelta`,
+      );
+      return;
+    }
+    if (s === 0) await cargarSaldo(Math.min(100, T - 1), `parcial-${metodo}`);
+    const p = await viajeConSaldo(metodo, comision);
+    if (!p) return frenado(`el parcial con ${metodo}`);
+    exigir(p.resto > 0 && p.usado > 0, `${metodo}: el parcial debía usar saldo y dejar un resto`);
+    casos.push(
+      `saldo ${p.usado} + ${metodo === 'efectivo' ? 'efectivo' : 'Pago Móvil'} ${p.resto}: el conductor cobró en mano solo el resto y su prepago entregó ${comision}`,
+    );
+  }
+}
+
 /** Lo que tenía Moto en la ciudad antes de la palanca (se devuelve al final). */
 let quienPagaMotoAntes = null;
 try {
@@ -475,6 +666,14 @@ try {
   casos.push(
     `viaje por pago móvil de ${v2.total} centavos: «sí me llegó» y la comisión salió del saldo`,
   );
+
+  // 7b. C-SALDO-CLIENTE en vivo (26 nov 2026): el pasajero paga con su Saldo Divoox. El equipo le
+  // carga saldo por el panel (con su idempotencia), y se prueban: todo con saldo (0 en mano, la
+  // comisión sale una vez del prepago), la cancelación (devuelve el saldo entero), saldo parcial +
+  // efectivo y saldo parcial + Pago Móvil (en mano solo el resto). El saldo del pasajero es fijo
+  // (zz-mtve-c) y no se borra: se mide contra lo que tenía. Si el conductor llegó al tope diario de
+  // viajes con saldo (antifraude, 10 en 24 h), eso también es el freno funcionando: se avisa y sigue.
+  await saldoDivooxEnVivo();
 
   // 8. C-QUIEN-PAGA-VIAJES: la palanca, en la ciudad de la vuelta (el resto del país no se toca), con
   // la app de hoy (que muestra la tarifa de servicio aparte). Un viaje por valor, de punta a punta.

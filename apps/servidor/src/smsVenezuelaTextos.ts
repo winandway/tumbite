@@ -35,7 +35,14 @@ const DINERO: readonly RegExp[] = [
   /\d ?(?:USD|VES|COP|PEN|Bs|dolares|dolar|dollars|bolivares|pesos|soles)\b/i,
   /\b(?:saldo|balance|tarjeta|card|cvv|iban|zelle|pago movil|cuenta bancaria|numero de cuenta|bank account|account number)\b/i,
 ];
-export const hablaDeDinero = (texto: string) => DINERO.some((r) => r.test(sinAcentos(texto)));
+/**
+ * C-SMS-ENLACE-NO-ES-DINERO (26 nov 2026): los enlaces no se miran. Su código es al azar y a veces
+ * trae «9usd» o «Bs5»: el aviso salía frenado como si llevara un monto.
+ */
+const sinEnlaces = (texto: string) =>
+  texto.replace(/(?:https?:\/\/|\b[a-z0-9-]+\.(?:com|dev|app|net|org)\/)\S*/gi, ' ');
+const tieneDinero = (limpio: string) => DINERO.some((r) => r.test(sinEnlaces(limpio)));
+export const hablaDeDinero = (texto: string) => tieneDinero(sinAcentos(texto));
 
 function cortarEnPalabra(texto: string, largo: number): string {
   if (texto.length <= largo) return texto;
@@ -57,7 +64,7 @@ export type TextoSmsVenezuela =
 export function textoParaSmsVenezuela(original: string): TextoSmsVenezuela {
   const limpio = sinAcentos(original);
   if (!limpio) return { bloqueado: 'largo' };
-  if (DINERO.some((r) => r.test(limpio))) return { bloqueado: 'dinero' };
+  if (tieneDinero(limpio)) return { bloqueado: 'dinero' };
   if (limpio.length <= LARGO_UN_SMS) return { texto: limpio };
   const m = /https?:\/\/\S+/.exec(limpio);
   if (!m) return { texto: cortarEnPalabra(limpio, LARGO_UN_SMS) };

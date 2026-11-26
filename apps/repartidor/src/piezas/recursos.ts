@@ -1,5 +1,7 @@
 /** Recursos gráficos del diseño aprobado de Divoox Driver (14 oct 2026). */
 import logo from '../../assets/driver/logo.png';
+// C-ACCESO-CON-CABECERA: el logo de letras blancas para la franja azul petróleo de «Entrar».
+import logoOscuro from '../../assets/driver/logo-oscuro.png';
 import mascota from '../../assets/driver/mascota.webp';
 import campana from '../../assets/driver/icono-campana.png';
 import navInicio from '../../assets/driver/nav-inicio.png';
@@ -17,6 +19,7 @@ import flotaCarro from '../../assets/driver/flota-carro.webp';
 
 export const IMG = {
   logo,
+  logoOscuro,
   mascota,
   campana,
   navInicio,

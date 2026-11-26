@@ -675,8 +675,10 @@ kyc.get('/admin/kyc/:id', async (c) => {
   if (!u) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
   // C-DOCUMENTO-SIN-REVERSO: en el país del conductor que no pide reversos (Venezuela), el equipo no
   // ve un «reverso» sobrante (la foto en blanco que alguien llegó a subir se queda guardada, sin más).
+  // C-LICENCIA-REVERSO-OPCIONAL: el reverso que se ofrece (la licencia) sí se ve si lo subió.
+  const pol = u.rol === 'repartidor' ? (await graciaDe(db, id)).politica : null;
   const noSePide = new Set<string>(
-    u.rol === 'repartidor' ? ((await graciaDe(db, id)).politica.sinReverso ?? []) : [],
+    (pol?.sinReverso ?? []).filter((p) => !(pol?.reversoOpcional ?? []).includes(p)),
   );
   const f = leida && noSePide.has('doc_reverso') ? { ...leida, doc_reverso: null } : leida;
   const { results: controles } = await db

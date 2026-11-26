@@ -181,9 +181,9 @@ describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las lín
     );
   });
   it('la fecha de la política es la del cambio', () => {
-    // C-PRIVACIDAD-REGRESO (25 nov 2026): la ciudad base y «Voy de regreso».
-    expect(PRIVACIDAD.es.actualizado).toContain('25 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toContain('November 25, 2026');
+    // C-LICENCIA-REVERSO-OPCIONAL (26 nov 2026): la fecha de nacimiento leída y el reverso opcional.
+    expect(PRIVACIDAD.es.actualizado).toContain('26 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 26, 2026');
   });
   it('C-CUENTA-UNICA: la política explica una cuenta con varios papeles, tratados por separado', () => {
     expect(texto(PRIVACIDAD.es)).toMatch(
@@ -363,7 +363,24 @@ describe('C-PRIVACIDAD-REGRESO: ciudad base y regreso en la política', () => {
     expect(en).toMatch(/home city/);
     expect(en).toMatch(/“Heading home”/);
     expect(en).toMatch(/heading-home setting/);
-    expect(PRIVACIDAD.es.actualizado).toBe('Actualizado: 25 de noviembre de 2026');
-    expect(PRIVACIDAD.en.actualizado).toBe('Last updated: November 25, 2026');
+    expect(PRIVACIDAD.es.actualizado).toBe('Actualizado: 26 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toBe('Last updated: November 26, 2026');
+  });
+});
+
+describe('C-LICENCIA-REVERSO-OPCIONAL: la política dice la fecha de nacimiento y la salud del reverso', () => {
+  it('en los dos idiomas', () => {
+    const es = JSON.stringify(PRIVACIDAD.es);
+    const en = JSON.stringify(PRIVACIDAD.en);
+    expect(es).toContain('(nombre, número, vencimiento y fecha de nacimiento)');
+    expect(es).toContain('guardamos la fecha de nacimiento que se lee en tu documento');
+    expect(es).toContain(
+      'trae datos de salud (grupo sanguíneo, alergias y un teléfono de emergencia)',
+    );
+    expect(en).toContain('(name, number, expiration date, and date of birth)');
+    expect(en).toContain('we store the date of birth read from your document');
+    expect(en).toContain(
+      'shows health details (blood type, allergies, and an emergency phone number)',
+    );
   });
 });
