@@ -1,0 +1,45 @@
+# linea: P2
+# titulo: Pedir una moto en El Vigía a KM 9: precio fijo de la hoja (3 $ de día, 3,90 $ de noche) en dólares y bolívares
+# app: cliente
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+- runFlow:
+    file: ../comun/entrar.yaml
+    env:
+      CORREO: ${CORREO_DEMO_CLIENTE}
+      CLAVE: ${CLAVE_DEMO_CLIENTE}
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      id: "servicio-moto"
+    timeout: 45000
+- tapOn:
+    id: "servicio-moto"
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      id: "moto-destino"
+    timeout: 30000
+- tapOn:
+    id: "moto-destino"
+- inputText: "KM 9"
+# Tiene que salir el KM 9 de la hoja de El Vigía (no un «Km 9» de otro país).
+- extendedWaitUntil:
+    visible:
+      text: "(?i).*(El Vig[ií]a|M[ée]rida|Tabulador|Precio fijo|Fixed price).*"
+    timeout: 20000
+- tapOn:
+    text: "(?i).*(El Vig[ií]a|M[ée]rida|Tabulador|Precio fijo|Fixed price).*"
+- extendedWaitUntil:
+    visible:
+      id: "moto-precio"
+    timeout: 30000
+- assertVisible:
+    text: ".*${PRECIO_KM9}.*"
+- assertVisible:
+    id: "moto-precio-bs"

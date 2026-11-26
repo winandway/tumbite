@@ -1,0 +1,19 @@
+# Pantalla «Permite los permisos» y los avisos del sistema (ubicación, avisos, cámara).
+appId: ${APP_ID}
+---
+- tapOn:
+    text: "I’m ready|Estoy listo|Listo"
+    optional: true
+- repeat:
+    times: 4
+    commands:
+      - tapOn:
+          text: "Allow While Using App|Allow|Permitir al usar la app|Permitir"
+          optional: true
+# «Cómo revisamos tus documentos»: el robot da el permiso, como la mayoría de los conductores.
+- tapOn:
+    text: "I give my permission.*|Doy mi permiso.*|Autorizo.*"
+    optional: true
+- tapOn:
+    id: "aviso-ia-aceptar"
+    optional: true

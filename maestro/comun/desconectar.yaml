@@ -1,0 +1,21 @@
+# Desconecta al conductor (barra «Desliza para desconectarte» + confirmar).
+appId: ${APP_ID}
+---
+- scrollUntilVisible:
+    element:
+      id: "desconectarme-pulgar"
+    direction: DOWN
+    timeout: 20000
+- swipe:
+    from:
+      id: "desconectarme-pulgar"
+    direction: RIGHT
+    duration: 2000
+- tapOn:
+    text: "Go offline|Desconectarme"
+    index: -1
+    optional: true
+- extendedWaitUntil:
+    notVisible:
+      id: "desconectarme-pulgar"
+    timeout: 20000

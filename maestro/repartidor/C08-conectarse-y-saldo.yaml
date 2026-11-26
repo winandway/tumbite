@@ -1,0 +1,60 @@
+# linea: C8
+# titulo: El conductor aprobado entra, ve su saldo y se conecta y desconecta
+# app: repartidor
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+- runFlow:
+    file: ../comun/entrar.yaml
+    env:
+      CORREO: ${CORREO_DEMO_CONDUCTOR}
+      CLAVE: ${CLAVE_DEMO_CONDUCTOR}
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      text: "Home|Inicio"
+    timeout: 45000
+# Si quedó en línea de una vuelta anterior, primero se desconecta.
+- runFlow:
+    when:
+      visible:
+        text: "Online for .*|Conectado a .*"
+    file: ../comun/desconectar.yaml
+# Se vuelve a abrir la app para tener la pantalla de inicio desde arriba.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "^Slide to go online$|^Desliza para conectarte$"
+    timeout: 45000
+# Se conecta deslizando la barra verde «Desliza para conectarte» (la principal, no la de cada servicio).
+- extendedWaitUntil:
+    visible:
+      text: "^Slide to go online$|^Desliza para conectarte$"
+    timeout: 20000
+# Se arrastra desde la perilla («pulgar») de la barra hasta el final.
+- swipe:
+    from:
+      id: "conectarme-pulgar"
+    direction: RIGHT
+    duration: 2000
+    optional: true
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      text: "Online for .*|Conectado a .*|En línea.*"
+    timeout: 30000
+# Se desconecta (el conductor demo no se queda en línea en el sitio de pruebas).
+- runFlow: ../comun/desconectar.yaml
+# Su saldo (prepago de Venezuela) se ve en el inicio.
+- scrollUntilVisible:
+    element:
+      id: "saldo-inicio"
+    direction: DOWN
+    timeout: 20000
+- assertVisible:
+    id: "saldo-inicio-monto"

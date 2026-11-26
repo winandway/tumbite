@@ -1,0 +1,51 @@
+# linea: C6
+# titulo: Cerrar la app a mitad del registro y volver: está lo escrito, y sin el aviso falso de «recuperamos»
+# app: repartidor
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+# 1) Sin escribir nada, al abrir no puede salir «Recuperamos lo que estabas escribiendo».
+- extendedWaitUntil:
+    visible:
+      id: "ir-a-crear-cuenta|registro-por-pasos"
+    timeout: 60000
+- assertNotVisible:
+    text: "We restored what you were typing.*|Recuperamos lo que estabas escribiendo.*"
+- tapOn:
+    id: "ya-tengo-cuenta-arriba|ya-tengo-cuenta"
+    optional: true
+- assertNotVisible:
+    text: "We restored what you were typing.*|Recuperamos lo que estabas escribiendo.*"
+# 2) Escribe nombre y correo, cierra la app y vuelve: lo escrito sigue ahí.
+- tapOn:
+    id: "ir-a-crear-cuenta"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-nombre"
+    timeout: 15000
+- tapOn:
+    text: "Full name|Nombre completo"
+    index: 1
+- inputText: ${NOMBRE_NUEVO}
+- tapOn:
+    id: "pasos-siguiente"
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-correo"
+    timeout: 15000
+- tapOn:
+    text: "email@example.com|correo@ejemplo.com"
+- inputText: ${CORREO_NUEVO}
+- waitForAnimationToEnd:
+    timeout: 3000
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "${CORREO_NUEVO}|${NOMBRE_NUEVO}"
+    timeout: 45000

@@ -1,0 +1,20 @@
+# linea: C1
+# titulo: Crear la cuenta de conductor desde El Vigía (Venezuela) y entrar sin pedir código (C2)
+# app: repartidor
+# tambien: C2
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+- runFlow: ../comun/registro.yaml
+- runFlow: ../comun/permisos.yaml
+# Entra a la app: alta guiada o el aviso de su ciudad, nunca un error.
+- extendedWaitUntil:
+    visible:
+      id: "alta-guiada|que-te-falta|asistente-papeles|tus-papeles"
+    timeout: 45000
+- assertNotVisible:
+    id: "acceso-error"
