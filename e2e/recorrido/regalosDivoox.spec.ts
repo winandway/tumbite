@@ -246,7 +246,9 @@ for (const idioma of ['es', 'en'] as const) {
       await expect(p.getByTestId('regalo-paga-en-mano')).toBeVisible();
       if (CAPTURAS)
         await precio.screenshot({ path: join(CARPETA, `cliente-precio-${idioma}.png`) });
-      await p.getByText(C.textos.pedir, { exact: true }).click();
+      // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita.
+      await p.getByTestId('pedir-boton').click();
+      await p.getByTestId('pago-solicitar').click();
       // El viaje en curso muestra lo que paga Divoox y lo que paga en mano.
       await expect(p.getByTestId('regalo-divoox')).toBeVisible({ timeout: 30_000 });
       const op = String(

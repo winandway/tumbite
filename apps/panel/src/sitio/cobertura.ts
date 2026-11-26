@@ -11,6 +11,19 @@ export type Lugar = {
   estado: Estado;
   /** Solo ciudades: país al que pertenece. */
   pais?: string;
+  /**
+   * Solo ciudades (C-CIUDAD-ABIERTA-SIN-PRONTO): la clave pública de su zona (el nombre sin acentos,
+   * «el-vigia»). Con clave, la página dice lo que de verdad está abierto (lo da el servidor) y nunca
+   * «muy pronto»; sin clave (Estados Unidos), sigue el interruptor de siempre.
+   */
+  clave?: string;
+  /** Solo ciudades: el estado donde queda («Mérida»), para el texto y los datos estructurados. */
+  estadoRegion?: string;
+  /**
+   * Solo ciudades con clave: unas líneas propias sobre la ciudad (de qué vive, vías y zonas que la
+   * gente reconoce), con datos geográficos públicos y verificables, sin cifras. Cada página es única.
+   */
+  sobre?: Record<Idioma, string>;
   /** Solo países: código de dos letras para las banderas y los formularios. */
   codigo?: string;
   /** Solo países: región para agruparlos en el pie de página. */
@@ -163,7 +176,8 @@ export const PAISES: Lugar[] = [
     region: 'sudamerica',
     primerasCiudades: ['Caracas', 'Maracaibo', 'Valencia'],
     idioma: { es: 'español', en: 'Spanish' },
-    moneda: { es: 'bolívar', en: 'bolívar' },
+    // Los viajes se cobran en dólares (perfil de Venezuela, monedaViajes USD); también se usa el bolívar.
+    moneda: { es: 'dólar y bolívar', en: 'US dollar and bolívar' },
   },
   {
     slug: 'ecuador',
@@ -368,6 +382,109 @@ export const CIUDADES: Lugar[] = [
   },
   { slug: 'tampa', nombre: { es: 'Tampa', en: 'Tampa' }, estado: 'pronto', pais: 'united-states' },
   { slug: 'ocala', nombre: { es: 'Ocala', en: 'Ocala' }, estado: 'pronto', pais: 'united-states' },
+  // C-CIUDAD-ABIERTA-SIN-PRONTO (25 nov 2026, orden de Richard): las ciudades de Venezuela. Lo que
+  // cada una tiene abierto sale del servidor por su `clave`; aquí no se abre ni se cierra nada.
+  // Las que se repiten en otros países llevan el país en la dirección (Mérida, Valencia, San Cristóbal).
+  ...(
+    [
+      [
+        'el-vigia',
+        'El Vigía',
+        'el-vigia',
+        'Mérida',
+        'El Vigía es la ciudad más grande del Sur del Lago de Maracaibo, en el municipio Alberto Adriani del estado Mérida. Es cruce de caminos entre los Andes y el Zulia: por aquí pasan la Carretera Panamericana y las vías hacia Mérida, El Zulia y el Táchira, y tiene aeropuerto propio. Vive del comercio, el transporte y el campo del Sur del Lago.',
+        'El Vigía is the largest city in the South of Lake Maracaibo region, in the Alberto Adriani municipality of Mérida state. It is a crossroads between the Andes and Zulia: the Pan-American Highway and the roads to Mérida, Zulia and Táchira run through it, and it has its own airport. Its economy rests on trade, transportation and the farmland around the lake.',
+      ],
+      [
+        'tucani',
+        'Tucaní',
+        'tucani',
+        'Mérida',
+        'Tucaní es la capital del municipio Caracciolo Parra Olmedo, en el estado Mérida, sobre la Carretera Panamericana en la zona del Sur del Lago. Es un pueblo agrícola y ganadero, de paso para quien viaja entre El Vigía y Caja Seca, ya en el sureste del Zulia.',
+        'Tucaní is the seat of the Caracciolo Parra Olmedo municipality in Mérida state, on the Pan-American Highway in the South of Lake Maracaibo region. It is a farming and cattle town, a stop on the way between El Vigía and Caja Seca, in southeastern Zulia.',
+      ],
+      [
+        'caracas',
+        'Caracas',
+        'caracas',
+        'Distrito Capital',
+        'Caracas es la capital de Venezuela y su ciudad más grande. Está en un valle a los pies del Ávila (Parque Nacional Waraira Repano), a pocos kilómetros del mar Caribe y del aeropuerto de Maiquetía. Es el centro del gobierno, las empresas y los servicios del país.',
+        'Caracas is the capital of Venezuela and its largest city. It sits in a valley at the foot of El Ávila (Waraira Repano National Park), a short drive from the Caribbean Sea and Maiquetía airport. It is the country’s center of government, business and services.',
+      ],
+      [
+        'maracaibo',
+        'Maracaibo',
+        'maracaibo',
+        'Zulia',
+        'Maracaibo es la capital del estado Zulia, a orillas del Lago de Maracaibo, que se cruza por el Puente General Rafael Urdaneta. Es la gran ciudad del occidente venezolano, con larga tradición petrolera y comercial, y la tierra de la gaita zuliana.',
+        'Maracaibo is the capital of Zulia state, on the shore of Lake Maracaibo, crossed by the General Rafael Urdaneta Bridge. It is the main city of western Venezuela, with a long oil and trading tradition, and the home of gaita zuliana music.',
+      ],
+      [
+        'valencia-venezuela',
+        'Valencia',
+        'valencia',
+        'Carabobo',
+        'Valencia es la capital del estado Carabobo, en el centro del país, cerca del Lago de Valencia y del puerto de Puerto Cabello. Es uno de los grandes polos industriales de Venezuela y la cruza la Autopista Regional del Centro.',
+        'Valencia is the capital of Carabobo state, in central Venezuela, near Lake Valencia and the port of Puerto Cabello. It is one of the country’s main industrial hubs, and the Central Regional Highway runs through it.',
+      ],
+      [
+        'barquisimeto',
+        'Barquisimeto',
+        'barquisimeto',
+        'Lara',
+        'Barquisimeto es la capital del estado Lara, en el centro occidente del país. La llaman la capital musical de Venezuela y cada enero recibe la procesión de la Divina Pastora. Es un centro comercial y agrícola de la región.',
+        'Barquisimeto is the capital of Lara state, in central-western Venezuela. It is known as the music capital of Venezuela, and every January it hosts the Divina Pastora procession. It is a trading and farming center for the region.',
+      ],
+      [
+        'merida-venezuela',
+        'Mérida',
+        'merida',
+        'Mérida',
+        'Mérida es la capital del estado Mérida, en plena cordillera de los Andes, entre la Sierra Nevada y la Sierra de La Culata. Es ciudad universitaria, sede de la Universidad de Los Andes, y vive mucho del turismo de montaña, con el teleférico Mukumbarí.',
+        'Mérida is the capital of Mérida state, high in the Andes between the Sierra Nevada and the Sierra de La Culata. It is a college town, home to the University of the Andes, and lives largely on mountain tourism, including the Mukumbarí cable car.',
+      ],
+      [
+        'san-cristobal-venezuela',
+        'San Cristóbal',
+        'san-cristobal',
+        'Táchira',
+        'San Cristóbal es la capital del estado Táchira, en los Andes venezolanos y cerca de la frontera con Colombia. Es una ciudad comercial y de paso entre los dos países, conocida por su feria de enero.',
+        'San Cristóbal is the capital of Táchira state, in the Venezuelan Andes near the border with Colombia. It is a trading city on the route between the two countries, known for its January fair.',
+      ],
+      [
+        'maracay',
+        'Maracay',
+        'maracay',
+        'Aragua',
+        'Maracay es la capital del estado Aragua, en el centro del país, cerca del Lago de Valencia. La llaman la ciudad jardín y es la puerta del Parque Nacional Henri Pittier, que baja hasta las playas de la costa aragüeña.',
+        'Maracay is the capital of Aragua state, in central Venezuela, near Lake Valencia. It is known as the garden city and is the gateway to Henri Pittier National Park, which runs down to the beaches of the Aragua coast.',
+      ],
+      [
+        'puerto-la-cruz',
+        'Puerto La Cruz',
+        'puerto-la-cruz',
+        'Anzoátegui',
+        'Puerto La Cruz es una ciudad costera del estado Anzoátegui, en el oriente del país, con su Paseo Colón frente al mar. Es puerto, centro turístico y la salida hacia el Parque Nacional Mochima y las islas del Caribe oriental.',
+        'Puerto La Cruz is a coastal city in Anzoátegui state, in eastern Venezuela, with its Paseo Colón boardwalk on the sea. It is a port, a tourist town and the departure point for Mochima National Park and the islands of the eastern Caribbean.',
+      ],
+      [
+        'ciudad-guayana',
+        'Ciudad Guayana',
+        'ciudad-guayana',
+        'Bolívar',
+        'Ciudad Guayana, en el estado Bolívar, une Puerto Ordaz y San Félix donde el río Caroní se junta con el Orinoco. Es el gran polo de la industria del hierro, el acero y el aluminio de Venezuela.',
+        'Ciudad Guayana, in Bolívar state, joins Puerto Ordaz and San Félix where the Caroní River meets the Orinoco. It is the hub of Venezuela’s iron, steel and aluminum industry.',
+      ],
+    ] as const
+  ).map(([slug, nombre, clave, estadoRegion, sobreEs, sobreEn]): Lugar => ({
+    slug,
+    nombre: { es: nombre, en: nombre },
+    estado: 'pronto',
+    pais: 'venezuela',
+    clave,
+    estadoRegion,
+    sobre: { es: sobreEs, en: sobreEn },
+  })),
 ];
 
 /** Tipos de comida que la gente busca (sirven de enlaces internos para el SEO). */

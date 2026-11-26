@@ -38,6 +38,7 @@ export const GUIA_PRECIO_ZONA: Record<Idioma, Guia> = {
       'El precio de la zona es para ese trayecto tal cual: un viaje con precio de la zona no admite cambios de paradas una vez pedido. Si necesitas otra cosa (otra parada, otro destino), pide otro viaje. Si pones paradas antes de pedir, el precio se calcula por distancia, como siempre. El de la zona aplica a la categoría de siempre; Comfort, Premium y XL se calculan aparte.',
       'Para el conductor, la oferta dice «Precio de la zona» antes de aceptar, y lo que gana ya sale de ese precio. En un viaje de ida y vuelta, la oferta lo dice también: espera en el destino y vuelve al punto de recogida.',
       'El precio de la zona aparece también en tu recibo de «Mis viajes», en su propia línea.',
+      'En algunas ciudades el viaje sube un porcentaje fijo de noche, como se acostumbra en la calle. Si es así, la tarjeta del precio lo dice antes de pedir, con una línea «Tarifa nocturna» y el porcentaje, y el precio que ves ya lo incluye: el de la zona o el calculado, el que sea más barato, más ese porcentaje. Si reservas un viaje para más tarde, cuenta la hora de la reserva. El conductor ve el mismo precio, con la tarifa nocturna incluida.',
     ],
     capturas: [
       foto(
@@ -65,6 +66,7 @@ export const GUIA_PRECIO_ZONA: Record<Idioma, Guia> = {
       '¿Cómo pido un viaje de ida y vuelta?',
       '¿Puedo agregar una parada a un viaje con precio de la zona?',
       '¿Se cobra la espera en un viaje de ida y vuelta?',
+      '¿Por qué de noche el viaje cuesta más?',
     ],
     pasos: [
       'Escribe a dónde vas: la app te muestra el precio fijo.',
@@ -86,6 +88,7 @@ export const GUIA_PRECIO_ZONA: Record<Idioma, Guia> = {
       'A local fixed price is for that exact trip: once requested, a ride with a local fixed price can’t have its stops changed. If you need something else (another stop, another drop-off), request another ride. If you add stops before requesting, the price is by distance and time, as usual. The local fixed price applies to the standard ride; Comfort, Premium and XL are priced on their own.',
       'For drivers, the offer says “Local fixed price” before accepting, and earnings already come from that price. On a round trip, the offer says so too: wait at the drop-off and come back to the pickup spot.',
       'The local fixed price also shows on your receipt in “My rides,” on its own line.',
+      'In some cities, rides cost a set percentage more at night, as is customary there. If so, the price card says it before you request, with a “Night fare” line and the percentage, and the price you see already includes it: the local fixed price or the distance-based one, whichever is lower, plus that percentage. If you book a ride for later, the booked time is what counts. Your driver sees the same price, night fare included.',
     ],
     capturas: [
       foto(
@@ -113,6 +116,7 @@ export const GUIA_PRECIO_ZONA: Record<Idioma, Guia> = {
       'How do I request a round trip?',
       'Can I add a stop to a ride with a local fixed price?',
       'Is waiting charged on a round trip?',
+      'Why does my ride cost more at night?',
     ],
     pasos: [
       'Enter where you are going: the app shows the upfront price.',

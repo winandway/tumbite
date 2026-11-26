@@ -10,6 +10,8 @@ export type Movimiento = {
   fecha: string;
   /** El viaje del movimiento (cobro con tarjeta o regalo que lo pagó): una carrera por viaje. */
   operacionId?: string | null;
+  /** C-SALDO-CLIENTE: «saldo_divoox» = lo que Divoox le paga por el Saldo Divoox del pasajero. */
+  origen?: string | null;
 };
 export type DatosBilletera = {
   saldo: number;
@@ -34,6 +36,7 @@ const T = {
     conectarAyuda: 'Tus datos bancarios los escribes en Stripe. Divoox nunca los ve.',
     movimientos: 'Movimientos',
     sinMovimientos: 'Aquí verás cada entrega, propina y retiro.',
+    saldoPasajero: 'Saldo Divoox del pasajero',
     conceptos: {
       venta: 'Venta',
       entrega: 'Entrega',
@@ -60,6 +63,7 @@ const T = {
     conectarAyuda: 'You enter your bank details on Stripe. Divoox never sees them.',
     movimientos: 'Activity',
     sinMovimientos: 'Every delivery, tip, and withdrawal will show up here.',
+    saldoPasajero: 'Rider’s Divoox Balance',
     conceptos: {
       venta: 'Sale',
       entrega: 'Delivery',
@@ -187,7 +191,11 @@ export function BilleteraRepartidor({
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700' }}>{t.conceptos[m.concepto] ?? m.concepto}</Text>
+                <Text style={{ fontWeight: '700' }}>
+                  {m.origen === 'saldo_divoox'
+                    ? t.saldoPasajero
+                    : (t.conceptos[m.concepto] ?? m.concepto)}
+                </Text>
                 <Text style={{ color: '#666B73', fontSize: 13 }}>
                   {fecha(m.fecha)}
                   {m.pedidoId ? ` · ${t.pedido} #${m.pedidoId.slice(0, 4).toUpperCase()}` : ''}

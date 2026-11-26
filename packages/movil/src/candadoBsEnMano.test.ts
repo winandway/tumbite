@@ -21,7 +21,11 @@ describe('C-BS-EN-MANO: la pieza única en cada pantalla donde se cobra o se pag
     // El cobro en mano también se ve con pago móvil (no solo en efectivo).
     // C-PAGO-A-CELULAR: «aCelular» es pago móvil (Venezuela), Yape o Plin (Perú).
     expect(v).toMatch(/const aCelular = esPagoACelular\(viaje\.metodo_pago\)/);
-    expect(v).toMatch(/metodo_pago === 'efectivo' \|\| aCelular\) &&\s*enMano != null/);
+    // C-SALDO-CLIENTE: también con el viaje pagado con saldo (lo que queda en mano, o «no cobras nada»).
+    expect(v).toMatch(
+      /cobraEnManoMetodo =\s*viaje\.metodo_pago === 'efectivo' \|\|\s*viaje\.metodo_pago === 'saldo' \|\|\s*esPagoACelular\(viaje\.metodo_pago\)/,
+    );
+    expect(v).toMatch(/cobraEnManoMetodo && enMano != null/);
   });
 
   it('cliente: el precio antes de pedir, el viaje en curso y el recibo', () => {

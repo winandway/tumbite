@@ -67,6 +67,9 @@ type Recibo = {
   moneda: string | null;
   /** C-PRECIO-CON-REGALO: lo que pagó Divoox (o el regalo que volvió a la cuenta si no hubo viaje). */
   regalo?: RegaloDelViaje | null;
+  /** C-SALDO-CLIENTE: lo que cubre el Saldo Divoox (y lo que volvió si el viaje no se hizo). */
+  saldoDivoox?: number;
+  saldoDevuelto?: number | null;
   desglose: Record<string, number>;
   /** C-BS-EN-MANO: lo pagado en mano en bolívares, con la tasa y la fecha usadas. */
   enManoLocal?: Referencia | null;
@@ -97,6 +100,8 @@ const ORDEN_PIEZAS = [
   'redondeo',
   // C-PRECIO-ZONA: el precio fijo de la zona, en su propia línea del recibo.
   'precioZona',
+  // C-RECARGO-NOCHE: la tarifa nocturna, en su propia línea del recibo.
+  'recargoNoche',
   // C-QUIEN-PAGA-VIAJES: la tarifa de servicio de Divoox, en su propia línea del recibo.
   'tarifaServicio',
 ];
@@ -193,6 +198,7 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
               etiqueta={t.total}
               total={r.total == null ? null : r.total + r.propina}
               regalo={r.regalo}
+              saldo={r.saldoDivoox ?? 0}
               moneda={r.moneda ?? 'USD'}
               idioma={idioma}
             />
@@ -368,6 +374,7 @@ export function TarjetaViaje({
           <PrecioCompacto
             total={v.total}
             regalo={v.regalo}
+            saldo={v.saldoDivoox ?? 0}
             moneda={v.moneda ?? 'USD'}
             idioma={idioma}
             estilo={[LETRA.cifra, { fontSize: 16, lineHeight: 20, color: col.texto }]}

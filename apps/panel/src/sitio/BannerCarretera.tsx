@@ -17,6 +17,7 @@ export function BannerArriba({
   lugar,
   activo: activoDado,
   servicios: serviciosDados,
+  lema: lemaDado,
   estilo = 'desfile',
 }: {
   idioma: 'es' | 'en';
@@ -27,6 +28,11 @@ export function BannerArriba({
    * la línea de siempre.
    */
   servicios?: string;
+  /**
+   * C-CIUDAD-ABIERTA-SIN-PRONTO: el lema tal cual («Divoox en Caracas»), para una ciudad que todavía no
+   * tiene servicio abierto: ni «ya estamos» ni «muy pronto».
+   */
+  lema?: string;
   /**
    * C-DESFILE-FLOTA (4 nov 2026, Richard): la avenida negra queda solo en «Cómo funciona»; en el
    * resto de las páginas va el desfile de la flota sobre la línea roja.
@@ -39,17 +45,19 @@ export function BannerArriba({
   const slug = (lugar ?? '').toLowerCase();
   const activo =
     activoDado ?? (lugar ? estadoCiudad({ slug, estado: 'pronto' }) === 'activo' : false);
-  const lema = !lugar
-    ? idioma === 'en'
-      ? 'Divoox, a food delivery startup'
-      : 'La startup Divoox: comida a domicilio'
-    : activo
+  const lema = lemaDado
+    ? lemaDado
+    : !lugar
       ? idioma === 'en'
-        ? `Now in ${lugar}`
-        : `Ya estamos en ${lugar}`
-      : idioma === 'en'
-        ? `Coming soon to ${lugar}`
-        : `Muy pronto en ${lugar}`;
+        ? 'Divoox, a food delivery startup'
+        : 'La startup Divoox: comida a domicilio'
+      : activo
+        ? idioma === 'en'
+          ? `Now in ${lugar}`
+          : `Ya estamos en ${lugar}`
+        : idioma === 'en'
+          ? `Coming soon to ${lugar}`
+          : `Muy pronto en ${lugar}`;
   const servicios = serviciosDados || (idioma === 'en' ? 'Food delivery' : 'Comida a domicilio');
   if (estilo === 'desfile') return <DesfileFlota lema={lema} servicios={servicios} />;
   return (

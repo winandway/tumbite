@@ -35,6 +35,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capRegalo\(\s*'([a-z0-9-]+)',\s
   archivos.add(`regalos-divoox-${nombre}-${idioma}.webp`);
 for (const [, nombre, idioma] of guias.matchAll(/capSaldo\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`saldo-conductores-${nombre}-${idioma}.webp`);
+// C-SALDO-CLIENTE: las de «Saldo de clientes» (capSaldoCliente).
+for (const [, nombre, idioma] of guias.matchAll(/capSaldoCliente\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`saldo-clientes-${nombre}-${idioma}.webp`);
 for (const [, nombre, idioma] of guias.matchAll(/capRef\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`referidos-${nombre}-${idioma}.webp`);
 // C-CUENTA-UNICA-UNIR: las de «Unir dos cuentas de la misma persona» (capUnion).

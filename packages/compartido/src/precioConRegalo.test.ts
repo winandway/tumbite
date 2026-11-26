@@ -12,6 +12,7 @@ describe('el precio de un viaje con regalo', () => {
       total: 142,
       tachado: false,
       regalo: 0,
+      saldo: 0,
       aPagar: 142,
       gratis: false,
     });
@@ -21,6 +22,7 @@ describe('el precio de un viaje con regalo', () => {
       total: 142,
       tachado: true,
       regalo: 142,
+      saldo: 0,
       aPagar: 0,
       gratis: true,
     });
@@ -41,6 +43,7 @@ describe('el precio de un viaje con regalo', () => {
       total: 142,
       tachado: false,
       regalo: 0,
+      saldo: 0,
       aPagar: 142,
       gratis: false,
       devuelto: true,

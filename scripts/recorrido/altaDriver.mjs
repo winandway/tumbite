@@ -1,11 +1,21 @@
 /**
  * Los guiones de capturas abren el alta de Moto o Carro de Divoox Driver como lo hace hoy un
  * conductor (el perfil ya no tiene la entrada «Divoox Moto» / «Divoox Carro», C-SERVICIOS-CONECTADOS):
- * - con el vehículo registrado: Perfil → «Mi vehículo» → su tarjeta → «Completar o editar»;
+ * - con el vehículo registrado: Cuenta → «Vehículo» (el perfil) → «Mi vehículo» → su tarjeta →
+ *   «Completar o editar» (desde el rediseño, la pestaña «Perfil» es «Cuenta», C-REDISENO-DRIVER);
  * - sin vehículo todavía: Inicio → la tarjeta del servicio («Agregar este servicio») → «Empezar».
  */
+/**
+ * Abre el perfil del conductor (Mi vehículo y Documentos). Desde el rediseño de Driver la barra de
+ * abajo dice «Cuenta» (antes «Perfil») y el perfil se abre con su fila «Vehículo».
+ */
+export async function abrirPerfil(d, en) {
+  await d.getByRole('tab', { name: en ? 'Account' : 'Cuenta' }).click({ timeout: 60_000 });
+  await d.getByTestId('cuenta-vehiculo').first().click({ timeout: 30_000 });
+}
+
 export async function abrirAlta(d, servicio, en) {
-  await d.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
+  await abrirPerfil(d, en);
   const seccion = d.getByTestId('seccion-vehiculo').first();
   await seccion.waitFor({ timeout: 30_000 });
   const tarjeta = d.getByTestId(`vehiculo-${servicio}`).first();
@@ -37,7 +47,7 @@ export async function abrirAlta(d, servicio, en) {
 /** Vuelve al perfil y abre «Documentos». */
 export async function abrirDocumentos(d, en) {
   await d.goto('/driver/');
-  await d.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
+  await abrirPerfil(d, en);
   const docs = d.getByTestId('seccion-documentos').first();
   await docs.waitFor({ timeout: 30_000 });
   await docs.click();

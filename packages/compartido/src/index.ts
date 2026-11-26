@@ -113,6 +113,7 @@ export * from './nacimientoLeido';
 export * from './crucesDocumento';
 export * from './tasaReferencia';
 export * from './regaloDivoox';
+export * from './saldoDivoox';
 export * from './sondeo';
 export * from './plural';
 export * from './comidaVenezuela';

@@ -235,10 +235,13 @@ try {
       16,
     );
     // 3) Pide (ida y vuelta) y el conductor ve la oferta con «Precio de la zona».
-    await c
-      .getByRole('button', { name: idioma === 'en' ? /Request/ : /Pedir|Solicitar/ })
-      .last()
-      .click();
+    // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita.
+    await c.getByTestId('pedir-boton').click();
+    await c.getByTestId('metodo-pago').waitFor({ timeout: 30_000 });
+    // Estas fotos son de pago en mano: si la cuenta tiene Saldo Divoox, se apaga.
+    if (await c.getByTestId('pago-saldo-desglose').isVisible())
+      await c.getByTestId('pago-saldo-usar').click();
+    await c.getByTestId('pago-solicitar').click();
     await espera(2_500);
     const viaje = (await pasajero('GET', '/datos/viajes/actual')).viaje;
     if (!viaje) throw new Error('el pasajero no quedó con un viaje');

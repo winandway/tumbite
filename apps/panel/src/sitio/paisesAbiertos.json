@@ -10,7 +10,13 @@
         "id": "carro",
         "es": "Carro",
         "en": "Car"
+      },
+      {
+        "id": "envios",
+        "es": "Envíos",
+        "en": "Delivery"
       }
     ]
-  }
+  },
+  "ciudades": {}
 }

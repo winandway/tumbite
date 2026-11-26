@@ -63,6 +63,6 @@ describe('cuenta del cliente dentro de la app', () => {
     expect(menu).toMatch(/<ConfirmarBorrado/);
     const confirmar = leer('packages', 'movil', 'src', 'OpcionesCuenta.tsx');
     expect(confirmar).toMatch(/export function ConfirmarBorrado/);
-    expect(confirmar).toMatch(/'DELETE', '\/datos\/cuentas\/yo'/);
+    expect(confirmar).toMatch(/'DELETE', `\/datos\/cuentas\/yo/);
   });
 });

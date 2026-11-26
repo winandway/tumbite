@@ -1,6 +1,7 @@
 import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
 import { MENSAJES_EN_LINEAS } from './mensajesEnLineas';
 import { MENSAJES_EN_REGALOS } from './mensajesEnRegalos';
+import { MENSAJES_EN_SALDO_CLIENTE } from './mensajesEnSaldoCliente';
 import { MENSAJES_EN_AGENTES } from './mensajesEnAgentes';
 import { MENSAJES_EN_BANNERS } from './mensajesEnBanners';
 import { MENSAJES_EN_CAMILA } from './mensajesEnCamila';
@@ -88,6 +89,7 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-PERMISOS-FINOS (MON-5): los del equipo interno viven en su propio archivo.
   ...MENSAJES_EN_EQUIPO,
   ...MENSAJES_EN_REGALOS,
+  ...MENSAJES_EN_SALDO_CLIENTE,
   ...MENSAJES_EN_LINEAS,
   ...MENSAJES_EN_AGENTES,
   ...MENSAJES_EN_BANNERS,
@@ -1371,6 +1373,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Before accepting rides, take a selfie with your helmet on.',
   ],
   ['Esa ciudad no existe.', 'That city doesn’t exist.'],
+  // C-TARIFAS-PUBLICAS: la página de precios de una ciudad sin precios publicados.
+  ['Sin precios publicados en esa ciudad.', 'No prices posted for that city.'],
   [
     'La propina se puede agregar hasta 7 días después del viaje.',
     'You can add a tip up to 7 days after the ride.',
@@ -1703,6 +1707,11 @@ export const MENSAJES_EN = new Map<string, string>([
   [
     'No se pudo cambiar el vehículo. Intenta otra vez.',
     'We couldn’t switch your vehicle. Please try again.',
+  ],
+  // C-RECARGO-NOCHE: una reserva cotizada con otra hora vuelve a cotizarse.
+  [
+    'El precio cambia a esa hora por la tarifa nocturna. Revisa el precio antes de reservar.',
+    'The price changes at that time because of the night fare. Check the price before you book.',
   ],
   [
     'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',

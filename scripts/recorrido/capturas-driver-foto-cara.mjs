@@ -412,7 +412,9 @@ try {
           );
           if (!sube.ok) throw new Error(`documento: ${sube.status}`);
           await p.goto('/driver/');
-          await p.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
+          // Desde el rediseño, «Perfil» es «Cuenta» → «Vehículo» (C-REDISENO-DRIVER).
+          await p.getByRole('tab', { name: en ? 'Account' : 'Cuenta' }).click({ timeout: 60_000 });
+          await p.getByTestId('cuenta-vehiculo').first().click({ timeout: 30_000 });
           const seccion = p.getByTestId('seccion-vehiculo').first();
           await seccion.waitFor({ timeout: 30_000 });
           if (

@@ -12,6 +12,27 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Unión de El Vigía: tabulador + Saldo Divoox + páginas para buscadores (25 nov 2026) — Venezuela · rama `fase-vigia-pago-buscadores` (lleva `fase-tabulador-vigia`, `fase-metodo-pago-saldo` y `fase-seo-venezuela`), sin subir
+
+- [x] [para: desarrollador] Fusionar las tres ramas, probar la interacción (circuito combinado del dinero en El Vigía con saldo, efectivo, Pago Móvil, noche, paradas, espera y cancelación), arreglar lo que salió (tarifas públicas con quién paga por servicio; soltar saldo y regalo si falla la comisión al aceptar; salida en español del borrado con saldo; la web no borra creyendo saldo 0), retoques de las ciudades, guion de Moto en Venezuela con la palanca en la regla de Moto (C-VIGIA-SALDO-CIRCUITO).
+- [ ] [para: revisor-calidad] Revisar UNA vez la rama de integración `fase-vigia-pago-buscadores` (reemplaza las revisiones pendientes de las tres ramas por separado; los ajustes del Saldo de 8342c14207 y los de esta unión no los ha visto nadie).
+- [ ] [para: desarrollador] Tras el visto bueno: subir la rama al sitio de pruebas y ver la pasada en verde (guiones de Moto en Venezuela, Perú, Carro, el recorrido de la web); luego lo de «Al publicar» de las secciones de abajo.
+
+## Divoox en Venezuela para Google y los buscadores de IA (encargo de Richard, 25 nov 2026) — Venezuela · rama `fase-seo-venezuela` (lleva dentro `fase-venezuela-abierta` y `fase-tabulador-vigia`), sin subir
+
+- [x] [para: desarrollador] Páginas de ciudad de Venezuela (El Vigía y Tucaní abiertas; nueve ciudades grandes sin «pronto» ni «ya disponible»), la del país con sus ciudades y preguntas frecuentes, y «Tarifas de mototaxi en El Vigía» de los datos que cobra el sistema, con datos estructurados, mapa del sitio, hreflang y llms.txt (C-CIUDAD-ABIERTA-SIN-PRONTO, C-TARIFAS-PUBLICAS; cambio de regla de C-SIN-LISTA-DE-CIUDADES solo para la web).
+- [ ] [para: revisor-calidad] Revisar la rama `fase-seo-venezuela` una vez antes de publicar (se publica junto con, o después de, `fase-venezuela-abierta` y `fase-tabulador-vigia`).
+- [x] [para: desarrollador] Correcciones del revisor: fotos vacías en el repositorio (nada sin confirmar por producción), precios viejos fuera al compilar, texto propio por ciudad sin servicio, servicio válido y caché por ciudad en la ruta de tarifas (pruebas en rojo comprobadas).
+- [ ] [para: desarrollador] OBLIGATORIO tras publicar el servidor nuevo: `curl -s https://divoox.com/datos/web/paises` (debe traer `ciudades.VE`) y `curl -s https://divoox.com/datos/web/tarifas/el-vigia`; luego VOLVER A COMPILAR Y PUBLICAR la web (otro push a main o «publicar» a mano): la primera compilación se hace antes de que exista la ruta, y sin esta segunda el HTML fijo, el sitemap y los datos estructurados no traen ciudades abiertas ni precios.
+- [ ] [para: jefe-operaciones] Decidir la propuesta: en `.github/workflows/publicar.yml`, después del «Semáforo de producción», volver a correr `estado-paises.mjs` y, solo si cambió algún JSON, recompilar la web y empujar otra vez a `yapanel-build` (sin commit a main, así no dispara «verify» ni hace bucle).
+
+## Tabulador de El Vigía y tarifa nocturna (encargo de Richard, 25 nov 2026) — Venezuela, El Vigía, Moto · rama `fase-tabulador-vigia`, sin subir
+
+- [x] [para: desarrollador] Tabulador de la calle como precios fijos (83 destinos por vía, 126 rutas con los regresos de la zona), tarifa aprendida (base 0, 0,46 $/km por la mediana tras la revisión, mínimo 1 $), umbral 0, comisión del conductor en El Vigía, tarifa nocturna +30 %, panel con lo que le queda al conductor, Docs es/en (C-TABULADOR-VIGIA, C-RECARGO-NOCHE).
+- [ ] [para: revisor-calidad] Revisar otra vez la rama `fase-tabulador-vigia` (devolución del 25 nov corregida: los ocho puntos, ver C-TABULADOR-VIGIA y C-RECARGO-NOCHE en CANDADOS).
+- [ ] [para: desarrollador] Al publicar: mirar en el sitio de pruebas que la semilla corrió (Viajes → Precios de la zona, El Vigía por vías) y pedir un viaje de prueba de día y otro de noche; compilar la app de clientes para la línea «Tarifa nocturna».
+- [ ] [para: jefe-operaciones] Repartir al equipo de la ciudad: corregir en el panel los 17 puntos marcados «Revisar punto en el mapa» de El Vigía.
+
 ## Verificaciones con TODO y el menú por uso (encargo de Richard por Gerencia, 25 nov 2026) — todos los países · rama `fase-verificaciones-todo`, sin subir
 
 - [x] [para: desarrollador] Pestaña «Vehículos» en Verificaciones (esperan revisión y sin enviar, aprobar ahí mismo, número del menú por persona), Camila recuerda enviar el vehículo, menú por uso («Países y servicios» y «Para aprobar» al final, límites por moneda en Configuración), barra del vehículo coherente, foto real de la licencia, «Soporte Divoox» en la línea de tiempo, documento vencido claro y pedido por Camila, privacidad con ciudad base y regreso. Candados vistos en rojo.

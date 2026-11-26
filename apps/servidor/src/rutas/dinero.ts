@@ -110,7 +110,10 @@ dinero.get('/billetera', async (c) => {
                 WHEN m.referencia LIKE 'regalo-divoox:%' THEN
                   (SELECT u.operacion_id FROM usos_cupon_divoox u
                     WHERE u.id = substr(m.referencia, 15) AND u.servicio <> 'comida')
-              END AS operacionId
+                -- C-SALDO-CLIENTE: lo que pagó el Saldo Divoox del pasajero, ligado a su viaje.
+                WHEN m.referencia LIKE 'saldo-divoox:%' THEN substr(m.referencia, 14)
+              END AS operacionId,
+              CASE WHEN m.referencia LIKE 'saldo-divoox:%' THEN 'saldo_divoox' END AS origen
          FROM movimientos m WHERE m.usuario_id = ? ORDER BY m.creado_en DESC LIMIT 100`,
     )
     .bind(u.id)

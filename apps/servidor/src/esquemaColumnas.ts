@@ -1973,6 +1973,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "espera_parada_gratis_s",
     "km_maximo",
     "umbral_precio_zona_pb",
+    "recargo_noche_pb",
+    "noche_desde_h",
+    "noche_hasta_h",
     "de_prueba",
     "activa",
     "motivo",
@@ -1996,6 +1999,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "precio",
     "precio_ida_vuelta",
     "activa",
+    "grupo",
+    "revisar",
     "creada_por",
     "creada_en",
     "actualizada_por",
@@ -3516,6 +3521,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
   "quien_paga_viajes": [
     "pais",
     "ciudad",
+    "servicio",
     "valor",
     "cambiado_por",
     "cambiado_en"
@@ -3552,5 +3558,36 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "negocio_id",
     "persona_id",
     "creado_en"
+  ],
+  "saldo_cliente_movimientos": [
+    "id",
+    "cliente_id",
+    "monto",
+    "moneda",
+    "concepto",
+    "referencia",
+    "operacion_id",
+    "autor_id",
+    "motivo",
+    "comprobante",
+    "creado_en"
+  ],
+  "usos_saldo_divoox": [
+    "operacion_id",
+    "cliente_id",
+    "conductor_id",
+    "monto",
+    "apartado",
+    "moneda",
+    "pais",
+    "aparato",
+    "tomado_en",
+    "estado",
+    "motivos",
+    "detalle",
+    "resuelto_por",
+    "creado_en",
+    "cerrado_en",
+    "motivo"
   ]
 };

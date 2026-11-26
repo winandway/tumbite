@@ -14,7 +14,10 @@ const leer = (...p: string[]) => readFileSync(join(RAIZ, ...p), 'utf8');
 describe('cerrar sesión y borrar la cuenta dentro de la app', () => {
   const pieza = leer('packages', 'movil', 'src', 'OpcionesCuenta.tsx');
   it('borra con la API, sin abrir la web, y pide escribir la palabra', () => {
-    expect(pieza).toContain("api.pedir('DELETE', '/datos/cuentas/yo')");
+    // C-SALDO-CLIENTE (I4): con Saldo Divoox, la misma llamada con «?saldo=acepto».
+    expect(pieza).toContain(
+      "api.pedir('DELETE', `/datos/cuentas/yo${saldo > 0 ? '?saldo=acepto' : ''}`)",
+    );
     expect(pieza).not.toContain('Linking');
     expect(pieza).toMatch(/escrito\.trim\(\)\.toUpperCase\(\) === t\.palabra/);
   });

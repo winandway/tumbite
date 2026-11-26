@@ -258,6 +258,14 @@ internacional.get('/admin/bandeja-dinero', async (c) => {
     .enum(TIPOS_CASO as [TipoCaso, ...TipoCaso[]])
     .optional()
     .safeParse(c.req.query('tipo') || undefined);
+  // C-NO-ME-LLEGO-BANDEJA: un tipo que la bandeja no tiene no se ignora en silencio (devolvía la
+  // primera página de todo y un caso nuevo podía no salir): se dice en palabras.
+  if (!tipo.success)
+    throw new ErrorDatos(
+      `Ese tipo de caso no existe. Usa uno de estos: ${TIPOS_CASO.join(', ')}.`,
+      'tipo',
+      422,
+    );
   const pagina = Number(c.req.query('pagina') ?? 0);
   return c.json(
     await listarCasos(base(c), {

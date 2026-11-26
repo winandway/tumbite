@@ -3,19 +3,22 @@ import { comisionConductor, servicioFinancieroViaje } from './conductor';
 
 /**
  * C-QUIEN-PAGA-VIAJES (23 nov 2026): la palanca de quién paga la comisión de Divoox en los viajes.
- * La ciudad manda sobre el país; sin fila, «conductor» (lo de siempre).
+ * La ciudad manda sobre el país, y en la misma ciudad (o país) la regla de un servicio manda sobre la
+ * de todos; sin fila, «conductor» (lo de siempre).
  */
 export async function quienPagaViaje(
   db: D1Database,
   pais: string,
   ciudad: string | null,
+  /** C-QUIEN-PAGA-SERVICIO: la regla de un servicio manda sobre la de todos (en la misma ciudad). */
+  servicio = '',
 ): Promise<QuienPaga> {
   const f = await db
     .prepare(
-      `SELECT valor FROM quien_paga_viajes WHERE pais = ?1 AND ciudad IN ('', ?2)
-        ORDER BY ciudad = '' LIMIT 1`,
+      `SELECT valor FROM quien_paga_viajes WHERE pais = ?1 AND ciudad IN ('', ?2) AND servicio IN ('', ?3)
+        ORDER BY ciudad = '', servicio = '' LIMIT 1`,
     )
-    .bind(pais, ciudad ?? '')
+    .bind(pais, ciudad ?? '', servicio)
     .first<{ valor: string }>();
   return esQuienPaga(f?.valor) ? f.valor : 'conductor';
 }

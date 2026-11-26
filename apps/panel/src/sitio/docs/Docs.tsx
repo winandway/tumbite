@@ -10,6 +10,31 @@ import { buscarGuias, resaltar } from './buscar';
 import { CapturasConLupa } from './Lupa';
 import { PaginaVideos, VideoDeDocs } from './VideoDocs';
 import { TEXTOS_VIDEO, VIDEOS, type VideoDocs, videosDeGuia, videosEnIdioma } from './videos';
+import { CIUDADES } from '../cobertura';
+import { CIUDADES_CON_TARIFAS } from '../tarifasCiudades';
+
+/**
+ * C-TARIFAS-PUBLICAS (25 nov 2026): Docs enlaza las páginas de precios de las ciudades que las
+ * tienen (salen de los datos que cobra el sistema), en la portada y en la guía del precio de la zona.
+ */
+function EnlacesTarifas({ idioma }: { idioma: Idioma }) {
+  const ciudades = CIUDADES.filter((c) => c.clave && CIUDADES_CON_TARIFAS.includes(c.clave));
+  if (!ciudades.length) return null;
+  return (
+    <>
+      {ciudades.map((c) => (
+        <p key={c.slug}>
+          <Enlace a={`/city/${c.slug}/prices`} className="docs-comohago">
+            {idioma === 'en'
+              ? `Moto taxi fares in ${c.nombre.en}`
+              : `Tarifas de mototaxi en ${c.nombre.es}`}{' '}
+            →
+          </Enlace>
+        </p>
+      ))}
+    </>
+  );
+}
 
 /** Cuántas sugerencias muestra la lista que se abre mientras se escribe. */
 const SUGERENCIAS = 20;
@@ -311,6 +336,7 @@ export function Docs({
                 {t.comoHagoInvita} →
               </Enlace>
             </p>
+            <EnlacesTarifas idioma={idioma} />
             {videos.length > 0 ? (
               <p>
                 <Enlace a="/docs/videos" className="docs-comohago">
@@ -550,6 +576,7 @@ function PaginaGuia({
         </>
       )}
       {guia.nota && <p className="docs-nota">{guia.nota}</p>}
+      {guia.id === 'local-fixed-price' ? <EnlacesTarifas idioma={idioma} /> : null}
       {guia.preguntas && guia.preguntas.length > 0 && (
         <section className="docs-preguntas">
           <h2>{t.responde}</h2>

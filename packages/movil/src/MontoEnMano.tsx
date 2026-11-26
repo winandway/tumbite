@@ -43,6 +43,7 @@ export function MontoEnMano({
   color,
   soloLocal = false,
   copiable = false,
+  centrado = false,
   testID,
 }: {
   monto: Monto | null | undefined;
@@ -55,6 +56,8 @@ export function MontoEnMano({
   soloLocal?: boolean;
   /** Con un botón para copiar los bolívares exactos (pago móvil). */
   copiable?: boolean;
+  /** Centrado bajo una cifra centrada (la pantalla «Método de pago»). */
+  centrado?: boolean;
   testID?: string;
 }) {
   const [copiado, setCopiado] = useState(false);
@@ -63,7 +66,12 @@ export function MontoEnMano({
   const t = idioma === 'en' ? TEXTOS_COPIAR.en : TEXTOS_COPIAR.es;
   const conBoton = copiable && Boolean(monto.local);
   return (
-    <View testID={testID} accessible={!conBoton} accessibilityRole="text" style={{ gap: 2 }}>
+    <View
+      testID={testID}
+      accessible={!conBoton}
+      accessibilityRole="text"
+      style={{ gap: 2, ...(centrado ? { alignItems: 'center' as const } : {}) }}
+    >
       {etiqueta ? (
         <Text style={{ color: COLOR.textoSuave, fontWeight: '700' }}>{etiqueta}</Text>
       ) : null}
@@ -102,7 +110,11 @@ export function MontoEnMano({
           </Text>
           <Text
             testID={testID ? `${testID}-tasa` : undefined}
-            style={{ color: COLOR.textoSuave, fontSize: 13 }}
+            style={{
+              color: COLOR.textoSuave,
+              fontSize: 13,
+              ...(centrado ? { textAlign: 'center' as const } : {}),
+            }}
           >
             {textoTasaUsada(monto.local, idioma)}
           </Text>
