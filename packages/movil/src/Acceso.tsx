@@ -80,6 +80,7 @@ export function Acceso({
   rolRegistro,
   pideCumple,
   portada,
+  cabecera,
   modoInicial = 'entrar',
   seguirMirando,
 }: {
@@ -90,6 +91,13 @@ export function Acceso({
    * Sin ella, el acceso se ve como siempre en cliente y repartidor.
    */
   portada?: ReactNode;
+  /**
+   * C-ACCESO-CON-CABECERA (26 nov 2026, Richard: «el logo sale bien con un fondo… debería mantenerse
+   * el azul petróleo»). Con portada, la franja de arriba (idioma, volver y portada) va sobre este
+   * color, el MISMO de la pantalla de arranque de la app, con el logo blanco: al pasar del arranque a
+   * «Entrar» no hay salto a blanco. Las casillas siguen sobre blanco.
+   */
+  cabecera?: string;
   /** Abre directo en «crear cuenta» (el enlace «¿Eres nuevo?» de la portada del cliente). */
   modoInicial?: 'entrar' | 'registro';
   /** C-MIRAR-SIN-CUENTA: en la app del cliente, volver a mirar sin cuenta. */
@@ -463,7 +471,38 @@ export function Acceso({
   const textoVolver = paso === 'revisar' ? r.editarDatos : t.volverAEntrar;
   const tituloPantalla = !registro ? t.entrar : paso === 'revisar' ? r.titulo : t.crearCuenta;
   const marco = (cuerpo: ReactNode) =>
-    portada ? (
+    portada && cabecera ? (
+      <SafeAreaView
+        edges={['top', 'left', 'right']}
+        style={{ flex: 1, backgroundColor: cabecera }}
+        {...gestoVolver}
+      >
+        <ScrollView
+          testID="acceso-con-cabecera"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          style={{ flex: 1, backgroundColor: cabecera }}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View
+            testID="acceso-cabecera"
+            style={{ backgroundColor: cabecera, paddingHorizontal: 24, paddingBottom: 24 }}
+          >
+            <View style={{ alignItems: 'flex-end', paddingTop: 8 }}>
+              <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
+            </View>
+            <View style={{ width: '100%', maxWidth: 460, alignSelf: 'center' }}>
+              {registro ? <EncabezadoVolver texto={textoVolver} alVolver={aEntrar} claro /> : null}
+              {portada}
+            </View>
+          </View>
+          <View style={{ flexGrow: 1, backgroundColor: '#FFFFFF', padding: 24 }}>
+            <View style={{ width: '100%', maxWidth: 460, alignSelf: 'center' }}>{cuerpo}</View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    ) : portada ? (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} {...gestoVolver}>
         <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8 }}>
           <View style={{ backgroundColor: fondoIdioma, borderRadius: 999, paddingHorizontal: 4 }}>

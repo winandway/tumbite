@@ -1,8 +1,11 @@
 import { Image, View } from 'react-native';
-import { Acceso, C, PantallaCarga, useSesion, Text } from '@tumbite/movil';
+import { Acceso, PantallaCarga, useSesion, Text } from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 import { textosRest } from '../piezas/textos';
+
+/** El negro de la pantalla de arranque (app.json, expo-splash-screen). */
+const COLOR_ARRANQUE_REST = '#101010';
 
 /**
  * Portada del acceso con el diseño aprobado: logotipo «Restaurante». El título («Entrar» o «Crear
@@ -14,12 +17,12 @@ function Portada() {
   return (
     <View style={{ alignItems: 'center', marginBottom: 20 }}>
       <Image
-        source={IMG.logo}
+        source={IMG.logoOscuro}
         style={{ width: 220, height: 64 }}
         resizeMode="contain"
         accessibilityLabel="Divoox"
       />
-      <Text style={{ fontWeight: '800', fontSize: 20, color: C.secundario, marginTop: -6 }}>
+      <Text style={{ fontWeight: '800', fontSize: 20, color: '#FFFFFF', marginTop: -6 }}>
         {t.restaurante}
       </Text>
     </View>
@@ -30,5 +33,10 @@ export default function Entrada() {
   const { cargando, usuario } = useSesion();
   // C-ARRANQUE-CON-MARCA: la pantalla de carga con la marca de la app mientras se lee la sesión.
   if (cargando) return <PantallaCarga />;
-  return usuario ? <Inicio /> : <Acceso rolRegistro="restaurante" portada={<Portada />} />;
+  return usuario ? (
+    <Inicio />
+  ) : (
+    // C-ACCESO-CON-CABECERA (26 nov 2026, Richard): «Entrar» sigue en el negro del arranque.
+    <Acceso rolRegistro="restaurante" portada={<Portada />} cabecera={COLOR_ARRANQUE_REST} />
+  );
 }

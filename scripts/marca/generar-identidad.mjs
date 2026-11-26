@@ -11,8 +11,19 @@ const VEC = join(RAIZ, 'identidad-divoox', 'Divoox_Vectoriales');
 const leer = (f) => readFileSync(join(VEC, f), 'utf8');
 export const ROJO = '#F20D20';
 export const NEGRO = '#101010';
+/** Azul petróleo de la marca (MARCA.colores.logistica). */
+export const PETROLEO = '#1F4D69';
 
-const LOGO_CLARO = leer('01_Logo_Completo_Fondo_Claro.svg');
+/**
+ * C-LOGO-FONDO-CLARO (26 nov 2026, orden de Richard al ver la Driver de pruebas: «el logo es
+ * transparente sobre fondo blanco y las letras no se ven»). Sobre fondo blanco o claro, todo lo que
+ * en el vector va en negro (las letras y el marcador) va en el AZUL PETRÓLEO de la marca; la X y
+ * los puntos siguen en rojo. Mismos trazos: solo cambia la tinta. Con el negro, en teléfonos que
+ * oscurecen las apps por su cuenta, las letras desaparecían sobre el fondo oscurecido.
+ */
+export const enPetroleo = (svg) => svg.replace(/fill="#101010"/gi, `fill="${PETROLEO}"`);
+
+const LOGO_CLARO = enPetroleo(leer('01_Logo_Completo_Fondo_Claro.svg'));
 const LOGO_OSCURO = leer('02_Logo_Completo_Fondo_Oscuro.svg');
 const ISO_CLARO = leer('05_Isotipo_GPS_Fondo_Claro.svg');
 const ISO_OSCURO = leer('06_Isotipo_GPS_Fondo_Oscuro.svg');
@@ -57,7 +68,7 @@ guardar(join(MARCA_WEB, 'divoox-isotipo.svg'), ISO_CLARO);
 guardar(join(MARCA_WEB, 'divoox-isotipo-oscuro.svg'), ISO_OSCURO);
 guardar(
   join(MARCA_WEB, 'divoox-palabra.svg'),
-  palabraLimpia(leer('03_Logotipo_Solo_Fondo_Claro.svg')),
+  enPetroleo(palabraLimpia(leer('03_Logotipo_Solo_Fondo_Claro.svg'))),
 );
 guardar(
   join(MARCA_WEB, 'divoox-palabra-oscuro.svg'),
@@ -186,6 +197,22 @@ const CABECERAS = [
 ];
 for (const ruta of CABECERAS)
   await png(join(RAIZ, ruta), { svg: LOGO_CLARO, ancho: 1218, alto: 300, escala: 1 });
+
+// 4a. C-ACCESO-CON-CABECERA: el logo para la franja de color de «Entrar» de Driver (azul petróleo) y
+// Restaurants (negro), el mismo de su pantalla de arranque: letras blancas y la X roja.
+for (const ruta of [
+  'apps/repartidor/assets/driver/logo-oscuro.png',
+  'apps/restaurante/assets/rest/logo-oscuro.png',
+])
+  await png(join(RAIZ, ruta), { svg: LOGO_OSCURO, ancho: 1218, alto: 300, escala: 1 });
+
+// 4b. El logo de los correos y de las páginas sueltas del servidor (van sobre gris claro).
+await png(join(MARCA_WEB, 'divoox-logo-correo.png'), {
+  svg: LOGO_CLARO,
+  ancho: 480,
+  alto: 118,
+  escala: 1,
+});
 
 // 5. La mascota de la marca vieja se reemplaza por el isotipo (un marcador de mapa), en los mismos
 // archivos y con la misma proporción, para no mover ningún diseño.
