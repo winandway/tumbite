@@ -7434,3 +7434,12 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Cómo se comprueba:** empujar una rama `fase-…` con la variable encendida: la corrida dice «Vista previa de …: https://divoox-preview-…» y los guiones pasan contra ella; staging no cambia. A mano: `node scripts/vista-previa/vista-previa.mjs listar`.
 - **Medido (26 nov):** vista previa nueva 85–94 s, republicar 21–36 s; dos ramas a la vez con los cinco guiones sin tarjeta en verde, 109 y 135 s cada una.
 - **Qué NO tocar:** nunca apuntar una vista previa a `site-tumbite-db` ni a `site-tumbite-pruebas-db`, ni darle llaves reales; no quitar la marca ni el `app.use('*', candadoVistaPrevia)` (va primero, antes de cualquier lectura); no volver a poner la fila `publicar` a nivel del flujo en `pruebas-rama.yml`.
+
+## C-INDICES-SIN-USO — fuera los índices que ninguna consulta usa (26 nov 2026, Gerencia, punto 8 del plan de mejoras) — todos los países
+
+- **Qué pasaba:** seis índices se escribían en cada alta o cambio de su tabla sin que ninguna consulta los usara (`pedidos_sesion`, `retiros_por_procesar`, `vehiculo_documentos_vence`, `miembros_restaurante_usuario`, `catalogo_productos_barras`, `invitaciones_flota_correo`).
+- **Cómo se decidió:** plan de SQLite de las 2.828 consultas reales de 31 días de producción (`wrangler d1 insights`), las 5.000 más usadas del sitio de pruebas, los disparadores y las 9.460 consultas de la batería completa, sobre el esquema exacto de producción. Estudio y cifras: `docs/INDICES-D1-2026-11-26.md`.
+- **Arreglo:** fuera de `schema.sql`; la migración de arranque los borra con `DROP INDEX IF EXISTS` (`INDICES_RETIRADOS` en `apps/servidor/src/indicesRetirados.ts`, dentro de la huella del esquema).
+- **Prueba (rojo comprobado):** `apps/servidor/src/indicesRetirados.test.ts` — ninguno vuelve a `schema.sql` ni a `esquema.ts`, una base que los tiene queda sin ellos al arrancar, y las consultas de esas tablas siguen yendo por índice.
+- **Medido (vista previa, base nueva):** cinco guiones de punta a punta, 13.349 → 13.335 filas leídas y 2.746 → 2.736 escritas.
+- **Qué NO tocar:** no devolver un índice «por si acaso»; si una consulta nueva lo necesita, se saca de la lista y se crea con su `EXPLAIN QUERY PLAN` a la vista. Los índices únicos nunca entran en esta lista.
