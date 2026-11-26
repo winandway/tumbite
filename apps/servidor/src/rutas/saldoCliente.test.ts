@@ -1074,6 +1074,107 @@ describe('C-SALDO-CLIENTE (ajustes finales): borrar la cuenta sin callejón y de
     expect(asiento?.n).toBe(0);
   });
 
+  it('3b: un uso del saldo que quedó abierto: si el viaje no se hizo vuelve y se borra; si se hizo, 409 en palabras', async () => {
+    const p = await preparar();
+    await p.cargar(1000);
+    const c = await conductorListoVe(p.e, 2000);
+    const { id } = await hastaIniciar(p, c, { metodoPago: 'efectivo', usarSaldo: true });
+    await recorrer(p, c.rep.id, id);
+    expect((await c.paso(id, 'terminar')).estado).toBe(200);
+    // El viaje terminó pero el cierre del saldo «se cortó»: el uso sigue apartado.
+    await p.e.m.DB.prepare(
+      "UPDATE usos_saldo_divoox SET estado = 'apartado', monto = 0, cerrado_en = NULL WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    const borrar = () =>
+      p.e.m.llamar('DELETE', '/datos/cuentas/yo?saldo=acepto', undefined, p.e.cliente.token, {
+        'x-idioma': 'es',
+      });
+    const r = await borrar();
+    expect(r.estado).toBe(409);
+    expect(r.datos.error).toMatch(/todavía estamos cerrando/);
+    expect((await usoDe(p, id))?.estado).toBe('apartado');
+  });
+
+  it('3b2: un uso abierto de un viaje cancelado se devuelve y la cuenta se borra cerrando el saldo', async () => {
+    const p = await preparar();
+    await p.cargar(1000);
+    const q = await p.cotizar();
+    const v = await p.pasajero('POST', '/datos/viajes', {
+      cotizacionId: q.id,
+      metodoPago: 'efectivo',
+      usarSaldo: true,
+    });
+    const id = v.datos.viaje.id as string;
+    // La cancelación se hizo pero la devolución «se cortó» (el uso quedó apartado sin su devolución).
+    await p.e.m.DB.prepare(
+      "UPDATE usos_saldo_divoox SET estado = 'apartado' WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    const { cambiarEstadoViaje } = await import('../operaciones');
+    expect(
+      await cambiarEstadoViaje(p.e.m.DB, {
+        operacionId: id,
+        desde: 'buscando',
+        hacia: 'sin_conductor',
+        actor: 'sistema',
+        actorId: null,
+        clave: 'prueba-borrar-sin-conductor',
+      }),
+    ).toBe(true);
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBeLessThan(1000);
+    const r = await p.e.m.llamar(
+      'DELETE',
+      '/datos/cuentas/yo?saldo=acepto',
+      undefined,
+      p.e.cliente.token,
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+    expect((await usoDe(p, id))?.estado).toBe('liberado');
+    expect(await saldoDeCliente(p.e.m.DB, p.e.cliente.id)).toBe(0);
+    expect(await saludSaldoClientes(p.e.m.DB)).toBe('ok');
+  });
+
+  it('3c: si el saldo cambia entre la lectura y el lote del borrado, 409 en palabras y no se borra nada', async () => {
+    const p = await preparar();
+    await p.cargar(900);
+    const { borrarCuenta } = await import('../borrarCuenta');
+    const real = p.e.m.DB;
+    let hecho = false;
+    const cambia = new Proxy(real, {
+      get(t, k) {
+        if (k === 'batch')
+          return async (s: D1PreparedStatement[]) => {
+            // Justo antes del lote grande del borrado, el equipo le carga saldo.
+            if (s.length > 3 && !hecho) {
+              hecho = true;
+              await p.cargar(100);
+            }
+            return t.batch(s);
+          };
+        const v = Reflect.get(t, k) as unknown;
+        return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(t) : v;
+      },
+    });
+    const u = await real
+      .prepare('SELECT id, correo, rol, nombre FROM usuarios WHERE id = ?')
+      .bind(p.e.cliente.id)
+      .first<{ id: string; correo: string; rol: string; nombre: string }>();
+    const error = await borrarCuenta({} as never, cambia, u as never, {
+      saldoAceptado: true,
+    }).catch((e: unknown) => e);
+    expect(error).toMatchObject({ estado: 409 });
+    expect(String((error as Error).message)).toMatch(/Tu Saldo Divoox cambió/);
+    expect(await saldoDeCliente(real, p.e.cliente.id)).toBe(1000);
+    const sigue = await real
+      .prepare('SELECT activo FROM usuarios WHERE id = ?')
+      .bind(p.e.cliente.id)
+      .first<{ activo: number }>();
+    expect(sigue?.activo).toBe(1);
+  });
+
   it('3: el cierre del saldo va en el mismo lote que el borrado: si el borrado falla, el saldo sigue', async () => {
     const p = await preparar();
     await p.cargar(900);

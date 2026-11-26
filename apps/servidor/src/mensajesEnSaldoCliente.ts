@@ -64,4 +64,12 @@ export const MENSAJES_EN_SALDO_CLIENTE: [string, string][] = [
     'Escribe la referencia del pago con el que le devolviste el prepago (al menos 4 números).',
     'Enter the reference of the payment you used to refund the prepayment (at least 4 digits).',
   ],
+  [
+    'Tienes un pago con tu Saldo Divoox de un viaje que todavía estamos cerrando. Inténtalo de nuevo en unos minutos; si sigue igual, escríbenos a soporte.',
+    'You have a Divoox Balance payment from a trip we’re still closing. Try again in a few minutes; if nothing changes, write to support.',
+  ],
+  [
+    'Tu Saldo Divoox cambió mientras borrábamos tu cuenta. No se borró nada: vuelve a intentarlo.',
+    'Your Divoox Balance changed while we were deleting your account. Nothing was deleted: try again.',
+  ],
 ];

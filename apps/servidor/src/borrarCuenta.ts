@@ -2,7 +2,7 @@ import type { Env } from './env';
 import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
 import { capturasDeCamila, sentenciasBorrarDeCamila } from './camila/memoria';
-import { saldoDeCliente, sentenciasCierreSaldo } from './saldoCliente';
+import { liberarSaldoViaje, saldoDeCliente, sentenciasCierreSaldo } from './saldoCliente';
 
 /**
  * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026): el borrado de una cuenta, en UNA sola pieza. Lo usan la app
@@ -61,6 +61,27 @@ export async function borrarCuenta(
       undefined,
       409,
     );
+  // C-SALDO-CLIENTE (revisión del 25 nov): un uso del Saldo Divoox que quedó abierto de un viaje que
+  // ya no está en curso. Si el viaje no se hizo, el saldo vuelve ahora (y se cierra con la cuenta); si
+  // se hizo y su cierre se cortó (o el equipo lo revisa), se espera: nunca se borra con dinero colgado.
+  const { results: usosAbiertos } = await db
+    .prepare(
+      `SELECT u.operacion_id, u.estado, o.estado_general FROM operaciones o
+         JOIN usos_saldo_divoox u ON u.operacion_id = o.id
+        WHERE o.cliente_id = ? AND u.estado IN ('apartado', 'en_revision') LIMIT 20`,
+    )
+    .bind(u.id)
+    .all<{ operacion_id: string; estado: string; estado_general: string }>();
+  for (const x of usosAbiertos) {
+    if (x.estado === 'apartado' && ['cancelada', 'sin_conductor'].includes(x.estado_general))
+      await liberarSaldoViaje(db, x.operacion_id, 'cuenta_borrada');
+    else
+      throw new ErrorDatos(
+        'Tienes un pago con tu Saldo Divoox de un viaje que todavía estamos cerrando. Inténtalo de nuevo en unos minutos; si sigue igual, escríbenos a soporte.',
+        'saldoDivoox',
+        409,
+      );
+  }
   // C-SALDO-CLIENTE (I4): con Saldo Divoox, el borrado NO se frena (las tiendas exigen poder borrar),
   // pero solo después del aviso con el monto y su confirmación explícita.
   const saldoDivoox = await saldoDeCliente(db, u.id);
@@ -162,7 +183,18 @@ export async function borrarCuenta(
   // queda un caso en la bandeja de dinero para devolverlo.
   // En el MISMO lote que el borrado (atómico): si el borrado falla, el saldo no queda en cero.
   const cierreSaldo = saldoDivoox > 0 ? (await sentenciasCierreSaldo(db, u.id)).sentencias : [];
-  await db.batch([
+  // Si el saldo cambió entre la lectura y el lote (una carga del equipo, un viaje), el lote entero se
+  // cae (un movimiento de 0 no pasa la regla de la tabla) y se dice en palabras: nunca un 500, nunca
+  // una cuenta borrada con saldo vivo.
+  const guardaSaldo = db
+    .prepare(
+      `INSERT INTO saldo_cliente_movimientos (id, cliente_id, monto, concepto, referencia, motivo)
+       SELECT ?1, ?2, 0, 'ajuste', ?1, 'El saldo cambió durante el borrado'
+        WHERE (SELECT COALESCE(SUM(monto), 0) FROM saldo_cliente_movimientos WHERE cliente_id = ?2) <> ?3`,
+    )
+    .bind(`guarda-borrado:${crypto.randomUUID()}`, u.id, saldoDivoox);
+  const lote: D1PreparedStatement[] = [
+    guardaSaldo,
     ...cierreSaldo,
     // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
     ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
@@ -233,8 +265,8 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE rutinas_viaje SET estado = 'borrada', nombre = '', origen_direccion = '', destino_direccion = '',
-           origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0, menor_nombre = NULL,
-           pin_menor = NULL, paquete_json = NULL, proxima_revision_en = NULL WHERE cliente_id = ?`,
+         origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0, menor_nombre = NULL,
+         pin_menor = NULL, paquete_json = NULL, proxima_revision_en = NULL WHERE cliente_id = ?`,
       )
       .bind(u.id),
     db
@@ -271,7 +303,7 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE viajes SET origen_direccion = 'Dirección borrada', destino_direccion = 'Dirección borrada',
-           origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0 WHERE operacion_id IN (${comoPasajero})`,
+         origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0 WHERE operacion_id IN (${comoPasajero})`,
       )
       .bind(u.id),
     db
@@ -291,7 +323,7 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE envios_persona SET descripcion = '', destinatario_nombre = '', destinatario_telefono = ''
-         WHERE operacion_id IN (${comoPasajero})`,
+       WHERE operacion_id IN (${comoPasajero})`,
       )
       .bind(u.id),
     // Fotos de recogida y de entrega (de sus pedidos y envíos, como cliente o como quien las tomó):
@@ -299,8 +331,8 @@ export async function borrarCuenta(
     db
       .prepare(
         `DELETE FROM fotos_gps WHERE clave IN (SELECT clave FROM evidencias WHERE pedido_id IN (${misPedidos}))
-           OR clave IN (SELECT foto_recogida FROM envios_persona WHERE operacion_id IN (${misOperaciones}))
-           OR clave IN (SELECT foto_entrega FROM envios_persona WHERE operacion_id IN (${misOperaciones}))`,
+         OR clave IN (SELECT foto_recogida FROM envios_persona WHERE operacion_id IN (${misOperaciones}))
+         OR clave IN (SELECT foto_entrega FROM envios_persona WHERE operacion_id IN (${misOperaciones}))`,
       )
       .bind(u.id),
     db
@@ -329,7 +361,7 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE cuentas_cobro_restaurante SET banco = '', telefono = '', documento = '', titular = 'Cuenta borrada', activa = 0
-          WHERE restaurante_id IN (SELECT id FROM restaurantes WHERE dueno_id = ?)`,
+        WHERE restaurante_id IN (SELECT id FROM restaurantes WHERE dueno_id = ?)`,
       )
       .bind(u.id),
     // Conductor: su cuenta de cobro (banco, titular, pago móvil) y sus selfies con casco y de control.
@@ -344,7 +376,7 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE calificaciones SET respuesta = NULL, respondida_en = NULL WHERE pedido_id IN
-           (SELECT p.id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE r.dueno_id = ?)`,
+         (SELECT p.id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE r.dueno_id = ?)`,
       )
       .bind(u.id),
     // C-BORRADO-SERVICIOS, segunda vuelta (16 nov 2026, auditor de tiendas): cotizaciones de viaje,
@@ -353,7 +385,7 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE cotizaciones_viaje SET origen_direccion = 'Dirección borrada', destino_direccion = 'Dirección borrada',
-           origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0, paradas_json = '[]' WHERE cliente_id = ?`,
+         origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0, paradas_json = '[]' WHERE cliente_id = ?`,
       )
       .bind(u.id),
     db
@@ -377,8 +409,8 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE restaurante_empresa SET dueno_nombre = '', dueno_telefono = '', dueno_correo = '',
-           manager_nombre = '', manager_telefono = '', manager_correo = ''
-         WHERE restaurante_id IN (SELECT id FROM restaurantes WHERE dueno_id = ?)`,
+         manager_nombre = '', manager_telefono = '', manager_correo = ''
+       WHERE restaurante_id IN (SELECT id FROM restaurantes WHERE dueno_id = ?)`,
       )
       .bind(u.id),
     db
@@ -402,7 +434,7 @@ export async function borrarCuenta(
       db
         .prepare(
           `UPDATE ${t} SET nombre = '', telefono_canonico = NULL, correo_canonico = NULL
-           WHERE usuario_id = ?1 OR (?2 IS NOT NULL AND correo_canonico = ?2) OR (?3 IS NOT NULL AND telefono_canonico = ?3)`,
+         WHERE usuario_id = ?1 OR (?2 IS NOT NULL AND correo_canonico = ?2) OR (?3 IS NOT NULL AND telefono_canonico = ?3)`,
         )
         .bind(u.id, canon?.correo_canonico ?? null, canon?.telefono_canonico ?? null),
     ),
@@ -440,7 +472,7 @@ export async function borrarCuenta(
     db
       .prepare(
         `DELETE FROM invitaciones_lider WHERE estado = 'pendiente'
-           AND (lider_correo = ?1 OR (?2 <> '' AND lider_telefono_canonico = ?2))`,
+         AND (lider_correo = ?1 OR (?2 <> '' AND lider_telefono_canonico = ?2))`,
       )
       .bind(String(u.correo).toLowerCase(), canon?.telefono_canonico ?? ''),
     // C-BORRADO-ESQUEMA (21 nov 2026, auditor de tiendas): lo que quedaba fuera al repasar TODO el
@@ -486,14 +518,14 @@ export async function borrarCuenta(
     db
       .prepare(
         `UPDATE lineas SET contacto2_nombre = '', contacto2_telefono = ''
-         WHERE equipo_id IN (SELECT id FROM equipos WHERE lider_id = ?)`,
+       WHERE equipo_id IN (SELECT id FROM equipos WHERE lider_id = ?)`,
       )
       .bind(u.id),
     db
       .prepare(
         `UPDATE solicitudes_linea SET lider_nombre = '', lider_telefono = '', contacto2_nombre = '', contacto2_telefono = ''
-         WHERE equipo_id IN (SELECT id FROM equipos WHERE lider_id = ?1)
-            OR (?2 <> '' AND lider_telefono = ?2) OR (?3 <> '' AND lider_telefono = ?3)`,
+       WHERE equipo_id IN (SELECT id FROM equipos WHERE lider_id = ?1)
+          OR (?2 <> '' AND lider_telefono = ?2) OR (?3 <> '' AND lider_telefono = ?3)`,
       )
       .bind(u.id, canon?.telefono ?? '', canon?.telefono_canonico ?? ''),
     // Su vehículo: se retira y se le quitan placa, marca, modelo y color. Primero el estado (un
@@ -515,7 +547,8 @@ export async function borrarCuenta(
         "UPDATE vehiculo_documentos SET clave = '' WHERE vehiculo_id IN (SELECT id FROM vehiculos WHERE conductor_id = ?)",
       )
       .bind(u.id),
-  ]);
+  ];
+  await siElSaldoCambia(db.batch(lote));
   // Y las fotos del documento, la cara y el local, del almacén privado.
   if (env.BUCKET) {
     for (const prefix of [
@@ -554,4 +587,19 @@ export async function borrarCuenta(
   }
   // Y los archivos de las fotos de la puerta (puertas/<usuario>/…), del almacén privado.
   await borrarPuertasDeUsuario(env, u.id);
+}
+
+/** El lote del borrado se cayó porque el saldo cambió en medio: 409 en palabras, nunca un 500. */
+async function siElSaldoCambia<T>(lote: Promise<T>): Promise<T> {
+  try {
+    return await lote;
+  } catch (e) {
+    if (/CHECK constraint|saldo_insuficiente/i.test(String(e)))
+      throw new ErrorDatos(
+        'Tu Saldo Divoox cambió mientras borrábamos tu cuenta. No se borró nada: vuelve a intentarlo.',
+        'saldoDivoox',
+        409,
+      );
+    throw e;
+  }
 }
