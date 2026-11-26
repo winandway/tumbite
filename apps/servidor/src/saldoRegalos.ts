@@ -612,15 +612,17 @@ export async function leerTopesMasiva(db: D1Database): Promise<TopesMasiva> {
   };
 }
 
-/**
- * Lo repartido con cargas masivas en las últimas 24 horas (todo el equipo y la persona). Las cargas de
- * esa ventana se buscan por su fecha (índice) y sus lotes por la regla (índice): no recorre tablas.
- */
+/** Lo repartido con cargas masivas en las últimas 24 horas (la persona, o todo el equipo). */
 const SQL_MASIVA_HOY = (autor: string) =>
-  `(SELECT COALESCE(SUM(l.monto_inicial), 0) FROM saldo_cliente_lotes l
-     WHERE l.origen = 'masiva' AND l.creado_en > datetime('now', '-1 day')
-       AND l.regla_id IN (SELECT k.id FROM saldo_cargas_masivas k INDEXED BY saldo_cargas_masivas_fecha
-                           WHERE k.creado_en > datetime('now', '-8 days') ${autor ? `AND k.autor_id = ${autor}` : ''}))`;
+  // Por la fecha de CADA movimiento acreditado (no la de la carga): con autor, por el índice
+  // `saldo_cliente_movimientos_autor`; todo el equipo, por el índice de fecha. Solo lo de las cargas
+  // masivas (referencia «masiva:»): la bienvenida, la fidelidad y las cargas a mano no cuentan aquí.
+  autor
+    ? `(SELECT COALESCE(SUM(mv.monto), 0) FROM saldo_cliente_movimientos mv INDEXED BY saldo_cliente_movimientos_autor
+         WHERE mv.autor_id = ${autor} AND mv.creado_en > datetime('now', '-1 day') AND mv.monto > 0
+           AND mv.referencia LIKE 'masiva:%')`
+    : `(SELECT COALESCE(SUM(mv.monto), 0) FROM saldo_cliente_movimientos mv INDEXED BY saldo_cliente_movimientos_fecha
+         WHERE mv.creado_en > datetime('now', '-1 day') AND mv.monto > 0 AND mv.referencia LIKE 'masiva:%')`;
 
 async function repartidoHoy(db: D1Database, autorId: string) {
   const f = await db
@@ -669,14 +671,13 @@ export async function guardarTopesMasiva(db: D1Database, t: TopesMasiva, autorId
  * la de un regalo que ya recibió allí (casi ningún cliente tiene ciudad en su cuenta).
  */
 function sqlCandidatos(limite: number) {
-  return `SELECT * FROM (
-      SELECT u.id, u.nombre, u.creado_en, u.telefono_verificado_en IS NOT NULL AS verificado,
-             COALESCE(v.n, 0) AS viajes
+  // Los viajes terminados se cuentan SOLO si hay filtro de viajes, y solo para cada cliente candidato
+  // (por el índice `operaciones_cliente`): nada recorre ni materializa todas las operaciones. La lista
+  // de la página trae sus viajes aparte, con un IN sobre sus ids (`viajesDe`).
+  const viajes = `(SELECT COUNT(*) FROM operaciones o WHERE o.cliente_id = u.id
+                     AND o.tipo_operacion = 'viaje_pasajero' AND o.estado_general = 'terminada')`;
+  return `SELECT u.id, u.nombre, u.creado_en, u.telefono_verificado_en IS NOT NULL AS verificado
         FROM usuarios u INDEXED BY usuarios_rol_creado
-        -- Los viajes terminados de todos los clientes en UNA consulta agregada (no uno por uno).
-        LEFT JOIN (SELECT o.cliente_id, COUNT(*) AS n FROM operaciones o
-                    WHERE o.tipo_operacion = 'viaje_pasajero' AND o.estado_general = 'terminada'
-                    GROUP BY o.cliente_id) v ON v.cliente_id = u.id
        WHERE u.rol = 'cliente' AND u.activo = 1 AND u.creado_en <= ?1
          AND (?2 IS NULL OR u.creado_en >= ?2)
          AND (?3 IS NULL OR u.creado_en < date(?3, '+1 day'))
@@ -685,17 +686,35 @@ function sqlCandidatos(limite: number) {
               OR EXISTS (SELECT 1 FROM operaciones o WHERE o.cliente_id = u.id AND o.zona_id = ?5)
               OR EXISTS (SELECT 1 FROM saldo_cliente_lotes l WHERE l.cliente_id = u.id AND l.zona_id = ?5))
          AND (u.creado_en > ?8 OR (u.creado_en = ?8 AND u.id > ?9))
-       ORDER BY u.creado_en, u.id) c
-     WHERE (?6 IS NULL OR c.viajes >= ?6) AND (?7 IS NULL OR c.viajes <= ?7)
-     LIMIT ${limite}`;
+         AND (?6 IS NULL OR ${viajes} >= ?6)
+         AND (?7 IS NULL OR ${viajes} <= ?7)
+       ORDER BY u.creado_en, u.id
+       LIMIT ${limite}`;
 }
+
+/** Los viajes terminados de los clientes de UNA página (una consulta, por el índice de cliente). */
+async function viajesDe(db: D1Database, ids: string[]) {
+  if (!ids.length) return new Map<string, number>();
+  const { results } = await db
+    .prepare(
+      `SELECT cliente_id, COUNT(*) AS n FROM operaciones
+        WHERE cliente_id IN (${ids.map(() => '?').join(',')})
+          AND tipo_operacion = 'viaje_pasajero' AND estado_general = 'terminada'
+        GROUP BY cliente_id`,
+    )
+    .bind(...ids)
+    .all<{ cliente_id: string; n: number }>();
+  return new Map(results.map((r) => [r.cliente_id, Number(r.n)]));
+}
+
+/** Solo para la prueba del plan (EXPLAIN): la consulta de candidatos tal como corre. */
+export const SQL_CANDIDATOS_PRUEBA = (limite: number) => sqlCandidatos(limite);
 
 type Candidato = {
   id: string;
   nombre: string;
   creado_en: string;
   verificado: number;
-  viajes: number;
 };
 
 async function candidatos(
@@ -757,6 +776,10 @@ export async function vistaPreviaMasiva(
   const pagina = (await candidatos(db, p.filtros, ahora, desde, 51)).slice(0, 51);
   const lista = pagina.slice(0, 50);
   const ultimo = lista.at(-1);
+  const viajes = await viajesDe(
+    db,
+    lista.map((c) => c.id),
+  );
   return {
     clientes,
     masDeLaCuenta: todos.length > MAX_CLIENTES_CARGA,
@@ -765,7 +788,7 @@ export async function vistaPreviaMasiva(
       id: c.id,
       nombre: c.nombre,
       registrado: c.creado_en,
-      viajes: Number(c.viajes),
+      viajes: viajes.get(c.id) ?? 0,
       celularVerificado: Number(c.verificado) === 1,
     })),
     siguiente: pagina.length > 50 && ultimo ? `${ultimo.creado_en}|${ultimo.id}` : null,
@@ -1063,13 +1086,16 @@ export async function procesarTandaMasiva(env: Env | undefined, db: D1Database, 
 export async function continuarCargasMasivas(env: Env | undefined, db: D1Database) {
   const { results } = await db
     .prepare(
-      "SELECT id FROM saldo_cargas_masivas INDEXED BY saldo_cargas_masivas_en_curso WHERE estado = 'en_curso' ORDER BY creado_en LIMIT 3",
+      "SELECT id FROM saldo_cargas_masivas INDEXED BY saldo_cargas_masivas_en_curso WHERE estado = 'en_curso' ORDER BY creado_en LIMIT 20",
     )
     .all<{ id: string }>();
+  // Hasta 3 cargas que AVANZAN por vuelta: una frenada por el tope de su persona (sin cupo, se mira y
+  // no escribe) no ocupa el lugar de las que sí tienen cupo.
   let n = 0;
   for (const r of results) {
-    await procesarTandaMasiva(env, db, r.id);
-    n++;
+    if (n >= 3) break;
+    const c = await procesarTandaMasiva(env, db, r.id);
+    if (!('frenadaPorTope' in c) || !c.frenadaPorTope) n++;
   }
   return n;
 }

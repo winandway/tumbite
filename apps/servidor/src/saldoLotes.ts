@@ -304,11 +304,16 @@ export const DEVOLVER_TODO = Number.MAX_SAFE_INTEGER;
  * MISMO lote de sentencias, antes que estas). Vuelve a los mismos lotes de los que salió, al revés del
  * orden de uso (primero el prepago, al final el regalo que vence antes), hasta `monto`. Si el regalo
  * venció mientras estaba apartado, vuelve con su prórroga. Si la operación es de antes de los lotes (no
- * tiene consumos), lo devuelto se vuelve un lote propio de regalo sin vencimiento.
+ * tiene consumos), lo devuelto se vuelve su propio lote (prepago hasta donde alcance lo prepagado).
+ *
+ * IDEMPOTENTE por la referencia: todas las sentencias van atadas al ID del movimiento que se intenta
+ * poner en ESTE lote de sentencias (`movimientoId`, nuevo en cada intento). Si la devolución ya estaba
+ * (un segundo «liberar», un reintento), su movimiento tiene otro ID y no se repite nada: ni consumos,
+ * ni prórroga, ni lotes de lo heredado. Así nunca se crea dinero.
  */
 export function sentenciasDevolver(
   db: D1Database,
-  p: { operacionId: string; referencia: string; monto: number },
+  p: { operacionId: string; referencia: string; monto: number; movimientoId: string },
 ) {
   return [
     db
@@ -323,19 +328,20 @@ export function sentenciasDevolver(
                           WHERE c.operacion_id = ?1
                           GROUP BY c.lote_id, c.cliente_id HAVING SUM(c.monto) > 0) n)
           WHERE acum - neto < ?3
-            AND EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE referencia = ?2)
+            AND EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE referencia = ?2 AND id = ?4)
             AND NOT EXISTS (SELECT 1 FROM saldo_cliente_consumos x WHERE x.referencia = ?2)`,
       )
-      .bind(p.operacionId, p.referencia, p.monto),
+      .bind(p.operacionId, p.referencia, p.monto, p.movimientoId),
     // El regalo que venció mientras estaba apartado vuelve con su prórroga (y sus avisos de nuevo).
     db
       .prepare(
         `UPDATE saldo_cliente_lotes SET vence_en = datetime('now', '+${PRORROGA_DIAS} days'), prorrogado_en = datetime('now'),
                 aviso_3d_en = NULL, aviso_hoy_en = NULL
           WHERE id IN (SELECT lote_id FROM saldo_cliente_consumos WHERE referencia = ?1)
-            AND vence_en IS NOT NULL AND vence_en <= datetime('now')`,
+            AND vence_en IS NOT NULL AND vence_en <= datetime('now')
+            AND EXISTS (SELECT 1 FROM saldo_cliente_movimientos WHERE referencia = ?1 AND id = ?2)`,
       )
-      .bind(p.referencia),
+      .bind(p.referencia, p.movimientoId),
     // Una operación de antes de los lotes (sin consumos): lo que vuelve se clasifica con el MISMO
     // criterio de la migración: es prepago hasta donde alcance lo prepagado que todavía no está en un
     // lote de prepago, y el resto es regalo sin vencimiento. Dos lotes, uno por parte.
@@ -349,11 +355,11 @@ export function sentenciasDevolver(
                           ${tipo === 'prepago' ? "m.referencia || ':prepago'" : 'm.referencia'} AS ref,
                           ${tipo === 'prepago' ? '' : 'm.monto - '}MIN(m.monto, ${PREPAGO_SIN_LOTE}) AS parte
                      FROM saldo_cliente_movimientos m
-                    WHERE m.referencia = ?2 AND m.monto > 0
+                    WHERE m.referencia = ?2 AND m.id = ?4 AND m.monto > 0
                       AND NOT EXISTS (SELECT 1 FROM saldo_cliente_consumos c WHERE c.operacion_id = ?3)) x
             WHERE x.parte > 0`,
         )
-        .bind(nuevoId(), p.referencia, p.operacionId),
+        .bind(nuevoId(), p.referencia, p.operacionId, p.movimientoId),
     ),
   ];
 }

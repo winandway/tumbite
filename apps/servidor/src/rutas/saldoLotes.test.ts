@@ -22,7 +22,14 @@ import {
   reintentarMigracionLotes,
   vencerLotes,
 } from '../saldoLotes';
-import { acreditarBienvenida, contarViajeFidelidad, crearCargaMasiva } from '../saldoRegalos';
+import {
+  SQL_CANDIDATOS_PRUEBA,
+  acreditarBienvenida,
+  continuarCargasMasivas,
+  contarViajeFidelidad,
+  crearCargaMasiva,
+  procesarTandaMasiva,
+} from '../saldoRegalos';
 import { sembrarTabuladorVigia } from '../semillaTabuladorVigia';
 import { TABULADOR_EL_VIGIA } from '../tabuladorElVigia';
 import { CUENTA_TUMBITE } from '../internacional/libro';
@@ -1425,5 +1432,271 @@ describe('C-SALDO-LOTES (revisión): saldos de antes, cierre y canario', () => {
       .bind(c.id)
       .run();
     expect(await saludSaldoClientes(p.db)).toBe('error');
+  });
+});
+
+/**
+ * Segunda devolución del revisor (26 nov 2026): cada punto con su prueba vista en rojo.
+ */
+/** Un proxy de la base que cambia lo que devuelve UNA consulta (para forzar carreras y lecturas viejas). */
+function conConsulta(
+  db: D1Database,
+  coincide: (sql: string) => boolean,
+  primera: (real: D1PreparedStatement) => Promise<unknown>,
+): D1Database {
+  return new Proxy(db, {
+    get(t, k) {
+      if (k !== 'prepare') return Reflect.get(t, k, t) as unknown;
+      return (sql: string) => {
+        const real = t.prepare(sql);
+        if (!coincide(sql)) return real;
+        return {
+          bind: (...a: unknown[]) => {
+            const b = real.bind(...a);
+            return { first: () => primera(b) };
+          },
+        };
+      };
+    },
+  }) as D1Database;
+}
+
+describe('C-SALDO-LOTES (revisión 2): la devolución nunca crea dinero', () => {
+  async function heredado(p: P, op: string) {
+    const c = await p.cliente();
+    await p.db.batch([
+      p.db
+        .prepare(
+          "INSERT INTO saldo_cliente_movimientos (id, cliente_id, monto, concepto, referencia, creado_en) VALUES (?, ?, 1000, 'recarga', ?, datetime('now', '-30 days'))",
+        )
+        .bind(`${op}-p`, c.id, `${op}-p`),
+      p.db
+        .prepare(
+          "INSERT INTO saldo_cliente_movimientos (id, cliente_id, monto, concepto, referencia, operacion_id, creado_en) VALUES (?, ?, -400, 'uso_viaje', ?, ?, datetime('now', '-30 days'))",
+        )
+        .bind(`${op}-u`, c.id, `viaje:${op}:uso`, op),
+      p.db
+        .prepare(
+          "INSERT INTO usos_saldo_divoox (operacion_id, cliente_id, monto, apartado, pais) VALUES (?, ?, 400, 400, 'VE')",
+        )
+        .bind(op, c.id),
+    ]);
+    await migrarSaldosALotes(p.db);
+    return c;
+  }
+  const lotesSuman = async (p: P, id: string) =>
+    Number(
+      (
+        await p.db
+          .prepare(
+            'SELECT COALESCE(SUM(restante), 0) AS s FROM saldo_cliente_lotes WHERE cliente_id = ?',
+          )
+          .bind(id)
+          .first<{ s: number }>()
+      )?.s,
+    );
+
+  it('liberar dos veces un apartado de antes: el libro y los lotes quedan en 1000', async () => {
+    const p = await preparar();
+    const c = await heredado(p, 'op-dos');
+    expect(await liberarSaldoViaje(p.db, 'op-dos', 'cancelada')).toBe(true);
+    // El segundo «liberar» (un reintento): el uso ya no está apartado; aun así, a la fuerza, se
+    // vuelve a poner como apartado para que el segundo intento corra entero.
+    await p.db
+      .prepare(
+        "UPDATE usos_saldo_divoox SET estado = 'apartado', monto = 400 WHERE operacion_id = 'op-dos'",
+      )
+      .run();
+    await liberarSaldoViaje(p.db, 'op-dos', 'cancelada');
+    expect(await saldoLibroCliente(p.db, c.id)).toBe(1000);
+    expect(await lotesSuman(p, c.id)).toBe(1000);
+    await p.cuadra(c.id);
+  });
+
+  it('sobrante y rechazo de un apartado de antes, repetidos: el libro y los lotes cuadran', async () => {
+    const p = await preparar();
+    const k = await conductor(p);
+    const c = await heredado(p, 'op-sr');
+    await cerrarSaldoDeViaje(p.db, {
+      operacionId: 'op-sr',
+      conductorId: k.rep.id,
+      maximo: 100,
+      alTerminar: true,
+    });
+    // El cierre se cortó después del sobrante: se repite entero desde «apartado».
+    await p.db
+      .prepare(
+        "UPDATE usos_saldo_divoox SET estado = 'apartado', monto = 400, conductor_id = NULL WHERE operacion_id = 'op-sr'",
+      )
+      .run();
+    await p.db.prepare("DELETE FROM movimientos WHERE referencia = 'saldo-divoox:op-sr'").run();
+    await cerrarSaldoDeViaje(p.db, {
+      operacionId: 'op-sr',
+      conductorId: k.rep.id,
+      maximo: 100,
+      alTerminar: true,
+    });
+    // Rechazo de la revisión, y un segundo intento.
+    await p.db
+      .prepare(
+        "UPDATE usos_saldo_divoox SET estado = 'en_revision', monto = 100, conductor_id = ? WHERE operacion_id = 'op-sr'",
+      )
+      .bind(k.rep.id)
+      .run();
+    await resolverRevisionSaldo(p.db, {
+      operacionId: 'op-sr',
+      aprobar: false,
+      autorId: p.e.admin.id,
+      nota: 'No fue real',
+    });
+    await p.db
+      .prepare(
+        "UPDATE usos_saldo_divoox SET estado = 'en_revision', monto = 100 WHERE operacion_id = 'op-sr'",
+      )
+      .run();
+    await resolverRevisionSaldo(p.db, {
+      operacionId: 'op-sr',
+      aprobar: false,
+      autorId: p.e.admin.id,
+      nota: 'Otra vez',
+    }).catch(() => null);
+    const libro = await saldoLibroCliente(p.db, c.id);
+    expect(await lotesSuman(p, c.id)).toBe(libro);
+    await p.cuadra(c.id);
+  });
+});
+
+describe('C-SALDO-MASIVO (revisión 2): lecturas, cargas con cupo y 24 h por movimiento', () => {
+  async function sesenta(p: P, prefijo = 'r2') {
+    await p.db
+      .prepare(
+        `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 60)
+       INSERT INTO usuarios (id, correo, nombre, rol, clave_hash, zona_id, creado_en)
+       SELECT '${prefijo}-' || printf('%03d', i), '${prefijo}' || i || '@ejemplo.com', 'C', 'cliente', 'x', ?, datetime('now', '-' || i || ' minutes') FROM n`,
+      )
+      .bind(EVG.id)
+      .run();
+  }
+  const cuerpo = (idem: string) => ({
+    filtros: { zonaId: EVG.id },
+    monto: 100,
+    vigenciaDias: 15,
+    motivo: 'Lanzamiento en la ciudad',
+    totalEscrito: 6000,
+    idempotencia: idem,
+  });
+  const topes = (p: P, porDiaPersona: number) =>
+    p.admin('PUT', '/datos/admin/saldo-regalos/masiva-topes', {
+      porCliente: 500,
+      porCarga: 50_000,
+      porDiaPersona,
+      porDiaGlobal: 100_000,
+    });
+
+  it('los candidatos cuentan los viajes por el índice de cada cliente: nada recorre ni materializa las operaciones (EXPLAIN)', async () => {
+    const p = await preparar();
+    const plan = (
+      await p.db
+        .prepare(`EXPLAIN QUERY PLAN ${SQL_CANDIDATOS_PRUEBA(51)}`)
+        .bind('2099-01-01', null, null, 0, EVG.id, 1, 5, '', '')
+        .all<{ detail: string }>()
+    ).results.map((x) => x.detail);
+    const texto = plan.join(' | ');
+    expect(texto).not.toMatch(/MATERIALIZE/);
+    expect(texto).not.toMatch(/SCAN o\b/);
+    expect(texto).toMatch(/SEARCH o USING (COVERING )?INDEX operaciones_cliente/);
+    expect(texto).toMatch(/usuarios_rol_creado/);
+  });
+
+  it('el reloj sigue las cargas que tienen cupo aunque las más viejas estén frenadas por el tope de su persona', async () => {
+    const p = await preparar();
+    await sesenta(p);
+    expect((await topes(p, 20_000)).estado).toBe(200);
+    const viejas: string[] = [];
+    for (const k of [1, 2, 3]) {
+      const r = await p.admin('POST', '/datos/admin/saldo-regalos/masiva', cuerpo(`cupo-x-${k}`));
+      expect(r.estado, JSON.stringify(r.datos)).toBe(201);
+      viejas.push(r.datos.carga.id as string);
+    }
+    const otra = await p.e.m.cuenta('admin', 'Soporte Divoox Dos');
+    const r = await p.e.m.llamar(
+      'POST',
+      '/datos/admin/saldo-regalos/masiva',
+      cuerpo('cupo-y-1'),
+      otra.token,
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(201);
+    const nueva = r.datos.carga.id as string;
+    await p.db
+      .prepare(
+        `UPDATE saldo_cargas_masivas SET creado_en = datetime('now', '-1 hour') WHERE id IN (${viejas.map(() => '?').join(',')})`,
+      )
+      .bind(...viejas)
+      .run();
+    // La primera persona se queda sin cupo; la segunda todavía tiene.
+    expect((await topes(p, 15_000)).estado).toBe(200);
+    await continuarCargasMasivas(undefined, p.db);
+    const n = await p.db
+      .prepare('SELECT acreditados, estado FROM saldo_cargas_masivas WHERE id = ?')
+      .bind(nueva)
+      .first<{ acreditados: number; estado: string }>();
+    expect(n).toEqual({ acreditados: 60, estado: 'terminada' });
+  });
+
+  it('el tope de 24 h cuenta por la fecha de cada movimiento, aunque la carga haya nacido hace días', async () => {
+    const p = await preparar();
+    await sesenta(p);
+    const r = await p.admin('POST', '/datos/admin/saldo-regalos/masiva', cuerpo('vieja-carga-1'));
+    const id = r.datos.carga.id as string;
+    await p.db
+      .prepare(
+        "UPDATE saldo_cargas_masivas SET creado_en = datetime('now', '-10 days') WHERE id = ?",
+      )
+      .bind(id)
+      .run();
+    expect((await topes(p, 5_000)).estado).toBe(200);
+    const t = await p.admin('POST', `/datos/admin/saldo-regalos/masiva/${id}/tanda`);
+    expect(t.datos.carga).toMatchObject({ acreditados: 50, frenadaPorTope: true });
+  });
+
+  it('el tope por persona también está en la sentencia que escribe (aunque el cupo leído antes diga que alcanza)', async () => {
+    const p = await preparar();
+    await sesenta(p);
+    expect((await topes(p, 10_000)).estado).toBe(200);
+    const r = await p.admin('POST', '/datos/admin/saldo-regalos/masiva', cuerpo('carrera-tope'));
+    const id = r.datos.carga.id as string;
+    expect((await topes(p, 5_300)).estado).toBe(200);
+    // Otra tanda de la misma persona se coló entre la lectura del cupo y la escritura: la lectura vieja
+    // dice «0 repartido hoy».
+    const db = conConsulta(
+      p.db,
+      (sql) => sql.includes('AS persona'),
+      async () => ({ persona: 0, global: 0 }),
+    );
+    await procesarTandaMasiva(undefined, db, id);
+    const n = await p.db
+      .prepare('SELECT COUNT(*) AS n FROM saldo_cliente_lotes WHERE regla_id = ?')
+      .bind(id)
+      .first<{ n: number }>();
+    expect(n?.n).toBe(53);
+  });
+
+  it('la guarda del cursor: una tanda que leyó la carga vieja no vuelve a contar lo ya revisado', async () => {
+    const p = await preparar();
+    await sesenta(p);
+    const r = await p.admin('POST', '/datos/admin/saldo-regalos/masiva', cuerpo('cursor-1'));
+    const id = r.datos.carga.id as string;
+    expect(r.datos.carga.revisados).toBe(50);
+    const db = conConsulta(
+      p.db,
+      (sql) => sql.startsWith('SELECT * FROM saldo_cargas_masivas WHERE id = ?'),
+      async (b) => ({ ...(await b.first<Record<string, unknown>>()), cursor: '', revisados: 0 }),
+    );
+    await procesarTandaMasiva(undefined, db, id);
+    const c = await p.db
+      .prepare('SELECT revisados, acreditados FROM saldo_cargas_masivas WHERE id = ?')
+      .bind(id)
+      .first<{ revisados: number; acreditados: number }>();
+    expect(c).toEqual({ revisados: 50, acreditados: 50 });
   });
 });

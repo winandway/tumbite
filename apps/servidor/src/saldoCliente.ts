@@ -625,6 +625,7 @@ async function asegurarLotesDeOperacion(db: D1Database, operacionId: string) {
 export async function liberarSaldoViaje(db: D1Database, operacionId: string, motivo: string) {
   await asegurarLotesDeOperacion(db, operacionId);
   const ref = `viaje:${operacionId}:devolucion`;
+  const movimientoId = nuevoId();
   const r = await db.batch([
     // Vuelve lo apartado menos lo que ya volvió como sobrante (si el cierre se cortó a mitad).
     db
@@ -637,9 +638,9 @@ export async function liberarSaldoViaje(db: D1Database, operacionId: string, mot
             AND apartado - COALESCE((SELECT SUM(x.monto) FROM saldo_cliente_movimientos x
                                      WHERE x.referencia = 'viaje:' || ?4 || ':sobrante'), 0) > 0`,
       )
-      .bind(nuevoId(), ref, motivo.slice(0, 80), operacionId),
-    // C-SALDO-LOTES: a los mismos lotes de los que salió.
-    ...sentenciasDevolver(db, { operacionId, referencia: ref, monto: DEVOLVER_TODO }),
+      .bind(movimientoId, ref, motivo.slice(0, 80), operacionId),
+    // C-SALDO-LOTES: a los mismos lotes de los que salió (solo si el movimiento nace en ESTE intento).
+    ...sentenciasDevolver(db, { operacionId, referencia: ref, monto: DEVOLVER_TODO, movimientoId }),
     db
       .prepare(
         `UPDATE usos_saldo_divoox SET estado = 'liberado', monto = 0, cerrado_en = datetime('now'), motivo = ?
@@ -741,6 +742,7 @@ export async function cerrarSaldoDeViaje(
   if (monto < apartado) {
     await asegurarLotesDeOperacion(db, p.operacionId);
     const ref = `viaje:${p.operacionId}:sobrante`;
+    const movimientoId = nuevoId();
     await db.batch([
       db
         .prepare(
@@ -748,11 +750,12 @@ export async function cerrarSaldoDeViaje(
            SELECT ?, cliente_id, ?, moneda, 'devolucion', ?, operacion_id, 'total_final_menor'
              FROM usos_saldo_divoox WHERE operacion_id = ? AND estado = 'apartado'`,
         )
-        .bind(nuevoId(), apartado - monto, ref, p.operacionId),
+        .bind(movimientoId, apartado - monto, ref, p.operacionId),
       ...sentenciasDevolver(db, {
         operacionId: p.operacionId,
         referencia: ref,
         monto: apartado - monto,
+        movimientoId,
       }),
     ]);
   }
@@ -840,6 +843,7 @@ export async function resolverRevisionSaldo(
   }
   await asegurarLotesDeOperacion(db, p.operacionId);
   const ref = `viaje:${p.operacionId}:rechazo`;
+  const movimientoId = nuevoId();
   const lote = await db.batch([
     db
       .prepare(
@@ -847,12 +851,13 @@ export async function resolverRevisionSaldo(
          SELECT ?, cliente_id, monto, moneda, 'devolucion', ?, operacion_id, 'revision_rechazada'
            FROM usos_saldo_divoox WHERE operacion_id = ? AND estado = 'en_revision' AND monto > 0`,
       )
-      .bind(nuevoId(), ref, p.operacionId),
-    // C-SALDO-LOTES: a los mismos lotes de los que salió.
+      .bind(movimientoId, ref, p.operacionId),
+    // C-SALDO-LOTES: a los mismos lotes de los que salió (solo si el movimiento nace en ESTE intento).
     ...sentenciasDevolver(db, {
       operacionId: p.operacionId,
       referencia: ref,
       monto: DEVOLVER_TODO,
+      movimientoId,
     }),
     db
       .prepare(
@@ -1052,9 +1057,13 @@ export async function resumenSaldoClientes(db: D1Database) {
       // todavía no lo haya barrido) más el libro de quien todavía no pasó a lotes.
       `SELECT (SELECT COALESCE(SUM(restante), 0) FROM saldo_cliente_lotes
                 WHERE moneda = '${MONEDA_SALDO_DIVOOX}' AND restante > 0 AND (vence_en IS NULL OR vence_en > datetime('now')))
-            + (SELECT COALESCE(SUM(m.monto), 0) FROM saldo_cliente_movimientos m
-                WHERE m.moneda = '${MONEDA_SALDO_DIVOOX}'
-                  AND NOT EXISTS (SELECT 1 FROM saldo_cliente_lotes l WHERE l.cliente_id = m.cliente_id)) AS disponible,
+            -- Quien todavía no pasó a lotes: UNA agregación del libro por cliente, y la lista de clientes
+            -- con lotes se arma una sola vez (NOT IN con subconsulta), no una búsqueda por movimiento.
+            + (SELECT COALESCE(SUM(t.s), 0) FROM (SELECT m.cliente_id, SUM(m.monto) AS s
+                                                    FROM saldo_cliente_movimientos m
+                                                   WHERE m.moneda = '${MONEDA_SALDO_DIVOOX}'
+                                                   GROUP BY m.cliente_id) t
+                WHERE t.cliente_id NOT IN (SELECT l.cliente_id FROM saldo_cliente_lotes l)) AS disponible,
               (SELECT COALESCE(SUM(apartado), 0) FROM usos_saldo_divoox WHERE estado = 'apartado') AS apartado,
               (SELECT COUNT(*) FROM usos_saldo_divoox WHERE estado = 'en_revision') AS en_revision`,
     )
