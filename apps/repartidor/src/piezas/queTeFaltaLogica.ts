@@ -1,4 +1,5 @@
 import type { Idioma } from '@tumbite/compartido';
+import { textoCara } from './esperaCiudadTextos';
 
 /**
  * C-QUE-TE-FALTA (23 nov 2026) — todos los países. Lo que el servidor dice que le falta al conductor
@@ -51,8 +52,16 @@ const NOMBRE_VEHICULO = {
   ]),
 };
 
-/** Lo que se muestra (en la pantalla de inicio, arriba) para cada cosa que falta. */
-export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | null {
+/**
+ * Lo que se muestra (en la pantalla de inicio, arriba) para cada cosa que falta.
+ * C-REGISTRO-TODO-EL-PAIS: con `enEspera` (su ciudad todavía no abre) lo mismo se dice para DEJAR LA
+ * CUENTA LISTA, nunca como si al hacerlo ya fuera a conectarse o recibir carreras hoy.
+ */
+export function avisoDeFalta(
+  f: FaltaServidor,
+  idioma: Idioma,
+  enEspera = false,
+): AvisoFalta | null {
   const en = idioma === 'en';
   const v =
     (en ? NOMBRE_VEHICULO.en : NOMBRE_VEHICULO.es).get(f.vehiculoTipo ?? '') ??
@@ -69,39 +78,46 @@ export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | nul
     accion: AccionFalta | null,
   ): AvisoFalta => ({ clave: f.clave, titulo, detalle, boton, accion, nuestro: !accion });
   switch (f.clave) {
-    case 'cara':
-      return a(
-        en ? 'Take your face photo to start' : 'Tómate la foto de tu cara para empezar',
-        en
-          ? 'It’s the photo riders see. With it you can go online and start working.'
-          : 'Es la foto que ven los pasajeros. Con ella ya puedes conectarte y trabajar.',
-        en ? 'Take my photo' : 'Tomar mi foto',
-        'cara',
-      );
+    case 'cara': {
+      const c = textoCara(idioma, enEspera);
+      return a(c.titulo, c.detalle, en ? 'Take my photo' : 'Tomar mi foto', 'cara');
+    }
     case 'telefono':
       return a(
         en ? 'Confirm your phone' : 'Confirma tu celular',
-        en
-          ? 'Enter the code we sent you by text to go online.'
-          : 'Escribe el código que te mandamos por SMS para conectarte.',
+        enEspera
+          ? en
+            ? 'Enter the code we sent you by text to get your account ready.'
+            : 'Escribe el código que te mandamos por SMS para dejar tu cuenta lista.'
+          : en
+            ? 'Enter the code we sent you by text to go online.'
+            : 'Escribe el código que te mandamos por SMS para conectarte.',
         null,
         'telefono',
       );
     case 'sin_vehiculo':
       return a(
         en ? 'Add your vehicle' : 'Registra tu vehículo',
-        en
-          ? 'Tell us what you drive (make, model and license plate) to get trips.'
-          : 'Dinos con qué trabajas (marca, modelo y placa) para recibir carreras.',
+        enEspera
+          ? en
+            ? 'Tell us what you drive (make, model and license plate) to get your account ready.'
+            : 'Dinos con qué trabajas (marca, modelo y placa) para dejar tu cuenta lista.'
+          : en
+            ? 'Tell us what you drive (make, model and license plate) to get trips.'
+            : 'Dinos con qué trabajas (marca, modelo y placa) para recibir carreras.',
         en ? 'Add my vehicle' : 'Registrar mi vehículo',
         'vehiculo_nuevo',
       );
     case 'sin_placa':
       return a(
         en ? `${V} is missing its license plate` : `A ${v} le falta la placa`,
-        en
-          ? 'Add it so we can check it and you can start getting trips.'
-          : 'Escríbela para que podamos revisarla y empieces a recibir carreras.',
+        enEspera
+          ? en
+            ? 'Add it so we can check it before we open in your city.'
+            : 'Escríbela para que podamos revisarla antes de abrir en tu ciudad.'
+          : en
+            ? 'Add it so we can check it and you can start getting trips.'
+            : 'Escríbela para que podamos revisarla y empieces a recibir carreras.',
         en ? 'Add the plate' : 'Completar la placa',
         'vehiculo',
       );
@@ -144,9 +160,13 @@ export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | nul
     case 'vehiculo_sin_activar':
       return a(
         en ? `Turn on ${v}` : `Activa ${v}`,
-        en
-          ? 'It’s registered but not in use. Turn it on to get trips with it.'
-          : `Está registrad${o}, pero no ${lo} estás usando. Actíva${lo} para recibir carreras con ${fem ? 'ella' : 'él'}.`,
+        enEspera
+          ? en
+            ? 'It’s registered but not in use. Turn it on so it’s ready the day we open in your city.'
+            : `Está registrad${o}, pero no ${lo} estás usando. Actíva${lo} para tener${lo} list${o} el día que abramos en tu ciudad.`
+          : en
+            ? 'It’s registered but not in use. Turn it on to get trips with it.'
+            : `Está registrad${o}, pero no ${lo} estás usando. Actíva${lo} para recibir carreras con ${fem ? 'ella' : 'él'}.`,
         en ? `Use ${v}` : `Usar ${v}`,
         'activar_vehiculo',
       );
@@ -233,12 +253,13 @@ export function avisoDeFalta(f: FaltaServidor, idioma: Idioma): AvisoFalta | nul
 export function primeraFalta(
   faltas: readonly FaltaServidor[] | null | undefined,
   idioma: Idioma,
+  enEspera = false,
 ): { aviso: AvisoFalta; falta: FaltaServidor; despues: number } | null {
   // C-SOLO-EFECTIVO: el pago móvil es opcional («recibe más carreras»): no cuenta como paso que
   // falta para empezar; lo avisa su propia franja fija (`franjaSoloEfectivo`).
   const lista = (faltas ?? [])
     .filter((f) => f.clave !== 'sin_pago_movil')
-    .map((f) => ({ f, aviso: avisoDeFalta(f, idioma) }))
+    .map((f) => ({ f, aviso: avisoDeFalta(f, idioma, enEspera) }))
     .filter((x): x is { f: FaltaServidor; aviso: AvisoFalta } => x.aviso !== null);
   const p = lista[0];
   return p ? { aviso: p.aviso, falta: p.f, despues: lista.length - 1 } : null;

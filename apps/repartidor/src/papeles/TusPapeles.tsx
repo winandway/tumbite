@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma } from '@tumbite/compartido';
 import { Boton, COLOR, FUENTE, Icono, Text } from '@tumbite/movil';
+import { textoCara } from '../piezas/esperaCiudadTextos';
 import { useMiniaturas } from './AsistentePapeles';
 import { AnilloPerfil } from './Horma';
 import {
@@ -65,16 +66,12 @@ let tarjetaCaraAnotada = false;
 
 const TEXTOS_CARA = {
   es: {
-    titulo: 'Tómate la foto de tu cara para empezar',
-    detalle: 'Es la foto que ven los pasajeros. Con ella ya puedes conectarte y trabajar.',
     boton: 'Tomar mi foto',
     sinPapeles: 'No pudimos cargar tus papeles',
     sinPapelesTexto: 'Revisa tu señal y vuelve a intentarlo.',
     reintentar: 'Reintentar',
   },
   en: {
-    titulo: 'Take your face photo to start',
-    detalle: 'It’s the photo riders see. With it you can go online and start working.',
     boton: 'Take my photo',
     sinPapeles: 'We couldn’t load your documents',
     sinPapelesTexto: 'Check your signal and try again.',
@@ -91,12 +88,18 @@ export function TarjetaCara({
   api,
   idioma,
   alTomar,
+  enEspera = false,
 }: {
   api: Api;
   idioma: Idioma;
   alTomar: () => void;
+  /** C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre (la foto deja la cuenta lista, no «empieza»). */
+  enEspera?: boolean;
 }) {
-  const t = idioma === 'en' ? TEXTOS_CARA.en : TEXTOS_CARA.es;
+  const t = {
+    ...(idioma === 'en' ? TEXTOS_CARA.en : TEXTOS_CARA.es),
+    ...textoCara(idioma, enEspera),
+  };
   useEffect(() => {
     if (tarjetaCaraAnotada) return;
     tarjetaCaraAnotada = true;
@@ -201,14 +204,17 @@ export function TusPapeles({
   v,
   idioma,
   alAbrir,
+  enEspera = false,
 }: {
   api: Api;
   v: Verificacion | null;
   idioma: Idioma;
   alAbrir: () => void;
+  /** C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre. */
+  enEspera?: boolean;
 }) {
   const { uriDe } = useMiniaturas(api, v);
-  const tarjeta = tarjetaPapeles(v, idioma);
+  const tarjeta = tarjetaPapeles(v, idioma, enEspera);
   if (!v || !tarjeta) return null;
   const { listas, total } = avanceDeFotos(v);
   const cara = v.pasos.find((p) => p.paso === 'cara');

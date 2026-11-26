@@ -54,8 +54,10 @@ describe('C-REGISTRO-TODO-EL-PAIS: el selector es de dónde VIVE, nunca de las z
     expect(textosSelectorLugar('es').enEsperaConductor).toBe(
       'Tu cuenta quedó creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos.',
     );
+    // El inglés traduce «quedó creada» (26 nov: decía «is ready», y contradecía «Get your account
+    // ready» de la misma pantalla mientras le faltan pasos).
     expect(textosSelectorLugar('en').enEsperaConductor).toBe(
-      'Your account is ready. There are no trips in your city yet; we’ll let you know as soon as we open.',
+      'Your account was created. There are no trips in your city yet; we’ll let you know as soon as we open.',
     );
   });
 });

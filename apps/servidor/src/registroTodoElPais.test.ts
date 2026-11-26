@@ -3,7 +3,9 @@ import type { LugarCuenta } from '@tumbite/compartido';
 import { contarFilas, type CuentaFilas } from './presupuestoFilas';
 import { mundo } from './pruebas/ayuda';
 import { EL_VIGIA, abrirComida, escenarioVe } from './pruebas/comidaVe';
+import { barraActivacion } from './activacion';
 import { AJUSTES_REZAGADOS_DE_FABRICA, candidatos } from './rezagados';
+import { faltaDeBarra } from './whatsappFalta';
 import {
   LOTE_ESPERA,
   PRESUPUESTO_PASO_AL_ABRIR,
@@ -710,5 +712,52 @@ describe('C-REGISTRO-TODO-EL-PAIS · (k) borrar la cuenta borra dónde vivía', 
       .bind(c.id)
       .first<Record<string, unknown>>();
     expect(Object.values(f ?? { x: 1 }).every((v) => v === null)).toBe(true);
+  });
+});
+
+describe('C-REGISTRO-TODO-EL-PAIS · (l) a quien espera no se le promete trabajar hoy', () => {
+  /**
+   * Comprobado en ROJO (26 nov): sin el filtro de `FALTAS_EN_ESPERA` le salían lo de recibir carreras
+   * hoy (aprobación, servicio de la ciudad por defecto…) y sin el `enEspera` de la barra el WhatsApp
+   * de «para que tu cuenta empiece a recibir carreras te falta…» se armaba igual.
+   */
+  it('que-te-falta dice `enEspera` y solo lo de su registro; la barra y el WhatsApp no le prometen viajes', async () => {
+    const m = mundo();
+    const c = await registrar(m, 'repartidor', MARACAIBO);
+    // Con su ficha de conductor ya creada (la de la ciudad por defecto de la tabla, que no es su zona).
+    await m.DB.prepare('INSERT INTO repartidores (usuario_id) VALUES (?)').bind(c.id).run();
+    const sin = await m.llamar('GET', '/datos/conductor/que-te-falta', undefined, c.token);
+    expect(sin.estado).toBe(200);
+    const q = sin;
+    expect(q.estado).toBe(200);
+    expect(q.datos.enEspera).toBe(true);
+    expect(q.datos.recibeViajes).toBe(false);
+    const claves = (q.datos.faltas as { clave: string }[]).map((x) => x.clave);
+    expect(claves).toContain('sin_vehiculo');
+    for (const operativa of [
+      'servicio_no_disponible',
+      'sin_habilitacion',
+      'sin_servicio_encendido',
+      'sin_saldo',
+      'sin_pago_movil',
+      'sin_restaurantes',
+      'ubicacion_vieja',
+      'desconectado',
+    ])
+      expect(claves, operativa).not.toContain(operativa);
+    const barra = await barraActivacion(m.DB, c.id);
+    expect(barra.enEspera).toBe(true);
+    expect(faltaDeBarra(barra, { pais: 'VE', appVieja: false })).toBeNull();
+  });
+
+  it('quien ya tiene su ciudad abierta sigue igual: `enEspera` en falso y su WhatsApp se arma', async () => {
+    const e = await escenarioVe();
+    expect((await abrirComida(e)).estado).toBe(201);
+    const c = await registrar(e.m, 'repartidor', EL_VIGIA_LUGAR);
+    const q = await e.m.llamar('GET', '/datos/conductor/que-te-falta', undefined, c.token);
+    expect(q.datos.enEspera).toBe(false);
+    const barra = await barraActivacion(e.m.DB, c.id);
+    expect(barra.enEspera).toBe(false);
+    expect(faltaDeBarra(barra, { pais: 'VE', appVieja: false })).not.toBeNull();
   });
 });

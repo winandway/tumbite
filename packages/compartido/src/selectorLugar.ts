@@ -111,9 +111,9 @@ const EN: typeof ES = {
   faltaLugar: 'Choose where you live.',
   credito: 'Places: GeoNames (CC BY 4.0)',
   enEsperaConductor:
-    'Your account is ready. There are no trips in your city yet; we’ll let you know as soon as we open.',
+    'Your account was created. There are no trips in your city yet; we’ll let you know as soon as we open.',
   enEsperaCliente:
-    'Your account is ready. There’s no service in your city yet; we’ll let you know as soon as we open.',
+    'Your account was created. There’s no service in your city yet; we’ll let you know as soon as we open.',
   sigueSubiendo: 'In the meantime, you can upload your photos and documents.',
   preguntaTitulo: 'Where do you live?',
   preguntaAyuda: 'Choose your city to finish your account. Nothing you already uploaded is lost.',

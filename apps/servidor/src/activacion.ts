@@ -69,6 +69,8 @@ export type Activacion = {
   total: number;
   /** El vehículo que se mira (activo o el mejor que tenga). */
   vehiculo: { id: string; tipo: string; estado: string; activo?: boolean } | null;
+  /** C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre (no recibe viajes aunque lo termine todo). */
+  enEspera?: boolean;
 };
 
 /** El paso de la barra al que corresponde cada falta de «qué te falta». */
@@ -304,6 +306,7 @@ export async function barraActivacion(db: D1Database, id: string, env?: Env): Pr
     hechos: cuentan.filter((p) => p.estado === 'hecho').length,
     total: cuentan.length,
     vehiculo: q.vehiculo,
+    enEspera: q.enEspera,
   };
 }
 
