@@ -107,5 +107,7 @@ cd /Users/windocellc/Divoox && node scripts/vista-previa/vista-previa.mjs cerrar
 
 - **Tiempo real** (los Workers `tumbite-tiempo-real` y `tumbite-reloj` con Durable Objects): siguen
   conectados al sitio compartido; su prueba en vivo es el flujo a mano «tiempo-real-staging».
-- **Avisos de Stripe** (webhooks): la vista previa no los recibe; los guiones leen los eventos de Stripe
-  con la ruta interna de siempre.
+  Los **avisos de Stripe** (webhooks) sí van: en cada publicación el guion crea en Stripe, en modo
+  prueba, el aviso de esa vista previa (`…/datos/stripe/aviso`, con los mismos eventos que el aviso
+  principal del servidor) y le pasa su secreto al worker. Al cerrar la rama se borra. Hay uno por rama
+  abierta (Stripe admite 16 por cuenta; hoy hay 3 de otros sitios).

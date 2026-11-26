@@ -23,10 +23,12 @@ import { join, resolve } from 'node:path';
 import {
   ALMACEN,
   CUENTA,
+  EVENTOS_STRIPE,
   PREFIJO,
   WORKER_CONOCIDO,
   configWorker,
   nombreVistaPrevia,
+  urlAvisoStripe,
   urlVistaPrevia,
   validarBaseVistaPrevia,
 } from './reglas.mjs';
@@ -93,6 +95,44 @@ function llavesStripePrueba() {
       'PROHIBIDO: las llaves de Stripe de una vista previa tienen que ser de modo prueba',
     );
   return { STRIPE_SECRET_KEY: sk, STRIPE_PUBLISHABLE_KEY: pk };
+}
+
+/** Stripe en MODO PRUEBA (la llave ya se revisó en llavesStripePrueba). */
+async function stripe(sk, metodo, ruta, cuerpo) {
+  const r = await fetch(`https://api.stripe.com/v1${ruta}`, {
+    method: metodo,
+    headers: { Authorization: `Bearer ${sk}`, 'content-type': 'application/x-www-form-urlencoded' },
+    body: cuerpo ? new URLSearchParams(cuerpo) : undefined,
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(`Stripe (prueba) ${metodo} ${ruta}: ${d.error?.message ?? r.status}`);
+  return d;
+}
+
+/** Borra los avisos de Stripe de prueba que apuntan a esta vista previa (solo los suyos). */
+async function borrarAvisosStripe(sk, nombre) {
+  const { data } = await stripe(sk, 'GET', '/webhook_endpoints?limit=100');
+  for (const a of data.filter((x) => x.url === urlAvisoStripe(nombre)))
+    await stripe(sk, 'DELETE', `/webhook_endpoints/${a.id}`);
+}
+
+/**
+ * El aviso (webhook) de Stripe de prueba de la vista previa: el que acredita recargas y cobros.
+ * Stripe entrega su secreto solo al crearlo, así que en cada publicación se rehace (uno por rama).
+ */
+async function avisoStripe(sk, nombre) {
+  await borrarAvisosStripe(sk, nombre);
+  const cuerpo = [
+    ['url', urlAvisoStripe(nombre)],
+    ['description', `Divoox vista previa ${nombre}`],
+    ['metadata[tumbite]', 'vista-previa'],
+    ...EVENTOS_STRIPE.map((e) => ['enabled_events[]', e]),
+  ];
+  const a = await stripe(sk, 'POST', '/webhook_endpoints', cuerpo);
+  if (!String(a.secret ?? '').startsWith('whsec_'))
+    throw new Error('Stripe no devolvió el secreto del aviso');
+  if (a.livemode) throw new Error('PROHIBIDO: el aviso de la vista previa quedó en modo real');
+  return a.secret;
 }
 
 async function esperarVersion(url) {
@@ -178,6 +218,8 @@ async function abrir() {
     writeFileSync(join(dir, 'wrangler.json'), JSON.stringify(config, null, 2));
     const reloj = process.env.RELOJ_SECRETO_VISTA || randomBytes(24).toString('hex');
     const secretos = { RELOJ_SECRETO: reloj, ...llavesStripePrueba() };
+    if (secretos.STRIPE_SECRET_KEY)
+      secretos.STRIPE_WEBHOOK_SECRET = await avisoStripe(secretos.STRIPE_SECRET_KEY, nombre);
     writeFileSync(join(dir, 'secretos.json'), JSON.stringify(secretos));
     wrangler(
       [
@@ -204,8 +246,13 @@ async function abrir() {
   salida('segundos', Math.round((Date.now() - t0) / 1000));
 }
 
-function cerrar() {
+async function cerrar() {
   const nombre = nombreVistaPrevia(rama);
+  const { STRIPE_SECRET_KEY: sk } = llavesStripePrueba();
+  if (sk) {
+    await borrarAvisosStripe(sk, nombre);
+    console.log(`aviso de Stripe de prueba de ${nombre} borrado`);
+  }
   comprobarCuenta();
   validarBaseVistaPrevia({ nombre });
   try {
@@ -229,7 +276,7 @@ function listar() {
 
 try {
   if (orden === 'abrir' && rama) await abrir();
-  else if (orden === 'cerrar' && rama) cerrar();
+  else if (orden === 'cerrar' && rama) await cerrar();
   else if (orden === 'listar') listar();
   else {
     console.error('Uso: vista-previa.mjs abrir|cerrar <rama> | listar');

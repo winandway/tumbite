@@ -81,3 +81,27 @@ export function configWorker({ nombre, idBase, paquete, commit }) {
     },
   };
 }
+
+/**
+ * Los eventos del aviso de Stripe de cada vista previa: los mismos del aviso PRINCIPAL del servidor
+ * (EVENTOS_PRINCIPAL de apps/servidor/src/rutas/stripeAvisos.ts; la prueba exige que coincidan).
+ */
+export const EVENTOS_STRIPE = [
+  'checkout.session.completed',
+  'payment_intent.amount_capturable_updated',
+  'payment_intent.succeeded',
+  'payment_intent.payment_failed',
+  'payment_intent.canceled',
+  'charge.refunded',
+  'charge.dispute.created',
+  'charge.dispute.updated',
+  'charge.dispute.closed',
+  'transfer.created',
+  'transfer.reversed',
+  'invoice.paid',
+  'customer.subscription.deleted',
+];
+
+export function urlAvisoStripe(nombre) {
+  return `${urlVistaPrevia(nombre)}/datos/stripe/aviso`;
+}

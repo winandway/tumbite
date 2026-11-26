@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { nombreVistaPrevia as nombreCompartido } from '@tumbite/compartido';
+import { EVENTOS_PRINCIPAL } from './rutas/stripeAvisos';
 // @ts-expect-error módulo .mjs sin tipos (lo usa el guion de vistas previas)
 import * as reglas from '../../../scripts/vista-previa/reglas.mjs';
 
@@ -10,6 +11,8 @@ import * as reglas from '../../../scripts/vista-previa/reglas.mjs';
  * toca la base de producción ni la del sitio de pruebas compartido, y cada rama tiene la suya.
  */
 const r = reglas as {
+  EVENTOS_STRIPE: string[];
+  urlAvisoStripe: (nombre: string) => string;
   BASES_PROHIBIDAS: { nombre: string; id: string }[];
   nombreVistaPrevia: (rama: string) => string;
   validarBaseVistaPrevia: (b: { nombre: string; id?: string }) => true;
@@ -64,6 +67,13 @@ describe('C-VISTA-PREVIA-RAMA: reglas del guion', () => {
         commit: 'abc1234',
       }),
     ).toThrow(/PROHIBIDO/);
+  });
+
+  it('el aviso de Stripe de la vista previa escucha lo mismo que el principal y apunta a SU sitio', () => {
+    expect([...r.EVENTOS_STRIPE].sort()).toEqual([...EVENTOS_PRINCIPAL].sort());
+    expect(r.urlAvisoStripe('divoox-preview-textos')).toBe(
+      'https://divoox-preview-textos.windoce1.workers.dev/datos/stripe/aviso',
+    );
   });
 
   it('el nombre del guion y el del servidor salen iguales de la misma rama', () => {
