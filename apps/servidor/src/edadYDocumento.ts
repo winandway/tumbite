@@ -1,5 +1,6 @@
 import {
   CONFIANZA_NACIMIENTO,
+  confianzaDe,
   edadEnAnios,
   edadMinimaRepartidor,
   fechaNacimientoValida,
@@ -267,8 +268,7 @@ export type DatosLeidos = {
 type Lectura = { paso: string; lectura: Record<string, unknown> | null };
 
 const texto = (x: unknown, max: number) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
-const numero = (x: unknown) =>
-  typeof x === 'number' && Number.isFinite(x) ? Math.max(0, Math.min(100, Math.round(x))) : null;
+const numero = confianzaDe;
 
 /** Lo que dicen las lecturas de sus fotos vigentes, en un solo registro. Pura. */
 export function datosDeLecturas(
@@ -431,6 +431,8 @@ export async function confirmarDatosLeidos(db: Db, id: string, adminId: string) 
 export const VENTANA_RELLENO = 100;
 export const TOPE_RELEER_POR_VUELTA = 3;
 export const CLAVE_CURSOR_RELLENO = 'relleno_documento_cursor';
+/** C-CONFIANZA-LEIDA: la segunda pasada, una sola vez, para las fechas leídas sin su confianza. */
+export const CLAVE_CURSOR_CONFIANZA = 'relleno_confianza_cursor';
 
 export type CedulaPorLeer = {
   conductorId: string;
@@ -474,7 +476,7 @@ export async function rellenarDatosDocumento(
     .prepare('SELECT valor FROM config WHERE clave = ?')
     .bind(CLAVE_CURSOR_RELLENO)
     .first<{ valor: string }>();
-  if (cursor?.valor === 'fin') return { sinIa: 0, releidas: 0, fin: true };
+  if (cursor?.valor === 'fin') return releerSinConfianza(db, releer);
   const desde = Number(cursor?.valor ?? 0) || 0;
   const vigente = (campo: string) =>
     `(SELECT ${campo} FROM verificacion_fotos f WHERE f.conductor_id = u.id
@@ -555,5 +557,92 @@ export async function rellenarDatosDocumento(
       )
       .bind(CLAVE_CURSOR_RELLENO, valor)
       .run();
-  return { sinIa, releidas, fin };
+  // C-CONFIANZA-LEIDA: «fin» solo con las dos pasadas. Si la primera terminó en esta vuelta y queda tope,
+  // la segunda arranca ya (así una base sin nada que hacer deja su estado en una sola vuelta).
+  if (!fin || releidas >= TOPE_RELEER_POR_VUELTA) return { sinIa, releidas, fin: false };
+  const segunda = await releerSinConfianza(db, releer, TOPE_RELEER_POR_VUELTA - releidas);
+  return { sinIa, releidas: releidas + segunda.releidas, fin: segunda.fin };
+}
+
+/**
+ * C-CONFIANZA-LEIDA (25 nov 2026, producción): la primera relectura guardó la fecha de nacimiento sin su
+ * confianza (el modelo no la mandaba: no era obligatoria en el JSON), así que nunca pasó sola a la
+ * cuenta. Cuando la primera pasada ya terminó, una SEGUNDA pasada, una sola vez y con su propio cursor,
+ * vuelve a leer la cédula de quien sigue sin fecha y tiene la fecha leída sin confianza útil (ninguna,
+ * o 0), con el mismo tope de 3 por vuelta. Al terminar se apaga («fin»): nadie se relee dos veces más.
+ */
+async function releerSinConfianza(
+  db: Db,
+  releer: (c: CedulaPorLeer) => Promise<boolean>,
+  tope = TOPE_RELEER_POR_VUELTA,
+): Promise<{ sinIa: number; releidas: number; fin: boolean }> {
+  const cursor = await db
+    .prepare('SELECT valor FROM config WHERE clave = ?')
+    .bind(CLAVE_CURSOR_CONFIANZA)
+    .first<{ valor: string }>();
+  if (cursor?.valor === 'fin') return { sinIa: 0, releidas: 0, fin: true };
+  const desde = Number(cursor?.valor ?? 0) || 0;
+  const vigente = (campo: string) =>
+    `(SELECT ${campo} FROM verificacion_fotos f WHERE f.conductor_id = u.id
+        AND f.paso = 'doc_frente' AND f.estado = 'vigente' LIMIT 1)`;
+  const { results: tramo } = await db
+    .prepare(
+      `SELECT u.rowid AS rid, u.id, u.rol, u.fecha_nacimiento AS fecha,
+              d.nacimiento, d.confianza_nacimiento AS confianzaNacimiento,
+              ${vigente('f.id')} AS fotoId, ${vigente('f.clave')} AS claveFoto,
+              (SELECT k.doc_frente FROM kyc k WHERE k.usuario_id = u.id) AS claveKyc
+         FROM usuarios u LEFT JOIN datos_documento d ON d.usuario_id = u.id
+        WHERE u.rowid > ? ORDER BY u.rowid LIMIT ?`,
+    )
+    .bind(desde, VENTANA_RELLENO)
+    .all<{
+      rid: number;
+      id: string;
+      rol: string;
+      fecha: string | null;
+      nacimiento: string | null;
+      confianzaNacimiento: number | null;
+      fotoId: string | null;
+      claveFoto: string | null;
+      claveKyc: string | null;
+    }>();
+  let releidas = 0;
+  let hasta = tramo.at(-1)?.rid ?? desde;
+  let lleno = false;
+  for (const f of tramo) {
+    const sinConfianza =
+      f.rol === 'repartidor' &&
+      !f.fecha &&
+      Boolean(f.nacimiento) &&
+      !(Number(f.confianzaNacimiento) > 0);
+    if (!sinConfianza) continue;
+    const porLeer: CedulaPorLeer | null =
+      f.fotoId && f.claveFoto
+        ? { conductorId: f.id, fotoId: f.fotoId, clave: f.claveFoto }
+        : f.claveKyc
+          ? { conductorId: f.id, fotoId: null, clave: f.claveKyc }
+          : null;
+    if (!porLeer) continue;
+    if (releidas >= tope) {
+      hasta = f.rid - 1;
+      lleno = true;
+      break;
+    }
+    await db
+      .prepare("UPDATE datos_documento SET releida_en = datetime('now') WHERE usuario_id = ?")
+      .bind(f.id)
+      .run();
+    if (await releer(porLeer)) await guardarDatosLeidos(db, f.id);
+    releidas++;
+  }
+  const fin = !lleno && tramo.length < VENTANA_RELLENO;
+  const valor = fin ? 'fin' : String(hasta);
+  if (valor !== cursor?.valor)
+    await db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(CLAVE_CURSOR_CONFIANZA, valor)
+      .run();
+  return { sinIa: 0, releidas, fin };
 }

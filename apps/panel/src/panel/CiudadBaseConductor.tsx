@@ -78,6 +78,16 @@ export function CiudadBaseConductor({
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   }, [id]);
 
+  // C-BORRADOR-SIN-AVISO-VACIO: una ciudad recuperada que ya no se puede elegir (o que ya es su base) se
+  // descarta al llegar los datos: no queda un «Recuperamos…» sobre una casilla vacía.
+  const { valores: vb, setValores: ponerValores } = b;
+  useEffect(() => {
+    if (!datos || !vb.zonaId) return;
+    const sirve =
+      (datos.ciudades ?? []).some((c) => c.id === vb.zonaId) && datos.actual?.id !== vb.zonaId;
+    if (!sirve) ponerValores({ ...vb, zonaId: '' });
+  }, [datos, vb, ponerValores]);
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!b.valores.zonaId || b.valores.motivo.trim().length < 3) return;

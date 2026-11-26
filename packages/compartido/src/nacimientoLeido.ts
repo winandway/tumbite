@@ -34,10 +34,20 @@ export function fechaNacimientoValida(texto: unknown, hoy = new Date()): string 
   return anios >= 14 && anios <= 100 ? s : null;
 }
 
-const numero = (x: unknown): number | null => {
-  const n = typeof x === 'number' ? x : Number.NaN;
-  return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : null;
-};
+/**
+ * C-CONFIANZA-LEIDA (25 nov 2026, producción: lecturas con la fecha y sin confianza útil). Una confianza
+ * como la devuelva el modelo, en número de 0 a 100: acepta número o texto («95», «95 %», «0,95»), y la
+ * escala de 0 a 1 (0.95 → 95). Lo que no es un número → null. Pura; la usan la lectura y el relleno.
+ */
+export function confianzaDe(x: unknown): number | null {
+  const texto = typeof x === 'string' ? x.trim().replace('%', '').replace(',', '.').trim() : null;
+  const n = typeof x === 'number' ? x : texto ? Number(texto) : Number.NaN;
+  if (!Number.isFinite(n) || n < 0) return null;
+  // Escala de 0 a 1: 0.95 quiere decir 95. Un 1 exacto se toma como 1 % (el modelo usa 0–100).
+  const escalado = n > 0 && n < 1 ? n * 100 : n;
+  return Math.max(0, Math.min(100, Math.round(escalado)));
+}
+const numero = confianzaDe;
 
 /** La fecha de nacimiento leída en sus documentos, con su confianza, o null si no se leyó. */
 export function nacimientoDeLecturas(

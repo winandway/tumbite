@@ -168,6 +168,40 @@ describe('C-FECHA-GUARDADA: lo leído se guarda al leerlo y la edad sale de la f
     expect((await guardarDatosLeidos(s.m.DB, b.id)).fecha).toBe(false);
   });
 
+  it('«Usar esta fecha»: un toque guarda la leída de su documento con auditoría y nunca pisa una escrita', async () => {
+    const s = await escenario();
+    const c = await s.conductor('Conductor Un Toque', null);
+    await s.m.DB.prepare(
+      "INSERT INTO datos_documento (usuario_id, nacimiento, confianza_nacimiento) VALUES (?, '1974-03-10', 60)",
+    )
+      .bind(c.id)
+      .run();
+    const r = await s.equipo('PUT', `/datos/admin/conductores/${c.id}/fecha-nacimiento`, {
+      usarLeida: true,
+    });
+    expect(r.estado).toBe(200);
+    expect(r.datos.fechaNacimiento).toBe('1974-03-10');
+    const audit = await s.m.DB.prepare(
+      "SELECT actor_id, despues_json FROM auditoria_admin WHERE accion = 'conductor.fecha_nacimiento' AND objeto = ?",
+    )
+      .bind(`usuario:${c.id}`)
+      .first<{ actor_id: string; despues_json: string }>();
+    expect(audit?.actor_id).toBe(s.admin.id);
+    expect(JSON.parse(audit?.despues_json ?? '{}')).toMatchObject({ fuente: 'documento_un_toque' });
+    // Con una fecha ya escrita, «Usar esta fecha» no la pisa.
+    await s.m.DB.prepare("UPDATE usuarios SET fecha_nacimiento = '1980-01-01' WHERE id = ?")
+      .bind(c.id)
+      .run();
+    const otra = await s.equipo('PUT', `/datos/admin/conductores/${c.id}/fecha-nacimiento`, {
+      usarLeida: true,
+    });
+    expect(otra.estado).toBe(409);
+    const u = await s.m.DB.prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
+      .bind(c.id)
+      .first<{ fecha_nacimiento: string }>();
+    expect(u?.fecha_nacimiento).toBe('1980-01-01');
+  });
+
   it('sin fecha, el equipo la escribe a mano con su motivo y queda en la auditoría', async () => {
     const s = await escenario();
     const c = await s.conductor('Conductor A Mano', null);

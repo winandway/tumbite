@@ -59,21 +59,21 @@ describe('relleno con cursor: avanza, termina y al día no hace nada', () => {
       vueltas++;
     }
     expect(r.fin).toBe(true);
-    expect(vueltas).toBeLessThanOrEqual(3);
+    expect(vueltas).toBeLessThanOrEqual(4);
     const edad = await s.m.DB.prepare(
       "SELECT estado FROM cumplimientos WHERE conductor_id = ? AND vehiculo_id = '' AND requisito = ?",
     )
       .bind(cumple.id, REQUISITO_EDAD)
       .first<{ estado: string }>();
     expect(edad?.estado).toBe('aprobado');
-    // Al día: una sola lectura (el cursor) y ninguna escritura.
+    // Al día: dos lecturas (los cursores de las dos pasadas) y ninguna escritura.
     const c = contar(s.m.DB);
     expect(await rellenarDatosDocumento(c.envuelta, nada)).toEqual({
       sinIa: 0,
       releidas: 0,
       fin: true,
     });
-    expect(c.sentencias).toHaveLength(1);
+    expect(c.sentencias).toHaveLength(2);
     expect(c.escrituras()).toBe(0);
   });
 
