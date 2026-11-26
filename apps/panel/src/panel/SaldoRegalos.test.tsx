@@ -63,11 +63,23 @@ describe('C-SALDO-BIENVENIDA: la regla en Configuración', () => {
     await userEvent.type(screen.getByTestId('regla-monto'), '2');
     await userEvent.selectOptions(screen.getByTestId('regla-ciudad'), 'Z1');
     // Se cierra la pantalla y se vuelve: lo escrito sigue ahí.
-    await new Promise((r) => setTimeout(r, 700));
+    // Espera a que el borrador quede guardado (con un respiro), sin un tiempo fijo.
+    await waitFor(
+      () =>
+        expect(
+          Object.keys(localStorage).some((k) => {
+            const v = localStorage.getItem(k) ?? '';
+            return v.includes('"monto":"2"') && v.includes('"zonaId":"Z1"');
+          }),
+        ).toBe(true),
+      { timeout: 5_000 },
+    );
     unmount();
     render(<SaldoRegalosAutomaticos idioma="es" />);
     await screen.findByTestId('regla-bienvenida-Z1');
-    expect((screen.getByTestId('regla-monto') as HTMLInputElement).value).toBe('2');
+    await waitFor(() =>
+      expect((screen.getByTestId('regla-monto') as HTMLInputElement).value).toBe('2'),
+    );
     expect((screen.getByTestId('regla-ciudad') as HTMLSelectElement).value).toBe('Z1');
   });
 });
