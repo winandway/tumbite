@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DOCS } from './guias';
 import {
@@ -105,6 +107,22 @@ describe('C-REGISTRO-TODO-EL-PAIS (parte C): la guía pública del registro desd
         ?.guias.find((x) => x.id === 'get-started');
       expect(rest).toEqual(restAntes);
     }
+  });
+
+  it('publicada, cada captura es REAL y está: original en docs/capturas y WebP en lo público', () => {
+    if (!REGISTRO_CIUDAD_PUBLICADA) return;
+    const raiz = join(__dirname, '..', '..', '..', '..', '..');
+    const faltan = (['es', 'en'] as const).flatMap((idioma) =>
+      PASOS_CAPTURA_REGISTRO_CIUDAD.flatMap((paso) => [
+        `docs/capturas/registro-ciudad-${paso}-${idioma}.png`,
+        `apps/panel/public/docs/registro-ciudad-${paso}-${idioma}.webp`,
+      ]).filter((r) => !existsSync(join(raiz, r))),
+    );
+    expect(faltan).toEqual([]);
+    for (const idioma of ['es', 'en'] as const)
+      expect(DOCS[idioma].flatMap((s) => s.guias.map((g) => g.id))).toContain(
+        'sign-up-from-any-city',
+      );
   });
 
   it('mientras faltan sus capturas reales, Docs sigue igual (ninguna guía sin capturas)', () => {

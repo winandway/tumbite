@@ -22,7 +22,7 @@ import type { Captura, Guia, SeccionDocs } from './guias';
  *   creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos.»
  * - `papeles`: Divoox Driver en espera, con la lista de lo que puede ir subiendo (fotos y papeles).
  */
-export const REGISTRO_CIUDAD_PUBLICADA = false;
+export const REGISTRO_CIUDAD_PUBLICADA = true;
 
 export const PASOS_CAPTURA_REGISTRO_CIUDAD = [
   'pais',
@@ -52,7 +52,7 @@ export const GUIA_REGISTRO_CIUDAD: Record<Idioma, Guia> = {
       'Si en tu ciudad todavía no hay viajes, tu cuenta queda creada igual. La app te lo dice con claridad: «Tu cuenta quedó creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos.» No pierdes nada de lo que escribiste.',
       'Mientras tanto puedes entrar a tu cuenta y, si vas a conducir, ir subiendo tus fotos y tus papeles. Así, el día que abramos en tu ciudad, te falta menos para empezar.',
       'Cuando abrimos en tu ciudad, tu cuenta pasa sola, sin que hagas nada, y te avisamos por correo y en la app con lo que te falta para empezar.',
-      'Si te mudas o te equivocaste de ciudad, escríbenos desde la app a soporte y la corregimos.',
+      'Si te equivocaste de ciudad mientras esperas, toca «Cambiar» en «Tu ciudad», en el inicio de la app. Si ya trabajas con nosotros y te mudas, escríbenos desde la app a soporte y la cambiamos.',
     ],
     capturas: [
       foto(
@@ -114,7 +114,7 @@ export const GUIA_REGISTRO_CIUDAD: Record<Idioma, Guia> = {
       'If there are no trips in your city yet, your account is still created. The app tells you clearly: “Your account is ready. There are no trips in your city yet; we’ll let you know as soon as we open.” Nothing you typed is lost.',
       'In the meantime you can sign in and, if you are going to drive, start uploading your photos and documents. That way, the day we open in your city, you have less left to do before you start.',
       'When we open in your city, your account moves in on its own, without you doing anything, and we let you know by email and in the app what you still need to start.',
-      'If you move or picked the wrong city, write to support from the app and we will fix it.',
+      'If you picked the wrong city while you wait, tap “Change” under “Your city” on the app’s home screen. If you already work with us and you move, write to support from the app and we will change it.',
     ],
     capturas: [
       foto(

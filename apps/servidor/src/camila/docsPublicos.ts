@@ -25,7 +25,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Si ves «Todavía no llegamos a tu zona», escribe tu ciudad y tu país en «Avísame cuando llegue».",
    "Toca el botón. Te escribimos al correo de tu cuenta el día que abramos."
   ],
-  "cuerpo": "Creas tu cuenta una sola vez y te sirve en cualquier lugar donde Divoox esté disponible. Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta. Cada aviso cuenta: abrimos primero en las ciudades donde más personas y más restaurantes nos lo piden."
+  "cuerpo": "Creas tu cuenta una sola vez y te sirve en cualquier lugar donde Divoox esté disponible. Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta. Cada aviso cuenta: abrimos primero en las ciudades donde más personas y más restaurantes nos lo piden. Si ya creaste tu cuenta y dijiste dónde vives, no hace falta anotarte aparte: tu cuenta queda en espera de tu ciudad y te avisamos apenas abramos ahí."
  },
  {
   "idioma": "es",
@@ -1453,7 +1453,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Cuando quieras trabajar, desliza «Desliza para conectarte» de izquierda a derecha hasta el final. Un toque no te conecta (así no te conectas sin querer con el celular en el bolsillo); si sueltas a medio camino, vuelve al inicio. La app usa tu ubicación solo mientras estás conectado.",
    "No hay horarios ni mínimos: te conectas y desconectas cuando quieras."
   ],
-  "cuerpo": ""
+  "cuerpo": "Puedes registrarte como conductor desde cualquier ciudad de tu país. Si en la tuya todavía no hay viajes, tu cuenta queda creada, vas subiendo tus papeles y te avisamos apenas abramos. Lo explicamos en «Cómo registrarte desde cualquier ciudad»."
  },
  {
   "idioma": "es",
@@ -2766,6 +2766,27 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "cuerpo": "El buscador está arriba de todas las páginas de Docs. Mientras escribes, se abre una lista con las guías que coinciden, la más útil primero, y la palabra que buscaste resaltada en cada título. Busca como hablas: sin acentos, con mayúsculas o sin ellas, con un error de escritura («biletera») o con la palabra en inglés que usa mucha gente («wallet», «tracking», «top up»). Docs entiende las dos lenguas y encuentra la guía igual. Cada captura de una guía se puede ampliar. Al tocarla se abre a pantalla completa, con su explicación debajo. En la computadora acercas con «+» y «−» o con la rueda del ratón; en el celular, con dos dedos o tocando dos veces. Para moverte por la imagen ampliada, arrástrala."
  },
  {
+  "idioma": "es",
+  "ruta": "account/sign-up-from-any-city",
+  "titulo": "Cómo registrarte desde cualquier ciudad",
+  "resumen": "Te registras diciendo dónde vives: tu país, tu estado y tu ciudad. Tu cuenta se crea siempre, aunque en tu ciudad todavía no haya viajes, y te avisamos apenas abramos ahí.",
+  "preguntas": [
+   "¿Puedo registrarme si Divoox todavía no está en mi ciudad?",
+   "¿Por qué me preguntan dónde vivo?",
+   "No encuentro mi ciudad, ¿qué hago?",
+   "¿Qué pasa con mi cuenta si en mi ciudad todavía no hay viajes?",
+   "¿Cómo me entero cuando Divoox llegue a mi ciudad?"
+  ],
+  "pasos": [
+   "Abre Divoox Driver, la app de Divoox o la web y toca «Crea tu cuenta».",
+   "En «¿Dónde vives?» elige tu país y tu estado.",
+   "En «Ciudad» escribe las primeras letras de tu ciudad o tu pueblo y tócala en la lista.",
+   "Termina tu registro. Si en tu ciudad todavía no hay viajes, tu cuenta queda creada igual y te avisamos apenas abramos.",
+   "Si vas a conducir, entra a tu cuenta y ve subiendo tus fotos y tus papeles mientras esperas."
+  ],
+  "cuerpo": "Al crear tu cuenta en Divoox Driver, en la app de Divoox o en la web, te preguntamos dónde vives. Eliges tu país, después tu estado y después tu ciudad o tu pueblo. Para encontrarla rápido, escribe las primeras letras: te sugerimos las ciudades de tu estado, aunque no pongas los acentos. Te preguntamos dónde vives, no dónde está Divoox. Encuentras tu ciudad aunque todavía no trabajemos ahí: está la lista completa de tu país. Si en tu ciudad ya hay viajes, quedas listo para empezar: sigues tu registro como siempre. Si en tu ciudad todavía no hay viajes, tu cuenta queda creada igual. La app te lo dice con claridad: «Tu cuenta quedó creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos.» No pierdes nada de lo que escribiste. Mientras tanto puedes entrar a tu cuenta y, si vas a conducir, ir subiendo tus fotos y tus papeles. Así, el día que abramos en tu ciudad, te falta menos para empezar. Cuando abrimos en tu ciudad, tu cuenta pasa sola, sin que hagas nada, y te avisamos por correo y en la app con lo que te falta para empezar. Si te equivocaste de ciudad mientras esperas, toca «Cambiar» en «Tu ciudad», en el inicio de la app. Si ya trabajas con nosotros y te mudas, escríbenos desde la app a soporte y la cambiamos."
+ },
+ {
   "idioma": "en",
   "ruta": "ordering/where-divoox-works",
   "titulo": "Is Divoox in my area? Notify me when it arrives",
@@ -2779,7 +2800,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If you see “We’re not in your area yet,” type your city and country under “Notify me when it arrives.”",
    "Tap the button. We’ll write to your account’s email the day we open."
   ],
-  "cuerpo": "You create your account once and it works anywhere Divoox is available. When you enter an address we don’t reach yet, the app tells you clearly and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email. Every request counts: we open first in the cities where the most people and restaurants ask."
+  "cuerpo": "You create your account once and it works anywhere Divoox is available. When you enter an address we don’t reach yet, the app tells you clearly and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email. Every request counts: we open first in the cities where the most people and restaurants ask. If you already created your account and said where you live, there is no need to sign up again: your account waits for your city and we let you know as soon as we open there."
  },
  {
   "idioma": "en",
@@ -4202,7 +4223,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "When you want to work, slide “Slide to go online” from left to right all the way. A tap doesn’t take you online (so your phone can’t do it from your pocket); if you let go halfway, it slides back. The app uses your location only while you’re online.",
    "No schedules, no minimums: go online and offline whenever you like."
   ],
-  "cuerpo": ""
+  "cuerpo": "You can sign up as a driver from any city in your country. If there are no trips in yours yet, your account is created, you upload your documents and we let you know as soon as we open. We explain it in “How to sign up from any city.”"
  },
  {
   "idioma": "en",
@@ -5509,5 +5530,26 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Go to the next screenshot with the arrows or by swiping, and close with the X, Escape, or by tapping outside it."
   ],
   "cuerpo": "The search box sits at the top of every Docs page. As you type, a list of matching guides opens, best match first, with your search word highlighted in each title. Search the way you talk: accents and capital letters don’t matter, a typo (“walet”) still works, and so does the Spanish word many people use (“billetera”, “rastreo”, “recargar”). Docs understands both languages and finds the guide either way. Every screenshot in a guide can be enlarged. Tap it and it opens full screen, with its caption below. On a computer, zoom with “+” and “−” or your mouse wheel; on a phone, pinch with two fingers or double-tap. Drag to move around the enlarged image."
+ },
+ {
+  "idioma": "en",
+  "ruta": "account/sign-up-from-any-city",
+  "titulo": "How to sign up from any city",
+  "resumen": "You sign up by telling us where you live: your country, your state and your city. Your account is always created, even if there are no trips in your city yet, and we let you know as soon as we open there.",
+  "preguntas": [
+   "Can I sign up if Divoox isn’t in my city yet?",
+   "Why do you ask where I live?",
+   "I can’t find my city. What do I do?",
+   "What happens to my account if there are no trips in my city yet?",
+   "How will I know when Divoox comes to my city?"
+  ],
+  "pasos": [
+   "Open Divoox Driver, the Divoox app or the website and tap “Create your account.”",
+   "In “Where do you live?” pick your country and your state.",
+   "In “City,” type the first letters of your city or town and tap it in the list.",
+   "Finish signing up. If there are no trips in your city yet, your account is still created and we let you know as soon as we open.",
+   "If you are going to drive, sign in and upload your photos and documents while you wait."
+  ],
+  "cuerpo": "When you create your account in Divoox Driver, in the Divoox app or on the website, we ask where you live. Pick your country, then your state, then your city or town. To find it fast, type the first letters: we suggest the cities in your state, even if you skip the accents. We ask where you live, not where Divoox is. You will find your city even if we don’t work there yet: the full list for your country is there. If there are already trips in your city, you are ready to go: keep signing up as usual. If there are no trips in your city yet, your account is still created. The app tells you clearly: “Your account is ready. There are no trips in your city yet; we’ll let you know as soon as we open.” Nothing you typed is lost. In the meantime you can sign in and, if you are going to drive, start uploading your photos and documents. That way, the day we open in your city, you have less left to do before you start. When we open in your city, your account moves in on its own, without you doing anything, and we let you know by email and in the app what you still need to start. If you picked the wrong city while you wait, tap “Change” under “Your city” on the app’s home screen. If you already work with us and you move, write to support from the app and we will change it."
  }
 ];

@@ -71,7 +71,8 @@ export function SelectorLugar({
         <Icono nombre="location-outline" color={COLOR.textoSuave} />
         <Text
           style={{ flex: 1, fontSize: 16, color: valor ? COLOR.texto : COLOR.textoTenue }}
-          numberOfLines={1}
+          // El lugar se lee entero («Salinas, California (CA)»): en dos renglones si no cabe, nunca cortado.
+          numberOfLines={2}
         >
           {valor ? `${banderaDe(valor.pais)} ${lugarEscrito(valor)}` : t.elegir}
         </Text>
