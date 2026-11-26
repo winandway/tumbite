@@ -71,8 +71,12 @@ async function conductor(pais: Pais) {
 describe('C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante', () => {
   it('la política de fábrica de Venezuela no pide el reverso de la cédula ni el de la licencia; los demás países sí', () => {
     expect(politicaPlazoDeFabrica('VE').sinReverso).toEqual(['doc_reverso', 'licencia_reverso']);
-    for (const p of ['US', 'PE', 'CO', null])
+    // C-LICENCIA-REVERSO-OPCIONAL: el de la licencia se sigue ofreciendo; el de la cédula, no.
+    expect(politicaPlazoDeFabrica('VE').reversoOpcional).toEqual(['licencia_reverso']);
+    for (const p of ['US', 'PE', 'CO', null]) {
       expect(politicaPlazoDeFabrica(p).sinReverso).toEqual([]);
+      expect(politicaPlazoDeFabrica(p).reversoOpcional).toEqual([]);
+    }
   });
 
   it('con moto: cara, documento y licencia solo por delante, y seguro; el total cuadra y se envía', async () => {
@@ -110,8 +114,29 @@ describe('C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante',
         ).estado,
       ).toBe(409);
     // «Lo que te falta» (la de Driver, la de WhatsApp y la de Camila salen de aquí) no nombra ningún reverso.
-    const falta = (await c.yo('GET', '/datos/conductor/que-te-falta')).datos as unknown;
-    expect(JSON.stringify(falta ?? {})).not.toMatch(/revers/i);
+    const falta = await c.yo('GET', '/datos/conductor/que-te-falta');
+    expect(falta.estado).toBe(200);
+    expect(JSON.stringify(falta.datos)).not.toMatch(/revers/i);
+    // C-LICENCIA-REVERSO-OPCIONAL: la app nueva (?opcionales=1) ve el reverso de la licencia como
+    // opcional (el de la cédula nunca); lo puede subir y no cambia la cuenta de papeles.
+    const conOpcional = (await c.yo('GET', '/datos/conductor/verificacion?opcionales=1')).datos as {
+      pasos: { paso: string; opcional: boolean }[];
+      total: number;
+      listos: number;
+    };
+    expect(conOpcional.pasos.filter((p) => p.opcional).map((p) => p.paso)).toEqual([
+      'licencia_reverso',
+    ]);
+    expect(conOpcional.pasos.map((p) => p.paso)).not.toContain('doc_reverso');
+    expect(conOpcional.total).toBe(4);
+    expect((await c.foto('licencia_reverso')).estado).toBe(201);
+    const conReverso = await c.verificacion();
+    expect(conReverso.listos).toBe(4);
+    expect(conReverso.pasos.map((p) => p.paso)).not.toContain('licencia_reverso');
+    const ficha2 = (await c.equipo('GET', `/datos/admin/verificacion/${c.rep.id}`)).datos;
+    expect(
+      ficha2.fotos.find((f: { paso: string }) => f.paso === 'licencia_reverso')?.opcional,
+    ).toBe(true);
   });
 
   it('sin vehículo: documento por delante y cara (dos papeles)', async () => {

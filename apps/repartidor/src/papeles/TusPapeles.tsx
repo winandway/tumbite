@@ -27,7 +27,7 @@ export function usePapeles(api: Api) {
   const recargar = useCallback(async () => {
     setCargando(true);
     try {
-      const r = await api.pedir<Verificacion>('GET', '/datos/conductor/verificacion');
+      const r = await api.pedir<Verificacion>('GET', '/datos/conductor/verificacion?opcionales=1');
       if (vivo.current) {
         setV(r);
         setError('');

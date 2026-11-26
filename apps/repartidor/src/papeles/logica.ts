@@ -30,6 +30,11 @@ export type PasoDelServidor = {
   paso: PasoVerificacion;
   papel: PapelDelConductor;
   soloEnVivo: boolean;
+  /**
+   * C-LICENCIA-REVERSO-OPCIONAL: se ofrece pero no se exige (en Venezuela, el reverso de la
+   * licencia). No cuenta para el avance, ni para «lo que falta», ni para enviar.
+   */
+  opcional?: boolean;
   foto: FotoDePaso | null;
 };
 
@@ -91,8 +96,12 @@ export function sePuedeCambiar(v: Pick<Verificacion, 'papeles'>, p: PasoDelServi
 
 /** El paso por donde se retoma: la primera foto que falta o que hay que repetir. null = están todas. */
 export function pasoPendiente(v: Pick<Verificacion, 'pasos'>): PasoVerificacion | null {
-  return pasosEnOrden(v).find((p) => !fotoLista(p))?.paso ?? null;
+  return pasosEnOrden(v).find((p) => !p.opcional && !fotoLista(p))?.paso ?? null;
 }
+
+/** ¿Están todas las fotos que se exigen? (las opcionales no cuentan) */
+export const todasLasExigidas = (v: Pick<Verificacion, 'pasos'>) =>
+  v.pasos.filter((p) => !p.opcional).every(fotoLista);
 
 /** El paso que sigue a `actual`: la siguiente foto que falta; si no falta ninguna, a «Revisa tus papeles». */
 export function siguientePaso(
@@ -101,14 +110,16 @@ export function siguientePaso(
 ): PasoVerificacion | null {
   const orden = pasosEnOrden(v);
   const i = orden.findIndex((p) => p.paso === actual);
+  // El opcional se ofrece en su lugar (el reverso, justo después del frente), nunca se vuelve a él.
   const despues = orden.slice(i + 1).find((p) => !fotoLista(p));
   if (despues) return despues.paso;
-  return orden.find((p) => !fotoLista(p) && p.paso !== actual)?.paso ?? null;
+  return orden.find((p) => !p.opcional && !fotoLista(p) && p.paso !== actual)?.paso ?? null;
 }
 
 /** «Paso 2 de 6» y el avance de la barra (fotos tomadas sobre el total). */
 export function avanceDeFotos(v: Pick<Verificacion, 'pasos'>): { listas: number; total: number } {
-  return { listas: v.pasos.filter(fotoLista).length, total: v.pasos.length };
+  const exigidas = v.pasos.filter((p) => !p.opcional);
+  return { listas: exigidas.filter(fotoLista).length, total: exigidas.length };
 }
 
 /** Qué dibujo lleva cada paso (la horma gris antes de la foto y la ilustración del borrador). */

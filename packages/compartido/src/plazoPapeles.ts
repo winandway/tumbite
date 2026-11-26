@@ -13,6 +13,9 @@
  * - `aprobacionAutomatica`: la IA aprueba sola lo que viene todo en verde. APAGADA de fábrica.
  * - `sinReverso`: las fotos «por detrás» que ese país NO pide, porque su documento no trae nada útil
  *   atrás (C-DOCUMENTO-SIN-REVERSO: la cédula de Venezuela). Sin escribir = se piden.
+ * - `reversoOpcional`: de los que el país no exige, los que la app igual OFRECE subir (C-LICENCIA-
+ *   REVERSO-OPCIONAL: la licencia de Venezuela tiene dos caras, pero basta el frente). Endurecer la
+ *   regla es sacarlo de `sinReverso`: un solo cambio, «reverso obligatorio: sí o no».
  *
  * Una sola pieza para el servidor, Driver y el panel. Nada de esto vive en condiciones sueltas.
  */
@@ -29,6 +32,8 @@ export type PoliticaPlazoPapeles = {
   aprobacionAutomatica: boolean;
   /** C-DOCUMENTO-SIN-REVERSO. Ausente o vacío = el país pide los dos reversos, como siempre. */
   sinReverso?: PasoReverso[];
+  /** C-LICENCIA-REVERSO-OPCIONAL. Los reversos de `sinReverso` que igual se ofrecen (opcionales). */
+  reversoOpcional?: PasoReverso[];
 };
 
 /** Las fotos «por detrás» que un país puede dejar de pedir. */
@@ -61,10 +66,13 @@ const DE_FABRICA = new Map<string, PoliticaPlazoPapeles>([
       aprobacionAutomatica: false,
       // C-DOCUMENTO-SIN-REVERSO (23 nov 2026, Richard): la cédula venezolana no tiene nada útil por
       // detrás (una lámina en blanco con un número de serie): solo se fotografía por delante.
-      // C-LICENCIA-SIN-REVERSO (26 nov 2026, Richard: «la licencia de Venezuela tiene una sola
-      // cara… si la parte trasera no está, entonces que sea conforme con el frente»): la licencia
-      // también va solo por delante. La carta médica ya era una sola foto en «Tus papeles».
+      // C-LICENCIA-REVERSO-OPCIONAL (26 nov 2026, Richard: «la licencia tiene dos caras, pero… si
+      // pasan una, será suficiente con la del frente… no hay que quitar la opción. En el futuro
+      // iremos endureciendo las reglas»): el frente de la licencia basta (es el que se cruza con la
+      // cédula y trae el vencimiento); el reverso se ofrece y nunca falta. La carta médica ya era
+      // una sola foto en «Tus papeles». Qué trae cada cara: docs/VERIFICACION-DOCUMENTOS-VENEZUELA.md.
       sinReverso: ['doc_reverso', 'licencia_reverso'],
+      reversoOpcional: ['licencia_reverso'],
     },
   ],
   // Perú («hay que ser más serios»): licencia y seguro (SOAT) aprobados para empezar; 30 días para el resto.
@@ -90,6 +98,7 @@ export function politicaPlazoDeFabrica(pais: string | null | undefined): Politic
     paraEmpezar: [...p.paraEmpezar],
     exentos: [...p.exentos],
     sinReverso: [...(p.sinReverso ?? [])],
+    reversoOpcional: [...(p.reversoOpcional ?? [])],
   };
 }
 
@@ -155,6 +164,19 @@ export function quitarReversos<T extends string>(
 ): T[] {
   const fuera = new Set<string>(politica?.sinReverso ?? []);
   return pasos.filter((p) => !fuera.has(p));
+}
+
+/**
+ * C-LICENCIA-REVERSO-OPCIONAL. Los pasos que se OFRECEN sin exigirse: están entre los que el país no
+ * pide y entre los opcionales, y solo de los que le tocan (`pasos`, la lista completa del vehículo).
+ */
+export function pasosOpcionales<T extends string>(
+  pasos: readonly T[],
+  politica: Pick<PoliticaPlazoPapeles, 'sinReverso' | 'reversoOpcional'> | null | undefined,
+): T[] {
+  const fuera = new Set<string>(politica?.sinReverso ?? []);
+  const ofrece = new Set<string>(politica?.reversoOpcional ?? []);
+  return pasos.filter((p) => fuera.has(p) && ofrece.has(p));
 }
 
 /** ¿Ese país pide el reverso del documento de identidad? */
