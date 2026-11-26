@@ -1,4 +1,5 @@
 import { ErrorDatos } from '../validar';
+import { sentenciaVencerRegaloConductor } from '../regaloConductorVence';
 
 export type Bolsillo =
   'prepago' | 'reservado' | 'comisiones' | 'punto' | 'deuda_cliente' | 'directo';
@@ -116,6 +117,9 @@ export async function reservarComision(
   // La segunda solo entra si la primera existe; un reintento después de una caída vieja (prepago sin
   // reservado) termina la reserva en vez de tomarlo como «no alcanza».
   await db.batch([
+    // C-REGALO-CONDUCTOR-TOPE-VENCE: un regalo de arranque vencido se retira ANTES de apartar la
+    // comisión (en el mismo lote), así no se paga una comisión con un regalo que ya no vale.
+    sentenciaVencerRegaloConductor(db, p.repartidorId),
     sentenciaDescontar(db, {
       cuentaId: p.repartidorId,
       bolsillo: 'prepago',

@@ -100,8 +100,8 @@ export const CONOCIMIENTO_DOCS: readonly EntradaDocs[] = [
       'bonus',
       'saldo gratis',
     ],
-    es: 'Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez: cuando tu cuenta queda aprobada o, donde hay plazo para los papeles, la primera vez que te conectas con la foto de tu cara ya tomada. Y solo mientras tu ciudad tenga ese regalo encendido.',
-    en: 'When you start, Divoox may give you a starter gift: balance for your first trips. It is given only once: when your account is approved or, where there is a document deadline, the first time you go online with the photo of your face already taken. And only while your city has that gift turned on.',
+    es: 'Al registrarte, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez: cuando tu cuenta queda aprobada o, donde hay plazo para los papeles, la primera vez que te conectas con la foto de tu cara ya tomada. Y solo mientras tu ciudad tenga ese regalo encendido. Lo ves en tu saldo con la fecha en que vence; lo que no uses antes de esa fecha se retira, y tu propio dinero nunca se toca.',
+    en: 'When you sign up, Divoox may give you a starter gift: balance for your first trips. It is given only once: when your account is approved or, where there is a document deadline, the first time you go online with the photo of your face already taken. And only while your city has that gift turned on. You see it in your balance with its expiration date; whatever you don’t use by then is removed, and your own money is never touched.',
   },
   {
     // C-PLAZO-PAPELES: el plazo, las fotos solo con cámara y que nada se envía solo.

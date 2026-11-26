@@ -2268,7 +2268,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'En «Saldo de conductores» eliges la ciudad y ves cuántos conductores hay, cuántos están activos (conectados o con carreras en los últimos 7 días), cuántos no tienen saldo, y el saldo, lo apartado, las ganancias y las carreras de cada uno.',
       'Cargar saldo a mano: toca «Cargar saldo» en su fila, escribe el monto, elige el motivo («Regalo de arranque», «Pagó por pago móvil» o «Corrección del equipo») y, si hay, la referencia del banco. Toca «Revisar la carga», lee el resumen y toca «Confirmar la carga». Queda en el libro con tu nombre.',
       'Topes: hasta 50 dólares por carga (fijo en el código). Si con esa carga pasas tu límite del día, no se mueve nada: queda en «Para aprobar» para que otra persona del equipo la firme.',
-      'Regalo de arranque: en la misma pantalla, por ciudad, pones cuánto saldo recibe cada conductor nuevo y el presupuesto total, y lo enciendes. Cada conductor lo recibe una sola vez, al aprobarlo. Al gastarse el presupuesto se apaga solo.',
+      'Regalo de arranque: en la misma pantalla, por ciudad, pones cuánto saldo recibe cada conductor nuevo, el presupuesto total, el tope por día (cada 24 horas) y los días que vale si no lo usa, y lo enciendes. Lo reciben solo las cuentas que se registran desde que lo enciendes: quien ya estaba registrado no lo recibe. Le llega solo, una vez, al aprobarlo o al conectarse por primera vez con permiso para trabajar. Si el tope del día está lleno, lo recibe al conectarse cuando vuelva a caber. Al vencer se le retira solo lo que no usó, nunca su dinero. Cada cambio queda en la auditoría con tu nombre. Al gastarse el presupuesto se apaga solo.',
     ],
     capturas: [
       capSaldo(
@@ -2294,7 +2294,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'Busca al conductor y toca «Cargar saldo».',
       'Escribe el monto, elige el motivo y la referencia si la hay; toca «Revisar la carga».',
       'Lee el resumen y toca «Confirmar la carga».',
-      'Para el regalo de arranque, llena el monto y el presupuesto abajo, marca «Encendido» y guarda.',
+      'Para el regalo de arranque, llena el monto, el presupuesto, el tope por día y los días de vigencia abajo, marca «Encendido» y guarda.',
     ],
   },
   en: {
@@ -2309,7 +2309,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'In “Driver balances” you pick the city and see how many drivers there are, how many are active (online or with trips in the last 7 days), how many have no balance, and each one’s balance, amount set aside, earnings and trips.',
       'Top up by hand: tap “Top up” on their row, enter the amount, choose the reason and, if there is one, the bank reference. Tap “Review the top-up,” read the summary and tap “Confirm the top-up.” It’s recorded in the ledger under your name.',
       'Limits: up to 50 dollars per top-up (fixed in the code). If that top-up takes you over your daily limit, nothing moves: it waits in “To approve” for another team member to sign off.',
-      'Starter gift: on the same screen, per city, set how much balance each new driver gets and the total budget, and turn it on. Each driver gets it once, when approved. When the budget runs out, it turns off on its own.',
+      'Starter gift: on the same screen, per city, set how much balance each new driver gets, the total budget, the daily cap (every 24 hours) and how many days it lasts if unused, and turn it on. Only accounts that sign up after you turn it on get it: drivers who were already signed up don’t. It arrives on its own, once, when they are approved or the first time they go online with permission to drive. If the daily cap is full, they get it when they go online once it fits again. When it expires, only the unused part is removed, never their own money. Every change is logged in the audit with your name. When the budget runs out, it turns off on its own.',
     ],
     capturas: [
       capSaldo(
@@ -2335,7 +2335,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'Find the driver and tap “Top up.”',
       'Enter the amount, choose the reason and add the reference if there is one; tap “Review the top-up.”',
       'Read the summary and tap “Confirm the top-up.”',
-      'For the starter gift, fill in the amount and budget below, check “On” and save.',
+      'For the starter gift, fill in the amount, budget, daily cap and days it lasts below, check “On” and save.',
     ],
   },
 };

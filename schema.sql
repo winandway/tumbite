@@ -4425,7 +4425,9 @@ CREATE TABLE IF NOT EXISTS cargas_saldo_conductor (
   motivo TEXT NOT NULL DEFAULT '',
   comprobante TEXT NOT NULL DEFAULT '',
   autor_id TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-REGALO-CONDUCTOR-TOPE-VENCE: cuándo vence el regalo de arranque si no se usa (vacío = no vence).
+  vence_en TEXT
 );
 CREATE INDEX IF NOT EXISTS cargas_saldo_conductor_quien ON cargas_saldo_conductor(conductor_id, creado_en);
 -- Un solo regalo de arranque por conductor, para siempre.
@@ -4436,7 +4438,13 @@ CREATE TABLE IF NOT EXISTS regalo_conductor_nuevo (
   presupuesto INTEGER NOT NULL CHECK (presupuesto > 0),
   activo INTEGER NOT NULL DEFAULT 0,
   actualizado_por TEXT,
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-REGALO-CONDUCTOR-TOPE-VENCE (26 nov 2026): lo más que se regala en un día en la ciudad y los
+  -- días que vale el regalo si no se usa. Vacío = sin tope del día / no vence.
+  tope_diario INTEGER CHECK (tope_diario IS NULL OR tope_diario > 0),
+  vigencia_dias INTEGER CHECK (vigencia_dias IS NULL OR vigencia_dias > 0),
+  -- Desde cuándo está encendido: solo lo reciben las cuentas creadas desde ese momento (conductores NUEVOS).
+  encendido_en TEXT
 );
 
 -- C-REFERIDOS-EQUIPOS (17 nov 2026, piloto de El Vigía y Tucaní, como los programas de referidos de

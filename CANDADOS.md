@@ -2,6 +2,23 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-REGALO-CONDUCTOR-TOPE-VENCE · Regalo de arranque de conductores: solo cuentas nuevas, tope por día, vencimiento a los N días y reintento al conectarse (26 nov 2026, Richard en Gerencia: «el conductor que se registre nuevo, de forma automática se le cargan sus $5»; 50 USD al día por ciudad; 30 días si no se usan) — todos los países con prepago · servidor, panel (Saldo de conductores), app Driver
+
+- **Qué fallaba:** la casilla del regalo de arranque pagaba, pero no tenía tope por día ni vencimiento. Además, al encenderla les habría regalado también a los conductores que ya estaban registrados, porque la vía del plazo de papeles lo da en la primera conexión. Y un conductor aprobado cuando el presupuesto estaba lleno nunca volvía a intentarlo.
+- **Cómo funciona:** `regalo_conductor_nuevo` lleva `tope_diario`, `vigencia_dias` y `encendido_en` (se pone al pasar de apagado a encendido y se borra al apagar). `darRegaloConductorNuevo` comprueba en la misma sentencia de inserción tres cosas: `usuarios.creado_en >= COALESCE(encendido_en, actualizado_en)`, que el regalo entero quepa en las últimas 24 horas de la ciudad (no lo parte) y el presupuesto. La carga guarda `cargas_saldo_conductor.vence_en`. Cuando el conductor pasa todas las puertas de `/repartidor/conectar`, se vuelve a intentar el regalo (una vez en la vida, por el índice único) y se corre el vencimiento.
+- **Vencimiento (`regaloConductorVence.ts`):**
+  - Es una sola sentencia y el regalo se gasta primero.
+  - Se retira `min(regalo − uso neto desde la carga, saldo)`. El uso no cuenta recargas ni cargas (`recarga%`, `carga%`).
+  - Lleva la referencia única `vence-regalo:<id>`. Si no quedaba nada, deja un asiento de 0 y no se vuelve a mirar.
+  - Corre en tres momentos: al mirar el saldo, al conectarse y dentro del lote de `reservarComision`, antes de apartar. La ruta del saldo (`/repartidor/saldo-prepago`) además devuelve `regaloArranque` con lo que queda y la fecha.
+- **Auditoría:** cada guardado escribe `auditoria_admin` (`regalo_conductor_nuevo`, `regalo-conductor-nuevo:<zona>`, antes y después).
+- **Migración:** las tres columnas nuevas y `cargas_saldo_conductor.vence_en` van en COLUMNAS de `esquema.ts`, con su prueba en `esquemaCompleto.test.ts`.
+- **Pruebas (vistas en rojo):**
+  - `saldoConductores.test.ts`, «C-REGALO-CONDUCTOR-TOPE-VENCE». Cada una de estas cuatro fallas pone una prueba en rojo: quitar el tope del día, quitar el filtro de cuentas nuevas, contar una recarga como uso, y sacar el vencimiento del lote de la reserva.
+  - `esquemaCompleto.test.ts`: quitar la columna de COLUMNAS la pone en rojo.
+- **Qué NO tocar:** no partir el regalo por el tope del día. No quitar el filtro de cuentas nuevas. No retirar nunca más que el saldo ni contar recargas como uso. No sacar el vencimiento del lote de la reserva.
+- **Docs:** guía pública del saldo del conductor (español e inglés), ayuda interna «Saldo de conductores» y la respuesta de Camila «regalo-de-arranque».
+
 ## C-SALDO-LOTES · El Saldo Divoox por lotes: origen, vencimiento, orden de uso y libro de Divoox con regalo y prepago aparte (26 nov 2026, encargo de Richard) — todos los países (encendido donde el país tiene el saldo: hoy Venezuela) · servidor, panel, app de clientes
 
 - **Qué es:** cada crédito del saldo es un LOTE (`saldo_cliente_lotes`) con su origen (`bienvenida`, `masiva`, `fidelidad`, `regalo_manual`, `prepago`; y `migracion` / `devolucion` para lo de antes) y, si es regalo, su `vence_en`. El prepago NUNCA vence (regla de la tabla). El libro (`saldo_cliente_movimientos`) sigue siendo la verdad: la suma de `restante` de los lotes de un cliente = la suma de su libro, SIEMPRE. Cada movimiento que saca o devuelve saldo deja sus consumos (`saldo_cliente_consumos`, + sale del lote, − vuelve) y un disparador mueve el `restante`.

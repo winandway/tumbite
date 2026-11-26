@@ -2844,7 +2844,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motivo",
     "comprobante",
     "autor_id",
-    "creado_en"
+    "creado_en",
+    "vence_en"
   ],
   "regalo_conductor_nuevo": [
     "zona_id",
@@ -2852,7 +2853,10 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "presupuesto",
     "activo",
     "actualizado_por",
-    "actualizado_en"
+    "actualizado_en",
+    "tope_diario",
+    "vigencia_dias",
+    "encendido_en"
   ],
   "programas_referido": [
     "tipo",

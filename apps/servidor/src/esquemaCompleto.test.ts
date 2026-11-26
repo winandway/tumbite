@@ -50,6 +50,26 @@ describe('el esquema completo existe en la base', () => {
     );
   });
 
+  it('C-REGALO-CONDUCTOR-TOPE-VENCE: el regalo de arranque y sus cargas que ya existían reciben solos el tope, la vigencia y el vencimiento', async () => {
+    const m = mundo();
+    await m.DB.prepare('DROP TABLE regalo_conductor_nuevo').run();
+    await m.DB.prepare(
+      `CREATE TABLE regalo_conductor_nuevo (zona_id TEXT PRIMARY KEY, monto INTEGER NOT NULL CHECK (monto > 0),
+         presupuesto INTEGER NOT NULL CHECK (presupuesto > 0), activo INTEGER NOT NULL DEFAULT 0,
+         actualizado_por TEXT, actualizado_en TEXT NOT NULL DEFAULT (datetime('now')))`,
+    ).run();
+    await m.DB.prepare('ALTER TABLE cargas_saldo_conductor DROP COLUMN vence_en').run();
+    reiniciarEsquema();
+    const salud = await m.llamar('GET', '/datos/salud');
+    expect(salud.datos.piezas.esquema).toBe('ok');
+    const cols = await m.DB.prepare(
+      "SELECT name FROM pragma_table_info('regalo_conductor_nuevo') UNION ALL SELECT name FROM pragma_table_info('cargas_saldo_conductor')",
+    ).all<{ name: string }>();
+    expect(cols.results.map((c) => c.name)).toEqual(
+      expect.arrayContaining(['tope_diario', 'vigencia_dias', 'encendido_en', 'vence_en']),
+    );
+  });
+
   it('si falta una columna del esquema que nadie agrega, la salud lo dice en rojo', async () => {
     const m = mundo();
     await m.DB.prepare('DROP TABLE avisos_pedido').run();

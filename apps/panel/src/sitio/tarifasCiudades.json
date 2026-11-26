@@ -1,3 +1,739 @@
 {
-  "tarifas": {}
+  "tarifas": {
+    "el-vigia": {
+      "ciudad": "el-vigia",
+      "servicio": "moto",
+      "moneda": "USD",
+      "centro": "El Vigía (casco urbano)",
+      "grupos": [
+        {
+          "grupo": "Carreras cortas",
+          "lugares": [
+            {
+              "lugar": "23 de Enero",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Av. 15",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Buenos Aires (Asodega)",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Centro",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "El Bosque",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Páez",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Pedregosa (Redoma)",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Playita",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Las Primicias",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Paraíso",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Campo Alegre",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Motoza",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Pedregosa ULA",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            }
+          ]
+        },
+        {
+          "grupo": "Vía El Zulia",
+          "lugares": [
+            {
+              "lugar": "El Taparo",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Los Pozones",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Parque Chama",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Parque Chama II",
+              "ida": {
+                "dia": 400,
+                "noche": 520
+              },
+              "regreso": {
+                "dia": 400,
+                "noche": 520
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Alcabala Vera Agua",
+              "ida": {
+                "dia": 500,
+                "noche": 650
+              },
+              "regreso": {
+                "dia": 500,
+                "noche": 650
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Caracolí",
+              "ida": {
+                "dia": 1000,
+                "noche": 1300
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Moralito",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "El Ubito",
+              "ida": {
+                "dia": 1700,
+                "noche": 2210
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Santa Bárbara",
+              "ida": {
+                "dia": 2500,
+                "noche": 3250
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Santa Cruz Zulia",
+              "ida": {
+                "dia": 4000,
+                "noche": 5200
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Encontrado",
+              "ida": {
+                "dia": 4500,
+                "noche": 5850
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "El Guayabo",
+              "ida": {
+                "dia": 6000,
+                "noche": 7800
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Casigua El Cubo",
+              "ida": {
+                "dia": 9000,
+                "noche": 11700
+              },
+              "regreso": null,
+              "idaVuelta": null
+            }
+          ]
+        },
+        {
+          "grupo": "Vía Mérida",
+          "lugares": [
+            {
+              "lugar": "La Vega I",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Peaje Vía Mérida",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Palmita",
+              "ida": {
+                "dia": 700,
+                "noche": 910
+              },
+              "regreso": {
+                "dia": 700,
+                "noche": 910
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "El Anís",
+              "ida": {
+                "dia": 1200,
+                "noche": 1560
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Providencia",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Mesa Bolívar",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Lagunillas",
+              "ida": {
+                "dia": 2000,
+                "noche": 2600
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Santa Cruz",
+              "ida": {
+                "dia": 2000,
+                "noche": 2600
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Ejido",
+              "ida": {
+                "dia": 2500,
+                "noche": 3250
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Mesa de las Palmas",
+              "ida": {
+                "dia": 2500,
+                "noche": 3250
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Tovar",
+              "ida": {
+                "dia": 2500,
+                "noche": 3250
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Mérida",
+              "ida": {
+                "dia": 3000,
+                "noche": 3900
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Tabay",
+              "ida": {
+                "dia": 3500,
+                "noche": 4550
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Bailadores",
+              "ida": {
+                "dia": 4000,
+                "noche": 5200
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Apartadero",
+              "ida": {
+                "dia": 6000,
+                "noche": 7800
+              },
+              "regreso": null,
+              "idaVuelta": null
+            }
+          ]
+        },
+        {
+          "grupo": "Vía Panamericana",
+          "lugares": [
+            {
+              "lugar": "Redoma de la Blanca",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Alta Vista",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Aroa II",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Blanca Universidad",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Las Delicias",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Prado Hermoso",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Mucujepe",
+              "ida": {
+                "dia": 500,
+                "noche": 650
+              },
+              "regreso": {
+                "dia": 500,
+                "noche": 650
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Villa los Ángeles",
+              "ida": {
+                "dia": 500,
+                "noche": 650
+              },
+              "regreso": {
+                "dia": 500,
+                "noche": 650
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Los Naranjos",
+              "ida": {
+                "dia": 1200,
+                "noche": 1560
+              },
+              "regreso": {
+                "dia": 1200,
+                "noche": 1560
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "4 Esquinas",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Guayabones",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Santa Elena",
+              "ida": {
+                "dia": 2000,
+                "noche": 2600
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Tucaní",
+              "ida": {
+                "dia": 3000,
+                "noche": 3900
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Caja Seca",
+              "ida": {
+                "dia": 4500,
+                "noche": 5850
+              },
+              "regreso": null,
+              "idaVuelta": null
+            }
+          ]
+        },
+        {
+          "grupo": "Vía Táchira",
+          "lugares": [
+            {
+              "lugar": "Puente de Onia",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "KM 9",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Peaje Zea",
+              "ida": {
+                "dia": 1000,
+                "noche": 1300
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Caño Tigre",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Tendida",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Los Giros",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Coloncito",
+              "ida": {
+                "dia": 2000,
+                "noche": 2600
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Zea",
+              "ida": {
+                "dia": 2000,
+                "noche": 2600
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "La Fría",
+              "ida": {
+                "dia": 3000,
+                "noche": 3900
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "San Juan de Colón",
+              "ida": {
+                "dia": 4500,
+                "noche": 5850
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "San Cristóbal",
+              "ida": {
+                "dia": 7000,
+                "noche": 9100
+              },
+              "regreso": null,
+              "idaVuelta": null
+            }
+          ]
+        }
+      ],
+      "otros": [],
+      "minimo": {
+        "dia": 100,
+        "noche": 130
+      },
+      "noche": {
+        "recargoPb": 3000,
+        "desdeH": 21,
+        "hastaH": 6,
+        "zonaHoraria": "America/Caracas"
+      },
+      "actualizado": "2026-11-26"
+    }
+  }
 }

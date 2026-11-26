@@ -20,6 +20,14 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
     'That budget is over the Divoox maximum.',
   ],
   [
+    'El tope del día tiene que alcanzar al menos para un regalo entero.',
+    'The daily cap has to cover at least one full gift.',
+  ],
+  [
+    'El tope del día no puede pasar el presupuesto.',
+    'The daily cap can’t be more than the budget.',
+  ],
+  [
     'Ese tope diario por conductor pasa el máximo permitido de Divoox.',
     'That daily limit per driver is over the Divoox maximum.',
   ],

@@ -10,6 +10,7 @@ import {
   cargasDeConductor,
   conductoresDeCiudad,
   guardarRegaloConductorNuevo,
+  VIGENCIA_REGALO_MAXIMA_DIAS,
   leerRegalosConductorNuevo,
   regalosASaldo,
 } from '../saldoConductores';
@@ -82,6 +83,15 @@ saldoConductores.put('/admin/regalo-conductor-nuevo/:zona', async (c) => {
       monto: z.number().int().min(1),
       presupuesto: z.number().int().min(1),
       activo: z.boolean(),
+      // C-REGALO-CONDUCTOR-TOPE-VENCE: vacío = sin tope del día / el regalo no vence.
+      topeDiario: z.number().int().min(1).nullable().default(null),
+      vigenciaDias: z
+        .number()
+        .int()
+        .min(1)
+        .max(VIGENCIA_REGALO_MAXIMA_DIAS)
+        .nullable()
+        .default(null),
     }),
   );
   const ciudad = await base(c)

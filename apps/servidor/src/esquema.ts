@@ -60,6 +60,12 @@ import {
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-REGALO-CONDUCTOR-TOPE-VENCE (26 nov 2026, Richard: 5 USD por conductor nuevo, 50 USD al día por
+  // ciudad, 30 días si no se usan): el tope del día y la vigencia del regalo de arranque de la ciudad.
+  ['regalo_conductor_nuevo', 'tope_diario', 'INTEGER'],
+  ['regalo_conductor_nuevo', 'vigencia_dias', 'INTEGER'],
+  ['regalo_conductor_nuevo', 'encendido_en', 'TEXT'],
+  ['cargas_saldo_conductor', 'vence_en', 'TEXT'],
   // C-RASTRO (22 nov 2026): la posición del repartidor en cada cambio de estado del pedido, en la misma
   // fila que ya se escribía.
   ['historial_estados', 'lat', 'REAL'],

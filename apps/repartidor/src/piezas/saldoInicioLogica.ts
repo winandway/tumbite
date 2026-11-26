@@ -16,6 +16,8 @@ export type SaldoPrepagoInicio = {
   efectivoActivo?: boolean;
   transferenciaActiva?: boolean;
   recargasPuntoVenta?: boolean;
+  /** C-REGALO-CONDUCTOR-TOPE-VENCE: lo que queda del regalo de arranque y cuándo vence (UTC). */
+  regaloArranque?: { monto: number; venceEn: string } | null;
 };
 
 export type TarjetaSaldo = {

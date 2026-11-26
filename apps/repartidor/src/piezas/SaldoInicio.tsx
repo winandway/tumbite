@@ -39,12 +39,21 @@ export function SaldoInicio({
         : null;
   const monto = formatearMonto(saldo.disponible, saldo.moneda ?? 'USD', idioma);
   const accion = problema ? t.inicioRecargar : t.inicioVer;
+  const regalo = saldo.regaloArranque
+    ? t.inicioRegalo(
+        formatearMonto(saldo.regaloArranque.monto, saldo.moneda ?? 'USD', idioma),
+        new Date(`${saldo.regaloArranque.venceEn.replace(' ', 'T')}Z`).toLocaleDateString(
+          idioma === 'es' ? 'es' : 'en-US',
+          { day: 'numeric', month: 'long' },
+        ),
+      )
+    : null;
   return (
     <Pressable
       testID="saldo-inicio"
       onPress={alRecargar}
       accessibilityRole="button"
-      accessibilityLabel={`${t.inicioTitulo}: ${monto}. ${aviso ?? alcanza ?? ''} ${accion}`}
+      accessibilityLabel={`${t.inicioTitulo}: ${monto}. ${regalo ?? ''} ${aviso ?? alcanza ?? ''} ${accion}`}
       style={{
         backgroundColor: '#fff',
         borderRadius: 16,
@@ -77,6 +86,11 @@ export function SaldoInicio({
       {alcanza ? (
         <Text style={{ color: problema ? C.primario : C.exito, fontWeight: '700', fontSize: 13 }}>
           {alcanza}
+        </Text>
+      ) : null}
+      {regalo ? (
+        <Text testID="saldo-inicio-regalo" style={{ color: '#666B73', fontSize: 13 }}>
+          {regalo}
         </Text>
       ) : null}
       {aviso ? (

@@ -171,6 +171,7 @@ const es = {
     inicioTitulo: 'Tu saldo para comisiones',
     inicioRecargar: 'Recargar saldo',
     inicioVer: 'Ver mi saldo',
+    inicioRegalo: (m: string, f: string) => `Incluye ${m} de regalo de Divoox · vence el ${f}`,
     inicioBajo: 'Tu saldo se está acabando. Recarga para seguir recibiendo trabajo.',
     inicioSin:
       'Sin saldo no te llegan carreras ni pedidos que se cobran en mano. Recarga para volver a recibirlos.',
@@ -417,6 +418,7 @@ const en: T = {
     inicioTitulo: 'Your balance for fees',
     inicioRecargar: 'Top up balance',
     inicioVer: 'View my balance',
+    inicioRegalo: (m: string, f: string) => `Includes ${m} Divoox gift · expires ${f}`,
     inicioBajo: 'Your balance is running low. Top up to keep getting work.',
     inicioSin:
       'Without balance you won’t get trips or orders paid in person. Top up to start receiving them again.',
