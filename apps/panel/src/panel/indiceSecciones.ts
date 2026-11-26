@@ -201,6 +201,10 @@ export const SINONIMOS_SECCIONES: Readonly<Record<string, Palabras>> = {
     es: ['saldo', 'recargas', 'recargar', 'billetera', 'ganancias de conductores', 'prepago'],
     en: ['balance', 'top-ups', 'top up', 'wallet', 'driver earnings', 'prepaid'],
   },
+  'customer-balance': {
+    es: ['saldo divoox', 'saldo de clientes', 'carrera de regalo', 'recarga de regalo', 'prepago'],
+    en: ['divoox balance', 'customer balance', 'gift ride', 'gift top-up', 'prepaid'],
+  },
   agents: {
     es: ['agentes', 'puntos de venta', 'vender saldo', 'pagar en efectivo', 'tasa del día'],
     en: ['agents', 'sales points', 'sell balance', 'cash payouts', 'exchange rate'],

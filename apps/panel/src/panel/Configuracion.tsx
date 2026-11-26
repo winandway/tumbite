@@ -7,6 +7,7 @@ import {
   type Usuario,
   almacenNavegador,
   enIdioma,
+  formatearMonto,
   useBorrador,
 } from '@tumbite/compartido';
 import { Icono } from '../sitio/Icono';
@@ -50,6 +51,11 @@ const T = {
     borrar: 'Borrar mi cuenta',
     confirmarBorrar:
       '¿Borrar tu cuenta? Se borran tus datos personales y no se puede deshacer. Escribe BORRAR para confirmar.',
+    // C-SALDO-CLIENTE (I4): el aviso del Saldo Divoox antes de borrar (igual que en las apps).
+    saldoAviso: (m: string) =>
+      `Tienes ${m} de Saldo Divoox. Si borras tu cuenta lo pierdes; si es dinero que recargaste, escríbenos antes para devolvértelo.`,
+    saldoAcepto: 'Entiendo que pierdo mi Saldo Divoox',
+    saldoSeguir: 'Seguir con el borrado',
     verClave: 'Ver la contraseña',
     ocultarClave: 'Ocultar la contraseña',
     recuperado: 'Recuperamos lo que estabas escribiendo.',
@@ -87,6 +93,10 @@ const T = {
     borrar: 'Delete my account',
     confirmarBorrar:
       'Delete your account? Your personal data is removed and this can’t be undone. Type DELETE to confirm.',
+    saldoAviso: (m: string) =>
+      `You have ${m} of Divoox Balance. If you delete your account, you lose it; if it’s money you topped up, write to us first so we can refund it.`,
+    saldoAcepto: 'I understand I lose my Divoox Balance',
+    saldoSeguir: 'Continue deleting',
     verClave: 'Show password',
     ocultarClave: 'Hide password',
     recuperado: 'We restored what you were typing.',
@@ -239,11 +249,26 @@ export function Configuracion({
     }
   }
 
+  // C-SALDO-CLIENTE (I4): con Saldo Divoox, primero el aviso con el monto y la casilla; sin casilla
+  // marcada no se borra (el servidor también lo exige con «?saldo=acepto»).
+  const [saldoBorrar, setSaldoBorrar] = useState<number | null>(null);
+  const [aceptaSaldo, setAceptaSaldo] = useState(false);
   async function borrar() {
+    if (saldoBorrar == null) {
+      // Si no se pudo leer el saldo, se dice y no se sigue: nunca se borra a ciegas creyendo que es 0.
+      let r: { disponible: number };
+      try {
+        r = await pedir<{ disponible: number }>('GET', '/datos/cuentas/yo/saldo-divoox');
+      } catch (x) {
+        return falla(x);
+      }
+      if (r.disponible > 0) return setSaldoBorrar(r.disponible);
+    } else if (!aceptaSaldo) return;
     const escrito = window.prompt(t.confirmarBorrar) ?? '';
     if (escrito.trim().toUpperCase() !== (idioma === 'en' ? 'DELETE' : 'BORRAR')) return;
     try {
-      await api.borrarCuenta();
+      if (saldoBorrar && saldoBorrar > 0) await pedir('DELETE', '/datos/cuentas/yo?saldo=acepto');
+      else await api.borrarCuenta();
       await alBorrar();
     } catch (x) {
       falla(x);
@@ -263,6 +288,30 @@ export function Configuracion({
           opciones={[{ texto: t.borrar, peligro: true, alTocar: () => void borrar() }]}
         />
       </div>
+      {saldoBorrar ? (
+        <div className="tarjeta-form" data-testid="borrar-saldo-aviso" role="alert">
+          <p>
+            <strong>{t.saldoAviso(formatearMonto(saldoBorrar, 'USD', idioma))}</strong>
+          </p>
+          <label className="casilla-fila">
+            <input
+              type="checkbox"
+              checked={aceptaSaldo}
+              onChange={(e) => setAceptaSaldo(e.target.checked)}
+              data-testid="borrar-saldo-acepto"
+            />
+            {t.saldoAcepto}
+          </label>
+          <button
+            type="button"
+            className="boton peligro"
+            disabled={!aceptaSaldo}
+            onClick={() => void borrar()}
+          >
+            {t.saldoSeguir}
+          </button>
+        </div>
+      ) : null}
       <AvisoBorrador
         visible={b.recuperado}
         idioma={idioma}

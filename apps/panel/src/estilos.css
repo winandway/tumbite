@@ -3043,6 +3043,137 @@ button {
 .pie-region:first-child h3 {
   margin-top: 0;
 }
+/* C-CIUDAD-ABIERTA-SIN-PRONTO y C-TARIFAS-PUBLICAS: páginas de ciudad, de país y de tarifas */
+.lugar-abierto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+.lugar .lugar-tarifas {
+  font-weight: 700;
+  color: var(--primario);
+  text-decoration: none;
+}
+.lugar .lugar-tarifas:hover {
+  text-decoration: underline;
+}
+.lugar .lugar-descargar-claro {
+  background: #fff;
+  color: var(--secundario);
+  border: 1px solid #2a2a2a;
+}
+.lugar .lugar-descargar-claro:hover {
+  background: var(--suave);
+}
+.lugar-donde-hoy,
+.lugar-desde-otra {
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: var(--suave);
+}
+.lugar-donde-hoy .lugar-enlace-ciudad {
+  font-weight: 700;
+  color: var(--primario);
+}
+.lugar-desde-otra a {
+  font-weight: 700;
+  color: var(--primario);
+}
+.lugar-pasos ol {
+  padding-left: 22px;
+}
+.lugar-pasos li {
+  margin: 6px 0;
+}
+.lugar-manejar {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 4px 20px 20px;
+  margin: 28px 0;
+}
+.lugar-ciudades-pais h3 {
+  font-size: 1rem;
+  margin: 16px 0 6px;
+}
+.lugar-ciudades-pais ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px 16px;
+  list-style: none;
+  padding: 0;
+}
+.lugar-ciudades-pais li {
+  flex-wrap: wrap;
+}
+.lugar-ciudades-pais a {
+  color: var(--secundario);
+  font-weight: 600;
+}
+.lugar-preguntas details {
+  border-bottom: 1px solid #e2e2e2;
+  padding: 12px 0;
+}
+.lugar-preguntas summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-family: Poppins, sans-serif;
+}
+.lugar-preguntas details p {
+  margin: 8px 0 0;
+}
+.tarifas-reglas ul {
+  padding-left: 20px;
+}
+.tarifas-grupo h2 {
+  margin-bottom: 8px;
+}
+.tarifas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.tarifas-tabla th,
+.tarifas-tabla td {
+  padding: 9px 8px;
+  border-bottom: 1px solid #e2e2e2;
+  text-align: left;
+  vertical-align: top;
+}
+.tarifas-tabla thead th {
+  font-size: 0.8rem;
+  color: #5e5e5e;
+  font-weight: 600;
+  border-bottom: 1px solid #2a2a2a;
+}
+.tarifas-tabla td {
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 700;
+  width: 1%;
+}
+.tarifas-tabla thead th:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+}
+.tarifas-tabla tbody th {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.tarifas-tabla tbody th small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #5e5e5e;
+}
+.tarifas-otros {
+  padding-left: 20px;
+}
+.tarifas-fecha {
+  font-size: 0.85rem;
+  color: #5e5e5e;
+}
 /* Página de país: datos, franquicia y vecinos */
 .lugar-datos dl {
   display: grid;

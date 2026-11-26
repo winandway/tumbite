@@ -84,6 +84,7 @@ import { SuperRewards } from './SuperRewards';
 import { SuperBanners } from './SuperBanners';
 import { SuperRegalosDivoox } from './SuperRegalosDivoox';
 import { SuperSaldoConductores } from './SuperSaldoConductores';
+import { SuperSaldoClientes } from './SuperSaldoClientes';
 import { SuperAgentes } from './SuperAgentes';
 import { SuperReferidosEquipos } from './SuperReferidosEquipos';
 import { SuperLineas } from './SuperLineas';
@@ -207,6 +208,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/gift-codes') return <SuperRegalosDivoox idioma={idioma} />;
   // C-SALDO-CONDUCTOR: conductores por ciudad, carga de saldo y regalo de arranque.
   if (sub === '/driver-balance') return <SuperSaldoConductores idioma={idioma} />;
+  // C-SALDO-CLIENTE: el Saldo Divoox de los clientes (buscar, cargar, revisar).
+  if (sub === '/customer-balance') return <SuperSaldoClientes idioma={idioma} />;
   // C-AGENTE-DIVOOX: agentes que pagan ganancias en efectivo y venden saldo.
   if (sub === '/agents') return <SuperAgentes idioma={idioma} />;
   // C-REFERIDOS-EQUIPOS: programas de referidos y equipos con su líder.

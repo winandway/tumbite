@@ -9,17 +9,20 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { recibirMensaje } from '../camila/cerebro';
 import { usarPersonaDelChat } from './camilaFallos';
 import { enviarPorCanal } from '../camila/canales';
+import { firmaDelEquipo } from '../camila/identidad';
 import { recibirCorreo } from '../camila/correoEntrante';
 import { anotarErrorDeCorreo, hiloDeCorreo } from '../camila/correoHilo';
 import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
 import {
   type AjustesCamila,
   type Persona,
+  NOMBRE_FIRMA_MAXIMO,
   REGALOS_POR_DIA_MAXIMO,
   anotarPais,
   guardarAjustes,
   humanoActivo,
   leerAjustes,
+  limpiarNombreFirma,
   personaDeUsuario,
   personaDeVisitante,
   personaPorId,
@@ -563,7 +566,8 @@ camila.post('/admin/camila/hilos/:persona/responder', async (c) => {
       .bind(yo.id, p.id),
   ]);
   const en = p.idioma === 'en';
-  const firma = `${yo.nombre}${en ? ', Divoox Support Team' : ', del equipo de soporte de Divoox'}`;
+  // C-FIRMA-EQUIPO: lo que escribe una persona del equipo firma con el nombre de atención de los ajustes.
+  const firma = firmaDelEquipo((await leerAjustes(db)).nombreFirmaEquipo, en ? 'en' : 'es');
   // C-CAMILA-CORREO-HILO: por correo sale en el mismo hilo de la persona, firmado por quien responde.
   const porCorreo = p.canal_ultimo === 'correo';
   const salida = await enviarPorCanal(
@@ -674,7 +678,8 @@ camila.get('/admin/camila/ajustes', async (c) => {
 camila.put('/admin/camila/ajustes', async (c) => {
   exigir(c, 'admin');
   exigirAlcanceTotal(c);
-  const d: AjustesCamila = await leerCuerpo(
+  const antes = await leerAjustes(base(c));
+  const cuerpo = await leerCuerpo(
     c,
     z.object({
       ia: z.boolean(),
@@ -682,8 +687,23 @@ camila.put('/admin/camila/ajustes', async (c) => {
         error: 'El tope diario no puede pasar de 5 dólares.',
       }),
       regalosPorDia: z.number().int().min(0).max(REGALOS_POR_DIA_MAXIMO),
+      // C-FIRMA-EQUIPO: el nombre de atención del equipo; sin mandarlo se queda el que estaba.
+      nombreFirmaEquipo: z
+        .string()
+        .max(NOMBRE_FIRMA_MAXIMO, { error: 'El nombre de firma va hasta 40 letras.' })
+        .refine((x) => x.trim() === '' || limpiarNombreFirma(x) !== '', {
+          error: 'El nombre de firma lleva solo letras y espacios.',
+        })
+        .optional(),
     }),
   );
+  const d: AjustesCamila = {
+    ...cuerpo,
+    nombreFirmaEquipo:
+      cuerpo.nombreFirmaEquipo === undefined
+        ? antes.nombreFirmaEquipo
+        : limpiarNombreFirma(cuerpo.nombreFirmaEquipo),
+  };
   await guardarAjustes(base(c), d);
   return c.json({ ajustes: d });
 });

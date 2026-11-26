@@ -16,7 +16,14 @@ import { pedir } from './api';
  * toca aquí (sale de las políticas de comisión): solo quién lo carga. Vale para los viajes que se
  * cotizan desde ahora; los que ya están en curso siguen con lo que tenían.
  */
-type Regla = { pais: string; ciudad: string | null; valor: QuienPaga; cambiadoEn: string };
+type Regla = {
+  pais: string;
+  ciudad: string | null;
+  /** C-QUIEN-PAGA-SERVICIO: null = Moto y Carro. */
+  servicio?: string | null;
+  valor: QuienPaga;
+  cambiadoEn: string;
+};
 type Ciudad = { id: string; nombre: string; pais: string };
 
 const T = {
@@ -37,6 +44,11 @@ const T = {
     pais: 'País',
     ciudad: 'Ciudad',
     todoElPais: 'Todo el país',
+    servicio: 'Servicio',
+    servicios: { '': 'Moto y Carro', moto: 'Solo Moto', carro: 'Solo Carro' } as Record<
+      string,
+      string
+    >,
     sinReglas: 'Sin reglas: en todos los países paga el conductor.',
     resto: 'En los demás países paga el conductor.',
     guardar: 'Guardar',
@@ -63,6 +75,11 @@ const T = {
     pais: 'Country',
     ciudad: 'City',
     todoElPais: 'Whole country',
+    servicio: 'Service',
+    servicios: { '': 'Moto and Car', moto: 'Moto only', carro: 'Car only' } as Record<
+      string,
+      string
+    >,
     sinReglas: 'No rules: the driver pays in every country.',
     resto: 'In every other country the driver pays.',
     guardar: 'Save',
@@ -85,7 +102,7 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
   const [enviando, setEnviando] = useState(false);
   const b = useBorrador({
     formulario: 'super-fin-quien-paga',
-    inicial: { pais: 'VE', ciudad: '', valor: 'cliente' },
+    inicial: { pais: 'VE', ciudad: '', servicio: '', valor: 'cliente' },
     almacen: almacenNavegador,
   });
   const v = b.valores;
@@ -113,6 +130,7 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
       await pedir('PUT', '/datos/admin/finanzas/quien-paga', {
         pais: v.pais,
         ...(v.ciudad ? { ciudad: v.ciudad } : {}),
+        ...(v.servicio ? { servicio: v.servicio } : {}),
         valor: v.valor,
       });
       await b.limpiar();
@@ -126,7 +144,7 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
     }
   }
 
-  const opciones: string[] = v.ciudad ? [...QUIEN_PAGA, 'del_pais'] : [...QUIEN_PAGA];
+  const opciones: string[] = v.ciudad || v.servicio ? [...QUIEN_PAGA, 'del_pais'] : [...QUIEN_PAGA];
   return (
     <section data-testid="quien-paga-viajes">
       <h2>
@@ -138,9 +156,12 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
         <>
           <ul className="lista-simple" data-testid="quien-paga-reglas">
             {reglas.map((r) => (
-              <li key={`${r.pais}:${r.ciudad ?? ''}`}>
+              <li key={`${r.pais}:${r.ciudad ?? ''}:${r.servicio ?? ''}`}>
                 <strong>
                   {r.pais} · {nombreCiudad(r.ciudad)}
+                  {r.servicio
+                    ? ` · ${new Map(Object.entries(t.servicios)).get(r.servicio) ?? r.servicio}`
+                    : ''}
                 </strong>{' '}
                 — {t.corto[r.valor]}
               </li>
@@ -185,7 +206,8 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
               value={v.ciudad}
               onChange={(e) => {
                 b.cambiar('ciudad', e.target.value);
-                if (!e.target.value && v.valor === 'del_pais') b.cambiar('valor', 'conductor');
+                if (!e.target.value && !v.servicio && v.valor === 'del_pais')
+                  b.cambiar('valor', 'conductor');
               }}
             >
               <option value="">{t.todoElPais}</option>
@@ -198,6 +220,24 @@ export function QuienPagaViajes({ idioma }: { idioma: 'es' | 'en' }) {
                 ))}
             </select>
           </div>
+        </div>
+        <div className="campo">
+          <label htmlFor="qp-servicio">{t.servicio}</label>
+          <select
+            id="qp-servicio"
+            value={v.servicio}
+            onChange={(e) => {
+              b.cambiar('servicio', e.target.value);
+              if (!e.target.value && !v.ciudad && v.valor === 'del_pais')
+                b.cambiar('valor', 'conductor');
+            }}
+          >
+            {['', 'moto', 'carro'].map((x) => (
+              <option key={x} value={x}>
+                {new Map(Object.entries(t.servicios)).get(x)}
+              </option>
+            ))}
+          </select>
         </div>
         <fieldset className="campo" style={{ border: 0, padding: 0, margin: 0 }}>
           {opciones.map((o) => (

@@ -335,7 +335,8 @@ export async function liberarRegalo(db: D1Database, operacionId: string, motivo:
   return Number(r.meta.changes ?? 0) > 0;
 }
 
-async function alerta(
+/** Una alerta antifraude para el reporte del equipo (regalos y, C-SALDO-CLIENTE, Saldo Divoox). */
+export async function alerta(
   db: D1Database,
   a: {
     tipo: string;
@@ -595,6 +596,65 @@ async function alertaCuentasMismoDia(
   });
 }
 
+/**
+ * C-REGALO-VIAJE-REAL y C-SALDO-CLIENTE: mide si un viaje terminado fue real (viajeReal.ts). La usan
+ * el cierre del regalo y el del Saldo Divoox (las mismas protecciones). Null = no hay con qué medir
+ * (sin viaje o sin cotización): se paga como siempre.
+ */
+export async function medirViajeReal(
+  db: D1Database,
+  p: { operacionId: string; conductorId: string; alTerminar: boolean },
+): Promise<{ motivos: MotivoRevision[]; medidas: MedidasViaje } | null> {
+  const v = await db
+    .prepare(
+      `SELECT v.destino_lat, v.destino_lng, COALESCE(v.distancia_m_real, 0) AS recorrido,
+              v.pasajero_cerca, v.pasajero_lejos,
+              CAST((julianday(COALESCE(v.terminado_en, 'now')) - julianday(v.iniciado_en)) * 86400 AS INTEGER) AS duracion,
+              q.distancia_m, q.duracion_s, r.lat, r.lng,
+              r.ubicacion_en > datetime('now', ?2) AS fresca
+         FROM viajes v LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         LEFT JOIN repartidores r ON r.usuario_id = ?3
+        WHERE v.operacion_id = ?1`,
+    )
+    .bind(p.operacionId, `-${UMBRALES_VIAJE_REAL.minutosUbicacion} minutes`, p.conductorId)
+    .first<{
+      destino_lat: number;
+      destino_lng: number;
+      recorrido: number;
+      pasajero_cerca: number;
+      pasajero_lejos: number;
+      duracion: number | null;
+      distancia_m: number | null;
+      duracion_s: number | null;
+      lat: number | null;
+      lng: number | null;
+      fresca: number | null;
+    }>();
+  if (!v || v.distancia_m == null || v.duracion_s == null) return null;
+  const aqui = v.lat != null && v.lng != null && Number(v.fresca) === 1;
+  const medidas: MedidasViaje = {
+    cotizadaM: Number(v.distancia_m),
+    cotizadaS: Number(v.duracion_s),
+    recorridoM: Number(v.recorrido),
+    duracionS: Number(v.duracion ?? 0),
+    pasajeroCerca: Number(v.pasajero_cerca ?? 0),
+    pasajeroLejos: Number(v.pasajero_lejos ?? 0),
+    ...(p.alTerminar
+      ? {
+          alDestinoM: aqui
+            ? Math.round(
+                metrosEntre(
+                  { lat: Number(v.lat), lng: Number(v.lng) },
+                  { lat: Number(v.destino_lat), lng: Number(v.destino_lng) },
+                ),
+              )
+            : null,
+        }
+      : {}),
+  };
+  return { motivos: evaluarViajeReal(medidas), medidas };
+}
+
 export type CierreRegaloViaje = { monto: number; enRevision: boolean };
 
 /**
@@ -637,56 +697,10 @@ export async function cerrarRegaloDeViaje(
     await liberarRegalo(db, p.operacionId, 'revision_rechazada');
     return { monto: 0, enRevision: false };
   }
-  const v = await db
-    .prepare(
-      `SELECT v.destino_lat, v.destino_lng, COALESCE(v.distancia_m_real, 0) AS recorrido,
-              v.pasajero_cerca, v.pasajero_lejos,
-              CAST((julianday(COALESCE(v.terminado_en, 'now')) - julianday(v.iniciado_en)) * 86400 AS INTEGER) AS duracion,
-              q.distancia_m, q.duracion_s, r.lat, r.lng,
-              r.ubicacion_en > datetime('now', ?2) AS fresca
-         FROM viajes v LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
-         LEFT JOIN repartidores r ON r.usuario_id = ?3
-        WHERE v.operacion_id = ?1`,
-    )
-    .bind(p.operacionId, `-${UMBRALES_VIAJE_REAL.minutosUbicacion} minutes`, p.conductorId)
-    .first<{
-      destino_lat: number;
-      destino_lng: number;
-      recorrido: number;
-      pasajero_cerca: number;
-      pasajero_lejos: number;
-      duracion: number | null;
-      distancia_m: number | null;
-      duracion_s: number | null;
-      lat: number | null;
-      lng: number | null;
-      fresca: number | null;
-    }>();
+  const medida = await medirViajeReal(db, p);
   // Sin viaje o sin cotización no hay con qué medir: se paga como siempre (no pasa en un viaje normal).
-  if (!v || v.distancia_m == null || v.duracion_s == null) return pagar();
-  const aqui = v.lat != null && v.lng != null && Number(v.fresca) === 1;
-  const medidas: MedidasViaje = {
-    cotizadaM: Number(v.distancia_m),
-    cotizadaS: Number(v.duracion_s),
-    recorridoM: Number(v.recorrido),
-    duracionS: Number(v.duracion ?? 0),
-    pasajeroCerca: Number(v.pasajero_cerca ?? 0),
-    pasajeroLejos: Number(v.pasajero_lejos ?? 0),
-    ...(p.alTerminar
-      ? {
-          alDestinoM: aqui
-            ? Math.round(
-                metrosEntre(
-                  { lat: Number(v.lat), lng: Number(v.lng) },
-                  { lat: Number(v.destino_lat), lng: Number(v.destino_lng) },
-                ),
-              )
-            : null,
-        }
-      : {}),
-  };
-  const motivos = evaluarViajeReal(medidas);
-  if (motivos.length === 0) return pagar();
+  if (!medida || medida.motivos.length === 0) return pagar();
+  const { motivos, medidas } = medida;
   const detalle = detalleRevision(motivos, medidas);
   const [abierta] = await db.batch([
     db
@@ -1083,6 +1097,14 @@ export async function listarCupones(db: D1Database) {
  */
 export const SIN_HEREDADOS = `AND NOT EXISTS (SELECT 1 FROM libro l WHERE l.referencia = 'regalo-divoox:' || usos_cupon_divoox.id AND l.concepto = 'regalo_divoox')`;
 
+/**
+ * Lo que Divoox le acreditó a cada conductor y todavía le debe pagar: los regalos cobrados y (C-SALDO-
+ * CLIENTE) lo que cubrió el Saldo Divoox de sus pasajeros. Los dos van a sus ganancias por el mismo
+ * camino y se le pagan por pago móvil o los pasa a su saldo con un toque.
+ */
+export const COBRADO_POR_DIVOOX = `SELECT conductor_id, moneda, pais, monto FROM usos_cupon_divoox WHERE estado = 'cobrado' ${SIN_HEREDADOS}
+   UNION ALL SELECT conductor_id, moneda, pais, monto FROM usos_saldo_divoox WHERE estado = 'cobrado' AND monto > 0`;
+
 /** Lo acreditado a cada conductor por regalos, lo que ya se le pagó por pago móvil y lo pendiente. */
 export async function liquidacionConductores(db: D1Database) {
   const { results } = await db
@@ -1092,7 +1114,7 @@ export async function liquidacionConductores(db: D1Database) {
               COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = x.conductor_id AND p.moneda = x.moneda AND p.referencia LIKE 'saldo:%'), 0) AS a_saldo,
               COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = x.conductor_id), 0) AS saldo
          FROM (SELECT conductor_id, moneda, pais, SUM(monto) AS acreditado, COUNT(*) AS viajes
-                 FROM usos_cupon_divoox WHERE estado = 'cobrado' ${SIN_HEREDADOS} GROUP BY conductor_id, moneda, pais) x
+                 FROM (${COBRADO_POR_DIVOOX}) GROUP BY conductor_id, moneda, pais) x
          LEFT JOIN usuarios us ON us.id = x.conductor_id
         ORDER BY x.acreditado DESC LIMIT 200`,
     )
@@ -1242,8 +1264,8 @@ export async function porCobrarRegalos(db: D1Database, conductorId: string) {
       `SELECT x.moneda, x.pais, x.acreditado,
               COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = ?1 AND p.moneda = x.moneda), 0) AS pagado,
               COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = ?1), 0) AS saldo
-         FROM (SELECT moneda, pais, SUM(monto) AS acreditado FROM usos_cupon_divoox
-                WHERE conductor_id = ?1 AND estado = 'cobrado' ${SIN_HEREDADOS} GROUP BY moneda, pais) x
+         FROM (SELECT moneda, pais, SUM(monto) AS acreditado FROM (${COBRADO_POR_DIVOOX})
+                WHERE conductor_id = ?1 GROUP BY moneda, pais) x
         ORDER BY x.acreditado DESC LIMIT 1`,
     )
     .bind(conductorId)

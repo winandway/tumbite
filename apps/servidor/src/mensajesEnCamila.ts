@@ -23,6 +23,11 @@ export const MENSAJES_EN_CAMILA: [string, string][] = [
   ['Escribe la respuesta en español.', 'Write the answer in Spanish.'],
   ['Escribe la respuesta en inglés.', 'Write the answer in English.'],
   ['El tope diario no puede pasar de 5 dólares.', 'The daily limit can’t be more than 5 dollars.'],
+  ['El nombre de firma va hasta 40 letras.', 'The signature name goes up to 40 letters.'],
+  [
+    'El nombre de firma lleva solo letras y espacios.',
+    'The signature name uses only letters and spaces.',
+  ],
   [
     'Esto es de toda la empresa: lo cambia alguien con alcance total.',
     'This covers the whole company: someone with full scope changes it.',

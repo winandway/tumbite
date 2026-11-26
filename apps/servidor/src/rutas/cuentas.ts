@@ -1082,7 +1082,8 @@ cuentas.get('/pase-web/:codigo', async (c) => {
 cuentas.delete('/yo', async (c) => {
   const u = exigir(c);
   const db = base(c);
-  await borrarCuenta(c.env, db, u);
+  // C-SALDO-CLIENTE (I4): «?saldo=acepto» = vio el aviso de su Saldo Divoox y confirmó perderlo.
+  await borrarCuenta(c.env, db, u, { saldoAceptado: c.req.query('saldo') === 'acepto' });
   c.header('Set-Cookie', cookie('', true));
   return c.json({ ok: true });
 });

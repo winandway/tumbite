@@ -5,6 +5,7 @@ import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_AGENTES } from './esquemaAgentes';
+import { ESQUEMA_SALDO_CLIENTE } from './esquemaSaldoCliente';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
 import {
@@ -27,6 +28,15 @@ import { INDICES_BUSCADOR } from './buscadorSql';
 import { INDICES_LUGAR, LUGAR_COLUMNAS } from './esquemaLugar';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
+import {
+  CLAVE_SEMILLA_TABULADOR_VIGIA,
+  ZONA_TABULADOR_VIGIA,
+  leerMarcaSemilla,
+  semillaPorCorrer,
+  sembrarTabuladorVigia,
+} from './semillaTabuladorVigia';
+import { QUIEN_PAGA_DDL, rehacerQuienPaga } from './esquemaQuienPaga';
+import { TABULADOR_EL_VIGIA } from './tabuladorElVigia';
 import {
   SQL_CANDIDATOS_SERVICIOS_VEHICULO,
   repararServiciosVehiculo,
@@ -115,6 +125,16 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['tarifas_viaje', 'km_maximo', 'INTEGER'],
   // C-PRECIO-ZONA (24 nov 2026): umbral del precio de la zona por ciudad y servicio (NULL = 10 %).
   ['tarifas_viaje', 'umbral_precio_zona_pb', 'INTEGER'],
+  // C-RECARGO-NOCHE (25 nov 2026): tarifa nocturna por ciudad y servicio (NULL = sin recargo, 21 a 6).
+  ['tarifas_viaje', 'recargo_noche_pb', 'INTEGER'],
+  ['tarifas_viaje', 'noche_desde_h', 'INTEGER'],
+  ['tarifas_viaje', 'noche_hasta_h', 'INTEGER'],
+  // C-TABULADOR-VIGIA (25 nov 2026): la vía de la ruta y «revisar el punto en el mapa».
+  ['rutas_precio_zona', 'grupo', 'TEXT'],
+  ['rutas_precio_zona', 'revisar', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-QUIEN-PAGA-SERVICIO (25 nov 2026): la regla de quién paga puede ser de un solo servicio. La
+  // clave primaria nueva la pone rehacerQuienPaga (la columna sola no basta).
+  ['quien_paga_viajes', 'servicio', "TEXT NOT NULL DEFAULT ''"],
   ['cotizaciones_viaje', 'paradas_json', "TEXT NOT NULL DEFAULT '[]'"],
   ['vehiculos', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
   ['vehiculos', 'acepta_menores', 'INTEGER NOT NULL DEFAULT 1'],
@@ -441,6 +461,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // mientras su ciudad no tiene una zona abierta (lista de espera de su ciudad); vuelve a 0 cuando
   // recibe su zona. Sin valor, todo sigue como hoy (cuentas viejas: la app se lo pide).
   ...LUGAR_COLUMNAS,
+  // C-SALDO-CLIENTE (25 nov 2026, Venezuela): cuánto del viaje cubre el Saldo Divoox del pasajero
+  // (apartado al pedir, ajustado al terminar, 0 si el viaje no se hizo). Todas las pantallas lo leen.
+  ['viajes', 'saldo_divoox', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 /**
@@ -722,6 +745,8 @@ async function asegurarFase3(db: D1Database): Promise<void> {
     ...ESQUEMA_FLEX,
     ...ESQUEMA_AGENTES,
     ...ESQUEMA_CUENTA_UNICA,
+    // C-SALDO-CLIENTE: el libro del Saldo Divoox, inmutable y nunca en negativo.
+    ...ESQUEMA_SALDO_CLIENTE,
   ];
   const nombres = todo
     .map((sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1])
@@ -778,6 +803,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         ESQUEMA_FLEX,
         ESQUEMA_AGENTES,
         ESQUEMA_CUENTA_UNICA,
+        ESQUEMA_SALDO_CLIENTE,
         COLUMNAS_DEL_ESQUEMA,
         CONFIG_DINERO_INICIAL,
         [...serviciosImplementados(entorno)],
@@ -811,20 +837,41 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(asegurarResumenCatalogo),
         SQL_MARCA_VIEJA,
         String(renombrarMarcaVieja),
+        String(sembrarTabuladorVigia),
+        SQL_ARRANQUE,
+        TABULADOR_EL_VIGIA,
+        QUIEN_PAGA_DDL,
+        String(rehacerQuienPaga),
       ]),
     ) + `:${entorno ?? 'local'}`
   );
 }
 
+/**
+ * C-TABULADOR-VIGIA: el arranque lee en UNA consulta la huella del esquema, la marca de la semilla de
+ * El Vigía y si esa zona existe (tres búsquedas por clave). Así el reintento de la semilla no cuesta
+ * otra consulta, y donde El Vigía no existe no se lee nada más.
+ */
+export const SQL_ARRANQUE = `SELECT valor,
+  (SELECT s.valor FROM config s WHERE s.clave = ?2) AS semilla,
+  (SELECT COUNT(*) FROM zonas z WHERE z.id = ?3) AS zona_vigia
+  FROM config WHERE clave = ?1`;
+
 async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
   const huella = huellaEsquema(entorno);
   const hecha = await db
-    .prepare('SELECT valor FROM config WHERE clave = ?')
-    .bind(CLAVE_HUELLA_ESQUEMA)
-    .first<{ valor: string }>()
+    .prepare(SQL_ARRANQUE)
+    .bind(CLAVE_HUELLA_ESQUEMA, CLAVE_SEMILLA_TABULADOR_VIGIA, ZONA_TABULADOR_VIGIA)
+    .first<{ valor: string; semilla: string | null; zona_vigia: number }>()
     .catch(() => null);
   if (hecha?.valor === huella) {
     columnasFaltantes = [];
+    // C-TABULADOR-VIGIA: la semilla tiene su propio reintento: si la zona no existía al publicar, o
+    // falló, o un servidor se cortó a mitad, se vuelve a intentar en el arranque siguiente.
+    if (Number(hecha.zona_vigia) > 0 && semillaPorCorrer(leerMarcaSemilla(hecha.semilla)))
+      await sembrarTabuladorVigia(db).catch((e: unknown) =>
+        console.error('esquema: el reintento de la semilla de El Vigía falló', e),
+      );
     return;
   }
   await migrarCompleto(db, entorno);
@@ -903,6 +950,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await rehacerConductorDocumentos(db);
   // C-PAGO-A-CELULAR: Yape y Plin en los tipos de cuenta de cobro (Perú).
   await rehacerCuentasCobro(db);
+  // C-QUIEN-PAGA-SERVICIO: la regla de quién paga por servicio (clave primaria nueva).
+  await rehacerQuienPaga(db);
   // C-SALDO-RESTAURANTE: la política de comisión también puede ser de un restaurante.
   await rehacerPoliticasFinancieras(db);
   // C-PLAZO-PAPELES: la vista y los disparadores que conocen el plazo, y la política de cada país
@@ -933,6 +982,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-NOMBRE-CON-MARCA: el equipo firma «Soporte Divoox» también en la base.
   await renombrarMarcaVieja(db).catch((e: unknown) =>
     console.error('esquema: renombrar la marca vieja del equipo falló', e),
+  );
+  // C-TABULADOR-VIGIA: una sola vez, el tabulador de moto de El Vigía y su tarifa (Venezuela).
+  await sembrarTabuladorVigia(db).catch((e: unknown) =>
+    console.error('esquema: la semilla del tabulador de El Vigía falló', e),
   );
 }
 

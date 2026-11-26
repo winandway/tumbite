@@ -1593,3 +1593,20 @@ export async function pedidosPorCodigo(
     ...cuenta,
   };
 }
+
+/**
+ * C-SALDO-CLIENTE: el mismo buscador serio, solo el grupo de clientes (nombre, apellido, celular,
+ * correo, id), para la pantalla «Saldo de clientes». Mirar no escribe; cinco por búsqueda.
+ */
+export async function buscarClientesSuper(
+  db: D1Database,
+  quien: Usuario,
+  q: string,
+  acceso: AccesoInterno | null,
+): Promise<ResultadoBusqueda[]> {
+  const b = interpretarBusqueda(q);
+  if (b.vacia) return [];
+  const permisos = new Map(Object.entries(PERMISO_GRUPO));
+  if (acceso && !(permisos.get('clientes') ?? []).some((p) => puedeVer(acceso, p))) return [];
+  return grupoCuentas(db, quien, 'cliente', b, acceso);
+}

@@ -98,6 +98,8 @@ export type ViajeConductor = {
   /** C-CUPON-DIVOOX: lo que cobra en mano y lo que le paga Divoox por el regalo del pasajero. */
   cobrar_en_mano?: number | null;
   regalo_divoox?: number;
+  /** C-SALDO-CLIENTE: lo que el pasajero paga con su Saldo Divoox (Divoox te lo paga). */
+  saldo_divoox?: number;
   /** C-QUIEN-PAGA-VIAJES: la tarifa de servicio del pasajero y la comisión entera apartada. */
   tarifa_servicio?: number;
   comision_divoox?: number;
@@ -129,8 +131,10 @@ export type RespuestaCierre = {
   totalFinal?: number | null;
   cobrarEnMano?: number | null;
   regaloDivoox?: number;
+  saldoDivoox?: number;
   /** C-REGALO-VIAJE-REAL: el regalo quedó en revisión del equipo; todavía no se acredita. */
   regaloEnRevision?: boolean;
+  saldoEnRevision?: boolean;
   referencia?: Referencia | null;
   enMano?: Monto | null;
 };
@@ -274,7 +278,14 @@ export function ViajeActivo({
   const regaloFinal = respuesta?.regaloDivoox ?? null;
   // C-CUPON-DIVOOX: «Cobra X · Divoox te paga Y». Sin regalo, X es el precio de siempre.
   const enMano = viaje.cobrar_en_mano ?? viaje.total;
-  const regaloDivoox = regaloFinal ?? viaje.regalo_divoox ?? 0;
+  // C-SALDO-CLIENTE: lo que Divoox le paga suma el regalo y el Saldo Divoox del pasajero.
+  const saldoDivoox = respuesta?.saldoDivoox ?? viaje.saldo_divoox ?? 0;
+  const regaloDivoox = (regaloFinal ?? viaje.regalo_divoox ?? 0) + saldoDivoox;
+  // Lo que se cobra en mano (o nada, si todo lo pagó Divoox): efectivo, a celular o con saldo.
+  const cobraEnManoMetodo =
+    viaje.metodo_pago === 'efectivo' ||
+    viaje.metodo_pago === 'saldo' ||
+    esPagoACelular(viaje.metodo_pago);
   // C-PRECIO-PROTAGONISTA: lo que paga Divoox por el regalo, aparte y en verde (nunca mezclado con
   // lo que cobra en mano).
   // C-REGALO-VIAJE-REAL: si el regalo quedó en revisión, no se promete en verde: se dice que se revisa.
@@ -286,7 +297,7 @@ export function ViajeActivo({
       style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 10, padding: 10, gap: 2 }}
     >
       <Text style={{ color: COLOR.aviso, fontWeight: '800', fontSize: 17 }}>
-        {t.regaloEnRevision}
+        {respuesta?.saldoEnRevision ? t.pagoEnRevision : t.regaloEnRevision}
       </Text>
       <Text style={{ color: COLOR.aviso, fontSize: 13 }}>{t.regaloEnRevisionAyuda}</Text>
     </View>
@@ -302,7 +313,9 @@ export function ViajeActivo({
           formatearMonto(regaloDivoox, viaje.moneda ?? 'USD', idioma),
         )}
       </Text>
-      <Text style={{ color: C.exito, fontSize: 13 }}>{t.divooxPagaAyuda}</Text>
+      <Text style={{ color: C.exito, fontSize: 13 }}>
+        {saldoDivoox > 0 ? t.divooxPagaSaldoAyuda : t.divooxPagaAyuda}
+      </Text>
     </View>
   ) : null;
   // C-PAGO-A-CELULAR: pago móvil (Venezuela), Yape y Plin (Perú) llegan al celular del conductor y
@@ -436,9 +449,7 @@ export function ViajeActivo({
           >
             {cierre.final === 'terminado' ? t.terminado : t.noShow}
           </Text>
-          {cierre.final === 'terminado' &&
-          (viaje.metodo_pago === 'efectivo' || aCelular) &&
-          (totalFinal ?? enMano) != null ? (
+          {cierre.final === 'terminado' && cobraEnManoMetodo && (totalFinal ?? enMano) != null ? (
             <View
               testID="viaje-cobra-efectivo"
               style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
@@ -650,7 +661,7 @@ export function ViajeActivo({
           testID="viaje-precio"
           style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 16, padding: 16, gap: 10 }}
         >
-          {(viaje.metodo_pago === 'efectivo' || aCelular) && enMano != null ? (
+          {cobraEnManoMetodo && enMano != null ? (
             (cobroEnMano(false)?.monto ?? 0) > 0 ? (
               <MontoEnMano
                 testID="viaje-bs"

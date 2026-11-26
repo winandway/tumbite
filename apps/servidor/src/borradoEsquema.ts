@@ -212,6 +212,10 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   usos_cupon: 'dinero',
   ventas_saldo_agente: 'dinero',
   viajes_pago_movil: 'dinero',
+  // C-SALDO-CLIENTE: el libro del Saldo Divoox es inmutable (contabilidad: lo cargado, lo usado y lo
+  // pagado al conductor, por número interno, sin nombre). La política de privacidad lo declara.
+  saldo_cliente_movimientos: 'dinero',
+  usos_saldo_divoox: 'dinero',
   // Registro del trabajo del equipo interno (quién aprobó, cambió o vio qué)
   accesos_sensibles: 'equipo',
   acciones_equipo: 'equipo',

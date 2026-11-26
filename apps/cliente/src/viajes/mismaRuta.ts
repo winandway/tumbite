@@ -25,6 +25,8 @@ export type ViajeHistorial = {
   total: number | null;
   moneda: string | null;
   metodoPago: string;
+  /** C-SALDO-CLIENTE: lo que cubrió el Saldo Divoox. */
+  saldoDivoox?: number;
   creadoEn: string;
   puntos: { origen: PuntoMapa; destino: PuntoMapa; paradas: ParadaHistorial[] } | null;
   /** C-CONDUCTOR-CONFIANZA: el nombre de pila del conductor de un viaje terminado (o null). */
@@ -75,10 +77,12 @@ export function cuerpoCotizarMismaRuta(v: ViajeHistorial) {
 export function metodoParaRepetir(
   anterior: string,
   aceptados: readonly string[] | undefined,
+  /** C-PAGO-MOVIL-DISPONIBLE: lo que hoy no se puede usar en este viaje (Pago Móvil sin conductor). */
+  disponibles?: Partial<Record<string, boolean>>,
 ): { metodo: MetodoPagoViaje; cambio: boolean } {
-  const lista = (aceptados?.length ? aceptados : ['efectivo', 'tarjeta']).flatMap((m) =>
-    METODOS.filter((x) => x === m),
-  );
+  const lista = (aceptados?.length ? aceptados : ['efectivo', 'tarjeta'])
+    .filter((m) => new Map(Object.entries(disponibles ?? {})).get(m) !== false)
+    .flatMap((m) => METODOS.filter((x) => x === m));
   const igual = lista.find((m) => m === anterior);
   if (igual) return { metodo: igual, cambio: false };
   return { metodo: lista[0] ?? 'efectivo', cambio: true };
@@ -93,7 +97,7 @@ export function pedidoMismaRuta(v: ViajeHistorial, cot: CotizacionViaje) {
   if (!sePuedeRepetir(v)) return null;
   if (cot.servicio !== v.servicio) return null;
   if ((cot.categoria ?? 'estandar') !== categoriaDe(v)) return null;
-  const pago = metodoParaRepetir(v.metodoPago, cot.metodosPago);
+  const pago = metodoParaRepetir(v.metodoPago, cot.metodosPago, cot.disponibles);
   return { cuerpo: { cotizacionId: cot.id, metodoPago: pago.metodo }, cambioPago: pago.cambio };
 }
 

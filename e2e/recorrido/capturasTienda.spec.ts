@@ -703,6 +703,8 @@ async function viajes(
     await expect(p.getByTestId('moto-precio')).toBeVisible({ timeout: 30_000 });
     await foto(p, carpeta, '06-moto-con-destino-y-precio.png');
     await p.getByTestId('pedir-boton').click();
+    // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita.
+    await p.getByTestId('pago-solicitar').click();
     await expect(p.getByTestId('viaje-estado-buscando')).toBeVisible({ timeout: 30_000 });
     const op = String(
       sql(

@@ -85,6 +85,8 @@ export const ICONOS_MENU = {
   'gift-codes': Gift,
   // C-SALDO-CONDUCTOR: el saldo de los conductores por ciudad.
   'driver-balance': PiggyBank,
+  // C-SALDO-CLIENTE: el Saldo Divoox de los clientes.
+  'customer-balance': Wallet,
   // C-AGENTE-DIVOOX: los agentes que pagan en efectivo y venden saldo.
   agents: Handshake,
   // C-REFERIDOS-EQUIPOS: referidos y equipos.
@@ -322,6 +324,7 @@ export const ORDEN_MENU_ADMIN = (g: ReturnType<typeof titulosGrupo>): [string, s
       'money',
       'cash',
       'driver-balance',
+      'customer-balance',
       'agents',
       'referrals',
       'gift-codes',

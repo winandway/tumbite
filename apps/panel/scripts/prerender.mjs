@@ -43,9 +43,14 @@ try {
   );
   const { PAISES, CIUDADES, COCINAS } = await vite.ssrLoadModule('/src/sitio/cobertura.ts');
   const { PREGUNTAS_COMO_FUNCIONA } = await vite.ssrLoadModule('/src/sitio/ComoFunciona.tsx');
-  const { PAISES_ABIERTOS_PUBLICADOS, estadoDePais } = await vite.ssrLoadModule(
-    '/src/sitio/paisesAbiertos.ts',
+  const { PAISES_ABIERTOS_PUBLICADOS, CIUDADES_ABIERTAS_PUBLICADAS, estadoDePais, estadoDeCiudad } =
+    await vite.ssrLoadModule('/src/sitio/paisesAbiertos.ts');
+  const { TARIFAS_PUBLICADAS } = await vite.ssrLoadModule('/src/sitio/tarifasCiudades.ts');
+  const { RUTAS_TARIFAS } = await vite.ssrLoadModule('/src/sitio/CiudadPublica.tsx');
+  const { preguntasPais, preguntasTarifas, paisDeCiudad } = await vite.ssrLoadModule(
+    '/src/sitio/ciudadesPublicas.ts',
   );
+  const { nombreGrupo } = await vite.ssrLoadModule('/src/sitio/tarifasCiudades.ts');
   // C-PAIS-ABIERTO-SIN-PRONTO: las páginas de los países abiertos (según producción al compilar).
   const paisesAbiertos = new Set(
     PAISES.filter((p) => estadoDePais(p, PAISES_ABIERTOS_PUBLICADOS).abierto).map(
@@ -53,6 +58,18 @@ try {
     ),
   );
   const paginasConPronto = [];
+  // C-CIUDAD-ABIERTA-SIN-PRONTO: las ciudades con clave (Venezuela) y su página de precios: ninguna
+  // dice «muy pronto», y la que no tiene servicio abierto no afirma que ya funcione.
+  const ciudadesConClave = new Map(
+    CIUDADES.filter((c) => c.clave).map((c) => {
+      const pais = paisDeCiudad(c);
+      return [
+        `/city/${c.slug}`,
+        { c, pais, ...estadoDeCiudad(c, pais?.codigo, CIUDADES_ABIERTAS_PUBLICADAS) },
+      ];
+    }),
+  );
+  const ciudadesQueAfirman = [];
 
   // Datos estructurados (schema.org) que leen Google y los buscadores de IA.
   const ORGANIZACION = {
@@ -64,7 +81,13 @@ try {
     email: 'soporte+divoox@windoce.com',
     description:
       'Divoox is a delivery startup: food, stores and packages in one app, with fair commissions for restaurants and 100% of the tip for the driver. It opens city by city with local franchises.',
-    areaServed: 'United States',
+    // C-CIUDAD-ABIERTA-SIN-PRONTO: los países donde hay algo abierto (según producción al publicar).
+    areaServed: [
+      'United States',
+      ...PAISES.filter((p) => estadoDePais(p, PAISES_ABIERTOS_PUBLICADOS).abierto).map(
+        (p) => p.nombre.en,
+      ),
+    ],
     parentOrganization: {
       '@type': 'Organization',
       name: 'Windoce, LLC',
@@ -83,6 +106,153 @@ try {
     name: 'Divoox',
     url: `${DOMINIO}/`,
     inLanguage: ['en', 'es'],
+  };
+  const PROVEEDOR = { '@type': 'Organization', name: 'Divoox', url: `${DOMINIO}/` };
+  const migas = (lengua, items) => ({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map(([name, ruta], i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name,
+      item: `${DOMINIO}${lengua === 'es' ? (ruta === '/' ? '/es' : `/es${ruta}`) : ruta}`,
+    })),
+  });
+  const preguntasLd = (xs, canonica) => ({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: xs.map(([q, a]) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a, url: canonica },
+    })),
+  });
+  const lugarLd = (c, pais) => ({
+    '@type': 'City',
+    name: c.nombre.es,
+    ...(c.estadoRegion
+      ? {
+          containedInPlace: {
+            '@type': 'State',
+            name: c.estadoRegion,
+            ...(pais ? { containedInPlace: { '@type': 'Country', name: pais.nombre.en } } : {}),
+          },
+        }
+      : {}),
+  });
+  const nombreServicio = (lista, lengua) =>
+    lista.map((s) => (lengua === 'es' ? s.es : s.en)).join(', ');
+  /**
+   * C-CIUDAD-ABIERTA-SIN-PRONTO y C-TARIFAS-PUBLICAS: los datos estructurados de la página de un país
+   * abierto (organización, servicio, preguntas y migas), de una ciudad con clave (el servicio solo si
+   * está abierta) y de la página de precios (el catálogo de ofertas con el precio que paga el pasajero).
+   */
+  const datosVenezuela = (ruta, lengua, canonica) => {
+    const idioma = lengua === 'es' ? 'es' : 'en';
+    const mPais = /^\/country\/([a-z-]+)$/.exec(ruta);
+    if (mPais) {
+      const p = PAISES.find((x) => x.slug === mPais[1]);
+      const ep = p ? estadoDePais(p, PAISES_ABIERTOS_PUBLICADOS) : null;
+      if (!p || !ep?.abierto) return [];
+      const abiertas = CIUDADES.filter(
+        (c) =>
+          c.pais === p.slug &&
+          c.clave &&
+          estadoDeCiudad(c, p.codigo, CIUDADES_ABIERTAS_PUBLICADAS).abierta,
+      );
+      return [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: idioma === 'es' ? `Divoox en ${p.nombre.es}` : `Divoox in ${p.nombre.en}`,
+          serviceType: nombreServicio(ep.servicios, idioma),
+          provider: PROVEEDOR,
+          areaServed: abiertas.length
+            ? abiertas.map((c) => lugarLd(c, p))
+            : { '@type': 'Country', name: p.nombre.en },
+          url: canonica,
+        },
+        preguntasLd(
+          preguntasPais(p, idioma, {
+            ciudades: CIUDADES_ABIERTAS_PUBLICADAS,
+            tarifas: TARIFAS_PUBLICADAS,
+          }),
+          canonica,
+        ),
+        migas(lengua, [
+          ['Divoox', '/'],
+          [p.nombre[idioma], ruta],
+        ]),
+      ];
+    }
+    const mTarifas = /^\/city\/([a-z-]+)\/prices$/.exec(ruta);
+    const mCiudad = /^\/city\/([a-z-]+)$/.exec(ruta);
+    const c = CIUDADES.find((x) => x.slug === (mTarifas?.[1] ?? mCiudad?.[1]) && x.clave);
+    if (!c) return [];
+    const info = ciudadesConClave.get(`/city/${c.slug}`);
+    const pais = info?.pais;
+    const base = [
+      ['Divoox', '/'],
+      ...(pais ? [[pais.nombre[idioma], `/country/${pais.slug}`]] : []),
+      [c.nombre[idioma], `/city/${c.slug}`],
+    ];
+    if (mCiudad)
+      return [
+        ...(info?.abierta
+          ? [
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Service',
+                name: idioma === 'es' ? `Divoox en ${c.nombre.es}` : `Divoox in ${c.nombre.en}`,
+                serviceType: nombreServicio(info.servicios, idioma),
+                provider: PROVEEDOR,
+                areaServed: lugarLd(c, pais),
+                url: canonica,
+              },
+            ]
+          : []),
+        migas(lengua, base),
+      ];
+    const t = c.clave ? TARIFAS_PUBLICADAS[c.clave] : null;
+    if (!t) return [migas(lengua, base)];
+    const dinero = (centavos) => (centavos / 100).toFixed(2);
+    const desde = t.centro ?? c.nombre.es;
+    const ofertas = t.grupos.flatMap((g) =>
+      g.lugares
+        .filter((l) => l.ida)
+        .map((l) => ({
+          '@type': 'Offer',
+          name: `${desde} → ${l.lugar}`,
+          category: nombreGrupo(g.grupo, idioma),
+          price: dinero(l.ida.dia),
+          priceCurrency: t.moneda,
+          itemOffered: {
+            '@type': 'Service',
+            name:
+              idioma === 'es'
+                ? `Mototaxi de ${desde} a ${l.lugar}`
+                : `Moto taxi from ${desde} to ${l.lugar}`,
+          },
+        })),
+    );
+    const titulo =
+      idioma === 'es'
+        ? `Tarifas de mototaxi en ${c.nombre.es}`
+        : `Moto taxi fares in ${c.nombre.en}`;
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: titulo,
+        serviceType: idioma === 'es' ? 'Mototaxi' : 'Moto taxi',
+        provider: PROVEEDOR,
+        areaServed: lugarLd(c, pais),
+        url: canonica,
+        hasOfferCatalog: { '@type': 'OfferCatalog', name: titulo, itemListElement: ofertas },
+      },
+      preguntasLd(preguntasTarifas(c, t, idioma), canonica),
+      migas(lengua, [...base, [titulo, ruta]]),
+    ];
   };
   const datosDe = (ruta, lengua) =>
     ruta === '/'
@@ -201,6 +371,8 @@ try {
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),
     ...PAISES.map((p) => `/country/${p.slug}`),
     ...CIUDADES.map((c) => `/city/${c.slug}`),
+    // C-TARIFAS-PUBLICAS: la página de precios de cada ciudad que los tiene publicados.
+    ...RUTAS_TARIFAS(),
     ...COCINAS.map((c) => `/food/${c.slug}`),
   ];
 
@@ -311,7 +483,11 @@ try {
               : `<link rel="alternate" hreflang="en" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
                 `<link rel="alternate" hreflang="es" href="${DOMINIO}${enEspanol(ruta)}" />` +
                 `<link rel="alternate" hreflang="x-default" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />`) +
-            [...datosDe(ruta, lengua), ...datosDeGuia(ruta, lengua, canonica)]
+            [
+              ...datosDe(ruta, lengua),
+              ...datosDeGuia(ruta, lengua, canonica),
+              ...datosVenezuela(ruta, lengua, canonica),
+            ]
               .map(
                 (d) =>
                   `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`,
@@ -339,6 +515,23 @@ try {
         if (/pronto|pr[oó]ximamente|coming soon|\bsoon\b/i.test(`${metas} ${cuerpo}`))
           paginasConPronto.push(url);
       }
+      // Candado C-CIUDAD-ABIERTA-SIN-PRONTO: lo mismo para cada ciudad con clave y su página de
+      // precios; y una ciudad sin servicio abierto no afirma que ya funcione.
+      const ciudadRuta = ciudadesConClave.get(ruta.replace(/\/prices$/, ''));
+      if (ciudadRuta) {
+        const cabeza = pagina.slice(0, pagina.indexOf('</head>'));
+        const metas = [...cabeza.matchAll(/<(?:title|meta)[^>]*>(?:[^<]*<\/title>)?/g)].join(' ');
+        const cuerpo = html.slice(0, html.indexOf('</main>'));
+        if (/pronto|pr[oó]ximamente|coming soon|\bsoon\b/i.test(`${metas} ${cuerpo}`))
+          paginasConPronto.push(url);
+        if (
+          !ciudadRuta.abierta &&
+          /ya funciona|now live|ya disponible|now available|ya estamos en|now in /i.test(
+            `${metas} ${cuerpo.replace(/<p class="lugar-donde-hoy"[\s\S]*?<\/p>/, '')}`,
+          )
+        )
+          ciudadesQueAfirman.push(url);
+      }
       paginas.push({ ruta: url, base: ruta, lengua, titulo, descripcion });
       // Se escribe «ruta.html» (no «ruta/index.html»): así el servidor de estáticos sirve /country/colombia
       // tal cual, sin redirigir a /country/colombia/ (una barra de más rompe la canónica y el SEO).
@@ -348,6 +541,10 @@ try {
       n++;
     }
   console.log(`prerender: ${n} páginas públicas escritas en dist/`);
+  if (ciudadesQueAfirman.length)
+    throw new Error(
+      `Una ciudad sin servicio abierto dice que ya funciona (C-CIUDAD-ABIERTA-SIN-PRONTO):\n${ciudadesQueAfirman.join('\n')}`,
+    );
   if (paginasConPronto.length)
     throw new Error(
       `Un país abierto sale con «muy pronto» (C-PAIS-ABIERTO-SIN-PRONTO):\n${paginasConPronto.join('\n')}`,
@@ -367,9 +564,11 @@ try {
         ? '0.9'
         : r.startsWith('/docs')
           ? '0.7'
-          : /^\/(country|city|food)\//.test(r)
-            ? '0.6'
-            : '0.3';
+          : /^\/city\/[a-z-]+\/prices$/.test(r)
+            ? '0.8'
+            : /^\/(country|city|food)\//.test(r)
+              ? '0.6'
+              : '0.3';
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</loc><lastmod>${hoy}</lastmod><priority>${prioridad(p.base)}</priority></url>`).join('\n')}
@@ -388,10 +587,24 @@ ${paginas.map((p) => `  <url><loc>${DOMINIO}${p.ruta === '/' ? '/' : p.ruta}</lo
 
 > Divoox is a delivery startup by Windoce, LLC, a Delaware company with offices in Novi, Michigan (United States). It connects customers, local restaurants, and drivers: restaurants pay a 7.5% to 15% commission depending on their plan, with no lock-in contracts; drivers keep 100% of the tip and see what they earn before accepting; customers see the full breakdown before paying and follow their order live. Every paid order is watched by an automatic Manager that reminds the restaurant and refunds the customer if nobody confirms within 10 minutes. It opens city by city, in any country, with local franchises that fund the launch (a fleet of motorbikes, training, a tablet for every restaurant, and finding the first customers). The app is bilingual (English and Spanish). Contact: https://divoox.com/contact.
 
+${(() => {
+  // C-CIUDAD-ABIERTA-SIN-PRONTO: dónde funciona hoy, según producción al publicar (sin «pronto»).
+  const lineas = PAISES.filter((p) => estadoDePais(p, PAISES_ABIERTOS_PUBLICADOS).abierto).map(
+    (p) => {
+      const cs = [...ciudadesConClave.values()].filter((x) => x.pais?.slug === p.slug && x.abierta);
+      const servicios = estadoDePais(p, PAISES_ABIERTOS_PUBLICADOS)
+        .servicios.map((s) => s.en)
+        .join(', ');
+      return `- Live today in ${p.nombre.en}${cs.length ? ` (${cs.map((x) => x.c.nombre.en).join(', ')})` : ''}: ${servicios}. ${DOMINIO}/country/${p.slug}`;
+    },
+  );
+  return lineas.length ? `## Where Divoox is live\n\n${lineas.join('\n')}\n` : '';
+})()}
 ${grupo('Main pages', (r) => r === '/' || r === '/how-it-works')}
 ${grupo('Guides (Docs)', (r) => r.startsWith('/docs'))}
 ${grupo('Countries', (r) => r.startsWith('/country/'))}
-${grupo('Cities', (r) => r.startsWith('/city/'))}
+${grupo('Cities', (r) => /^\/city\/[a-z-]+$/.test(r))}
+${grupo('Fares', (r) => /^\/city\/[a-z-]+\/prices$/.test(r))}
 ${grupo('Food types', (r) => r.startsWith('/food/'))}
 ${grupo('Legal and support', (r) => /^\/(privacy|terms|restaurant-terms|driver-terms|promo-terms|delete-account|support|sms-consent|contact)$/.test(r))}
 ## En español

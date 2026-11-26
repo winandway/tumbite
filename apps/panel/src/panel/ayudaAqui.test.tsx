@@ -28,6 +28,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['ResolverAutorizacion.tsx', 'resolve-expired-card-authorization'],
   ['SuperRegalosDivoox.tsx', 'create-divoox-gift-code'],
   ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
+  ['SuperSaldoClientes.tsx', 'customer-balance-top-up'],
   ['RecargasRestaurantesAdmin.tsx', 'restaurant-balance-top-ups'],
   ['QuienPagaViajes.tsx', 'who-pays-ride-fee'],
   ['ComidaQuienPaga.tsx', 'food-who-pays-what'],

@@ -66,8 +66,11 @@ describe('C-PAIS-ABIERTO-SIN-PRONTO: un país abierto no dice «muy pronto»', (
         idioma === 'en' ? /motorbike rides/ : /viajes en moto/,
       );
       expect(main!.textContent).not.toMatch(/comida|food|restaurant/i);
-      // Sin nombrar ciudades (C-SIN-LISTA-DE-CIUDADES).
-      expect(main!.textContent).not.toMatch(/Caracas|Maracaibo|Valencia|El Vigía|Tucaní/);
+      // Cambio de regla (25 nov 2026, orden de Richard): la WEB PÚBLICA sí enlaza las páginas de
+      // ciudad desde la página del país (las apps siguen sin listar ciudades, C-SIN-LISTA-DE-CIUDADES).
+      // Lo que se prueba ahora es que cada ciudad vaya a su página (C-CIUDAD-ABIERTA-SIN-PRONTO).
+      expect(main!.querySelector('a[href$="/city/el-vigia"]')).not.toBeNull();
+      expect(main!.querySelector('a[href$="/city/caracas"]')).not.toBeNull();
     });
   }
 

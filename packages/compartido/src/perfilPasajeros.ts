@@ -85,6 +85,12 @@ export type PerfilPasajeros = {
   metodosPago: readonly MetodoPagoViaje[];
   /** Moneda en que se cotiza y se cobra un viaje (null = la de la ciudad). */
   monedaViajes: string | null;
+  /**
+   * C-SALDO-CLIENTE (25 nov 2026): el pasajero puede pagar su viaje con su Saldo Divoox (crédito en
+   * dólares que carga el equipo: carreras y recargas de regalo, o lo que el cliente prepagó). Encendido
+   * solo en Venezuela; en los demás países, apagado hasta nueva orden.
+   */
+  saldoDivoox: boolean;
   /** La placa es nacional (no hay «estado que la emitió»): se guarda con el código del país. */
   placaNacional: boolean;
   /** Papeles del conductor de MOTO que se piden en ese país. */
@@ -145,6 +151,7 @@ const EEUU: PerfilPasajeros = {
   edadMinima: 21,
   metodosPago: ['efectivo', 'tarjeta'],
   monedaViajes: null,
+  saldoDivoox: false,
   placaNacional: false,
   // EE. UU.: antecedentes e historial de manejo con el proveedor (Checkr); la licencia, la
   // inspección y el seguro de pasajeros siguen como estaban sembrados. No se baja ese piso.
@@ -177,6 +184,7 @@ const VENEZUELA: PerfilPasajeros = {
   edadMinima: 18,
   metodosPago: ['efectivo', 'pago_movil'],
   monedaViajes: 'USD',
+  saldoDivoox: true,
   placaNacional: true,
   // C-PLAZO-PAPELES (Richard, 19 nov 2026): en Venezuela NO se piden antecedentes penales ni se
   // muestran como requisito. Quien ya subió su certificado lo conserva (el mapa de abajo sigue).
@@ -221,6 +229,7 @@ const PERU: PerfilPasajeros = {
   edadMinima: 21,
   metodosPago: ['efectivo', 'yape', 'plin'],
   monedaViajes: 'PEN',
+  saldoDivoox: false,
   placaNacional: true,
   // Mototaxi y moto: licencia de la clase B; carro: licencia de la clase A (A-I o A-IIa) [OBS].
   documentosConductor: ['licencia_moto', 'antecedentes_penales'],

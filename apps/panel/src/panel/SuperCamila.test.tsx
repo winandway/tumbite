@@ -117,7 +117,12 @@ function servidor(extra: Record<string, unknown> = {}) {
     if (ruta.endsWith('/camila/ajustes') && metodo === 'PUT') return json({ ok: true });
     if (ruta.endsWith('/camila/ajustes'))
       return json({
-        ajustes: { ia: true, topeDiarioCentavos: 100, regalosPorDia: 20 },
+        ajustes: {
+          ia: true,
+          topeDiarioCentavos: 100,
+          regalosPorDia: 20,
+          nombreFirmaEquipo: 'Samira',
+        },
         limites: { topeMaximoCentavos: 500, regalosPorDiaMaximo: 50 },
         modelos: {},
         iaConectada: true,
@@ -242,6 +247,26 @@ describe('C-CAMILA-BUZON: el buzón de Camila', () => {
       ia: true,
       topeDiarioCentavos: 250,
       regalosPorDia: 20,
+      nombreFirmaEquipo: 'Samira',
+    });
+  });
+
+  it('C-FIRMA-EQUIPO: el nombre con el que firma el equipo se edita en Ajustes y explica cómo sale', async () => {
+    const llamadas = servidor();
+    window.history.replaceState(null, '', '/panel/control-x/camila?view=ajustes');
+    render(<SuperCamila idioma="es" />);
+    const form = await screen.findByTestId('camila-ajustes');
+    const firma = within(form).getByLabelText('Nombre con el que firma el equipo');
+    await waitFor(() => expect((firma as HTMLInputElement).value).toBe('Samira'));
+    expect(form.textContent).toContain('«Samira, de Soporte Divoox»');
+    expect(form.textContent).toContain('Lo que responde la IA sigue firmado por Camila');
+    await userEvent.clear(firma);
+    await userEvent.type(firma, 'Laura');
+    expect(form.textContent).toContain('«Laura, de Soporte Divoox»');
+    await userEvent.click(within(form).getByRole('button', { name: 'Guardar los ajustes' }));
+    await within(form).findByText('Ajustes guardados.');
+    expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toMatchObject({
+      nombreFirmaEquipo: 'Laura',
     });
   });
 

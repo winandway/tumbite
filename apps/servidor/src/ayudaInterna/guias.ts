@@ -1402,6 +1402,100 @@ const regalosDivoox: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────── Saldo de clientes (C-SALDO-CLIENTE, 25 nov 2026) ─────────────────────
+
+const capSaldoCliente = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `saldo-clientes-${nombre}-${idioma}.webp`, alt, pie });
+
+const saldoClientes: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'customer-balance-top-up',
+    titulo: 'Saldo de clientes: buscar, cargar Saldo Divoox y revisar viajes',
+    resumen:
+      'Cómo encontrar a un cliente, ver su Saldo Divoox y sus movimientos, cargarle saldo (carrera de regalo, recarga de regalo o su prepago) y resolver los viajes pagados con saldo que quedaron en revisión.',
+    explicacion: [
+      'El Saldo Divoox es crédito en dólares del cliente para pagar sus viajes. Hoy se usa en Venezuela. El cliente lo ve en la pantalla «Método de pago» al pedir un viaje: si alcanza, paga todo con saldo; si no, usa lo que tiene y el resto lo paga en efectivo o por Pago Móvil.',
+      'Solo entra saldo desde esta pantalla. No hay recarga del cliente con tarjeta: si el cliente nos prepagó (por Pago Móvil o en efectivo), el equipo lo registra aquí con la referencia del pago.',
+      'Motivos: «Carrera de regalo» y «Recarga de regalo» son regalos de Divoox; «Prepago del cliente» es dinero que el cliente ya pagó y exige la referencia.',
+      'Topes: cada carga tiene un tope, y hay un tope por persona del equipo al día y por cliente al día. Los cambia una persona con permiso de configurar dinero en «Topes de las cargas», sin pasar el máximo de Divoox. Todo cambio queda en la auditoría.',
+      'Cada carga queda en el libro del saldo con tu nombre y en la auditoría, y al cliente le llega el aviso «Tienes X de Saldo Divoox». El libro no se borra ni se cambia: una corrección es otro movimiento.',
+      'Al pedir, el saldo se aparta; si el viaje se cancela o no hay conductor, vuelve entero. Al terminar, Divoox le paga al conductor lo que cubrió el saldo (va a sus ganancias, como un regalo).',
+      'Viajes en revisión: si no se pudo comprobar que el viaje fue real, el pago al conductor espera. Apruébalo para pagarle, o recházalo y el saldo vuelve al cliente.',
+    ],
+    capturas: [
+      capSaldoCliente(
+        'buscar',
+        'es',
+        'Pantalla «Saldo de clientes» con los totales, el buscador y un cliente encontrado con su saldo.',
+        'Busca al cliente por su nombre, celular, correo o código.',
+      ),
+      capSaldoCliente(
+        'carga',
+        'es',
+        'Ficha del cliente con su Saldo Divoox, el formulario de carga y sus movimientos.',
+        'Carga saldo con su motivo y revisa el resumen antes de confirmar.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo le doy una carrera de regalo a un cliente?',
+      '¿Cómo registro el prepago de un cliente?',
+      '¿Por qué un viaje pagado con saldo quedó en revisión?',
+    ],
+    pasos: [
+      'Abre «Saldo de clientes» en el menú de Dinero.',
+      'Escribe el nombre, el celular, el correo o el código del cliente y tócalo en la lista.',
+      'Escribe el monto, elige el motivo y, si es un prepago, la referencia; toca «Revisar la carga».',
+      'Lee el resumen y toca «Confirmar la carga».',
+      'Para un viaje en revisión, escribe una nota y aprueba o rechaza.',
+    ],
+  },
+  en: {
+    id: 'customer-balance-top-up',
+    titulo: 'Customer balances: find, add Divoox Balance and review rides',
+    resumen:
+      'How to find a customer, see their Divoox Balance and activity, add balance (gift ride, gift top-up or their prepayment) and resolve rides paid with balance that are under review.',
+    explicacion: [
+      'Divoox Balance is a customer’s credit in US dollars to pay for their rides. Today it’s used in Venezuela. Customers see it on the “Payment method” screen when they request a ride: if it covers the trip, they pay it all with balance; if not, they use what they have and pay the rest in cash or by Pago Móvil.',
+      'Balance only comes in from this screen. Customers can’t top up with a card: if a customer prepaid us (by Pago Móvil or in cash), the team records it here with the payment reference.',
+      'Reasons: “Gift ride” and “Gift top-up” are Divoox gifts; “Customer prepayment” is money the customer already paid and requires the reference.',
+      'Limits: each top-up has a limit, and there’s a daily limit per team member and per customer. Someone allowed to configure money changes them in “Top-up limits,” never above the Divoox maximum. Every change is recorded in the audit log.',
+      'Every top-up goes into the balance ledger under your name and into the audit log, and the customer gets the notice “You have X of Divoox Balance.” The ledger is never deleted or edited: a correction is another entry.',
+      'When they request, the balance is set aside; if the ride is canceled or no driver is found, it all goes back. When the ride ends, Divoox pays the driver what the balance covered (it goes to their earnings, like a gift).',
+      'Rides under review: if we couldn’t confirm the ride was real, the driver’s payment waits. Approve it to pay them, or decline it and the balance goes back to the customer.',
+    ],
+    capturas: [
+      capSaldoCliente(
+        'buscar',
+        'en',
+        'The “Customer balances” screen with the totals, the search box and a customer found with their balance.',
+        'Find the customer by name, mobile, email or code.',
+      ),
+      capSaldoCliente(
+        'carga',
+        'en',
+        'The customer’s file with their Divoox Balance, the top-up form and their activity.',
+        'Add balance with its reason and review the summary before confirming.',
+      ),
+    ],
+    preguntas: [
+      'How do I give a customer a gift ride?',
+      'How do I record a customer’s prepayment?',
+      'Why is a ride paid with balance under review?',
+    ],
+    pasos: [
+      'Open “Customer balances” in the Money menu.',
+      'Type the customer’s name, mobile, email or code and tap them in the list.',
+      'Enter the amount, choose the reason and, for a prepayment, the reference; tap “Review the top-up.”',
+      'Read the summary and tap “Confirm the top-up.”',
+      'For a ride under review, write a note and approve or decline.',
+    ],
+  },
+};
+
 // ───────────────────── Saldo de conductores (C-SALDO-CONDUCTOR, 17 nov 2026) ─────────────────────
 
 const capSaldo = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
@@ -1756,6 +1850,7 @@ const quienPagaViajes: Record<IdiomaAyuda, Guia> = {
       'Cada viaje guarda el valor con que se cotizó. Cambiar la palanca vale para los viajes que se piden desde ese momento; los que ya están en curso siguen como empezaron. Cada cambio queda en la auditoría de Dinero con tu nombre, el valor de antes y el de después.',
       'Solo ven la tarifa los pasajeros con la app que la muestra en su línea (la de hoy y la web). Quien todavía tiene una app vieja sigue viajando como siempre, con el conductor pagando la comisión: nunca se cobra una tarifa que la persona no puede ver. Los envíos de paquetes no llevan tarifa. Donde no hay comisión del saldo (Estados Unidos hoy) la palanca no cambia nada.',
       'Una ciudad puede tener su propia regla: elige la ciudad y el valor. «Como el resto del país» le quita la regla propia y vuelve a seguir la del país.',
+      'Una regla también puede ser de un solo servicio (Moto o Carro): elige el servicio. El Vigía tiene una desde el 25 nov 2026, «conductor» SOLO en Moto (Carro sigue como el resto de Venezuela). Allí el pasajero de Moto paga el precio del tabulador de la calle (los precios de la zona, en Viajes) y Divoox saca su 10 % de ese precio, del saldo del conductor; en Viajes, cada ruta dice cuánto le queda al conductor, de día y de noche (C-TABULADOR-VIGIA).',
     ],
     capturas: [
       capQuienPaga(
@@ -1787,6 +1882,7 @@ const quienPagaViajes: Record<IdiomaAyuda, Guia> = {
       'Each ride keeps the value it was quoted with. Changing the switch applies to rides requested from that moment on; rides already in progress stay as they started. Every change is logged in the Money audit with your name, the value before and the value after.',
       'Only riders with an app that shows the fee on its own line (today’s app and the web) see it. Anyone still on an older app rides as always, with the driver paying the fee: we never charge a fee the person cannot see. Package deliveries carry no fee. Where there is no balance fee (the United States today) the switch changes nothing.',
       'A city can have its own rule: choose the city and the value. “Same as the rest of the country” removes the city rule and follows the country again.',
+      'A rule can also apply to one service only (Moto or Car): choose the service. El Vigía has one since Nov 25, 2026, “driver” for Moto ONLY (Car stays like the rest of Venezuela). There the Moto rider pays the street price list (the local fixed prices, in Rides) and Divoox takes its 10% from that price, out of the driver’s balance; in Rides, each route shows what the driver keeps, by day and at night (C-TABULADOR-VIGIA).',
     ],
     capturas: [
       capQuienPaga(
@@ -3497,6 +3593,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       guias: [
         de(regalosDivoox),
         de(saldoConductores),
+        de(saldoClientes),
         de(saldoRestaurantes),
         de(quienPagaViajes),
         de(comidaQuienPaga),

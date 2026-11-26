@@ -52,6 +52,8 @@ export type OfertaViaje = {
   destinoPunto?: { lat: number; lng: number };
   /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del pasajero (0 sin regalo). */
   regaloDivoox?: number;
+  /** C-SALDO-CLIENTE: lo que el pasajero paga con su Saldo Divoox (Divoox te lo paga). */
+  saldoDivoox?: number;
   /** C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares con la tasa fijada del viaje. */
   enMano?: Monto | null;
   /** C-CARRO-PRUEBAS: «moto» o «carro». */
@@ -104,6 +106,9 @@ export function OfertaViajeModal({
   const textos = enIdioma(TEXTOS_VIAJE, idioma);
   // C-OFERTA-SIN-COBRO: el regalo cubre todo el viaje (nada que cobrar en mano).
   const sinCobro = oferta.metodoPago !== 'tarjeta' && oferta.enMano?.monto === 0;
+  // C-SALDO-CLIENTE: «Divoox te paga» suma el regalo y el Saldo Divoox del pasajero.
+  const divooxPaga = (oferta.regaloDivoox ?? 0) + (oferta.saldoDivoox ?? 0);
+  const conSaldo = (oferta.saldoDivoox ?? 0) > 0;
   // C-ENVIO-TEXTOS: la oferta de un envío dice «envío de paquete», no «viaje».
   const t =
     oferta.servicioId === 'envios' ? { ...textos.oferta, ...textos.ofertaEnvio } : textos.oferta;
@@ -331,16 +336,20 @@ export function OfertaViajeModal({
           </Text>
         </View>
       ) : null}
-      {(oferta.regaloDivoox ?? 0) > 0 ? (
+      {divooxPaga > 0 ? (
         <View
           testID="oferta-viaje-regalo"
           style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
         >
           <Text style={{ fontWeight: '800', color: C.exito }}>
-            {(sinCobro ? t.regaloOfertaTodo : t.regaloOferta).replace(
-              '{monto}',
-              formatearMonto(oferta.regaloDivoox ?? 0, oferta.moneda ?? 'USD', idioma),
-            )}
+            {(conSaldo
+              ? sinCobro
+                ? textos.oferta.saldoOfertaTodo
+                : textos.oferta.saldoOferta
+              : sinCobro
+                ? t.regaloOfertaTodo
+                : t.regaloOferta
+            ).replace('{monto}', formatearMonto(divooxPaga, oferta.moneda ?? 'USD', idioma))}
           </Text>
         </View>
       ) : null}

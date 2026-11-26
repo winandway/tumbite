@@ -718,36 +718,68 @@ conductorPapeles.put('/admin/conductores/:id/fecha-nacimiento', async (c) => {
   const admin = exigir(c, 'admin');
   const db = base(c);
   const id = c.req.param('id');
+  // Dos formas: escrita a mano (fecha + motivo) o «Usar esta fecha» (la leída de su documento, un toque).
   const d = await leerCuerpo(
     c,
-    z.object({
-      fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      motivo: z.string().trim().min(3).max(200),
-    }),
+    z.union([
+      z.object({
+        fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        motivo: z.string().trim().min(3).max(200),
+      }),
+      z.object({ usarLeida: z.literal(true) }),
+    ]),
   );
-  if (!fechaNacimientoValida(d.fecha))
-    throw new ErrorDatos('Esa fecha no es válida para una persona que trabaja.', 'fecha', 422);
   const antes = await db
     .prepare("SELECT fecha_nacimiento FROM usuarios WHERE id = ? AND rol = 'repartidor'")
     .bind(id)
     .first<{ fecha_nacimiento: string | null }>();
   if (!antes) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
-  await db.batch([
-    db.prepare('UPDATE usuarios SET fecha_nacimiento = ? WHERE id = ?').bind(d.fecha, id),
+  let fecha: string;
+  let despues: Record<string, unknown>;
+  if ('usarLeida' in d) {
+    // La fecha sale de lo que se leyó en su documento (nunca del navegador) y nunca pisa una escrita.
+    const leida = await db
+      .prepare(
+        'SELECT nacimiento, confianza_nacimiento AS confianza FROM datos_documento WHERE usuario_id = ?',
+      )
+      .bind(id)
+      .first<{ nacimiento: string; confianza: number | null }>();
+    if (!leida?.nacimiento || !fechaNacimientoValida(leida.nacimiento))
+      throw new ErrorDatos('No hay una fecha leída de su documento para usar.', 'fecha', 422);
+    if (antes.fecha_nacimiento)
+      throw new ErrorDatos('Esta persona ya tiene una fecha de nacimiento guardada.', 'fecha', 409);
+    fecha = leida.nacimiento;
+    despues = { fecha_nacimiento: fecha, fuente: 'documento_un_toque', confianza: leida.confianza };
+  } else {
+    if (!fechaNacimientoValida(d.fecha))
+      throw new ErrorDatos('Esa fecha no es válida para una persona que trabaja.', 'fecha', 422);
+    fecha = d.fecha;
+    despues = { fecha_nacimiento: fecha, fuente: 'a_mano', motivo: d.motivo };
+  }
+  const r = await db.batch([
     db
       .prepare(
-        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+        'usarLeida' in d
+          ? "UPDATE usuarios SET fecha_nacimiento = ? WHERE id = ? AND (fecha_nacimiento IS NULL OR fecha_nacimiento = '')"
+          : 'UPDATE usuarios SET fecha_nacimiento = ? WHERE id = ?',
+      )
+      .bind(fecha, id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) SELECT ?, ?, ?, ?, ? WHERE changes() > 0',
       )
       .bind(
         admin.id,
         'conductor.fecha_nacimiento',
         `usuario:${id}`,
         JSON.stringify({ fecha_nacimiento: antes.fecha_nacimiento }),
-        JSON.stringify({ fecha_nacimiento: d.fecha, fuente: 'a_mano', motivo: d.motivo }),
+        JSON.stringify(despues),
       ),
   ]);
+  if (!r[0]?.meta.changes)
+    throw new ErrorDatos('Esta persona ya tiene una fecha de nacimiento guardada.', 'fecha', 409);
   await sincronizarEdad(db, id);
-  return c.json({ fechaNacimiento: d.fecha });
+  return c.json({ fechaNacimiento: fecha });
 });
 
 /** C-EDAD-POR-PAIS: la edad mínima de cada servicio en cada país (Sistema y configuración). */

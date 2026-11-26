@@ -577,6 +577,15 @@ describe('C-PANICO-SOLO-REALES · la alarma de pánico cuenta solo zonas con con
     const revisor = await conductorDeMoto(m, ORIGEN);
     await q(m, "UPDATE usuarios SET nombre = 'Soporte Revisión Driver' WHERE id = ?", revisor.id);
     expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
+    // Las cuentas de los guiones del sitio de pruebas (correo @prueba.invalid) tampoco cuentan: sin
+    // esto, la vuelta de Moto en Venezuela ponía la salud en 503 y se caía en El Vigía.
+    const guion = await conductorDeMoto(m, ORIGEN);
+    await q(
+      m,
+      "UPDATE usuarios SET correo = 'zz-mtve-k@prueba.invalid', nombre = 'Conductor de prueba' WHERE id = ?",
+      guion.id,
+    );
+    expect(await mirar(m)).toEqual({ salud: 'ok', zonas: [] });
   });
 
   it('un conductor real sin vehículo aprobado ni plazo vigente tampoco cuenta; con plazo vigente, sí', async () => {

@@ -82,6 +82,8 @@ export function CambiarCiudadConductor({
     cuenta: 'superadmin',
     inicial: { zonaId: '', motivo: '' },
     almacen: almacenNavegador,
+    // C-BORRADOR-ELECCION-SOLA: la ciudad elegida sola no es «lo que estabas escribiendo».
+    noBastan: ['zonaId'],
   });
   const [destinos, setDestinos] = useState<Destinos | null>(null);
   const [paso, setPaso] = useState<'llenar' | 'confirmar'>('llenar');
@@ -94,6 +96,15 @@ export function CambiarCiudadConductor({
       .then(setDestinos)
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   }, [id]);
+  // C-BORRADOR-SIN-AVISO-VACIO: una ciudad recuperada que ya no se puede elegir (la actual, una cerrada
+  // o de una versión vieja) se descarta al llegar las ciudades: así no queda un «Recuperamos…» con la
+  // casilla vacía. Lo demás escrito se respeta.
+  const { valores: vb, setValores: ponerValores } = b;
+  useEffect(() => {
+    if (!destinos || !vb.zonaId) return;
+    if (!(destinos.ciudades ?? []).some((c) => c.id === vb.zonaId))
+      ponerValores({ ...vb, zonaId: '' });
+  }, [destinos, vb, ponerValores]);
   const destino = destinos?.ciudades?.find((c) => c.id === b.valores.zonaId) ?? null;
   const otroPais = Boolean(destino && destinos?.actual && destino.pais !== destinos.actual.pais);
 

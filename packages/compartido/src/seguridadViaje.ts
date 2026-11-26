@@ -3,21 +3,16 @@
  * reciben el viaje (siempre o solo de noche), aviso si el viaje se sale de la ruta y límite de horas
  * al volante (12 horas manejando, luego 6 de descanso). Reglas puras: el servidor las aplica.
  */
+import { esHoraDeNoche } from './viajes';
+
 type Punto = { lat: number; lng: number };
 
-/** De noche = de 9 de la noche a 6 de la mañana en la hora de la ciudad (como Uber). */
+/**
+ * De noche = de 9 de la noche a 6 de la mañana en la hora de la ciudad (como Uber). La misma noche
+ * de la tarifa nocturna (C-RECARGO-NOCHE), cuando la ciudad no fija otras horas.
+ */
 export function esDeNoche(ahora: Date, zonaHoraria: string): boolean {
-  let hora: number;
-  try {
-    hora = Number(
-      new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: zonaHoraria })
-        .format(ahora)
-        .replace(/\D/g, ''),
-    );
-  } catch {
-    hora = ahora.getUTCHours();
-  }
-  return hora >= 21 || hora < 6;
+  return esHoraDeNoche(ahora, zonaHoraria);
 }
 
 /** Distancia en km del punto al tramo recto origen→destino (aproximación plana, de sobra en una ciudad). */
