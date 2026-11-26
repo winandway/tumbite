@@ -15,6 +15,35 @@ export type Entorno = 'produccion' | 'pruebas' | 'local';
  * del sitio de pruebas NO se escribe aquí: así nunca viaja dentro de un paquete de producción. */
 export const SERVIDOR_PRODUCCION = 'https://divoox.com';
 
+/** Subdominio de Workers de la cuenta de Cloudflare de Divoox (windoce1). */
+export const SUBDOMINIO_VISTAS_PREVIAS = 'windoce1.workers.dev';
+/** Prefijo fijo del worker y de la base de cada vista previa por rama. */
+export const PREFIJO_VISTA_PREVIA = 'divoox-preview-';
+
+/**
+ * C-VISTA-PREVIA-RAMA: el nombre del worker (y de su base) de la vista previa de una rama.
+ * «fase-licencia-una-cara» → «divoox-preview-licencia-una-cara». Solo minúsculas, números y guiones,
+ * y cabe en el límite de nombres de Cloudflare (63 letras).
+ */
+export function nombreVistaPrevia(rama: string): string {
+  const limpio = rama
+    .toLowerCase()
+    .replace(/^refs\/heads\//, '')
+    .replace(/^fase-/, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+    .replace(/-+$/g, '');
+  if (!limpio) throw new Error(`La rama «${rama}» no da un nombre de vista previa`);
+  return `${PREFIJO_VISTA_PREVIA}${limpio}`;
+}
+
+/** La vista previa de una rama: divoox-preview-<algo>.windoce1.workers.dev (nada más). */
+export function esHostVistaPrevia(host: string): boolean {
+  const h = host.toLowerCase().split(':')[0] ?? '';
+  return /^divoox-preview-[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?\.windoce1\.workers\.dev$/.test(h);
+}
+
 /** Dominios que sirven Divoox y a qué entorno pertenecen. */
 export function entornoDeHost(host: string): Entorno | null {
   const h = host.toLowerCase().split(':')[0] ?? '';
@@ -29,6 +58,9 @@ export function entornoDeHost(host: string): Entorno | null {
   )
     return 'produccion';
   if (h === 'staging.tumbite.com' || h === 'tumbite-pruebas.sitios.dev') return 'pruebas';
+  // C-VISTA-PREVIA-RAMA (26 nov 2026): la vista previa de cada rama «fase-*» es un sitio de pruebas
+  // propio, con su base aparte. Solo en el subdominio de Workers de la cuenta de Divoox.
+  if (esHostVistaPrevia(h)) return 'pruebas';
   if (h === 'localhost' || h === '127.0.0.1') return 'local';
   return null;
 }
