@@ -200,10 +200,10 @@ try {
       16,
       en ? 6 : 16,
     );
-    await c
-      .getByRole('button', { name: en ? /Request/ : /Pedir|Solicitar/ })
-      .last()
-      .click();
+    // C-METODO-PAGO-PANTALLA: «Continuar» abre «Método de pago» y ahí se solicita en efectivo.
+    await c.getByTestId('pedir-boton').click();
+    await c.getByTestId('pago-metodo-efectivo').click();
+    await c.getByTestId('pago-solicitar').click();
     await espera(2_500);
     const viaje = (await pasajero('GET', '/datos/viajes/actual')).viaje;
     if (!viaje) throw new Error('el pasajero no quedó con un viaje');

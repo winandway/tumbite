@@ -762,6 +762,44 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "ordering/payment-method",
+  "titulo": "Elegir cómo pagas un viaje",
+  "resumen": "Después de ver el precio, la pantalla «Método de pago» te muestra el monto a pagar y eliges cómo pagas antes de solicitar.",
+  "preguntas": [
+   "¿Dónde elijo cómo pago el viaje?",
+   "¿Por qué Pago Móvil dice «Aún no disponible para este viaje»?",
+   "¿Puedo pagar parte con saldo y parte en efectivo?"
+  ],
+  "pasos": [
+   "Elige tu destino y mira el precio.",
+   "Toca «Continuar».",
+   "Si tienes Saldo Divoox, decide si lo usas con el interruptor.",
+   "Elige cómo pagas el resto: Pago Móvil o efectivo.",
+   "Toca «Solicitar»."
+  ],
+  "cuerpo": "Al tocar «Continuar» en Moto, Carro o Envíos llegas a «Método de pago». Arriba ves el monto a pagar en grande; en Venezuela, también en bolívares con la tasa del día y su fecha. Debajo ves las formas de pago de tu ciudad. En Venezuela: tu Saldo Divoox, Pago Móvil y efectivo. Con Pago Móvil le pagas al conductor y ves sus datos cuando acepta; con efectivo le pagas al terminar. Si en ese momento no hay conductores cerca que reciban Pago Móvil, la opción sale con «Aún no disponible para este viaje» y la app elige efectivo por ti. No pierdes nada de lo que escribiste. El botón «Solicitar» dice cuánto pagas en mano. Si algo cambió mientras elegías, la app te lo dice en la misma pantalla y puedes elegir otra forma de pago."
+ },
+ {
+  "idioma": "es",
+  "ruta": "ordering/divoox-balance",
+  "titulo": "Tu Saldo Divoox",
+  "resumen": "El Saldo Divoox es crédito en dólares para pagar tus viajes: si alcanza, pagas todo con saldo; si no, usas lo que tienes y el resto lo pagas en mano.",
+  "preguntas": [
+   "¿Cómo consigo Saldo Divoox?",
+   "¿Qué pasa con mi saldo si cancelo el viaje?",
+   "¿Puedo usar el saldo en una reserva?"
+  ],
+  "pasos": [
+   "Pide tu viaje y toca «Continuar».",
+   "En la tarjeta «Saldo Divoox», deja el interruptor encendido.",
+   "Mira cuánto usas y cuánto te queda por pagar.",
+   "Si queda algo por pagar, elige Pago Móvil o efectivo.",
+   "Toca «Solicitar»."
+  ],
+  "cuerpo": "Tu Saldo Divoox lo carga nuestro equipo: una carrera de regalo, una recarga de regalo o lo que pagaste por adelantado. Cuando te cargamos saldo, te llega un aviso con el monto. En «Método de pago» ves tu saldo disponible en dólares y en bolívares, con el logo de Divoox. Con el interruptor encendido, primero se descuenta tu regalo de código (si tienes) y después tu saldo, hasta donde alcance. Si el saldo cubre todo el viaje, no pagas nada en mano. Si no alcanza, la pantalla te dice cuánto usas y cuánto te queda por pagar, y eliges si el resto va por Pago Móvil o en efectivo. El saldo se separa al pedir. Si cancelas, o si no encontramos conductor, vuelve completo a tu cuenta. Por ahora se usa en los viajes de ahora, no en las reservas."
+ },
+ {
+  "idioma": "es",
   "ruta": "ordering/ride-seguridad",
   "titulo": "Tu seguridad en los viajes",
   "resumen": "Comparte tu viaje en vivo, elige contactos de confianza y pide ayuda con un toque.",
@@ -3513,6 +3551,40 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If you canceled a cash ride late, the fee is added to your next ride."
   ],
   "cuerpo": "After you see the price, tap “Continue” to open “Payment method”: it shows the amount to pay and you choose how you’ll pay before you request. It has its own guide, “Choosing how you pay for a ride.” With a card, we hold the price when you request and charge it when the ride ends. With cash, you pay the driver when you arrive. During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay. Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up. If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services."
+ },
+ {
+  "idioma": "en",
+  "ruta": "ordering/payment-method",
+  "titulo": "Choosing how you pay for a ride",
+  "resumen": "After you see the price, the “Payment method” screen shows the amount to pay and you choose how you’ll pay before you request.",
+  "preguntas": [
+   "Where do I choose how to pay for a ride?",
+   "Can I pay for a ride with a card?",
+   "What does “Not available for this trip yet” mean?"
+  ],
+  "pasos": [
+   "Choose your destination and check the price.",
+   "Tap “Continue.”",
+   "Choose cash or card.",
+   "Tap “Request.”"
+  ],
+  "cuerpo": "When you tap “Continue” on Moto, Car or Deliveries, you get to “Payment method.” At the top you see the amount to pay in large type. Below it are the payment methods available in your city. In the United States: cash or card. With cash, you pay the driver when the ride ends; with a card, we hold the price when you request and charge it when the ride ends. If a method can’t be used for a ride, it shows “Not available for this trip yet” and the app picks another one for you. Nothing you entered is lost. The “Request” button shows what you’ll pay. If something changed while you were choosing, the app tells you on the same screen and you can pick another method."
+ },
+ {
+  "idioma": "en",
+  "ruta": "ordering/divoox-balance",
+  "titulo": "Your Divoox Balance",
+  "resumen": "Divoox Balance is credit for paying rides in some countries. It isn’t used in the United States: here you pay with cash or card.",
+  "preguntas": [
+   "Can I use Divoox Balance in the United States?",
+   "How do I pay for a ride in the United States?"
+  ],
+  "pasos": [
+   "Request your ride and tap “Continue.”",
+   "On “Payment method,” choose cash or card.",
+   "Tap “Request.”"
+  ],
+  "cuerpo": "In some countries, our team can add Divoox Balance to your account (a gift ride, a gift top-up or a prepayment), and you use it on the “Payment method” screen. Divoox Balance isn’t used in the United States, so you won’t see it on your “Payment method” screen. Here you pay each ride with cash or card. Promo codes still work the same way: add them in your account and they’re applied to your next eligible ride."
  },
  {
   "idioma": "en",

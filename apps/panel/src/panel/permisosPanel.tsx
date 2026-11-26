@@ -113,6 +113,7 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   flexfinance: 'dinero.ver',
   'gift-codes': 'dinero.ver',
   'driver-balance': 'dinero.ver',
+  'customer-balance': 'dinero.ver',
   signups: 'monitoreo.ver',
   agents: 'dinero.ver',
   referrals: 'dinero.ver',

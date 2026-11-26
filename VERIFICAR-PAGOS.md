@@ -2,6 +2,14 @@
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
+## 🔴 Saldo Divoox del cliente y pantalla «Método de pago» (C-SALDO-CLIENTE, C-METODO-PAGO-PANTALLA, C-PAGO-MOVIL-DISPONIBLE, 25 nov 2026) · Venezuela · probado SOLO con pruebas automáticas y en pantalla en local · 🔴 NADA con dinero real
+
+- **Cómo cobra:** el pasajero elige en «Método de pago»: primero el regalo de código, después su Saldo Divoox hasta donde alcance y el resto en mano (Pago Móvil o efectivo). Todo con saldo = viaje «saldo», no se cobra nada en mano. El saldo se aparta al pedir, vuelve si el viaje no se hace y al terminar Divoox le paga al conductor lo cubierto (a sus ganancias, solo con viaje real). La comisión de Divoox sale del prepago del conductor como siempre, sobre el precio del viaje.
+- **Probado (automático):** `apps/servidor/src/rutas/saldoCliente.test.ts` (15 pruebas, cada fallo visto en rojo): doble gasto, idempotencia, topes y auditoría de la carga, todo con saldo con el libro que cuadra (lo que sale del saldo = lo que se le acredita al conductor = lo que paga la cuenta de Divoox; comisión igual), parcial + efectivo y parcial + Pago Móvil con el mismo monto en $ y Bs en cliente, conductor y panel, total final mayor y menor, cancelación y sin conductor, viaje dudoso en revisión, propio celular y Pago Móvil apagado sin conductor que lo reciba.
+- **Probado en pantalla, en local (25 nov):** la pantalla en la app web real del cliente contra el servidor local (sin saldo con Pago Móvil apagado, saldo parcial, saldo que cubre todo, métodos de EE. UU.) y el panel «Saldo de clientes».
+- **🔴 Sin probar:** en el sitio de pruebas, en las apps nativas y en la calle; ninguna carga ni ningún viaje con dinero real; el pago real al conductor de lo cubierto por saldo (sale por el mismo camino del regalo: pago móvil del equipo o «Pasar a mi saldo»). No anunciar el Saldo Divoox hasta probarlo en el sitio de pruebas y con un viaje real mirado por el equipo.
+- **Canario:** pieza `saldo_clientes` de `/datos/salud`.
+
 ## 🔴 Tarifa de servicio de Divoox en los viajes (C-QUIEN-PAGA-VIAJES, 23 nov 2026): quién paga la comisión, conductor, cliente o mitad · Venezuela en «cliente» · probado con pruebas automáticas, en local en pantalla y con el guion del sitio de pruebas · 🔴 NADA con dinero real
 
 - **Qué cambia en el cobro:** el pasajero paga el precio del viaje MÁS la «Tarifa de servicio de Divoox» en una línea aparte (la comisión entera en «cliente»; la mitad en «mitad»). Todo se paga en mano al conductor (efectivo o pago móvil), como siempre; su saldo prepago entrega a Divoox la comisión entera al terminar. Con tarjeta (donde exista), la autorización es por el total con la tarifa.
