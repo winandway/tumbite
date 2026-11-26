@@ -7,7 +7,9 @@ import { mundo } from '../pruebas/ayuda';
  * C-DOCUMENTO-SIN-REVERSO (23 nov 2026, Richard: «si seleccionó Venezuela, debe eliminar que el
  * documento venezolano se tome por la parte de atrás»). La cédula venezolana no tiene nada útil por
  * detrás (una lámina en blanco con un número de serie): en Venezuela se fotografía solo por delante.
- * La licencia venezolana SÍ tiene dos caras y se sigue pidiendo por frente y por reverso. Estados
+ * C-LICENCIA-SIN-REVERSO (26 nov 2026, Richard: «la licencia de Venezuela tiene una sola cara… si la
+ * parte trasera no está, entonces que sea conforme con el frente»): la licencia venezolana también va
+ * solo por delante (la carta médica ya era una sola foto en «Tus papeles»). Estados
  * Unidos y los demás países siguen pidiendo los dos lados de todo. La app ya publicada recibe los pasos del servidor,
  * así que el arreglo vale para ella sin compilar nada.
  */
@@ -67,23 +69,27 @@ async function conductor(pais: Pais) {
 }
 
 describe('C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante', () => {
-  it('la política de fábrica de Venezuela no pide el reverso de la cédula; los demás países sí', () => {
-    expect(politicaPlazoDeFabrica('VE').sinReverso).toEqual(['doc_reverso']);
-    for (const p of ['US', 'PE', 'CO', null])
+  it('la política de fábrica de Venezuela no pide el reverso de la cédula ni el de la licencia; los demás países sí', () => {
+    expect(politicaPlazoDeFabrica('VE').sinReverso).toEqual(['doc_reverso', 'licencia_reverso']);
+    // C-LICENCIA-REVERSO-OPCIONAL: el de la licencia se sigue ofreciendo; el de la cédula, no.
+    expect(politicaPlazoDeFabrica('VE').reversoOpcional).toEqual(['licencia_reverso']);
+    for (const p of ['US', 'PE', 'CO', null]) {
       expect(politicaPlazoDeFabrica(p).sinReverso).toEqual([]);
+      expect(politicaPlazoDeFabrica(p).reversoOpcional).toEqual([]);
+    }
   });
 
-  it('con moto: cara, documento por delante, licencia por los dos lados y seguro; el total cuadra y se envía', async () => {
+  it('con moto: cara, documento y licencia solo por delante, y seguro; el total cuadra y se envía', async () => {
     const c = await conductor('VE');
     await c.moto();
     await c.yo('POST', '/datos/kyc/consentimiento', { acepto: true });
     const antes = await c.verificacion();
     expect(antes.pais).toBe('VE');
     expect(antes.pasos.map((p) => p.paso).sort()).toEqual(
-      ['cara', 'doc_frente', 'licencia_frente', 'licencia_reverso', 'seguro'].sort(),
+      ['cara', 'doc_frente', 'licencia_frente', 'seguro'].sort(),
     );
     expect(antes.total).toBe(4);
-    for (const p of ['doc_frente', 'licencia_frente', 'licencia_reverso', 'seguro', 'cara'])
+    for (const p of ['doc_frente', 'licencia_frente', 'seguro', 'cara'])
       expect((await c.foto(p)).estado).toBe(201);
     const listo = await c.verificacion();
     expect(listo.listos).toBe(4);
@@ -96,16 +102,41 @@ describe('C-DOCUMENTO-SIN-REVERSO: en Venezuela la cédula va solo por delante',
     // La ficha del equipo tampoco muestra un hueco de reverso.
     const ficha = (await c.equipo('GET', `/datos/admin/verificacion/${c.rep.id}`)).datos;
     expect(ficha.fotos.map((f: { paso: string }) => f.paso)).not.toContain('doc_reverso');
-    expect(ficha.fotos.map((f: { paso: string }) => f.paso)).toContain('licencia_reverso');
+    expect(ficha.fotos.map((f: { paso: string }) => f.paso)).not.toContain('licencia_reverso');
     // Y no se le puede pedir de nuevo una foto que su país no pide.
+    for (const paso of ['doc_reverso', 'licencia_reverso'])
+      expect(
+        (
+          await c.equipo('POST', `/datos/admin/verificacion/${c.rep.id}/pedir-foto`, {
+            paso,
+            motivo: 'Prueba de candado',
+          })
+        ).estado,
+      ).toBe(409);
+    // «Lo que te falta» (la de Driver, la de WhatsApp y la de Camila salen de aquí) no nombra ningún reverso.
+    const falta = await c.yo('GET', '/datos/conductor/que-te-falta');
+    expect(falta.estado).toBe(200);
+    expect(JSON.stringify(falta.datos)).not.toMatch(/revers/i);
+    // C-LICENCIA-REVERSO-OPCIONAL: la app nueva (?opcionales=1) ve el reverso de la licencia como
+    // opcional (el de la cédula nunca); lo puede subir y no cambia la cuenta de papeles.
+    const conOpcional = (await c.yo('GET', '/datos/conductor/verificacion?opcionales=1')).datos as {
+      pasos: { paso: string; opcional: boolean }[];
+      total: number;
+      listos: number;
+    };
+    expect(conOpcional.pasos.filter((p) => p.opcional).map((p) => p.paso)).toEqual([
+      'licencia_reverso',
+    ]);
+    expect(conOpcional.pasos.map((p) => p.paso)).not.toContain('doc_reverso');
+    expect(conOpcional.total).toBe(4);
+    expect((await c.foto('licencia_reverso')).estado).toBe(201);
+    const conReverso = await c.verificacion();
+    expect(conReverso.listos).toBe(4);
+    expect(conReverso.pasos.map((p) => p.paso)).not.toContain('licencia_reverso');
+    const ficha2 = (await c.equipo('GET', `/datos/admin/verificacion/${c.rep.id}`)).datos;
     expect(
-      (
-        await c.equipo('POST', `/datos/admin/verificacion/${c.rep.id}/pedir-foto`, {
-          paso: 'doc_reverso',
-          motivo: 'Prueba de candado',
-        })
-      ).estado,
-    ).toBe(409);
+      ficha2.fotos.find((f: { paso: string }) => f.paso === 'licencia_reverso')?.opcional,
+    ).toBe(true);
   });
 
   it('sin vehículo: documento por delante y cara (dos papeles)', async () => {

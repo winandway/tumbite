@@ -9,6 +9,7 @@ import {
   esPasoVerificacion,
   papelDePaso,
   pideReversoDocumento,
+  pasosOpcionales,
   quitarReversos,
   soloEnVivo,
 } from '@tumbite/compartido';
@@ -77,17 +78,29 @@ const MOTOR = new Set(['moto', 'carro']);
 
 /**
  * Las fotos que le tocan: sin moto ni carro no hay licencia ni seguro que pedir. Y sin los reversos
- * que su país no pide (C-DOCUMENTO-SIN-REVERSO: en Venezuela, el de la cédula).
+ * que su país no pide (C-DOCUMENTO-SIN-REVERSO: en Venezuela, el de la cédula y el de la licencia).
  */
 export function pasosDe(
   vehiculoTipo: string | null | undefined,
   politica?: Pick<PoliticaPlazoPapeles, 'sinReverso'> | null,
 ): PasoVerificacion[] {
-  const todos: readonly PasoVerificacion[] =
-    vehiculoTipo && MOTOR.has(vehiculoTipo)
-      ? PASOS_VERIFICACION
-      : ['doc_frente', 'doc_reverso', 'cara'];
-  return quitarReversos(todos, politica);
+  return quitarReversos(todosLosPasos(vehiculoTipo), politica);
+}
+
+const todosLosPasos = (vehiculoTipo: string | null | undefined): readonly PasoVerificacion[] =>
+  vehiculoTipo && MOTOR.has(vehiculoTipo)
+    ? PASOS_VERIFICACION
+    : ['doc_frente', 'doc_reverso', 'cara'];
+
+/**
+ * C-LICENCIA-REVERSO-OPCIONAL (26 nov 2026): las fotos que se le OFRECEN sin exigirse (en Venezuela,
+ * el reverso de la licencia). Nunca cuentan para el papel, el total ni «lo que te falta».
+ */
+export function opcionalesDe(
+  vehiculoTipo: string | null | undefined,
+  politica?: Pick<PoliticaPlazoPapeles, 'sinReverso' | 'reversoOpcional'> | null,
+): PasoVerificacion[] {
+  return pasosOpcionales(todosLosPasos(vehiculoTipo), politica);
 }
 
 const deRevision = (estado: string | null | undefined): EstadoPapel | null =>
@@ -156,6 +169,7 @@ export async function estadoVerificacion(db: D1Database, conductorId: string) {
   // C-DOCUMENTO-SIN-REVERSO: un reverso que su país no pide no se cuenta aunque se haya subido o
   // esté en «repetir»: la foto sobrante se queda guardada y se ignora.
   const pasos = pasosDe(veh?.tipo, g.politica);
+  const opcionales = opcionalesDe(veh?.tipo, g.politica);
   const fotos = new Map(fotosR.results.map((f) => [f.paso, f]));
   const tipoLicencia = veh?.tipo === 'carro' ? 'licencia_conducir' : 'licencia_moto';
   const lic = licencia.results.find((l) => l.tipo === tipoLicencia) ?? null;
@@ -194,6 +208,7 @@ export async function estadoVerificacion(db: D1Database, conductorId: string) {
     vehiculo: veh,
     tipoLicencia,
     pasos,
+    opcionales,
     fotos,
     papeles,
     consentimiento: Boolean(kycF?.consentimiento_en),
@@ -417,11 +432,14 @@ verificacionConductor.get('/conductor/verificacion', async (c) => {
     permisoIa: await permisoIa(db, u.id),
     // C-AVISO-IA-UNICO: la app muestra la pantalla del aviso (una vez) mientras esto sea verdadero.
     avisoIaPendiente: await avisoIaPendiente(db, u.id),
-    pasos: e.pasos.map((paso) => {
+    // C-LICENCIA-REVERSO-OPCIONAL: los pasos opcionales solo van a la app que sabe saltarlos (la pide
+    // con `?opcionales=1`); la ya publicada sigue viendo solo lo que se exige.
+    pasos: [...e.pasos, ...(c.req.query('opcionales') === '1' ? e.opcionales : [])].map((paso) => {
       const f = e.fotos.get(paso);
       return {
         paso,
         papel: papelDePaso(paso),
+        opcional: e.opcionales.includes(paso),
         soloEnVivo: soloEnVivo(paso, g.politica.asistente),
         foto: f
           ? {
@@ -501,7 +519,7 @@ async function subirFotoDePaso(c: Ctx, u: UsuarioSesion) {
   // C-DOCUMENTO-SIN-REVERSO (cinturón): si una app con la lista vieja en memoria manda igual el
   // reverso que su país no pide, no se le rechaza con «No se lee bien»: se guarda tal cual (sin IA,
   // sin tocar lo que revisa el equipo) y se da por buena, sin exigirla nunca.
-  if ((g.politica.sinReverso ?? []).some((p) => p === paso)) {
+  if (!e.opcionales.includes(paso) && (g.politica.sinReverso ?? []).some((p) => p === paso)) {
     const id = nuevoId();
     const clave = `verificacion/${u.id}/${paso}-${id}`;
     await guardarFoto(c.env.BUCKET, clave, bytes, tipo, {
@@ -523,7 +541,8 @@ async function subirFotoDePaso(c: Ctx, u: UsuarioSesion) {
     ]);
     return c.json({ id, paso, ia: { color: 'verde', aviso: '' } }, 201);
   }
-  if (!e.pasos.includes(paso)) throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
+  if (!e.pasos.includes(paso) && !e.opcionales.includes(paso))
+    throw new ErrorDatos('Esa foto no corresponde.', 'foto', 400);
   // C-PAPELES-SOLO-CAMARA: con asistente, toda foto de verificación se toma en vivo; sin él, solo la
   // cara. `origen` lo declara la app (barrera razonable, no infalsificable); la IA, que avisa si es la
   // foto de una pantalla o de otra foto, y la revisión del equipo son las barreras siguientes.
@@ -1066,13 +1085,15 @@ verificacionConductor.get('/admin/verificacion/:id', async (c) => {
     },
     papeles: e.papeles,
     caras: caras ?? null,
-    fotos: e.pasos.map((paso) => {
+    // C-LICENCIA-REVERSO-OPCIONAL: el reverso opcional se ve solo si lo subió (nunca como hueco).
+    fotos: [...e.pasos, ...e.opcionales.filter((p) => e.fotos.has(p))].map((paso) => {
       const f = e.fotos.get(paso);
       const otra = f ? {} : otraFotoDe(paso, e.tipoLicencia, otras, e.vehiculo?.id ?? null, id);
       const lectura = leerJson(f?.ia_json);
       return {
         paso,
         papel: papelDePaso(paso),
+        opcional: e.opcionales.includes(paso),
         foto: f
           ? {
               id: f.id,

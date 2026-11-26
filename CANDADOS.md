@@ -791,6 +791,14 @@ Recorrido real: registro del conductor desde cero en Driver de pruebas, Verifica
 - **Cómo se comprueba:** `apps/servidor/src/rutas/documentoSinReverso.test.ts` (vista en ROJO antes del arreglo): Venezuela con moto recibe cara, documento por delante, licencia por los dos lados y seguro (4 papeles); sin vehículo, documento por delante y cara (2); envía por el asistente y por el flujo viejo; el reverso en «repetir» queda libre; Estados Unidos y Colombia siguen pidiendo el reverso.
 - **Qué NO tocar:** la app no decide los pasos, los recibe del servidor; no volver a poner `doc_reverso` fijo en `pasosDe`. Las capturas de Docs del asistente en Venezuela todavía muestran el paso del reverso (pendiente de rehacer).
 
+## C-LICENCIA-REVERSO-OPCIONAL · En Venezuela basta el frente de la licencia; el reverso se ofrece y nunca falta (26 nov 2026) — Venezuela
+
+- **Qué pasaba:** el asistente de fotos le exigía a un conductor de moto de Venezuela el reverso de la licencia. Richard: «si pasan una, será suficiente con la del frente… pero no hay que quitar la opción… en el futuro iremos endureciendo las reglas».
+- **Arreglo:** la política de fábrica de Venezuela (`politicaPlazoDeFabrica`, en `packages/compartido/src/plazoPapeles.ts`) pone `sinReverso: ['doc_reverso', 'licencia_reverso']` y `reversoOpcional: ['licencia_reverso']`. De ahí sale todo lo demás: pasos, papeles completos, «lo que te falta», WhatsApp, Camila, ficha del equipo y «pedir otra foto». El servidor solo manda el paso opcional a la app que lo pide con `?opcionales=1`, así la Driver ya publicada no se traba. La carta médica siempre fue una sola foto. Qué trae cada cara: `docs/VERIFICACION-DOCUMENTOS-VENEZUELA.md`.
+- **En producción el 26 nov:** cero conductores trabados por un reverso (cuatro licencias de moto aprobadas por «Tus papeles», tres cédulas solo con frente).
+- **Candados:** `apps/servidor/src/rutas/documentoSinReverso.test.ts` (Venezuela con moto: el papel queda completo con los frentes; la ficha no muestra huecos; pedir un reverso da 409; «lo que te falta» no nombra reversos; con `?opcionales=1` el reverso de la licencia sale opcional, se sube y no cambia la cuenta) y `apps/repartidor/src/papeles/logica.test.ts` (se ofrece después del frente, nunca es «lo que falta» y no frena «Enviar»). Estados Unidos y Colombia siguen pidiendo los dos lados.
+- **No tocar:** no hay reglas de reverso sueltas en las pantallas. Para endurecer, se quita el paso de las dos listas del país.
+
 ## C-CASA-POR-DEFECTO · Fotos de la entrada: casa por defecto y un selector visible de casa o edificio (Richard en su iPhone, 21 nov 2026) — todos los países
 
 - **Qué pasaba:** al llegar a «Fotos de la entrada» le salía «Es un edificio o conjunto» con los pasos de edificio, y para decir que era una casa había que encontrar un enlace pequeño «Cambiar». Sus palabras: «hay más casas que edificios… por defecto debería estar la casa».

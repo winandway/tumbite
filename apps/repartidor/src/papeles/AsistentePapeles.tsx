@@ -33,6 +33,7 @@ import {
   proporcionDeHorma,
   sePuedeCambiar,
   siguientePaso,
+  todasLasExigidas,
   textosDelPaso,
 } from './logica';
 
@@ -50,6 +51,10 @@ const T = {
     usarIgual: 'Usar esta de todos modos',
     lista: 'Foto lista',
     siguiente: 'Siguiente',
+    opcionalTexto:
+      'Si tu licencia tiene parte de atrás, súbela también. Es opcional: con el frente basta.',
+    saltar: 'Saltar este paso',
+    opcionalCorta: 'Opcional',
     revisar: 'Revisar mis papeles',
     cambiar: 'Cambiar esta foto',
     aprobada: 'Este papel ya está aprobado. No hace falta cambiarlo.',
@@ -95,6 +100,10 @@ const T = {
     usarIgual: 'Use this one anyway',
     lista: 'Photo ready',
     siguiente: 'Next',
+    opcionalTexto:
+      'If your license has a back side, upload it too. It’s optional: the front is enough.',
+    saltar: 'Skip this step',
+    opcionalCorta: 'Optional',
     revisar: 'Review my documents',
     cambiar: 'Change this photo',
     aprobada: 'This document is already approved. No need to change it.',
@@ -483,7 +492,8 @@ export function AsistentePapeles({
 
   // ───────────────────────── «Revisa tus papeles» ─────────────────────────
   if (pantalla.tipo === 'revisar') {
-    const todas = orden.every(fotoLista);
+    // C-LICENCIA-REVERSO-OPCIONAL: lo opcional nunca frena «Enviar».
+    const todas = todasLasExigidas(v);
     const enRevision = todas && !v.puedeEnviar;
     return marco(
       <>
@@ -507,7 +517,13 @@ export function AsistentePapeles({
                   onPress={() => irA({ tipo: 'paso', paso: p.paso })}
                   accessibilityRole="button"
                   accessibilityLabel={`${nombreDeFoto(p.paso, v.pais, idioma)}: ${
-                    lista ? t.listaCorta : repetir ? t.hayQueRepetir : t.falta
+                    lista
+                      ? t.listaCorta
+                      : repetir
+                        ? t.hayQueRepetir
+                        : p.opcional
+                          ? t.opcionalCorta
+                          : t.falta
                   }`}
                   style={{
                     width: '47.5%',
@@ -533,7 +549,13 @@ export function AsistentePapeles({
                       color: lista ? COLOR.exito : repetir ? COLOR.aviso : COLOR.textoSuave,
                     }}
                   >
-                    {lista ? `✓ ${t.listaCorta}` : repetir ? t.hayQueRepetir : t.falta}
+                    {lista
+                      ? `✓ ${t.listaCorta}`
+                      : repetir
+                        ? t.hayQueRepetir
+                        : p.opcional
+                          ? t.opcionalCorta
+                          : t.falta}
                   </Text>
                 </Pressable>
               );
@@ -622,6 +644,15 @@ export function AsistentePapeles({
       />
     );
   } else if (momento === 'horma' || momento === 'repetir') {
+    if (momento === 'horma' && dato.opcional)
+      explicacion = (
+        <View
+          testID="papeles-opcional"
+          style={{ borderWidth: 1, borderColor: COLOR.borde, borderRadius: 12, padding: 12 }}
+        >
+          <Text style={{ fontSize: 14, lineHeight: 20 }}>{t.opcionalTexto}</Text>
+        </View>
+      );
     if (momento === 'repetir')
       explicacion = (
         <View
@@ -643,6 +674,18 @@ export function AsistentePapeles({
           testID="papeles-tomar"
         />
         {nota(momento === 'horma' ? `${t.asi} ${t.soloCamara}` : t.soloCamara)}
+        {dato.opcional ? (
+          <Pressable
+            testID="papeles-saltar"
+            onPress={() => irA(sigue ? { tipo: 'paso', paso: sigue } : { tipo: 'revisar' })}
+            accessibilityRole="button"
+            style={{ alignSelf: 'center', padding: 6 }}
+          >
+            <Text style={{ fontFamily: FUENTE.textoFuerte, textDecorationLine: 'underline' }}>
+              {t.saltar}
+            </Text>
+          </Pressable>
+        ) : null}
       </>
     );
   } else if (momento === 'vista_previa') {

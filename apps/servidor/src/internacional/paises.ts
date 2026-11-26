@@ -86,6 +86,8 @@ export const esquemaConfigPais = z.object({
       aprobacionAutomatica: z.boolean(),
       // C-DOCUMENTO-SIN-REVERSO: los reversos que el país no pide (sin escribir = los de fábrica).
       sinReverso: z.array(z.enum(PASOS_REVERSO)).max(PASOS_REVERSO.length).optional(),
+      // C-LICENCIA-REVERSO-OPCIONAL: de esos, los que igual se ofrecen (sin escribir = los de fábrica).
+      reversoOpcional: z.array(z.enum(PASOS_REVERSO)).max(PASOS_REVERSO.length).optional(),
     })
     .optional(),
   /**

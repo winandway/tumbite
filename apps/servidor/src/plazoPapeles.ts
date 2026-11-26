@@ -56,6 +56,7 @@ const esquemaGuardado = z
         asistente: z.boolean(),
         aprobacionAutomatica: z.boolean(),
         sinReverso: z.array(z.enum(PASOS_REVERSO)),
+        reversoOpcional: z.array(z.enum(PASOS_REVERSO)),
       })
       .partial()
       .optional(),
