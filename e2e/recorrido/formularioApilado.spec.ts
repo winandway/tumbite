@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import { sqlLocalTexto } from './sqlLocal';
+import { rutaSuperadmin } from './rutaSuperadmin';
 
 /**
  * C-FORMULARIO-APILADO (14 nov 2026, todos los países): «Abrir un servicio en una ciudad» del panel
@@ -32,11 +33,7 @@ for (const [nombre, ancho] of [
     sqlLocalTexto(
       `UPDATE usuarios SET rol = 'admin', correo_confirmado_en = datetime('now') WHERE id = '${admin.usuario.id}'`,
     );
-    const { ruta } = (await (
-      await request.get('/datos/admin/ruta', {
-        headers: { authorization: `Bearer ${admin.token}` },
-      })
-    ).json()) as { ruta: string | null };
+    const ruta = await rutaSuperadmin(request, { authorization: `Bearer ${admin.token}` });
     const ctx = await browser.newContext({ viewport: { width: ancho, height: 900 } });
     await ctx.addCookies([
       { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },

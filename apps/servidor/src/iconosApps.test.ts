@@ -37,7 +37,9 @@ describe('C-ICONOS-POR-APP: la primera pantalla de Driver no es la del cliente',
   // de logística vive solo dentro de Flex y Envíos. El ícono de la app sigue azul (C-ICONOS-POR-APP).
   it('Driver entra con su propia portada que dice para quién es', () => {
     const entrada = readFileSync(raiz('apps/repartidor/src/app/index.tsx'), 'utf8');
-    expect(entrada).toMatch(/<Acceso rolRegistro="repartidor" portada=\{<Portada \/>\} \/>/);
+    expect(entrada).toMatch(
+      /<Acceso rolRegistro="repartidor" portada=\{<Portada \/>\} cabecera=\{COLOR_ARRANQUE_DRIVER\} \/>/,
+    );
     expect(entrada).toContain('C.primario');
     expect(entrada).not.toContain('C.logistica');
     expect(entrada).toMatch(/For drivers/);

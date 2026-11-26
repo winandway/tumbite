@@ -1,5 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { join } from 'node:path';
 import { expect, test } from './fixtures';
 import { sqlLocal, sqlLocalTexto } from './sqlLocal';
@@ -57,11 +58,7 @@ for (const idioma of ['es', 'en'] as const)
     sqlLocalTexto(`INSERT INTO repartidores (usuario_id, zona_id) VALUES ('${c.id}', 'US-FL-MIAMI')
       ON CONFLICT(usuario_id) DO UPDATE SET zona_id = 'US-FL-MIAMI', conectado = 0, ciudad_elegida_en = NULL, codigo = NULL`);
 
-    const { ruta } = (await (
-      await request.get('/datos/admin/ruta', {
-        headers: { authorization: `Bearer ${admin.token}` },
-      })
-    ).json()) as { ruta: string | null };
+    const ruta = await rutaSuperadmin(request, { authorization: `Bearer ${admin.token}` });
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await ctx.addCookies([
       { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },

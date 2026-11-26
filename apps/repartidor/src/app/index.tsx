@@ -3,6 +3,9 @@ import { Acceso, C, PantallaCarga, PuertaTelefono, useSesion, Text } from '@tumb
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 
+/** El azul petróleo de la pantalla de arranque (app.json, expo-splash-screen). */
+const COLOR_ARRANQUE_DRIVER = '#1F4D69';
+
 /**
  * C-ICONOS-POR-APP (3 nov 2026, lámina aprobada por Richard): Driver entra con su propia portada en
  * el azul de logística, que dice para quién es, y no con la cabecera roja del cliente. Apple leyó
@@ -13,7 +16,7 @@ function Portada() {
   return (
     <View style={{ alignItems: 'center', marginBottom: 20 }}>
       <Image
-        source={IMG.logo}
+        source={IMG.logoOscuro}
         style={{ width: 220, height: 64 }}
         resizeMode="contain"
         accessibilityLabel="Divoox Driver"
@@ -45,6 +48,7 @@ export default function Entrada() {
       <Inicio />
     </PuertaTelefono>
   ) : (
-    <Acceso rolRegistro="repartidor" portada={<Portada />} />
+    // C-ACCESO-CON-CABECERA (26 nov 2026, Richard): «Entrar» sigue en el azul petróleo del arranque.
+    <Acceso rolRegistro="repartidor" portada={<Portada />} cabecera={COLOR_ARRANQUE_DRIVER} />
   );
 }

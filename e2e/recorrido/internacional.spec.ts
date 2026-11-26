@@ -1,5 +1,6 @@
 import { deslizar } from './deslizar';
 import { execFileSync } from 'node:child_process';
+import { rutaSuperadmin } from './rutaSuperadmin';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type Page, devices, expect, test } from './fixtures';
@@ -736,11 +737,7 @@ for (const P of PAISES) {
         new Set(['diferencia', 'excedente', 'comida']),
       );
       expect(mios.every((c) => c.moneda === P.moneda)).toBe(true);
-      const ruta = (
-        (await (await request.get('/datos/admin/ruta', { headers: hdr(admin) })).json()) as {
-          ruta: string;
-        }
-      ).ruta;
+      const ruta = await rutaSuperadmin(request, hdr(admin));
       const supCtx = await browser.newContext({
         viewport: { width: 1100, height: 900 },
         locale: P.idioma === 'en' ? 'en-US' : 'es-US',

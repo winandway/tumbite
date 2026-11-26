@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import { sqlLocalTexto } from './sqlLocal';
+import { rutaSuperadmin } from './rutaSuperadmin';
 // @ts-expect-error guion local sin tipos: la misma revisión que usan las capturas de las fichas.
 import { revisarCortes } from '../../scripts/recorrido/revisar-cortes.mjs';
 
@@ -47,9 +48,7 @@ test('las fichas de conductor, cliente y restaurante no cortan ni montan nada a 
   sqlLocalTexto(`INSERT OR IGNORE INTO restaurantes (id, dueno_id, nombre, estado, telefono, direccion)
     VALUES ('rest-ficha-${id}', '${duenio.id}', 'Restaurante de Ejemplo', 'aprobado', '+584145550101', 'Avenida de ejemplo con un nombre bastante largo, local 12')`);
 
-  const { ruta } = (await (
-    await request.get('/datos/admin/ruta', { headers: { authorization: `Bearer ${admin.token}` } })
-  ).json()) as { ruta: string | null };
+  const ruta = await rutaSuperadmin(request, { authorization: `Bearer ${admin.token}` });
   const fallos: string[] = [];
   for (const ancho of [1280, 1440, 1920, 760]) {
     const ctx = await browser.newContext({ viewport: { width: ancho, height: 900 } });
