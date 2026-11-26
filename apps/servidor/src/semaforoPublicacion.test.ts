@@ -38,6 +38,21 @@ describe('semáforo de la publicación', () => {
     expect(verify).not.toMatch(/cancel-in-progress: true/);
   });
 
+  // C-SEMAFORO-RELOJ (26 nov 2026): el reloj de pruebas solo lo mueven los guiones; una pasada cortada
+  // dejó un regalo apartado sin cerrar, la salud dio 503 una hora después y frenó la publicación.
+  it('C-SEMAFORO-RELOJ: antes de exigir la salud le da un toque al reloj del sitio de pruebas', () => {
+    expect(script).toMatch(/-X POST "\$URL\/datos\/reloj" -H "x-reloj-secreto: \$RELOJ_SECRETO"/);
+    const rama = leer('.github', 'workflows', 'pruebas-rama.yml');
+    for (const f of [rama, flujo])
+      expect(f).toMatch(
+        /RELOJ_SECRETO: \$\{\{ secrets\.RELOJ_SECRETO \}\}\n\s+YAD_LLAVE_SITIO: \$\{\{ secrets\.YAD_LLAVE_PRUEBAS \}\}\n\s+run: bash scripts\/semaforo/,
+      );
+    // Solo el sitio de pruebas: el semáforo de producción no recibe el secreto del reloj.
+    expect(flujo).not.toMatch(
+      /RELOJ_SECRETO: [^\n]+\n\s+YAD_LLAVE_SITIO: \$\{\{ secrets\.YAD_LLAVE_PRODUCCION/,
+    );
+  });
+
   it('dos publicaciones nunca corren a la vez', () => {
     expect(flujo).toMatch(/concurrency:\n\s+group: publicar\n\s+cancel-in-progress: false/);
   });

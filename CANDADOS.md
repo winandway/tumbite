@@ -4737,6 +4737,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `apps/servidor/src/borradoPapeles.test.ts`: siembra fotos y filas de dos conductores, borra una cuenta y exige almacén y tablas vacíos para ella e intactos para la otra (visto en rojo antes del arreglo); y una segunda prueba que recorre `COLUMNAS_DEL_ESQUEMA` y falla si una tabla `verificacion_*` o `plazo_*` con `conductor_id` no está en el borrado.
 - **Punto abierto (dicho claro):** el auditor pidió el candado para TODO el esquema. Hay 85 tablas con `usuario_id`, `conductor_id`, `cliente_id` o `repartidor_id` que el borrado no nombra; muchas se conservan a propósito (libro de dinero, retiros, registros del equipo) y hay que clasificarlas una por una con su motivo. Ese candado completo queda en la fila del relevo, no está hecho.
 
+## C-SEMAFORO-RELOJ (26 nov 2026) — todos los países
+
+- **Qué se rompió:** la publicación de la licencia de una cara cayó en el semáforo: el sitio de pruebas servía la versión pero `/datos/salud` daba 503 con la pieza `regalos` en error.
+- **Causa:** el reloj del sitio de pruebas está apagado desde el 7 nov (C-RELOJ-PRUEBAS-PAUSA) y solo lo mueven los guiones. Una pasada cortada a medias (la de `fase-privacidad-reverso`) dejó un regalo apartado sin cerrar; una hora después la pieza `regalos` pasó a rojo y nadie lo liberaba, así que toda publicación siguiente se frenaba.
+- **Qué se hizo:** `scripts/semaforo.sh`, cuando el sitio de pruebas ya sirve la versión, le da un toque a `/datos/reloj` (al empezar y cada minuto, con `RELOJ_SECRETO`) antes de exigir la salud. Los pasos del semáforo de pruebas de `pruebas-rama.yml` y `publicar.yml` le pasan el secreto; el de producción no.
+- **Cómo se comprueba:** `apps/servidor/src/semaforoPublicacion.test.ts` (visto en rojo quitando el toque). En vivo: una pasada después de otra cortada llega al semáforo con la salud en 200.
+- **No tocar:** el orden `RELOJ_SECRETO` antes de `YAD_LLAVE_SITIO` (el candado de la llave exige que vaya pegada al `run`).
+
 ## C-SEMAFORO-REPUBLICA y C-RECORRIDO-SUELTO (20 nov 2026) — todos los países
 
 - **Qué pasó:** con el semáforo insistiendo (C-SEMAFORO-INSISTE), el sitio de pruebas volvió a quedarse quince minutos en «subiendo el paquete» durante la publicación de `6f04731`. Los empujones (commits vacíos) no lo sacaban. Lo que lo destrabó, las dos veces, fue pedirle a la plataforma «republicar» por su API (`POST …/api/sitio/v1/republicar` con la llave del sitio): publicó en segundos.

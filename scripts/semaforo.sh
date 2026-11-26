@@ -23,6 +23,14 @@ for i in $(seq 1 $INTENTOS); do
     # Se espera a que el servidor diga la misma versión tres veces seguidas (hasta cinco minutos).
     seguidas=0
     for j in $(seq 1 60); do
+      # C-SEMAFORO-RELOJ (26 nov 2026): el reloj del sitio de pruebas solo lo mueven los guiones. Una
+      # pasada cortada a medias dejaba un regalo apartado sin cerrar, una hora después la salud daba
+      # 503 y el semáforo frenaba a todas las publicaciones siguientes. Se le da un toque al reloj
+      # (al empezar y cada minuto) para que cierre lo que quedó cortado antes de exigir la salud.
+      if [ -n "${RELOJ_SECRETO:-}" ] && [ $(( (j - 1) % 12 )) = 0 ]; then
+        curl -s -m 60 -o /dev/null -X POST "$URL/datos/reloj" -H "x-reloj-secreto: $RELOJ_SECRETO" \
+          || echo "::warning::El toque al reloj de pruebas no respondió."
+      fi
       if curl -fsS "$URL/datos/salud?v=$RANDOM" | grep -q "\"commit\":\"$VERSION\""; then
         seguidas=$((seguidas+1))
         [ "$seguidas" -ge 3 ] && break
