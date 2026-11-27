@@ -10,6 +10,11 @@ export async function deslizar(p: Page, testID: string, fraccion = 1) {
   const pulgar = p.getByTestId(`${testID}-pulgar`).filter({ visible: true }).first();
   await expect(pulgar).toBeVisible({ timeout: 30_000 });
   await riel.scrollIntoViewIfNeeded();
+  // C-DESLIZAR-RECIBE-EL-TOQUE (27 nov 2026): el pulgar tiene que ser el que de verdad recibe el
+  // toque. Justo después de cerrar una oferta, en las máquinas lentas de GitHub algo lo tapaba unos
+  // segundos y el arrastre caía encima de otra cosa sin hacer nada. La prueba «de ensayo» espera a
+  // que nada lo tape (y si algo lo tapa para siempre, el error dice qué es).
+  await pulgar.click({ trial: true, timeout: 30_000 });
   const caja = (await riel.boundingBox())!;
   const ini = (await pulgar.boundingBox())!;
   const y = ini.y + ini.height / 2;
@@ -41,7 +46,18 @@ export async function dejarConectado(p: Page, conectado: boolean) {
   await expect(visible(quiero).or(visible(deslizo))).toBeVisible({ timeout: 30_000 });
   await expect(async () => {
     if (await visible(quiero).isVisible()) return;
+    // C-DESLIZAR-RECIBE-EL-TOQUE: se espera la respuesta REAL del servidor (conectar o desconectar),
+    // no un tiempo fijo. Si el gesto no mandó nada, se dice así y se vuelve a intentar.
+    const respuesta = p
+      .waitForResponse(
+        (r) => r.url().includes('/datos/repartidor/conectar') && r.request().method() === 'POST',
+        { timeout: 15_000 },
+      )
+      .catch(() => null);
     await deslizar(p, deslizo);
+    const r = await respuesta;
+    expect(r, `el deslizador «${deslizo}» no mandó nada al servidor`).not.toBeNull();
+    expect(r!.ok(), `el servidor no aceptó «${deslizo}»: ${r!.status()}`).toBe(true);
     await expect(visible(quiero)).toBeVisible({ timeout: 10_000 });
-  }).toPass({ timeout: 60_000 });
+  }).toPass({ timeout: 90_000 });
 }
