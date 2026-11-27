@@ -1,16 +1,28 @@
-// C-ESTOY-AQUI (27 nov 2026) — todas las ciudades. Prueba EN PANTALLA, contra un servidor LOCAL propio,
-// el recorrido completo de «Estoy aquí» y toma las capturas:
-//   Driver (Docs públicos, apps/panel/public/docs): puntos-por-medir-lista, estoy-aqui-esperar,
-//     estoy-aqui-listo, estoy-aqui-enviada (-es y -en). Lugares NEUTROS de ejemplo y sin ciudad en
-//     pantalla (C-DOCS-SIN-DATOS-REALES).
-//   Panel (ayuda interna, carpeta privada): medir-lugares-pendiente y medir-lugares-tareas (-es, -en).
-// Cada paso lleva su comprobación: con 40 m de precisión NO aparece «Estoy aquí»; con 6 m sí; la medición
-// queda pendiente y el lugar NO se mueve hasta aprobarla en el panel; un conductor sin asignar no la ve.
+// C-ESTOY-AQUI (27 nov 2026; C-ESTOY-AQUI-300, C-TRES-FOTOS y C-FOTOS-PUBLICAS el mismo día) — todas
+// las ciudades. Prueba EN PANTALLA, contra un servidor LOCAL propio, el recorrido completo de «Estoy
+// aquí» y toma las capturas:
+//   Driver (Docs públicos, apps/panel/public/docs): puntos-por-medir-lista, estoy-aqui-lejos (a ~420 m:
+//     botón gris «Acércate al punto (faltan …)»), estoy-aqui-esperar (a ~100 m con 40 m de precisión:
+//     botón gris «Esperando precisión»), estoy-aqui-listo (6 m), estoy-aqui-fotos (las tres fotos, a
+//     mitad), estoy-aqui-enviada (-es y -en).
+//   App de clientes (Docs públicos, guía de Moto): recorrido-moto-{ve,us}-lugar-fotos-v2 (un viaje
+//     en curso cuyo destino es un lugar medido con sus fotos aprobadas: «Así se ve el lugar»).
+//   Panel (ayuda interna, carpeta privada): medir-lugares-pendiente (con sus tres fotos),
+//     medir-lugares-fotos («Así se ve el lugar» con «Quitar de las apps») y medir-lugares-tareas.
+// Lugares NEUTROS de ejemplo, sin ciudad en pantalla; las fotos son dibujos sin personas ni placas
+// (e2e/recorrido/fotos/lugar-*.jpg, de scripts/recorrido/fotos-lugar-dibujos.mjs) (C-DOCS-SIN-DATOS-REALES).
+// Cada paso lleva su comprobación: lejos el botón está gris y dice cuánto falta; con 40 m de precisión
+// NO aparece «Estoy aquí»; con 6 m sí; sin las tres fotos no hay «enviada» ni se puede aprobar; las
+// fotos llevan el GPS (por eso el contexto tiene geolocalización); la medición queda pendiente y el
+// lugar NO se mueve hasta aprobarla; al aprobar, sus fotos pasan a las apps y «Quitar de las apps» las
+// saca; un conductor sin asignar no ve la tarea.
 // NO toca el sitio de pruebas ni producción.
 // Antes: npm run build -w @tumbite/panel && URL_API=http://localhost:8799 npm run build:repartidor-web
+//        && URL_API=http://localhost:8799 npm run build:app-web
 // Uso: node scripts/recorrido/capturas-estoy-aqui.mjs
 /* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion local: carpetas fijas del repositorio y de la carpeta privada */
 import { execFileSync, execSync, spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
@@ -26,6 +38,7 @@ execSync('node scripts/recorrido/preparar.mjs', {
 });
 cpSync(join(RAIZ, 'apps/panel/dist'), join(DIR, 'sitio'), { recursive: true });
 cpSync(join(RAIZ, 'apps/repartidor/dist-web'), join(DIR, 'sitio', 'driver'), { recursive: true });
+cpSync(join(RAIZ, 'apps/cliente/dist-web'), join(DIR, 'sitio', 'app'), { recursive: true });
 const DATOS = JSON.parse(readFileSync(join(DIR, 'datos.json'), 'utf8'));
 const URL = DATOS.url;
 const PUBLICAS = join(RAIZ, 'apps', 'panel', 'public', 'docs');
@@ -80,6 +93,36 @@ const comprobar = (ok, que) => {
   console.log(`ok: ${que}`);
 };
 const webp = (png, destino) => execFileSync('cwebp', ['-quiet', '-q', '82', png, '-o', destino]);
+// C-TRES-FOTOS: las tres fotos de ejemplo (dibujos neutros) y su subida por la API, con el GPS y la
+// hora en cabeceras, como las manda Driver.
+const FOTOS = join(RAIZ, 'e2e', 'recorrido', 'fotos');
+const TIPOS = ['entrada', 'letrero', 'calle'];
+const fotoDe = (tipo) => join(FOTOS, `lugar-${tipo}.jpg`);
+async function subirTresFotos(token, medicionId, punto) {
+  let faltan;
+  for (const tipo of TIPOS) {
+    const r = await fetch(
+      `${URL}/datos/conductor/mediciones/medicion/${medicionId}/fotos/${tipo}`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'image/jpeg',
+          'cf-connecting-ip': `10.88.1.${++ip % 250}`,
+          'x-foto-lat': String(punto.lat),
+          'x-foto-lng': String(punto.lng),
+          'x-foto-precision': '5',
+          'x-foto-hora': String(Date.now()),
+        },
+        body: readFileSync(fotoDe(tipo)),
+      },
+    );
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(`foto ${tipo}: ${r.status} ${d.error ?? ''}`);
+    faltan = d.faltan;
+  }
+  return faltan;
+}
 
 // Lugares de EJEMPLO, cerca del centro de cada ciudad de pruebas (los nombres no son de ningún sitio real).
 const L = {
@@ -104,6 +147,33 @@ const L = {
     titulo: 'Points along the main road',
     nota: 'Measure where riders get dropped off, not in the middle of the road.',
     lugares: ['Main Square', 'Market Entrance', 'Bridge Stop'],
+  },
+};
+
+// «Así se ve el lugar» en la app de clientes: una ciudad NEUTRA de ejemplo (como las demás guías de
+// viajes) con un lugar medido por idioma, a más de 1 km uno del otro.
+const ZONA_EJ = 'US-ZZ-EJEMPLO';
+const CENTRO_EJ = { lat: 42.6006, lng: -84.1955 };
+const EJEMPLO = {
+  es: {
+    ciudad: 'Ciudad de ejemplo',
+    lugar: 'Plaza de Ejemplo',
+    conductor: 'José Rojas',
+    cliente: 'Laura Pérez',
+    origen: { lat: 42.5922, lng: -84.198 },
+    punto: { lat: 42.6052, lng: -84.1889 },
+    direccionOrigen: 'Calle de Ejemplo 120',
+    direccionDestino: 'Plaza de Ejemplo',
+  },
+  en: {
+    ciudad: 'Example city',
+    lugar: 'Example Plaza',
+    conductor: 'Sam Carter',
+    cliente: 'Jamie Lee',
+    origen: { lat: 42.5922, lng: -84.198 },
+    punto: { lat: 42.5925, lng: -84.1798 },
+    direccionOrigen: '120 Example Street',
+    direccionDestino: 'Example Plaza',
   },
 };
 
@@ -172,7 +242,9 @@ try {
     undefined,
     secreto,
   );
-  navegador = await chromium.launch();
+  navegador = await chromium.launch({
+    args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+  });
 
   for (const idioma of ['es', 'en']) {
     const T = L[idioma];
@@ -238,6 +310,25 @@ try {
       { lat: puntos[2].lat + 0.0003, lng: puntos[2].lng, precisionM: 5, tomadaEn: Date.now() },
       token,
     );
+    // Sin sus tres fotos no se aprueba (C-TRES-FOTOS).
+    const sinFotos = await pedir(
+      'POST',
+      `/datos/admin/mediciones/medicion/${ya.medicion.id}/aprobar`,
+      {},
+      admin,
+    ).then(
+      () => 'aprobada',
+      (x) => x.message,
+    );
+    comprobar(
+      sinFotos.includes('409') && sinFotos.includes('Faltan fotos'),
+      `${idioma}: sin las tres fotos el servidor no deja aprobar`,
+    );
+    const faltanYa = await subirTresFotos(token, ya.medicion.id, {
+      lat: puntos[2].lat + 0.0003,
+      lng: puntos[2].lng,
+    });
+    comprobar(faltanYa?.length === 0, `${idioma}: con las tres fotos ya no falta ninguna`);
     await pedir('POST', `/datos/admin/mediciones/medicion/${ya.medicion.id}/aprobar`, {}, admin);
     // Un conductor sin asignar no la ve.
     const otro = await pedir('POST', '/datos/cuentas/registro', {
@@ -254,12 +345,13 @@ try {
 
     // ─── Driver
     const destino = { lat: puntos[0].lat + 0.0009, lng: puntos[0].lng }; // a ~100 m del punto guardado
+    const lejos = { lat: puntos[0].lat + 0.00378, lng: puntos[0].lng }; // a ~420 m: fuera de los 300 m
     const ctx = await navegador.newContext({
       ...devices['Pixel 7'],
       baseURL: URL,
       locale: T.locale,
       timezoneId: T.zona.tz,
-      geolocation: { latitude: destino.lat, longitude: destino.lng, accuracy: 40 },
+      geolocation: { latitude: lejos.lat, longitude: lejos.lng, accuracy: 6 },
       permissions: ['geolocation', 'camera'],
     });
     await ctx.addInitScript(
@@ -327,26 +419,72 @@ try {
     );
     await foto('puntos-por-medir-lista');
     await d.getByTestId(`medir-${ids[0]}`).click();
+    // 1) A ~420 m: botón gris que dice cuánto falta (C-ESTOY-AQUI-300), aunque el GPS sea preciso.
+    const gris = d.getByTestId('estoy-aqui-lejos');
+    await gris.waitFor({ timeout: 30_000 }).catch(async (x) => {
+      await d.screenshot({ path: join(DIR, `fallo-driver-${idioma}.png`) });
+      throw x;
+    });
+    const textoGris = await gris.innerText();
+    comprobar(
+      textoGris.includes(idioma === 'es' ? 'faltan' : 'to go') && /\d/.test(textoGris),
+      `${idioma}: a ~420 m el botón está gris y dice cuánto falta («${textoGris}»)`,
+    );
+    comprobar(
+      (await d.getByTestId('estoy-aqui').count()) === 0,
+      `${idioma}: a más de 300 m no hay «Estoy aquí»`,
+    );
+    await espera(2500); // el mapa carga sus piezas
+    await foto('estoy-aqui-lejos');
+    // 2) A ~100 m con 40 m de precisión: gris «Esperando precisión».
+    await ctx.setGeolocation({ latitude: destino.lat, longitude: destino.lng, accuracy: 40 });
+    await d.getByTestId('estoy-aqui-esperando').waitFor({ timeout: 30_000 });
+    comprobar(
+      (await d.getByTestId('estoy-aqui').count()) === 0,
+      `${idioma}: con 40 m no aparece «Estoy aquí»`,
+    );
+    await espera(1500);
+    await foto('estoy-aqui-esperar');
+    // 3) Con 6 m: «Estoy aquí».
+    await ctx.setGeolocation({ latitude: destino.lat, longitude: destino.lng, accuracy: 6 });
+    await d.getByTestId('estoy-aqui').waitFor({ timeout: 30_000 });
+    await foto('estoy-aqui-listo');
+    await d.getByTestId('estoy-aqui').click();
+    // 4) Las tres fotos, con la cámara (en la web, el selector de archivo).
+    await d.getByTestId('tres-fotos').waitFor({ timeout: 30_000 });
+    comprobar(
+      (await d.getByTestId('medicion-enviada').count()) === 0,
+      `${idioma}: sin las tres fotos la medición no sale como enviada`,
+    );
+    const tomar = idioma === 'es' ? 'Tomar foto' : 'Take photo';
+    // Una foto lista cambia su botón a «Tomar otra».
+    const lista = idioma === 'es' ? 'Tomar otra' : 'Retake';
+    for (const [i, tipo] of TIPOS.entries()) {
+      const filaFoto = d.getByTestId(`foto-${tipo}`);
+      const [selector] = await Promise.all([
+        d.waitForEvent('filechooser', { timeout: 30_000 }),
+        filaFoto.getByText(tomar, { exact: true }).click(),
+      ]);
+      await selector.setFiles(fotoDe(tipo));
+      if (i < TIPOS.length - 1) {
+        await filaFoto.getByText(lista, { exact: true }).waitFor({ timeout: 30_000 });
+        if (i === 0) {
+          comprobar(
+            (await d.getByTestId('foto-letrero').getByText(lista, { exact: true }).count()) === 0,
+            `${idioma}: tras la primera foto, las otras dos siguen pendientes`,
+          );
+          await d.getByTestId('tres-fotos').scrollIntoViewIfNeeded();
+          await foto('estoy-aqui-fotos');
+        }
+      }
+    }
     await d
-      .getByTestId('gps-esperar')
+      .getByTestId('medicion-enviada')
       .waitFor({ timeout: 30_000 })
       .catch(async (x) => {
         await d.screenshot({ path: join(DIR, `fallo-driver-${idioma}.png`) });
         throw x;
       });
-    comprobar(
-      (await d.getByTestId('estoy-aqui').count()) === 0,
-      `${idioma}: con 40 m no aparece «Estoy aquí»`,
-    );
-    await espera(2500); // el mapa carga sus piezas
-    await foto('estoy-aqui-esperar');
-    await ctx.setGeolocation({ latitude: destino.lat, longitude: destino.lng, accuracy: 6 });
-    await d.getByTestId('estoy-aqui').waitFor({ timeout: 30_000 });
-    await foto('estoy-aqui-listo');
-    await d.getByTestId('estoy-aqui').click();
-    await d
-      .getByText(idioma === 'es' ? 'Medición enviada' : 'Measurement sent', { exact: false })
-      .waitFor();
     await foto('estoy-aqui-enviada');
     await ctx.close();
     const antes = await pedir(
@@ -391,6 +529,24 @@ try {
     );
     await s.getByTestId('medicion-mapa-libre').first().waitFor();
     await espera(3000); // los cuadros del mapa
+    const imagenes = async (donde) =>
+      donde.locator('img').evaluateAll(
+        (xs) =>
+          // Solo las fotos del lugar (no los cuadros del mapa), y ya cargadas.
+          xs.filter(
+            (x) =>
+              x.complete &&
+              x.naturalWidth > 0 &&
+              /mediciones\/fotos\/|lugares\/fotos\/|^blob:|^data:image/.test(x.src),
+          ).length,
+      );
+    for (let i = 0; i < 20 && (await imagenes(pendiente)) < 3; i++) await espera(500);
+    comprobar(
+      (await imagenes(pendiente)) === 3 &&
+        (await pendiente.getByTestId('medicion-faltan-fotos').count()) === 0 &&
+        (await pendiente.getByTestId('medicion-aprobar').isEnabled()),
+      `${idioma}: el panel muestra las tres fotos y deja aprobar`,
+    );
     await pendiente.scrollIntoViewIfNeeded();
     await privada('pendiente', pendiente);
     // Aprobar desde el panel mueve el lugar.
@@ -408,6 +564,69 @@ try {
       Math.abs(movido.lat - destino.lat) < 1e-6,
       `${idioma}: al aprobar, el lugar quedó en el punto medido`,
     );
+    const asiSeVe = (punto) =>
+      pedir('GET', `/datos/lugares/asi-se-ve?lat=${punto.lat}&lng=${punto.lng}`);
+    comprobar(
+      (await asiSeVe(destino)).fotos.length === 3,
+      `${idioma}: al aprobar, sus tres fotos se ven en las apps («Así se ve el lugar»)`,
+    );
+    // «Así se ve el lugar (fotos en las apps)»: las de los dos lugares aprobados, cada una con su menú.
+    await s.reload();
+    await tarjeta.waitFor({ timeout: 60_000 });
+    await s.getByTestId('medicion-ciudad').selectOption(T.zona.id);
+    const publicas = s.getByTestId('foto-publica');
+    await publicas.nth(5).waitFor({ timeout: 30_000 });
+    comprobar(
+      (await publicas.count()) === 6,
+      `${idioma}: el panel lista las seis fotos públicas (dos lugares)`,
+    );
+    for (let i = 0; i < 20 && (await imagenes(publicas.first().locator('xpath=..'))) < 6; i++)
+      await espera(500);
+    const titulo = s.getByRole('heading', {
+      name:
+        idioma === 'es'
+          ? 'Así se ve el lugar (fotos en las apps)'
+          : 'What the place looks like (photos in the apps)',
+    });
+    const deYa = publicas.filter({ hasText: T.lugares[2] }).first();
+    await deYa
+      .getByRole('button', { name: idioma === 'es' ? 'Opciones de la tarea' : 'Task options' })
+      .click();
+    await s
+      .getByRole('menuitem', {
+        name: idioma === 'es' ? 'Quitar de las apps' : 'Remove from the apps',
+      })
+      .waitFor();
+    await titulo.scrollIntoViewIfNeeded();
+    await espera(600);
+    {
+      const a = await titulo.boundingBox();
+      const b = await publicas.first().locator('xpath=..').boundingBox();
+      const png = join(ORIGINALES_PRIVADAS, `medir-lugares-fotos-${idioma}.png`);
+      await s.screenshot({
+        path: png,
+        clip: {
+          x: b.x - 16,
+          y: a.y - 12,
+          width: Math.min(1100, b.width + 32),
+          height: b.y + b.height - a.y + 140,
+        },
+      });
+      webp(png, join(CAPTURAS_PRIVADAS, `medir-lugares-fotos-${idioma}.webp`));
+      console.log(`captura: medir-lugares-fotos-${idioma}`);
+    }
+    // «Quitar de las apps» la saca de verdad.
+    s.once('dialog', (x) => void x.accept());
+    await s
+      .getByRole('menuitem', {
+        name: idioma === 'es' ? 'Quitar de las apps' : 'Remove from the apps',
+      })
+      .click();
+    for (let i = 0; i < 20 && (await publicas.count()) !== 5; i++) await espera(500);
+    comprobar(
+      (await asiSeVe({ lat: puntos[2].lat + 0.0003, lng: puntos[2].lng })).fotos.length === 2,
+      `${idioma}: «Quitar de las apps» deja de mostrar esa foto (quedan dos de «${T.lugares[2]}»)`,
+    );
     // Las tareas y el formulario de tarea nueva, con un lugar y el nombre escritos.
     await s
       .getByTestId('medicion-titulo')
@@ -416,6 +635,192 @@ try {
     await espera(800);
     await privada('tareas', tarjeta);
     await p.close();
+
+    // ─── App de clientes: «Así se ve el lugar» en un viaje cuyo destino es un lugar medido
+    // Ciudad NEUTRA de ejemplo (sin nombre real en pantalla); un lugar por idioma, lejos uno del otro.
+    const C = EJEMPLO[idioma];
+    await sql(
+      `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa)
+       VALUES ('${ZONA_EJ}', '${C.ciudad}', 'US', 'USD', 'America/Detroit', ${CENTRO_EJ.lat}, ${CENTRO_EJ.lng}, 15, 1)
+       ON CONFLICT(id) DO UPDATE SET nombre = excluded.nombre`,
+    );
+    await sql(
+      `INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('moto', '${ZONA_EJ}', 'disponible') ON CONFLICT DO UPDATE SET estado = 'disponible'`,
+    );
+    await pedir(
+      'POST',
+      '/datos/admin/viajes/tarifas',
+      {
+        servicio: 'moto',
+        zona: ZONA_EJ,
+        tarifa: { base: 150, porKm: 60, porMinuto: 12, minimo: 400 },
+        motivo: 'Capturas de «Así se ve el lugar» (servidor local)',
+      },
+      admin,
+    ).catch((x) => console.log(`tarifa ${ZONA_EJ}: ${x.message}`));
+    await pedir(
+      'PUT',
+      '/datos/admin/viajes/ajustes',
+      { zona: ZONA_EJ, servicio: 'moto', pin: 'nunca', selfieCasco: false },
+      admin,
+    );
+    const m = await pedir('POST', '/datos/interno/diagnostico/moto/armar', {}, undefined, secreto);
+    const moto = { id: m.ids.conductor, token: m.tokens.conductor };
+    await sql(
+      `UPDATE usuarios SET nombre = '${C.conductor}', idioma = '${idioma}' WHERE id = '${moto.id}'`,
+    );
+    // Su moto con datos de ejemplo (placa imposible, C-DOCS-SIN-DATOS-REALES).
+    await sql(
+      `UPDATE vehiculos SET marca = 'Moto', modelo = '150', color = '${idioma === 'es' ? 'Negra' : 'Black'}', placa = '${idioma === 'es' ? 'EJEMPLO01' : 'EJEMPLO02'}' WHERE conductor_id = '${moto.id}'`,
+    );
+    const ubicar = (donde) =>
+      sql(
+        `UPDATE repartidores SET conectado = 1, zona_id = '${ZONA_EJ}', lat = ${donde.lat}, lng = ${donde.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${moto.id}'`,
+      );
+    // El lugar, medido con sus tres fotos y aprobado (lo mismo que hizo el conductor arriba).
+    const lugarEj = (
+      await pedir(
+        'POST',
+        '/datos/admin/lugares-propios',
+        { zona: ZONA_EJ, nombre: C.lugar, otrosNombres: [], ...C.punto, rutaId: null },
+        admin,
+      )
+    ).lugar;
+    const tareaEj = await pedir(
+      'POST',
+      '/datos/admin/mediciones',
+      { zona: ZONA_EJ, titulo: C.lugar, nota: '', lugares: [lugarEj.id], conductores: [moto.id] },
+      admin,
+    );
+    const medEj = await pedir(
+      'POST',
+      `/datos/conductor/mediciones/${tareaEj.tarea.id}/lugares/${lugarEj.id}`,
+      { ...C.punto, precisionM: 5, tomadaEn: Date.now() },
+      moto.token,
+    );
+    await subirTresFotos(moto.token, medEj.medicion.id, C.punto);
+    await pedir('POST', `/datos/admin/mediciones/medicion/${medEj.medicion.id}/aprobar`, {}, admin);
+    // Un pasajero pide un mototaxi hasta ese lugar y el conductor lo recoge.
+    const reg2 = await pedir('POST', '/datos/cuentas/registro', {
+      nombre: C.cliente,
+      correo: `pasajero.${idioma}.${randomBytes(4).toString('hex')}@recorrido.test`,
+      clave: DATOS.clave,
+      rol: 'cliente',
+      idioma,
+    });
+    await sql(
+      `UPDATE usuarios SET correo_confirmado_en = datetime('now'), telefono_verificado_en = datetime('now'), fecha_nacimiento = '1990-03-15', idioma = '${idioma}' WHERE id = '${reg2.usuario.id}'`,
+    );
+    const cli = { token: reg2.token, id: reg2.usuario.id };
+    // Ya eligió su ciudad («¿Dónde vives?» es la pantalla de entrada, no es de esta guía).
+    await pedir(
+      'PUT',
+      '/datos/cuentas/lugar',
+      {
+        lugar: {
+          pais: 'US',
+          estado: 'MI',
+          municipio: 'Oakland County',
+          ciudad: 'Novi',
+          lugarId: 'gn:5004005',
+          ...C.origen,
+        },
+      },
+      cli.token,
+    );
+    await ubicar(C.origen);
+    const cot = (
+      await pedir(
+        'POST',
+        '/datos/viajes/cotizar',
+        {
+          servicio: 'moto',
+          origen: { ...C.origen, direccion: C.direccionOrigen },
+          destino: { ...C.punto, direccion: C.direccionDestino },
+        },
+        cli.token,
+      )
+    ).cotizacion;
+    const viajeId = (
+      await pedir(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: cot.id, metodoPago: 'efectivo' },
+        cli.token,
+      )
+    ).viaje.id;
+    const paso = (nombre) =>
+      pedir('POST', `/datos/conductor/operaciones/${viajeId}/${nombre}`, {}, moto.token, {
+        'idempotency-key': `asi-se-ve-${nombre}-${randomBytes(8).toString('hex')}`,
+      });
+    for (let i = 0; ; i++) {
+      await ubicar(C.origen);
+      await pedir('GET', '/datos/viajes/actual', undefined, cli.token);
+      if (
+        await paso('aceptar').then(
+          () => true,
+          () => false,
+        )
+      )
+        break;
+      if (i > 20) throw new Error('el conductor no pudo aceptar el viaje');
+      await espera(1500);
+    }
+    await paso('llegue');
+    await paso('iniciar');
+    const cx = await navegador.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+      baseURL: URL,
+      locale: idioma === 'en' ? 'en-US' : 'es-US',
+      timezoneId: 'America/Detroit',
+      geolocation: { latitude: C.origen.lat, longitude: C.origen.lng },
+      permissions: ['geolocation'],
+    });
+    await cx.addInitScript(
+      ([pase, u, i]) => {
+        localStorage.setItem('tumbite.idioma', i);
+        localStorage.setItem('tumbite.sesion', pase);
+        localStorage.setItem(`divoox.permisos.${u}`, '1');
+      },
+      [cli.token, cli.id, idioma],
+    );
+    const q = await cx.newPage();
+    await q.goto('/app/ride');
+    const asi = q.getByTestId('asi-se-ve-destino');
+    await asi.waitFor({ timeout: 60_000 }).catch(async (x) => {
+      await q.screenshot({ path: join(DIR, `fallo-cliente-${idioma}.png`) });
+      throw x;
+    });
+    // Si igual sale una pantalla de entrada encima, se pasa como lo haría el pasajero.
+    const ahoraNo = q.getByText(idioma === 'es' ? 'Ahora no' : 'Not now', { exact: true });
+    if (await ahoraNo.isVisible().catch(() => false)) await ahoraNo.click();
+    for (let i = 0; i < 20 && (await imagenes(asi)) < 3; i++) await espera(500);
+    comprobar(
+      await asi.isVisible(),
+      `${idioma}: «Así se ve el lugar» está a la vista (nada lo tapa)`,
+    );
+    comprobar(
+      (await asi.innerText()).includes(
+        idioma === 'es' ? 'Así se ve el lugar' : 'What the place looks like',
+      ) && (await imagenes(asi)) === 3,
+      `${idioma}: el pasajero ve «Así se ve el lugar» con las tres fotos del destino`,
+    );
+    await asi.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+    await espera(900);
+    {
+      // Va en la guía de Moto: lleva su nombre de captura de Moto (C-DOCS-MOTO).
+      const nombre = `recorrido-moto-${idioma === 'en' ? 'us' : 've'}-lugar-fotos-v2-${idioma}`;
+      const png = join(ORIGINALES, `${nombre}.png`);
+      await q.screenshot({ path: png });
+      webp(png, join(PUBLICAS, `${nombre}.webp`));
+      console.log(`captura: ${nombre}`);
+    }
+    await cx.close();
+    await ubicar(C.punto);
+    await paso('terminar').catch(() => null);
   }
 } finally {
   await navegador?.close();

@@ -731,7 +731,8 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "preguntas": [
    "¿Cómo pido una moto?",
    "¿El precio puede cambiar?",
-   "¿Para qué sirve el código del viaje?"
+   "¿Para qué sirve el código del viaje?",
+   "¿Qué es «Así se ve el lugar»?"
   ],
   "pasos": [
    "Abre Divoox y toca «Moto».",
@@ -740,7 +741,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Toca «Solicitar moto». Cuando el conductor acepte, verás sus datos y su ubicación.",
    "Al subirte, comprueba la placa y, si la app te muestra un código, díselo al conductor."
   ],
-  "cuerpo": "Divoox Moto te lleva rápido por la ciudad. Está disponible en las ciudades donde Divoox Moto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa. Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta."
+  "cuerpo": "Divoox Moto te lleva rápido por la ciudad. Está disponible en las ciudades donde Divoox Moto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa. Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta. Si tu recogida o tu destino es un lugar conocido de la ciudad que el equipo de Divoox ya confirmó en la calle, en tu viaje aparece «Así se ve el lugar» con tres fotos: la entrada, el letrero y la vista desde la calle. Toca cualquiera para verla en grande y reconocer el punto al llegar."
  },
  {
   "idioma": "es",
@@ -1231,20 +1232,22 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "drivers/points-to-measure",
   "titulo": "Puntos por medir: confirma un lugar con «Estoy aquí»",
-  "resumen": "Si el equipo de Divoox te pide confirmar lugares en la calle, te aparecen en «Puntos por medir». Vas a cada uno y, en el punto exacto, tocas «Estoy aquí». El equipo revisa cada medición antes de cambiar el mapa.",
+  "resumen": "Si el equipo de Divoox te pide confirmar lugares en la calle, te aparecen en «Puntos por medir». Vas a cada uno, en el punto exacto tocas «Estoy aquí» y tomas tres fotos del lugar con la cámara. El equipo revisa cada medición antes de cambiar el mapa.",
   "preguntas": [
    "¿Qué es «Puntos por medir»?",
    "¿Por qué no me sale el botón «Estoy aquí»?",
-   "¿Tengo que tomar foto?",
+   "¿Por qué el botón «Estoy aquí» está gris?",
+   "¿Tengo que tomar las tres fotos?",
    "¿Mi medición cambia el mapa al momento?"
   ],
   "pasos": [
    "Abre Perfil → «Puntos por medir».",
    "Toca el lugar y ve hasta el punto exacto donde se deja al pasajero.",
-   "Espera a que la precisión llegue a 15 m o menos y toca «Estoy aquí».",
-   "Si quieres, toca «Tomar foto del lugar». Luego «Volver a la lista» y sigue con el próximo."
+   "A 300 m o menos, espera a que la precisión llegue a 15 m o menos y toca «Estoy aquí».",
+   "Toma las tres fotos con «Tomar foto»: entrada o fachada, letrero o algo reconocible, y vista desde la calle. Sin caras ni placas.",
+   "Cuando diga «Medición y tres fotos enviadas», toca «Volver a la lista» y sigue con el próximo."
   ],
-  "cuerpo": "Cuando el equipo te asigna lugares para medir, te llega un aviso y en Driver, en tu Perfil, aparece «Puntos por medir» con cuántos te faltan. Solo lo ve quien fue asignado. Toca un lugar y verás el mapa con tu ubicación y el punto que tiene guardado ahora. Ve hasta el sitio exacto donde se deja al pasajero: la entrada, la parada o el letrero que usa la gente. El botón «Estoy aquí» aparece cuando tu GPS tiene 15 metros de precisión o menos. Si todavía no, la pantalla te dice la precisión de ahora: espera unos segundos al aire libre, lejos de techos y edificios altos, o acércate al lugar. Al tocar «Estoy aquí» se guardan tu ubicación, la precisión y la hora. Si quieres, toma una foto del lugar (la entrada, el letrero o la parada): ayuda al equipo a aprobarla. Tu medición no cambia el mapa sola: el equipo la revisa y la aprueba. Si te piden medirlo otra vez, el lugar dice «Medir otra vez» con el motivo."
+  "cuerpo": "Cuando el equipo te asigna lugares para medir, te llega un aviso y en Driver, en tu Perfil, aparece «Puntos por medir» con cuántos te faltan. Solo lo ve quien fue asignado. Toca un lugar y verás el mapa con tu ubicación y el punto que tiene guardado ahora. Ve hasta el sitio exacto donde se deja al pasajero: la entrada, la parada o el letrero que usa la gente. «Estoy aquí» solo se activa cuando estás a 300 metros o menos del punto. Más lejos, el botón queda gris y te dice cuánto te falta, por ejemplo «Acércate al punto (faltan 420 m)». Ya cerca, el botón necesita que tu GPS tenga 15 metros de precisión o menos. Si todavía no, queda gris con «Esperando precisión» y la precisión de ahora: espera unos segundos al aire libre, lejos de techos y edificios altos. Al tocar «Estoy aquí» se guardan tu ubicación, la precisión y la hora. Enseguida tomas las tres fotos del lugar, que son obligatorias: la entrada o fachada, el letrero o algo reconocible, y la vista desde la calle. Se toman con la cámara en ese momento (no desde la galería) y cada una guarda dónde y cuándo la tomaste. En las fotos sale solo el lugar: evita caras de personas y placas de carros. Si una no quedó bien, toca «Tomar otra». Con las tres fotos, la pantalla dice «Medición y tres fotos enviadas». Sin las tres, el equipo no puede aprobarla y en tu lista el lugar dice «Faltan fotos» hasta que las tomes. Tu medición no cambia el mapa sola: el equipo la revisa y la aprueba. Al aprobarla, tus fotos se ven en la app de clientes y en Driver como «Así se ve el lugar», para que pasajeros y conductores reconozcan el punto. S…"
  },
  {
   "idioma": "es",
@@ -3571,7 +3574,8 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "preguntas": [
    "How do I request a motorcycle ride?",
    "Can the price change?",
-   "What is the ride code for?"
+   "What is the ride code for?",
+   "What is «What the place looks like»?"
   ],
   "pasos": [
    "Open Divoox and tap “Moto”.",
@@ -3580,7 +3584,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Tap “Request moto”. When a driver accepts, you’ll see their details and location.",
    "When you get on, check the plate and, if the app shows a code, tell it to the driver."
   ],
-  "cuerpo": "Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it. The price is upfront: you see it before you request and it doesn’t change with traffic. In the United States the price is in US dollars, and the app shows it next to the distance and the time of your ride, so you know what you’ll pay before you get on. When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map. To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person."
+  "cuerpo": "Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it. The price is upfront: you see it before you request and it doesn’t change with traffic. In the United States the price is in US dollars, and the app shows it next to the distance and the time of your ride, so you know what you’ll pay before you get on. When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map. To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person. If your pickup or destination is a well-known place in the city that the Divoox team already checked on the street, your ride shows «What the place looks like» with three photos: the entrance, the sign and the view from the street. Tap any of them to see it full size and recognize the spot when you get there."
  },
  {
   "idioma": "en",
@@ -4061,20 +4065,22 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "en",
   "ruta": "drivers/points-to-measure",
   "titulo": "Points to measure: confirm a place with «I’m here»",
-  "resumen": "If the Divoox team asks you to check places on the street, they show up in «Points to measure». Go to each one and, at the exact spot, tap «I’m here». The team reviews every measurement before changing the map.",
+  "resumen": "If the Divoox team asks you to check places on the street, they show up in «Points to measure». Go to each one, tap «I’m here» at the exact spot and take three photos of the place with the camera. The team reviews every measurement before changing the map.",
   "preguntas": [
    "What is «Points to measure»?",
    "Why don’t I see the «I’m here» button?",
-   "Do I have to take a photo?",
+   "Why is the «I’m here» button gray?",
+   "Do I have to take all three photos?",
    "Does my measurement change the map right away?"
   ],
   "pasos": [
    "Open Profile → «Points to measure».",
    "Tap the place and go to the exact spot where riders get dropped off.",
-   "Wait until accuracy reaches 15 m or better and tap «I’m here».",
-   "If you want, tap «Take a photo of the place». Then «Back to the list» and go to the next one."
+   "Within 300 m, wait until accuracy reaches 15 m or better and tap «I’m here».",
+   "Take the three photos with «Take photo»: entrance or front, sign or a landmark, and view from the street. No faces or license plates.",
+   "When it says «Measurement and three photos sent», tap «Back to the list» and go to the next one."
   ],
-  "cuerpo": "When the team assigns you places to measure, you get a notification and, in Driver, your Profile shows «Points to measure» with how many are left. Only assigned drivers see it. Tap a place to see the map with your location and the point it has saved now. Go to the exact spot where riders get dropped off: the entrance, the stop or the sign people use. The «I’m here» button appears when your GPS accuracy is 15 meters or better. If it isn’t yet, the screen shows the current accuracy: wait a few seconds outdoors, away from roofs and tall buildings, or move closer. Tapping «I’m here» saves your location, the accuracy and the time. If you want, take a photo of the place (the entrance, the sign or the stop): it helps the team approve it. Your measurement doesn’t change the map by itself: the team reviews and approves it. If they ask you to measure it again, the place says «Measure again» with the reason."
+  "cuerpo": "When the team assigns you places to measure, you get a notification and, in Driver, your Profile shows «Points to measure» with how many are left. Only assigned drivers see it. Tap a place to see the map with your location and the point it has saved now. Go to the exact spot where riders get dropped off: the entrance, the stop or the sign people use. «I’m here» only turns on when you are within 300 meters of the point. Farther away, the button stays gray and tells you how far you have to go, for example «Get closer to the point (420 m to go)». Once you are close, the button needs your GPS accuracy to be 15 meters or better. If it isn’t yet, it stays gray with «Waiting for accuracy» and the current accuracy: wait a few seconds outdoors, away from roofs and tall buildings. Tapping «I’m here» saves your location, the accuracy and the time. Right after, you take the three photos of the place, which are required: the entrance or front, the sign or a landmark, and the view from the street. They are taken with the camera at that moment (not from the gallery) and each one keeps where and when you took it. Only the place should be in the photos: avoid people’s faces and license plates. If one didn’t come out well, tap «Retake». With all three photos, the screen says «Measurement and three photos sent». Without all three, the team can’t approve it and your list shows «Photos missing» for that place until you take them. Your measurement doesn’t change the map by itself: the team reviews and approves it. Once approved, your photos show in the customer app and in Driver as «What the pl…"
  },
  {
   "idioma": "en",
