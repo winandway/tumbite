@@ -244,6 +244,7 @@
 - [One account for everything: order and drive · Divoox](https://divoox.com/docs/account/one-account-for-everything): With the same email and password you can order in the Divoox app and drive or deliver in Divoox Driver. You don’t need another account.
 - [Your notifications arrive in your language · Divoox](https://divoox.com/docs/account/notifications-language): Phone notifications, browser notifications, emails and text messages arrive in the language you pick in the app. If you never changed it, in your phone’s l
 - [Search Docs and enlarge a screenshot to read it clearly · Divoox](https://divoox.com/docs/account/search-docs-and-zoom): Start typing and Docs suggests guides from the first letter, even if you type in Spanish or make a typo. Tap any screenshot to see it full screen and zoom 
+- [How to sign up from any city · Divoox](https://divoox.com/docs/account/sign-up-from-any-city): You sign up by telling us where you live: your country, your state and your city. Your account is always created, even if there are no trips in your city y
 
 ## Countries
 

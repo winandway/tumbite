@@ -1,0 +1,2 @@
+Lugares poblados de Venezuela y Estados Unidos: GeoNames (https://www.geonames.org), licencia CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+Filtrados y compactados por Divoox (sin barrios ni lugares abandonados, coordenadas a 3 decimales, formato compacto).
