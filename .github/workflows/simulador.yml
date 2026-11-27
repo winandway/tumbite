@@ -73,7 +73,7 @@ jobs:
             --semilla "${{ inputs.semilla }}" --reporte simulador/reportes/corrida
       - name: Guardar el reporte
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: simulador-reporte
           path: simulador/reportes/corrida/
