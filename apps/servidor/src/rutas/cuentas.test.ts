@@ -128,14 +128,14 @@ describe('cuentas', () => {
     const sin = await llamar('/datos/cuentas/registro', {
       ...nueva,
       correo: 'jose@windoce.com',
-      nombre: 'José',
+      nombre: 'José Pérez',
     });
     expect(sin.res.status).toBe(400);
     expect(sin.datos.campo).toBe('nombre');
     const con = await llamar('/datos/cuentas/registro', {
       ...nueva,
       correo: 'jose@windoce.com',
-      nombre: 'José (Soporte)',
+      nombre: 'José Pérez (Soporte)',
     });
     expect(con.res.status).toBe(201);
   });
@@ -277,9 +277,9 @@ describe('configuración de la cuenta', () => {
       enviados.push(JSON.parse(String(init.body)));
       return new Response(JSON.stringify({ success: true, rebotados: [] }));
     });
-    const u = await m.cuenta('cliente', 'Rosa');
+    const u = await m.cuenta('cliente', 'Rosa Prueba');
     const perfil = await m.llamar('GET', '/datos/cuentas/perfil', undefined, u.token);
-    expect(perfil.datos.perfil.nombre).toBe('Rosa');
+    expect(perfil.datos.perfil.nombre).toBe('Rosa Prueba');
 
     const ed = await m.llamar(
       'PATCH',

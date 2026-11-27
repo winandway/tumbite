@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { Campo } from './CampoClave';
 
 const T = {
   es: {
@@ -154,16 +155,13 @@ export function Equipo({ idioma }: { idioma: Idioma }) {
             idioma={idioma}
             empezar={() => void b.empezarDeNuevo()}
           />
-          <label className="campo">
-            <span>{t.correo}</span>
-            <input
-              type="email"
-              value={b.valores.correo}
-              onChange={(ev) => b.cambiar('correo', ev.target.value)}
-              aria-label={t.correo}
-              required
-            />
-          </label>
+          <Campo
+            etiqueta={t.correo}
+            tipo="email"
+            casilla="correo"
+            valor={b.valores.correo}
+            cambiar={(x) => b.cambiar('correo', x)}
+          />
           <label className="campo">
             <span>{t.rol}</span>
             <select

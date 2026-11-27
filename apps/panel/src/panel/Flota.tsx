@@ -10,6 +10,7 @@ import {
 } from '@tumbite/compartido';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { Campo } from './CampoClave';
 
 /**
  * C-FLOTA-PROPIA (10 nov 2026) — Chile y todos los países. El restaurante que reparte con los
@@ -278,35 +279,32 @@ export function Flota({ idioma }: { idioma: Idioma }) {
         </p>
       )}
       <form onSubmit={invitar} className="formulario" noValidate>
-        <label className="campo">
-          <span>{t.nombre}</span>
-          <input
-            value={v.nombre}
-            onChange={(e) => b.cambiar('nombre', e.target.value)}
-            placeholder={t.nombre}
-            autoComplete="off"
-          />
-        </label>
-        <label className="campo">
-          <span>{t.correo}</span>
-          <input
-            type="email"
-            value={v.correo}
-            onChange={(e) => b.cambiar('correo', e.target.value)}
-            placeholder={correoEjemplo(idioma)}
-            autoComplete="off"
-          />
-        </label>
-        <label className="campo">
-          <span>{t.telefono}</span>
-          <input
-            type="tel"
-            value={v.telefono}
-            onChange={(e) => b.cambiar('telefono', e.target.value)}
-            placeholder={t.telefono}
-            autoComplete="off"
-          />
-        </label>
+        <Campo
+          etiqueta={t.nombre}
+          casilla="nombreCompleto"
+          valor={v.nombre}
+          cambiar={(x) => b.cambiar('nombre', x)}
+          placeholder={t.nombre}
+          autoComplete="off"
+        />
+        <Campo
+          etiqueta={t.correo}
+          tipo="email"
+          casilla="correo"
+          valor={v.correo}
+          cambiar={(x) => b.cambiar('correo', x)}
+          placeholder={correoEjemplo(idioma)}
+          autoComplete="off"
+        />
+        <Campo
+          etiqueta={t.telefono}
+          tipo="tel"
+          casilla="celular"
+          valor={v.telefono}
+          cambiar={(x) => b.cambiar('telefono', x)}
+          placeholder={t.telefono}
+          autoComplete="off"
+        />
         {error && (
           <p className="error-general" role="alert">
             {error}

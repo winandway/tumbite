@@ -152,7 +152,7 @@ describe('cupones reales (C-CUPONES-DIRECCIONES)', () => {
     await e.pedir();
     await e.m.DB.prepare("UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now')").run();
     expect((await validar('PRIMERO')).datos.error).toMatch(/primer pedido|first order/);
-    const otro = await e.m.cuenta('cliente', 'Otro');
+    const otro = await e.m.cuenta('cliente', 'Otro Prueba');
     expect((await e.pedir({ cupon: 'UNO' }, otro.token)).estado).toBe(201);
     expect((await validar('UNO')).datos.error).toMatch(/agotó|run out/);
     // Envío gratis en un pedido: el descuento es el envío y el repartidor cobra igual.

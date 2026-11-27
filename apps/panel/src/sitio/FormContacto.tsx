@@ -11,6 +11,7 @@ import {
 import { api } from '../panel/api';
 import { AvisoBorrador } from '../panel/AvisoBorrador';
 import { Turnstile, reiniciarTurnstile } from '../panel/Turnstile';
+import { Campo } from '../panel/CampoClave';
 
 /**
  * C-CONTACTO (2 nov 2026, pedido de Richard): el formulario público de contacto. Abre un caso real
@@ -142,27 +143,21 @@ export function FormContacto({ idioma }: { idioma: Idioma }) {
         idioma={idioma}
         empezar={() => void b.empezarDeNuevo()}
       />
-      <label className="campo">
-        {t.nombre}
-        <input
-          value={v.nombre}
-          onChange={(e) => b.cambiar('nombre', e.target.value)}
-          autoComplete="name"
-          maxLength={80}
-        />
-      </label>
-      <label className="campo">
-        {t.correo}
-        <input
-          type="email"
-          value={v.correo}
-          onChange={(e) => b.cambiar('correo', e.target.value)}
-          autoComplete="email"
-          inputMode="email"
-          maxLength={160}
-          aria-invalid={v.correo !== '' && !correoValido}
-        />
-      </label>
+      <Campo
+        etiqueta={t.nombre}
+        casilla="nombre"
+        idioma={idioma}
+        valor={v.nombre}
+        cambiar={(x) => b.cambiar('nombre', x)}
+      />
+      <Campo
+        etiqueta={t.correo}
+        tipo="email"
+        casilla="correo"
+        idioma={idioma}
+        valor={v.correo}
+        cambiar={(x) => b.cambiar('correo', x)}
+      />
       {sugerencia ? (
         <p className="contacto-sugerencia">
           {t.quisiste} <strong>{sugerencia}</strong>?{' '}

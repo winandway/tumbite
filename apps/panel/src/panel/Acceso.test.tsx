@@ -28,7 +28,7 @@ describe('C-FLEX-CUENTA-EMPRESA', () => {
     });
     render(<Acceso idioma="es" alEntrar={() => undefined} tipo={tipo} />);
     await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
-    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await userEvent.type(screen.getByLabelText('Nombre y apellido'), 'Ana Prueba');
     await elegirCiudad('mara', 'Maracaibo');
     await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-segura-1');
@@ -107,7 +107,7 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
   async function llenar(correo = 'ana@ejemplo.com') {
     render(<Acceso idioma="es" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
-    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await userEvent.type(screen.getByLabelText('Nombre y apellido'), 'Ana Prueba');
     await elegirCiudad('mara', 'Maracaibo');
     await userEvent.type(screen.getByLabelText('Correo'), correo);
     await userEvent.type(screen.getByLabelText('Celular'), '305-555-0100');
@@ -143,12 +143,12 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
     expect(screen.queryByTestId('revisa-tus-datos')).toBeNull();
     expect(screen.getByLabelText('Correo')).toHaveFocus();
     expect(screen.getByLabelText('Correo')).toHaveValue('ana@ejemplo.com');
-    expect(screen.getByLabelText('Tu nombre')).toHaveValue('Ana Prueba');
+    expect(screen.getByLabelText('Nombre y apellido')).toHaveValue('Ana Prueba');
     expect(screen.getByLabelText('Contraseña')).toHaveValue('clave-segura-1');
     expect((screen.getAllByRole('checkbox')[0] as HTMLInputElement).checked).toBe(true);
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     await userEvent.click(screen.getByRole('button', { name: 'Editar datos' }));
-    expect(screen.getByLabelText('Tu nombre')).toHaveValue('Ana Prueba');
+    expect(screen.getByLabelText('Nombre y apellido')).toHaveValue('Ana Prueba');
     expect(cuerpos).toHaveLength(0);
   });
 
@@ -184,7 +184,7 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
     servidor();
     render(<Acceso idioma="en" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Create|New here/ }));
-    await userEvent.type(screen.getByLabelText('Your name'), 'Sam Taylor');
+    await userEvent.type(screen.getByLabelText('Full name'), 'Sam Taylor');
     await userEvent.click(screen.getByTestId('registro-lugar'));
     await userEvent.click(screen.getByRole('button', { name: /United States/ }));
     await userEvent.type(screen.getByTestId('selector-lugar-buscar'), 'novi');
@@ -229,7 +229,7 @@ describe('C-MENSAJES-ACCESO: el error de entrar trae su botón', () => {
     expect(await screen.findByText('No hay ninguna cuenta con ese correo.')).toBeTruthy();
     expect(screen.queryByTestId('accion-olvide')).toBeNull();
     await userEvent.click(screen.getByTestId('accion-crear'));
-    expect(await screen.findByLabelText('Tu nombre')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Nombre y apellido')).toBeInTheDocument();
     await waitFor(() =>
       expect((screen.getByLabelText('Correo') as HTMLInputElement).value).toBe('nadie@ejemplo.com'),
     );
@@ -254,5 +254,32 @@ describe('C-MENSAJES-ACCESO: el error de entrar trae su botón', () => {
     expect(screen.getByTestId('registro-revisar-casillas').textContent).toBe(
       'Revisa lo marcado en rojo: Nombre, Ciudad, Contraseña.',
     );
+  });
+});
+
+/**
+ * C-CASILLA-CON-SU-TIPO (27 nov 2026): Richard escribió su correo en «Nombre y apellido» y la app lo
+ * aceptó. En el registro web, un correo en el nombre avisa debajo y no avanza.
+ */
+describe('C-CASILLA-CON-SU-TIPO: registro web', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('un correo escrito en el nombre muestra el aviso y no pasa a revisar', async () => {
+    vi.stubGlobal('fetch', async (url: string) => respuestaCatalogo(url) ?? new Response('{}'));
+    render(<Acceso idioma="es" alEntrar={() => undefined} />);
+    await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
+    const nombre = screen.getByLabelText('Nombre y apellido');
+    await userEvent.type(nombre, 'richard@ejemplo.com');
+    await userEvent.tab();
+    expect(
+      await screen.findByText('Escribe tu nombre como en tu cédula, sin números ni @.'),
+    ).toBeInTheDocument();
+    // Lo escrito no se borra.
+    expect(nombre).toHaveValue('richard@ejemplo.com');
+    await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-segura-1');
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    expect(screen.queryByRole('button', { name: 'Crear mi cuenta' })).toBeNull();
   });
 });

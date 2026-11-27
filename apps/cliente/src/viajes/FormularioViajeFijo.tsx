@@ -496,22 +496,23 @@ export function FormularioViajeFijo({
             ))}
           </View>
           <Campo
+            tipo="monto"
             etiqueta={t.valor}
             value={v.paqueteValor}
             onChangeText={(x) => cambiar('paqueteValor', x)}
-            keyboardType="decimal-pad"
           />
           <Campo
+            tipo="nombre"
             etiqueta={t.destinatarioNombre}
             value={v.destinatarioNombre}
             onChangeText={(x) => cambiar('destinatarioNombre', x)}
             autoComplete="name"
           />
           <Campo
+            tipo="celular"
             etiqueta={t.destinatarioTelefono}
             value={v.destinatarioTelefono}
             onChangeText={(x) => cambiar('destinatarioTelefono', x)}
-            keyboardType="phone-pad"
             placeholder={t.destinatarioTelefonoAyuda}
           />
           <Pressable
@@ -565,6 +566,7 @@ export function FormularioViajeFijo({
           {v.esMenor ? (
             <>
               <Campo
+                tipo="nombre"
                 etiqueta={t.menorNombre}
                 value={v.menorNombre}
                 onChangeText={(x) => cambiar('menorNombre', x)}

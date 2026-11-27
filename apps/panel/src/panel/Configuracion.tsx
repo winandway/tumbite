@@ -321,6 +321,7 @@ export function Configuracion({
       <form onSubmit={guardarDatos} className="formulario tarjeta-form" noValidate>
         <h2>{t.datos}</h2>
         <Campo
+          casilla="nombre"
           etiqueta={t.nombre}
           valor={v.nombre}
           cambiar={(x) => b.cambiar('nombre', x)}
@@ -328,6 +329,7 @@ export function Configuracion({
           error={errorDe('nombre')}
         />
         <Campo
+          casilla="celular"
           etiqueta={t.telefono}
           tipo="tel"
           valor={v.telefono}
@@ -420,6 +422,7 @@ export function Configuracion({
           </p>
         ) : null}
         <Campo
+          casilla="correo"
           etiqueta={t.correoNuevo}
           tipo="email"
           valor={v.correoNuevo}

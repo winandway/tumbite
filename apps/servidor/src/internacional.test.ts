@@ -841,7 +841,7 @@ describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)'
       });
     for (const t of [e.dueno.token, e.cliente.token, e.admin.token, rep.token])
       expect((await ver(t)).status).toBe(200);
-    const extrano = await e.m.cuenta('cliente', 'Otro');
+    const extrano = await e.m.cuenta('cliente', 'Otro Prueba');
     expect((await ver(extrano.token)).status).toBe(404);
     // El equipo del restaurante (staff) también la ve; un restaurante ajeno, no.
     const staff = await e.m.cuenta('restaurante', 'Beto Staff');
@@ -1295,7 +1295,7 @@ describe('recargas por punto de venta (C-COBRO-DIRECTO)', () => {
     const e = await escenario();
     const rep = await e.repartidor('Rafa Rep');
     const otroRep = await e.repartidor('Rosa Rep');
-    const duenoPunto = await e.m.cuenta('cliente', 'Tienda');
+    const duenoPunto = await e.m.cuenta('cliente', 'Tienda Prueba');
     const punto = await e.m.llamar(
       'POST',
       '/datos/admin/puntos-venta',

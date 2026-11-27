@@ -205,7 +205,7 @@ describe('mis casos de ayuda (C-AYUDA-EN-LA-APP)', () => {
   it('cada persona ve solo sus casos, con el mismo número que el gerente', async () => {
     const m = mundo();
     const rest = await m.cuenta('restaurante', 'Dueño Ayuda');
-    const otro = await m.cuenta('cliente', 'Otro');
+    const otro = await m.cuenta('cliente', 'Otro Prueba');
     const t = await crearTicket({ DB: m.DB, ...m.extra } as never, m.DB, {
       tipo: 'soporte',
       nombre: 'Dueño Ayuda',

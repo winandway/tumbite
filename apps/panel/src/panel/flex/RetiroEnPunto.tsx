@@ -235,6 +235,7 @@ export function RetiroEnPunto({
               </label>
               {v.tercero === 'si' ? (
                 <Campo
+                  casilla="nombre"
                   etiqueta={t.terceroNombre}
                   valor={v.terceroNombre}
                   cambiar={(x) => b.cambiar('terceroNombre', x)}
@@ -243,6 +244,7 @@ export function RetiroEnPunto({
               ) : null}
               {pideDocumento ? (
                 <Campo
+                  casilla="documento"
                   etiqueta={t.documento}
                   valor={v.documento}
                   cambiar={(x) => b.cambiar('documento', x)}
@@ -267,6 +269,7 @@ export function RetiroEnPunto({
                     </select>
                   </div>
                   <Campo
+                    casilla="monto"
                     etiqueta={t.monto}
                     valor={v.monto}
                     cambiar={(x) => b.cambiar('monto', x)}

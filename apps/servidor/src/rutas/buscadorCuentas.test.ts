@@ -248,11 +248,22 @@ describe('C-BUSCADOR-APELLIDO · toda cuenta se encuentra por cualquier palabra 
       correo: 'cliente.nuevo@ejemplo.com',
       rol: 'cliente',
     });
-    const solo = await registrar({
+    // C-CASILLA-CON-SU-TIPO: el registro pide nombre y apellido, así que una cuenta vieja de una sola
+    // palabra se deja directo en la base (así existen las anteriores a la regla).
+    const rechazada = await m.llamar('POST', '/datos/cuentas/registro', {
+      clave: 'clave-segura-1',
       nombre: 'Unapalabra',
       correo: 'una.palabra@ejemplo.com',
       rol: 'cliente',
     });
+    expect(rechazada.estado).toBe(400);
+    expect((rechazada.datos as { campo?: string }).campo).toBe('nombre');
+    const solo = await registrar({
+      nombre: 'Una Palabra',
+      correo: 'una.palabra@ejemplo.com',
+      rol: 'cliente',
+    });
+    await sql("UPDATE usuarios SET nombre = 'Unapalabra' WHERE id = ?", solo);
     for (const q of ['fernanda', 'ruiz', 'Fer'])
       expect(await encontrar(q, 'clientes', cliente), q).toBeTruthy();
     expect(await encontrar('unapal', 'clientes', solo)).toBeTruthy();

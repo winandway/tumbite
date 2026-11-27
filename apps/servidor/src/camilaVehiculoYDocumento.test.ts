@@ -90,7 +90,7 @@ describe('C-VEHICULO-SIN-ENVIAR: Camila le recuerda enviar su vehículo', () => 
       modelo: 'M150',
       anio: 2023,
       color: 'Negro',
-      placa: `AB${Math.floor(Math.random() * 1e6)}`,
+      placa: `AB${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
       placaEstado: 'FL',
     });
     const lista = await candidatos(

@@ -520,10 +520,10 @@ function FormPlato({
         multiline
       />
       <Campo
+        tipo="monto"
         etiqueta={etiquetaPrecio}
         value={v.precio}
         onChangeText={(x) => b.cambiar('precio', x)}
-        keyboardType="decimal-pad"
         placeholder={montoATexto(0, moneda)}
       />
       <Campo

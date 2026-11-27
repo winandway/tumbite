@@ -119,7 +119,7 @@ describe('C-CUENTA-UNICA: la misma cuenta en la app de clientes y en Driver', ()
     const r = await p.m.llamar(
       'POST',
       '/datos/cuentas/registro',
-      { nombre: 'Persona', correo: conductor.correo, clave: CLAVE, rol: 'cliente' },
+      { nombre: 'Persona Prueba', correo: conductor.correo, clave: CLAVE, rol: 'cliente' },
       undefined,
       app('cliente'),
     );

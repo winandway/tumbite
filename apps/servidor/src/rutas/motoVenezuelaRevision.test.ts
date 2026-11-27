@@ -34,7 +34,7 @@ async function base() {
 describe('C-KYC-ATOMICO: aprobar la identidad no deja medio estado', () => {
   it('si la base rechaza el requisito de identidad, el KYC sigue pendiente y la respuesta es clara', async () => {
     const { m, admin, subir } = await base();
-    const rep = await m.cuenta('repartidor', 'Conductor');
+    const rep = await m.cuenta('repartidor', 'Conductor Prueba');
     for (const p of ['doc_frente', 'doc_reverso', 'selfie'])
       expect(await subir(`/datos/kyc/foto/${p}`, rep.token)).toBe(201);
     expect(
@@ -176,7 +176,7 @@ describe('C-CIUDAD-CONDUCTOR: cambiar de ciudad como en el mercado', () => {
     await e.m.DB.prepare(
       "INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES ('VE-MCB-PRUEBAS', 'Maracaibo (pruebas)', 'VE', 'USD', 'America/Caracas', 10.65, -71.64, 25, 1)",
     ).run();
-    const rep = await e.m.cuenta('repartidor', 'Conductor');
+    const rep = await e.m.cuenta('repartidor', 'Conductor Prueba');
     const ciudad = (zonaId: string) =>
       e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId }, rep.token);
     expect((await ciudad(CCS.id)).estado).toBe(200);

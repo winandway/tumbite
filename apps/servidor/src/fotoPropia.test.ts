@@ -23,8 +23,8 @@ async function negocio(m: ReturnType<typeof mundo>, nombre: string) {
 describe('NXT-8x · la foto de otro comercio no se usa en ningún lado', () => {
   it('plato nuevo, plato editado y portada: con la foto propia sí, con la de otro 422 (es/en)', async () => {
     const m = mundo();
-    const a = await negocio(m, 'Dueño A');
-    const b = await negocio(m, 'Dueño B');
+    const a = await negocio(m, 'Dueña Alfa');
+    const b = await negocio(m, 'Dueño Beta');
     const plato = { nombreEs: 'Cubano', precioCentavos: 1500 };
     // Con la propia, todo bien.
     const propio = await m.llamar(
@@ -72,7 +72,7 @@ describe('NXT-8x · la foto de otro comercio no se usa en ningún lado', () => {
     );
     expect(portada.estado).toBe(422);
     // Una cuenta sin restaurante tampoco estrena el suyo con la foto de otro.
-    const c = await m.cuenta('restaurante', 'Dueño C');
+    const c = await m.cuenta('restaurante', 'Dueño C Prueba');
     expect(
       (
         await m.llamar(

@@ -179,7 +179,7 @@ describe('cuentas del revisor de las tiendas (C-REVISORES)', () => {
     const m = mundo();
     const admin = await m.cuenta('admin');
     await m.llamar('POST', '/datos/cuentas/registro', {
-      nombre: 'Soporte',
+      nombre: 'Soporte Divoox',
       correo: CUENTAS_REVISOR[0].correo,
       clave: 'Otra-clave-segura-1',
       rol: 'cliente',

@@ -731,8 +731,8 @@ describe('Flex · integraciones salientes (C-FLEX-INTEGRACIONES)', () => {
 
   it('aislamiento: una empresa no ve, no toca ni recibe lo de otra; las claves de API no gestionan integraciones', async () => {
     const m = mundoF();
-    const a = await empresa(m, 'A');
-    const b = await empresa(m, 'B');
+    const a = await empresa(m, 'Alfa');
+    const b = await empresa(m, 'Beta');
     const wa = await conIntegracion(m, a, ['package.created']);
     for (const [metodo, ruta2] of [
       ['PATCH', `/integraciones/${wa.id}`],

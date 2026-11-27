@@ -89,7 +89,7 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     });
     render(<PanelApp ruta="/panel" />);
     await userEvent.click(await screen.findByText(/Crea tu cuenta/));
-    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Rosa Prueba');
+    await userEvent.type(screen.getByLabelText('Nombre y apellido'), 'Rosa Prueba');
     await elegirCiudad('mara', 'Maracaibo');
     await userEvent.type(screen.getByLabelText('Correo'), 'rosa@correo.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'una-clave-larga');

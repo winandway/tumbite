@@ -262,7 +262,8 @@ export function Acceso({
               etiqueta={t.nombre}
               valor={v.nombre}
               cambiar={(x) => cambiar('nombre', x)}
-              autoComplete="name"
+              casilla="nombreCompleto"
+              idioma={idioma}
               enfocar={enfocar === 'nombre'}
               placeholder={t.nombre}
               error={errorDe('nombre')}
@@ -283,10 +284,10 @@ export function Acceso({
           <Campo
             etiqueta={t.correo}
             tipo="email"
+            casilla="correo"
+            idioma={idioma}
             valor={v.correo}
             cambiar={(x) => cambiar('correo', x)}
-            autoComplete="email"
-            modoTeclado="email"
             enfocar={modo === 'registro' && enfocar === 'correo'}
             placeholder={correoEjemplo(idioma)}
             error={errorDe('correo')}
@@ -312,8 +313,9 @@ export function Acceso({
               valor={v.telefono}
               // Solo números (y el + del país): las letras no entran.
               cambiar={(x) => cambiar('telefono', soloNumerosTelefono(x))}
-              autoComplete="tel"
-              modoTeclado="tel"
+              casilla="celular"
+              idioma={idioma}
+              pais={v.paisTelefono}
               enfocar={enfocar === 'telefono'}
               placeholder={datosPais(v.paisTelefono)?.ejemploCelular ?? t.telefono}
               error={errorDe('telefono')}

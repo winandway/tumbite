@@ -155,7 +155,8 @@ describe('Recientes y Populares de «¿A dónde vas?»', () => {
     const m = mundo();
     const hace = new Date(Date.now() - 5 * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
     const clientes = [];
-    for (let i = 0; i < 10; i++) clientes.push(await m.cuenta('cliente', `Cliente ${i}`));
+    for (let i = 0; i < 10; i++)
+      clientes.push(await m.cuenta('cliente', `Cliente ${'ABCDEFGHIJ'[i]}x`));
     // La terminal: diez personas distintas (cada una con el pin un poco movido).
     for (const [i, c] of clientes.entries())
       await viaje(
@@ -208,7 +209,8 @@ describe('Recientes y Populares de «¿A dónde vas?»', () => {
     const m = mundo();
     const hace = new Date(Date.now() - 5 * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
     const clientes = [];
-    for (let i = 0; i < 10; i++) clientes.push(await m.cuenta('cliente', `Vecino ${i}`));
+    for (let i = 0; i < 10; i++)
+      clientes.push(await m.cuenta('cliente', `Vecino ${'ABCDEFGHIJ'[i]}x`));
     for (const [i, c] of clientes.slice(0, 9).entries())
       await viaje(
         m,

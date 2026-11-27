@@ -168,10 +168,10 @@ export function AvisameCuandoLlegue({
         </Text>
       ) : (
         <Campo
+          tipo="correo"
           etiqueta={t.correo}
           value={v.correo}
           onChangeText={(x) => b.cambiar('correo', x)}
-          keyboardType="email-address"
           autoComplete="email"
           placeholder={correoEjemplo(idioma)}
           error={errorDe('correo')}
@@ -186,10 +186,10 @@ export function AvisameCuandoLlegue({
       />
       {restaurante ? (
         <Campo
+          tipo="celular"
           etiqueta={t.telefono}
           value={v.telefono}
           onChangeText={(x) => b.cambiar('telefono', x)}
-          keyboardType="phone-pad"
           autoComplete="tel"
           placeholder={t.telefono}
           error={errorDe('telefono')}

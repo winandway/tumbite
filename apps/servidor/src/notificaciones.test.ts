@@ -86,9 +86,9 @@ describe('avisos al celular', () => {
     );
     const ENV = { STRIPE_SECRET_KEY: 'sk_test_x', YAD_TOKEN: 'x'.repeat(40) };
     const m = mundo(ENV);
-    const dueno = await m.cuenta('restaurante', 'Luis');
+    const dueno = await m.cuenta('restaurante', 'Luis Prueba');
     const admin = await m.cuenta('admin');
-    const cliente = await m.cuenta('cliente', 'Rosa');
+    const cliente = await m.cuenta('cliente', 'Rosa Prueba');
     const rep = await m.cuenta('repartidor', 'Pedro Veloz');
     for (const [u, tk] of [
       [cliente, 'cliente'],

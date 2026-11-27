@@ -434,7 +434,7 @@ describe('C-TERRITORIO: franquicias y managers aislados', () => {
     const m = mundo(ENV);
     const admin = await m.cuenta('admin');
     await restauranteEn(m, admin.token, EN_NORTE, 'Norte Grill');
-    const dueno = await m.cuenta('cliente', 'Socio');
+    const dueno = await m.cuenta('cliente', 'Socio Prueba');
     await m.confirmarCorreo(dueno.id);
     const f = await m.llamar(
       'POST',

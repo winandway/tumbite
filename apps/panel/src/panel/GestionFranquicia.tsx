@@ -11,6 +11,7 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { pedir } from './api';
+import { Campo } from './CampoClave';
 
 /**
  * Territorio y equipo de una franquicia (C-TERRITORIO), dentro del superadmin: qué áreas de su
@@ -276,15 +277,14 @@ export function GestionFranquicia({
           idioma={idioma}
           empezar={() => void miembro.empezarDeNuevo()}
         />
-        <label className="campo">
-          <span>{t.correo}</span>
-          <input
-            type="email"
-            value={miembro.valores.correo}
-            placeholder={correoEjemplo(idioma)}
-            onChange={(e) => miembro.cambiar('correo', e.target.value)}
-          />
-        </label>
+        <Campo
+          etiqueta={t.correo}
+          tipo="email"
+          casilla="correo"
+          valor={miembro.valores.correo}
+          placeholder={correoEjemplo(idioma)}
+          cambiar={(x) => miembro.cambiar('correo', x)}
+        />
         <label className="campo">
           <span>{t.rol}</span>
           <select

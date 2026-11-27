@@ -395,6 +395,8 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
               idioma={idioma}
             />
             <Campo
+              casilla="celular"
+              pais={v.paisTelefono}
               etiqueta={t.celular}
               tipo="tel"
               valor={v.telefono}
@@ -407,6 +409,7 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
           </>
         ) : (
           <Campo
+            casilla="correo"
             etiqueta={t.correo}
             tipo="email"
             valor={v.correo}

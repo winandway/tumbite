@@ -234,7 +234,7 @@ describe('ciclo del pedido', () => {
     expect(reintento.estado).toBe(200);
     expect(reintento.datos.yaEntregado).toBe(true);
     // Otro repartidor no puede «entregar» un pedido ajeno.
-    const otroRep = await m.cuenta('repartidor', 'Otro');
+    const otroRep = await m.cuenta('repartidor', 'Otro Prueba');
     expect((await m.entregar(id, otroRep.token)).estado).toBe(409);
     const resumen = await m.llamar('GET', '/datos/restaurante/resumen', undefined, dueno.token);
     expect(resumen.datos.resumen).toMatchObject({
@@ -262,8 +262,8 @@ describe('ciclo del pedido', () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const id = await pedidoPagado();
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
-    const lejos = await repartidor('Lejos', 25.85, -80.25);
-    const cerca = await repartidor('Cerca', 25.7702, -80.1902);
+    const lejos = await repartidor('Lejos Prueba', 25.85, -80.25);
+    const cerca = await repartidor('Cerca Prueba', 25.7702, -80.1902);
     expect(
       (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, lejos.token)).datos.ofertas,
     ).toHaveLength(0);
@@ -284,7 +284,7 @@ describe('ciclo del pedido', () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const id = await pedidoPagado();
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
-    const solo = await repartidor('Solo', 25.7702, -80.1902);
+    const solo = await repartidor('Solo Prueba', 25.7702, -80.1902);
     const ofertas = async () =>
       (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, solo.token)).datos.ofertas;
     expect(await ofertas()).toHaveLength(1);
@@ -401,8 +401,8 @@ describe('ciclo del pedido', () => {
 
   it('a igual distancia gana el de nivel más alto', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
-    const novato = await repartidor('Novato', 25.7701, -80.1901);
-    const veterano = await repartidor('Veterano', 25.7702, -80.1902);
+    const novato = await repartidor('Novato Prueba', 25.7701, -80.1901);
+    const veterano = await repartidor('Veterano Prueba', 25.7702, -80.1902);
     await m.DB.prepare('UPDATE repartidores SET puntos = 2000 WHERE usuario_id = ?')
       .bind(veterano.id)
       .run();
@@ -662,7 +662,7 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
   it('no se puede cancelar si el restaurante ya aceptó, ni el pedido de otro', async () => {
     const { m, cliente, dueno, pedidoPagado } = await escenario();
     const id = await pedidoPagado();
-    const otro = await m.cuenta('cliente', 'Otro');
+    const otro = await m.cuenta('cliente', 'Otro Prueba');
     const ajeno = await m.llamar('POST', `/datos/pedidos/${id}/cancelar`, {}, otro.token);
     expect(ajeno.estado).toBe(409);
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
@@ -4011,8 +4011,8 @@ describe('C-REPARTIDOR-DESTACADO', () => {
   it('a igual distancia y sin turnos, la oferta va primero al destacado', async () => {
     const { m, pedidoPagado, repartidor } = await escenario();
     const id = await pedidoPagado();
-    await repartidor('Comun', 25.781, -80.201);
-    const top = await repartidor('Destacado', 25.781, -80.201);
+    await repartidor('Comun Prueba', 25.781, -80.201);
+    const top = await repartidor('Destacado Prueba', 25.781, -80.201);
     await m.DB.prepare('UPDATE repartidores SET destacado = 1 WHERE usuario_id = ?')
       .bind(top.id)
       .run();

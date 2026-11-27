@@ -93,7 +93,7 @@ describe('invitar a un conductor de la empresa', () => {
       e.dueno.token,
     );
     expect(inv.estado).toBe(201);
-    const otro = await m.cuenta('repartidor', 'Otro');
+    const otro = await m.cuenta('repartidor', 'Otro Prueba');
     expect(
       (await llamar(m, 'GET', `${B}/conductor/invitaciones`, undefined, otro.token)).datos
         .invitaciones,
@@ -239,7 +239,7 @@ describe('invitar a un conductor de la empresa', () => {
     );
     expect(lista.datos.conductores).toMatchObject([{ nombre: 'Lía Enlace' }]);
     // El mismo enlace no sirve dos veces.
-    const otra = await m.cuenta('repartidor', 'Otra');
+    const otra = await m.cuenta('repartidor', 'Otra Prueba');
     expect(
       (await llamar(m, 'POST', `${B}/conductor/invitacion-enlace/${token}/aceptar`, {}, otra.token))
         .estado,

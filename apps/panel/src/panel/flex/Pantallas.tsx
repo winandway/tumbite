@@ -199,11 +199,13 @@ export function Perfil({ ctx }: { ctx: Contexto }) {
           cambiar={(x) => b.cambiar('direccionFiscal', x)}
         />
         <Campo
+          casilla="nombreCompleto"
           etiqueta={t.registro.representante}
           valor={v.representante}
           cambiar={(x) => b.cambiar('representante', x)}
         />
         <Campo
+          casilla="celular"
           etiqueta={t.registro.telefono}
           tipo="tel"
           valor={v.telefono}
@@ -458,6 +460,7 @@ export function Equipo({ ctx }: { ctx: Contexto }) {
       <form onSubmit={invitar} noValidate className="flex-form flex-inline">
         <h2>{t.invitar}</h2>
         <Campo
+          casilla="correo"
           etiqueta={t.correo}
           tipo="email"
           valor={v.correo}
@@ -618,12 +621,14 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
       <p className="pista">{t.invitarAyuda}</p>
       <form onSubmit={invitar} noValidate className="flex-form" data-testid="invitar-conductor">
         <Campo
+          casilla="nombreCompleto"
           etiqueta={t.nombreConductor}
           valor={v.nombre}
           cambiar={(x) => b.cambiar('nombre', x)}
           placeholder={t.nombreConductor}
         />
         <Campo
+          casilla="celular"
           etiqueta={t.celularConductor}
           tipo="tel"
           valor={v.telefono}
@@ -631,6 +636,7 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
           placeholder={t.celularConductor}
         />
         <Campo
+          casilla="correo"
           etiqueta={t.correoInvitado}
           tipo="email"
           valor={v.correo}
@@ -729,6 +735,7 @@ export function Conductores({ ctx }: { ctx: Contexto }) {
         <summary>{t.yaTieneCuenta}</summary>
         <div className="flex-form flex-inline">
           <Campo
+            casilla="correo"
             etiqueta={t.correoConductor}
             tipo="email"
             valor={v.correoCuenta}

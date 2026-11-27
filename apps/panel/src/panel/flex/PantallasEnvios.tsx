@@ -406,12 +406,14 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           placeholder="ORD-1001"
         />
         <Campo
+          casilla="nombre"
           etiqueta={t.destinatario}
           valor={v.destinatarioNombre}
           cambiar={(x) => b.cambiar('destinatarioNombre', x)}
           placeholder={t.destinatario}
         />
         <Campo
+          casilla="celular"
           etiqueta={t.telefono}
           tipo="tel"
           valor={v.destinatarioTelefono}
@@ -469,6 +471,7 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
           placeholder={cd.referenciasEj}
         />
         <Campo
+          casilla="correo"
           etiqueta={cd.correo}
           tipo="email"
           valor={v.destinatarioCorreo}
@@ -477,6 +480,7 @@ export function NuevoEnvio({ ctx }: { ctx: Contexto }) {
         />
         {perfilFlex(empresa.pais).documento.pide ? (
           <Campo
+            casilla="documento"
             etiqueta={cd.documento}
             valor={v.destinatarioDocumento}
             cambiar={(x) => b.cambiar('destinatarioDocumento', x)}

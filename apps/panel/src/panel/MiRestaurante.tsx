@@ -294,6 +294,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           placeholder={t.categoria}
         />
         <Campo
+          casilla="celular"
           etiqueta={t.telefono}
           tipo="tel"
           valor={v.telefono}

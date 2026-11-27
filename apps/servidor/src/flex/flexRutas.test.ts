@@ -318,8 +318,8 @@ describe('Flex · asignación y ocupación (C-FLEX-OCUPACION)', () => {
 
   it('dos empresas asignan al mismo conductor a la vez: solo una gana; y no puede tomar un pedido de comida', async () => {
     const m = mundo();
-    const a = await empresa(m, 'A');
-    const b = await empresa(m, 'B');
+    const a = await empresa(m, 'Alfa');
+    const b = await empresa(m, 'Beta');
     const cond = await m.cuenta('repartidor');
     await vincular(m, a, cond.id, 'propio');
     await vincular(m, b, cond.id, 'propio');
@@ -367,8 +367,8 @@ describe('Flex · asignación y ocupación (C-FLEX-OCUPACION)', () => {
 
   it('ofertas de la red: vencen, la aceptación es única y dos aceptaciones simultáneas de rutas distintas no ocupan dos veces', async () => {
     const m = mundo();
-    const a = await empresa(m, 'A');
-    const b = await empresa(m, 'B');
+    const a = await empresa(m, 'Alfa');
+    const b = await empresa(m, 'Beta');
     const cond = await m.cuenta('repartidor');
     await vincular(m, a, cond.id, 'red');
     await vincular(m, b, cond.id, 'hibrido');

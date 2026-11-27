@@ -69,6 +69,8 @@ import {
   type Referencia,
   ESPERA_MAXIMA_CRITICA_MS,
   type VistaPagoComida,
+  errorCasilla,
+  tecladoDe,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -1573,6 +1575,11 @@ export function Inicio() {
   /** Entregado en mano: el cliente lo recibió; sin foto, pero solo en la puerta. */
   async function entregarEnMano() {
     if (!estado?.activo || subiendo) return;
+    // C-CASILLA-CON-SU-TIPO: el nombre de quien recibe (alcohol o tabaco) sin números ni @.
+    if (estado.activo.requiereEdad) {
+      const malNombre = errorCasilla('nombre', nombreRecibe, { idioma });
+      if (malNombre) return setError(malNombre);
+    }
     setError('');
     setSubiendo(true);
     try {
@@ -3665,6 +3672,7 @@ export function Inicio() {
                               style={e.input}
                             />
                             <TextInput
+                              {...tecladoDe('nombre')}
                               value={nombreRecibe}
                               onChangeText={(x) => setNombreRecibe(x.slice(0, 80))}
                               placeholder={tg.edad.nombre}

@@ -148,6 +148,7 @@ export function CuentaSaldoRestaurante({
               cambiar={(x) => b.cambiar('banco', x)}
             />
             <Campo
+              casilla="celular"
               etiqueta={t.cuentaTelefono}
               placeholder={t.cuentaTelefonoAyuda}
               valor={v.telefono}
@@ -155,12 +156,14 @@ export function CuentaSaldoRestaurante({
               modoTeclado="tel"
             />
             <Campo
+              casilla="documento"
               etiqueta={t.cuentaDocumento}
               placeholder={t.cuentaDocumentoAyuda}
               valor={v.documento}
               cambiar={(x) => b.cambiar('documento', x)}
             />
             <Campo
+              casilla="nombre"
               etiqueta={t.cuentaTitular}
               placeholder={t.cuentaTitularAyuda}
               valor={v.titular}

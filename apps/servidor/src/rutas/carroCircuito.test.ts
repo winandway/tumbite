@@ -74,7 +74,7 @@ async function taxistaVenezolano(e: E, plazas: 4 | 6) {
     modelo: plazas === 6 ? 'Hiace' : 'Corolla',
     anio: 2016,
     color: 'Blanco',
-    placa: `AC${Math.floor(Math.random() * 1e6)}`,
+    placa: `AC${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
     plazas,
   });
   expect(v.estado).toBe(201);

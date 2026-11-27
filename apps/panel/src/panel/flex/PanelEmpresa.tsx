@@ -241,12 +241,14 @@ function MisEmpresas({ idioma }: { idioma: Idioma }) {
           />
         </div>
         <Campo
+          casilla="nombreCompleto"
           etiqueta={t.registro.representante}
           valor={v.representante}
           cambiar={(x) => b.cambiar('representante', x)}
           placeholder={t.registro.representante}
         />
         <Campo
+          casilla="celular"
           etiqueta={t.registro.telefono}
           tipo="tel"
           valor={v.telefono}

@@ -143,7 +143,7 @@ async function conductorVenezolano(e: E) {
     modelo: 'M150',
     anio: 2023,
     color: 'Negro',
-    placa: `AB${Math.floor(Math.random() * 1e6)}`,
+    placa: `AB${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
   });
   expect(v.estado).toBe(201);
   for (const t of ['registro', 'seguro', 'seguro_pasajeros', 'foto_frente'])

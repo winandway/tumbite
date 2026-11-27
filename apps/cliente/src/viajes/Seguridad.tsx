@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
-import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
+import { ErrorApi, enIdioma, errorCasilla, useBorrador } from '@tumbite/compartido';
 import {
   AvisoBorrador,
   Boton,
@@ -121,21 +121,27 @@ export function ContactosConfianza() {
         <>
           <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
           <Campo
+            tipo="nombre"
             etiqueta={t.nombre}
             value={b.valores.nombre}
             onChangeText={(x) => b.cambiar('nombre', x)}
           />
           <Campo
+            tipo="celular"
             etiqueta={t.telefono}
             value={b.valores.telefono}
             onChangeText={(x) => b.cambiar('telefono', x)}
-            keyboardType="phone-pad"
             placeholder={idioma === 'en' ? 'Mobile number' : 'Número de celular'}
           />
           <Boton
             texto={t.agregar}
             secundario
-            alTocar={() =>
+            alTocar={() => {
+              // C-CASILLA-CON-SU-TIPO: nombre y celular se revisan antes de mandarlos.
+              const mal =
+                errorCasilla('nombre', b.valores.nombre, { idioma }) ??
+                errorCasilla('celular', b.valores.telefono, { idioma });
+              if (mal) return setError(mal);
               void hacer(() =>
                 api.pedir('POST', '/datos/seguridad/contactos', {
                   nombre: b.valores.nombre,
@@ -143,8 +149,8 @@ export function ContactosConfianza() {
                 }),
               ).then(async (ok) => {
                 if (ok) await b.limpiar();
-              })
-            }
+              });
+            }}
           />
         </>
       ) : null}

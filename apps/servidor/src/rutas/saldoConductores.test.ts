@@ -133,9 +133,9 @@ describe('C-SALDO-CONDUCTOR: regalo de arranque por ciudad, con presupuesto', ()
       restante: 800,
       activo: true,
     });
-    const a = await conductor('Ana');
-    const b = await conductor('Beto');
-    const c = await conductor('Carla');
+    const a = await conductor('Ana Prueba');
+    const b = await conductor('Beto Prueba');
+    const c = await conductor('Carla Prueba');
     expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(500);
     expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(0);
     expect(await darRegaloConductorNuevo(e.m.DB, b.id)).toBe(300);
@@ -175,7 +175,7 @@ describe('C-SALDO-CONDUCTOR: regalo de arranque por ciudad, con presupuesto', ()
       { monto: 500, presupuesto: 800, activo: false },
       e.admin.token,
     );
-    const a = await conductor('Ana');
+    const a = await conductor('Ana Prueba');
     expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(0);
   });
 });
@@ -272,9 +272,9 @@ describe('C-REGALO-CONDUCTOR-TOPE-VENCE: tope del día, solo nuevos y vencimient
       vigenciaDias: 30,
       dadoUltimas24h: 0,
     });
-    const a = await conductor('Ana');
-    const b = await conductor('Beto');
-    const c = await conductor('Carla');
+    const a = await conductor('Ana Prueba');
+    const b = await conductor('Beto Prueba');
+    const c = await conductor('Carla Prueba');
     expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(500);
     expect(await darRegaloConductorNuevo(e.m.DB, b.id)).toBe(500);
     // Hoy ya no cabe un regalo entero: espera, no recibe la mitad.
@@ -298,12 +298,12 @@ describe('C-REGALO-CONDUCTOR-TOPE-VENCE: tope del día, solo nuevos y vencimient
 
   it('encenderlo no le regala a quien ya estaba registrado; cada cambio queda auditado', async () => {
     const { e, conductor } = await mundo();
-    const viejo = await conductor('Viejo');
+    const viejo = await conductor('Viejo Prueba');
     await e.m.DB.prepare("UPDATE usuarios SET creado_en = datetime('now', '-3 days') WHERE id = ?")
       .bind(viejo.id)
       .run();
     expect((await encender(e)).estado).toBe(200);
-    const nuevo = await conductor('Nuevo');
+    const nuevo = await conductor('Nuevo Prueba');
     expect(await darRegaloConductorNuevo(e.m.DB, viejo.id)).toBe(0);
     expect(await darRegaloConductorNuevo(e.m.DB, nuevo.id)).toBe(500);
     const aud = await e.m.DB.prepare(
@@ -320,8 +320,8 @@ describe('C-REGALO-CONDUCTOR-TOPE-VENCE: tope del día, solo nuevos y vencimient
     const { reservarComision } = await import('../internacional/libro');
     const { e, conductor } = await mundo();
     await encender(e);
-    const a = await conductor('Ana');
-    const b = await conductor('Beto');
+    const a = await conductor('Ana Prueba');
+    const b = await conductor('Beto Prueba');
     expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(500);
     expect(await darRegaloConductorNuevo(e.m.DB, b.id)).toBe(500);
     // Ana usa 200 en comisiones y recarga 1.000 de su bolsillo.

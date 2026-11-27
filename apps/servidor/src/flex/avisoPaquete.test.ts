@@ -22,8 +22,8 @@ afterEach(() => usarTransporteAvisos(null));
 
 async function conDestinatarios(m: M) {
   const r = await rutaEnCurso(m, 2);
-  const ana = await m.cuenta('cliente', 'Ana');
-  const luis = await m.cuenta('cliente', 'Luis');
+  const ana = await m.cuenta('cliente', 'Ana Prueba');
+  const luis = await m.cuenta('cliente', 'Luis Prueba');
   for (const [u, p] of [
     [ana.id, r.paradas[0]],
     [luis.id, r.paradas[1]],

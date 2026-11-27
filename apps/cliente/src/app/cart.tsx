@@ -30,6 +30,7 @@ import {
   porcentajeDe,
   useBorrador,
   textoLinea,
+  errorCasilla,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -698,11 +699,13 @@ function PantallaCarrito() {
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
     if (sinTarifas) return setError(sinTarifas);
-    if (
-      comoRegalo &&
-      (!b.valores.paraNombre.trim() || b.valores.paraTelefono.replace(/\D/g, '').length < 10)
-    )
-      return setError(t.regaloFalta);
+    if (comoRegalo) {
+      // C-CASILLA-CON-SU-TIPO: el nombre y el celular de quien recibe se revisan con la pieza única.
+      const malRegalo =
+        errorCasilla('nombre', b.valores.paraNombre, { idioma }) ??
+        errorCasilla('celular', b.valores.paraTelefono, { idioma });
+      if (malRegalo) return setError(malRegalo);
+    }
     if (programado && !franjaElegida) return setError(te.elegirFranja);
     // ETP-4: «Elegir uno» sin elegir el reemplazo no se manda (el servidor lo rechazaría).
     const sinReemplazo = carrito.esTienda
@@ -1369,6 +1372,7 @@ function PantallaCarrito() {
           {comoRegalo ? (
             <View style={{ marginTop: 10 }}>
               <Campo
+                tipo="nombre"
                 etiqueta={t.regaloNombre}
                 value={b.valores.paraNombre}
                 onChangeText={(x) => b.cambiar('paraNombre', x)}
@@ -1377,11 +1381,11 @@ function PantallaCarrito() {
                 autoComplete="off"
               />
               <Campo
+                tipo="celular"
                 etiqueta={t.regaloTelefono}
                 value={b.valores.paraTelefono}
                 onChangeText={(x) => b.cambiar('paraTelefono', x)}
                 placeholder="(555) 555-0100"
-                keyboardType="phone-pad"
                 maxLength={20}
               />
               <Campo
@@ -1438,10 +1442,10 @@ function PantallaCarrito() {
       </View>
       {propinaPb === 'otra' && (
         <Campo
+          tipo="monto"
           etiqueta={recogidaElegida ? t.propinaRecoger : t.propina}
           value={b.valores.propinaOtra}
           onChangeText={(x) => b.cambiar('propinaOtra', x)}
-          keyboardType="decimal-pad"
           placeholder={montoATexto(0, moneda)}
         />
       )}

@@ -67,7 +67,7 @@ describe('contactos de confianza (C-VIAJE-SEGURIDAD-2)', () => {
           await m.llamar(
             'POST',
             '/datos/seguridad/contactos',
-            { nombre: `Contacto ${i}`, telefono: `305555010${i}` },
+            { nombre: `Contacto ${'ABCDE'[i]}x`, telefono: `305555010${i}` },
             c.token,
           )
         ).estado,

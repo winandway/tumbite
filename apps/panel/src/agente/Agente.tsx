@@ -271,6 +271,7 @@ function Entrar({ t, idioma, alPasar }: { t: T; idioma: Idioma; alPasar: () => v
       ) : (
         <form onSubmit={enviar} noValidate>
           <Campo
+            casilla="correo"
             etiqueta={t.correo}
             tipo="email"
             valor={v.correo}
@@ -1008,6 +1009,7 @@ function Vender({
         <form onSubmit={buscar} noValidate>
           <p className="pista">{t.venderPaso}</p>
           <Campo
+            casilla="celular"
             etiqueta={t.telefono}
             tipo="tel"
             valor={v.telefono}
@@ -1084,6 +1086,7 @@ function Vender({
               noValidate
             >
               <Campo
+                casilla="monto"
                 etiqueta={t.montoVenta}
                 valor={v.monto}
                 cambiar={(x) => b.cambiar('monto', x.replace(/[^\d.,]/g, ''))}

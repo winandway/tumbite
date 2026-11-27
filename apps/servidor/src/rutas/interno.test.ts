@@ -300,7 +300,7 @@ describe('pase corto para el tiempo real', () => {
   it('cliente: solo su pedido en curso; nunca el de otro', async () => {
     const { m } = escenario();
     const cliente = await m.cuenta('cliente');
-    const otro = await m.cuenta('cliente', 'Otro');
+    const otro = await m.cuenta('cliente', 'Otro Prueba');
     const dueno = await m.cuenta('restaurante');
     const rep = await m.cuenta('repartidor');
     await m.DB.prepare(

@@ -177,18 +177,19 @@ function TarjetasRegalo() {
             <Tarjeta>
               <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.regalar}</Text>
               <Campo
+                tipo="monto"
                 etiqueta={t.monto(dinero(estado.minimo), dinero(estado.maximo))}
                 value={b.valores.monto}
                 onChangeText={(v) => b.cambiar('monto', v)}
-                keyboardType="decimal-pad"
               />
               <Campo
+                tipo="correo"
                 etiqueta={t.correo}
                 value={b.valores.correo}
                 onChangeText={(v) => b.cambiar('correo', v)}
-                keyboardType="email-address"
               />
               <Campo
+                tipo="nombre"
                 etiqueta={t.nombre}
                 value={b.valores.nombre}
                 onChangeText={(v) => b.cambiar('nombre', v)}

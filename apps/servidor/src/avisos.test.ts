@@ -50,7 +50,7 @@ describe('correos que el sitio manda solo', () => {
   it('al registrarse llega el enlace de confirmación; sirve una vez y vence', async () => {
     const enviados = buzon();
     const m = mundo(ENV);
-    const u = await m.cuenta('cliente', 'Rosa');
+    const u = await m.cuenta('cliente', 'Rosa Prueba');
     const correo = (await m.llamar('GET', '/datos/cuentas/yo', undefined, u.token)).datos.usuario
       .correo as string;
     const c = de(enviados, correo)[0];
@@ -70,7 +70,7 @@ describe('correos que el sitio manda solo', () => {
   it('restaurante nuevo: aviso a cada administrador, con el dueño para responder', async () => {
     const enviados = buzon();
     const m = mundo(ENV);
-    const dueno = await m.cuenta('restaurante', 'Luis');
+    const dueno = await m.cuenta('restaurante', 'Luis Prueba');
     await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
     const admins = enviados.filter((e) => e.subject.startsWith('Restaurante nuevo'));
     expect(admins.map((e) => e.to[0]?.address).sort()).toEqual([
@@ -119,9 +119,9 @@ describe('correos que el sitio manda solo', () => {
         : new Response('{}', { status: 404 }),
     );
     const m = mundo(ENV);
-    const dueno = await m.cuenta('restaurante', 'Luis');
+    const dueno = await m.cuenta('restaurante', 'Luis Prueba');
     const admin = await m.cuenta('admin');
-    const cliente = await m.cuenta('cliente', 'Rosa');
+    const cliente = await m.cuenta('cliente', 'Rosa Prueba');
     const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
     await m.llamar(
       'PATCH',

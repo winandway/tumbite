@@ -606,7 +606,11 @@ describe('C-WHATSAPP-FALTA: revisión del 25 nov', () => {
     const meta = simularMeta();
     // 26 sin consentimiento (confirmaron por SMS) y MÁS viejos que el que sí puede.
     for (let i = 0; i < 26; i++)
-      await s.conductor(`Sin Permiso ${i}`, `+5841400000${String(i).padStart(2, '0')}`, 'sms');
+      await s.conductor(
+        `Sin Permiso ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}x`,
+        `+5841400000${String(i).padStart(2, '0')}`,
+        'sms',
+      );
     await s.m.DB.prepare(
       "UPDATE usuarios SET creado_en = datetime('now', '-3 days') WHERE nombre LIKE 'Sin Permiso%'",
     ).run();
@@ -632,7 +636,10 @@ describe('C-WHATSAPP-FALTA: revisión del 25 nov', () => {
     // 26 con permiso que ya agotaron sus 3 de «la foto de la cara» (hace días) y son más viejos.
     const agotados: string[] = [];
     for (let i = 0; i < 26; i++) {
-      const u = await s.conductor(`Agotado ${i}`, `+5841410000${String(i).padStart(2, '0')}`);
+      const u = await s.conductor(
+        `Agotado ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}x`,
+        `+5841410000${String(i).padStart(2, '0')}`,
+      );
       agotados.push(u.id);
     }
     await s.m.DB.prepare(

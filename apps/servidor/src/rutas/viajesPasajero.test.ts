@@ -325,7 +325,7 @@ describe('M2: pedir, ver y cancelar un viaje (efectivo)', () => {
   it('una cotización vencida o de otro pasajero no sirve', async () => {
     const e = await listo();
     const c = (await cotizar(e)).datos.cotizacion;
-    const otro = await e.m.cuenta('cliente', 'Otro');
+    const otro = await e.m.cuenta('cliente', 'Otro Prueba');
     expect(
       (
         await e.m.llamar(
@@ -460,7 +460,7 @@ describe('M2: pedir, ver y cancelar un viaje (efectivo)', () => {
   it('nadie más ve ni cancela mi viaje', async () => {
     const e = await listo();
     const { id } = await pedir(e);
-    const otro = await e.m.cuenta('cliente', 'Otro');
+    const otro = await e.m.cuenta('cliente', 'Otro Prueba');
     expect((await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, otro.token)).estado).toBe(
       404,
     );
@@ -594,7 +594,7 @@ describe('M6 (C-VIAJE-SEGURIDAD): emergencia y viaje compartido', () => {
       .bind(id)
       .all();
     expect(results.map((x) => x.rol).sort()).toEqual(['conductor', 'pasajero']);
-    const otro = await e.m.cuenta('cliente', 'Otro');
+    const otro = await e.m.cuenta('cliente', 'Otro Prueba');
     expect(
       (await e.m.llamar('POST', `/datos/viajes/${id}/emergencia`, {}, otro.token)).estado,
     ).toBe(404);
@@ -966,7 +966,7 @@ describe('M8: calificación de los dos lados', () => {
     const prom = await e.m.llamar('GET', '/datos/repartidor/calificaciones', undefined, cond.token);
     expect(prom.datos.clientes).toMatchObject({ promedio: 4, cuantas: 1 });
     // Nadie más califica ese viaje.
-    const otro = await e.m.cuenta('cliente', 'Otro');
+    const otro = await e.m.cuenta('cliente', 'Otro Prueba');
     expect(
       (await e.m.llamar('POST', `/datos/viajes/${id}/calificar`, { estrellas: 1 }, otro.token))
         .estado,

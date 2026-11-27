@@ -151,7 +151,7 @@ describe('C-REFERIDOS-EQUIPOS: equipos con su líder', () => {
     )
       .bind(a.id, e.admin.id)
       .run();
-    const cli = await registrar('cliente', 'Pasajera');
+    const cli = await registrar('cliente', 'Pasajera Prueba');
     await carrera(a.id, cli.id);
     const lista = await e.m.llamar(
       'GET',
@@ -283,7 +283,7 @@ describe('C-REFERIDOS-EQUIPOS: referido de conductor', () => {
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
     const nuevo = await registrar('repartidor', 'Beto Nuevo', { invitacion: codigo });
-    const cli = await registrar('cliente', 'Pasajero');
+    const cli = await registrar('cliente', 'Pasajero Prueba');
     // Ana se pide carreras a sí misma con Beto: no cuentan.
     await e.m.DB.prepare("UPDATE usuarios SET rol = 'repartidor' WHERE id = ?")
       .bind(invita.id)
@@ -308,7 +308,9 @@ describe('C-REFERIDOS-EQUIPOS: referido de conductor', () => {
 
   it('no se puede invitar a sí mismo (mismo teléfono o aparato): queda rechazado y con alerta', async () => {
     const { e, registrar } = await mundo();
-    const invita = await registrar('repartidor', 'Ana', { aparato: 'aparato-compartido-123' });
+    const invita = await registrar('repartidor', 'Ana Prueba', {
+      aparato: 'aparato-compartido-123',
+    });
     const codigo = (
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
@@ -331,13 +333,15 @@ describe('C-REFERIDOS-EQUIPOS: referido de conductor', () => {
       presupuesto: 250,
       reglas: { premio: 100, carreras: 1, dias: 30, topeMes: 10 },
     });
-    const invita = await registrar('repartidor', 'Ana');
+    const invita = await registrar('repartidor', 'Ana Prueba');
     const codigo = (
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
-    const cli = await registrar('cliente', 'Pasajero');
+    const cli = await registrar('cliente', 'Pasajero Prueba');
     for (let i = 0; i < 4; i++) {
-      const c = await registrar('repartidor', `Invitado ${i}`, { invitacion: codigo });
+      const c = await registrar('repartidor', `Invitado ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}x`, {
+        invitacion: codigo,
+      });
       await carrera(c.id, cli.id);
     }
     await revisarReferidos(e.m.DB);
@@ -386,7 +390,7 @@ describe('C-REFERIDOS-EQUIPOS: referido de cliente', () => {
       .bind(bea.id)
       .first();
     expect(guardado).toEqual({ valor: 150, tipo: 'gratis' });
-    const cond = await registrar('repartidor', 'Conductor');
+    const cond = await registrar('repartidor', 'Conductor Prueba');
     for (let i = 0; i < 2; i++) await carrera(cond.id, bea.id, 200);
     expect(await revisarReferidos(e.m.DB)).toBe(0);
     await carrera(cond.id, bea.id, 200);
@@ -459,7 +463,7 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
       presupuesto: 10_000,
       reglas: PROGRAMAS_POR_DEFECTO['cliente:VE']!.reglas,
     });
-    const ana = await registrar('cliente', 'Ana', { aparato: 'aparato-de-ana-0001' });
+    const ana = await registrar('cliente', 'Ana Prueba', { aparato: 'aparato-de-ana-0001' });
     const codigo = (await e.m.llamar('GET', '/datos/referidos', undefined, ana.token)).datos
       .codigo as string;
     // La segunda cuenta de Ana: mismo aparato desde el registro.
@@ -474,7 +478,7 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
     )
       .bind(ana3.id, ana.id)
       .run();
-    const cond = await registrar('repartidor', 'Conductor');
+    const cond = await registrar('repartidor', 'Conductor Prueba');
     for (const c of [ana2, ana3]) for (let i = 0; i < 3; i++) await carrera(cond.id, c.id, 200);
     expect(await revisarReferidos(e.m.DB)).toBe(0);
     expect(await revisarReferidos(e.m.DB)).toBe(0);
@@ -500,7 +504,7 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
       presupuesto: 5_000,
       reglas: { premio: 100, carreras: 1, dias: 30, topeMes: 10 },
     });
-    const invita = await registrar('repartidor', 'Ana');
+    const invita = await registrar('repartidor', 'Ana Prueba');
     const codigo = (
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
@@ -510,7 +514,7 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
     )
       .bind(otro.id, invita.id)
       .run();
-    const cli = await registrar('cliente', 'Pasajero');
+    const cli = await registrar('cliente', 'Pasajero Prueba');
     await carrera(otro.id, cli.id);
     expect(await revisarReferidos(e.m.DB)).toBe(0);
     expect(await saldoLibro(e.m.DB, invita.id, 'prepago', 'VE', 'USD')).toBe(0);
@@ -528,12 +532,12 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
       presupuesto: 5_000,
       reglas: { premio: 100, carreras: 1, dias: 30, topeMes: 10 },
     });
-    const invita = await registrar('repartidor', 'Ana');
+    const invita = await registrar('repartidor', 'Ana Prueba');
     const codigo = (
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
-    const nuevo = await registrar('repartidor', 'Beto', { invitacion: codigo });
-    const cli = await registrar('cliente', 'Pasajero');
+    const nuevo = await registrar('repartidor', 'Beto Prueba', { invitacion: codigo });
+    const cli = await registrar('cliente', 'Pasajero Prueba');
     await carrera(nuevo.id, cli.id);
     // La base falla justo al acreditar el saldo.
     await e.m.DB.exec(
@@ -553,13 +557,15 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
     const { e, registrar, carrera, programa } = await mundo();
     const reglas = { premio: 100, carreras: 1, dias: 30, topeMes: 10 };
     await programa('conductor', 'VE', { activo: true, presupuesto: 100, reglas });
-    const invita = await registrar('repartidor', 'Ana');
+    const invita = await registrar('repartidor', 'Ana Prueba');
     const codigo = (
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
-    const cli = await registrar('cliente', 'Pasajero');
+    const cli = await registrar('cliente', 'Pasajero Prueba');
     for (let i = 0; i < 3; i++) {
-      const c = await registrar('repartidor', `Invitado ${i}`, { invitacion: codigo });
+      const c = await registrar('repartidor', `Invitado ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}x`, {
+        invitacion: codigo,
+      });
       await carrera(c.id, cli.id);
     }
     expect(await revisarReferidos(e.m.DB)).toBe(1);
@@ -591,13 +597,15 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
     const { e, registrar, carrera, programa } = await mundo();
     const reglas = { premio: 100, carreras: 1, dias: 30, topeMes: 1 };
     await programa('conductor', 'VE', { activo: true, presupuesto: 5_000, reglas });
-    const invita = await registrar('repartidor', 'Ana');
+    const invita = await registrar('repartidor', 'Ana Prueba');
     const codigo = (
       await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
     ).datos.codigo as string;
-    const cli = await registrar('cliente', 'Pasajero');
+    const cli = await registrar('cliente', 'Pasajero Prueba');
     for (let i = 0; i < 2; i++) {
-      const c = await registrar('repartidor', `Invitado ${i}`, { invitacion: codigo });
+      const c = await registrar('repartidor', `Invitado ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}x`, {
+        invitacion: codigo,
+      });
       await carrera(c.id, cli.id);
     }
     expect(await revisarReferidos(e.m.DB)).toBe(1);
@@ -621,11 +629,11 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
       presupuesto: 10_000,
       reglas: { ...PROGRAMAS_POR_DEFECTO['cliente:VE']!.reglas, premioInvitador: 0 },
     });
-    const ana = await registrar('cliente', 'Ana');
+    const ana = await registrar('cliente', 'Ana Prueba');
     const codigo = (await e.m.llamar('GET', '/datos/referidos', undefined, ana.token)).datos
       .codigo as string;
-    const bea = await registrar('cliente', 'Bea', { invitacion: codigo });
-    const cond = await registrar('repartidor', 'Conductor');
+    const bea = await registrar('cliente', 'Bea Prueba', { invitacion: codigo });
+    const cond = await registrar('repartidor', 'Conductor Prueba');
     for (let i = 0; i < 3; i++) await carrera(cond.id, bea.id, 200);
     expect(await revisarReferidos(e.m.DB)).toBe(0);
     expect(

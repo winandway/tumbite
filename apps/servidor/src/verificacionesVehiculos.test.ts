@@ -24,7 +24,7 @@ async function escenario() {
     expect((await yo('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id })).estado).toBe(200);
     // Cuenta real (no de prueba), para que cuente en el menú.
     await m.DB.prepare('UPDATE usuarios SET es_prueba = 0 WHERE id = ?').bind(rep.id).run();
-    const placa = `VX${Math.floor(Math.random() * 1e6)}`;
+    const placa = `VX${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`;
     const v = await yo('POST', '/datos/conductor/vehiculos', {
       tipo: 'moto',
       marca: 'Motos Divoox',

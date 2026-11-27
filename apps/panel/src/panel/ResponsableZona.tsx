@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { Campo } from './CampoClave';
 
 /**
  * C-PANICO-ZONA (16 nov 2026): la persona responsable de cada zona. Cuando un conductor, un
@@ -92,24 +93,20 @@ export function ResponsableZona({
         idioma={idioma}
         empezar={() => void b.empezarDeNuevo()}
       />
-      <label className="campo">
-        <span>{t.nombre}</span>
-        <input
-          value={b.valores.nombre}
-          onChange={(e) => b.cambiar('nombre', e.target.value)}
-          maxLength={60}
-        />
-      </label>
-      <label className="campo">
-        <span>{t.telefono}</span>
-        <input
-          type="tel"
-          value={b.valores.telefono}
-          onChange={(e) => b.cambiar('telefono', e.target.value)}
-          maxLength={30}
-          required
-        />
-      </label>
+      <Campo
+        etiqueta={t.nombre}
+        casilla="nombre"
+        valor={b.valores.nombre}
+        cambiar={(x) => b.cambiar('nombre', x)}
+      />
+      <Campo
+        etiqueta={t.telefono}
+        tipo="tel"
+        casilla="celular"
+        obligatorio
+        valor={b.valores.telefono}
+        cambiar={(x) => b.cambiar('telefono', x)}
+      />
       {error && <p className="error">{error}</p>}
       {aviso && <p className="exito">{aviso}</p>}
       <button type="submit" className="boton secundario chico">

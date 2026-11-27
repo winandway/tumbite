@@ -241,6 +241,7 @@ export function RecargasRestaurantesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
           cambiar={(v) => cb.cambiar('restauranteId', v)}
         />
         <Campo
+          casilla="monto"
           etiqueta={t.monto}
           valor={cb.valores.monto}
           cambiar={(v) => cb.cambiar('monto', v)}

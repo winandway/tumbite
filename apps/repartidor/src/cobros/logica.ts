@@ -1,4 +1,4 @@
-import { telefonoPeruValido } from '@tumbite/compartido';
+import { errorNombre, telefonoPeruValido } from '@tumbite/compartido';
 
 /**
  * C-CUENTA-COBRO-CONDUCTOR y C-RECARGA-TARJETA-ALOJADA (19 nov 2026 — Venezuela y Perú). La lógica
@@ -47,7 +47,8 @@ export function falloCuenta(
   const tipo = tipos.length === 1 ? tipos.at(0)! : v.tipo;
   if (!tipos.includes(tipo)) return 'tipo';
   if (tipo === 'pago_movil' && v.banco.trim().length < 2) return 'banco';
-  if (v.titular.trim().length < 3) return 'titular';
+  // C-CASILLA-CON-SU-TIPO: el titular es una persona: sin números ni @.
+  if (v.titular.trim().length < 3 || errorNombre(v.titular)) return 'titular';
   // Yape y Plin van al celular peruano: nueve dígitos que empiezan por 9.
   if (tipo === 'yape' || tipo === 'plin') {
     if (!telefonoPeruValido(v.identificador)) return 'identificador';

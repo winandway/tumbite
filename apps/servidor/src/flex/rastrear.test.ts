@@ -51,7 +51,7 @@ describe('rastrear un paquete desde la app del cliente', () => {
   });
   it('si no es suyo, lo sigue solo con el estado y sin datos personales', async () => {
     const m = mundo();
-    const otro = await m.cuenta('cliente', 'Curioso');
+    const otro = await m.cuenta('cliente', 'Curioso Prueba');
     const { codigo } = await crearEnvio(m, '(305) 555-0111');
     const r = await llamar(m, 'POST', `${B}/mis-paquetes/seguir`, { codigo }, otro.token);
     expect(r.datos.suyo).toBe(false);
@@ -63,7 +63,7 @@ describe('rastrear un paquete desde la app del cliente', () => {
   });
   it('un número que no existe se dice claro', async () => {
     const m = mundo();
-    const c = await m.cuenta('cliente', 'Nadie');
+    const c = await m.cuenta('cliente', 'Nadie Prueba');
     const r = await llamar(
       m,
       'POST',

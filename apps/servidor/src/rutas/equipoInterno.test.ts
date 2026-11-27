@@ -131,7 +131,7 @@ describe('C-PERMISOS-FINOS: compatibilidad y dueño', () => {
     const m = mundo({ ADMIN_CORREOS: 'dueno@ejemplo.com' });
     const otro = await m.cuenta('admin', 'Soporte Otro');
     const r = await m.llamar('POST', '/datos/cuentas/registro', {
-      nombre: 'Dueño',
+      nombre: 'Dueño Mayor',
       correo: 'dueno@ejemplo.com',
       clave: 'clave-segura-1',
       rol: 'cliente',
@@ -716,7 +716,12 @@ describe('C-SEGUNDO-FACTOR-EQUIPO: construido y apagado de fábrica', () => {
 describe('C-PERMISOS-FINOS: registro, exportación y retención', () => {
   it('el CSV del registro escapa las celdas que una hoja de cálculo leería como fórmula', async () => {
     const m = mundo();
-    const total = await m.cuenta('admin', '=HYPERLINK("x") Soporte');
+    const total = await m.cuenta('admin', 'Soporte Total');
+    // C-CASILLA-CON-SU-TIPO: el registro ya no deja pasar un nombre con «=» ni símbolos; para probar
+    // que el CSV neutraliza fórmulas, el nombre raro se mete directo en la base (como una cuenta vieja).
+    await m.DB.prepare('UPDATE usuarios SET nombre = ? WHERE id = ?')
+      .bind('=HYPERLINK("x") Soporte', total.id)
+      .run();
     await m.llamar('PUT', '/datos/admin/web/ciudades/miami', { estado: 'pronto' }, total.token);
     const r = await m.crudo('/datos/admin/equipo/registro?tipo=acciones&formato=csv', {
       headers: { authorization: `Bearer ${total.token}` },

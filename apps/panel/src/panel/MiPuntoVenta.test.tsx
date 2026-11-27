@@ -71,7 +71,7 @@ describe('C-PANICO-ZONA en el panel', () => {
     await waitFor(() => expect(alGuardar).toHaveBeenCalled());
     expect(cuerpos.at(-1)).toEqual({
       responsableNombre: 'Responsable',
-      responsableTelefono: '+58 412 0000000',
+      responsableTelefono: '+584120000000',
     });
   });
 });

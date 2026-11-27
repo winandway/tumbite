@@ -611,8 +611,8 @@ export function CambiarCorreo({
         empezar={() => void b.empezarDeNuevo()}
       />
       <Campo
+        tipo="correo"
         etiqueta={t.correoNuevo}
-        keyboardType="email-address"
         value={b.valores.correo}
         onChangeText={(x) => b.cambiar('correo', x)}
       />

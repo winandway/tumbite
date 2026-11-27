@@ -127,6 +127,7 @@ export function RecargaTarjeta({
         })}
       </View>
       <Campo
+        tipo="monto"
         etiqueta={t.otroMonto}
         value={otro}
         onChangeText={(x) => {
@@ -134,7 +135,6 @@ export function RecargaTarjeta({
           setError('');
         }}
         placeholder={t.otroMonto}
-        keyboardType="decimal-pad"
         error={error || undefined}
       />
       <Text style={{ color: '#666B73', fontSize: 12 }}>

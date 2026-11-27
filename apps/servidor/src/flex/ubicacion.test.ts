@@ -228,7 +228,7 @@ describe('C-FLEX-UBICACION · Venezuela: ubicación exacta antes de salir', () =
     });
     expect(mios.datos.paquetes[0].codigo).toMatch(/^DVX/);
     // Otra persona no lo ve ni lo cambia.
-    const otro = await m.cuenta('cliente', 'Otra');
+    const otro = await m.cuenta('cliente', 'Otra Prueba');
     expect(
       (await llamar(m, 'GET', `${B}/mis-paquetes`, undefined, otro.token)).datos.paquetes,
     ).toHaveLength(0);

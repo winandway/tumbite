@@ -312,8 +312,8 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja del superadmin', () => {
 
   it('solo el equipo la ve', async () => {
     const { m } = await preparar();
-    const rep = await m.cuenta('repartidor', 'Curioso');
-    const cli = await m.cuenta('cliente', 'Curiosa');
+    const rep = await m.cuenta('repartidor', 'Curioso Prueba');
+    const cli = await m.cuenta('cliente', 'Curiosa Prueba');
     expect((await bandeja(m, rep.token)).estado).toBe(403);
     expect((await bandeja(m, cli.token)).estado).toBe(403);
   });
@@ -557,7 +557,7 @@ describe('C-VERIFICACIONES-BANDEJA · mirar no escribe y lee poco (con el volume
     await m.llamar('GET', '/datos/version');
     await zonas(m);
     const admin = await m.cuenta('admin', 'Soporte Lecturas');
-    for (let i = 0; i < 4; i++) await conductor(m, { nombre: `Persona Bandeja ${i}` });
+    for (let i = 0; i < 4; i++) await conductor(m, { nombre: `Persona Bandeja ${'ABCD'[i]}x` });
     await m.sesionLista(admin.token);
     escrituras.length = 0;
     const antes = { ...conteo.cuenta };

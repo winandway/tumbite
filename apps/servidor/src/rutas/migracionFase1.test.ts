@@ -28,8 +28,8 @@ describe('migraciones preparadas de la Fase 1 (M4 y M5)', () => {
     const conCarro = await m.cuenta('repartidor', 'Rep Carro');
     const enBici = await m.cuenta('repartidor', 'Rep Bici');
     const sinPlaca = await m.cuenta('repartidor', 'Rep Moto');
-    const repetidoA = await m.cuenta('repartidor', 'Rep A');
-    const repetidoB = await m.cuenta('repartidor', 'Rep B');
+    const repetidoA = await m.cuenta('repartidor', 'Rep A Prueba');
+    const repetidoB = await m.cuenta('repartidor', 'Rep B Prueba');
     const sinVehiculo = await m.cuenta('repartidor', 'Rep Nada');
     const datos: [string, string, string][] = [
       [conCarro.id, 'carro', 'abc 123'],

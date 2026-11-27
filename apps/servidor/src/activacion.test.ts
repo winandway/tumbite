@@ -35,7 +35,7 @@ async function escenario({ conSaldo = true }: { conSaldo?: boolean } = {}) {
     modelo: 'M150',
     anio: 2023,
     color: 'Negro',
-    placa: `AB${Math.floor(Math.random() * 1e6)}`,
+    placa: `AB${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
     placaEstado: 'FL',
   });
   const id = v.datos.id as string;

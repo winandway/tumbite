@@ -246,7 +246,7 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
             value={v.titular}
             onChangeText={(x) => b.cambiar('titular', x)}
             placeholder={t.titular}
-            autoCapitalize="words"
+            tipo="nombre"
             error={errorDe('titular')}
           />
           <Campo
@@ -266,7 +266,10 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
                   ? t.pagoMovil.telefonoAyuda
                   : t.identificador
             }
-            keyboardType={aCelularPeru || tipo === 'pago_movil' ? 'phone-pad' : 'default'}
+            // C-CASILLA-CON-SU-TIPO: el número de Yape, Plin o pago móvil es un celular.
+            {...(aCelularPeru || tipo === 'pago_movil'
+              ? { tipo: 'celular' as const, pais: aCelularPeru ? 'PE' : 'VE' }
+              : {})}
             error={errorDe('identificador')}
           />
           {tipo === 'pago_movil' ? (

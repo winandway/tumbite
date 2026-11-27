@@ -3,7 +3,7 @@ export const TEXTOS = {
   en: {
     panelCrear: 'Restaurant not on Divoox yet? Create your account',
     panelRegistrar: 'Create a restaurant account',
-    tuNombre: 'Your name',
+    tuNombre: 'Full name',
     correo: 'Email',
     celular: 'Mobile phone',
     clave: 'Password',
@@ -144,7 +144,7 @@ export const TEXTOS = {
   es: {
     panelCrear: '¿Tu restaurante aún no está en Divoox? Crea tu cuenta',
     panelRegistrar: 'Crear cuenta de restaurante',
-    tuNombre: 'Tu nombre',
+    tuNombre: 'Nombre y apellido',
     correo: 'Correo',
     celular: 'Celular',
     clave: 'Contraseña',

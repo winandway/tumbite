@@ -232,25 +232,25 @@ export function Promociones({ alVolver }: { alVolver: () => void }) {
                   onChangeText={(x) => b.cambiar('porcentaje', x.replace(/\D/g, ''))}
                 />
                 <Campo
+                  tipo="monto"
                   etiqueta={t.tope}
                   value={v.tope}
-                  keyboardType="decimal-pad"
                   onChangeText={(x) => b.cambiar('tope', x)}
                 />
               </>
             ) : null}
             {v.tipo === 'gasta_ahorra' ? (
               <Campo
+                tipo="monto"
                 etiqueta={t.ahorro}
                 value={v.monto}
-                keyboardType="decimal-pad"
                 onChangeText={(x) => b.cambiar('monto', x)}
               />
             ) : null}
             <Campo
+              tipo="monto"
               etiqueta={v.tipo === 'gasta_ahorra' ? t.minimoGasta : t.minimo}
               value={v.minimo}
-              keyboardType="decimal-pad"
               onChangeText={(x) => b.cambiar('minimo', x)}
             />
             <Campo

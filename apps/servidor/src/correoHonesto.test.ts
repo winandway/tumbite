@@ -51,7 +51,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
       bloquear ? { estado: 502, cuerpo: { success: false, error: BLOQUEADO } } : bien(),
     );
     const m = mundo(ENV);
-    const u = await m.cuenta('cliente', 'Vale');
+    const u = await m.cuenta('cliente', 'Vale Prueba');
     const { correo } = await correoDe(m, u.token);
     expect((await correoDe(m, u.token)).correoRebotado).toBe(false);
 
@@ -77,7 +77,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
     expect(JSON.stringify(salud.datos)).not.toContain(correo);
 
     // Cambiar el correo a otra dirección que tampoco existe: se dice al momento, no «enviado».
-    const otraCuenta = await m.cuenta('cliente', 'Otra');
+    const otraCuenta = await m.cuenta('cliente', 'Otra Prueba');
     const muerta = `muerta-${Math.random().toString(36).slice(2)}@ejemplo.com`;
     const cambio = await m.llamar(
       'POST',
@@ -94,7 +94,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
   it('en inglés el mensaje sale en inglés', async () => {
     transporte(() => ({ estado: 502, cuerpo: { success: false, error: BLOQUEADO } }));
     const m = mundo(ENV);
-    const u = await m.cuenta('cliente', 'Sam');
+    const u = await m.cuenta('cliente', 'Sam Prueba');
     const re = await m.llamar('POST', '/datos/cuentas/confirmar/reenviar', {}, u.token, {
       'x-idioma': 'en',
     });
@@ -113,7 +113,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
         : bien(),
     );
     const m = mundo(ENV);
-    const u = await m.cuenta('cliente', 'Rosa');
+    const u = await m.cuenta('cliente', 'Rosa Prueba');
     caido = true;
     const re = await m.llamar('POST', '/datos/cuentas/confirmar/reenviar', {}, u.token, ES);
     expect(re.estado).toBe(503);
@@ -131,7 +131,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
     transporte(() => ({ estado: 502, cuerpo: { success: false, error: BLOQUEADO } }));
     const m = mundo(ENV);
     const r = await m.llamar('POST', '/datos/cuentas/registro', {
-      nombre: 'Lía',
+      nombre: 'Lía Prueba',
       correo: `lia-${Math.random().toString(36).slice(2)}@ejemplo.com`,
       clave: 'clave-segura-1',
       rol: 'cliente',
@@ -152,7 +152,7 @@ describe('C-CORREO-HONESTO: el enlace de confirmación que no sale se dice como 
       },
     }));
     const m = mundo(ENV);
-    await m.cuenta('cliente', 'Ana');
+    await m.cuenta('cliente', 'Ana Prueba');
     const salud = await m.llamar('GET', '/datos/salud');
     expect(salud.datos.piezas.correo).toBe('error');
     expect(salud.datos.correo.cupoAlto).toBe(true);

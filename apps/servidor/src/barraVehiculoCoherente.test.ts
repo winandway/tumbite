@@ -31,7 +31,7 @@ async function conductor() {
       modelo: 'M150',
       anio: 2023,
       color: 'Negro',
-      placa: `${placa}${Math.floor(Math.random() * 1e6)}`,
+      placa: `${placa}${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
       placaEstado: 'FL',
     });
     return v.datos.id as string;

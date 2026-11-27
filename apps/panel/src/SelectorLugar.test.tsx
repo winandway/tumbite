@@ -149,7 +149,7 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro web', () => {
     const cuerpos = servidor();
     render(<Acceso idioma="es" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
-    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await userEvent.type(screen.getByLabelText('Nombre y apellido'), 'Ana Prueba');
     await userEvent.click(screen.getByTestId('registro-lugar'));
     await userEvent.click(screen.getByRole('button', { name: /Venezuela/ }));
     await userEvent.type(screen.getByTestId('selector-lugar-buscar'), 'cara');
@@ -173,7 +173,7 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro web', () => {
     const cuerpos = servidor();
     render(<Acceso idioma="es" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
-    await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await userEvent.type(screen.getByLabelText('Nombre y apellido'), 'Ana Prueba');
     await userEvent.click(screen.getByTestId('registro-lugar'));
     await userEvent.click(screen.getByTestId('selector-lugar-pais-otro'));
     expect(screen.getByTestId('registro-lugar').textContent).toContain('Otro país');
@@ -193,7 +193,7 @@ describe('C-REGISTRO-TODO-EL-PAIS: el registro web', () => {
     servidor();
     render(<Acceso idioma="en" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Create|New here/ }));
-    await userEvent.type(screen.getByLabelText('Your name'), 'Sam Taylor');
+    await userEvent.type(screen.getByLabelText('Full name'), 'Sam Taylor');
     await userEvent.type(screen.getByLabelText('Email'), 'sam@example.com');
     await userEvent.type(screen.getByLabelText('Password'), 'safe-password-1');
     await userEvent.click(screen.getAllByRole('checkbox')[0]!);

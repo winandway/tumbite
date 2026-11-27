@@ -1,6 +1,13 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { comoLlegar } from '../comoLlegar';
-import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb, contar } from '@tumbite/compartido';
+import {
+  enlaceRutaGoogle,
+  errorCasilla,
+  medidasReducidas,
+  posicionFrescaWeb,
+  contar,
+  tecladoDe,
+} from '@tumbite/compartido';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -2041,7 +2048,12 @@ function DetalleParada({
     if (cobroPendiente) {
       if (!cobro) return;
       if (!recibio.trim()) return setAviso(`${t.falta}: ${t.quienPaga}.`);
+      // C-CASILLA-CON-SU-TIPO: quien recibe lleva nombre sin números ni @, y su documento, la regla del país.
+      const malRecibe = errorCasilla('nombre', recibio, { idioma });
+      if (malRecibe) return setAviso(malRecibe);
       if (cedula.replace(/[\s.-]/g, '').length < 7) return setAviso(t.faltaCedula);
+      const malCedula = errorCasilla('documento', cedula, { idioma, pais: ruta.pais });
+      if (malCedula) return setAviso(malCedula);
     }
     if (!lugar) return setAviso(t.faltaLugar);
     setAviso('');
@@ -2547,6 +2559,7 @@ function DetalleParada({
               </View>
             ) : null}
             <TextInput
+              {...tecladoDe('nombre')}
               value={recibio}
               onChangeText={setRecibio}
               placeholder={cobroPendiente ? t.quienPaga : t.quienRecibio}
@@ -2606,10 +2619,10 @@ function DetalleParada({
                 ) : null}
                 <Text style={{ fontWeight: '800' }}>{t.cedulaRecibe}</Text>
                 <TextInput
+                  {...tecladoDe('documento')}
                   value={cedula}
                   onChangeText={setCedula}
                   placeholder="V-12345678"
-                  autoCapitalize="characters"
                   style={e.input}
                   accessibilityLabel={t.cedulaRecibe}
                 />

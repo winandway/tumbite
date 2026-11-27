@@ -54,7 +54,7 @@ describe('C-CORREGIR-CORREO: corregir el correo de una cuenta desde el superadmi
   it('cambia el correo, la deja sin confirmar, manda la confirmación y lo anota enmascarado', async () => {
     const m = mundo(ENV);
     const total = await m.cuenta('admin', 'Soporte Total');
-    const cli = await m.cuenta('cliente', 'Jhon');
+    const cli = await m.cuenta('cliente', 'Jhon Prueba');
     const enviados = buzon();
     const correo = nuevo();
     const r = await m.llamar(

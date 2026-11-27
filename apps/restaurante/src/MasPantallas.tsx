@@ -264,9 +264,9 @@ function MiRestauranteApp({ t }: { t: Textos }) {
             onChangeText={(x) => b.cambiar('nombre', x)}
           />
           <Campo
+            tipo="celular"
             etiqueta={t.telefono}
             value={v.telefono}
-            keyboardType="phone-pad"
             onChangeText={(x) => b.cambiar('telefono', x)}
           />
           <Campo
@@ -469,8 +469,8 @@ function Equipo({ t }: { t: Textos }) {
       {esDueno ? (
         <Tarjeta>
           <Campo
+            tipo="correo"
             etiqueta={t.correo}
-            keyboardType="email-address"
             placeholder={correoEjemplo(idioma)}
             value={b.valores.correo}
             onChangeText={(x) => b.cambiar('correo', x)}
@@ -567,13 +567,14 @@ function Configuracion({ t }: { t: Textos }) {
       <Mensajes error={error} aviso={aviso} />
       <Tarjeta>
         <Campo
+          tipo="nombreCompleto"
           etiqueta={t.tuNombre}
           value={b.valores.nombre}
           onChangeText={(x) => b.cambiar('nombre', x)}
         />
         <Campo
+          tipo="celular"
           etiqueta={t.tuTelefono}
-          keyboardType="phone-pad"
           value={b.valores.telefono}
           onChangeText={(x) => b.cambiar('telefono', x)}
         />

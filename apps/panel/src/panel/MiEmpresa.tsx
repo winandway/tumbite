@@ -3,6 +3,7 @@ import {
   correoEjemplo,
   ErrorApi,
   type Idioma,
+  type TipoCasilla,
   type Usuario,
   almacenNavegador,
   enIdioma,
@@ -99,10 +100,17 @@ export function MiEmpresa({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
     }
   }
 
-  const campo = (clave: keyof typeof INICIAL, etiqueta: string, tipo = 'text') => (
+  const campo = (
+    clave: keyof typeof INICIAL,
+    etiqueta: string,
+    tipo = 'text',
+    casilla?: TipoCasilla,
+  ) => (
     <Campo
       etiqueta={etiqueta}
       tipo={tipo}
+      casilla={casilla}
+      idioma={idioma}
       valor={new Map(Object.entries(b.valores)).get(clave) ?? ''}
       cambiar={(x) => b.cambiar(clave, x)}
       error={error?.campo === clave ? error.mensaje : undefined}
@@ -127,13 +135,13 @@ export function MiEmpresa({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
         {campo('horario', t.horario)}
         {campo('sitioWeb', t.sitioWeb)}
         <h2>{t.dueno}</h2>
-        {campo('duenoNombre', t.nombre)}
-        {campo('duenoTelefono', t.telefono, 'tel')}
-        {campo('duenoCorreo', t.correo, 'email')}
+        {campo('duenoNombre', t.nombre, 'text', 'nombre')}
+        {campo('duenoTelefono', t.telefono, 'tel', 'celular')}
+        {campo('duenoCorreo', t.correo, 'email', 'correo')}
         <h2>{t.manager}</h2>
-        {campo('managerNombre', t.nombre)}
-        {campo('managerTelefono', t.telefono, 'tel')}
-        {campo('managerCorreo', t.correo, 'email')}
+        {campo('managerNombre', t.nombre, 'text', 'nombre')}
+        {campo('managerTelefono', t.telefono, 'tel', 'celular')}
+        {campo('managerCorreo', t.correo, 'email', 'correo')}
         {aviso && (
           <p className="ok" role="status">
             {aviso}

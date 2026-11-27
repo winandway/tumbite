@@ -29,7 +29,7 @@ async function conductorConMoto() {
     modelo: 'M150',
     anio: 2023,
     color: 'Negro',
-    placa: `EF${Math.floor(Math.random() * 1e6)}`,
+    placa: `EF${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
     placaEstado: 'FL',
   });
   const equipo = (ruta: string) => m.llamar('GET', ruta, undefined, admin.token);

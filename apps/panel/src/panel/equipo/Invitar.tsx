@@ -11,6 +11,7 @@ import { pedir } from '../api';
 import { usePermisos } from '../permisosPanel';
 import { ElegirAcceso, alcanceDe, type EleccionAcceso } from './Piezas';
 import { type Plantilla, type Zona, textosEquipo } from './textos';
+import { Campo } from '../CampoClave';
 
 const INICIAL = {
   correo: '',
@@ -135,31 +136,25 @@ export function Invitar({
         </p>
       ) : null}
       <div className="eq-dos">
-        <div className="campo">
-          <label htmlFor={`${id}-correo`}>{t.correo}</label>
-          <input
-            id={`${id}-correo`}
-            type="email"
-            autoComplete="off"
-            placeholder={correoEjemplo(idioma)}
-            value={v.correo}
-            onChange={(e) => b.cambiar('correo', e.target.value)}
-            aria-invalid={error?.campo === 'correo'}
-          />
-          {error?.campo === 'correo' ? <p className="error-campo">{error.mensaje}</p> : null}
-        </div>
-        <div className="campo">
-          <label htmlFor={`${id}-nombre`}>{t.nombre}</label>
-          <input
-            id={`${id}-nombre`}
-            autoComplete="off"
-            placeholder={t.nombre}
-            value={v.nombre}
-            onChange={(e) => b.cambiar('nombre', e.target.value)}
-            aria-invalid={soporteMal || error?.campo === 'nombre'}
-          />
-          {soporteMal ? <p className="error-campo">{t.soporteRegla}</p> : null}
-        </div>
+        <Campo
+          etiqueta={t.correo}
+          tipo="email"
+          casilla="correo"
+          valor={v.correo}
+          placeholder={correoEjemplo(idioma)}
+          autoComplete="off"
+          cambiar={(x) => b.cambiar('correo', x)}
+          error={error?.campo === 'correo' ? error.mensaje : undefined}
+        />
+        <Campo
+          etiqueta={t.nombre}
+          casilla="nombre"
+          autoComplete="off"
+          placeholder={t.nombre}
+          valor={v.nombre}
+          cambiar={(x) => b.cambiar('nombre', x)}
+          error={soporteMal ? t.soporteRegla : undefined}
+        />
       </div>
       <ElegirAcceso
         valor={v}

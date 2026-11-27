@@ -171,7 +171,7 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
 
   it('el interruptor: solo el equipo, zona que existe, no se enciende donde Comida no está y queda en la auditoría', async () => {
     const { m, q, admin, encender } = await escenario();
-    const cli = await m.cuenta('cliente', 'Curioso');
+    const cli = await m.cuenta('cliente', 'Curioso Prueba');
     expect(
       (
         await m.llamar(
@@ -226,12 +226,16 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
       );
     };
     const lejos = await repartidor('Rep Legado Lejos', 25.86);
-    await suspender('Rep S1', 25.771);
-    await suspender('Rep S2', 25.772);
+    await suspender('Rep Sa', 25.771);
+    await suspender('Rep Sb', 25.772);
     const id = await pedidoListo();
     await q('DELETE FROM ofertas');
     const conDos = await vuelta();
-    for (let i = 0; i < 10; i++) await suspender(`Rep S${i + 3}`, 25.773 + i / 10000);
+    for (let i = 0; i < 10; i++)
+      await suspender(
+        `Rep S${[...String(i + 3)].map((d) => 'ABCDEFGHIJ'[Number(d)]).join('')}x`,
+        25.773 + i / 10000,
+      );
     const conDoce = await vuelta();
     expect(conDoce).toBe(conDos);
     // Y el resultado es el mismo: los suspendidos no reciben nada, el habilitado de lejos sí.
@@ -243,7 +247,15 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
     const { motivosServicio } = await import('./despachoCatalogo');
     const { estadoDelConductor } = await import('./rutas/servicios');
     const ids: string[] = [];
-    for (let i = 0; i < 33; i++) ids.push((await repartidor(`Rep L${i}`, 25.771)).id);
+    for (let i = 0; i < 33; i++)
+      ids.push(
+        (
+          await repartidor(
+            `Rep L${[...String(i)].map((d) => 'ABCDEFGHIJ'[Number(d)]).join('')}x`,
+            25.771,
+          )
+        ).id,
+      );
     await q(
       "INSERT INTO habilitaciones (conductor_id, servicio_id, estado) VALUES (?, 'comida', 'suspendida')",
       ids[0],

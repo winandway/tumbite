@@ -27,6 +27,7 @@ import {
   indiceDePaso,
   useBorrador,
   type PasoDeFormulario,
+  errorCasilla,
 } from '@tumbite/compartido';
 import { MapaEntrega } from '../MapaEntrega';
 import {
@@ -373,9 +374,13 @@ export function PedirMoto({
       if (!v.paqueteDescripcion.trim()) f.set('paqueteDescripcion', tp.faltaQue);
       if (!v.sinProhibidos) f.set('sinProhibidos', t.faltaProhibidos);
     } else if (clave === 'recibe') {
-      if (!v.destinatarioNombre.trim()) f.set('destinatarioNombre', tp.faltaNombre);
-      if (v.destinatarioTelefono.replace(/\D/g, '').length < 7)
-        f.set('destinatarioTelefono', tp.faltaCelular);
+      // C-CASILLA-CON-SU-TIPO: el nombre y el celular de quien recibe, con la pieza única.
+      const malNombre = errorCasilla('nombre', v.destinatarioNombre, { idioma });
+      if (malNombre)
+        f.set('destinatarioNombre', v.destinatarioNombre.trim() ? malNombre : tp.faltaNombre);
+      const malCel = errorCasilla('celular', v.destinatarioTelefono, { idioma });
+      if (malCel)
+        f.set('destinatarioTelefono', v.destinatarioTelefono.trim() ? malCel : tp.faltaCelular);
     }
     setFallosEnvio(f);
     setPorQue(motivo || (f.size ? textosPasos(idioma).falta : ''));
@@ -1182,10 +1187,10 @@ export function PedirMoto({
               testID="envio-que"
             />
             <Campo
+              tipo="monto"
               etiqueta={t.paqueteValor}
               value={v.paqueteValor}
               onChangeText={(x) => cambiarEnvio('paqueteValor', x)}
-              keyboardType="decimal-pad"
               placeholder={tp.valorEjemplo}
               testID="envio-valor"
             />
@@ -1229,6 +1234,7 @@ export function PedirMoto({
           <View style={{ gap: 4 }}>
             <Text style={{ color: '#666B73', marginBottom: 4 }}>{tp.recibeAyuda}</Text>
             <Campo
+              tipo="nombre"
               etiqueta={t.destinatarioNombre}
               value={v.destinatarioNombre}
               onChangeText={(x) => cambiarEnvio('destinatarioNombre', x)}
@@ -1239,10 +1245,10 @@ export function PedirMoto({
               testID="envio-recibe-nombre"
             />
             <Campo
+              tipo="celular"
               etiqueta={t.destinatarioTelefono}
               value={v.destinatarioTelefono}
               onChangeText={(x) => cambiarEnvio('destinatarioTelefono', x)}
-              keyboardType="phone-pad"
               placeholder={idioma === 'en' ? 'Mobile number' : 'Número de celular'}
               error={fallosEnvio.get('destinatarioTelefono')}
               testID="envio-recibe-celular"

@@ -466,6 +466,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
             placeholder={t.categoriaEn}
           />
           <Campo
+            casilla="monto"
             etiqueta={etiquetaPrecio}
             valor={v.precio}
             cambiar={(x) => b.cambiar('precio', x)}
@@ -627,6 +628,7 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
                       placeholder="Large"
                     />
                     <Campo
+                      casilla="monto"
                       etiqueta={t.precioExtra}
                       valor={o.precio}
                       cambiar={(x) =>

@@ -189,6 +189,7 @@ export function AceptarInvitacion({ idioma }: { idioma: Idioma }) {
             <input id="eq-inv-correo" value={inv.correo} readOnly />
           </div>
           <Campo
+            casilla="nombre"
             etiqueta={t.nombre}
             valor={b.valores.nombre}
             cambiar={(x) => b.cambiar('nombre', x)}

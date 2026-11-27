@@ -229,6 +229,7 @@ export function FormCorregirCorreo({
         empezar={() => void b.empezarDeNuevo()}
       />
       <Campo
+        casilla="correo"
         etiqueta={t.correoNuevo}
         tipo="email"
         valor={v.correo}

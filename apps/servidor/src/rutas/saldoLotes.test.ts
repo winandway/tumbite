@@ -124,7 +124,10 @@ async function preparar() {
   /** Un cliente nuevo (cuenta real por la API), con su celular escrito y, si se da, su ciudad. */
   let n = 0;
   const cliente = async (p: { zona?: string | null; telefono?: string } = {}) => {
-    const c = await e.m.cuenta('cliente', `Cliente ${++n}`);
+    const c = await e.m.cuenta(
+      'cliente',
+      `Cliente ${[...String(++n)].map((d) => 'ABCDEFGHIJ'[Number(d)]).join('')}x`,
+    );
     const tel = p.telefono ?? `58414${String(1_000_000 + n * 7919).slice(-7)}`;
     await db
       .prepare('UPDATE usuarios SET telefono = ?, telefono_canonico = ?, zona_id = ? WHERE id = ?')

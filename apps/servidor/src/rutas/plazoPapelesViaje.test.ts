@@ -88,7 +88,7 @@ async function nuevoEnCaracas() {
       modelo: 'M150',
       anio: 2023,
       color: 'Negro',
-      placa: `AB${Math.floor(Math.random() * 1e6)}`,
+      placa: `AB${String(Math.floor(Math.random() * 1e6)).padStart(6, '0')}`,
     });
     expect(v.estado).toBe(201);
     const vehiculo = v.datos.id as string;

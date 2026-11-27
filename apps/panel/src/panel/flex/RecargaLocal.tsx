@@ -259,6 +259,7 @@ export function RecargaLocal({ ctx }: { ctx: Contexto }) {
                 </select>
               </div>
               <Campo
+                casilla="monto"
                 etiqueta={`${t.monto} (${cfg.moneda})`}
                 valor={fb.valores.monto}
                 cambiar={(v) => fb.cambiar('monto', v)}

@@ -501,6 +501,7 @@ export function Productos({ idioma }: { idioma: Idioma }) {
           placeholder={t.categoria}
         />
         <Campo
+          casilla="monto"
           etiqueta={t.precio}
           valor={v.precio}
           cambiar={(x) => b.cambiar('precio', x)}

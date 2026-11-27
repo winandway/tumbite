@@ -536,11 +536,12 @@ function ConfirmaTuCelular({
             idioma={idioma}
           />
           <Campo
+            tipo="celular"
+            pais={pais || null}
             etiqueta={t.numero}
             testID="celular-nuevo"
             value={b.valores.telefono}
             onChangeText={(x) => b.cambiar('telefono', x.replace(/[^\d+]/g, ''))}
-            keyboardType="phone-pad"
             autoComplete="tel"
             textContentType="telephoneNumber"
             placeholder={datosPais(pais)?.ejemploCelular ?? t.numero}

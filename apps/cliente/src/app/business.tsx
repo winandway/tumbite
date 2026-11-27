@@ -483,6 +483,7 @@ function PantallaEmpresas() {
                         testID="empresa-direccion-fiscal"
                       />
                       <Campo
+                        tipo="nombreCompleto"
                         etiqueta={t.representante}
                         value={v.representante}
                         autoComplete="name"
@@ -491,9 +492,9 @@ function PantallaEmpresas() {
                         error={fallos.get('representante')}
                       />
                       <Campo
+                        tipo="celular"
                         etiqueta={t.telefono}
                         value={v.telefono}
-                        keyboardType="phone-pad"
                         placeholder={idioma === 'en' ? 'Phone number' : 'Número de teléfono'}
                         onChangeText={(x) => poner('telefono', x)}
                         error={fallos.get('telefono')}

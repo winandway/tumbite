@@ -646,6 +646,7 @@ function Recargar({ ctx }: { ctx: Contexto }) {
         </fieldset>
         {fb.valores.elegido === 'otro' ? (
           <Campo
+            casilla="monto"
             etiqueta={t.otroImporte}
             valor={fb.valores.otro}
             cambiar={(v) => fb.cambiar('otro', v)}
@@ -1215,12 +1216,14 @@ function ConfigBilletera({ ctx }: { ctx: Contexto }) {
             {fb.valores.auto === '1' ? (
               <div className="flex-inline">
                 <Campo
+                  casilla="monto"
                   etiqueta={t.umbral}
                   valor={fb.valores.umbral}
                   cambiar={(v) => fb.cambiar('umbral', v)}
                   placeholder="0.00"
                 />
                 <Campo
+                  casilla="monto"
                   etiqueta={t.montoAuto}
                   valor={fb.valores.monto}
                   cambiar={(v) => fb.cambiar('monto', v)}

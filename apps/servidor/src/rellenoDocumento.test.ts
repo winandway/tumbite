@@ -50,7 +50,11 @@ describe('relleno con cursor: avanza, termina y al día no hace nada', () => {
   it('con 50 que no cumplen ninguna edad avanza, pone al día al que viene detrás y se apaga', async () => {
     const s = await escenario();
     const anio = new Date().getUTCFullYear();
-    for (let i = 0; i < 50; i++) await s.conductor(`Conductor Menor ${i}`, `${anio - 15}-01-01`);
+    for (let i = 0; i < 50; i++)
+      await s.conductor(
+        `Conductor Menor ${[...String(i)].map((d) => 'ABCDEFGHIJ'[Number(d)]).join('')}x`,
+        `${anio - 15}-01-01`,
+      );
     const cumple = await s.conductor('Conductor Que Cumple', '1974-03-10');
     let vueltas = 0;
     let r = { fin: false };

@@ -28,7 +28,7 @@ describe('recuperar la contraseña por correo', () => {
   it('manda el enlace, sirve una vez, cambia la clave y cierra las sesiones viejas', async () => {
     const enviados = buzon();
     const m = mundo(ENV);
-    const cuenta = await m.cuenta('cliente', 'Rosa');
+    const cuenta = await m.cuenta('cliente', 'Rosa Prueba');
     const correo = (await m.llamar('GET', '/datos/cuentas/yo', undefined, cuenta.token)).datos
       .usuario.correo as string;
     // El registro ya mandó el correo de confirmación; se cuenta solo lo que llega después.

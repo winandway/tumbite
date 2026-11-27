@@ -131,8 +131,8 @@ describe('C-CONNECT-UN-INTENTO: un rechazo de Stripe frena todo intento siguient
   it('después del primer rechazo, otra persona ya no llega a Stripe y la salud lo marca', async () => {
     const ll = stripeFalso(true);
     const m = mundo({ STRIPE_SECRET_KEY: 'sk_live_x', STRIPE_CONNECT_ACTIVO: '1' });
-    const a = await m.cuenta('repartidor', 'Primera');
-    const b = await m.cuenta('restaurante', 'Segunda');
+    const a = await m.cuenta('repartidor', 'Primera Prueba');
+    const b = await m.cuenta('restaurante', 'Segunda Prueba');
     const r1 = await m.llamar('POST', '/datos/billetera/conectar', {}, a.token);
     expect(r1.estado).toBeGreaterThanOrEqual(400);
     const r2 = await m.llamar('POST', '/datos/billetera/conectar', {}, b.token);

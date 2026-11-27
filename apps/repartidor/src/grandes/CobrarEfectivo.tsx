@@ -305,10 +305,10 @@ export function CobrarEfectivo({
                 empezar={() => void b.empezarDeNuevo()}
               />
               <Campo
+                tipo="monto"
                 etiqueta={t.monto}
                 value={b.valores.monto}
                 onChangeText={(x) => b.cambiar('monto', x.replace(/[^\d.,]/g, ''))}
-                keyboardType="decimal-pad"
                 placeholder="0.00"
               />
               <Boton

@@ -142,7 +142,7 @@ describe('C-MENSAJES-ACCESO: los escudos siguen delante', () => {
       await m.llamar(
         'POST',
         '/datos/cuentas/registro',
-        { nombre: 'Persona', correo: 'nueva@ejemplo.com', clave: CLAVE, rol: 'repartidor' },
+        { nombre: 'Persona Prueba', correo: 'nueva@ejemplo.com', clave: CLAVE, rol: 'repartidor' },
         undefined,
         ES,
       ),
@@ -231,7 +231,7 @@ describe('C-INTENTOS-ACCESO: todo intento fallido queda anotado para el panel', 
     await p.m.llamar(
       'POST',
       '/datos/cuentas/registro',
-      { nombre: 'Persona', correo: 'nueva@ejemplo.com', clave: 'corta', rol: 'repartidor' },
+      { nombre: 'Persona Prueba', correo: 'nueva@ejemplo.com', clave: 'corta', rol: 'repartidor' },
       undefined,
       ES,
     );
@@ -347,7 +347,12 @@ describe('C-LIMITES-SIN-ESCUDO: sin Turnstile, los límites frenan entrar, crear
           await p.m.llamar(
             'POST',
             '/datos/cuentas/registro',
-            { nombre: 'Persona', correo: `n${i}@ejemplo.com`, clave: 'corta', rol: 'repartidor' },
+            {
+              nombre: 'Persona Prueba',
+              correo: `n${i}@ejemplo.com`,
+              clave: 'corta',
+              rol: 'repartidor',
+            },
             undefined,
             misma('10.251.1.1'),
           )

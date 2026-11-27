@@ -61,7 +61,9 @@ async function encenderMotoDePrueba(m: Mundo, conRequisitos = false) {
 }
 
 /** Un conductor de Moto con todo en regla: vehículo aprobado, documentos vigentes, habilitado. */
-async function conductor(m: Mundo, nombre = 'Conductor') {
+// C-CASILLA-CON-SU-TIPO: los nombres llevan nombre y apellido, sin dígitos.
+const SUFIJOS = ['Alfa', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta'];
+async function conductor(m: Mundo, nombre = 'Conductor Prueba') {
   const c = await m.cuenta('repartidor', nombre);
   const admin = await m.cuenta('admin', 'Soporte Revisión');
   const v = id('veh');
@@ -152,8 +154,8 @@ async function pedidoComida(m: Mundo, clienteId: string, restauranteId: string) 
 
 async function escenario() {
   const m = mundo();
-  const cliente = await m.cuenta('cliente', 'Cliente');
-  const dueno = await m.cuenta('restaurante', 'Dueño');
+  const cliente = await m.cuenta('cliente', 'Cliente Prueba');
+  const dueno = await m.cuenta('restaurante', 'Dueño Prueba');
   const rest = id('rest');
   await q(
     m,
@@ -176,7 +178,7 @@ describe('Fase 3 · asignación atómica de operaciones', () => {
   it('dos conductores aceptan la misma operación a la vez: uno solo se la lleva', async () => {
     const { m, cliente } = await escenario();
     const conductores = await Promise.all(
-      Array.from({ length: 6 }, (_, i) => conductor(m, `Conductor ${i}`)),
+      Array.from({ length: 6 }, (_, i) => conductor(m, `Conductor ${SUFIJOS[i]}`)),
     );
     const op = await operacion(m, cliente.id);
     for (const c of conductores) await ofrecer(m, op, c);
@@ -372,8 +374,8 @@ describe('Fase 3 · exclusividad entre Comida y operaciones', () => {
 
   it('cancelar, soltar y reasignar liberan la ocupación como corresponde', async () => {
     const { m, cliente, rest } = await escenario();
-    const c = await conductor(m, 'Uno');
-    const d = await conductor(m, 'Dos');
+    const c = await conductor(m, 'Uno Prueba');
+    const d = await conductor(m, 'Dos Prueba');
     const ped = await pedidoComida(m, cliente.id, rest);
     await tomarComida(m, ped, c.id);
     await soltarPedido(m.DB, ped, c.id);
@@ -404,8 +406,8 @@ describe('Fase 3 · exclusividad entre Comida y operaciones', () => {
 
   it('un viaje: soltar, cancelar y terminar liberan al conductor; otro puede tomarlo', async () => {
     const { m, cliente } = await escenario();
-    const c = await conductor(m, 'Uno');
-    const d = await conductor(m, 'Dos');
+    const c = await conductor(m, 'Uno Prueba');
+    const d = await conductor(m, 'Dos Prueba');
     const op = await operacion(m, cliente.id);
     await ofrecer(m, op, c);
     await aceptarOperacion(m.DB, {
@@ -556,7 +558,8 @@ describe('Fase 3 · elegibilidad', () => {
       ],
     ];
     for (const [nombre, romper] of casos) {
-      const c = await conductor(m, nombre);
+      // C-CASILLA-CON-SU-TIPO: nombre y apellido, solo letras.
+      const c = await conductor(m, `Caso ${nombre.replace(/[^\p{L}]+/gu, ' ').trim()} Prueba`);
       const antes = await uno(
         m,
         "SELECT 1 FROM conductores_elegibles WHERE conductor_id = ? AND servicio_id = 'moto'",
@@ -601,8 +604,8 @@ describe('Fase 3 · despacho con tiempo real y recuperación', () => {
 
   it('pregunta al tiempo real por los más cercanos y, si falla, usa la base', async () => {
     const { m, cliente } = await escenario();
-    const lejos = await conductor(m, 'Lejos');
-    const cerca = await conductor(m, 'Cerca');
+    const lejos = await conductor(m, 'Lejos Prueba');
+    const cerca = await conductor(m, 'Cerca Prueba');
     const op = await operacion(m, cliente.id);
     const datos = { id: op, servicioId: 'moto', zonaId: ZONA, ...PUNTO };
     const conTR = await candidatosParaOperacion(envTR, m.DB, datos, (async () =>
@@ -806,8 +809,8 @@ describe('Fase 3 · migración y vuelta atrás', () => {
 
   it('con pedidos activos de antes, publicar deja el conteo exacto (y repetirlo no cambia nada)', async () => {
     const { m, cliente, rest } = await escenario();
-    const a = await conductor(m, 'Conductor A');
-    const b = await conductor(m, 'Conductor B');
+    const a = await conductor(m, 'Conductor Alfa');
+    const b = await conductor(m, 'Conductor Beta');
     // La base «de antes»: sin la tabla ni los disparadores de la Fase 3.
     for (const t of [
       'pedidos_ocupa_conductor',
@@ -856,7 +859,9 @@ describe('Fase 3 · migración y vuelta atrás', () => {
 describe('Fase 3 · miles de acciones al azar', () => {
   it('2.000 acciones mezcladas de Comida y viajes: nunca dos cosas a la vez, cero inconsistencias', async () => {
     const { m, cliente, rest } = await escenario();
-    const cs = await Promise.all(Array.from({ length: 5 }, (_, i) => conductor(m, `Azar ${i}`)));
+    const cs = await Promise.all(
+      Array.from({ length: 5 }, (_, i) => conductor(m, `Azar ${SUFIJOS[i]}`)),
+    );
     const ops = await Promise.all(Array.from({ length: 6 }, () => operacion(m, cliente.id)));
     const peds = await Promise.all(
       Array.from({ length: 8 }, () => pedidoComida(m, cliente.id, rest)),

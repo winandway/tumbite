@@ -129,11 +129,11 @@ export function EditorOpciones({
                 maxLength={60}
               />
               <Campo
+                tipo="monto"
                 etiqueta={`${t.precio} ${gi + 1}.${oi + 1}`}
                 value={o.precio}
                 onChangeText={(x) => enOpcion(gi, oi, { precio: x })}
                 placeholder={montoATexto(0, moneda)}
-                keyboardType="decimal-pad"
               />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ flex: 1 }}>{t.disponible}</Text>

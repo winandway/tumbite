@@ -354,8 +354,8 @@ describe('C-COMIDA-PAGO-RESTAURANTE: el cliente le paga la comida directo al res
 
   it('dos conductores a la vez: solo uno toma el pedido y el pago se pide una sola vez', async () => {
     const w = await mundoPago();
-    const a = await w.conductor('Conductor A');
-    const b = await w.conductor('Conductor B');
+    const a = await w.conductor('Conductor Alfa');
+    const b = await w.conductor('Conductor Beta');
     const p = await w.pedir();
     const id = p.datos.pedidoId as string;
     expect((await w.aceptarRest(id)).estado).toBe(200);

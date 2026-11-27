@@ -163,9 +163,9 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
 
   it('«excedente devuelto» en la bandeja de casos pasa por el control dual', async () => {
     const { m, pide } = await escenario();
-    const rep = await m.cuenta('repartidor', 'Repartidor');
-    const cli = await m.cuenta('cliente', 'Cliente');
-    const duenoId = (await m.cuenta('restaurante', 'Dueño')).id;
+    const rep = await m.cuenta('repartidor', 'Repartidor Prueba');
+    const cli = await m.cuenta('cliente', 'Cliente Prueba');
+    const duenoId = (await m.cuenta('restaurante', 'Dueño Prueba')).id;
     await m.DB.batch([
       m.DB.prepare(
         "INSERT INTO restaurantes (id, dueno_id, nombre) VALUES ('rx', ?, 'Sabor')",

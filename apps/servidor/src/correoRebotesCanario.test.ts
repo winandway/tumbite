@@ -15,7 +15,7 @@ import {
  */
 type Mundo = ReturnType<typeof mundo>;
 async function sembrar(m: Mundo, enlaces: number, rebotes: number) {
-  const usuario = await m.cuenta('cliente', 'Persona');
+  const usuario = await m.cuenta('cliente', 'Persona Prueba');
   for (let i = 0; i < enlaces; i++)
     await m.DB.prepare(
       "INSERT INTO confirmaciones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', '+2 days'))",

@@ -4,7 +4,13 @@
  * dicen los días y las horas, y el formulario del viaje fijo (borrador en texto ↔ cuerpo del
  * servidor). Las reglas de verdad las hace cumplir el servidor con `esquemaRutina`.
  */
-import { esquemaRutina, textoAMonto, TAMANOS_PAQUETE } from '@tumbite/compartido';
+import {
+  alEscribir,
+  errorCasilla,
+  esquemaRutina,
+  textoAMonto,
+  TAMANOS_PAQUETE,
+} from '@tumbite/compartido';
 
 export type VehiculoConfianza = {
   tipo: string;
@@ -282,14 +288,15 @@ export function cuerpoRutina(
   const vuelta = !envio && f.conVuelta ? f.horaVuelta : null;
   if (vuelta !== null && (!HORA.test(vuelta) || vuelta <= f.horaIda)) return no('horaVuelta');
   const menor = !envio && f.esMenor;
-  if (menor && f.menorNombre.trim().length < 2) return no('menorNombre');
+  if (menor && errorCasilla('nombre', f.menorNombre)) return no('menorNombre');
   if (menor && !/^\d{4}$/.test(f.pin)) return no('pin');
   let paquete: Record<string, unknown> | undefined;
   if (envio) {
     if (f.paqueteDescripcion.trim().length < 3) return no('paquete');
+    // C-CASILLA-CON-SU-TIPO: nombre sin números ni @ y celular solo con números.
     if (
-      f.destinatarioNombre.trim().length < 2 ||
-      f.destinatarioTelefono.replace(/\D/g, '').length < 7
+      errorCasilla('nombre', f.destinatarioNombre) ||
+      errorCasilla('celular', alEscribir('celular', f.destinatarioTelefono))
     )
       return no('destinatario');
     if (!f.sinProhibidos) return no('prohibidos');
