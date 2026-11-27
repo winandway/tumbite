@@ -165,10 +165,10 @@ Se cambió la contraseña de tu cuenta de Divoox y cerramos las sesiones que est
 
 Si fuiste tú, no tienes que hacer nada.
 
-Si no fuiste tú, escríbenos ya a soporte@divoox.com para proteger tu cuenta.
+Si no fuiste tú, escríbenos ya a soporte@windoce.com para proteger tu cuenta.
 
 El equipo de Divoox`,
-    sms: 'Divoox: se cambio la contrasena de tu cuenta. Si no fuiste tu, escribe ya a soporte@divoox.com',
+    sms: 'Divoox: se cambio la contrasena de tu cuenta. Si no fuiste tu, escribe ya a soporte@windoce.com',
   },
   en: {
     asunto: 'Your account password was changed',
@@ -178,10 +178,10 @@ The password of your Divoox account was changed and we signed out the sessions t
 
 If it was you, you don't need to do anything.
 
-If it wasn't you, write to us right away at support@divoox.com to protect your account.
+If it wasn't you, write to us right away at soporte@windoce.com to protect your account.
 
 The Divoox team`,
-    sms: 'Divoox: your account password was changed. If it was not you, write to support@divoox.com now',
+    sms: 'Divoox: your account password was changed. If it was not you, write to soporte@windoce.com now',
   },
 };
 

@@ -2624,18 +2624,21 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "es",
   "ruta": "account/password",
-  "titulo": "Olvidé mi contraseña",
-  "resumen": "Te mandamos un enlace al correo (sirve una vez y vence en 30 minutos) o, si tu correo todavía no está confirmado, un código a tu celular.",
+  "titulo": "Recupera tu cuenta por WhatsApp o correo",
+  "resumen": "Te mandamos un código de 6 números por WhatsApp (lo más rápido) o por correo. Vence en 5 minutos y sirve una sola vez.",
   "preguntas": [
    "¿Qué hago si olvidé mi contraseña?",
+   "¿Cómo recupero mi cuenta por WhatsApp?",
    "¿Cómo cambio mi contraseña?"
   ],
   "pasos": [
    "En la pantalla de entrar, toca «¿Olvidaste tu contraseña?».",
-   "Escribe tu correo y toca «Mandarme el enlace». Te llega un enlace (revisa también la carpeta de spam). Si ese correo no tiene cuenta, la página te dice «No hay ninguna cuenta con ese correo» y te ofrece «Crear cuenta»: revisa que esté bien escrito.",
-   "Toca el enlace y escribe tu contraseña nueva dos veces.",
-   "Si todavía no confirmaste tu correo, por seguridad no te mandamos el enlace: te mandamos un código de 6 números por WhatsApp o SMS a tu celular confirmado. Escríbelo en la misma página, debajo de «¿Te llegó un código al celular?», junto con tu contraseña nueva dos veces.",
-   "Listo. Por seguridad, se cierran todas las sesiones abiertas y entras de nuevo con la contraseña nueva."
+   "Toca «Con mi celular» o «Con mi correo» y escríbelo. Si es tu celular, elige primero el país.",
+   "Elige cómo recibir el código. «Por WhatsApp» es lo más rápido: el mensaje trae el botón «Copiar código». «Por correo» te sirve si estás fuera del país. Toca «Mandarme el código».",
+   "Escribe el código de 6 números y toca «Verificar el código». Vence en 5 minutos y sirve una sola vez.",
+   "¿No te llegó? Toca «Mándamelo por SMS» o «Mándamelo por correo». Nunca te quedas sin camino.",
+   "Si tu celular está en más de una cuenta (por ejemplo, la de cliente y la de Driver), elige cuál recuperar.",
+   "Escribe tu contraseña nueva dos veces y toca «Guardar contraseña». Cerramos las sesiones abiertas y te avisamos por tu otro canal que se cambió."
   ],
   "cuerpo": ""
  },
@@ -5427,18 +5430,21 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "en",
   "ruta": "account/password",
-  "titulo": "Forgot my password",
-  "resumen": "We email you a link (it works once and expires in 30 minutes) or, if your email isn’t confirmed yet, we send a code to your cell phone.",
+  "titulo": "Recover your account by WhatsApp or email",
+  "resumen": "We send you a 6-digit code by WhatsApp (the fastest way) or by email. It expires in 5 minutes and works only once.",
   "preguntas": [
    "What if I forgot my password?",
+   "How do I recover my account by WhatsApp?",
    "How do I change my password?"
   ],
   "pasos": [
    "On the sign-in screen, tap “Forgot your password?”",
-   "Enter your email and tap “Send me the link.” You get a link (check spam too). If that email has no account, the page says “There’s no account with that email” and offers “Create account”: check the spelling.",
-   "Tap the link and type your new password twice.",
-   "If you haven’t confirmed your email yet, for your safety we don’t send the link: we send a 6-digit code by WhatsApp or text to your confirmed cell phone. Enter it on the same page, under “Did you get a code on your phone?”, along with your new password twice.",
-   "Done. For safety, all open sessions are closed and you sign in again with the new password."
+   "Tap “With my cell phone” or “With my email” and enter it. For your cell phone, choose the country first.",
+   "Choose how to get the code. “By WhatsApp” is the fastest: the message comes with a “Copy code” button. “By email” is handy if you’re abroad. Tap “Send me the code.”",
+   "Enter the 6-digit code and tap “Verify the code.” It expires in 5 minutes and works only once.",
+   "Didn’t get it? Tap “Send it by text” or “Send it by email.” You’re never stuck.",
+   "If your cell phone is on more than one account (for example, your customer and your Driver accounts), choose which one to recover.",
+   "Enter your new password twice and tap “Save password.” We sign out the open sessions and let you know on your other channel that it changed."
   ],
   "cuerpo": ""
  },
