@@ -3,6 +3,7 @@ import { CIUDAD_EL_VIGIA as EVG, formatearMonto } from '@tumbite/compartido';
 import { conPermisoIaDelChat, mundo } from '../pruebas/ayuda';
 import { olvidarCacheTarifas } from '../rutas/tarifasWeb';
 import { sembrarTabuladorVigia } from '../semillaTabuladorVigia';
+import { sembrarLugaresVigia } from '../semillaLugaresVigia';
 import { DINERO_LO_VE_EL_EQUIPO, esCasoDeDinero } from './dinero';
 import {
   type Contexto,
@@ -183,6 +184,15 @@ describe('C-CAMILA-TARIFAS-DE-LA-BASE: el tabulador y la tarifa nocturna salen d
     expect(r.datos.respuesta).toContain(`KM 9: ida ${formatearMonto(dia, 'USD', 'es')} de día`);
     expect(r.datos.respuesta).toContain('Tarifa nocturna: 30 % más');
     expect(r.datos.respuesta).toContain('/es/city/el-vigia/prices');
+    // C-LUGARES-PROPIOS: los puntos de la hoja ya son reales; la prueba marca uno como dudoso.
+    // La semilla de lugares (que corrige los puntos) corre antes, para que no borre la marca.
+    await sembrarLugaresVigia(e.m.DB);
+    await e.m.DB.prepare(
+      "UPDATE rutas_precio_zona SET revisar = 1 WHERE zona_id = ? AND 'La Vega II' IN (hasta_nombre, desde_nombre)",
+    )
+      .bind(EVG.id)
+      .run();
+    olvidarCacheTarifas();
     const dudosa = await e.decir(pasajero.token, '¿Cuánto cuesta una moto hasta La Vega II?');
     expect(dudosa.datos.respuesta).not.toContain('La Vega II:');
   });

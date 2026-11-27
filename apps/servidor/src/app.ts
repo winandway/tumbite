@@ -139,6 +139,7 @@ import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { preciosZona } from './precioZona';
+import { lugaresPropios } from './lugaresPropios';
 import { viajesProgramados } from './rutas/viajesProgramados';
 import { viajesFijos } from './rutas/viajesFijos';
 import { chatViaje } from './rutas/chatViaje';
@@ -905,6 +906,7 @@ app.route('/datos', dinamicaViaje);
 app.route('/datos', viajesPasajero);
 // C-PRECIO-ZONA: las etiquetas de ruta del panel (precios fijos de la zona).
 app.route('/datos', preciosZona);
+app.route('/datos', lugaresPropios);
 app.route('/datos', comidaCiudad);
 app.route('/datos', pruebasComidaVe);
 app.route('/datos', seguridadViaje);

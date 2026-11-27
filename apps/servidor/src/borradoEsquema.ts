@@ -101,6 +101,8 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   tareas_programadas: 'sin_persona',
   // C-PRECIO-ZONA: precios fijos de la zona (configuración de la ciudad, la escribe el equipo).
   rutas_precio_zona: 'sin_persona',
+  // C-LUGARES-PROPIOS: los lugares de una ciudad son de la ciudad, no de quien los escribió.
+  lugares_propios: 'sin_persona',
   tarifas_viaje: 'sin_persona',
   tasas_cambio: 'sin_persona',
   tasas_modo: 'sin_persona',

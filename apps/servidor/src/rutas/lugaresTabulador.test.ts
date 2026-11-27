@@ -3,6 +3,7 @@ import { CIUDAD_EL_VIGIA as EVG } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
 import { sembrarTabuladorVigia } from '../semillaTabuladorVigia';
 import { PREFIJO_TABULADOR } from './lugares';
+import { vaciarCacheLugares } from '../lugaresPropios';
 
 /**
  * C-DESTINO-TABULADOR (26 nov 2026, robot de aceptación P2: en El Vigía «KM 9» traía lugares de
@@ -69,7 +70,10 @@ async function elVigia(extra: Record<string, unknown> = { GOOGLE_PLACES_KEY: LLA
 }
 
 describe('C-DESTINO-TABULADOR: los destinos del tabulador de su ciudad primero, y solo su país', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vaciarCacheLugares();
+  });
 
   it('el pasajero de El Vigía escribe «KM 9» sin ubicación: KM 9 del tabulador arriba, Google solo en Venezuela y cerca de El Vigía', async () => {
     const e = await elVigia();
@@ -96,6 +100,10 @@ describe('C-DESTINO-TABULADOR: los destinos del tabulador de su ciudad primero, 
 
   it('con la ubicación dentro de El Vigía (la web sin sesión) también; «kilómetro 9» es KM 9; y un punto «revisar» nunca sale', async () => {
     const e = await elVigia();
+    // Un punto todavía aproximado (el equipo lo marcó «revisar»): no se ofrece.
+    await e.m.DB.prepare(
+      "UPDATE rutas_precio_zona SET revisar = 1 WHERE hasta_nombre = 'La Vega II'",
+    ).run();
     const r = await e.buscar('kilómetro 9', undefined, `&lat=${EVG.lat}&lng=${EVG.lng}`);
     expect((r.datos.sugerencias as Sug[])[0]?.principal).toBe('KM 9');
     expect(e.cuerpos[0]).toMatchObject({ includedRegionCodes: ['ve'] });

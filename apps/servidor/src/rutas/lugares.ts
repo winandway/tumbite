@@ -5,6 +5,16 @@ import { type Variables, base, exigir } from '../sesion';
 import { partirDireccion, sinPlusCode } from '@tumbite/compartido';
 import { zonaPara } from './zonas';
 import { ErrorDatos } from '../validar';
+import {
+  PREFIJO_LUGAR_PROPIO,
+  PREFIJO_TABULADOR,
+  buscarEnCiudad,
+  lugaresDeLaCiudad,
+  puntoDeLugar,
+  sugerenciaDeLugar,
+} from '../lugaresPropios';
+
+export { PREFIJO_LUGAR_PROPIO, PREFIJO_TABULADOR };
 
 const idiomaDe = (c: { req: { header: (n: string) => string | undefined } }) =>
   (c.req.header('x-idioma') ?? 'es').startsWith('en') ? ('en' as const) : ('es' as const);
@@ -55,7 +65,9 @@ lugares.get('/lugares/sugerencias', async (c) => {
   // Dominicana y Bolivia): la ciudad de la persona, por dónde está o, si la pantalla no lo manda, por
   // la de su cuenta. Sus destinos del tabulador van primero, y Google busca solo en su país.
   const ciudad = await ciudadDeLaPersona(db, c.get('usuario')?.id ?? null, q.lat, q.lng);
-  const delTabulador = ciudad ? await destinosDelTabulador(db, ciudad, q.q, idiomaDe(c)) : [];
+  // C-LUGARES-PROPIOS: los lugares propios de SU ciudad (y las rutas del tabulador sin lugar propio),
+  // de la caché de la ciudad: buscar no escribe y casi nunca lee.
+  const delTabulador = ciudad ? await propiosDeLaCiudad(db, ciudad, q, idiomaDe(c)) : [];
   if (!c.env.GOOGLE_PLACES_KEY && delTabulador.length) return c.json({ sugerencias: delTabulador });
   const k = llave(c.env);
   // Con la ciudad de la persona, solo su país (la pantalla manda si trae el suyo: Flex).
@@ -144,24 +156,10 @@ lugares.get('/lugares/sugerencias', async (c) => {
 /** El punto exacto de una sugerencia elegida. */
 lugares.get('/lugares/punto/:id', async (c) => {
   const id = c.req.param('id');
-  // C-DESTINO-TABULADOR: un destino del tabulador trae su punto de la base, sin llamar a Google.
-  if (id.startsWith(PREFIJO_TABULADOR)) {
-    const f = await base(c)
-      .prepare(
-        'SELECT hasta_lat, hasta_lng, hasta_nombre, zona_id FROM rutas_precio_zona WHERE id = ? AND activa = 1 AND revisar = 0',
-      )
-      .bind(id.slice(PREFIJO_TABULADOR.length))
-      .first<{ hasta_lat: number; hasta_lng: number; hasta_nombre: string; zona_id: string }>();
-    if (!f) throw new ErrorDatos('Esa dirección no existe.', undefined, 404);
-    const z0 = await base(c)
-      .prepare('SELECT nombre FROM zonas WHERE id = ?')
-      .bind(f.zona_id)
-      .first<{ nombre: string }>();
-    return c.json({
-      punto: { lat: Number(f.hasta_lat), lng: Number(f.hasta_lng) },
-      direccion: z0 ? `${f.hasta_nombre}, ${z0.nombre}` : f.hasta_nombre,
-    });
-  }
+  // C-DESTINO-TABULADOR y C-LUGARES-PROPIOS: un lugar propio o un destino del tabulador trae su punto
+  // de la base, sin llamar a Google.
+  const propio = await puntoDeLugar(base(c), id);
+  if (propio) return c.json(propio);
   if (!/^[A-Za-z0-9_-]{10,300}$/.test(id))
     throw new ErrorDatos('Esa dirección no existe.', undefined, 404);
   const sesion = c.req.query('sesion');
@@ -193,17 +191,13 @@ lugares.get('/lugares/punto/:id', async (c) => {
   });
 });
 
-/** El id de una sugerencia del tabulador (no choca con los de Google, que no llevan «~»). */
-export const PREFIJO_TABULADOR = 'tab~';
-/** Cuántos destinos del tabulador van arriba como mucho. */
-export const TOPE_DESTINOS_TABULADOR = 3;
-
 type CiudadPersona = {
   id: string;
   nombre: string;
   pais: string;
   lat: number;
   lng: number;
+  zonaHoraria: string;
   /** La persona está dentro de esa ciudad ahora (no es solo la de su cuenta). */
   aqui?: boolean;
 };
@@ -220,13 +214,22 @@ async function ciudadDeLaPersona(
 ): Promise<CiudadPersona | null> {
   if (lat != null && lng != null) {
     const z = await zonaPara(db, lat, lng);
-    if (z) return { id: z.id, nombre: z.nombre, pais: z.pais, lat: z.lat, lng: z.lng, aqui: true };
+    if (z)
+      return {
+        id: z.id,
+        nombre: z.nombre,
+        pais: z.pais,
+        lat: z.lat,
+        lng: z.lng,
+        zonaHoraria: z.zonaHoraria,
+        aqui: true,
+      };
   }
   // Fuera de toda ciudad (o sin ubicación): la ciudad de su cuenta.
   if (!usuarioId) return null;
   return db
     .prepare(
-      `SELECT z.id, z.nombre, z.pais, z.lat, z.lng FROM usuarios u
+      `SELECT z.id, z.nombre, z.pais, z.lat, z.lng, z.zona_horaria AS zonaHoraria FROM usuarios u
          LEFT JOIN repartidores r ON r.usuario_id = u.id
          JOIN zonas z ON z.id = COALESCE(r.zona_id, u.zona_id) AND z.activa = 1
         WHERE u.id = ?`,
@@ -235,72 +238,21 @@ async function ciudadDeLaPersona(
     .first<CiudadPersona>();
 }
 
-/** «Kilómetro 9», «km9», «K.M. 9» → «km 9», sin acentos ni mayúsculas. */
-const llanoLugar = (t: string) =>
-  t
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9ñ]+/g, ' ')
-    .replace(/\bkilometros?\b/g, 'km')
-    .replace(/\bk m\b/g, 'km')
-    .replace(/\bkm(\d)/g, 'km $1')
-    .trim();
-
 /**
- * Los destinos del tabulador de esa ciudad que empiezan como lo escrito (cada palabra escrita es el
- * comienzo de una palabra del lugar, en orden): «km 9» → KM 9; «vega» → La Vega I. Una lectura con
- * el tope de la zona; no salen los apagados ni los marcados «revisar» (punto aproximado).
+ * C-LUGARES-PROPIOS: lo que casa con lo escrito entre los lugares de la ciudad (los propios y los del
+ * tabulador), el mejor primero, con su precio si la persona está donde empieza la ruta.
  */
-async function destinosDelTabulador(
+async function propiosDeLaCiudad(
   db: D1Database,
   ciudad: CiudadPersona,
-  texto: string,
+  q: { q: string; lat?: number | undefined; lng?: number | undefined },
   idioma: 'es' | 'en',
 ) {
-  const buscado = llanoLugar(texto).split(' ').filter(Boolean);
-  if (!buscado.length) return [];
-  const { results } = await db
-    .prepare(
-      `SELECT id, hasta_nombre, desde_nombre FROM rutas_precio_zona
-        WHERE zona_id = ? AND activa = 1 AND revisar = 0 ORDER BY precio, hasta_nombre LIMIT 200`,
-    )
-    .bind(ciudad.id)
-    .all<{ id: string; hasta_nombre: string; desde_nombre: string | null }>();
-  const casa = (nombre: string) => {
-    // Cada palabra escrita, en orden, es el comienzo de una palabra del lugar.
-    let resto = llanoLugar(nombre).split(' ');
-    for (const b of buscado) {
-      const donde = resto.findIndex((p) => p.startsWith(b));
-      if (donde < 0) return false;
-      resto = resto.slice(donde + 1);
-    }
-    return true;
-  };
-  const vistos = new Set<string>();
-  const salida: { id: string; texto: string; principal: string; secundario: string }[] = [];
-  for (const f of results) {
-    const llave = llanoLugar(f.hasta_nombre);
-    if (vistos.has(llave) || !casa(f.hasta_nombre)) continue;
-    vistos.add(llave);
-    salida.push({
-      id: `${PREFIJO_TABULADOR}${f.id}`,
-      texto: `${f.hasta_nombre}, ${ciudad.nombre}`,
-      principal: f.hasta_nombre,
-      secundario:
-        idioma === 'en'
-          ? `${ciudad.nombre} · Local fixed price`
-          : `${ciudad.nombre} · Precio de la zona`,
-    });
-  }
-  // El que se escribió entero va primero («km 9» antes que «KM 90»).
-  const exacto = llanoLugar(texto);
-  return salida
-    .sort(
-      (a, b) =>
-        Number(llanoLugar(b.principal) === exacto) - Number(llanoLugar(a.principal) === exacto),
-    )
-    .slice(0, TOPE_DESTINOS_TABULADOR);
+  const { lista, noche } = await lugaresDeLaCiudad(db, ciudad.id);
+  const donde = q.lat != null && q.lng != null ? { lat: q.lat, lng: q.lng } : null;
+  return buscarEnCiudad(lista, q.q).map((l) =>
+    sugerenciaDeLugar(l, ciudad, noche, { idioma, donde }),
+  );
 }
 
 /** ¿Está encendida la búsqueda? (las pantallas muestran el buscador solo si sí). */

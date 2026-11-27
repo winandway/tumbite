@@ -18,6 +18,7 @@ import { menuPorUso, verificacionUnica } from './activacion';
 import { fichaConductor } from './fichaConductor';
 import { whatsappFalta } from './whatsappFalta';
 import { esperaCiudad } from './esperaCiudad';
+import { lugaresCiudad } from './lugaresCiudad';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -3596,6 +3597,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(saldoClientes),
         de(saldoRestaurantes),
         de(quienPagaViajes),
+        // Lugares propios de tu ciudad (Viajes · Emergencias y tarifas).
+        de(lugaresCiudad),
         de(comidaQuienPaga),
         de(primerRestauranteVe),
         de(abrirPeru),

@@ -15,7 +15,7 @@ describe('C-DIRECCION-SUGERENCIAS: toda casilla de dirección sugiere direccione
     );
   });
 
-  it('pide sugerencias desde 3 letras, y al elegir trae el punto exacto', async () => {
+  it('pide sugerencias desde la segunda letra (una sola no), y al elegir trae el punto exacto', async () => {
     const pedir = vi.fn(async (_m: string, ruta: string) =>
       ruta.includes('/sugerencias')
         ? { sugerencias: [{ id: 'ChIJ1', texto: '30080 Montmorency Dr, Miami' }] }
@@ -24,7 +24,7 @@ describe('C-DIRECCION-SUGERENCIAS: toda casilla de dirección sugiere direccione
     const { result } = renderHook(() =>
       useSugerenciasDireccion({ pedir: pedir as never, pais: null }),
     );
-    act(() => result.current.buscar('30'));
+    act(() => result.current.buscar('3'));
     await new Promise((r) => setTimeout(r, 350));
     expect(pedir).not.toHaveBeenCalled();
     act(() => result.current.buscar('30080 Montmor'));

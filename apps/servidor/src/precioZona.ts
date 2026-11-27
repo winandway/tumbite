@@ -19,6 +19,7 @@ import { quienPagaViaje } from './finanzas/quienPaga';
 import { servicioFinancieroViaje } from './finanzas/conductor';
 import { politicaVigente } from './finanzas/politicas';
 import { filaATarifa, tarifaActiva } from './rutas/viajesPasajero';
+import { olvidarLugaresDe } from './lugaresPropios';
 
 /**
  * C-PRECIO-ZONA (24 nov 2026, Richard): «etiquetas de ruta». En los pueblos la gente cobra un precio
@@ -366,6 +367,8 @@ preciosZona.post('/admin/viajes/precios-zona', async (c) => {
     .prepare('SELECT * FROM rutas_precio_zona WHERE id = ?')
     .bind(id)
     .first<FilaRutaPrecio>();
+  // C-LUGARES-PROPIOS: el buscador de destino de este servidor vuelve a leer la ciudad.
+  olvidarLugaresDe(zona.id);
   return c.json({ ruta: f ? rutaPublica(f) : null }, 201);
 });
 
@@ -432,6 +435,8 @@ preciosZona.put('/admin/viajes/precios-zona/:id', async (c) => {
       ),
     auditoria(db, admin.id, 'viaje.precio_zona.editar', antes.id, rutaPublica(antes), d),
   ]);
+  olvidarLugaresDe(antes.zona_id);
+  olvidarLugaresDe(zona.id);
   const f = await rutaExistente(db, antes.id);
   return c.json({ ruta: rutaPublica(f) });
 });
@@ -452,5 +457,6 @@ preciosZona.post('/admin/viajes/precios-zona/:id/apagar', async (c) => {
         activa: false,
       }),
     ]);
+  olvidarLugaresDe(antes.zona_id);
   return c.json({ ruta: rutaPublica(await rutaExistente(db, antes.id)) });
 });

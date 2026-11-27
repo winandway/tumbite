@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { CIUDAD_EL_VIGIA as EVG } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
 import { sembrarTabuladorVigia } from '../semillaTabuladorVigia';
+import { sembrarLugaresVigia } from '../semillaLugaresVigia';
 import { olvidarCacheTarifas } from './tarifasWeb';
 
 /**
@@ -86,6 +87,16 @@ describe('C-TARIFAS-PUBLICAS: los precios de El Vigía salen de la base', () => 
 
   it('por vía, con el precio de día y de noche que paga el pasajero, sin ids ni lo interno', async () => {
     const { m } = await elVigia();
+    // C-LUGARES-PROPIOS: los 83 puntos de la hoja ya son reales; para probar que un punto dudoso
+    // no se publica, la prueba marca dos como «revisar».
+    // La semilla de lugares (que corrige los puntos) corre antes, para que no borre la marca.
+    await sembrarLugaresVigia(m.DB);
+    await m.DB.prepare(
+      "UPDATE rutas_precio_zona SET revisar = 1 WHERE zona_id = ? AND (hasta_nombre IN ('La Vega II', 'Pedeca') OR desde_nombre IN ('La Vega II', 'Pedeca'))",
+    )
+      .bind(EVG.id)
+      .run();
+    olvidarCacheTarifas();
     const r = await m.llamar('GET', '/datos/web/tarifas/el-vigia');
     expect(r.estado, JSON.stringify(r.datos)).toBe(200);
     expect(r.datos.moneda).toBe('USD');

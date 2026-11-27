@@ -262,6 +262,12 @@ describe('C-TABULADOR-VIGIA: la semilla de El Vigía', () => {
   it('corregir el punto (o «marcar como revisado») desmarca «revisar»; cambiar solo el precio, no', async () => {
     const e = await escenario();
     await sembrarTabuladorVigia(e.m.DB);
+    // C-LUGARES-PROPIOS: los 83 puntos ya son reales; la prueba marca tres como «revisar».
+    await e.m.DB.prepare(
+      "UPDATE rutas_precio_zona SET revisar = 1 WHERE zona_id = ? AND hasta_nombre IN ('La Vega II', 'Pedeca', 'Caño Frío')",
+    )
+      .bind(EVG.id)
+      .run();
     const lista = async () =>
       (
         await e.m.llamar(

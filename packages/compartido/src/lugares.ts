@@ -29,8 +29,8 @@ export function limpiarSugerencia(x: SugerenciaDireccion): SugerenciaDireccion {
 export type DireccionElegida = { punto: { lat: number; lng: number }; direccion: string };
 export type PedirLugares = <R>(metodo: 'GET', ruta: string) => Promise<R>;
 
-/** Lo mínimo para pedir sugerencias: 3 letras. */
-export const MINIMO_SUGERENCIAS = 3;
+/** Lo mínimo para pedir sugerencias: 2 letras (el buscador serio: desde la segunda letra). */
+export const MINIMO_SUGERENCIAS = 2;
 const ESPERA_MS = 300;
 /**
  * C-DESTINO-RESULTADOS: tope diario de búsquedas del mapa por teléfono (además de los topes del

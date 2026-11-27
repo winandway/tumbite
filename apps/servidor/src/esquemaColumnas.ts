@@ -2006,6 +2006,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "actualizada_por",
     "actualizada_en"
   ],
+  "lugares_propios": [
+    "id",
+    "zona_id",
+    "nombre",
+    "otros_nombres",
+    "lat",
+    "lng",
+    "ruta_id",
+    "activo",
+    "creado_por",
+    "creado_en",
+    "actualizado_por",
+    "actualizado_en"
+  ],
   "cotizaciones_viaje": [
     "id",
     "cliente_id",
