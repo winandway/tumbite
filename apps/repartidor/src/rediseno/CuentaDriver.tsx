@@ -19,6 +19,7 @@ export type DestinoCuenta =
   | 'turnos'
   | 'clientesFijos'
   | 'miEquipo'
+  | 'puntosPorMedir'
   | 'calificaciones'
   | 'asiTeVen'
   | 'seguridad'
@@ -103,6 +104,7 @@ export function CuentaDriver({
   papelesPendientes,
   alPapeles,
   alIr,
+  puntosPorMedir = null,
 }: {
   idioma: Idioma;
   cambiarIdioma: (i: Idioma) => void;
@@ -113,6 +115,8 @@ export function CuentaDriver({
   papelesPendientes: number;
   alPapeles: () => void;
   alIr: (v: DestinoCuenta) => void;
+  /** C-ESTOY-AQUI: con una tarea de medición asignada, cuántos lugares le faltan (null = sin tarea). */
+  puntosPorMedir?: number | null;
 }) {
   const t = idioma === 'en' ? T.en : T.es;
   const { salir } = useSesion();
@@ -170,6 +174,19 @@ export function CuentaDriver({
             alTocar={() => alIr('miRuta')}
             testID="cuenta-mi-ruta"
           />
+          {puntosPorMedir != null ? (
+            <FilaDriver
+              icono="locate-outline"
+              titulo={idioma === 'en' ? 'Points to measure' : 'Puntos por medir'}
+              detalle={
+                idioma === 'en'
+                  ? `${puntosPorMedir} ${puntosPorMedir === 1 ? 'place' : 'places'} to check on the street`
+                  : `${puntosPorMedir} ${puntosPorMedir === 1 ? 'lugar' : 'lugares'} por confirmar en la calle`
+              }
+              alTocar={() => alIr('puntosPorMedir')}
+              testID="cuenta-puntos-por-medir"
+            />
+          ) : null}
           <FilaDriver
             icono="calendar-outline"
             titulo={t.turnos}

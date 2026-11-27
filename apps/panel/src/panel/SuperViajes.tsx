@@ -18,6 +18,7 @@ import { Hora } from './horario';
 import { PestanasViajes } from './SuperViajesFijos';
 import { PreciosZona } from './PreciosZona';
 import { LugaresPropios } from './LugaresPropios';
+import { MedicionesLugares } from './MedicionesLugares';
 
 const T = {
   es: {
@@ -726,6 +727,15 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
         monedaDe={(zona) => datos?.tarifas.find((x) => x.zona === zona)?.moneda ?? 'USD'}
       />
       <LugaresPropios
+        idioma={idioma}
+        zonas={[
+          ...new Map(
+            (datos?.tarifas ?? []).map((x) => [x.zona, { id: x.zona, nombre: x.zonaNombre }]),
+          ).values(),
+        ]}
+      />
+      {/* C-ESTOY-AQUI: medir los lugares propios en la calle con Driver y aprobar cada medición. */}
+      <MedicionesLugares
         idioma={idioma}
         zonas={[
           ...new Map(

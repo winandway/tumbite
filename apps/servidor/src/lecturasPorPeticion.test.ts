@@ -425,7 +425,8 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // +1 (26 nov 2026, C-SALDO-LOTES): la marca de la pasada de los saldos a lotes en `config`.
       // +2 (27 nov 2026, C-HABILITAR-IGUAL-LETRERO): al aprobar una habilitación, el disparador mira
       // también si el conductor está dentro de su plazo (su fila de `plazo_papeles`).
-      ['f1', 522 + 2 * objetosEsquema],
+      // +1 (27 nov 2026, C-TRES-FOTOS): borrar la cuenta borra también sus fotos de medición.
+      ['f1', 523 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
       // +11 (22 nov 2026, C-RASTRO): cada vehículo nuevo deja el paso «vehículo» del registro (una lectura).

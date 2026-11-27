@@ -2284,6 +2284,45 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa dirección no existe.', 'That address doesn’t exist.'],
   ['Ese lugar no existe.', 'That place doesn’t exist.'],
+  ['Esa tarea de medición no existe.', 'That measuring task doesn’t exist.'],
+  ['Elige solo cuentas de conductor activas.', 'Choose active driver accounts only.'],
+  ['Todos los lugares tienen que ser de esta ciudad.', 'Every place has to be in this city.'],
+  ['Esta tarea ya está cerrada.', 'This task is already closed.'],
+  ['Esa medición no existe.', 'That measurement doesn’t exist.'],
+  ['Esta medición ya se revisó.', 'This measurement was already reviewed.'],
+  ['Un lugar no cambia de ciudad.', 'A place never changes city.'],
+  [
+    'Esta medición no tiene la precisión mínima.',
+    'This measurement doesn’t meet the minimum accuracy.',
+  ],
+  [
+    'El lugar cambió desde que se tomó esta medición. Recházala y pide medirlo otra vez.',
+    'The place changed after this measurement was taken. Reject it and ask for a new one.',
+  ],
+  ['Esta medición no tiene foto.', 'This measurement has no photo.'],
+  [
+    'Esta tarea ya se cerró. Gracias por tu ayuda.',
+    'This task is already closed. Thanks for your help.',
+  ],
+  ['Ese lugar no está en esta tarea.', 'That place isn’t in this task.'],
+  [
+    'La foto llegó sin tu ubicación. Activa la ubicación y tómala otra vez.',
+    'The photo arrived without your location. Turn on location and take it again.',
+  ],
+  [
+    'Esa foto es vieja. Tómala otra vez en el lugar.',
+    'That photo is old. Take it again at the place.',
+  ],
+  ['Toma la foto en el lugar que mediste.', 'Take the photo at the place you measured.'],
+  ['Esa foto no existe.', 'That photo doesn’t exist.'],
+  [
+    'La hora de tu teléfono no está bien. Corrígela y vuelve a intentar.',
+    'Your phone’s time is wrong. Fix it and try again.',
+  ],
+  [
+    'Esa ubicación es vieja. Toca «Estoy aquí» otra vez.',
+    'That location is old. Tap «I’m here» again.',
+  ],
   // C-LUGARES-PROPIOS (27 nov 2026): los lugares propios de cada ciudad.
   [
     'Ese precio del tabulador no es de esta ciudad.',
@@ -2550,6 +2589,21 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  // C-ESTOY-AQUI: la precisión del GPS y la distancia al lugar al medir.
+  [
+    /^El GPS todavía no es preciso \((\d+) m\)\. Espera unos segundos al aire libre o acércate más, hasta (\d+) m o menos\.$/,
+    (m) =>
+      `Your GPS isn’t accurate yet (${m[1]} m). Wait a few seconds outdoors or move closer, to ${m[2]} m or less.`,
+  ],
+  [
+    /^Estás a ([\d.,]+ k?m) de «(.+)»\. Toca «Estoy aquí» cuando llegues al lugar\.$/,
+    (m) => `You’re ${m[1]!.replace(',', '.')} from «${m[2]}». Tap «I’m here» when you get there.`,
+  ],
+  [
+    /^La medición queda a más de (\d+) km del lugar\. Si de verdad está allá, cámbialo a mano en «Lugares propios»\.$/,
+    (m) =>
+      `The measurement is more than ${m[1]} km from the place. If it really is there, change it by hand in «Own places».`,
+  ],
   // C-TELEFONO-TOPES: la espera creciente entre códigos.
   [
     /^Espera (\d+) segundos para pedir otro código\.$/,

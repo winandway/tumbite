@@ -379,14 +379,14 @@ async function zonaPanel(db: D1Database, id: string) {
   return z0;
 }
 
-type RutaAtada = {
+export type RutaAtada = {
   id: string;
   zona_id: string;
   servicio_id: string;
   hasta_lat: number;
   hasta_lng: number;
 };
-async function rutaDeLaCiudad(db: D1Database, rutaId: string | null, zona: string) {
+export async function rutaDeLaCiudad(db: D1Database, rutaId: string | null, zona: string) {
   if (!rutaId) return null;
   const r = await db
     .prepare(
@@ -426,7 +426,7 @@ async function exigirNombreLibre(
   }
 }
 
-function auditoria(
+export function auditoria(
   db: D1Database,
   actor: string,
   accion: string,
@@ -445,7 +445,7 @@ function auditoria(
  * Mover el punto de la ruta atada (y el de su regreso: la ruta que sale de ese mismo punto). Corregir
  * el punto en el mapa desmarca «revisar», como en Precios de la zona.
  */
-function moverRuta(
+export function moverRuta(
   db: D1Database,
   admin: string,
   ruta: RutaAtada,
@@ -485,7 +485,7 @@ function moverRuta(
   ];
 }
 
-const leerLugar = async (db: D1Database, id: string) => {
+export const leerLugar = async (db: D1Database, id: string) => {
   const f = await db
     .prepare('SELECT * FROM lugares_propios WHERE id = ?')
     .bind(id)

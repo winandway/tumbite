@@ -103,6 +103,9 @@ export const TABLAS_QUE_SE_CONSERVAN: Record<string, MotivoConservar> = {
   rutas_precio_zona: 'sin_persona',
   // C-LUGARES-PROPIOS: los lugares de una ciudad son de la ciudad, no de quien los escribió.
   lugares_propios: 'sin_persona',
+  // C-ESTOY-AQUI: las tareas de medición son trabajo del equipo sobre los lugares de la ciudad.
+  mediciones_tareas: 'equipo',
+  mediciones_tarea_lugares: 'sin_persona',
   tarifas_viaje: 'sin_persona',
   tasas_cambio: 'sin_persona',
   tasas_modo: 'sin_persona',

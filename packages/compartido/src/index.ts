@@ -58,6 +58,7 @@ export * from './motivosCancelacion';
 export * from './mapas';
 export * from './flexCobro';
 export * from './lugares';
+export * from './medicionLugares';
 export * from './tiendas';
 export * from './entregaMostrada';
 export * from './programado';

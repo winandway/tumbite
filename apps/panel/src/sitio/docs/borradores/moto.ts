@@ -26,11 +26,13 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
           'Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa.',
           'Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta.',
+          'Si tu recogida o tu destino es un lugar conocido de la ciudad que el equipo de Divoox ya confirmó en la calle, en tu viaje aparece «Así se ve el lugar» con tres fotos: la entrada, el letrero y la vista desde la calle. Toca cualquiera para verla en grande y reconocer el punto al llegar.',
         ],
         preguntas: [
           '¿Cómo pido una moto?',
           '¿El precio puede cambiar?',
           '¿Para qué sirve el código del viaje?',
+          '¿Qué es «Así se ve el lugar»?',
         ],
         pasos: [
           'Abre Divoox y toca «Moto».',
@@ -249,11 +251,13 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'The price is upfront: you see it before you request and it doesn’t change with traffic. In the United States the price is in US dollars, and the app shows it next to the distance and the time of your ride, so you know what you’ll pay before you get on.',
           'When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map.',
           'To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person.',
+          'If your pickup or destination is a well-known place in the city that the Divoox team already checked on the street, your ride shows «What the place looks like» with three photos: the entrance, the sign and the view from the street. Tap any of them to see it full size and recognize the spot when you get there.',
         ],
         preguntas: [
           'How do I request a motorcycle ride?',
           'Can the price change?',
           'What is the ride code for?',
+          'What is «What the place looks like»?',
         ],
         pasos: [
           'Open Divoox and tap “Moto”.',
@@ -547,6 +551,13 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
         'La oferta que recibe el conductor con su ganancia, la distancia, la recogida y el destino.',
         'Tu conductor recibe el viaje con la ruta completa.',
       ),
+      // C-FOTOS-PUBLICAS: tomada con scripts/recorrido/capturas-estoy-aqui.mjs (ciudad de ejemplo).
+      foto(
+        'lugar-fotos',
+        'es',
+        'El viaje en curso con el destino Plaza de Ejemplo y debajo «Así se ve el lugar» con tres fotos: entrada o fachada, letrero o algo reconocible y vista desde la calle.',
+        'Si el destino es un lugar confirmado, ves cómo se ve. El lugar de la imagen es de ejemplo.',
+      ),
     ],
     'ride-moto-pago': [
       foto(
@@ -728,6 +739,13 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
         'en',
         'The offer the driver gets, with earnings, distance, pickup and destination.',
         'Your driver gets the ride with the full route.',
+      ),
+      // C-FOTOS-PUBLICAS: taken with scripts/recorrido/capturas-estoy-aqui.mjs (example city).
+      foto(
+        'lugar-fotos',
+        'en',
+        'The ride in progress with the destination Example Plaza and, below it, «What the place looks like» with three photos: entrance or front, sign or a landmark and view from the street.',
+        'If the destination is a checked place, you see what it looks like. The place in the image is an example.',
       ),
     ],
     'ride-moto-pago': [

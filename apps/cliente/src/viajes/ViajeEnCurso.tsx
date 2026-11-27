@@ -31,6 +31,7 @@ import {
   InicialConductor,
   LETRA,
   PerfilConductor,
+  AsiSeVeElLugar,
 } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
@@ -789,8 +790,15 @@ export function ViajeEnCurso({
         <Tarjeta>
           <Text style={{ color: '#666B73', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
           <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
+          {/* C-FOTOS-PUBLICAS: «Así se ve el lugar» si la recogida o el destino es un lugar propio medido. */}
+          {viaje.estado === 'asignado' || viaje.estado === 'conductor_llego' ? (
+            <AsiSeVeElLugar punto={viaje.origen} idioma={idioma} testID="asi-se-ve-recogida" />
+          ) : null}
           <Text style={{ color: '#666B73', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
           <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.destino.direccion}</Text>
+          {viaje.estado !== 'terminado' ? (
+            <AsiSeVeElLugar punto={viaje.destino} idioma={idioma} testID="asi-se-ve-destino" />
+          ) : null}
           {/* C-PRECIO-CON-REGALO: el precio tachado, el regalo en verde y lo que se paga de verdad. */}
           <PrecioDelViaje
             etiqueta={
