@@ -60,10 +60,11 @@ export const LAMINAS = [
     carpeta: 'Divoox Restaurants (restaurante)',
     paquete: 'com.windoce.tumbite.restaurants',
     nombre: 'Divoox Merchant',
-    etiqueta: ['FOR BUSINESSES', 'PARA COMERCIOS'],
+    // Divoox Merchant (27 nov 2026): la app de todos los comercios, texto aprobado por Gerencia.
+    etiqueta: ['FOR BUSINESSES', 'PARA NEGOCIOS'],
     resalte: '#F20D20',
     rotulo: '#F20D20',
-    frase: ['Orders for *your business*', 'Pedidos para *tu comercio*'],
+    frase: ['Sell more, *right from your store*', 'Vende más, *sin salir de tu local*'],
   },
 ];
 
