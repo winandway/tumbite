@@ -18,6 +18,7 @@ import {
 } from '../cuentaUnica';
 import { z } from 'zod';
 import { zAnioVehiculoOVacio, zPlaca } from '@tumbite/compartido';
+import { vehiculoDesdeDatosReparto } from '../vehiculoDeReparto';
 import {
   correoCanonico,
   diasRestantes,
@@ -199,7 +200,16 @@ superadmin.put('/repartidor/datos', async (c) => {
       d.seguroVence || null,
     )
     .run();
-  return c.json({ ok: true });
+  // C-VEHICULO-DE-REPARTO: sin ningún vehículo real, lo escrito aquí se vuelve su vehículo (antes se
+  // quedaba solo en estos datos y el panel decía «todavía no registra ninguno»).
+  let vehiculoId: string | null = null;
+  try {
+    vehiculoId = await vehiculoDesdeDatosReparto(base(c), u.id, d);
+  } catch (e) {
+    // Lo de arriba ya quedó guardado; el vehículo se pide después en «Agrega tu vehículo».
+    console.error('datos de reparto: no se pudo crear el vehículo real', u.id, e);
+  }
+  return c.json({ ok: true, vehiculoId });
 });
 
 // ───────────────────────── El restaurante: su empresa ─────────────────────────

@@ -41,6 +41,10 @@ import { INDICES_LUGAR, LUGAR_COLUMNAS } from './esquemaLugar';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
 import {
+  SQL_CANDIDATOS_VEHICULOS_DE_REPARTO,
+  repararVehiculosDeReparto,
+} from './vehiculoDeReparto';
+import {
   CLAVE_SEMILLA_TABULADOR_VIGIA,
   ZONA_TABULADOR_VIGIA,
   leerMarcaSemilla,
@@ -844,6 +848,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         SQL_CANDIDATOS_LLEGA_SOLO,
         String(repararVehiculoActivo),
         SQL_CANDIDATOS_VEHICULO_ACTIVO,
+        String(repararVehiculosDeReparto),
+        SQL_CANDIDATOS_VEHICULOS_DE_REPARTO,
         String(repararServiciosVehiculo),
         SQL_CANDIDATOS_SERVICIOS_VEHICULO,
         DISPARADORES_RASTRO,
@@ -1025,6 +1031,11 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-VEHICULO-ACTIVO-SOLO: una sola vez, el único vehículo aprobado queda activo.
   await repararVehiculoActivo(db).catch((e: unknown) =>
     console.error('esquema: la reparación «vehículo activo» falló', e),
+  );
+  // C-VEHICULO-DE-REPARTO: una sola vez, el vehículo escrito en «Datos para Comida y Envíos» de quien
+  // no tenía ninguno real se vuelve su vehículo (el caso de Richard, 27 nov 2026).
+  await repararVehiculosDeReparto(db).catch((e: unknown) =>
+    console.error('esquema: la reparación «vehículos de reparto» falló', e),
   );
   // C-SERVICIOS-DEL-VEHICULO: una sola vez, Envíos encendido a quien su vehículo ya se lo permite.
   // Después de la anterior: usa el vehículo que esa dejó en uso.
