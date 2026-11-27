@@ -1,15 +1,15 @@
 {
   "merida:La Vega II": {
-    "lat": 8.6,
-    "lng": -71.626,
-    "revisar": true,
-    "motivo": "Google no tiene La Vega II: punto aproximado cerca del peaje (mismo precio)"
+    "lat": 8.59972,
+    "lng": -71.62904,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): sobre la vía a Mérida entre La Vega I y el peaje, a mitad del tramo (mismo precio que el peaje)"
   },
   "merida:Alcabala La Victoria": {
-    "lat": 8.45,
-    "lng": -71.6,
-    "revisar": true,
-    "motivo": "centro aproximado del sector La Victoria, no la alcabala"
+    "lat": 8.42462,
+    "lng": -71.60396,
+    "fuente": "Google",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Punto de Control GNB «La Victoria», Troncal 7"
   },
   "merida:La Providencia": {
     "lat": 8.4814,
@@ -18,16 +18,16 @@
     "motivo": "escuela La Providencia, al lado de Mesa Bolívar (mismo precio)"
   },
   "zulia:Pedeca": {
-    "lat": 8.638,
-    "lng": -71.663,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado sobre la vía, antes de Parque Chama"
+    "lat": 8.63957,
+    "lng": -71.66548,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): sobre la vía al Zulia, a mitad del tramo entre el casco y Parque Chama"
   },
   "zulia:Caño Frío": {
-    "lat": 8.645,
-    "lng": -71.67,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado sobre la vía, cerca de Parque Chama"
+    "lat": 8.6648,
+    "lng": -71.65888,
+    "fuente": "OpenStreetMap",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Parcelamiento Caño Frío, Los Pozones"
   },
   "zulia:Alcabala Vera Agua": {
     "lat": 8.709,
@@ -35,10 +35,10 @@
     "motivo": "pueblo Vera de Agua (la alcabala está a su entrada)"
   },
   "zulia:Cañito": {
-    "lat": 8.685,
-    "lng": -71.69,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado sobre la vía, antes de Vera de Agua"
+    "lat": 8.68102,
+    "lng": -71.70345,
+    "fuente": "Google",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Los Cañitos, vía al Zulia antes de Vera de Agua"
   },
   "zulia:Caracolí": {
     "lat": 8.7629,
@@ -46,10 +46,10 @@
     "motivo": "Caracolí, Zulia (segundo resultado de Google)"
   },
   "zulia:KM 35": {
-    "lat": 8.84,
-    "lng": -71.85,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado a unos 35 km por la vía a Santa Bárbara"
+    "lat": 8.74786,
+    "lng": -71.78278,
+    "fuente": "OpenStreetMap",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Kilómetro 35, parroquia Moralito (Zulia)"
   },
   "zulia:Encontrado": {
     "lat": 9.0634,
@@ -57,46 +57,46 @@
     "motivo": "Plaza Bolívar de Encontrados"
   },
   "tachira:Carlos Andrés": {
-    "lat": 8.575,
-    "lng": -71.705,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado pasando Onia, vía a Los Giros"
+    "lat": 8.56393,
+    "lng": -71.71252,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): vía a Los Giros pasando Onia, a la distancia de su precio"
   },
   "tachira:Culebria": {
-    "lat": 8.5,
-    "lng": -71.72,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado en la vía a Los Giros"
+    "lat": 8.50023,
+    "lng": -71.72806,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): vía a Los Giros, a la distancia de su precio (cerca del río Culebrilla)"
   },
   "tachira:KM 12": {
-    "lat": 8.588,
-    "lng": -71.735,
-    "revisar": true,
-    "motivo": "punto aproximado sobre la Troncal 1, pasando el kilómetro 9"
+    "lat": 8.59547,
+    "lng": -71.74827,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Troncal 1, tres kilómetros después del KM 9 (que está a 9,9 km por carretera)"
   },
   "tachira:KM 15": {
-    "lat": 8.575,
-    "lng": -71.752,
-    "revisar": true,
-    "motivo": "punto aproximado sobre la Troncal 1, antes del peaje de Zea"
+    "lat": 8.57858,
+    "lng": -71.76742,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Troncal 1, seis kilómetros después del KM 9"
   },
   "tachira:El Puerto": {
-    "lat": 8.13,
-    "lng": -72.26,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado entre La Fría y San Juan de Colón"
+    "lat": 8.15181,
+    "lng": -72.23756,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): vía La Fría a San Juan de Colón, a la distancia de su precio"
   },
   "tachira:Aguas Clara": {
-    "lat": 8.07,
-    "lng": -72.28,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado cerca de San Juan de Colón (mismo precio)"
+    "lat": 8.06918,
+    "lng": -72.24918,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): vía La Fría a San Juan de Colón, antes de San Juan de Colón"
   },
   "panamericana:Aroa I": {
-    "lat": 8.65,
-    "lng": -71.625,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado pasando Aroa II"
+    "lat": 8.648937,
+    "lng": -71.633224,
+    "fuente": "Google",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Hacienda Aroa, La Blanca (Aroa II queda 1,2 km antes)"
   },
   "panamericana:Los Naranjos": {
     "lat": 8.7421,
@@ -104,16 +104,16 @@
     "motivo": "Los Naranjos, Zulia (vía Los Naranjos desde La Blanca)"
   },
   "panamericana:El Chivo": {
-    "lat": 8.95,
-    "lng": -71.65,
-    "revisar": true,
-    "motivo": "centro aproximado de Pueblo Nuevo-El Chivo (Google da un punto redondeado)"
+    "lat": 8.96148,
+    "lng": -71.60821,
+    "fuente": "OpenStreetMap",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Pueblo Nuevo - El Chivo (Zulia)"
   },
   "panamericana:Los Robles": {
-    "lat": 8.6419,
-    "lng": -71.6146,
-    "revisar": true,
-    "motivo": "una finca llamada Los Robles en Caño Seco; confirmar el sector"
+    "lat": 8.64185,
+    "lng": -71.61464,
+    "fuente": "Google",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Los Robles, avenida principal de Caño Seco, La Blanca"
   },
   "panamericana:Las Delicias": {
     "lat": 8.6296,
@@ -131,16 +131,16 @@
     "motivo": "Núcleo Alberto Adriani de la ULA"
   },
   "cortas:Colinas de Buenos Aires": {
-    "lat": 8.592,
-    "lng": -71.628,
-    "revisar": true,
-    "motivo": "Google no lo ubica: punto aproximado pasando la Urb. Buenos Aires"
+    "lat": 8.59295,
+    "lng": -71.62786,
+    "fuente": "carretera",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): la calle más cercana al sector, al lado de la urbanización Buenos Aires"
   },
   "cortas:Cementerio Onia": {
-    "lat": 8.6005,
-    "lng": -71.688,
-    "revisar": true,
-    "motivo": "cerca del Cementerio Santa Isabel de Onia (por la dirección de una escuela)"
+    "lat": 8.60047,
+    "lng": -71.68804,
+    "fuente": "Google",
+    "motivo": "C-LUGARES-PROPIOS (27 nov 2026): Cementerio Santa Isabel, Onia"
   },
   "cortas:Las Primicias": {
     "lat": 8.6127,

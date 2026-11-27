@@ -2283,6 +2283,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Esa dirección no existe.', 'That address doesn’t exist.'],
   ['Ese lugar no existe.', 'That place doesn’t exist.'],
+  // C-LUGARES-PROPIOS (27 nov 2026): los lugares propios de cada ciudad.
+  [
+    'Ese precio del tabulador no es de esta ciudad.',
+    'That fixed-price route isn’t from this city.',
+  ],
+  [
+    'Un lugar no cambia de ciudad: créalo en la otra.',
+    'A place can’t move to another city: create it in the other one.',
+  ],
   // Divoox Moto · M1 (cotización de viajes).
   ['Esa emergencia ya fue atendida.', 'That emergency was already handled.'],
   ['Solo se califica un viaje terminado.', 'Only completed rides can be rated.'],

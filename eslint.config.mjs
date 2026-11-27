@@ -78,8 +78,14 @@ export default tseslint.config(
     // El revisor de paquetes recorre la carpeta del paquete que arma CI (out-pruebas, out-produccion):
     // leer rutas variables es su trabajo. Solo esta regla y solo este archivo (C-ENTORNOS-SEPARADOS).
     // sin-arroba.mjs hace lo mismo con la carpeta de cada app exportada (C-RUTAS-SIN-ARROBA), y
-    // sin-indexar.mjs con el paquete de pruebas (C-PRUEBAS-SIN-INDEXAR).
-    files: ['scripts/verificar-paquete.mjs', 'scripts/sin-arroba.mjs', 'scripts/sin-indexar.mjs'],
+    // sin-indexar.mjs con el paquete de pruebas (C-PRUEBAS-SIN-INDEXAR), y paginas-por-servidor.mjs
+    // mueve las páginas del paquete a _paginas/ (C-TUMBITE-REDIRIGE).
+    files: [
+      'scripts/verificar-paquete.mjs',
+      'scripts/sin-arroba.mjs',
+      'scripts/sin-indexar.mjs',
+      'scripts/paginas-por-servidor.mjs',
+    ],
     rules: { 'security/detect-non-literal-fs-filename': 'off' },
   },
   {

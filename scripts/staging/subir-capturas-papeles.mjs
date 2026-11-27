@@ -14,7 +14,7 @@ import { AYUDA_PRIVADA, CAPTURAS_PRIVADAS } from '../docs/ayudaPrivada.mjs';
 
 const SITIOS = {
   pruebas: { llave: 'yadominios-llave-ia-tumbite-pruebas', web: 'https://staging.tumbite.com' },
-  produccion: { llave: 'yadominios-llave-ia-tumbite', web: 'https://tumbite.com' },
+  produccion: { llave: 'yadominios-llave-ia-tumbite', web: 'https://divoox.com' },
 };
 const elegidos = process.argv[2] ? [process.argv[2]] : Object.keys(SITIOS);
 const archivos = [];

@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Producción
         run: |
-          curl -fsS -X POST https://tumbite.com/datos/reloj -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::El reloj de producción falló"; exit 1; }
+          curl -fsS -X POST https://divoox.com/datos/reloj -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::El reloj de producción falló"; exit 1; }
       # C-RELOJ-PRUEBAS-PAUSA (7 nov 2026): con Divoox en pausa, el reloj de pruebas no se llama.
       # Para encenderlo al retomar, devolver este paso y poner RELOJ_PRUEBAS_EN_PAUSA en false.
       # - name: Pruebas
@@ -29,7 +29,7 @@ jobs:
       # vuelta se pide el respaldo y el servidor solo lo hace si hoy todavía no hay uno.
       - name: Copia de seguridad diaria (producción)
         run: |
-          curl -fsS -X POST "https://tumbite.com/datos/respaldo?siHaceFalta=1" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }
+          curl -fsS -X POST "https://divoox.com/datos/respaldo?siHaceFalta=1" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad falló"; exit 1; }
       # El sitio de pruebas también tiene su copia diaria (antes nunca se pedía: canario «atrasado»).
       - name: Copia de seguridad diaria (pruebas)
         run: |
@@ -39,4 +39,4 @@ jobs:
       - name: Copia de seguridad completa a pedido (producción)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.respaldo }}
         run: |
-          curl -fsS -X POST "https://tumbite.com/datos/respaldo" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad a pedido falló"; exit 1; }
+          curl -fsS -X POST "https://divoox.com/datos/respaldo" -H "x-reloj-secreto: ${{ secrets.RELOJ_SECRETO }}" || { echo "::error::La copia de seguridad a pedido falló"; exit 1; }

@@ -14,6 +14,12 @@ import { migrarSaldosALotes, sentenciasMigrarLotes } from './saldoLotes';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
 import {
+  CLAVE_SEMILLA_LUGARES_VIGIA,
+  OTROS_NOMBRES_VIGIA,
+  lugaresVigiaPorCorrer,
+  sembrarLugaresVigia,
+} from './semillaLugaresVigia';
+import {
   COLUMNAS_RESUMEN_CATALOGO,
   DISPARADORES_RESUMEN_CATALOGO,
   asegurarResumenCatalogo,
@@ -854,6 +860,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         SQL_MARCA_VIEJA,
         String(renombrarMarcaVieja),
         String(sembrarTabuladorVigia),
+        String(sembrarLugaresVigia),
+        OTROS_NOMBRES_VIGIA,
         SQL_ARRANQUE,
         TABULADOR_EL_VIGIA,
         QUIEN_PAGA_DDL,
@@ -870,15 +878,26 @@ export function huellaEsquema(entorno: Entorno | null): string {
  */
 export const SQL_ARRANQUE = `SELECT valor,
   (SELECT s.valor FROM config s WHERE s.clave = ?2) AS semilla,
-  (SELECT COUNT(*) FROM zonas z WHERE z.id = ?3) AS zona_vigia
+  (SELECT COUNT(*) FROM zonas z WHERE z.id = ?3) AS zona_vigia,
+  (SELECT l.valor FROM config l WHERE l.clave = ?4) AS semilla_lugares
   FROM config WHERE clave = ?1`;
 
 async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
   const huella = huellaEsquema(entorno);
   const hecha = await db
     .prepare(SQL_ARRANQUE)
-    .bind(CLAVE_HUELLA_ESQUEMA, CLAVE_SEMILLA_TABULADOR_VIGIA, ZONA_TABULADOR_VIGIA)
-    .first<{ valor: string; semilla: string | null; zona_vigia: number }>()
+    .bind(
+      CLAVE_HUELLA_ESQUEMA,
+      CLAVE_SEMILLA_TABULADOR_VIGIA,
+      ZONA_TABULADOR_VIGIA,
+      CLAVE_SEMILLA_LUGARES_VIGIA,
+    )
+    .first<{
+      valor: string;
+      semilla: string | null;
+      zona_vigia: number;
+      semilla_lugares: string | null;
+    }>()
     .catch(() => null);
   if (hecha?.valor === huella) {
     columnasFaltantes = [];
@@ -887,6 +906,15 @@ async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
     if (Number(hecha.zona_vigia) > 0 && semillaPorCorrer(leerMarcaSemilla(hecha.semilla)))
       await sembrarTabuladorVigia(db).catch((e: unknown) =>
         console.error('esquema: el reintento de la semilla de El Vigía falló', e),
+      );
+    // C-LUGARES-PROPIOS: lo mismo para los lugares propios de El Vigía (después del tabulador).
+    if (
+      Number(hecha.zona_vigia) > 0 &&
+      (semillaPorCorrer(leerMarcaSemilla(hecha.semilla)) ||
+        lugaresVigiaPorCorrer(hecha.semilla, hecha.semilla_lugares ?? null))
+    )
+      await sembrarLugaresVigia(db).catch((e: unknown) =>
+        console.error('esquema: la semilla de lugares propios de El Vigía falló', e),
       );
     return;
   }
@@ -1010,6 +1038,10 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   // C-TABULADOR-VIGIA: una sola vez, el tabulador de moto de El Vigía y su tarifa (Venezuela).
   await sembrarTabuladorVigia(db).catch((e: unknown) =>
     console.error('esquema: la semilla del tabulador de El Vigía falló', e),
+  );
+  // C-LUGARES-PROPIOS: una sola vez, los puntos corregidos y los lugares propios de El Vigía.
+  await sembrarLugaresVigia(db).catch((e: unknown) =>
+    console.error('esquema: la semilla de lugares propios de El Vigía falló', e),
   );
 }
 
