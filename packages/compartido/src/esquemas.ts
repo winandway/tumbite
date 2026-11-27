@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zCelular, zNombreCompleto } from './casillas';
 
 /** Esquemas de datos compartidos: el servidor valida con ellos y las apps los usan para sus tipos. */
 
@@ -18,11 +19,13 @@ const clave = z
 
 export const esquemaRegistro = z
   .object({
-    nombre: z.string().trim().min(2, { error: 'Escribe tu nombre.' }).max(80),
+    // C-CASILLA-CON-SU-TIPO (27 nov 2026): nombre y apellido, solo letras; nunca un correo ni números.
+    nombre: zNombreCompleto(),
     correo,
     clave,
     rol: z.enum(ROLES_PUBLICOS),
-    telefono: z.string().trim().max(30).optional(),
+    // C-CASILLA-CON-SU-TIPO: el celular lleva solo números (y el «+»); nunca letras.
+    telefono: zCelular().pipe(z.string().trim().max(30)).optional(),
     fechaNacimiento: z.iso.date({ error: 'La fecha debe ser AAAA-MM-DD.' }).optional(),
     idioma: z.enum(['es', 'en']).default('en'),
     // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar. No marcarla no impide registrarse.

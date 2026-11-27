@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zNombre } from '@tumbite/compartido';
 import {
   documentoNormal,
   documentoValido,
@@ -172,7 +173,7 @@ const esquemaRetirar = z.object({
   documento: z.string().trim().max(20).default(''),
   /** Si retira otra persona con autorización del destinatario. */
   tercero: z
-    .object({ nombre: z.string().trim().min(3).max(120), documento: z.string().trim().max(20) })
+    .object({ nombre: zNombre(), documento: z.string().trim().max(20) })
     .nullable()
     .optional(),
   cobro: esquemaCobroEntrega.nullable().optional(),

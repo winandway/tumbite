@@ -138,6 +138,7 @@ export * from './permisoIaPorPlataforma';
 export * from './categoriaRestaurante';
 export * from './sugerirCorreo';
 export * from './revisarRegistro';
+export * from './casillas';
 export * from './accesoAcciones';
 export * from './fechaEscrita';
 export * from './videosAyuda';

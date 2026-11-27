@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Switch, TextInput, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {
   DOCUMENTOS_VEHICULO_PASAJEROS,
   ErrorApi,
   ayudaSeguroPais,
   enIdioma,
+  errorCasilla,
   nombrePapelPais,
   nombreRequisitoPais,
   useBorrador,
@@ -18,6 +19,7 @@ import {
   AvisoBorrador,
   Boton,
   C,
+  Campo,
   alSalirTelefono,
   almacenTelefono,
   e,
@@ -493,7 +495,10 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       await f();
       await cargar();
     } catch (x) {
-      if (x instanceof ErrorApi && (x.campo === 'placa' || x.campo === 'placaEstado'))
+      if (
+        x instanceof ErrorApi &&
+        (x.campo === 'placa' || x.campo === 'placaEstado' || x.campo === 'anio')
+      )
         setErrorCampo({ campo: x.campo, texto: x.message });
       else setError(x instanceof ErrorApi ? x.message : String(x));
     }
@@ -520,6 +525,28 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   async function guardar() {
     const v = b.valores;
     setErrorCampo(null);
+    // C-CASILLA-CON-SU-TIPO: la misma regla que el servidor, antes de mandar (el aviso va debajo de su
+    // casilla y lo escrito se queda).
+    const pais = papeles?.ciudad.pais ?? null;
+    const malo =
+      (['anio', 'placa'] as const)
+        .map((campo) => ({
+          campo,
+          texto: errorCasilla(
+            campo === 'anio' ? 'anioVehiculo' : 'placa',
+            campo === 'anio' ? v.anio : v.placa,
+            {
+              idioma,
+              pais,
+              obligatorio: campo === 'placa',
+            },
+          ),
+        }))
+        .find((x) => x.texto) ?? null;
+    if (malo?.texto) {
+      setErrorCampo({ campo: malo.campo, texto: malo.texto });
+      return;
+    }
     await hacer(async () => {
       await api.pedir('POST', '/datos/conductor/vehiculos', {
         tipo: servicio,
@@ -559,31 +586,29 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     tipo;
   const docVehiculo = (tipo: string) => vehiculo?.documentos.find((d) => d.tipo === tipo);
   const docMio = (tipo: string) => papeles?.documentos.find((d) => d.tipo === tipo);
+  // C-CASILLA-CON-SU-TIPO (27 nov 2026, Tucaní: «el formulario de la moto sin nombres en las
+  // casillas»): cada casilla con su nombre arriba, su ícono, su teclado y su aviso debajo. El año va
+  // con teclado de números y la placa en mayúsculas, sin símbolos. Lo escrito nunca se borra.
   const casilla = (
     campo: 'marca' | 'modelo' | 'anio' | 'color' | 'placa' | 'placaEstado',
     etiqueta: string,
-    teclado: 'default' | 'number-pad' = 'default',
   ) => (
-    <View style={{ gap: 4 }}>
-      <TextInput
-        testID={`alta-${campo}`}
-        value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
-        onChangeText={(x) => {
-          b.cambiar(campo, x);
-          if (errorCampo?.campo === campo) setErrorCampo(null);
-        }}
-        placeholder={etiqueta}
-        accessibilityLabel={etiqueta}
-        keyboardType={teclado}
-        autoCapitalize={campo === 'placa' || campo === 'placaEstado' ? 'characters' : 'words'}
-        style={[e.input, errorCampo?.campo === campo ? { borderColor: ROJO_ERROR } : null]}
-      />
-      {errorCampo?.campo === campo ? (
-        <Text accessibilityRole="alert" style={{ color: ROJO_ERROR, fontSize: 13 }}>
-          {errorCampo.texto}
-        </Text>
-      ) : null}
-    </View>
+    <Campo
+      testID={`alta-${campo}`}
+      etiqueta={etiqueta}
+      tipo={campo === 'anio' ? 'anioVehiculo' : campo === 'placa' ? 'placa' : undefined}
+      pais={papeles?.ciudad.pais ?? null}
+      value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
+      onChangeText={(x) => {
+        b.cambiar(campo, campo === 'placaEstado' ? x.toUpperCase() : x);
+        if (errorCampo?.campo === campo) setErrorCampo(null);
+      }}
+      placeholder={etiqueta}
+      autoCapitalize={
+        campo === 'placaEstado' ? 'characters' : campo === 'placa' ? undefined : 'words'
+      }
+      error={errorCampo?.campo === campo ? errorCampo.texto : undefined}
+    />
   );
 
   return (
@@ -632,6 +657,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               cuenta={usuario?.id}
               vehiculo={vehiculo}
               placaNacional={Boolean(papeles?.perfil.placaNacional)}
+              pais={papeles?.ciudad.pais ?? null}
               alGuardar={() => cargar()}
             />
             {servicio === 'carro' && (vehiculo.plazas ?? 0) >= PLAZAS_XL ? (
@@ -734,7 +760,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
             <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
             {casilla('marca', tc.marca)}
             {casilla('modelo', tc.modelo)}
-            {casilla('anio', tc.anio, 'number-pad')}
+            {casilla('anio', tc.anio)}
             {casilla('color', tc.color)}
             {casilla('placa', tc.placa)}
             {papeles && !papeles.perfil.placaNacional

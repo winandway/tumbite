@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zDireccion } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -46,7 +47,8 @@ direcciones.get('/mis-direcciones', async (c) => {
 
 const esquemaDireccion = z.object({
   etiqueta: z.string().trim().max(30).default(''),
-  direccion: z.string().trim().min(5, { error: 'Escribe la dirección de entrega.' }).max(200),
+  // C-CASILLA-CON-SU-TIPO: texto libre, pero ni vacío ni basura («12345», «aaaa», un correo).
+  direccion: zDireccion().pipe(z.string().max(200)),
   lat: z.number().min(-90).max(90).nullable().default(null),
   lng: z.number().min(-180).max(180).nullable().default(null),
   instrucciones: z.string().trim().max(300).default(''),

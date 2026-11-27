@@ -311,6 +311,11 @@ export function SesionProvider({
   );
 }
 
+/** La sesión si hay una (las piezas sueltas, como `Campo`, también se usan fuera de ella). */
+export function useSesionOpcional(): Sesion | null {
+  return useContext(Contexto);
+}
+
 export function useSesion(): Sesion {
   const s = useContext(Contexto);
   if (!s) throw new Error('useSesion fuera de SesionProvider');

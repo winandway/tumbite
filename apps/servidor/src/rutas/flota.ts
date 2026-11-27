@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zCelular, zNombre } from '@tumbite/compartido';
 import { correoCanonico, telefonoCanonico } from '@tumbite/compartido';
 import { enviarCorreo } from '../correo';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
@@ -112,7 +113,8 @@ flota.put('/mi-restaurante/flota', async (c) => {
 
 const esquemaInvitacion = z
   .object({
-    nombre: z.string().trim().min(2, { error: 'Escribe el nombre del repartidor.' }).max(80),
+    // C-CASILLA-CON-SU-TIPO: un nombre de persona, sin @ ni números.
+    nombre: zNombre(),
     correo: z
       .string()
       .trim()
@@ -120,7 +122,7 @@ const esquemaInvitacion = z
       .pipe(z.email({ error: 'Escribe un correo válido.' }))
       .or(z.literal(''))
       .default(''),
-    telefono: z.string().trim().max(30).default(''),
+    telefono: zCelular().pipe(z.string().trim().max(30)).default(''),
   })
   .refine((d) => d.correo !== '' || d.telefono.length >= 7, {
     error: 'Escribe el correo o el celular del repartidor.',

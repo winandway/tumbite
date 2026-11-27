@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * C-ROBOT-PANEL (26 nov 2026, Gerencia con autorización de Richard). El robot del panel: corre las
- * líneas A1 a A9 de la lista de aceptación (sección 3) con Playwright (e2e/aceptacion/panel) contra el
+ * líneas A1 a A10 de la lista de aceptación (sección 3) con Playwright (e2e/aceptacion/panel) contra el
  * SITIO DE PRUEBAS, con un conductor y un pasajero de robot creados por la API. Cada línea se anota en
  * registros/aceptacion/<fecha>/panel.jsonl con su captura, y aquí se junta en panel.json y panel.md.
  * Una línea en rojo es un fallo del producto: se dice, no se arregla.
@@ -28,6 +28,10 @@ const LINEAS = [
   ['A7', 'Ver los que esperan por ciudad («Maracaibo: 14 esperando»)'],
   ['A8', 'Editar un precio fijo del tabulador'],
   ['A9', 'Cargar saldo a un conductor o activar un regalo automático por ciudad'],
+  [
+    'A10',
+    'Las casillas rechazan los datos malos: correo o números en el nombre, letras en el celular, símbolos en la placa y un año fuera de rango',
+  ],
 ];
 
 const url = sitioDePruebas();

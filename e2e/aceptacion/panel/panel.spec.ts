@@ -28,7 +28,12 @@ import {
 } from '../../../scripts/aceptacion/panel-datos.mjs';
 
 const ROBOT = 'panel';
-const SELLO = Date.now().toString(36).toUpperCase().slice(-5);
+// C-CASILLA-CON-SU-TIPO: el nombre lleva solo letras; el sello del robot también (sin números).
+const SELLO = Date.now()
+  .toString(36)
+  .toUpperCase()
+  .slice(-5)
+  .replace(/\d/g, (d) => 'ABCDEFGHIJ'.charAt(Number(d)));
 const NOMBRE = `Robot Panel ${SELLO}`;
 
 test.describe.configure({ mode: 'serial' });
@@ -510,4 +515,71 @@ test('A9 cargar saldo a un conductor desde el panel', async () => {
   );
   void CLAVE_ROBOT;
   void motoAprobada;
+});
+
+// ── A10 ──────────────────────────────────────────────────────────────────────────────────────────
+// C-CASILLA-CON-SU-TIPO (27 nov 2026, Richard escribió su correo en «Nombre y apellido» y pasó): el
+// servidor rechaza, cada noche, lo que no le corresponde a cada casilla, con el error en su casilla.
+test('A10 las casillas rechazan los datos malos (correo en el nombre, letras en el celular, símbolos en la placa)', async () => {
+  await linea('A10', async () => {
+    const base = {
+      correo: `robot.malos.${SELLO.toLowerCase()}@robots.invalid`,
+      clave: CLAVE_ROBOT,
+      rol: 'repartidor',
+      idioma: 'es',
+    };
+    const casos: { que: string; cuerpo: Record<string, unknown>; campo: string }[] = [
+      { que: 'correo en el nombre', cuerpo: { ...base, nombre: base.correo }, campo: 'nombre' },
+      { que: 'números en el nombre', cuerpo: { ...base, nombre: 'Robot Malo 2' }, campo: 'nombre' },
+      {
+        que: 'letras en el celular',
+        cuerpo: { ...base, nombre: 'Robot Malo', telefono: '0414abcdefg' },
+        campo: 'telefono',
+      },
+    ];
+    const vistos: string[] = [];
+    for (const c of casos) {
+      const r = await api('POST', '/datos/cuentas/registro', c.cuerpo);
+      if (r.estado < 400 || r.d?.campo !== c.campo)
+        throw new Error(
+          `${c.que}: el servidor respondió ${r.estado} ${JSON.stringify(r.d).slice(0, 150)}`,
+        );
+      vistos.push(`${c.que} → ${r.estado} en «${c.campo}»`);
+    }
+    const placa = await api(
+      'POST',
+      '/datos/conductor/vehiculos',
+      {
+        tipo: 'carro',
+        marca: 'Marca',
+        modelo: 'Modelo',
+        anio: 2020,
+        color: 'Rojo',
+        placa: 'AB#12$',
+      },
+      { token: cond.token },
+    );
+    if (placa.estado < 400 || placa.d?.campo !== 'placa')
+      throw new Error(
+        `símbolos en la placa: ${placa.estado} ${JSON.stringify(placa.d).slice(0, 150)}`,
+      );
+    vistos.push(`símbolos en la placa → ${placa.estado} en «placa»`);
+    const anio = await api(
+      'POST',
+      '/datos/conductor/vehiculos',
+      {
+        tipo: 'carro',
+        marca: 'Marca',
+        modelo: 'Modelo',
+        anio: 1975,
+        color: 'Rojo',
+        placa: 'AB123CD',
+      },
+      { token: cond.token },
+    );
+    if (anio.estado < 400 || anio.d?.campo !== 'anio')
+      throw new Error(`año 1975: ${anio.estado} ${JSON.stringify(anio.d).slice(0, 150)}`);
+    vistos.push(`año 1975 → ${anio.estado} en «anio»`);
+    return vistos.join('; ');
+  });
 });

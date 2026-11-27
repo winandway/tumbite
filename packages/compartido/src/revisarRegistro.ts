@@ -2,6 +2,7 @@ import { leerTelefono, mensajeTelefono, telefonoParaMostrar } from './pais/telef
 import type { Idioma } from './idiomas';
 import { lugarEscrito, type LugarCuenta } from './lugarCuenta';
 import { textosSelectorLugar } from './selectorLugar';
+import { errorNombre } from './casillas';
 
 /**
  * C-REVISA-TUS-DATOS (19 nov 2026, orden de Richard) — todos los países. Al crear la cuenta, nada se
@@ -250,7 +251,9 @@ export function validarRegistro(
     if (mensaje) fallos.push({ campo, mensaje });
   };
   for (const campo of casillas) {
-    if (campo === 'nombre') fallo(campo, datos.nombre.trim().length < 2 ? e.nombreVacio : null);
+    // C-CASILLA-CON-SU-TIPO: «Nombre y apellido» lleva solo letras (nada de @ ni números) y las dos
+    // palabras; la misma regla que el servidor.
+    if (campo === 'nombre') fallo(campo, errorNombre(datos.nombre, idioma, true));
     else if (campo === 'correo') fallo(campo, errorCorreo(datos.correo, idioma));
     else if (campo === 'telefono')
       fallo(campo, errorTelefono(datos.telefono, idioma, datos.paisTelefono));

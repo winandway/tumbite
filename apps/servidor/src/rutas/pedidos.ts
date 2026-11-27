@@ -40,6 +40,7 @@ import { registrarDisputa } from '../disputas';
 import { avisoDeTransferencia } from '../retiros';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zCelular, zNombre } from '@tumbite/compartido';
 import {
   type OpcionElegida,
   type Plan,
@@ -135,9 +136,9 @@ export const esquemaNuevoPedido = z.object({
   // C-REGALAR-PEDIDO: para otra persona; recibe el seguimiento por SMS. Se paga con el cobro normal.
   paraOtro: z
     .object({
-      nombre: z.string().trim().min(1, { error: 'Escribe el nombre de quien recibe.' }).max(60),
-      telefono: z
-        .string()
+      // C-CASILLA-CON-SU-TIPO: quien recibe es una persona: letras, sin @ ni números.
+      nombre: zNombre(),
+      telefono: zCelular()
         .trim()
         .regex(/^\+?[0-9 ()-]{7,20}$/, { error: 'Escribe el celular de quien recibe.' }),
       mensaje: z.string().trim().max(200).default(''),

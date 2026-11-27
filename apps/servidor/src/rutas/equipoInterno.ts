@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zNombre } from '@tumbite/compartido';
 import {
   type Alcance,
   CONFIG_PERMISOS,
@@ -963,7 +964,8 @@ equipoInterno.post('/equipo-interno/invitacion/aceptar', async (c) => {
     c,
     z.object({
       codigo: esquemaCodigo,
-      nombre: z.string().trim().min(2, { error: 'Escribe tu nombre.' }).max(80),
+      // C-CASILLA-CON-SU-TIPO: nombre y apellido de la persona del equipo.
+      nombre: zNombre(),
       clave: z
         .string()
         .min(8, { error: 'La contraseña debe tener al menos 8 caracteres.' })

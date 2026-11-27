@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { tramos } from '../rutaPorCalles';
 import { z } from 'zod';
+import { zCelular, zNombre } from '@tumbite/compartido';
 import { bloqueoPorHoras, esDeNoche, seDesvio, telefonoCanonico } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
@@ -42,8 +43,9 @@ seguridadViaje.post('/seguridad/contactos', async (c) => {
   const d = await leerCuerpo(
     c,
     z.object({
-      nombre: z.string().trim().min(1, { error: 'Escribe el nombre.' }).max(60),
-      telefono: z.string().trim().min(7).max(20),
+      // C-CASILLA-CON-SU-TIPO: el nombre del contacto (letras) y su celular (solo números).
+      nombre: zNombre(),
+      telefono: zCelular().pipe(z.string().trim().min(7).max(20)),
     }),
   );
   const telefono = telefonoCanonico(d.telefono);

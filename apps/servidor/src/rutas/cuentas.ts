@@ -66,6 +66,7 @@ import {
 import type { Env } from '../env';
 import { hashClave, nuevoId, nuevoToken, sha256, verificarClave } from '../cripto';
 import { z } from 'zod';
+import { zCelular, zNombreCompleto } from '@tumbite/compartido';
 import { idiomaDeLaApp } from '../avisosWeb';
 import {
   COOKIE_SESION,
@@ -159,8 +160,9 @@ const esquemaRestablecerConCodigo = z.object({
 });
 const MINUTOS_RECUPERACION = 30;
 const esquemaPerfil = z.object({
-  nombre: z.string().trim().min(2, { error: 'Escribe tu nombre.' }).max(80),
-  telefono: z.string().trim().max(30).default(''),
+  // C-CASILLA-CON-SU-TIPO: el mismo nombre que al crear la cuenta (letras, sin @ ni números).
+  nombre: zNombreCompleto(),
+  telefono: zCelular().pipe(z.string().trim().max(30)).default(''),
   fechaNacimiento: z.iso.date({ error: 'La fecha debe ser AAAA-MM-DD.' }).nullable().default(null),
   idioma: z.enum(['es', 'en']).default('es'),
 });
@@ -1356,7 +1358,9 @@ const esquemaCodigo = z.object({
     .regex(/^\d{6}$/, { error: 'El código tiene 6 números.' }),
 });
 const esquemaCambiarTelefono = z.object({
-  telefono: z.string().trim().min(6, { error: 'Escribe tu número de celular.' }).max(30),
+  telefono: zCelular().pipe(
+    z.string().trim().min(6, { error: 'Escribe tu número de celular.' }).max(30),
+  ),
   paisTelefono: z.string().trim().toUpperCase().length(2).optional(),
 });
 

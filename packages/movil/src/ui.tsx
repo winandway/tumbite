@@ -12,11 +12,18 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MARCA, enIdioma } from '@tumbite/compartido';
+import {
+  MARCA,
+  alEscribir,
+  enIdioma,
+  errorCasilla,
+  tecladoDe,
+  type TipoCasilla,
+} from '@tumbite/compartido';
 import { SelectorIdioma } from './SelectorIdioma';
-import { useSesion } from './sesion';
+import { useSesion, useSesionOpcional } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
-import { Icono } from './diseno';
+import { Icono, type NombreIcono } from './diseno';
 import { ALTO, COLOR, ESPACIO, FUENTE, RADIO, estiloBoton, type TipoBoton } from './tokens';
 
 export const C = MARCA.colores;
@@ -94,35 +101,129 @@ export function Pantalla({
   );
 }
 
+/**
+ * C-CASILLA-CON-SU-TIPO (27 nov 2026): el ícono pequeño de cada tipo de casilla, dentro de ella a la
+ * izquierda, todos del mismo juego de línea, para entender la casilla de un vistazo.
+ */
+export const ICONO_CASILLA: Readonly<Record<TipoCasilla, NombreIcono>> = {
+  nombre: 'person-outline',
+  nombreCompleto: 'id-card-outline',
+  celular: 'call-outline',
+  correo: 'mail-outline',
+  documento: 'id-card-outline',
+  placa: 'car-outline',
+  anioVehiculo: 'calendar-outline',
+  monto: 'cash-outline',
+  direccion: 'location-outline',
+};
+
 export function Campo({
   etiqueta,
   error,
   nombreAccesible,
+  tipo,
+  pais,
+  obligatorio,
+  icono,
   ...props
-}: TextInputProps & { etiqueta: string; error?: string; nombreAccesible?: string }) {
+}: TextInputProps & {
+  etiqueta: string;
+  error?: string;
+  nombreAccesible?: string;
+  /**
+   * C-CASILLA-CON-SU-TIPO: qué dato lleva la casilla. Con él vienen su teclado (numérico para el
+   * celular y el año, de correo para el correo, mayúsculas para la placa), su ícono, lo que nunca
+   * entra al escribir (letras en el celular) y el aviso debajo, en palabras, al salir de la casilla.
+   * Lo escrito nunca se borra.
+   */
+  tipo?: TipoCasilla;
+  /** País para el celular, el documento y la placa. */
+  pais?: string | null;
+  /** Vacío también se avisa al salir. */
+  obligatorio?: boolean;
+  /** Un ícono propio (o `null` para ninguno) en lugar del del tipo. */
+  icono?: NombreIcono | null;
+}) {
+  const sesion = useSesionOpcional();
+  const [tocado, setTocado] = useState(false);
   // C-CORREO-SIN-AUTOCORRECTOR (31 oct 2026, visto en el simulador de iPhone): un correo no se
   // corrige ni se subraya; el iPhone cambiaba lo escrito. Vale para toda casilla de correo.
-  const correo = props.keyboardType === 'email-address';
+  const correo = tipo === 'correo' || props.keyboardType === 'email-address';
+  const teclado = tipo ? tecladoDe(tipo) : null;
+  const nombreIcono =
+    icono === undefined
+      ? tipo
+        ? (new Map(Object.entries(ICONO_CASILLA)).get(tipo) ?? null)
+        : null
+      : icono;
+  // El aviso propio de la casilla, al salir de ella; el que llega de afuera (servidor, «Siguiente»)
+  // manda siempre.
+  const propio =
+    tipo && tocado && typeof props.value === 'string'
+      ? errorCasilla(tipo, props.value, {
+          idioma: sesion?.idioma ?? 'es',
+          pais,
+          obligatorio: Boolean(obligatorio),
+        })
+      : null;
+  const aviso = error ?? propio ?? undefined;
+  const alCambiar = props.onChangeText;
   return (
     <View style={e.campo}>
       <Text style={e.etiqueta}>{etiqueta}</Text>
-      <TextInput
-        {...(correo
-          ? {
-              autoCorrect: false,
-              spellCheck: false,
-              autoCapitalize: 'none' as const,
-              textContentType: 'emailAddress' as const,
-            }
-          : {})}
-        {...props}
-        // Lo que se lee en voz alta puede llevar más contexto que la etiqueta visible
-        // («Abre · Lunes»), sin repetirlo en pantalla.
-        accessibilityLabel={nombreAccesible ?? etiqueta}
-        style={[e.input, error ? e.inputError : null]}
-        placeholderTextColor={COLOR.textoTenue}
-      />
-      {error ? <Text style={e.error}>{error}</Text> : null}
+      <View>
+        <TextInput
+          {...(teclado
+            ? {
+                keyboardType: teclado.keyboardType,
+                autoCapitalize: teclado.autoCapitalize,
+                autoCorrect: teclado.autoCorrect,
+                maxLength: teclado.maxLength,
+                ...(teclado.autoComplete ? { autoComplete: teclado.autoComplete } : {}),
+              }
+            : {})}
+          {...(correo
+            ? {
+                autoCorrect: false,
+                spellCheck: false,
+                autoCapitalize: 'none' as const,
+                textContentType: 'emailAddress' as const,
+              }
+            : {})}
+          {...props}
+          onChangeText={
+            alCambiar ? (x: string) => alCambiar(tipo ? alEscribir(tipo, x) : x) : undefined
+          }
+          onBlur={(ev) => {
+            setTocado(true);
+            props.onBlur?.(ev);
+          }}
+          // Lo que se lee en voz alta puede llevar más contexto que la etiqueta visible
+          // («Abre · Lunes»), sin repetirlo en pantalla.
+          accessibilityLabel={nombreAccesible ?? etiqueta}
+          style={[
+            e.input,
+            nombreIcono ? { paddingLeft: 44 } : null,
+            aviso ? e.inputError : null,
+            props.style,
+          ]}
+          placeholderTextColor={COLOR.textoTenue}
+        />
+        {nombreIcono ? (
+          <View style={e.iconoCasilla} testID={`icono-${tipo ?? 'casilla'}`}>
+            <Icono
+              nombre={nombreIcono}
+              tamano={20}
+              color={aviso ? COLOR.error : COLOR.textoSuave}
+            />
+          </View>
+        ) : null}
+      </View>
+      {aviso ? (
+        <Text style={e.error} accessibilityRole="alert">
+          {aviso}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -351,6 +452,14 @@ export const e = StyleSheet.create({
     fontSize: 16,
     fontFamily: FUENTE.texto,
     color: COLOR.texto,
+  },
+  iconoCasilla: {
+    position: 'absolute',
+    pointerEvents: 'none',
+    left: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
   },
   inputError: { borderColor: COLOR.error },
   error: { color: COLOR.error, marginTop: 4, fontSize: 13 },

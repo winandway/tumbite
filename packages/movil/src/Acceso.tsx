@@ -551,6 +551,8 @@ export function Acceso({
   const campoNombre = registro ? (
     <Campo
       etiqueta={t.nombre}
+      // C-CASILLA-CON-SU-TIPO: nombre y apellido, solo letras; el aviso sale debajo al salir.
+      tipo="nombreCompleto"
       value={v.nombre}
       onChangeText={(x) => cambiar('nombre', x)}
       autoComplete="name"
@@ -565,6 +567,7 @@ export function Acceso({
     <>
       <Campo
         etiqueta={t.correo}
+        tipo="correo"
         value={v.correo}
         onChangeText={(x) => cambiar('correo', x)}
         autoCapitalize="none"
@@ -588,6 +591,8 @@ export function Acceso({
       />
       <Campo
         etiqueta={t.telefono}
+        tipo="celular"
+        pais={v.paisTelefono || null}
         value={v.telefono}
         // Solo números (y el + del país): las letras no entran.
         onChangeText={(x) => cambiar('telefono', soloNumerosTelefono(x))}

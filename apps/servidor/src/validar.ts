@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import type { z } from 'zod';
+import { avisoCasillaEnIdioma } from '@tumbite/compartido';
 
 export class ErrorDatos extends Error {
   constructor(
@@ -24,7 +25,14 @@ export async function leerCuerpo<T extends z.ZodType>(c: Context, esquema: T): P
   const r = esquema.safeParse(cuerpo);
   if (!r.success) {
     const primero = r.error.issues[0];
-    throw new ErrorDatos(primero?.message ?? 'Datos inválidos.', primero?.path.join('.'));
+    if (primero)
+      console.error('DEPURAR', primero.path.join('.'), JSON.stringify(cuerpo).slice(0, 200));
+    // C-CASILLA-CON-SU-TIPO: el aviso de la casilla, en el idioma de la app.
+    const idioma = c.req.header('x-idioma') === 'en' ? 'en' : 'es';
+    throw new ErrorDatos(
+      avisoCasillaEnIdioma(primero?.message ?? 'Datos inválidos.', idioma),
+      primero?.path.join('.'),
+    );
   }
   return r.data;
 }

@@ -17,6 +17,7 @@ import {
   suspenderPapelConductor,
 } from '../cuentaUnica';
 import { z } from 'zod';
+import { zAnioVehiculoOVacio, zPlaca } from '@tumbite/compartido';
 import {
   correoCanonico,
   diasRestantes,
@@ -90,9 +91,10 @@ const esquemaDatosRepartidor = z.object({
   vehiculoTipo: z.enum(['', 'carro', 'moto', 'scooter', 'bicicleta', 'a_pie']),
   marca: z.string().trim().max(60).default(''),
   modelo: z.string().trim().max(60).default(''),
-  anio: z.coerce.number().int().min(1970).max(2100).or(z.literal('')).default(''),
+  // C-CASILLA-CON-SU-TIPO: el año (4 dígitos, 1990 al año que viene) y la placa (letras y números).
+  anio: zAnioVehiculoOVacio().default(''),
   color: z.string().trim().max(30).default(''),
-  placa: z.string().trim().toUpperCase().max(15).default(''),
+  placa: zPlaca().default(''),
   licenciaNumero: z.string().trim().max(30).default(''),
   licenciaEstado: z.string().trim().max(40).default(''),
   licenciaVence: fecha,

@@ -208,9 +208,9 @@ export function MisDatos() {
         <>
           {campo('marca', t.marca)}
           {campo('modelo', t.modelo)}
-          {campo('anio', t.anio, { keyboardType: 'number-pad' })}
+          {campo('anio', t.anio, { tipo: 'anioVehiculo' })}
           {campo('color', t.color)}
-          {conMotor ? campo('placa', t.placa, { autoCapitalize: 'characters' }) : null}
+          {conMotor ? campo('placa', t.placa, { tipo: 'placa' }) : null}
         </>
       ) : null}
       {conMotor ? (

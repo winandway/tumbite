@@ -27,7 +27,14 @@ import { esParticipante } from './piloto';
 import { esCuentaPrueba } from './cuentaPrueba';
 import { entornoDe } from '../entorno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import { type Entorno, faltaParaAprobarSinEnviar, textoPlano } from '@tumbite/compartido';
+import {
+  type Entorno,
+  errorPlaca,
+  faltaParaAprobarSinEnviar,
+  textoPlano,
+  zAnioVehiculo,
+  zPlaca,
+} from '@tumbite/compartido';
 import {
   REQUISITO_EDAD,
   edadPorServicio,
@@ -776,14 +783,11 @@ const datosVehiculo = z.object({
   tipo: z.enum(['carro', 'moto', 'scooter', 'bicicleta', 'a_pie']),
   marca: z.string().trim().max(40).default(''),
   modelo: z.string().trim().max(40).default(''),
-  anio: z.number().int().min(1980).max(2100).nullable().optional(),
+  // C-CASILLA-CON-SU-TIPO (27 nov 2026): el año, 4 dígitos de 1990 al año que viene; la placa, letras y
+  // números en mayúsculas, sin símbolos (el formato del país se mira en `exigirPlaca`).
+  anio: zAnioVehiculo().nullable().optional(),
   color: z.string().trim().max(30).default(''),
-  placa: z
-    .string()
-    .trim()
-    .max(12)
-    .regex(/^[A-Za-z0-9 -]*$/, 'La placa solo lleva letras, números, espacios o guiones.')
-    .default(''),
+  placa: zPlaca().default(''),
   placaEstado: z
     .string()
     .trim()
@@ -808,9 +812,21 @@ function conPlacaDelPais<T extends { placaEstado: string }>(d: T, donde: { pais:
  * donde aplica). Antes se guardaba sin placa y «Enviar a revisión» fallaba después; un conductor de
  * Venezuela quedó con su moto sin placa y sin poder corregirla.
  */
-function exigirPlaca(d: { tipo: string; placa: string; placaEstado: string }, pais: string) {
+function exigirPlaca(
+  d: { tipo: string; placa: string; placaEstado: string },
+  pais: string,
+  idioma: 'es' | 'en' = 'es',
+) {
   if (!MOTORIZADOS.has(d.tipo)) return;
-  if (!d.placa) throw new ErrorDatos('Escribe la placa de tu vehículo.', 'placa', 422);
+  if (!d.placa)
+    throw new ErrorDatos(
+      idioma === 'en' ? 'Enter your vehicle’s license plate.' : 'Escribe la placa de tu vehículo.',
+      'placa',
+      422,
+    );
+  // C-CASILLA-CON-SU-TIPO: la placa con el formato de su país (Venezuela: letras y números, 5 a 8).
+  const formato = errorPlaca(d.placa, idioma, pais);
+  if (formato) throw new ErrorDatos(formato, 'placa', 422);
   if (!d.placaEstado && !perfilPasajeros(pais).placaNacional)
     throw new ErrorDatos(
       'Escribe el estado que emitió la placa (dos letras, por ejemplo, FL).',
@@ -999,7 +1015,7 @@ servicios.post('/conductor/vehiculos', async (c) => {
   const db = base(c);
   const donde = await paisDelConductor(db, u.id);
   const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), donde);
-  exigirPlaca(d, donde.pais);
+  exigirPlaca(d, donde.pais, c.req.header('x-idioma') === 'en' ? 'en' : 'es');
   const vivos = await db
     .prepare("SELECT COUNT(*) AS n FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado'")
     .bind(u.id)
@@ -1042,7 +1058,7 @@ servicios.put('/conductor/vehiculos/:id', async (c) => {
     );
   const donde = await paisDelConductor(db, u.id);
   const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), donde);
-  exigirPlaca(d, donde.pais);
+  exigirPlaca(d, donde.pais, c.req.header('x-idioma') === 'en' ? 'en' : 'es');
   await conRestricciones(
     db
       .prepare(
