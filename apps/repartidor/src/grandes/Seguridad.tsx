@@ -4,6 +4,7 @@ import * as Location from 'expo-location';
 import { type Api, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Boton, C, Deslizador, e, Text } from '@tumbite/movil';
 import { cargarAccesibilidad, fijarAuditiva } from './accesibilidad';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * C-SEGURIDAD-REPARTIDOR (29 oct 2026), como el centro de seguridad de Dasher y Uber Driver:
@@ -223,6 +224,7 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
           ))}
         </View>
         <TextInput
+          placeholderTextColor={COLOR_TEXTO_DE_FONDO}
           value={detalle}
           onChangeText={setDetalle}
           placeholder={t.detalle}

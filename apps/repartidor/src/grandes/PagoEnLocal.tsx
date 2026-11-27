@@ -8,7 +8,7 @@ import {
   montoATexto,
   textoAMonto,
 } from '@tumbite/compartido';
-import { Boton, C, e, Text } from '@tumbite/movil';
+import { Boton, C, COLOR_TEXTO_DE_FONDO, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 type Datos = {
@@ -179,6 +179,7 @@ export function PagoEnLocal({
           </View>
           <Text style={{ color: C.secundario, fontWeight: '700' }}>{t.cuantoPagaste}</Text>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={pagado}
             onChangeText={setPagado}
             accessibilityLabel={t.cuantoPagaste}
@@ -187,6 +188,7 @@ export function PagoEnLocal({
           />
           <Text style={{ color: C.secundario, fontWeight: '700' }}>{t.importeTicket}</Text>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={ticket}
             onChangeText={setTicket}
             accessibilityLabel={t.importeTicket}

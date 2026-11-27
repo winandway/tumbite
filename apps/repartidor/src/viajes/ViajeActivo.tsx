@@ -56,6 +56,7 @@ import { Mapa } from '../piezas/Mapa';
 import { TarjetaRecogida } from '../piezas/FotosPuerta';
 import { AsiSeVeElLugar } from '@tumbite/movil';
 import { textoOfertaConfianza } from './agendaFijos';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 type Api = {
   pedir<T>(
@@ -596,6 +597,7 @@ export function ViajeActivo({
             testID="codigo-a-la-vista"
           >
             <TextInput
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               testID="viaje-pin"
               value={pin}
               onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
@@ -615,6 +617,7 @@ export function ViajeActivo({
             testID="codigo-entrega-a-la-vista"
           >
             <TextInput
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               testID="envio-pin-entrega"
               value={pinEntrega}
               onChangeText={(v) => setPinEntrega(v.replace(/\D/g, '').slice(0, 4))}

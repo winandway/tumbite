@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { type Idioma, enIdioma, textoPesoReal } from '@tumbite/compartido';
 import { Boton, Text } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -54,6 +55,7 @@ export function PesoReal({
       {editable ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={texto}
             onChangeText={setTexto}
             keyboardType="decimal-pad"

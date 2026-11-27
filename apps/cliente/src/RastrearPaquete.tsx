@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e, useSesion, Text, Modal } from '@tumbite/movil';
 import { Tarjeta } from './comida/piezas';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * C-FLEX-RASTREAR (31 oct 2026, LG3, pedido de Richard; como UPS My Choice o Amazon): la persona
@@ -103,6 +104,7 @@ export function RastrearPaquete({
         <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>{t.titulo}</Text>
         <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
         <TextInput
+          placeholderTextColor={COLOR_TEXTO_DE_FONDO}
           value={codigo}
           onChangeText={setCodigo}
           placeholder="DVX…"
