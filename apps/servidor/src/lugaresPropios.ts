@@ -1,6 +1,12 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { distanciaKm, esHoraDeNoche, formatearMonto, recargoNocheDe } from '@tumbite/compartido';
+import {
+  distanciaKm,
+  esHoraDeNoche,
+  formatearMonto,
+  llanoLugar,
+  recargoNocheDe,
+} from '@tumbite/compartido';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
 import { type Variables, base, exigir } from './sesion';
@@ -31,18 +37,8 @@ export const PREFIJO_LUGAR_PROPIO = 'lp~';
 /** El id de una sugerencia de ruta del tabulador sin lugar propio. */
 export const PREFIJO_TABULADOR = 'tab~';
 
-/** «Kilómetro 9», «km9», «K.M. 9», «KM-9» → «km 9», sin acentos ni mayúsculas. */
-export const llanoLugar = (t: string) =>
-  t
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9ñ]+/g, ' ')
-    .replace(/\bkilometros?\b/g, 'km')
-    .replace(/\bk m\b/g, 'km')
-    .replace(/\bkm(\d)/g, 'km $1')
-    .replace(/\s+/g, ' ')
-    .trim();
+/** C-LUGARES-PROPIOS: la misma regla en el servidor y en el panel (pieza compartida). */
+export { llanoLugar };
 
 /** Cada palabra escrita, en orden, es el comienzo de una palabra del nombre («la veg» → «La Vega I»). */
 export function casaNombre(nombreLlano: string, buscado: readonly string[]): boolean {

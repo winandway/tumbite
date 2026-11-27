@@ -5,6 +5,7 @@ import {
   almacenNavegador,
   enIdioma,
   formatearMonto,
+  llanoLugar,
   useBorrador,
 } from '@tumbite/compartido';
 import { api } from './api';
@@ -75,7 +76,7 @@ const T = {
     nuevo: 'Add a place',
     nombre: 'Name',
     otros: 'Other names or ways to write it',
-    otrosAyuda: 'Separate them with commas. Example: km9, kilometer 9, KM-9',
+    otrosAyuda: 'Separate them with commas. Example: 12 Oaks, Twelve Oaks, the mall',
     punto: 'Point on the map: drag the map to the place',
     faltaNombre: 'Type the place name.',
     faltaPunto: 'Mark the place on the map.',
@@ -115,14 +116,8 @@ type Respuesta = { ciudad: { id: string; nombre: string }; lugares: Lugar[]; rut
 
 const VACIO = { editando: '', nombre: '', otros: '', lat: '', lng: '', rutaId: '' };
 
-/** Sin acentos ni mayúsculas ni signos: «KM-9» y «km 9» se buscan igual. */
-const llano = (x: string) =>
-  x
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9ñ]+/g, ' ')
-    .trim();
+/** Sin acentos ni mayúsculas ni signos, como el buscador de la app: «K.M. 9» y «km9» son «KM 9». */
+const llano = llanoLugar;
 
 const enlaceMapa = (l: { lat: number; lng: number }) =>
   `https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}`;

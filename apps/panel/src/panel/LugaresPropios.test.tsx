@@ -105,6 +105,18 @@ describe('Lugares propios de tu ciudad', () => {
     expect(screen.getAllByTestId('lugar-propio-linea')).toHaveLength(1);
   });
 
+  it('se busca como en la app: «km9» y «kilómetro 9» encuentran «KM 9» aunque no sea uno de sus otros nombres', async () => {
+    await abrir();
+    const buscar = screen.getByTestId('lugar-propio-buscar');
+    for (const f of ['K.M. 9', 'kilometro 9', 'km 9']) {
+      await userEvent.clear(buscar);
+      await userEvent.type(buscar, f);
+      const lineas = screen.getAllByTestId('lugar-propio-linea');
+      expect(lineas, f).toHaveLength(1);
+      expect(lineas[0]).toHaveTextContent('KM 9');
+    }
+  });
+
   it('el menú ofrece Editar y Apagar (nunca borrar)', async () => {
     await abrir();
     const linea = screen.getAllByTestId('lugar-propio-linea')[0] as HTMLElement;

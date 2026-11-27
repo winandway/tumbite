@@ -154,3 +154,18 @@ export function useSugerenciasDireccion(op: {
   const cerrar = useCallback(() => setSugerencias([]), []);
   return { sugerencias, buscar, elegir, cerrar, agotado, buscando };
 }
+
+// C-LUGARES-PROPIOS (27 nov 2026): cómo se compara un nombre de lugar, igual en el buscador de la
+// app (servidor) y en la lista del panel.
+/** «Kilómetro 9», «km9», «K.M. 9», «KM-9» → «km 9», sin acentos ni mayúsculas. */
+export const llanoLugar = (t: string) =>
+  t
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9ñ]+/g, ' ')
+    .replace(/\bkilometros?\b/g, 'km')
+    .replace(/\bk m\b/g, 'km')
+    .replace(/\bkm(\d)/g, 'km $1')
+    .replace(/\s+/g, ' ')
+    .trim();
