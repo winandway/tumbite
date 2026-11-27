@@ -34,71 +34,87 @@ const ASSETS = {
   },
 };
 
+// Una sola base para todas las peticiones: crear una por petición pasaba de 5 s en la nube.
+const DB = crearBasePruebas();
 const pedir = (url: string, init: RequestInit = {}) =>
-  app.request(url, { redirect: 'manual', ...init }, { DB: crearBasePruebas(), ASSETS });
+  app.request(url, { redirect: 'manual', ...init }, { DB, ASSETS });
+// Diez peticiones al servidor completo por prueba: en la máquina lenta de la nube tardan más de 5 s.
+const ESPERA = 60_000;
 
 describe('tumbite.com deja Google y lleva a divoox.com (C-TUMBITE-REDIRIGE)', () => {
-  it('cinco páginas de tumbite.com responden 301 a la misma ruta en divoox.com', async () => {
-    const casos: [string, string][] = [
-      ['https://tumbite.com/', 'https://divoox.com/'],
-      ['https://tumbite.com/app/', 'https://divoox.com/app/'],
-      ['https://tumbite.com/es/how-it-works?ref=g', 'https://divoox.com/es/how-it-works?ref=g'],
-      [
-        'https://www.tumbite.com/docs/ordering/cancel-order',
-        'https://divoox.com/docs/ordering/cancel-order',
-      ],
-      ['https://tumbite.com/t/ABC123', 'https://divoox.com/t/ABC123'],
-      ['https://tumbite.com/privacy.html', 'https://divoox.com/privacy.html'],
-    ];
-    for (const [desde, hacia] of casos) {
-      const r = await pedir(desde);
-      expect(r.status, desde).toBe(301);
-      expect(r.headers.get('location'), desde).toBe(hacia);
-      const cabeza = await pedir(desde, { method: 'HEAD' });
-      expect(cabeza.status, `HEAD ${desde}`).toBe(301);
-    }
-  });
+  it(
+    'cinco páginas de tumbite.com responden 301 a la misma ruta en divoox.com',
+    async () => {
+      const casos: [string, string][] = [
+        ['https://tumbite.com/', 'https://divoox.com/'],
+        ['https://tumbite.com/app/', 'https://divoox.com/app/'],
+        ['https://tumbite.com/es/how-it-works?ref=g', 'https://divoox.com/es/how-it-works?ref=g'],
+        [
+          'https://www.tumbite.com/docs/ordering/cancel-order',
+          'https://divoox.com/docs/ordering/cancel-order',
+        ],
+        ['https://tumbite.com/t/ABC123', 'https://divoox.com/t/ABC123'],
+        ['https://tumbite.com/privacy.html', 'https://divoox.com/privacy.html'],
+      ];
+      for (const [desde, hacia] of casos) {
+        const r = await pedir(desde);
+        expect(r.status, desde).toBe(301);
+        expect(r.headers.get('location'), desde).toBe(hacia);
+        const cabeza = await pedir(desde, { method: 'HEAD' });
+        expect(cabeza.status, `HEAD ${desde}`).toBe(301);
+      }
+    },
+    ESPERA,
+  );
 
-  it('la API, los avisos de los proveedores y la verificación de tumbite.com NO redirigen', async () => {
-    const casos: [string, RequestInit][] = [
-      ['https://tumbite.com/datos/salud', {}],
-      ['https://tumbite.com/datos/version', {}],
-      ['https://tumbite.com/datos/stripe/aviso', { method: 'POST', body: '{}' }],
-      ['https://tumbite.com/datos/stripe/aviso-conectadas', { method: 'POST', body: '{}' }],
-      ['https://tumbite.com/datos/whatsapp/aviso', { method: 'POST', body: '{}' }],
-      ['https://tumbite.com/datos/whatsapp/aviso?hub.mode=subscribe', {}],
-      ['https://tumbite.com/datos/cuentas/entrar', { method: 'POST', body: '{}' }],
-      ['https://tumbite.com/media/fotos/x.webp', {}],
-      ['https://tumbite.com/turnstile.html?sitio=x', {}],
-      ['https://tumbite.com/robots.txt', {}],
-    ];
-    for (const [url, init] of casos) {
-      const r = await pedir(url, init);
-      expect([301, 302, 307, 308], `${init.method ?? 'GET'} ${url}`).not.toContain(r.status);
-      // Lo que sigue respondiendo en el dominio viejo no entra en Google.
-      expect(r.headers.get('x-robots-tag'), url).toContain('noindex');
-    }
-  });
+  it(
+    'la API, los avisos de los proveedores y la verificación de tumbite.com NO redirigen',
+    async () => {
+      const casos: [string, RequestInit][] = [
+        ['https://tumbite.com/datos/salud', {}],
+        ['https://tumbite.com/datos/version', {}],
+        ['https://tumbite.com/datos/stripe/aviso', { method: 'POST', body: '{}' }],
+        ['https://tumbite.com/datos/stripe/aviso-conectadas', { method: 'POST', body: '{}' }],
+        ['https://tumbite.com/datos/whatsapp/aviso', { method: 'POST', body: '{}' }],
+        ['https://tumbite.com/datos/whatsapp/aviso?hub.mode=subscribe', {}],
+        ['https://tumbite.com/datos/cuentas/entrar', { method: 'POST', body: '{}' }],
+        ['https://tumbite.com/media/fotos/x.webp', {}],
+        ['https://tumbite.com/turnstile.html?sitio=x', {}],
+        ['https://tumbite.com/robots.txt', {}],
+      ];
+      for (const [url, init] of casos) {
+        const r = await pedir(url, init);
+        expect([301, 302, 307, 308], `${init.method ?? 'GET'} ${url}`).not.toContain(r.status);
+        // Lo que sigue respondiendo en el dominio viejo no entra en Google.
+        expect(r.headers.get('x-robots-tag'), url).toContain('noindex');
+      }
+    },
+    ESPERA,
+  );
 
-  it('en divoox.com las páginas se entregan desde la carpeta interna, sin mostrarla', async () => {
-    const portada = await pedir('https://divoox.com/');
-    expect(portada.status).toBe(200);
-    expect(await portada.text()).toContain('portada');
-    expect(portada.headers.get('x-robots-tag')).toBeNull();
-    const privacidad = await pedir('https://divoox.com/privacy');
-    expect(await privacidad.text()).toContain('privacidad');
-    // La barra final que pone la plataforma lleva a la dirección pública, nunca a «/_paginas/…».
-    const app = await pedir('https://divoox.com/app?x=1');
-    expect(app.status).toBe(307);
-    expect(app.headers.get('location')).toBe('/app/');
-    // Una ruta interna de la app web cae en su raíz, también desde la carpeta.
-    const interna = await pedir('https://divoox.com/app/restaurant/abc');
-    expect(await interna.text()).toContain('app del cliente');
-    // Quien entre por la carpeta interna en divoox.com ve la dirección pública.
-    const carpeta = await pedir('https://divoox.com/_paginas/privacy');
-    expect(carpeta.status).toBe(301);
-    expect(carpeta.headers.get('location')).toBe('https://divoox.com/privacy');
-  });
+  it(
+    'en divoox.com las páginas se entregan desde la carpeta interna, sin mostrarla',
+    async () => {
+      const portada = await pedir('https://divoox.com/');
+      expect(portada.status).toBe(200);
+      expect(await portada.text()).toContain('portada');
+      expect(portada.headers.get('x-robots-tag')).toBeNull();
+      const privacidad = await pedir('https://divoox.com/privacy');
+      expect(await privacidad.text()).toContain('privacidad');
+      // La barra final que pone la plataforma lleva a la dirección pública, nunca a «/_paginas/…».
+      const app = await pedir('https://divoox.com/app?x=1');
+      expect(app.status).toBe(307);
+      expect(app.headers.get('location')).toBe('/app/');
+      // Una ruta interna de la app web cae en su raíz, también desde la carpeta.
+      const interna = await pedir('https://divoox.com/app/restaurant/abc');
+      expect(await interna.text()).toContain('app del cliente');
+      // Quien entre por la carpeta interna en divoox.com ve la dirección pública.
+      const carpeta = await pedir('https://divoox.com/_paginas/privacy');
+      expect(carpeta.status).toBe(301);
+      expect(carpeta.headers.get('location')).toBe('https://divoox.com/privacy');
+    },
+    ESPERA,
+  );
 
   it('el paquete no deja ninguna página donde la plataforma la sirva sin el servidor', () => {
     const empaquetar = readFileSync(join(RAIZ, 'scripts', 'empaquetar.sh'), 'utf8');
