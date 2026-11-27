@@ -33,3 +33,25 @@ describe('C-PUBLICAR-SE-RECUPERA', () => {
     expect(y).toMatch(/permissions:\n\s+contents: write\n\s+actions: write/);
   });
 });
+
+/**
+ * C-PUBLICAR-SIN-ESPERAR (27 nov 2026, emergencia de Tucaní): con cambios seguidos en main, «publicar»
+ * se saltaba cada versión verificada porque ya había otra más nueva verificándose, y producción quedó
+ * horas en la misma versión (el arreglo del registro de conductores esperó por eso). Ahora publica la
+ * verificada más nueva que producción, nunca una en rojo y nunca una más vieja que la que ya sirve.
+ */
+describe('C-PUBLICAR-SIN-ESPERAR', () => {
+  const y = leer('publicar.yml');
+  it('publica la versión verificada si trae todo lo de producción y más, aunque main vaya adelante', () => {
+    expect(y).toContain('https://divoox.com/datos/version');
+    expect(y).toContain('compare/${PROD}...${VERSION}');
+    expect(y).toMatch(/if \[ "\$ESTADO" = "ahead" \]; then echo "ultima=true"/);
+  });
+  it('nunca una en rojo: solo corre con la verificación en verde o a mano con la última verde', () => {
+    expect(y).toContain("github.event.workflow_run.conclusion == 'success'");
+    expect(y).toContain('verify.yml/runs?branch=main&status=success');
+  });
+  it('sin poder leer producción, solo la punta de main (la regla de antes)', () => {
+    expect(y).toMatch(/"\$ESTADO" = "desconocido" \] && \{ \[ "\$PUNTA" = "\$VERSION" \]/);
+  });
+});
