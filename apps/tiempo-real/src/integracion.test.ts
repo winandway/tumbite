@@ -27,7 +27,7 @@ function conectarAlServidor(m: ReturnType<typeof mundo>): typeof fetch {
 describe('Worker ↔ servidor, de punta a punta', () => {
   it('el lote del Durable Object mueve al repartidor libre en la base, una sola vez', async () => {
     const m = mundo(VARIABLES);
-    const rep = await m.cuenta('repartidor', 'Rep E2E');
+    const rep = await m.cuenta('repartidor', 'Repartidor Prueba');
     await m.DB.prepare(
       "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en) VALUES (?, 1, 25.7, -80.2, datetime('now', '-1 minute'))",
     )
