@@ -1,5 +1,6 @@
 import { CuentaTarifa } from './CuentaTarifa';
 import { comoLlegar } from '../comoLlegar';
+import { AccionFija } from '../piezas/AccionFija';
 import { type CierreViaje, cierreConRespuesta, empezarCierre } from './cierreViaje';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, Switch, TextInput, View } from 'react-native';
@@ -508,7 +509,10 @@ export function ViajeActivo({
               </View>
             </View>
           ) : null}
-          <BotonDriver texto={t.listo} alTocar={() => void calificarYSalir()} variante="negro" />
+          {/* C-BOTON-SOBRE-BARRA: la acción principal de cada paso va fija sobre la barra de abajo. */}
+          <AccionFija testID="accion-fija-viaje-listo">
+            <BotonDriver texto={t.listo} alTocar={() => void calificarYSalir()} variante="negro" />
+          </AccionFija>
         </View>
       </AnchoDriver>
     );
@@ -772,16 +776,18 @@ export function ViajeActivo({
         {viaje.estado === 'asignado' ? (
           <>
             {/* C-PASOS-DESLIZANDO: «Llegué» se desliza (como Uber Driver): un toque no lo marca. */}
-            <Deslizador
-              variante="accion"
-              tono={esEnvio ? 'logistica' : 'neutro'}
-              testID="viaje-llegue"
-              texto={t.deslizarLlegue}
-              accionLector={t.llegue}
-              ocupado={enviando}
-              confirmar={t.confirmarLlegue}
-              alConfirmar={() => paso('llegue')}
-            />
+            <AccionFija testID="accion-fija-viaje-llegue">
+              <Deslizador
+                variante="accion"
+                tono={esEnvio ? 'logistica' : 'neutro'}
+                testID="viaje-llegue"
+                texto={t.deslizarLlegue}
+                accionLector={t.llegue}
+                ocupado={enviando}
+                confirmar={t.confirmarLlegue}
+                alConfirmar={() => paso('llegue')}
+              />
+            </AccionFija>
             <Pressable
               onPress={() => void paso('liberar', { motivo: 'conductor_suelta' })}
               accessibilityRole="button"
@@ -824,16 +830,18 @@ export function ViajeActivo({
             ) : null}
             {casco && (!conCodigo || pin.length === 4) ? (
               // C-PASOS-DESLIZANDO: iniciar el viaje (o «recogí el paquete») se desliza.
-              <Deslizador
-                variante="accion"
-                tono={esEnvio ? 'logistica' : 'neutro'}
-                testID="viaje-iniciar"
-                texto={t.deslizarIniciar}
-                accionLector={t.iniciar}
-                ocupado={enviando}
-                confirmar={t.confirmarIniciar}
-                alConfirmar={() => paso('iniciar', conCodigo ? { pin } : {})}
-              />
+              <AccionFija testID="accion-fija-viaje-iniciar">
+                <Deslizador
+                  variante="accion"
+                  tono={esEnvio ? 'logistica' : 'neutro'}
+                  testID="viaje-iniciar"
+                  texto={t.deslizarIniciar}
+                  accionLector={t.iniciar}
+                  ocupado={enviando}
+                  confirmar={t.confirmarIniciar}
+                  alConfirmar={() => paso('iniciar', conCodigo ? { pin } : {})}
+                />
+              </AccionFija>
             ) : null}
             {quedaGratis <= 0 ? (
               <Boton
@@ -940,16 +948,18 @@ export function ViajeActivo({
         {parada && !enParada ? (
           <>
             {/* C-PASOS-DESLIZANDO: llegar a la parada se desliza. */}
-            <Deslizador
-              variante="accion"
-              tono="exito"
-              testID="viaje-parada-llegue"
-              texto={t.deslizarLlegueParada}
-              accionLector={t.llegueParada}
-              ocupado={enviando}
-              confirmar={t.confirmarLlegueParada}
-              alConfirmar={() => paso(`paradas/${parada.orden}/llegue`)}
-            />
+            <AccionFija testID="accion-fija-viaje-parada-llegue">
+              <Deslizador
+                variante="accion"
+                tono="exito"
+                testID="viaje-parada-llegue"
+                texto={t.deslizarLlegueParada}
+                accionLector={t.llegueParada}
+                ocupado={enviando}
+                confirmar={t.confirmarLlegueParada}
+                alConfirmar={() => paso(`paradas/${parada.orden}/llegue`)}
+              />
+            </AccionFija>
             {/* C-PRECIO-ZONA: con precio de la zona no se salta la parada (la vuelta de un ida y vuelta). */}
             {viaje.precio_zona ? (
               <Text
@@ -991,32 +1001,36 @@ export function ViajeActivo({
               </Text>
             </View>
             {/* C-PASOS-DESLIZANDO: seguir después de la parada se desliza. */}
-            <Deslizador
-              variante="accion"
-              tono="exito"
-              testID="viaje-parada-seguir"
-              texto={t.deslizarSeguir}
-              accionLector={t.seguir}
-              ocupado={enviando}
-              confirmar={t.confirmarSeguir}
-              alConfirmar={() => paso(`paradas/${parada.orden}/seguir`)}
-            />
+            <AccionFija testID="accion-fija-viaje-parada-seguir">
+              <Deslizador
+                variante="accion"
+                tono="exito"
+                testID="viaje-parada-seguir"
+                texto={t.deslizarSeguir}
+                accionLector={t.seguir}
+                ocupado={enviando}
+                confirmar={t.confirmarSeguir}
+                alConfirmar={() => paso(`paradas/${parada.orden}/seguir`)}
+              />
+            </AccionFija>
           </>
         ) : null}
         {viaje.estado === 'en_curso' && !parada && (!esEnvio || pinEntrega.length === 4) ? (
           // C-CERRAR-DESLIZANDO (robot, 18 nov 2026): entregar un envío o terminar un viaje se
           // desliza, como el cierre de la entrega de comida: un toque accidental no lo cierra.
-          <Deslizador
-            variante="accion"
-            tono={esEnvio ? 'logistica' : 'neutro'}
-            testID="viaje-terminar"
-            texto={esEnvio ? t.entregar : t.terminar}
-            accionLector={esEnvio ? t.entregar : t.terminar}
-            ocupado={enviando}
-            // Revisor (18 nov 2026): con lector de pantalla, cerrar pregunta antes.
-            confirmar={esEnvio ? t.confirmarEntregar : t.confirmarTerminar}
-            alConfirmar={() => paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
-          />
+          <AccionFija testID="accion-fija-viaje-terminar">
+            <Deslizador
+              variante="accion"
+              tono={esEnvio ? 'logistica' : 'neutro'}
+              testID="viaje-terminar"
+              texto={esEnvio ? t.entregar : t.terminar}
+              accionLector={esEnvio ? t.entregar : t.terminar}
+              ocupado={enviando}
+              // Revisor (18 nov 2026): con lector de pantalla, cerrar pregunta antes.
+              confirmar={esEnvio ? t.confirmarEntregar : t.confirmarTerminar}
+              alConfirmar={() => paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
+            />
+          </AccionFija>
         ) : null}
 
         {error ? (

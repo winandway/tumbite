@@ -12,6 +12,11 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Acción principal fija sobre la barra de Driver (27 nov 2026) — todos los países · rama `claude/trusting-jones-0478de`, sin subir
+
+- [x] [para: desarrollador] La acción principal de cada hoja de Driver (comida, viajes, envíos, Flex, «Estoy aquí») queda fija arriba de la barra de abajo, con su área segura (C-BOTON-SOBRE-BARRA).
+- [ ] [para: revisor-calidad] Revisar C-BOTON-SOBRE-BARRA una vez antes de publicar (pieza `apps/repartidor/src/piezas/AccionFija.tsx` y su prueba); en iPhone la barra de abajo ahora deja libre la rayita de inicio.
+
 ## Unión de El Vigía: tabulador + Saldo Divoox + páginas para buscadores (25 nov 2026) — Venezuela · rama `fase-vigia-pago-buscadores` (lleva `fase-tabulador-vigia`, `fase-metodo-pago-saldo` y `fase-seo-venezuela`), sin subir
 
 - [x] [para: desarrollador] Fusionar las tres ramas, probar la interacción (circuito combinado del dinero en El Vigía con saldo, efectivo, Pago Móvil, noche, paradas, espera y cancelación), arreglar lo que salió (tarifas públicas con quién paga por servicio; soltar saldo y regalo si falla la comisión al aceptar; salida en español del borrado con saldo; la web no borra creyendo saldo 0), retoques de las ciudades, guion de Moto en Venezuela con la palanca en la regla de Moto (C-VIGIA-SALDO-CIRCUITO).

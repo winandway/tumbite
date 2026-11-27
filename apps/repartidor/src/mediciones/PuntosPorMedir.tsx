@@ -12,6 +12,7 @@ import {
   enIdioma,
 } from '@tumbite/compartido';
 import { Boton, C, Text, achicarFotoEvidencia, e } from '@tumbite/movil';
+import { AccionFija } from '../piezas/AccionFija';
 import { Mapa } from '../piezas/Mapa';
 import { type LecturaGps, estadoGps } from './estoyAquiLogica';
 
@@ -359,13 +360,16 @@ function Medir({
           <Text testID="gps-listo" style={{ color: '#1E7B34', fontWeight: '700' }}>
             {t.listo(estado.precisionM, distanciaLegible(estado.metros, idioma))}
           </Text>
-          <Boton
-            texto={t.estoyAqui}
-            testID="estoy-aqui"
-            exito
-            cargando={enviando}
-            alTocar={() => void enviar()}
-          />
+          {/* C-BOTON-SOBRE-BARRA: «Estoy aquí» va fijo sobre la barra de abajo. */}
+          <AccionFija testID="accion-fija-estoy-aqui">
+            <Boton
+              texto={t.estoyAqui}
+              testID="estoy-aqui"
+              exito
+              cargando={enviando}
+              alTocar={() => void enviar()}
+            />
+          </AccionFija>
         </>
       )}
       {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}

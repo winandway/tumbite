@@ -89,6 +89,14 @@ import { ModoDestino } from './piezas/ModoDestino';
 import { RegresoACasa } from './piezas/RegresoACasa';
 import { DeslizarParaCompletar } from './piezas/DeslizarParaCompletar';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
+import {
+  AccionFija,
+  AnclaAccionFija,
+  EspacioAccionFija,
+  ZonaAccionFija,
+  useRegistroAccionFija,
+} from './piezas/AccionFija';
+import { accionDelPedido } from './piezas/accionFijaLogica';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CuentaDriver } from './rediseno/CuentaDriver';
 import { tituloDeVista } from './rediseno/titulos';
@@ -693,6 +701,9 @@ export function Inicio() {
   const [rutaFlex, setRutaFlex] = useState<RutaFlexInicio | null>(null);
   // C-FLEX-PARADA-ACTUAL: el botón fijo «Parada actual» de «Mi ruta», fuera de lo que se desplaza.
   const [pieFlex, setPieFlex] = useState<ReactNode>(null);
+  // C-BOTON-SOBRE-BARRA: la acción principal de la hoja va fija sobre la barra de abajo.
+  const accionFija = useRegistroAccionFija();
+  const [altoBarra, setAltoBarra] = useState(0);
   const [vista, setVista] = useState<
     | 'inicio'
     | 'billetera'
@@ -1335,9 +1346,13 @@ export function Inicio() {
   }
 
   /** La foto de la puerta y el deslizador (el pedido principal y los agrupados). */
-  function cierrePuerta(p: Pedido, conFotoPrincipal: boolean) {
+  function cierrePuerta(p: Pedido, conFotoPrincipal: boolean, fijar = false) {
     const local = fotoTomada[p.id];
     const lista = Boolean(p.fotoEntregaLista) || Boolean(local);
+    // C-BOTON-SOBRE-BARRA: en el pedido principal, el paso que toca (la foto o «Desliza para
+    // completar») va fijo sobre la barra de abajo.
+    const fijo = (nodo: ReactNode, testID: string) =>
+      fijar ? <AccionFija testID={testID}>{nodo}</AccionFija> : nodo;
     return (
       <View style={{ gap: 6 }} testID="cierre-puerta">
         {lista ? (
@@ -1376,16 +1391,29 @@ export function Inicio() {
             </View>
           </View>
         ) : (
-          <Boton
-            texto={subiendo ? t.subiendo : t.fotoEntrega}
-            alTocar={() => void tomarFotoEntrega(p.id)}
-            cargando={subiendo}
-            exito={conFotoPrincipal}
-            secundario={!conFotoPrincipal}
-          />
+          fijo(
+            <Boton
+              texto={subiendo ? t.subiendo : t.fotoEntrega}
+              alTocar={() => void tomarFotoEntrega(p.id)}
+              cargando={subiendo}
+              exito={conFotoPrincipal}
+              secundario={!conFotoPrincipal}
+            />,
+            'accion-fija-foto-entrega',
+          )
         )}
         <Text style={{ color: '#666B73', fontSize: 12 }}>{t.sinCaras}</Text>
-        {conFotoPrincipal || lista ? (
+        {lista ? (
+          fijo(
+            <DeslizarParaCompletar
+              idioma={idioma}
+              listo={lista}
+              ocupado={subiendo}
+              alCompletar={() => completarEnPuerta(p.id)}
+            />,
+            'accion-fija-completar',
+          )
+        ) : conFotoPrincipal ? (
           <DeslizarParaCompletar
             idioma={idioma}
             listo={lista}
@@ -1878,6 +1906,11 @@ export function Inicio() {
   }
 
   const activo = estado?.activo;
+  // C-BOTON-SOBRE-BARRA: la única acción del pedido que va fija sobre la barra de abajo (las demás
+  // siguen en la hoja). Así el conductor siempre la ve y la puede tocar, en cualquier teléfono.
+  const accionPedido = activo ? accionDelPedido(activo, Platform.OS !== 'web') : null;
+  const fija = (clave: NonNullable<typeof accionPedido>, nodo: ReactNode) =>
+    accionPedido === clave ? <AccionFija testID={`accion-fija-${clave}`}>{nodo}</AccionFija> : nodo;
   // Verificar el pedido en el restaurante: escanear el QR de su pantalla o escribir el número.
   const bloqueCodigo =
     activo && activo.estado === 'listo' ? (
@@ -1890,9 +1923,9 @@ export function Inicio() {
         </Text>
       ) : (
         <>
-          {Platform.OS !== 'web' ? (
-            <Boton texto={t.escanear} alTocar={() => void escanear()} exito />
-          ) : null}
+          {Platform.OS !== 'web'
+            ? fija('escanear', <Boton texto={t.escanear} alTocar={() => void escanear()} exito />)
+            : null}
           <Text style={{ color: '#666B73', fontSize: 13, marginTop: 6 }}>{t.escribirCodigo}</Text>
           <FilaConBoton>
             <TextInput
@@ -2186,81 +2219,88 @@ export function Inicio() {
     vista === 'agregar' ||
     vista === 'vehiculo';
   const lienzo = (_pestana: string, cuerpo: ReactNode, sinScroll = false, blanco = false) => (
-    <SafeAreaView
-      style={[e.fondo, { backgroundColor: blanco ? '#FFFFFF' : '#F6F6F6' }]}
-      edges={['top', 'left', 'right']}
-    >
-      {titulo ? (
-        <CabeceraDriverPantalla
-          titulo={titulo}
-          volver={
-            esRaiz
-              ? undefined
-              : () => setVista(ultimaPestana === 'ganancias' ? 'billetera' : ultimaPestana)
-          }
-          textoVolver={idioma === 'en' ? 'Back' : 'Volver'}
-        />
-      ) : null}
-      <View style={{ flex: 1 }}>
-        {sinScroll ? (
-          <View style={{ flex: 1 }}>{cuerpo}</View>
-        ) : (
-          <ScrollView
-            ref={scrollLienzo}
-            onScroll={(ev) => {
-              desplazado.current = ev.nativeEvent.contentOffset.y;
-            }}
-            scrollEventThrottle={64}
-            keyboardDismissMode="interactive"
-            automaticallyAdjustKeyboardInsets
-            contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* C-REDISENO-DRIVER: en tableta el contenido no se estira (una columna de 600). */}
-            <AnchoDriver estilo={{ flexGrow: 1 }}>{cuerpo}</AnchoDriver>
-          </ScrollView>
-        )}
-        {/* C-SERVICIOS-CONECTADOS y C-CONECTAR-DESLIZANDO: el aviso solo informa; ningún toque
-            reconecta (para volver, se desliza la tarjeta). */}
-        <AvisoDeshacer
-          visible={Boolean(desconectado)}
-          titulo={desconectado ? ts.avisoTitulo(desconectado.nombre, desconectado.id) : ''}
-          texto={`${desconectado?.texto ?? ts.avisoTexto} ${ts.avisoVolver}`}
-          alCerrar={() => setDesconectado(null)}
-        />
-        {/* C-OFERTA-EN-CUALQUIER-PANTALLA: la oferta (hoja con su alarma) sobre cualquier pantalla. */}
-        {hojasVisibles}
-      </View>
-      <BarraInferior
-        idioma={idioma}
-        activa={pestanaDeVista()}
-        alTocar={irAPestana}
-        sinLeer={campanaSinLeer}
-      />
-      <Modal
-        presentationStyle="pageSheet"
-        visible={escaneando}
-        animationType="slide"
-        onRequestClose={() => setEscaneando(false)}
+    <ZonaAccionFija registro={accionFija}>
+      <SafeAreaView
+        style={[e.fondo, { backgroundColor: blanco ? '#FFFFFF' : '#F6F6F6' }]}
+        edges={['top', 'left', 'right']}
       >
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
-          <CameraView
-            style={{ flex: 1 }}
-            facing="back"
-            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            onBarcodeScanned={({ data }) => {
-              if (qrLeido.current) return;
-              qrLeido.current = true;
-              setEscaneando(false);
-              void verificar(data);
-            }}
+        {titulo ? (
+          <CabeceraDriverPantalla
+            titulo={titulo}
+            volver={
+              esRaiz
+                ? undefined
+                : () => setVista(ultimaPestana === 'ganancias' ? 'billetera' : ultimaPestana)
+            }
+            textoVolver={idioma === 'en' ? 'Back' : 'Volver'}
           />
-          <View style={{ padding: 16 }}>
-            <Boton texto={t.cerrar} alTocar={() => setEscaneando(false)} secundario />
-          </View>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          {sinScroll ? (
+            <View style={{ flex: 1 }}>{cuerpo}</View>
+          ) : (
+            <ScrollView
+              ref={scrollLienzo}
+              onScroll={(ev) => {
+                desplazado.current = ev.nativeEvent.contentOffset.y;
+              }}
+              scrollEventThrottle={64}
+              keyboardDismissMode="interactive"
+              automaticallyAdjustKeyboardInsets
+              contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* C-REDISENO-DRIVER: en tableta el contenido no se estira (una columna de 600). */}
+              <AnchoDriver estilo={{ flexGrow: 1 }}>{cuerpo}</AnchoDriver>
+              {/* C-BOTON-SOBRE-BARRA: lo último del contenido se lee por encima de la acción fija. */}
+              <EspacioAccionFija registro={accionFija} />
+            </ScrollView>
+          )}
+          {/* C-SERVICIOS-CONECTADOS y C-CONECTAR-DESLIZANDO: el aviso solo informa; ningún toque
+            reconecta (para volver, se desliza la tarjeta). */}
+          <AvisoDeshacer
+            visible={Boolean(desconectado)}
+            titulo={desconectado ? ts.avisoTitulo(desconectado.nombre, desconectado.id) : ''}
+            texto={`${desconectado?.texto ?? ts.avisoTexto} ${ts.avisoVolver}`}
+            alCerrar={() => setDesconectado(null)}
+          />
+          {/* C-OFERTA-EN-CUALQUIER-PANTALLA: la oferta (hoja con su alarma) sobre cualquier pantalla. */}
+          {hojasVisibles}
         </View>
-      </Modal>
-    </SafeAreaView>
+        {/* C-BOTON-SOBRE-BARRA: la acción principal de la hoja, fija arriba de la barra de abajo. */}
+        <AnclaAccionFija registro={accionFija} altoBarra={altoBarra} />
+        <BarraInferior
+          idioma={idioma}
+          activa={pestanaDeVista()}
+          alTocar={irAPestana}
+          sinLeer={campanaSinLeer}
+          alMedir={setAltoBarra}
+        />
+        <Modal
+          presentationStyle="pageSheet"
+          visible={escaneando}
+          animationType="slide"
+          onRequestClose={() => setEscaneando(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: '#000' }}>
+            <CameraView
+              style={{ flex: 1 }}
+              facing="back"
+              barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+              onBarcodeScanned={({ data }) => {
+                if (qrLeido.current) return;
+                qrLeido.current = true;
+                setEscaneando(false);
+                void verificar(data);
+              }}
+            />
+            <View style={{ padding: 16 }}>
+              <Boton texto={t.cerrar} alTocar={() => setEscaneando(false)} secundario />
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </ZonaAccionFija>
   );
 
   // C-AVISO-IA-UNICO: la cuenta que no contestó el aviso de IA lo ve una vez al entrar, en su propia
@@ -2654,41 +2694,47 @@ export function Inicio() {
   // pantalla entera es para el trabajo, en fondo oscuro, con la franja de Divoox Flex arriba.
   if (vista === 'miRuta')
     return (
-      <SafeAreaView
-        style={[e.fondo, { backgroundColor: C.logistica }]}
-        edges={['top', 'left', 'right']}
-        testID="mi-ruta-completa"
-      >
-        <ScrollView
-          keyboardDismissMode="interactive"
-          automaticallyAdjustKeyboardInsets
-          style={{ backgroundColor: FONDO_FLEX }}
-          contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
+      <ZonaAccionFija registro={accionFija}>
+        <SafeAreaView
+          style={[e.fondo, { backgroundColor: C.logistica }]}
+          edges={['top', 'left', 'right']}
+          testID="mi-ruta-completa"
         >
-          <MiRuta
-            key={rutaDelAviso ?? 'lista'}
-            api={api}
+          <ScrollView
+            keyboardDismissMode="interactive"
+            automaticallyAdjustKeyboardInsets
+            style={{ backgroundColor: FONDO_FLEX }}
+            contentContainerStyle={{ paddingBottom: 16, flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <MiRuta
+              key={rutaDelAviso ?? 'lista'}
+              api={api}
+              idioma={idioma}
+              abrirRutaId={rutaDelAviso ?? estado?.bloqueFlex?.rutaId ?? null}
+              alSeguridad={() => setVista('seguridad')}
+              alVolver={enBloque ? undefined : () => setVista('inicio')}
+              alInicio={() => setVista('inicio')}
+              bloque={estado?.bloqueFlex ?? null}
+              bloqueados={<ServiciosBloqueados panel={servicios.panel} idioma={idioma} oscuro />}
+              ponerPie={setPieFlex}
+            />
+            {/* C-BOTON-SOBRE-BARRA: «Parada actual» (y la acción de cada parada) fija sobre la barra. */}
+            {pieFlex ? <AccionFija testID="parada-actual">{pieFlex}</AccionFija> : null}
+            <EspacioAccionFija registro={accionFija} />
+          </ScrollView>
+          <AnclaAccionFija registro={accionFija} altoBarra={altoBarra} fondo={FONDO_FLEX} />
+          <BarraInferior
             idioma={idioma}
-            abrirRutaId={rutaDelAviso ?? estado?.bloqueFlex?.rutaId ?? null}
-            alSeguridad={() => setVista('seguridad')}
-            alVolver={enBloque ? undefined : () => setVista('inicio')}
-            alInicio={() => setVista('inicio')}
-            bloque={estado?.bloqueFlex ?? null}
-            bloqueados={<ServiciosBloqueados panel={servicios.panel} idioma={idioma} oscuro />}
-            ponerPie={setPieFlex}
+            activa="cuenta"
+            alTocar={irAPestana}
+            sinLeer={campanaSinLeer}
+            alMedir={setAltoBarra}
           />
-        </ScrollView>
-        {pieFlex}
-        <BarraInferior
-          idioma={idioma}
-          activa="cuenta"
-          alTocar={irAPestana}
-          sinLeer={campanaSinLeer}
-        />
-        {/* C-OFERTA-EN-CUALQUIER-PANTALLA (en un bloque de Flex el servidor no ofrece nada más). */}
-        {hojasVisibles}
-      </SafeAreaView>
+          {/* C-OFERTA-EN-CUALQUIER-PANTALLA (en un bloque de Flex el servidor no ofrece nada más). */}
+          {hojasVisibles}
+        </SafeAreaView>
+      </ZonaAccionFija>
     );
   // C-ASISTENTE-DRIVER: el asistente ocupa toda la pantalla (un paso por foto, como el borrador).
   if (vista === 'papeles' && papeles.v)
@@ -3228,18 +3274,21 @@ export function Inicio() {
                   {l.cantidad} × {textoLinea(l, idioma)}
                 </Text>
               ))}
-              {activo.estado !== 'en_camino' && !activo.llegoRestaurante ? (
-                // C-PASOS-DESLIZANDO: llegar al restaurante se desliza (como DoorDash Dasher).
-                <Deslizador
-                  variante="accion"
-                  tono="exito"
-                  testID="pedido-llegue"
-                  texto={tg.pedido.deslizarLlegue}
-                  accionLector={tg.pedido.llegue}
-                  confirmar={tg.pedido.confirmarLlegue}
-                  alConfirmar={() => llegue(activo.id)}
-                />
-              ) : null}
+              {activo.estado !== 'en_camino' && !activo.llegoRestaurante
+                ? // C-PASOS-DESLIZANDO: llegar al restaurante se desliza (como DoorDash Dasher).
+                  fija(
+                    'llegue',
+                    <Deslizador
+                      variante="accion"
+                      tono="exito"
+                      testID="pedido-llegue"
+                      texto={tg.pedido.deslizarLlegue}
+                      accionLector={tg.pedido.llegue}
+                      confirmar={tg.pedido.confirmarLlegue}
+                      alConfirmar={() => llegue(activo.id)}
+                    />,
+                  )
+                : null}
               {activo.estado === 'aceptado' && activo.llegoRestaurante ? (
                 <Boton
                   texto={tg.pedido.noListo}
@@ -3327,15 +3376,18 @@ export function Inicio() {
                   ) : activo.estado === 'listo' ? (
                     <>
                       {bloqueCodigo}
-                      <Boton
-                        texto={subiendo ? t.subiendo : t.fotoRecogida}
-                        alTocar={() =>
-                          void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
-                        }
-                        cargando={subiendo}
-                        exito={!!activo.verificado}
-                        secundario={!activo.verificado}
-                      />
+                      {fija(
+                        'fotoRecogida',
+                        <Boton
+                          texto={subiendo ? t.subiendo : t.fotoRecogida}
+                          alTocar={() =>
+                            void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-recogida`)
+                          }
+                          cargando={subiendo}
+                          exito={!!activo.verificado}
+                          secundario={!activo.verificado}
+                        />,
+                      )}
                       <Text style={{ color: '#666B73', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
                     </>
                   ) : (
@@ -3411,11 +3463,14 @@ export function Inicio() {
                               : `${(m / 1000).toFixed(1)} km`;
                       return (
                         <>
-                          <Boton
-                            texto={t.comoLlegar}
-                            alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
-                            exito
-                          />
+                          {fija(
+                            'comoLlegar',
+                            <Boton
+                              texto={t.comoLlegar}
+                              alTocar={() => abrirMapa(activo.lat, activo.lng, activo.direccion)}
+                              exito
+                            />,
+                          )}
                           {cerca ? (
                             <Text style={{ color: '#0D7A3A', fontWeight: '700', fontSize: 13 }}>
                               {gpsSimulado ? t.gpsSimulado : t.confirmandoGps}
@@ -3617,7 +3672,7 @@ export function Inicio() {
                         ) : null}
                         {/* C-PIN-SIN-FOTO: con PIN, la foto no salta el PIN; se entrega en mano. */}
                         {!activo.pinRequerido && !activo.requiereEdad ? (
-                          cierrePuerta(activo, !enMano)
+                          cierrePuerta(activo, !enMano, accionPedido === 'puerta')
                         ) : activo.pinRequerido ? (
                           <Text
                             style={{ color: '#666B73', fontSize: 12 }}
@@ -3700,16 +3755,19 @@ export function Inicio() {
                           </View>
                         ) : null}
                         {/* C-PASOS-DESLIZANDO: entregar en mano cierra el pedido: se desliza. */}
-                        <Deslizador
-                          variante="accion"
-                          tono="exito"
-                          testID="entregar-en-mano"
-                          texto={t.deslizarEnMano}
-                          accionLector={t.enMano}
-                          ocupado={subiendo}
-                          confirmar={t.confirmarEnMano}
-                          alConfirmar={() => entregarEnMano()}
-                        />
+                        {fija(
+                          'enMano',
+                          <Deslizador
+                            variante="accion"
+                            tono="exito"
+                            testID="entregar-en-mano"
+                            texto={t.deslizarEnMano}
+                            accionLector={t.enMano}
+                            ocupado={subiendo}
+                            confirmar={t.confirmarEnMano}
+                            alConfirmar={() => entregarEnMano()}
+                          />,
+                        )}
                         {faltanSeg == null ? (
                           <Boton
                             texto={t.noAparece}
