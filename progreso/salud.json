@@ -20,6 +20,8 @@
     "smsVenezuela": "ok",
     "smsGasto": "ok",
     "whatsapp": "ok",
+    "whatsappEntrante": "ok",
+    "whatsappFalta": "ok",
     "dinero": "ok",
     "retiros": "ok",
     "agentes": "ok",
@@ -28,6 +30,8 @@
     "aprobadosNoElegibles": "ok",
     "tarifas": "ok",
     "viajes": "ok",
+    "tabuladorVigia": "ok",
+    "panicoZonas": "error",
     "comidaPaises": "ok",
     "pagoComida": "ok",
     "tiempoReal": "pendiente",
@@ -36,6 +40,7 @@
     "transiciones": "ok",
     "libro": "ok",
     "regalos": "ok",
+    "saldo_clientes": "ok",
     "camila": "ok",
     "verificacion_ia": "ok",
     "correoEntrante": "ok",
@@ -50,5 +55,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-24T09:33:37.717052+00:00"
+  "medido": "2026-11-26T22:22:43.969975+00:00"
 }

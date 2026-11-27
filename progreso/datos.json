@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-24T09:25:00Z",
+  "actualizado": "2026-11-26T22:30:00Z",
   "version": "fe71f3f",
   "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
@@ -553,6 +553,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-26",
+      "titulo": "Driver 0.1.79 enviada a Google Play y logo en azul petróleo",
+      "texto": "La app Driver 0.1.79 pasó el auditor de tiendas (APTO) y se envió a revisión de Google Play. Trae el reverso de la licencia opcional en Venezuela, con aviso de datos de salud. La pantalla de entrar de Driver y de Restaurants ahora sigue en el color de su arranque, con el logo blanco, y donde el logo va sobre blanco las letras salen en azul petróleo. La política de privacidad ya dice que se lee la fecha de nacimiento y que el reverso puede traer datos de salud. También se arregló un fallo: algunos SMS a Venezuela no salían porque el código del enlace parecía un monto."
+    },
     {
       "fecha": "2026-11-24",
       "titulo": "Versiones nuevas de Android compiladas, sin subir",

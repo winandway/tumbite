@@ -63,6 +63,14 @@ export default defineConfig({
           setupFiles: ['./vitest.setup.ts'],
         },
       },
+      {
+        test: {
+          // C-LAMINA-PLAY-COLOR-APP: los guiones de marca que arman las piezas de las tiendas.
+          name: 'marca',
+          include: ['scripts/marca/**/*.test.mjs'],
+          environment: 'node',
+        },
+      },
     ],
     coverage: {
       provider: 'v8',
