@@ -30,6 +30,7 @@ import {
   useSesion,
   useSondeo,
 } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * C-CAMILA-CHAT en Divoox Driver (17 nov 2026) — todos los países. «Habla con soporte», dentro de
@@ -368,6 +369,7 @@ export function ChatSoporteApp() {
         <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
         <FilaConBoton>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={b.valores.texto}
             onChangeText={(x) => b.cambiar('texto', x)}
             placeholder={adjunto ? t.escribeConCaptura : t.escribe}

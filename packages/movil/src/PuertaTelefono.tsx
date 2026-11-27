@@ -9,6 +9,7 @@ import { SelectorPaisTelefono, usePaisSugerido } from './SelectorPaisTelefono';
 import { useSesion } from './sesion';
 import { useSoporte } from './soporte';
 import { Boton, C, Campo, e } from './ui';
+import { COLOR_TEXTO_DE_FONDO } from './tokens';
 
 /**
  * C-TELEFONO-AL-REGISTRARSE (22 nov 2026, orden de Richard por Gerencia, como Uber, DoorDash y Rappi):
@@ -460,6 +461,7 @@ function ConfirmaTuCelular({
               : `${canal === 'whatsapp' ? t.enviamosWa : t.enviamos} ${ultimos}.`}
           </Text>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             testID="codigo-celular"
             value={codigo}
             onChangeText={(x) => {

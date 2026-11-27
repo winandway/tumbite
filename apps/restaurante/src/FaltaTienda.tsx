@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { type Api, type Idioma, enIdioma, textoLinea } from '@tumbite/compartido';
 import { Boton, C, Text } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -83,6 +84,7 @@ export function FaltaTienda({
         <>
           <Text style={{ fontSize: 13, color: '#666B73' }}>{t.reemplazos}</Text>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={busca}
             onChangeText={setBusca}
             placeholder={t.buscar}

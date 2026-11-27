@@ -6,6 +6,7 @@ import { Boton, C, CASILLA_EN_FILA, FilaConBoton, e } from './ui';
 import { useSesion } from './sesion';
 import { BotonReportar, MenuBloquear } from './Moderacion';
 import { useSondeo } from './useSondeo';
+import { COLOR_TEXTO_DE_FONDO } from './tokens';
 
 type Mensaje = {
   id: number;
@@ -246,6 +247,7 @@ export function ChatPedido({
       {abierto ? (
         <FilaConBoton style={{ marginTop: 8 }}>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={texto}
             onChangeText={setTexto}
             placeholder={t.escribe}
