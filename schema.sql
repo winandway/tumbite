@@ -125,6 +125,42 @@ CREATE TABLE IF NOT EXISTS recuperaciones (
 );
 CREATE INDEX IF NOT EXISTS recuperaciones_usuario ON recuperaciones(usuario_id, creada_en);
 
+-- C-RECUPERAR-WHATSAPP (27 nov 2026): recuperar la cuenta con un código por WhatsApp, SMS o correo.
+-- Nada guarda el celular ni el correo escrito: solo su huella. El código, solo su hash.
+CREATE TABLE IF NOT EXISTS codigos_recuperacion (
+  id TEXT PRIMARY KEY,
+  identificador_hash TEXT NOT NULL,
+  canal TEXT NOT NULL,
+  usuarios TEXT NOT NULL,
+  codigo_hash TEXT NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS codigos_recuperacion_huella ON codigos_recuperacion(identificador_hash, creado_en);
+-- Topes: 3 envíos por hora por lo escrito y por destino, exista o no la cuenta.
+CREATE TABLE IF NOT EXISTS envios_recuperacion (
+  id TEXT PRIMARY KEY,
+  identificador_hash TEXT NOT NULL,
+  destino_hash TEXT,
+  ip TEXT,
+  canal TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS envios_recuperacion_huella ON envios_recuperacion(identificador_hash, creado_en);
+CREATE INDEX IF NOT EXISTS envios_recuperacion_destino ON envios_recuperacion(destino_hash, creado_en);
+-- Auditoría de cada recuperación (pedido, código enviado, bueno o malo, tope, contraseña cambiada).
+CREATE TABLE IF NOT EXISTS auditoria_recuperacion (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT,
+  identificador_hash TEXT,
+  canal TEXT,
+  evento TEXT NOT NULL,
+  ip TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS auditoria_recuperacion_usuario ON auditoria_recuperacion(usuario_id, creado_en);
+
 CREATE TABLE IF NOT EXISTS restaurantes (
   id TEXT PRIMARY KEY,
   dueno_id TEXT NOT NULL UNIQUE REFERENCES usuarios(id),
@@ -1554,6 +1590,12 @@ WHEN NEW.estado = 'aprobada' AND EXISTS (
                        JOIN repartidores r ON r.usuario_id = NEW.conductor_id
                        JOIN zonas z ON z.id = r.zona_id
                       WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
+     AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                      WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                        AND pp.vence_en > datetime('now')
+                        AND NOT EXISTS (SELECT 1 FROM politica_requisitos y
+                                         WHERE y.pais = pp.pais AND y.requisito = sr.requisito
+                                           AND y.regla = 'para_empezar'))
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -1570,6 +1612,12 @@ WHEN NEW.estado = 'aprobada' AND EXISTS (
                        JOIN repartidores r ON r.usuario_id = NEW.conductor_id
                        JOIN zonas z ON z.id = r.zona_id
                       WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
+     AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                      WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                        AND pp.vence_en > datetime('now')
+                        AND NOT EXISTS (SELECT 1 FROM politica_requisitos y
+                                         WHERE y.pais = pp.pais AND y.requisito = sr.requisito
+                                           AND y.regla = 'para_empezar'))
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -3253,6 +3301,80 @@ CREATE TABLE IF NOT EXISTS lugares_propios (
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS lugares_propios_ciudad ON lugares_propios(zona_id) WHERE activo = 1;
+
+-- C-ESTOY-AQUI (27 nov 2026): medir los lugares propios en la calle. El equipo crea una tarea de
+-- medición (lugares de UNA ciudad) y la asigna a conductores; el conductor toca «Estoy aquí» en cada
+-- lugar y la medición queda pendiente. Nada cambia sin que el equipo la apruebe en el panel.
+CREATE TABLE IF NOT EXISTS mediciones_tareas (
+  id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL,
+  titulo TEXT NOT NULL,
+  nota TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'abierta' CHECK (estado IN ('abierta', 'cerrada')),
+  creada_por TEXT,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrada_por TEXT,
+  cerrada_en TEXT
+);
+CREATE INDEX IF NOT EXISTS mediciones_tareas_ciudad ON mediciones_tareas(zona_id, estado);
+CREATE TABLE IF NOT EXISTS mediciones_tarea_lugares (
+  tarea_id TEXT NOT NULL,
+  lugar_id TEXT NOT NULL,
+  orden INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (tarea_id, lugar_id)
+);
+CREATE TABLE IF NOT EXISTS mediciones_tarea_asignados (
+  tarea_id TEXT NOT NULL,
+  conductor_id TEXT NOT NULL,
+  asignado_por TEXT,
+  asignado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (tarea_id, conductor_id)
+);
+CREATE INDEX IF NOT EXISTS mediciones_asignados_conductor ON mediciones_tarea_asignados(conductor_id);
+CREATE TABLE IF NOT EXISTS mediciones_lugar (
+  id TEXT PRIMARY KEY,
+  tarea_id TEXT NOT NULL,
+  lugar_id TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  conductor_id TEXT NOT NULL,
+  lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  precision_m REAL NOT NULL CHECK (precision_m > 0 AND precision_m <= 15),
+  tomada_en TEXT NOT NULL,
+  recibida_en TEXT NOT NULL DEFAULT (datetime('now')),
+  antes_lat REAL NOT NULL,
+  antes_lng REAL NOT NULL,
+  distancia_m INTEGER NOT NULL CHECK (distancia_m >= 0),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+  revisada_por TEXT,
+  revisada_en TEXT,
+  motivo TEXT
+);
+CREATE INDEX IF NOT EXISTS mediciones_lugar_tarea ON mediciones_lugar(tarea_id, estado);
+-- C-TRES-FOTOS (Richard, 27 nov 2026): las tres fotos obligatorias de cada medición (entrada o fachada,
+-- letrero o algo reconocible, vista desde la calle), tomadas con la cámara y cada una con su hora y su
+-- GPS. Volver a tomar una la reemplaza. C-FOTOS-PUBLICAS: al aprobar la medición pasan a públicas
+-- («Así se ve el lugar» en la app de clientes y en Driver); el equipo puede quitar cualquiera.
+CREATE TABLE IF NOT EXISTS mediciones_fotos (
+  id TEXT PRIMARY KEY,
+  medicion_id TEXT NOT NULL,
+  lugar_id TEXT NOT NULL,
+  conductor_id TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'letrero', 'calle')),
+  clave TEXT NOT NULL,
+  lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  precision_m REAL,
+  tomada_en TEXT NOT NULL,
+  recibida_en TEXT NOT NULL DEFAULT (datetime('now')),
+  publica INTEGER NOT NULL DEFAULT 0 CHECK (publica IN (0, 1)),
+  quitada_por TEXT,
+  quitada_en TEXT,
+  UNIQUE (medicion_id, tipo)
+);
+CREATE INDEX IF NOT EXISTS mediciones_fotos_lugar ON mediciones_fotos(lugar_id, publica);
+CREATE INDEX IF NOT EXISTS mediciones_fotos_conductor ON mediciones_fotos(conductor_id);
+CREATE INDEX IF NOT EXISTS mediciones_lugar_conductor ON mediciones_lugar(conductor_id);
 
 CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
   id TEXT PRIMARY KEY,
