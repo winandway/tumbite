@@ -269,6 +269,7 @@ export function ChatSoporteApp() {
         <Text style={{ color: '#666B73', fontSize: 13 }}>{t.camila}</Text>
       </View>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         ref={lista}
         style={{ backgroundColor: '#F6F6F6', borderRadius: 14, maxHeight: 460 }}
         contentContainerStyle={{ padding: 10 }}

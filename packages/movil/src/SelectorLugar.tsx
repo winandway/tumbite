@@ -236,7 +236,11 @@ export function PanelSelectorLugar({
         </View>
       ) : null}
 
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16 }}>
+      <ScrollView
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ padding: 16 }}
+      >
         {s.paso === 'pais'
           ? paisesParaElegir(paisSugerido).map((p) => (
               <Fila

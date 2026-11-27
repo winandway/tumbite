@@ -261,6 +261,7 @@ export function ElegirDireccion({
       <>
         <Encabezado titulo={t.direccionTitulo} cerrar={salir} etiquetaCerrar={t.cerrar} />
         <ScrollView
+          automaticallyAdjustKeyboardInsets
           contentContainerStyle={{ padding: 16, gap: 12 }}
           keyboardShouldPersistTaps="handled"
         >

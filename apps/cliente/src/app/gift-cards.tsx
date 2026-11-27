@@ -142,6 +142,7 @@ function TarjetasRegalo() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }}>
       <Encabezado titulo={t.titulo} alVolver={() => router.back()} etiquetaVolver="‹" />
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           padding: 16,

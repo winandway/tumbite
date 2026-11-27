@@ -253,6 +253,7 @@ function ConfirmaTuCorreo({
 
   return (
     <ScrollView
+      automaticallyAdjustKeyboardInsets
       testID="confirma-tu-correo"
       style={{ flex: 1, backgroundColor: '#fff' }}
       contentContainerStyle={{ padding: 24, paddingTop: arriba + 32, gap: 14 }}

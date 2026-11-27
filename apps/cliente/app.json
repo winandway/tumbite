@@ -126,7 +126,8 @@
         "googleMaps": {
           "apiKey": "PON_AQUI_LA_LLAVE_DE_GOOGLE_MAPS"
         }
-      }
+      },
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -224,7 +225,11 @@
     },
     "extra": {
       "sonidoAvisos": "aviso.wav",
-      "canalesAvisos": { "llego": "llego.wav", "dinero": "dinero.wav", "panico": "panico.wav" },
+      "canalesAvisos": {
+        "llego": "llego.wav",
+        "dinero": "dinero.wav",
+        "panico": "panico.wav"
+      },
       "eas": {
         "projectId": "0f62355b-be8a-44a8-b4b4-098976dc8f90"
       }

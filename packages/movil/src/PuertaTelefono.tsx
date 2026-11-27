@@ -441,6 +441,7 @@ function ConfirmaTuCelular({
 
   return (
     <ScrollView
+      automaticallyAdjustKeyboardInsets
       testID="confirma-tu-celular"
       style={{ flex: 1, backgroundColor: '#fff' }}
       contentContainerStyle={{ padding: 24, paddingTop: arriba + 32, gap: 14 }}

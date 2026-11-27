@@ -128,6 +128,7 @@ export function EditarDireccion({
         testID="editar-direccion-cabecera"
       />
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         ref={desplazar}
         contentContainerStyle={{ padding: 16, gap: 22, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"

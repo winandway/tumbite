@@ -15,7 +15,9 @@ import {
   almacenTelefono,
   e,
   useSesion,
-  Text, Modal } from '@tumbite/movil';
+  Text,
+  Modal,
+} from '@tumbite/movil';
 
 /**
  * C-CANCELAR-LISTO (10 nov 2026) — todos los países. Un pedido ya listo no se cancela con un
@@ -105,7 +107,11 @@ export function PedirCancelacion({
             maxHeight: '88%',
           }}
         >
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 10 }}>
+          <ScrollView
+            automaticallyAdjustKeyboardInsets
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ gap: 10 }}
+          >
             <Text style={{ fontSize: 19, fontWeight: '800' }} accessibilityRole="header">
               {t.titulo}
             </Text>

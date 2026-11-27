@@ -123,7 +123,9 @@ function Hoja({
             alignSelf: 'center',
           }}
         >
-          <ScrollView keyboardShouldPersistTaps="handled">{children}</ScrollView>
+          <ScrollView automaticallyAdjustKeyboardInsets keyboardShouldPersistTaps="handled">
+            {children}
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>

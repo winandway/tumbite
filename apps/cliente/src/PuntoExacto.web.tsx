@@ -51,6 +51,7 @@ export function PuntoExacto({
 
   return (
     <ScrollView
+      automaticallyAdjustKeyboardInsets
       style={{ flex: 1, backgroundColor: '#fff' }}
       contentContainerStyle={{ padding: 16, gap: 12 }}
       testID="punto-exacto"

@@ -227,6 +227,7 @@ export default function MenuRestaurante() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{
           paddingBottom: 110,
           width: '100%',
@@ -713,6 +714,7 @@ export default function MenuRestaurante() {
           {detalle ? (
             <>
               <ScrollView
+                automaticallyAdjustKeyboardInsets
                 contentContainerStyle={{
                   paddingBottom: 24,
                   width: '100%',

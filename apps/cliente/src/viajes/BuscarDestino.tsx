@@ -131,6 +131,7 @@ export function BuscarDestino({
         </Text>
       </View>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
