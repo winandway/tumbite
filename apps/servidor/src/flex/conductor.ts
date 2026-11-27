@@ -14,6 +14,7 @@ import {
 } from '../finanzas/cobrosRuta';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zNombreOpcional } from '@tumbite/compartido';
 import {
   MOTIVOS_INCIDENCIA,
   PROXIMAS_ACCIONES,
@@ -82,7 +83,8 @@ const esquemaEntrega = z.object({
     .nullable()
     .optional(),
   sinContacto: z.boolean().default(false),
-  recibio: z.string().trim().max(120).default(''),
+  // C-CASILLA-CON-SU-TIPO: quien recibió es una persona.
+  recibio: zNombreOpcional().default(''),
   // Fase 6 (C-FLEX-COBRO): lo cobrado y quién recibió (cédula y relación: «titular», «familiar»…).
   cobro: esquemaCobroEntrega.nullable().optional(),
   recibioDocumento: z.string().trim().max(20).default(''),

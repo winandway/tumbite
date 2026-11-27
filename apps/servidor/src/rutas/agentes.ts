@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { z } from 'zod';
+import { zCelular } from '@tumbite/compartido';
 import {
   type Agente,
   COLUMNAS_AGENTE,
@@ -375,7 +376,7 @@ agentes.post('/agent/drivers/find', limiteIntentos(12, 60_000), async (c) => {
     c,
     z
       .object({
-        telefono: z.string().trim().max(30).optional(),
+        telefono: zCelular().pipe(z.string().trim().max(30)).optional(),
         codigo: z.string().trim().max(20).optional(),
       })
       .refine((x) => Boolean(x.telefono || x.codigo), {
@@ -479,7 +480,7 @@ const topes = {
 };
 const datosAgente = {
   nombre: z.string().trim().min(3).max(80),
-  telefono: z.string().trim().max(30).default(''),
+  telefono: zCelular().pipe(z.string().trim().max(30)).default(''),
   idioma: z.enum(['es', 'en']).default('es'),
   zonaId: z.string().min(1).max(64),
   direccion: z.string().trim().max(160).default(''),

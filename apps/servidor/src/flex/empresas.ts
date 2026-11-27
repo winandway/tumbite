@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zCelular } from '@tumbite/compartido';
 import {
   PERMISOS_CLAVE_API,
   type PermisoFlex,
@@ -47,7 +48,7 @@ const camposEmpresa = {
   numeroFiscal: z.string().trim().max(40).default(''),
   direccionFiscal: z.string().trim().max(300).default(''),
   representante: z.string().trim().max(120).default(''),
-  telefono: z.string().trim().max(40).default(''),
+  telefono: zCelular().pipe(z.string().trim().max(40)).default(''),
 };
 /** Si viene el número fiscal, tiene que tener la forma del país (EIN, RIF, NIT, RFC). */
 const esquemaEmpresa = z
@@ -666,7 +667,7 @@ flexEmpresas.get('/empresas/:id/conductores', async (c) => {
 const esquemaInvitacionConductor = z
   .object({
     nombre: texto(120),
-    telefono: z.string().trim().max(40).default(''),
+    telefono: zCelular().pipe(z.string().trim().max(40)).default(''),
     correo: z.union([z.email().max(254), z.literal('')]).default(''),
     vinculo: z.enum(['propio', 'red', 'hibrido']).default('propio'),
   })

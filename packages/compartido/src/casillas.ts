@@ -432,6 +432,10 @@ const conRegla = (regla: (v: string) => string | null) =>
 export const zNombre = (idioma: Idioma = 'es') =>
   conRegla((v) => errorNombre(v, idioma)).transform(nombreLimpio);
 
+/** Nombre de persona que puede ir vacío (quien recibe, cuando no se pidió). */
+export const zNombreOpcional = (idioma: Idioma = 'es') =>
+  conRegla((v) => errorNombre(v, idioma, false, false)).transform(nombreLimpio);
+
 /** Nombre Y apellido («Nombre y apellido»). */
 export const zNombreCompleto = (idioma: Idioma = 'es') =>
   conRegla((v) => errorNombre(v, idioma, true)).transform(nombreLimpio);

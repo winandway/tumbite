@@ -99,6 +99,7 @@ import { exigirSegundoFactor } from '../segundoFactor';
 import { Hono } from 'hono';
 import { cobertura } from '../territorio';
 import { z } from 'zod';
+import { zNombreOpcional } from '@tumbite/compartido';
 import { taparOfensivas } from '../filtroPalabras';
 import {
   bloqueo,
@@ -3138,7 +3139,8 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
           .string()
           .regex(/^\d{4}$/)
           .optional(),
-        nombreRecibe: z.string().trim().max(80).optional(),
+        // C-CASILLA-CON-SU-TIPO: quien recibe es una persona (letras, sin @ ni números).
+        nombreRecibe: zNombreOpcional().optional(),
       }),
     );
     if (requiereEdad && d.mayorEdad !== true)

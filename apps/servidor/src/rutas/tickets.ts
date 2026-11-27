@@ -3,6 +3,7 @@ import { topesDeZona } from '../internacional/tarifas';
 import { devolverParcial, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { zCelular } from '@tumbite/compartido';
 import type { AccesoInterno, Idioma } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken } from '../cripto';
@@ -415,7 +416,7 @@ tickets.post('/tickets/:codigo/mensajes', limiteIntentos(20, 60_000), async (c) 
 const esquemaFranquicia = z.object({
   nombre: z.string().trim().min(2).max(120),
   correo: z.string().trim().email().max(200),
-  telefono: z.string().trim().min(6).max(40),
+  telefono: zCelular().pipe(z.string().trim().min(6).max(40)),
   pais: z.string().trim().min(2).max(80),
   ciudad: z.string().trim().min(2).max(120),
   empresa: z.string().trim().max(160).default(''),
