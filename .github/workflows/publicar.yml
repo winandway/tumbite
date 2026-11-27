@@ -52,13 +52,28 @@ jobs:
             fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # C-PUBLICAR-SIN-ESPERAR (27 nov 2026, emergencia de Tucaní): se publica la versión verificada
+          # MÁS NUEVA que producción, aunque main ya tenga otra más nueva todavía verificándose. Antes se
+          # saltaba («la más nueva ya trae todo») y con cambios seguidos producción quedó horas sin
+          # publicar. Nunca una en rojo (solo llegan corridas verdes) y nunca una más VIEJA que la que
+          # ya sirve producción (compare: «ahead» = esta versión trae todo lo de producción y más).
+          PROD=$(curl -fsS https://divoox.com/datos/version | grep -oE '"commit":"[0-9a-f]+"' | cut -d'"' -f4 || true)
+          if [ -n "$PROD" ]; then
+            ESTADO=$(gh api "repos/${{ github.repository }}/compare/${PROD}...${VERSION}" --jq .status || echo "desconocido")
+          else
+            ESTADO="desconocido"
+          fi
           PUNTA=$(gh api "repos/${{ github.repository }}/commits/main" --jq .sha)
           # Los cambios con [skip ci] no se verifican ni se publican solos: no cuentan como «más nuevos».
           NUEVOS=$(gh api "repos/${{ github.repository }}/compare/${VERSION}...main" \
             --jq '[.commits[] | select(.commit.message | test("\\[skip ci\\]") | not)] | length')
-          if [ "$PUNTA" = "$VERSION" ] || [ "$NUEVOS" = "0" ]; then echo "ultima=true" >> "$GITHUB_OUTPUT"; else
+          if [ "$ESTADO" = "ahead" ]; then echo "ultima=true" >> "$GITHUB_OUTPUT"
+          elif [ "$ESTADO" = "desconocido" ] && { [ "$PUNTA" = "$VERSION" ] || [ "$NUEVOS" = "0" ]; }; then
+            # Sin poder leer producción, la regla de siempre: solo la punta de main.
+            echo "ultima=true" >> "$GITHUB_OUTPUT"
+          else
             echo "ultima=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::${VERSION:0:7} no se publica: main ya va en ${PUNTA:0:7}, que se publica al terminar su verificación."
+            echo "::notice::${VERSION:0:7} no se publica: producción (${PROD:-?}) ya trae lo mismo o algo más nuevo (${ESTADO})."
           fi
   publicar:
     needs: revisar

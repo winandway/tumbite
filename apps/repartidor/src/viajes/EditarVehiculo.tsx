@@ -13,6 +13,7 @@ import {
   e,
 } from '@tumbite/movil';
 import { type VehiculoEditable, faltaPlaca } from '../piezas/queTeFaltaLogica';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * C-QUE-TE-FALTA (23 nov 2026, un conductor de Venezuela con la moto guardada sin placa y sin poder
@@ -148,6 +149,7 @@ export function EditarVehiculo({
     <View key={campo} style={{ gap: 4 }}>
       <Text style={{ color: COLOR.textoSuave, fontSize: 12 }}>{etiqueta}</Text>
       <TextInput
+        placeholderTextColor={COLOR_TEXTO_DE_FONDO}
         testID={`editar-${campo}`}
         value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
         onChangeText={(x) => {

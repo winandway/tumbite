@@ -18,6 +18,7 @@ import { useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { Icono } from './diseno';
 import { ALTO, COLOR, ESPACIO, FUENTE, RADIO, estiloBoton, type TipoBoton } from './tokens';
+import { COLOR_TEXTO_DE_FONDO } from './tokens';
 
 export const C = MARCA.colores;
 
@@ -157,6 +158,7 @@ export function CampoClave({
       <Text style={e.etiqueta}>{etiqueta}</Text>
       <View>
         <TextInput
+          placeholderTextColor={COLOR_TEXTO_DE_FONDO}
           value={valor}
           onChangeText={cambiar}
           secureTextEntry={!visible}

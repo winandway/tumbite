@@ -27,6 +27,7 @@ import {
   Text,
   TarjetaMiLugar,
 } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * Alta del conductor de pasajeros (Divoox Moto y Divoox Carro) — Venezuela y todos los países.
@@ -566,6 +567,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   ) => (
     <View style={{ gap: 4 }}>
       <TextInput
+        placeholderTextColor={COLOR_TEXTO_DE_FONDO}
         testID={`alta-${campo}`}
         value={String(new Map(Object.entries(b.valores)).get(campo) ?? '')}
         onChangeText={(x) => {

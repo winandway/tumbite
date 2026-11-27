@@ -6,6 +6,7 @@ import { enIdioma, formatearMonto } from '@tumbite/compartido';
 import { useSesion } from './sesion';
 import { Boton, C, e } from './ui';
 import { PreferenciaSms } from './CasillaSms';
+import { COLOR_TEXTO_DE_FONDO } from './tokens';
 
 const T = {
   es: {
@@ -212,6 +213,7 @@ export function ConfirmarBorrado({
               </View>
             ) : null}
             <TextInput
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               value={escrito}
               onChangeText={setEscrito}
               placeholder={t.escribe}

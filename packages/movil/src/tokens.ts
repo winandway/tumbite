@@ -258,3 +258,10 @@ export function contraste(a: string, b: string): number {
   const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p) as [number, number];
   return (x + 0.05) / (y + 0.05);
 }
+
+/**
+ * C-CASILLA-SE-LEE (27 nov 2026, Tucaní: «cinco casillas vacías» en «Tu moto»). El texto de fondo de
+ * TODA casilla lleva este color fijo. Sin él, Android usa el del tema del teléfono y en varios equipos
+ * (modo oscuro forzado) sale casi blanco sobre blanco: la casilla parece vacía y sin nombre.
+ */
+export const COLOR_TEXTO_DE_FONDO = '#6B7078';
