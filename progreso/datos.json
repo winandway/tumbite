@@ -563,6 +563,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-27",
+      "titulo": "tumbite.com lleva a divoox.com y sale de Google",
+      "texto": "Quien entra a cualquier página de tumbite.com llega a la misma página en divoox.com, con un aviso permanente que Google entiende. Las apps viejas y los avisos de pago siguen funcionando igual en tumbite.com, pero ya no aparecen en el buscador. Falta un paso de Richard en Search Console para que Google cambie los resultados más rápido (Progreso 42)."
+    },
+    {
+      "fecha": "2026-11-27",
       "titulo": "El cobro ya no se corta si la pantalla se recarga",
       "texto": "Cuando un restaurante o un repartidor marcaba un pedido como entregado y la pantalla se recargaba en ese mismo instante, el cobro de la tarjeta podía quedar a medias. Ahora el cobro termina siempre, aunque el celular pierda la señal, y nunca se cobra dos veces. Lo mismo vale para terminar o cancelar un viaje con tarjeta: si el banco falla, se anota lo que de verdad cobró y el reloj termina lo pendiente. El botón «Reintentar ahora» del panel de dinero ya rescata un cobro atascado. Probado de punta a punta en el sitio de pruebas con tarjeta de prueba (comida a domicilio, para recoger y un carro con propina). Los dos pedidos de prueba que habían quedado a medias ya están cobrados y cuadran."
     },
