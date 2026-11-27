@@ -2,6 +2,16 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CABECERAS-MARCA, C-CABECERA-SOLO-ABIERTOS, C-CABECERA-ROTA y C-MOTO-SERIA · Diez cabeceras de marca que rotan, solo de servicios abiertos, y la moto de trabajo en vez de la Vespa (27 nov 2026, orden de Richard vía Gerencia) — todos los países · app de clientes (web ya; teléfonos en la próxima compilación), servidor, Driver (íconos)
+
+- **Qué pidió:** que la cabecera del inicio muestre todo lo que hace Divoox (moto, carro, comida, mercado, farmacia, licores, ferretería, envíos, saldo, comercios aliados), una distinta cada vez que se abre, y una moto seria, no «la motico que parece una Vespa».
+- **Qué se hizo:** `CABECERAS_MARCA` y `cabeceraDeMarca` en `packages/compartido/src/inicioNuevo.ts` (reemplazan las tres de respaldo). Cada una dice qué servicio necesita abierto (`requiere`); «Comercios aliados» no promete servicio y sale siempre. La pantalla (`apps/cliente/src/Inicio.tsx`) pide primero la del administrador de banners; si no hay, o si es la misma de la vez anterior, sale la SIGUIENTE de marca abierta en la ciudad. Lo visto se guarda en el teléfono (`inicio-ultima-portada`), nada en la base. Mientras llega la ciudad, la portada sale sin titular ni imagen (nunca asoma una que después cambia).
+- **Servidor:** `segunServicio` ya no deja pasar Comida siempre: un banner de Comida no sale donde Comida está cerrada (El Vigía hoy).
+- **Imágenes:** Seedream 4 + BiRefNet con `scripts/banners/generar-cabeceras.mjs`; fuentes, costo y licencia en `docs/disenos/cabeceras-27nov/FUENTES.md`. La moto traía letras inventadas en la tapa lateral: se borraron.
+- **Pruebas en rojo comprobadas:** `packages/compartido/src/inicioNuevo.test.ts` (cerrado no sale, no repite), `apps/servidor/src/banners.test.ts` (Comida cerrada no sale), `apps/cliente/src/inicio/cabecerasMarca.test.ts` (huellas de la moto aprobada y prohibición de la Vespa en las apps y el borrador).
+- **Qué NO tocar:** no volver a eximir a Comida; no guardar la rotación en la base; no reemplazar `moto.webp`/`heroe-moto.webp`/`servicio-moto.png` sin actualizar la huella del candado y la hoja para Richard.
+- **Pendiente fuera del código:** la promoción «Tu mototaxi, en minutos» del administrador de banners todavía usa la imagen vieja guardada en el almacén: se cambia en «Banners de la app» subiendo `docs/capturas/banners/banner-moto.webp`.
+
 ## C-ROBOT-NOCTURNO y C-ROBOT-PANEL · Los tres robots de la lista de aceptación corren cada noche en la Mac contra el sitio de pruebas (26 nov 2026, Gerencia con autorización de Richard, plan de mejoras puntos 2, 4 y 7b) — todos los países · solo herramientas, el producto no cambia
 
 - **Qué es:** la hoja `~/Gerencia/LISTA-DE-ACEPTACION-DIVOOX.md` (conductor C1–C13, pasajero P1–P8, panel A1–A9, examen de Camila) la recorren tres robots y dejan el parte de la mañana en `~/Gerencia/partes/ACEPTACION-<fecha>.md`, línea por línea en verde, rojo o «no se pudo», con su captura. Solo el sitio de pruebas, solo cuentas de prueba (correo `.test` o las demo), cero dinero, nada a las tiendas.

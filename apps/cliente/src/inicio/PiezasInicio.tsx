@@ -47,15 +47,21 @@ export function PortadaRotativa({
 }: {
   idioma: Idioma;
   cambiarIdioma: (i: Idioma) => void;
-  banner: BannerInicio;
+  /** null mientras se elige (llega la ciudad): la portada sale sin titular ni imagen. */
+  banner: BannerInicio | null;
   pendientes: number;
   alCampana: () => void;
   alTocar: (b: BannerInicio) => void;
 }) {
   const t = textosInicioNuevo(idioma);
-  const fuente = banner.imagen
-    ? { uri: banner.imagen }
-    : (IMG_NUEVO.heroes[banner.local ?? 'heroe-comida'] ?? IMG_NUEVO.heroes['heroe-comida']);
+  const fuente = !banner
+    ? null
+    : banner.imagen
+      ? { uri: banner.imagen }
+      : banner.local
+        ? IMG_NUEVO.heroes[banner.local]
+        : null;
+  const foto = Boolean(banner?.imagen);
   return (
     <View style={p.portada} testID="inicio-portada">
       <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">
@@ -72,25 +78,27 @@ export function PortadaRotativa({
           y se desvanece hacia la izquierda en el degradado, como la tarjeta de promociones. Así
           también una foto del administrador de banners con su propio fondo se integra. */}
       <View style={p.imagenPortada} pointerEvents="none" testID="portada-imagen">
-        <Image
-          source={fuente}
-          style={banner.imagen ? p.fotoPortada : p.dibujoPortada}
-          resizeMode={banner.imagen ? 'cover' : 'contain'}
-          accessibilityIgnoresInvertColors
-        />
+        {fuente ? (
+          <Image
+            source={fuente}
+            style={foto ? p.fotoPortada : p.dibujoPortada}
+            resizeMode={foto ? 'cover' : 'contain'}
+            accessibilityIgnoresInvertColors
+          />
+        ) : null}
         <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">
           <Defs>
             <LinearGradient id="fundido" x1="0" y1="0" x2="1" y2="0">
               <Stop offset="0" stopColor="#1C0708" stopOpacity={1} />
-              <Stop offset="0.3" stopColor="#1C0708" stopOpacity={banner.imagen ? 0.85 : 0} />
-              <Stop offset="0.65" stopColor="#1C0708" stopOpacity={banner.imagen ? 0.35 : 0} />
+              <Stop offset="0.3" stopColor="#1C0708" stopOpacity={foto ? 0.85 : 0} />
+              <Stop offset="0.65" stopColor="#1C0708" stopOpacity={foto ? 0.35 : 0} />
               <Stop offset="1" stopColor="#1C0708" stopOpacity={0} />
             </LinearGradient>
             <LinearGradient id="fundidoAbajo" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#120506" stopOpacity={banner.imagen ? 0.7 : 0} />
+              <Stop offset="0" stopColor="#120506" stopOpacity={foto ? 0.7 : 0} />
               <Stop offset="0.3" stopColor="#120506" stopOpacity={0} />
               <Stop offset="0.7" stopColor="#120506" stopOpacity={0} />
-              <Stop offset="1" stopColor="#120506" stopOpacity={banner.imagen ? 0.85 : 0} />
+              <Stop offset="1" stopColor="#120506" stopOpacity={foto ? 0.85 : 0} />
             </LinearGradient>
           </Defs>
           <Rect x="0" y="0" width="100" height="100" fill="url(#fundido)" />
@@ -119,18 +127,22 @@ export function PortadaRotativa({
         </Pressable>
         <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
       </View>
-      <Pressable
-        onPress={() => alTocar(banner)}
-        accessibilityRole="button"
-        accessibilityLabel={banner.titulo}
-        testID={`portada-${banner.id}`}
-        style={p.cuerpo}
-      >
-        {/* C-BANNER-SIN-CORTES: el titular nunca se corta; ocupa los renglones que necesite. */}
-        <Text style={p.titular} maxFontSizeMultiplier={1.2}>
-          {banner.titulo}
-        </Text>
-      </Pressable>
+      {banner ? (
+        <Pressable
+          onPress={() => alTocar(banner)}
+          accessibilityRole="button"
+          accessibilityLabel={banner.titulo}
+          testID={`portada-${banner.id}`}
+          style={p.cuerpo}
+        >
+          {/* C-BANNER-SIN-CORTES: el titular nunca se corta; ocupa los renglones que necesite. */}
+          <Text style={p.titular} maxFontSizeMultiplier={1.2}>
+            {banner.titulo}
+          </Text>
+        </Pressable>
+      ) : (
+        <View style={p.cuerpo} testID="portada-eligiendo" />
+      )}
     </View>
   );
 }
