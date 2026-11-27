@@ -13,7 +13,7 @@ import {
   formatearMonto,
   leerBanner,
   ordenarPorUso,
-  portadaRespaldo,
+  cabeceraDeMarca,
   rutaBanners,
   recomendarRestaurantes,
   serviciosAbiertos,
@@ -138,9 +138,12 @@ export function Inicio() {
   const abiertos = useMemo(() => serviciosAbiertos(servicios?.servicios ?? null), [servicios]);
   const disponible = (id: string) => id === 'comida' || abiertos.has(id);
 
-  // La portada: la del administrador de banners; si no hay, la de respaldo (una distinta cada vez).
-  const [vez, setVez] = useState(0);
-  const vezAbierta = useRef<number | null>(null);
+  // C-CABECERAS-MARCA y C-CABECERA-ROTA (27 nov 2026): la portada. Primero la del administrador de
+  // banners; si no tiene ninguna, o si devuelve la misma que se vio la última vez, una de las diez
+  // cabeceras de marca: la siguiente abierta en la ciudad (C-CABECERA-SOLO-ABIERTOS). Lo que se vio
+  // se guarda en el teléfono, nunca en la base. Se elige UNA vez por apertura: si la ciudad cambia
+  // después, se vuelve a pedir contra la misma «última» y no salta a otra.
+  const ultimaAlAbrir = useRef<string | null | undefined>(undefined);
   const [portada, setPortada] = useState<BannerInicio | null>(null);
   // Una sola vez por ciudad: se espera a saber la ciudad (catálogo de servicios) antes de pedirla,
   // así no cambia un segundo después de abrir (revisión del 18 nov).
@@ -148,22 +151,25 @@ export function Inicio() {
     if (!servicios) return;
     let vivo = true;
     void (async () => {
-      const ultima = await Promise.resolve(almacenTelefono.leer(LLAVE_PORTADA)).catch(() => null);
-      // La vuelta de la portada se cuenta UNA vez por apertura: si la ciudad cambia después (la
-      // ubicación llega más tarde), se pide de nuevo pero no salta a la siguiente.
-      const n = vezAbierta.current ?? Number((ultima ?? '').split('|')[1] ?? 0) + 1;
-      vezAbierta.current = n;
-      if (vivo) setVez(n);
+      if (ultimaAlAbrir.current === undefined) {
+        const g = await Promise.resolve(almacenTelefono.leer(LLAVE_PORTADA)).catch(() => null);
+        ultimaAlAbrir.current = (g ?? '').split('|')[0] || null;
+      }
+      const ultima = ultimaAlAbrir.current;
       const r = await api
         .pedir<{ banner: unknown }>(
           'GET',
-          rutaBanners('cabecera', { ciudad: zona, idioma, excluir: (ultima ?? '').split('|')[0] }),
+          rutaBanners('cabecera', { ciudad: zona, idioma, excluir: ultima }),
         )
         .catch(() => null);
-      const b = leerBanner(r?.banner);
       if (!vivo) return;
-      setPortada(b);
-      void Promise.resolve(almacenTelefono.guardar(LLAVE_PORTADA, `${b?.id ?? ''}|${n}`)).catch(
+      const delPanel = leerBanner(r?.banner);
+      const elegida =
+        delPanel && delPanel.id !== ultima
+          ? delPanel
+          : cabeceraDeMarca(idioma, ultima, serviciosAbiertos(servicios.servicios));
+      setPortada(elegida);
+      void Promise.resolve(almacenTelefono.guardar(LLAVE_PORTADA, elegida.id)).catch(
         () => undefined,
       );
     })();
@@ -172,7 +178,9 @@ export function Inicio() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo hace falta saber que ya cargó
   }, [api, zona, idioma, Boolean(servicios)]);
-  const cabecera = portada ?? portadaRespaldo(idioma, vez, disponible);
+  // Mientras llega la ciudad, la portada va sin titular ni imagen (un instante): así nunca asoma una
+  // cabecera que después cambia, ni una de un servicio que en esa ciudad está cerrado.
+  const cabecera = portada;
 
   // Las promociones: las del administrador de banners; si no hay, los cupones destacados reales.
   const [promos, setPromos] = useState<BannerInicio[]>([]);

@@ -95,6 +95,7 @@ import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { guardarConsentimientoSms } from '../sms';
 import { TELEFONO_DIEZ } from '../esquema';
+import { mensajeYaTienesCuenta } from '../mensajesYaTienesCuenta';
 import {
   TelefonoInvalido,
   invitacionQueEspera,
@@ -419,7 +420,7 @@ cuentas.post('/registro', async (c) => {
     appConCuentaUnica(c)
   )
     throw new ErrorDatos(
-      'Ya tienes una cuenta de Divoox con este correo. Entra con tu misma contraseña: ahí te ofrecemos usarla también aquí.',
+      mensajeYaTienesCuenta('correo', papelDeLaApp(c.req.header('x-tumbite-app'))),
       'correo',
       409,
       'correo_con_cuenta',
@@ -438,7 +439,30 @@ cuentas.post('/registro', async (c) => {
       'correo_con_cuenta',
     );
   // El mismo teléfono no abre dos cuentas del mismo tipo (un repartidor puede pedir como cliente).
-  if (telUnico) {
+  // C-CUENTA-UNICA-CELULAR (27 nov 2026): en las apps de la cuenta única, tampoco una de cliente y otra
+  // de conductor: el celular de una cuenta de persona lleva a entrar con ella (nunca a una duplicada).
+  const unica = appConCuentaUnica(c) && esPapelDePersona(d.rol);
+  if (telUnico && unica) {
+    const conTel = await db
+      .prepare(
+        `SELECT 1 FROM usuarios WHERE telefono_canonico = ?1 AND rol IN ('cliente', 'repartidor')
+         UNION ALL
+         SELECT 1 FROM usuarios WHERE ${TELEFONO_DIEZ} = substr(?1, -10)
+           AND telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != ''
+           AND rol IN ('cliente', 'repartidor')
+         LIMIT 1`,
+      )
+      .bind(telUnico)
+      .first();
+    if (conTel)
+      throw new ErrorDatos(
+        mensajeYaTienesCuenta('telefono', papelDeLaApp(c.req.header('x-tumbite-app'))),
+        'telefono',
+        409,
+        'telefono_con_cuenta',
+      );
+  }
+  if (telUnico && !unica) {
     // C-LECTURAS-POR-PETICION: dos búsquedas por índice en vez de un OR que recorría todas las
     // cuentas del mismo rol (el teléfono único, y el escrito a mano de las cuentas viejas).
     const conTel = await db

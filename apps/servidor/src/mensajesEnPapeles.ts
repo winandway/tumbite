@@ -28,10 +28,12 @@ const QUE_HACER_EN = new Map<AppDeCelular, string>([
   ],
   ['restaurante', 'To sign in here, use the email of your restaurant’s account.'],
 ]);
+const QUE_HACER_PERSONA_COMERCIO_EN =
+  'To register your restaurant with this same account, sign in at divoox.com/panel with this email and your password and tap “My restaurants”.';
 export const MENSAJES_EN_OTRA_APP: [string, string][] = APPS_DE_CELULAR.flatMap((cuenta) =>
   APPS_DE_CELULAR.filter((app) => app !== cuenta).map((app): [string, string] => [
     mensajeCuentaDeOtraApp(cuenta, app),
-    `This email already belongs to ${CUENTA_EN.get(cuenta)} and doesn’t work in ${APP_EN.get(app)}. ${QUE_HACER_EN.get(app)} ${SIGUE_EN.get(cuenta)}`,
+    `This email already belongs to ${CUENTA_EN.get(cuenta)} and doesn’t work in ${APP_EN.get(app)}. ${app === 'restaurante' && cuenta !== 'restaurante' ? QUE_HACER_PERSONA_COMERCIO_EN : QUE_HACER_EN.get(app)} ${SIGUE_EN.get(cuenta)}`,
   ]),
 );
 

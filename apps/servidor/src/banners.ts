@@ -137,25 +137,21 @@ export function visiblesPara(
 /**
  * C-BANNER-SEGUN-SERVICIO (22 nov 2026, Richard vía Gerencia) — todos los países. Un banner que lleva
  * a un servicio (moto, carro, envíos…) solo sale donde ese servicio está abierto al público: nunca se
- * anuncia el mototaxi en una ciudad donde no se puede pedir. Comida queda fuera de la regla, igual
- * que en el inicio de la app (es la puerta de entrada de la portada). `abiertos` es null cuando no se
- * pudo saber (sin ciudad): entonces solo pasan los que no llevan a un servicio con regla.
+ * anuncia el mototaxi en una ciudad donde no se puede pedir. C-CABECERA-SOLO-ABIERTOS (27 nov 2026,
+ * Richard): Comida también cumple la regla (antes pasaba siempre y prometía restaurantes en El Vigía,
+ * donde Comida no está abierta). `abiertos` es null cuando no se pudo saber (sin ciudad): entonces
+ * solo pasan los que no llevan a un servicio.
  */
 export function segunServicio<T extends Pick<Banner, 'destinoTipo' | 'destinoValor'>>(
   l: T[],
   abiertos: Set<string> | null,
 ): T[] {
-  return l.filter(
-    (b) =>
-      b.destinoTipo !== 'servicio' ||
-      b.destinoValor === 'comida' ||
-      Boolean(abiertos?.has(b.destinoValor)),
-  );
+  return l.filter((b) => b.destinoTipo !== 'servicio' || Boolean(abiertos?.has(b.destinoValor)));
 }
 
-/** ¿Hace falta mirar los servicios de la ciudad? Solo si algún banner lleva a uno con regla. */
+/** ¿Hace falta mirar los servicios de la ciudad? Solo si algún banner lleva a un servicio. */
 export const necesitaServicios = (l: Pick<Banner, 'destinoTipo' | 'destinoValor'>[]) =>
-  l.some((b) => b.destinoTipo === 'servicio' && b.destinoValor !== 'comida');
+  l.some((b) => b.destinoTipo === 'servicio');
 
 /**
  * C-BANNER-AZAR-COMPROBABLE (25 nov 2026): el número al azar de la rotación sale de aquí, para que
