@@ -255,6 +255,9 @@ const T = {
     habilitadoCarro: 'Conductor habilitado para Carro.',
     vehiculoActivo: 'Vehículo activo',
     noHabilitado: 'Todavía no se puede habilitar. Le falta:',
+    // C-HABILITAR-IGUAL-LETRERO: habilitado dentro de su plazo, con la fecha y lo que le queda.
+    habilitadoPorPlazo: (fecha: string, papeles: string) =>
+      `Se habilita por su plazo: tiene hasta el ${fecha} para subir ${papeles}.`,
     hecho: 'Listo.',
     // 5. Motos
     motos: 'Papeles, motos y carros',
@@ -303,6 +306,15 @@ const T = {
     motoAprobada: 'Moto aprobada.',
     opcionesMoto: 'Más opciones de la moto',
     rechazarMoto: 'Rechazar la moto',
+    // C-FICHA-VEHICULO-SIEMPRE: el vehículo en cualquier estado, con lo que se puede hacer.
+    estadoVehiculo: 'Estado',
+    suspenderMoto: 'Suspender la moto',
+    suspenderCarro: 'Suspender el carro',
+    motivoSuspension: 'Motivo de la suspensión (la persona lo ve)',
+    suspendido: 'Vehículo suspendido.',
+    reactivarMoto: 'Volver a aprobar la moto',
+    reactivarCarro: 'Volver a aprobar el carro',
+    esperaReenvio: 'El conductor tiene que corregirlo y volver a enviarlo desde Driver.',
     sinDocumentos: 'Todavía no subió documentos.',
     seguroEnPlazo: (vence: string) =>
       `Póliza: pendiente, dentro del plazo de papeles${vence ? ` (vence el ${vence})` : ''}. Se puede aprobar el vehículo con el registro; al vencer el plazo, sin la póliza aprobada no se conecta.`,
@@ -511,6 +523,8 @@ const T = {
     habilitadoCarro: 'Driver approved for Car.',
     vehiculoActivo: 'Active vehicle',
     noHabilitado: 'Can’t approve yet. Missing:',
+    habilitadoPorPlazo: (fecha: string, papeles: string) =>
+      `Approved within their document window: they have until ${fecha} to upload ${papeles}.`,
     hecho: 'Done.',
     motos: 'Documents, motorbikes and cars',
     sinMotos: 'No motorbikes or cars waiting for review.',
@@ -558,6 +572,14 @@ const T = {
     motoAprobada: 'Motorbike approved.',
     opcionesMoto: 'More motorbike options',
     rechazarMoto: 'Reject motorbike',
+    estadoVehiculo: 'Status',
+    suspenderMoto: 'Suspend motorbike',
+    suspenderCarro: 'Suspend car',
+    motivoSuspension: 'Reason for the suspension (the person sees it)',
+    suspendido: 'Vehicle suspended.',
+    reactivarMoto: 'Approve motorbike again',
+    reactivarCarro: 'Approve car again',
+    esperaReenvio: 'The driver has to fix it and send it again from Driver.',
     sinDocumentos: 'No documents uploaded yet.',
     seguroEnPlazo: (vence: string) =>
       `Insurance policy: pending, within the documents grace period${vence ? ` (ends ${vence})` : ''}. The vehicle can be approved with the registration; once the period ends, the driver can’t go online without an approved policy.`,
@@ -1064,6 +1086,8 @@ function Rechazo({
   t,
   alConfirmar,
   alCancelar,
+  etiqueta,
+  boton,
 }: {
   formulario: string;
   cuenta: string;
@@ -1071,6 +1095,9 @@ function Rechazo({
   t: Textos;
   alConfirmar: (motivo: string) => Promise<boolean>;
   alCancelar: () => void;
+  /** Otra etiqueta y otro botón (suspender en vez de rechazar). */
+  etiqueta?: string;
+  boton?: string;
 }) {
   const b = useBorrador({
     formulario,
@@ -1097,7 +1124,7 @@ function Rechazo({
         empezar={() => void b.empezarDeNuevo()}
       />
       <label>
-        {t.motivoRechazo}
+        {etiqueta ?? t.motivoRechazo}
         <input
           value={b.valores.motivo}
           maxLength={200}
@@ -1107,7 +1134,7 @@ function Rechazo({
       </label>
       <div className="fila-botones">
         <button type="submit" className="boton" disabled={!b.valores.motivo.trim()}>
-          {t.confirmarRechazo}
+          {boton ?? t.confirmarRechazo}
         </button>
         <button type="button" className="boton secundario" onClick={alCancelar}>
           {t.cancelar}
@@ -1641,8 +1668,26 @@ export function Conductor({
     setOk('');
     setFaltan([]);
     try {
-      await pedir(metodo, ruta, cuerpo);
-      setOk(exito);
+      const r = await pedir<{ porPlazo?: { venceEn: string | null; pendientes: string[] } }>(
+        metodo,
+        ruta,
+        cuerpo,
+      );
+      // C-HABILITAR-IGUAL-LETRERO: si se habilitó por su plazo, se dice hasta cuándo y qué le falta.
+      const pp = r?.porPlazo;
+      if (pp?.venceEn && pp.pendientes.length) {
+        const servicio = ruta.split('/').pop() ?? 'moto';
+        const fecha = formatearFechaHora(`${pp.venceEn.slice(0, 10)} 12:00:00`, {
+          idioma,
+          formato: '24',
+          zona: 'UTC',
+          estilo: 'fecha',
+        });
+        const papeles = new Intl.ListFormat(idioma === 'en' ? 'en-US' : 'es', {
+          type: 'conjunction',
+        }).format(pp.pendientes.map((x) => requisitoDe(servicio)(x).toLowerCase()));
+        setOk(t.habilitadoPorPlazo(fecha, papeles));
+      } else setOk(exito);
       cargar();
       alCambiar?.();
     } catch (x) {
@@ -2028,8 +2073,12 @@ export function FilaMoto({
     () => new Map(m.documentos.map((d) => [d.id, d.venceEn?.slice(0, 10) ?? ''])),
   );
   const [rechazando, setRechazando] = useState(false);
+  const [suspendiendo, setSuspendiendo] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  // C-FICHA-VEHICULO-SIEMPRE: los botones según su estado (los mismos cambios que deja la base).
+  const estado = m.estado || 'en_revision';
+  const estadosVehiculo = idioma === 'en' ? T_ESTADOS_VEHICULO.en : T_ESTADOS_VEHICULO.es;
   // C-CARRO-CATEGORIAS: la categoría con que se aprueba el carro («auto» = la que le toque).
   const [categoria, setCategoria] = useState('auto');
   // C-CARRO-PANEL: la misma cola revisa motos y carros, cada uno con sus textos.
@@ -2062,6 +2111,10 @@ export function FilaMoto({
           {esCarro && m.plazas ? ` · ${t.plazas(m.plazas)}` : ''} · {m.conductor} · {t.placa}:{' '}
           {m.placa}
           {m.placa_estado ? ` (${m.placa_estado})` : ''}
+        </span>
+        <span data-testid={`estado-vehiculo-${m.id}`}>
+          {t.estadoVehiculo}:{' '}
+          <Insignia estado={estado}>{enPalabras(estadosVehiculo, estado)}</Insignia>
         </span>
       </div>
       {m.conductor_id && verConductor ? (
@@ -2096,6 +2149,19 @@ export function FilaMoto({
               >
                 {t.verArchivo}
               </a>
+              {/* C-FICHA-VEHICULO-SIEMPRE: las fotos del vehículo se ven ahí mismo. */}
+              {d.tipo.startsWith('foto_') ? (
+                <img
+                  className="foto-vehiculo"
+                  src={`/datos/admin/vehiculos/${m.id}/documentos/${d.id}/archivo`}
+                  alt={
+                    nombrePapelPais(m.pais, esCarro ? 'carro' : 'moto', d.tipo, idioma) ??
+                    enPalabras(nombresDoc, d.tipo)
+                  }
+                  loading="lazy"
+                  style={{ maxWidth: 220, maxHeight: 160, borderRadius: 8, objectFit: 'cover' }}
+                />
+              ) : null}
             </div>
             {d.estado !== 'aprobado' ? (
               <div className="fila-botones">
@@ -2145,31 +2211,77 @@ export function FilaMoto({
           </select>
         </label>
       ) : null}
-      <div className="fila-botones">
-        <button
-          type="button"
-          className="boton exito"
-          onClick={() =>
-            void hacer(
+      {estado === 'rechazado' || estado === 'vencido' ? (
+        <p className="pista" data-testid={`espera-reenvio-${m.id}`}>
+          {t.esperaReenvio}
+        </p>
+      ) : null}
+      {estado === 'en_revision' || estado === 'suspendido' || estado === 'aprobado' ? (
+        <div className="fila-botones">
+          {estado !== 'aprobado' ? (
+            <button
+              type="button"
+              className="boton exito"
+              onClick={() =>
+                void hacer(
+                  `/datos/admin/vehiculos/${m.id}`,
+                  {
+                    estado: 'aprobado',
+                    ...(esCarro && categoria !== 'auto' ? { categoria } : {}),
+                  },
+                  esCarro ? t.carroAprobado : t.motoAprobada,
+                )
+              }
+            >
+              {estado === 'suspendido'
+                ? esCarro
+                  ? t.reactivarCarro
+                  : t.reactivarMoto
+                : esCarro
+                  ? t.aprobarCarro
+                  : t.aprobarMoto}
+            </button>
+          ) : null}
+          {estado !== 'suspendido' ? (
+            <MenuTresPuntos
+              etiqueta={esCarro ? t.opcionesCarro : t.opcionesMoto}
+              opciones={[
+                estado === 'aprobado'
+                  ? {
+                      texto: esCarro ? t.suspenderCarro : t.suspenderMoto,
+                      peligro: true,
+                      alTocar: () => setSuspendiendo(true),
+                    }
+                  : {
+                      texto: esCarro ? t.rechazarCarro : t.rechazarMoto,
+                      peligro: true,
+                      alTocar: () => setRechazando(true),
+                    },
+              ]}
+            />
+          ) : null}
+        </div>
+      ) : null}
+      {suspendiendo ? (
+        <Rechazo
+          formulario="moto-suspension-vehiculo"
+          cuenta={m.id}
+          idioma={idioma}
+          t={t}
+          etiqueta={t.motivoSuspension}
+          boton={esCarro ? t.suspenderCarro : t.suspenderMoto}
+          alCancelar={() => setSuspendiendo(false)}
+          alConfirmar={async (motivo) => {
+            const bien = await hacer(
               `/datos/admin/vehiculos/${m.id}`,
-              { estado: 'aprobado', ...(esCarro && categoria !== 'auto' ? { categoria } : {}) },
-              esCarro ? t.carroAprobado : t.motoAprobada,
-            )
-          }
-        >
-          {esCarro ? t.aprobarCarro : t.aprobarMoto}
-        </button>
-        <MenuTresPuntos
-          etiqueta={esCarro ? t.opcionesCarro : t.opcionesMoto}
-          opciones={[
-            {
-              texto: esCarro ? t.rechazarCarro : t.rechazarMoto,
-              peligro: true,
-              alTocar: () => setRechazando(true),
-            },
-          ]}
+              { estado: 'suspendido', motivo },
+              t.suspendido,
+            );
+            if (bien) setSuspendiendo(false);
+            return bien;
+          }}
         />
-      </div>
+      ) : null}
       {rechazando ? (
         <Rechazo
           formulario="moto-rechazo-vehiculo"

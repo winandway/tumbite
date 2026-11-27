@@ -118,7 +118,8 @@ export const T_ACTIVACION = {
     error: 'No pudimos calcular la barra. Revisa tu conexión.',
     reintentar: 'Reintentar',
     vehiculo: 'Vehículo por revisar',
-    sinVehiculo: 'No tiene un vehículo esperando revisión.',
+    sinVehiculo: 'No tiene ningún vehículo registrado.',
+    otrosVehiculos: 'Sus vehículos',
     papeles: 'Papeles por revisar',
     sinPapeles: 'No tiene papeles esperando revisión.',
     servicios_: 'Servicios y requisitos',
@@ -195,7 +196,8 @@ export const T_ACTIVACION = {
     error: 'We couldn’t work out the bar. Check your connection.',
     reintentar: 'Try again',
     vehiculo: 'Vehicle to review',
-    sinVehiculo: 'No vehicle waiting for review.',
+    sinVehiculo: 'No vehicle registered.',
+    otrosVehiculos: 'Their vehicles',
     papeles: 'Documents to review',
     sinPapeles: 'No documents waiting for review.',
     servicios_: 'Services and requirements',
@@ -442,6 +444,9 @@ export function EsperaAlEquipo({
  * Lo que se decide del conductor fuera de su identidad, en su ficha de Verificaciones y en su ficha
  * de conductor: vehículo, papeles y servicios, más «Aprobar todo lo que está en verde».
  */
+/** Primero el que trabaja; al final lo retirado. */
+const ORDEN_ESTADO = ['aprobado', 'suspendido', 'vencido', 'rechazado', 'retirado'];
+
 export function RevisionConductor({
   id,
   base,
@@ -468,6 +473,9 @@ export function RevisionConductor({
   const [sinEnviar, setSinEnviar] = useState<
     (Moto & { faltaParaAprobar?: FaltaSinEnviar[] })[] | null
   >(null);
+  // C-FICHA-VEHICULO-SIEMPRE (27 nov 2026, Richard: «no encuentro la moto»): los demás vehículos
+  // (aprobado, suspendido, rechazado…) también se ven aquí, con su estado, sus fotos y sus botones.
+  const [otros, setOtros] = useState<Moto[] | null>(null);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [ocupado, setOcupado] = useState(false);
@@ -494,6 +502,16 @@ export function RevisionConductor({
           Array.isArray(r?.vehiculos)
             ? r.vehiculos.filter((m) => Array.isArray(m?.documentos))
             : [],
+        ),
+      )
+      .catch((x: unknown) => setError(mensaje(x)));
+    pedir<{ vehiculos: Moto[] }>('GET', `/datos/admin/vehiculos?estado=todos&conductor=${q}`)
+      .then((r) =>
+        setOtros(
+          (Array.isArray(r?.vehiculos) ? r.vehiculos : [])
+            .filter((m) => Array.isArray(m?.documentos))
+            .filter((m) => m.estado !== 'en_revision' && m.estado !== 'registrado')
+            .sort((a, b) => ORDEN_ESTADO.indexOf(a.estado) - ORDEN_ESTADO.indexOf(b.estado)),
         ),
       )
       .catch((x: unknown) => setError(mensaje(x)));
@@ -578,7 +596,7 @@ export function RevisionConductor({
       ) : null}
       <section id="revision-vehiculo" data-testid="revision-vehiculo">
         <h2>{t.vehiculo}</h2>
-        {motos && motos.length === 0 && !(sinEnviar ?? []).length ? (
+        {motos && motos.length === 0 && !(sinEnviar ?? []).length && otros?.length === 0 ? (
           <p className="pista">{t.sinVehiculo}</p>
         ) : null}
         <ul className="lista">
@@ -602,6 +620,19 @@ export function RevisionConductor({
             <VehiculoSinEnviar v={m} idioma={idioma} alCambiar={cambio} />
           </div>
         ))}
+        {(otros ?? []).length ? (
+          <ul className="lista" aria-label={t.otrosVehiculos} data-testid="otros-vehiculos">
+            {(otros ?? []).map((m) => (
+              <FilaMoto
+                key={`${m.id}-${m.estado}-${m.documentos.map((d) => d.estado).join('')}`}
+                m={m}
+                idioma={idioma}
+                t={tm}
+                alCambiar={cambio}
+              />
+            ))}
+          </ul>
+        ) : null}
       </section>
       <section id="revision-papeles" data-testid="revision-papeles">
         <h2>{t.papeles}</h2>

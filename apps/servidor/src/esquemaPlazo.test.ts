@@ -41,6 +41,8 @@ describe('C-PLAZO-PAPELES: la base vieja se pone al día al arrancar', () => {
     ]) {
       const sql = await sqlDe(m.DB, n);
       expect(sql, n).toContain('politica_requisitos');
+      // C-HABILITAR-IGUAL-LETRERO: los tres conocen el plazo (botón, reparto y letrero, una regla).
+      expect(sql, n).toContain('plazo_papeles');
     }
     expect(await sqlDe(m.DB, 'conductores_elegibles')).toContain('plazo_papeles');
     expect(await rehacerElegibilidad(m.DB)).toBe(false);
@@ -58,5 +60,21 @@ describe('C-PLAZO-PAPELES: la base vieja se pone al día al arrancar', () => {
     );
     const plano = (s: string) => s.replace(/\s+/g, ' ').trim();
     for (const d of DISPARADORES_HABILITACION) expect(plano(esquema)).toContain(plano(d));
+  });
+
+  it('C-HABILITAR-IGUAL-LETRERO: un disparador con exentos pero sin el plazo se rehace', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const viejo = (DISPARADORES_HABILITACION[0] ?? '').replace(
+      /AND NOT EXISTS \(SELECT 1 FROM plazo_papeles[\s\S]*?'para_empezar'\)\)\n/,
+      '',
+    );
+    expect(viejo).not.toContain('plazo_papeles');
+    await m.DB.batch([
+      m.DB.prepare('DROP TRIGGER habilitaciones_exigen_requisitos'),
+      m.DB.prepare(viejo),
+    ]);
+    expect(await rehacerElegibilidad(m.DB)).toBe(true);
+    expect(await sqlDe(m.DB, 'habilitaciones_exigen_requisitos')).toContain('plazo_papeles');
   });
 });

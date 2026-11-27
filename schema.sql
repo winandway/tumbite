@@ -1554,6 +1554,12 @@ WHEN NEW.estado = 'aprobada' AND EXISTS (
                        JOIN repartidores r ON r.usuario_id = NEW.conductor_id
                        JOIN zonas z ON z.id = r.zona_id
                       WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
+     AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                      WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                        AND pp.vence_en > datetime('now')
+                        AND NOT EXISTS (SELECT 1 FROM politica_requisitos y
+                                         WHERE y.pais = pp.pais AND y.requisito = sr.requisito
+                                           AND y.regla = 'para_empezar'))
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -1570,6 +1576,12 @@ WHEN NEW.estado = 'aprobada' AND EXISTS (
                        JOIN repartidores r ON r.usuario_id = NEW.conductor_id
                        JOIN zonas z ON z.id = r.zona_id
                       WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
+     AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                      WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                        AND pp.vence_en > datetime('now')
+                        AND NOT EXISTS (SELECT 1 FROM politica_requisitos y
+                                         WHERE y.pais = pp.pais AND y.requisito = sr.requisito
+                                           AND y.regla = 'para_empezar'))
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'

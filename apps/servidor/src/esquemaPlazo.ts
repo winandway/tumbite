@@ -21,6 +21,8 @@ export const DISPARADORES_HABILITACION: readonly string[] = (
     ['habilitaciones_exigen_requisitos_alta', 'BEFORE INSERT ON habilitaciones'],
   ] as const
 ).map(
+  // C-HABILITAR-IGUAL-LETRERO (27 nov 2026, Richard): dentro de su plazo vigente, solo frena lo que
+  // su país pide «para empezar»; es la misma regla de la vista y del letrero de la ficha.
   ([nombre, cuando]) => `CREATE TRIGGER IF NOT EXISTS ${nombre}
 ${cuando}
 WHEN NEW.estado = 'aprobada' AND EXISTS (
@@ -30,6 +32,12 @@ WHEN NEW.estado = 'aprobada' AND EXISTS (
                        JOIN repartidores r ON r.usuario_id = NEW.conductor_id
                        JOIN zonas z ON z.id = r.zona_id
                       WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
+     AND NOT EXISTS (SELECT 1 FROM plazo_papeles pp
+                      WHERE pp.conductor_id = NEW.conductor_id AND pp.estado = 'en_plazo'
+                        AND pp.vence_en > datetime('now')
+                        AND NOT EXISTS (SELECT 1 FROM politica_requisitos y
+                                         WHERE y.pais = pp.pais AND y.requisito = sr.requisito
+                                           AND y.regla = 'para_empezar'))
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -59,7 +67,9 @@ export async function rehacerElegibilidad(db: D1Database): Promise<boolean> {
   const viejas = results.filter(
     (r) =>
       !String(r.sql).includes('politica_requisitos') ||
-      (r.name === 'conductores_elegibles' && !String(r.sql).includes('servicios_prueba')),
+      (r.name === 'conductores_elegibles' && !String(r.sql).includes('servicios_prueba')) ||
+      // C-HABILITAR-IGUAL-LETRERO (27 nov 2026): los disparadores sin el plazo también se rehacen.
+      (r.name !== 'conductores_elegibles' && !String(r.sql).includes('plazo_papeles')),
   );
   // Lo que todavía no existe lo crea el arranque de siempre (schema.sql y asegurarFase3).
   if (!viejas.length) return false;

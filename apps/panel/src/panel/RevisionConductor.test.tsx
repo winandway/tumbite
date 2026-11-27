@@ -57,6 +57,8 @@ function servidor(
     servicios?: unknown[];
     esPrueba?: boolean;
     activacion?: unknown;
+    todos?: unknown[];
+    porPlazo?: { venceEn: string; pendientes: string[] };
   } = {},
 ) {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -136,6 +138,8 @@ function servidor(
           },
         ],
       });
+    if (u.includes('/datos/admin/vehiculos?estado=todos'))
+      return responder({ vehiculos: op.todos ?? op.vehiculos ?? [] });
     if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: op.vehiculos ?? [] });
     if (metodo === 'GET' && u.endsWith('/datos/admin/tasas-referencia'))
       return responder({
@@ -169,6 +173,8 @@ function servidor(
         { error: 'Le faltan requisitos.', requisitosFaltantes: ['licencia_moto'] },
         409,
       );
+    if (metodo === 'PUT' && u.endsWith('/habilitaciones/c1/moto') && op.porPlazo)
+      return responder({ habilitacion: { estado: 'aprobada' }, porPlazo: op.porPlazo });
     if (metodo === 'PUT') return responder({ ok: true });
     return responder({});
   });
@@ -475,5 +481,63 @@ describe('C-VERIFICACION-UNICA: todo lo de un conductor se decide en una sola pi
       );
       unmount();
     }
+  });
+
+  it('C-HABILITAR-IGUAL-LETRERO: habilitado por su plazo, dice hasta cuándo y qué le queda por subir', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      porPlazo: {
+        venceEn: '2026-12-25 10:00:00',
+        pendientes: ['licencia_moto', 'seguro_vehiculo'],
+      },
+    });
+    render(<RevisionConductor id="c1" base="/panel/control-x" idioma="es" />);
+    const detalle = await screen.findByTestId('detalle-conductor');
+    await userEvent.click(
+      await within(detalle).findByRole('button', { name: 'Habilitar para Moto' }),
+    );
+    const ok = await within(detalle).findByRole('status');
+    expect(ok.textContent).toMatch(/^Se habilita por su plazo: tiene hasta el 25 dic para subir /);
+    expect(ok.textContent).toMatch(/licencia de moto y /i);
+  });
+
+  it('C-FICHA-VEHICULO-SIEMPRE: la moto ya aprobada se ve en la ficha con su placa, estado y fotos', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      todos: [
+        {
+          id: 'v1',
+          conductor: 'Conductor Uno',
+          conductor_id: 'c1',
+          tipo: 'moto',
+          marca: 'Bera',
+          modelo: 'SBR',
+          anio: 2022,
+          color: 'Rojo',
+          placa: 'AB1C23D',
+          placa_estado: 'MER',
+          estado: 'aprobado',
+          pais: 'VE',
+          documentos: [
+            { id: 'f1', tipo: 'foto_frente', estado: 'aprobado', venceEn: null },
+            { id: 's1', tipo: 'seguro', estado: 'pendiente', venceEn: null },
+          ],
+        },
+      ],
+    });
+    render(<RevisionConductor id="c1" base="/panel/control-x" idioma="es" />);
+    const fila = await screen.findByTestId('moto-v1');
+    expect(fila.textContent).toContain('AB1C23D');
+    expect(within(fila).getByTestId('estado-vehiculo-v1').textContent).toContain('Aprobado');
+    expect(within(fila).getByRole('img')).toBeTruthy();
+    // Aprobado: no repite «Aprobar la moto», pero el papel pendiente se aprueba ahí mismo.
+    expect(within(fila).queryByRole('button', { name: 'Aprobar la moto' })).toBeNull();
+    await userEvent.click(within(fila).getByRole('button', { name: 'Aprobar documento' }));
+    await waitFor(() =>
+      expect(
+        llamadas.some((l) => l.metodo === 'PUT' && l.url.endsWith('/vehiculos/v1/documentos/s1')),
+      ).toBe(true),
+    );
+    expect(screen.queryByText('No tiene ningún vehículo registrado.')).toBeNull();
   });
 });

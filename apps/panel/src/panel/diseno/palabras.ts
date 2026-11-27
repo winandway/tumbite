@@ -77,6 +77,7 @@ export const T_ESTADOS_VEHICULO = {
     aprobado: 'Aprobado',
     rechazado: 'Rechazado',
     suspendido: 'Suspendido',
+    vencido: 'Vencido',
     retirado: 'Retirado',
   } as Record<string, string>,
   en: {
@@ -85,6 +86,7 @@ export const T_ESTADOS_VEHICULO = {
     aprobado: 'Approved',
     rechazado: 'Rejected',
     suspendido: 'Suspended',
+    vencido: 'Expired',
     retirado: 'Removed',
   } as Record<string, string>,
 };

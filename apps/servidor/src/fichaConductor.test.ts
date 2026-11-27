@@ -316,3 +316,30 @@ describe('C-NACIMIENTO-DEL-DOCUMENTO: va en la MISMA lectura (ninguna llamada m�
     expect(() => asegurarModeloVerificacion(MODELO_VERIFICACION.id)).not.toThrow();
   });
 });
+
+describe('C-FICHA-VEHICULO-SIEMPRE: el vehículo se ve en la ficha en cualquier estado', () => {
+  it('aprobado, sale con «todos» y con su placa; sin conductor, «todos» no abre la cola entera', async () => {
+    const s = await escenario();
+    // La moto ya aprobada (caso real: «Vehículo registrado con su placa» en verde y no se veía).
+    await s.m.DB.prepare("UPDATE vehiculos SET estado = 'en_revision' WHERE id = ?")
+      .bind(s.vehiculo)
+      .run();
+    for (const tipo of ['registro', 'seguro'])
+      await s.m.DB.prepare(
+        "INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado) VALUES (?, ?, ?, 'veh/doc', 'aprobado')",
+      )
+        .bind(`doc-${tipo}-${s.vehiculo}`, s.vehiculo, tipo)
+        .run();
+    await s.m.DB.prepare("UPDATE vehiculos SET estado = 'aprobado' WHERE id = ?")
+      .bind(s.vehiculo)
+      .run();
+    const r = await s.equipo('GET', `/datos/admin/vehiculos?estado=todos&conductor=${s.rep.id}`);
+    expect(r.estado).toBe(200);
+    const fila = r.datos.vehiculos.find((v: { id: string }) => v.id === s.vehiculo);
+    expect(fila?.estado).toBe('aprobado');
+    expect(fila?.placa).toBe('AB123CD');
+    expect(fila?.documentos.length).toBe(2);
+    const cola = await s.equipo('GET', '/datos/admin/vehiculos?estado=todos');
+    expect(cola.datos.vehiculos.some((v: { id: string }) => v.id === s.vehiculo)).toBe(false);
+  });
+});

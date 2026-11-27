@@ -423,13 +423,17 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // +1 (23 nov 2026, C-VEHICULO-ACTIVO-SOLO): la fila de su reparación en `config`.
       // +1 (23 nov 2026, C-SERVICIOS-DEL-VEHICULO): la fila de su reparación en `config`.
       // +1 (26 nov 2026, C-SALDO-LOTES): la marca de la pasada de los saldos a lotes en `config`.
-      ['f1', 520 + 2 * objetosEsquema],
+      // +2 (27 nov 2026, C-HABILITAR-IGUAL-LETRERO): al aprobar una habilitación, el disparador mira
+      // también si el conductor está dentro de su plazo (su fila de `plazo_papeles`).
+      ['f1', 522 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
       // +11 (22 nov 2026, C-RASTRO): cada vehículo nuevo deja el paso «vehículo» del registro (una lectura).
       // +20 (22 nov 2026, C-RASTRO-FUENTES): la verificación aprobada deja además los pasos de la cara,
       // el documento y el envío de cada cuenta (una vez por cuenta; dos lecturas por paso).
-      ['migraciones-prueba', 3_051],
+      // +12 (27 nov 2026, C-HABILITAR-IGUAL-LETRERO): cada una de las seis habilitaciones que siembra
+      // mira si el conductor está dentro de su plazo (dos lecturas por fila).
+      ['migraciones-prueba', 3_063],
       ['f2', 76_000],
       ['reloj', 25_500],
     ];
