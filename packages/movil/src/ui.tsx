@@ -107,7 +107,7 @@ export function Pantalla({
  */
 export const ICONO_CASILLA: Readonly<Record<TipoCasilla, NombreIcono>> = {
   nombre: 'person-outline',
-  nombreCompleto: 'id-card-outline',
+  nombreCompleto: 'person-outline',
   celular: 'call-outline',
   correo: 'mail-outline',
   documento: 'id-card-outline',

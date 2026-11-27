@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { nombreDePrueba } from './nombreDePrueba';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 
@@ -30,7 +31,7 @@ test('alta simultánea del mismo miembro desde dos restaurantes: siempre gana un
     const correo = `${quien}.${id}@carreras.test`;
     const r = await request.post('/datos/cuentas/registro', {
       headers: desde(),
-      data: { nombre: `Carrera ${quien}`, correo, clave, rol: 'restaurante' },
+      data: { nombre: nombreDePrueba(quien, 'Carrera'), correo, clave, rol: 'restaurante' },
     });
     expect(r.ok(), await r.text()).toBe(true);
     return { correo, token: ((await r.json()) as { token: string }).token };

@@ -1,4 +1,5 @@
 import { celularDePrueba } from './celularDePrueba';
+import { nombreDePrueba } from './nombreDePrueba';
 import { expect, test } from './fixtures';
 
 /**
@@ -45,7 +46,7 @@ test('peso real de un pesable con Stripe en modo prueba (autoriza con margen, ca
     const correo = `${q}.${id}@recorrido.test`;
     const r = await request.post('/datos/cuentas/registro', {
       data: {
-        nombre: `Prueba ${q}`,
+        nombre: nombreDePrueba(q),
         correo,
         clave,
         rol,

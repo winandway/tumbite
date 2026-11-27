@@ -1,4 +1,5 @@
 import { celularDePrueba } from './celularDePrueba';
+import { nombreDePrueba } from './nombreDePrueba';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { VERSION_TERMINOS } from '../../packages/compartido/src/terminos';
@@ -33,7 +34,7 @@ export async function preparar(request: APIRequestContext) {
   const cuenta = async (
     q: string,
     rol: 'cliente' | 'restaurante' | 'repartidor',
-    nombre = `Prueba ${q}`,
+    nombre = nombreDePrueba(q),
   ) => {
     const correo = `${q}.${id}@recorrido.test`;
     const r = await registrarPausado(request, {

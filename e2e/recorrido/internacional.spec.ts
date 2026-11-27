@@ -1,4 +1,5 @@
 import { deslizar } from './deslizar';
+import { nombreDePrueba } from './nombreDePrueba';
 import { execFileSync } from 'node:child_process';
 import { rutaSuperadmin } from './rutaSuperadmin';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -279,7 +280,7 @@ for (const P of PAISES) {
         const telefono = celularDePrueba();
         const r = await request.post('/datos/cuentas/registro', {
           headers: desde(),
-          data: { nombre: `Prueba ${q}`, correo: correo(q), clave, rol, telefono },
+          data: { nombre: nombreDePrueba(q), correo: correo(q), clave, rol, telefono },
         });
         expect(r.ok(), await r.text()).toBe(true);
         return (await r.json()) as { token: string; usuario: { id: string } };

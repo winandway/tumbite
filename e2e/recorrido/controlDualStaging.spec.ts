@@ -1,4 +1,5 @@
 import { celularDePrueba } from './celularDePrueba';
+import { nombreDePrueba } from './nombreDePrueba';
 import { expect, test } from './fixtures';
 import { esperarVentanaLibre, registrarPausado } from './registroPausado';
 
@@ -42,7 +43,7 @@ test('control dual: una persona pide la devolución grande y otra la aprueba; St
   };
   const id = Date.now().toString(36);
   const clave = `Dual-${id}-Firma9`;
-  const cuenta = async (q: string, rol: 'cliente' | 'restaurante', nombre = `Prueba ${q}`) => {
+  const cuenta = async (q: string, rol: 'cliente' | 'restaurante', nombre = nombreDePrueba(q)) => {
     const correo = `${q}.${id}@recorrido.test`;
     const r = await registrarPausado(request, {
       nombre,
