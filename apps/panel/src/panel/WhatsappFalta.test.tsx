@@ -70,6 +70,37 @@ describe('C-WHATSAPP-FALTA: el botón de la ficha y de Verificaciones', () => {
     expect(confirmar).toHaveBeenCalledTimes(2);
   });
 
+  it('C-WHATSAPP-FALTA-IDIOMAS: cuenta en inglés sin plantilla en inglés: ofrece español y lo manda', async () => {
+    const llamadas = simular((c) => {
+      const b = c.cuerpo as { soloVista?: boolean; idioma?: string };
+      const es = b.idioma === 'es';
+      const v = vista({
+        idioma: es ? 'es' : 'en',
+        idiomaCuenta: 'en',
+        idiomas: { es: true, en: false },
+        puede: es,
+        motivo: es ? null : 'idioma_sin_plantilla',
+      });
+      return b.soloVista
+        ? json({ vista: v })
+        : json({ vista: v, enviado: true, estado: 'enviado' });
+    });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<MandarWhatsappFalta id="u-ejemplo-1" idioma="es" />);
+    await userEvent.click(screen.getByTestId('whatsapp-falta-boton'));
+    // Por defecto, el idioma de su cuenta (inglés): dice por qué no sale y ofrece la salida.
+    expect(await screen.findByTestId('whatsapp-falta-motivo')).toHaveTextContent(
+      'espera la aprobación de Meta',
+    );
+    expect(screen.getByRole('radio', { name: /English/ })).toBeChecked();
+    expect(screen.queryByTestId('whatsapp-falta-enviar')).toBeNull();
+    await userEvent.click(screen.getByTestId('whatsapp-falta-usar-es'));
+    expect(await screen.findByRole('radio', { name: /Español/ })).toBeChecked();
+    await userEvent.click(await screen.findByTestId('whatsapp-falta-enviar'));
+    await screen.findByText(/le mandamos el WhatsApp/);
+    expect(llamadas.at(-1)!.cuerpo).toEqual({ confirmar: true, idioma: 'es' });
+  });
+
   it('menos de 24 horas: lo dice y NO ofrece mandarlo (a mano tampoco se salta)', async () => {
     const llamadas = simular(() =>
       json({ vista: vista({ puede: false, motivo: 'ya_hoy', delPaso: 1 }) }),

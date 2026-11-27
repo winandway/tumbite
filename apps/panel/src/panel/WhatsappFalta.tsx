@@ -34,6 +34,10 @@ type Vista = {
   motivo: string | null;
   delPaso: number;
   ultimoEn: string | null;
+  /** C-WHATSAPP-FALTA-IDIOMAS: en qué idioma sale, el de su cuenta y cuáles se pueden mandar hoy. */
+  idioma?: Idioma;
+  idiomaCuenta?: Idioma;
+  idiomas?: Record<Idioma, boolean>;
 };
 
 const T = {
@@ -55,6 +59,11 @@ const T = {
         ? 'Ya le salió 1 por este paso (máximo 3).'
         : `Ya le salieron ${n} por este paso (máximo 3).`,
     error: 'No se pudo armar el mensaje.',
+    // C-WHATSAPP-FALTA-IDIOMAS: el idioma del aviso (por defecto el de su cuenta).
+    idiomaAviso: 'Idioma del mensaje',
+    deSuCuenta: '(el de su cuenta)',
+    esperaMeta: '(espera la aprobación de Meta)',
+    usarOtro: (otro: string) => `Mandarlo en ${otro}`,
     reintentar: 'Reintentar',
     motivo: {
       sin_credenciales:
@@ -76,7 +85,8 @@ const T = {
       whatsapp_fallo: 'El código por WhatsApp no le llegó: este canal no le sirve.',
       baja: 'Pidió no recibir más recordatorios.',
       pais_apagado: 'WhatsApp está apagado para el país de su ciudad.',
-      idioma_sin_plantilla: 'Su cuenta está en inglés y todavía no hay plantilla en inglés.',
+      idioma_sin_plantilla:
+        'La plantilla en este idioma todavía espera la aprobación de Meta. Elige el otro idioma para mandarlo ya.',
       nada_que_le_toque: 'Lo que falta le toca al equipo (o ya recibe carreras): no se le manda.',
       tope_paso: 'Ya le salieron los 3 mensajes de este paso: no se le mandan más.',
       ya_hoy: 'Ya le mandamos uno hace menos de 24 horas.',
@@ -90,6 +100,8 @@ const T = {
     listo: 'Listo para salir',
     noListo: 'No sale ningún mensaje',
     plantilla: 'Plantilla en Meta',
+    plantillaEn: 'Plantilla en inglés (EE. UU.)',
+    marcarPlantillaEn: 'Estado de la plantilla en inglés (a mano)',
     estadoPlantilla: {
       sin_crear: 'Sin crear',
       PENDING: 'En revisión',
@@ -142,6 +154,10 @@ const T = {
     fallido: 'Meta did not accept the message. It is logged on their timeline.',
     yaVan: (n: number) => `${n} already sent for this step (3 at most).`,
     error: 'Could not build the message.',
+    idiomaAviso: 'Message language',
+    deSuCuenta: '(their account’s)',
+    esperaMeta: '(waiting for Meta’s approval)',
+    usarOtro: (otro: string) => `Send it in ${otro}`,
     reintentar: 'Try again',
     motivo: {
       sin_credenciales: 'WhatsApp is not connected on this site yet (the Meta keys are missing).',
@@ -161,7 +177,8 @@ const T = {
       whatsapp_fallo: 'Their WhatsApp code was not delivered: this channel does not work for them.',
       baja: 'They asked to stop reminders.',
       pais_apagado: 'WhatsApp is off for their city’s country.',
-      idioma_sin_plantilla: 'Their account is in English and there is no English template yet.',
+      idioma_sin_plantilla:
+        'The template in this language is still waiting for Meta’s approval. Pick the other language to send it now.',
       nada_que_le_toque:
         'What is missing is up to the team (or they already get trips): nothing is sent.',
       tope_paso: 'All 3 messages for this step were already sent: no more go out.',
@@ -175,6 +192,8 @@ const T = {
     listo: 'Ready to send',
     noListo: 'No message goes out',
     plantilla: 'Template on Meta',
+    plantillaEn: 'English template (US)',
+    marcarPlantillaEn: 'English template status (by hand)',
     estadoPlantilla: {
       sin_crear: 'Not created',
       PENDING: 'In review',
@@ -222,6 +241,9 @@ function nombrePais(codigo: string, idioma: Idioma) {
     return codigo;
   }
 }
+
+/** Cada idioma escrito en su propio idioma (como el selector de la app). */
+const NOMBRE_IDIOMA: Record<Idioma, string> = { es: 'Español', en: 'English' };
 
 const mensajeDe = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
 const motivoEn = (t: (typeof T)['es'], m: string | null) =>
@@ -278,18 +300,25 @@ export function MandarWhatsappFalta({
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  /** C-WHATSAPP-FALTA-IDIOMAS: null = el de su cuenta; el equipo puede elegir el otro. */
+  const [elegido, setElegido] = useState<Idioma | null>(null);
   const cerrar = useCallback(() => setAbierto(false), []);
 
-  const ver = useCallback(() => {
-    setVista(null);
-    setError('');
-    setOk('');
-    pedir<{ vista: Vista }>('POST', `/datos/admin/camila/whatsapp/${encodeURIComponent(id)}`, {
-      soloVista: true,
-    })
-      .then((r) => setVista(r.vista))
-      .catch((x: unknown) => setError(mensajeDe(x) || t.error));
-  }, [id, t.error]);
+  const ver = useCallback(
+    (cual: Idioma | null = null) => {
+      setVista(null);
+      setError('');
+      setOk('');
+      setElegido(cual);
+      pedir<{ vista: Vista }>('POST', `/datos/admin/camila/whatsapp/${encodeURIComponent(id)}`, {
+        soloVista: true,
+        ...(cual ? { idioma: cual } : {}),
+      })
+        .then((r) => setVista(r.vista))
+        .catch((x: unknown) => setError(mensajeDe(x) || t.error));
+    },
+    [id, t.error],
+  );
 
   async function mandar() {
     if (!vista || ocupado) return;
@@ -300,7 +329,7 @@ export function MandarWhatsappFalta({
       const r = await pedir<{ vista: Vista; enviado: boolean; estado?: string; motivo?: string }>(
         'POST',
         `/datos/admin/camila/whatsapp/${encodeURIComponent(id)}`,
-        { confirmar: true },
+        { confirmar: true, ...(elegido ? { idioma: elegido } : {}) },
       );
       setVista(r.vista);
       if (r.enviado) setOk(t.enviado);
@@ -325,7 +354,7 @@ export function MandarWhatsappFalta({
           data-testid="whatsapp-falta-boton"
           onClick={() => {
             setAbierto(true);
-            ver();
+            ver(null);
           }}
         >
           {t.boton}
@@ -336,6 +365,27 @@ export function MandarWhatsappFalta({
           {!vista && !error ? <p role="status">{t.armando}</p> : null}
           {vista ? (
             <>
+              {/* C-WHATSAPP-FALTA-IDIOMAS: por defecto el de su cuenta; nunca un callejón sin salida. */}
+              <fieldset className="rez-idioma" data-testid="whatsapp-falta-idioma">
+                <legend>{t.idiomaAviso}</legend>
+                {(['es', 'en'] as const).map((i) => (
+                  <label key={i}>
+                    <input
+                      type="radio"
+                      name={`whatsapp-idioma-${id}`}
+                      checked={(vista.idioma ?? 'es') === i}
+                      onChange={() => ver(i)}
+                    />{' '}
+                    {NOMBRE_IDIOMA[i]}{' '}
+                    {(vista.idiomaCuenta ?? vista.idioma) === i ? (
+                      <span className="pista">{t.deSuCuenta}</span>
+                    ) : null}
+                    {vista.idiomas && !vista.idiomas[i] ? (
+                      <span className="pista"> {t.esperaMeta}</span>
+                    ) : null}
+                  </label>
+                ))}
+              </fieldset>
               {vista.texto ? (
                 <>
                   <p className="pista">{t.asi}</p>
@@ -353,7 +403,22 @@ export function MandarWhatsappFalta({
                   role="status"
                   data-testid="whatsapp-falta-motivo"
                 >
-                  {motivoEn(t, vista.motivo)}
+                  {motivoEn(t, vista.motivo)}{' '}
+                  {vista.motivo === 'idioma_sin_plantilla' && vista.idiomas
+                    ? (['es', 'en'] as const)
+                        .filter((i) => i !== vista.idioma && vista.idiomas?.[i])
+                        .map((i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            className="boton secundario"
+                            data-testid={`whatsapp-falta-usar-${i}`}
+                            onClick={() => ver(i)}
+                          >
+                            {t.usarOtro(NOMBRE_IDIOMA[i])}
+                          </button>
+                        ))
+                    : null}
                 </p>
               ) : null}
             </>
@@ -362,7 +427,7 @@ export function MandarWhatsappFalta({
             <p className="error-general" role="alert">
               {error}{' '}
               {!vista ? (
-                <button type="button" className="enlace" onClick={ver}>
+                <button type="button" className="enlace" onClick={() => ver(elegido)}>
                   {t.reintentar}
                 </button>
               ) : null}
@@ -413,13 +478,27 @@ type Estado = {
     motivo: string | null;
     cuerpo: string;
   };
+  /** C-WHATSAPP-FALTA-IDIOMAS: la traducción en inglés de EE. UU., con su propio estado en Meta. */
+  plantillaEn?: {
+    nombre: string;
+    idioma: string;
+    estado: string;
+    categoria: string | null;
+    motivo: string | null;
+    cuerpo: string;
+  };
   ajustes: Ajustes;
   gasto: { mensajes: number; usd: number };
   zonas: { id: string; nombre: string; pais: string }[];
 };
 type FilaZona = Vista;
 /** Lo que se escribe en el formulario de ajustes (guarda su borrador: regla de formularios). */
-type ValoresAjustes = Ajustes & { plantillaEstado: string; plantillaCategoria: string };
+type ValoresAjustes = Ajustes & {
+  plantillaEstado: string;
+  plantillaCategoria: string;
+  plantillaEnEstado: string;
+  plantillaEnCategoria: string;
+};
 const VACIO: ValoresAjustes = {
   paises: {},
   topeDiario: 0,
@@ -427,6 +506,8 @@ const VACIO: ValoresAjustes = {
   costoUsd: 0,
   plantillaEstado: 'sin_crear',
   plantillaCategoria: '',
+  plantillaEnEstado: 'sin_crear',
+  plantillaEnCategoria: '',
 };
 
 export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
@@ -461,6 +542,8 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
             ...d.ajustes,
             plantillaEstado: d.plantilla.estado,
             plantillaCategoria: d.plantilla.categoria ?? '',
+            plantillaEnEstado: d.plantillaEn?.estado ?? 'sin_crear',
+            plantillaEnCategoria: d.plantillaEn?.categoria ?? '',
           });
         })
         .catch((x: unknown) => setError(mensajeDe(x))),
@@ -475,10 +558,20 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
     setOcupado(true);
     setError('');
     setOk('');
-    const { plantillaEstado, plantillaCategoria, ...ajustes } = aj;
+    const {
+      plantillaEstado,
+      plantillaCategoria,
+      plantillaEnEstado,
+      plantillaEnCategoria,
+      ...ajustes
+    } = aj;
     const cambioPlantilla =
       plantillaEstado !== e.plantilla.estado ||
       plantillaCategoria !== (e.plantilla.categoria ?? '');
+    const cambioEn =
+      Boolean(e.plantillaEn) &&
+      (plantillaEnEstado !== e.plantillaEn?.estado ||
+        plantillaEnCategoria !== (e.plantillaEn?.categoria ?? ''));
     try {
       await pedir('PUT', '/datos/admin/camila/whatsapp', {
         ...ajustes,
@@ -491,6 +584,15 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
             }
           : {}),
       });
+      if (cambioEn)
+        await pedir('PUT', '/datos/admin/camila/whatsapp', {
+          ...ajustes,
+          plantilla: {
+            idioma: 'en',
+            estado: plantillaEnEstado,
+            categoria: plantillaEnCategoria || null,
+          },
+        });
       setOk(t.guardado);
       // Guardado con éxito: el borrador ya no hace falta.
       b.cargar(aj);
@@ -570,6 +672,18 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
           {e.plantilla.motivo ? ` · ${e.plantilla.motivo}` : ''}
         </p>
         <p className="pista">{e.plantilla.cuerpo}</p>
+        {e.plantillaEn ? (
+          <>
+            <p data-testid="whatsapp-falta-plantilla-en">
+              <strong>{t.plantillaEn}:</strong> {e.plantillaEn.nombre} ·{' '}
+              {new Map(Object.entries(t.estadoPlantilla)).get(e.plantillaEn.estado) ??
+                e.plantillaEn.estado}
+              {e.plantillaEn.categoria ? ` · ${e.plantillaEn.categoria}` : ''}
+              {e.plantillaEn.motivo ? ` · ${e.plantillaEn.motivo}` : ''}
+            </p>
+            <p className="pista">{e.plantillaEn.cuerpo}</p>
+          </>
+        ) : null}
       </div>
       <AvisoBorrador
         visible={b.recuperado}
@@ -605,6 +719,38 @@ export function WhatsappFaltaAjustes({ idioma }: { idioma: Idioma }) {
             ))}
           </select>
         </label>
+        {e.plantillaEn ? (
+          <div className="wa-fila">
+            <label className="campo">
+              <span>{t.marcarPlantillaEn}</span>
+              <select
+                value={aj.plantillaEnEstado}
+                data-testid="whatsapp-falta-estado-en"
+                onChange={(x) => b.cambiar('plantillaEnEstado', x.target.value)}
+              >
+                {Object.entries(t.estadoPlantilla).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="campo">
+              <span>{t.marcarCategoria}</span>
+              <select
+                value={aj.plantillaEnCategoria}
+                onChange={(x) => b.cambiar('plantillaEnCategoria', x.target.value)}
+              >
+                <option value="">{t.sinCategoria}</option>
+                {['UTILITY', 'MARKETING', 'AUTHENTICATION'].map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
         <fieldset className="rez-canales">
           <legend>{t.paises}</legend>
           {paises.map((p) => (

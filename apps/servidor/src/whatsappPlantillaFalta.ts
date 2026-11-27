@@ -36,8 +36,10 @@ export type DefinicionPlantillaFalta = {
 };
 
 /**
- * Una por idioma. Por ahora solo español (decisión de Richard); el inglés queda en `null` y el
- * servidor no manda WhatsApp a quien tiene la app en inglés hasta que exista y esté aprobada.
+ * Una por idioma, con el MISMO nombre en Meta (cada idioma es una traducción de la misma plantilla).
+ * C-WHATSAPP-FALTA-IDIOMAS (27 nov 2026, Richard): la de inglés de EE. UU. (`en_US`) se manda a
+ * aprobación; mientras Meta no la apruebe, el equipo puede mandar la española a una cuenta en inglés
+ * (el panel lo ofrece: nunca un callejón sin salida). Solo el reloj automático espera la de su idioma.
  */
 export const PLANTILLAS_FALTA: Readonly<Record<'es' | 'en', DefinicionPlantillaFalta | null>> = {
   es: {
@@ -48,7 +50,14 @@ export const PLANTILLAS_FALTA: Readonly<Record<'es' | 'en', DefinicionPlantillaF
       'Hola {{1}} 👋 Para que tu cuenta de Divoox Driver empiece a recibir carreras te falta: {{2}}. Entra a la app y complétalo. Si tienes dudas, responde a este mensaje.',
     ejemplos: ['María', 'enviar tu moto a revisión'],
   },
-  en: null,
+  en: {
+    nombre: PLANTILLA_FALTA_NOMBRE,
+    idioma: 'en_US',
+    categoria: PLANTILLA_FALTA_CATEGORIA,
+    cuerpo:
+      'Hi {{1}} 👋 To start receiving trips with your Divoox Driver account, you still need to: {{2}}. Open the app to finish it. If you have any questions, reply to this message.',
+    ejemplos: ['Maria', 'send your motorcycle for review'],
+  },
 };
 
 /** El texto exacto que verá la persona (la vista previa del panel y lo que se guarda en su historial). */

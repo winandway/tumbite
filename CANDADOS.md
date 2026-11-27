@@ -2,6 +2,36 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-HABILITAR-IGUAL-LETRERO · «Habilitar» usa la misma regla del plazo de papeles que el letrero de la ficha (27 nov 2026, caso real de Richard en Verificaciones, conductor de El Vigía) — todos los países con plazo (hoy Venezuela y Perú) · base, servidor y panel
+
+- **Qué fallaba:** la ficha decía «Habilitación para Moto: Habilitado por su plazo · No le falta nada» (papeles «En plazo · quedan 29 días») y al tocar «Habilitar para Moto» salía «Todavía no se puede habilitar. Le falta: Historial de manejo, Licencia de moto». El letrero usaba la regla con el plazo (`evaluarServicio` con la gracia) y el botón chocaba con los disparadores `habilitaciones_exigen_requisitos(_alta)`, que no conocían el plazo.
+- **Causa real:** dos reglas. La vista del reparto `conductores_elegibles` y el letrero ya conocían el plazo; los dos disparadores no.
+- **Qué se hizo:** los disparadores (en `schema.sql` y en `DISPARADORES_HABILITACION` de `apps/servidor/src/esquemaPlazo.ts`) saltan, dentro del plazo vigente (`plazo_papeles` en_plazo y sin vencer), lo que su país no pide «para empezar»: la misma regla de la vista. `rehacerElegibilidad` cambia los disparadores viejos (los que no dicen `plazo_papeles`) una sola vez al arrancar. `faltantesParaHabilitar` aplica `requisitosConGracia`. Al habilitar dentro del plazo, la respuesta trae `porPlazo { venceEn, pendientes }` y el panel dice «Se habilita por su plazo: tiene hasta el 25 dic para subir licencia de moto y …».
+- **Por qué es seguro:** habilitar por plazo no deja trabajar sin papeles al vencer: la vista del reparto vuelve a exigir todos los requisitos cuando el plazo vence (prueba «al vencer el plazo el reparto le vuelve a exigir los papeles»).
+- **Prueba (rojo comprobado):** `apps/servidor/src/habilitarPorPlazo.test.ts` (3), `esquemaPlazo.test.ts` (disparador viejo sin plazo se rehace), `apps/panel/src/panel/RevisionConductor.test.tsx` («habilitado por su plazo, dice hasta cuándo»). Topes de lecturas: F1 +2 y migraciones-prueba +12.
+- **Qué NO tocar:** nunca una segunda regla en TypeScript para el botón; el disparador, la vista y el letrero dicen lo mismo. No sacar la condición del plazo del disparador sin sacarla también de la vista.
+
+## C-FICHA-VEHICULO-SIEMPRE · El vehículo del conductor se ve en su ficha de Verificaciones en cualquier estado (27 nov 2026, Richard: «la barra dice vehículo registrado con su placa y no encuentro la moto») — todos los países · servidor y panel
+
+- **Qué fallaba:** la ficha pedía solo los vehículos «en revisión» y «registrado sin enviar». Una moto ya aprobada (o suspendida, rechazada, vencida) no salía en ningún lado de la ficha.
+- **Qué se hizo:** `GET /datos/admin/vehiculos?estado=todos&conductor=<id>` (solo con conductor; sin él sigue la cola de revisión). `RevisionConductor` muestra los demás vehículos con `FilaMoto`, que ahora dice su estado, muestra las fotos ahí mismo y ofrece solo los botones que la base deja (en revisión: aprobar o rechazar; aprobado: aprobar papeles pendientes y suspender con motivo; suspendido: volver a aprobar; rechazado o vencido: espera el reenvío del conductor).
+- **Prueba (rojo comprobado):** `apps/servidor/src/fichaConductor.test.ts` (C-FICHA-VEHICULO-SIEMPRE) y `apps/panel/src/panel/RevisionConductor.test.tsx` («la moto ya aprobada se ve en la ficha»).
+- **Qué NO tocar:** no volver a filtrar la ficha por estado; «todos» nunca abre la cola entera sin conductor.
+
+## C-WHATSAPP-FALTA-IDIOMAS · El aviso «lo que te falta» sale en el idioma de la cuenta, con selector «Español / English» y sin callejón sin salida (27 nov 2026, Richard en Gerencia) — todos los países · servidor, panel y Meta
+
+- **Qué fallaba:** a una cuenta en inglés el panel decía «Su cuenta está en inglés y todavía no hay plantilla en inglés» y no había forma de mandarle nada.
+- **Qué se hizo:** `PLANTILLAS_FALTA.en` (`en_US`, utilidad, mismo nombre `divoox_driver_te_falta`), mandada a Meta con `node scripts/whatsapp/enviar-plantilla-a-meta.mjs --enviar`. El canal se mira por idioma (`estadosCanal`); el texto de lo que falta (`faltaDeBarra`, `TEXTOS_FALTA`) va entero en el idioma elegido. `POST /datos/admin/camila/whatsapp/:id` acepta `idioma`; la vista trae `idioma`, `idiomaCuenta` e `idiomas` (cuáles se pueden mandar hoy). El panel abre con el idioma de la cuenta, muestra el selector y, si ese idioma espera la aprobación de Meta, ofrece «Mandarlo en Español». El reloj automático solo manda en el idioma de la cuenta. El estado de la plantilla en inglés se ve y se puede marcar a mano en los ajustes.
+- **Prueba (rojo comprobado):** `apps/servidor/src/whatsappFalta.test.ts` (dos de idiomas y la de la plantilla) y `apps/panel/src/panel/WhatsappFalta.test.tsx` («ofrece español y lo manda»).
+- **Qué NO tocar:** el nombre y las dos variables de la plantilla; el código `en_US` (es la llave en Meta y en `whatsapp_plantillas`).
+
+## C-WHATSAPP-PAIS · El interruptor de WhatsApp por país se respeta; Venezuela y Estados Unidos encendidos (27 nov 2026, Richard en Gerencia) — Venezuela y EE. UU. · servidor y panel (Configuración)
+
+- **Qué fallaba:** «WhatsApp está apagado para el país de su ciudad» en una cuenta de Miami: Estados Unidos nacía apagado.
+- **Qué se hizo:** de fábrica `paises: { VE: true, US: true }`, con los mismos topes (uno cada 24 horas por persona, tres por paso, 150 al día y 3 USD al día entre todos). En producción y en pruebas se encendió con el panel (queda en la auditoría). El interruptor se ve también en Configuración (`WhatsappFaltaAjustes`, la misma pieza de Recordatorios de registro). Costo de Meta por mensaje de utilidad (tarifa del 1 oct 2026): EE. UU. 0,0034 USD, Venezuela 0,0113 USD.
+- **Prueba:** `apps/servidor/src/whatsappFalta.test.ts` («el interruptor por país se respeta» y «Estados Unidos nace encendido»).
+- **Qué NO tocar:** un país apagado nunca recibe, ni a mano.
+
 ## C-ROBOT-NOCTURNO y C-ROBOT-PANEL · Los tres robots de la lista de aceptación corren cada noche en la Mac contra el sitio de pruebas (26 nov 2026, Gerencia con autorización de Richard, plan de mejoras puntos 2, 4 y 7b) — todos los países · solo herramientas, el producto no cambia
 
 - **Qué es:** la hoja `~/Gerencia/LISTA-DE-ACEPTACION-DIVOOX.md` (conductor C1–C13, pasajero P1–P8, panel A1–A9, examen de Camila) la recorren tres robots y dejan el parte de la mañana en `~/Gerencia/partes/ACEPTACION-<fecha>.md`, línea por línea en verde, rojo o «no se pudo», con su captura. Solo el sitio de pruebas, solo cuentas de prueba (correo `.test` o las demo), cero dinero, nada a las tiendas.

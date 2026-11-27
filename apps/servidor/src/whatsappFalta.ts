@@ -75,7 +75,9 @@ export const esquemaAjustesWhatsappFalta = z.object({
 export type AjustesWhatsappFalta = z.infer<typeof esquemaAjustesWhatsappFalta>;
 
 export const AJUSTES_WHATSAPP_FALTA_DE_FABRICA: AjustesWhatsappFalta = {
-  paises: { VE: true, US: false },
+  // C-WHATSAPP-PAIS (27 nov 2026, Richard): los dos países donde trabajamos, abiertos, con el mismo
+  // tope por persona y por día. Utilidad en EE. UU.: 0,0034 USD por mensaje (tarifa de Meta del 1 oct).
+  paises: { VE: true, US: true },
   topeDiario: 150,
   presupuestoDiaUsd: 3,
   costoUsd: COSTO_UTILIDAD_USD,
@@ -223,10 +225,27 @@ export async function estadoCanal(
   db: D1Database,
   idioma: Idioma = 'es',
 ): Promise<EstadoCanal> {
+  return (await estadosCanal(env, db))[idioma];
+}
+
+/** C-WHATSAPP-FALTA-IDIOMAS: el canal de cada idioma (cada uno con su plantilla), con una lectura. */
+export async function estadosCanal(env: Env, db: D1Database): Promise<Record<Idioma, EstadoCanal>> {
   const [ajustes, plantillas] = await Promise.all([
     leerAjustesWhatsappFalta(db),
     leerPlantillas(db),
   ]);
+  return {
+    es: canalDeIdioma(env, ajustes, plantillas, 'es'),
+    en: canalDeIdioma(env, ajustes, plantillas, 'en'),
+  };
+}
+
+function canalDeIdioma(
+  env: Env,
+  ajustes: AjustesWhatsappFalta,
+  plantillas: Record<string, EstadoPlantilla>,
+  idioma: Idioma,
+): EstadoCanal {
   const def = PLANTILLAS_FALTA[idioma];
   const plantilla = def
     ? (plantillas[llavePlantilla(def.nombre, def.idioma)] ?? SIN_CREAR)
@@ -273,8 +292,47 @@ const DOCUMENTO_DEL_PAIS: Record<string, string> = {
   US: 'tu documento de identidad',
 };
 
-const vehiculoEnPalabras = (tipo: string | null | undefined) =>
-  tipo === 'moto' ? 'tu moto' : tipo === 'carro' ? 'tu carro' : 'tu vehículo';
+/** C-WHATSAPP-FALTA-IDIOMAS: cada texto de {{2}} en los dos idiomas de las plantillas. */
+const TEXTOS_FALTA = {
+  es: {
+    veh: (tipo: string | null | undefined) =>
+      tipo === 'moto' ? 'tu moto' : tipo === 'carro' ? 'tu carro' : 'tu vehículo',
+    documento: (pais: string | null) =>
+      `subir la foto de ${DOCUMENTO_DEL_PAIS[pais ?? ''] ?? 'tu documento de identidad'}`,
+    actualizar: 'actualizar la app Divoox Driver',
+    enviar: (v: string) => `enviar ${v} a revisión`,
+    cara: 'tomarte la foto de la cara',
+    repetir: 'repetir la foto que te pedimos',
+    enviarFotos: 'enviar tus fotos a revisión',
+    placa: (v: string) => `escribir la placa de ${v}`,
+    registrar: (v: string) => `registrar ${v} con su placa`,
+    corregir: (v: string) => `corregir lo que te pedimos de ${v}`,
+    elegir: (v: string) => `elegir ${v} para trabajar`,
+    saldo: 'recargar saldo en tu billetera',
+    papeles: 'subir tus papeles',
+    encender: 'encender tu servicio y conectarte',
+    conectarte: 'conectarte en la app',
+  },
+  en: {
+    veh: (tipo: string | null | undefined) =>
+      tipo === 'moto' ? 'your motorcycle' : tipo === 'carro' ? 'your car' : 'your vehicle',
+    documento: (pais: string | null) =>
+      `upload a photo of ${pais === 'US' ? 'your driver’s license or state ID' : 'your ID'}`,
+    actualizar: 'update the Divoox Driver app',
+    enviar: (v: string) => `send ${v} for review`,
+    cara: 'take your face photo',
+    repetir: 'retake the photo we asked for',
+    enviarFotos: 'send your photos for review',
+    placa: (v: string) => `add the license plate of ${v}`,
+    registrar: (v: string) => `register ${v} with its license plate`,
+    corregir: (v: string) => `fix what we asked for on ${v}`,
+    elegir: (v: string) => `choose ${v} to drive with`,
+    saldo: 'add funds to your wallet',
+    papeles: 'upload your documents',
+    encender: 'turn on your service and go online',
+    conectarte: 'go online in the app',
+  },
+} as const;
 
 /**
  * La falta y su texto corto (va en {{2}}): sale del PRIMER paso de su barra de activación que le toca
@@ -282,60 +340,55 @@ const vehiculoEnPalabras = (tipo: string | null | undefined) =>
  */
 export function faltaDeBarra(
   b: Pick<Activacion, 'listo' | 'recibiendo' | 'siguiente' | 'pasos' | 'vehiculo' | 'enEspera'>,
-  o: { pais: string | null; appVieja: boolean },
+  o: { pais: string | null; appVieja: boolean; idioma?: Idioma },
 ): { clave: FaltaWhatsapp; texto: string } | null {
+  const T = TEXTOS_FALTA[o.idioma === 'en' ? 'en' : 'es'];
   if (b.recibiendo) return null;
   // C-REGISTRO-TODO-EL-PAIS: la plantilla dice «para que tu cuenta empiece a recibir carreras te
   // falta…»; a quien espera su ciudad eso es falso aunque lo complete. Al abrir su ciudad sí le llega.
   if (b.enEspera) return null;
   // Con la app vieja no puede dar ningún otro paso: esto va primero.
-  if (o.appVieja) return { clave: 'actualizar', texto: 'actualizar la app Divoox Driver' };
-  const veh = vehiculoEnPalabras(b.vehiculo?.tipo);
+  if (o.appVieja) return { clave: 'actualizar', texto: T.actualizar };
+  const veh = T.veh(b.vehiculo?.tipo);
   // C-VEHICULO-SIN-ENVIAR: registrado y sin enviar se le dice aunque ya trabaje en su plazo.
   const sinEnviar = b.pasos.find(
     (p) => p.falta === 'vehiculo_sin_enviar' && p.estado !== 'hecho' && p.quien === 'conductor',
   );
   const s = b.listo ? null : b.siguiente;
   if (!s || s.quien !== 'conductor') {
-    return sinEnviar ? { clave: 'vehiculo_enviar', texto: `enviar ${veh} a revisión` } : null;
+    return sinEnviar ? { clave: 'vehiculo_enviar', texto: T.enviar(veh) } : null;
   }
   switch (s.clave) {
     case 'cara':
-      return { clave: 'cara', texto: 'tomarte la foto de la cara' };
+      return { clave: 'cara', texto: T.cara };
     case 'documento':
-      return {
-        clave: 'documento',
-        texto: `subir la foto de ${DOCUMENTO_DEL_PAIS[o.pais ?? ''] ?? 'tu documento de identidad'}`,
-      };
+      return { clave: 'documento', texto: T.documento(o.pais) };
     case 'identidad':
       return s.estado === 'problema'
-        ? { clave: 'repetir', texto: 'repetir la foto que te pedimos' }
-        : { clave: 'documento', texto: 'enviar tus fotos a revisión' };
+        ? { clave: 'repetir', texto: T.repetir }
+        : { clave: 'documento', texto: T.enviarFotos };
     case 'vehiculo':
       return s.falta === 'sin_placa'
-        ? { clave: 'placa', texto: `escribir la placa de ${veh}` }
-        : { clave: 'vehiculo', texto: `registrar ${veh} con su placa` };
+        ? { clave: 'placa', texto: T.placa(veh) }
+        : { clave: 'vehiculo', texto: T.registrar(veh) };
     case 'vehiculo_aprobado':
       if (s.falta === 'vehiculo_rechazado' || s.estado === 'problema')
-        return { clave: 'vehiculo_corregir', texto: `corregir lo que te pedimos de ${veh}` };
-      return { clave: 'vehiculo_enviar', texto: `enviar ${veh} a revisión` };
+        return { clave: 'vehiculo_corregir', texto: T.corregir(veh) };
+      return { clave: 'vehiculo_enviar', texto: T.enviar(veh) };
     case 'vehiculo_activo':
-      return { clave: 'vehiculo_enviar', texto: `elegir ${veh} para trabajar` };
+      return { clave: 'vehiculo_enviar', texto: T.elegir(veh) };
     case 'saldo':
-      return { clave: 'saldo', texto: 'recargar saldo en tu billetera' };
+      return { clave: 'saldo', texto: T.saldo };
     case 'papeles':
     case 'papeles_pais':
-      return { clave: 'papeles', texto: 'subir tus papeles' };
+      return { clave: 'papeles', texto: T.papeles };
     case 'conectado':
       return {
         clave: 'conectarse',
-        texto:
-          s.falta === 'sin_servicio_encendido'
-            ? 'encender tu servicio y conectarte'
-            : 'conectarte en la app',
+        texto: s.falta === 'sin_servicio_encendido' ? T.encender : T.conectarte,
       };
     default:
-      return sinEnviar ? { clave: 'vehiculo_enviar', texto: `enviar ${veh} a revisión` } : null;
+      return sinEnviar ? { clave: 'vehiculo_enviar', texto: T.enviar(veh) } : null;
   }
 }
 
@@ -512,7 +565,10 @@ export type MotivoNo =
 export type Persona = {
   id: string;
   nombre: string;
+  /** El idioma en que se le manda (el de su cuenta, o el que eligió el equipo en el panel). */
   idioma: Idioma;
+  /** C-WHATSAPP-FALTA-IDIOMAS: el de su cuenta, cuando el equipo eligió otro. */
+  idiomaCuenta?: Idioma;
   pais: string | null;
   rol: string;
 };
@@ -528,26 +584,31 @@ export type Evaluacion = {
   delPaso: number;
   ultimoEn: string | null;
   para: string | null;
+  /** C-WHATSAPP-FALTA-IDIOMAS: en qué idiomas se le puede mandar ahora (plantilla aprobada). */
+  idiomas: Record<Idioma, boolean>;
 };
 
 const primerNombre = (nombre: string) =>
   (nombre.trim().split(/\s+/)[0] || nombre.trim()).slice(0, 30);
 
 type Contexto = {
+  /** El de español: los ajustes (países, topes) son los mismos para los dos idiomas. */
   canal: EstadoCanal;
+  canales: Record<Idioma, EstadoCanal>;
   consentimiento: Awaited<ReturnType<typeof consentimientos>>;
   historial: Awaited<ReturnType<typeof historiales>>;
   gasto: { mensajes: number; usd: number };
 };
 
 async function contexto(env: Env, db: D1Database, ids: readonly string[], ahora: Date) {
-  const canal = await estadoCanal(env, db);
+  const canales = await estadosCanal(env, db);
+  const canal = canales.es;
   const [consentimiento, historial, gasto] = await Promise.all([
     consentimientos(db, ids),
     historiales(db, ids),
     gastoDelDia(db, canal.ajustes, ahora),
   ]);
-  return { canal, consentimiento, historial, gasto } satisfies Contexto;
+  return { canal, canales, consentimiento, historial, gasto } satisfies Contexto;
 }
 
 /**
@@ -563,6 +624,7 @@ async function evaluarCon(
   o: { ahora: Date; barra?: Activacion },
 ): Promise<Evaluacion> {
   const h = ctx.historial.get(p.id);
+  const idiomas = { es: ctx.canales.es.listo, en: ctx.canales.en.listo };
   const base = {
     persona: p,
     falta: null,
@@ -570,6 +632,7 @@ async function evaluarCon(
     delPaso: 0,
     ultimoEn: h?.ultimoEn ?? null,
     para: null,
+    idiomas,
   };
   const no = (motivo: MotivoNo, extra: Partial<Evaluacion> = {}): Evaluacion => ({
     ...base,
@@ -583,17 +646,24 @@ async function evaluarCon(
   if (c?.motivo === 'cuenta_interna' || c?.motivo === 'zona_revision') return no(c.motivo);
   // Lo que le falta y su texto se arman siempre (la vista previa lo muestra aunque no se pueda enviar).
   const barra = o.barra ?? (await barraActivacion(db, p.id));
-  const falta = faltaDeBarra(barra, { pais: p.pais, appVieja: await appVieja(env, db, p.id) });
+  // C-WHATSAPP-FALTA-IDIOMAS: el texto va entero en el idioma en que se le manda (o se elige).
   const def = PLANTILLAS_FALTA[p.idioma] ?? null;
-  // La vista previa sale con la plantilla de su idioma; si su idioma todavía no tiene, con la española.
   const vista = def ?? PLANTILLAS_FALTA.es;
+  const falta = faltaDeBarra(barra, {
+    pais: p.pais,
+    appVieja: await appVieja(env, db, p.id),
+    idioma: def ? p.idioma : 'es',
+  });
   const texto =
     falta && vista ? textoDePlantilla(vista, primerNombre(p.nombre), falta.texto) : null;
   const delPaso = falta ? (h?.porPaso.get(falta.clave) ?? 0) : 0;
   const extra = { falta, texto, delPaso };
   if (!falta) return no('nada_que_le_toque', extra);
-  if (!ctx.canal.listo) return no(ctx.canal.motivo ?? 'plantilla_no_aprobada', extra);
-  if (!def) return no('idioma_sin_plantilla', extra);
+  const canal = ctx.canales[p.idioma];
+  // Su idioma todavía sin plantilla aprobada, pero el otro sí: el panel ofrece mandarlo en ese.
+  if ((!def || !canal.listo) && (ctx.canales.es.listo || ctx.canales.en.listo))
+    return no('idioma_sin_plantilla', extra);
+  if (!canal.listo) return no(canal.motivo ?? 'plantilla_no_aprobada', extra);
   if (!p.pais || !ctx.canal.ajustes.paises[p.pais]) return no('pais_apagado', extra);
   if (!c?.ok) return no(c?.motivo ?? 'no_confirmo_por_whatsapp', extra);
   if (delPaso >= MAX_POR_PASO) return no('tope_paso', extra);
@@ -893,8 +963,10 @@ export async function vueltaWhatsappFalta(
     return minutos >= a.horaDesde * 60 && minutos < a.horaHasta * 60;
   });
   if (!posibles.length) return { enviados: 0, evaluados: 0, motivo: null };
-  const canal = await estadoCanal(env, db);
-  if (!canal.listo) return { enviados: 0, evaluados: 0, motivo: canal.motivo };
+  const canales = await estadosCanal(env, db);
+  const canal = canales.es;
+  // C-WHATSAPP-FALTA-IDIOMAS: cada uno recibe la de su idioma; sin ninguna aprobada, nada sale.
+  if (!canal.listo && !canales.en.listo) return { enviados: 0, evaluados: 0, motivo: canal.motivo };
   const delPais = posibles.filter((c) => c.pais && canal.ajustes.paises[c.pais]);
   if (!delPais.length) return { enviados: 0, evaluados: 0, motivo: null };
   const ids = delPais.map((c) => c.id);
@@ -945,7 +1017,7 @@ export async function vueltaWhatsappFalta(
     {
       ahora,
       enviar: { origen: 'auto', actorId: null },
-      ctx: { canal, consentimiento, historial, gasto },
+      ctx: { canal, canales, consentimiento, historial, gasto },
     },
   );
   return {
