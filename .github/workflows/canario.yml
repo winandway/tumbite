@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Producción
         run: |
-          curl -fsS https://tumbite.com/datos/salud -o salud.json || { echo "::error::El canario de producción está en rojo"; cat salud.json 2>/dev/null; exit 1; }
+          curl -fsS https://divoox.com/datos/salud -o salud.json || { echo "::error::El canario de producción está en rojo"; cat salud.json 2>/dev/null; exit 1; }
       - name: Pruebas
         run: |
           curl -fsS https://staging.tumbite.com/datos/salud -o /dev/null || echo "::warning::El canario de pruebas está en rojo"

@@ -3,7 +3,7 @@ import { lugarCuenta } from './rutas/lugarCuenta';
 import { saludTabuladorVigia } from './semillaTabuladorVigia';
 import { disparadoresPresentes } from './canarioLecturas';
 import { presupuestoVueltaPruebas, saludVueltasPruebas } from './vueltaPruebas';
-import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
+import { CARPETA_PAGINAS, DOMINIO_PRINCIPAL, esDominioViejo, redireccionDominio } from './dominio';
 import { rewardsSombra } from './rewards/rutas';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
@@ -194,9 +194,21 @@ app.use('*', candadoVistaPrevia);
 
 // C-DOMINIO-DIVOOX: las páginas viven en divoox.com; la API sigue respondiendo en los dos.
 app.use('*', async (c, next) => {
-  const destino = redireccionDominio(new URL(c.req.url), c.req.method);
+  const url = new URL(c.req.url);
+  const destino = redireccionDominio(url, c.req.method);
   if (destino) return c.redirect(destino, 301);
   await next();
+  // C-TUMBITE-REDIRIGE: lo que sigue respondiendo en tumbite.com (la API, los avisos, la
+  // verificación) no entra en Google: solo divoox.com se indexa.
+  if (esDominioViejo(url.hostname)) {
+    try {
+      c.res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    } catch {
+      // Respuesta con cabeceras fijas (un 101 o una copia inmutable): se rehace con la marca.
+      c.res = new Response(c.res.body, c.res);
+      c.res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    }
+  }
 });
 app.use('*', cabecerasSeguridad);
 // C-AVISOS-WEB: el trabajo que no hace falta para responder (los avisos web) va con waitUntil.
@@ -768,13 +780,25 @@ export const urlCanonica = (ruta: string) => `https://${DOMINIO_PRINCIPAL}${ruta
 export function conCanonica(res: Response, href: string): Response {
   if (!res.headers.get('content-type')?.includes('text/html')) return res;
   if (typeof HTMLRewriter === 'undefined') return res;
-  return new HTMLRewriter()
-    .on('link[rel="canonical"]', {
-      element(e) {
-        e.setAttribute('href', href);
-      },
-    })
-    .transform(res);
+  let tiene = false;
+  return (
+    new HTMLRewriter()
+      .on('link[rel="canonical"]', {
+        element(e) {
+          tiene = true;
+          e.setAttribute('href', href);
+        },
+      })
+      // C-TUMBITE-REDIRIGE: la página que no traía etiqueta canónica la recibe (siempre divoox.com).
+      .on('head', {
+        element(e) {
+          e.onEndTag((fin) => {
+            if (!tiene) fin.before(`<link rel="canonical" href="${href}" />`, { html: true });
+          });
+        },
+      })
+      .transform(res)
+  );
 }
 
 /**
@@ -825,17 +849,42 @@ app.notFound(async (c) => {
       'Cache-Control': 'public, max-age=300',
     });
   if (!c.env.ASSETS) return c.text('No encontrado', 404);
-  let res = await c.env.ASSETS.fetch(c.req.raw);
   const esPagina =
     (c.req.method === 'GET' || c.req.method === 'HEAD') && !/\.[a-z0-9]+$/i.test(c.req.path);
+  const esHtml = (c.req.method === 'GET' || c.req.method === 'HEAD') && /\.html$/i.test(c.req.path);
+  const pedir = (ruta: string) =>
+    c.env.ASSETS!.fetch(
+      new Request(new URL(ruta, c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
+    );
+  let res: Response | null = null;
+  // C-TUMBITE-REDIRIGE: las páginas viajan en CARPETA_PAGINAS para que la plataforma no las sirva
+  // sin pasar por aquí. Se buscan ahí primero; un paquete viejo (o el de la computadora) las trae
+  // en la raíz, y entonces se sigue como siempre.
+  if (esPagina || esHtml) {
+    res = await pedir(`${CARPETA_PAGINAS}${c.req.path}`);
+    if (res.status === 404 && esPagina)
+      res = await pedir(`${CARPETA_PAGINAS}${raizDeApp(c.req.path)}`);
+    // La plataforma ajusta la barra final con 307 («/app» → «/app/»): la persona ve la dirección
+    // pública, nunca la carpeta interna.
+    const destino = res.headers.get('location');
+    if (res.status >= 300 && res.status < 400 && destino) {
+      const u = new URL(destino, c.req.url);
+      if (u.pathname.startsWith(`${CARPETA_PAGINAS}/`)) {
+        u.pathname = u.pathname.slice(CARPETA_PAGINAS.length);
+        res = new Response(null, {
+          status: res.status,
+          headers: { location: u.pathname + u.search },
+        });
+      }
+    }
+    if (res.status === 404) res = null;
+  }
+  if (!res) res = await c.env.ASSETS.fetch(c.req.raw);
   if (res.status === 404 && esPagina) {
     // Se pide la raíz «/», no «/index.html»: la plataforma redirige /index.html a / (307)
     // y eso mandaba a la persona a la portada en vez de a la página que pidió.
     // Las apps web viven en /app (cliente), /driver y /restaurant: sus rutas internas caen en su raíz.
-    const raiz = raizDeApp(c.req.path);
-    res = await c.env.ASSETS.fetch(
-      new Request(new URL(raiz, c.req.url), { method: c.req.method, headers: c.req.raw.headers }),
-    );
+    res = await pedir(raizDeApp(c.req.path));
   }
   let respuesta = new Response(res.body, res);
   // Las conversaciones de tickets (/t/<codigo>) son privadas: ningún buscador las guarda.

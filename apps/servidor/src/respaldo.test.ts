@@ -91,7 +91,7 @@ describe('el reloj pide la copia diaria en producción y en pruebas', () => {
       fileURLToPath(new URL('../../../.github/workflows/reloj.yml', import.meta.url).href),
       'utf8',
     );
-    expect(reloj).toContain('https://tumbite.com/datos/respaldo?siHaceFalta=1');
+    expect(reloj).toContain('https://divoox.com/datos/respaldo?siHaceFalta=1');
     expect(reloj).toContain('https://staging.tumbite.com/datos/respaldo?siHaceFalta=1');
   });
 });

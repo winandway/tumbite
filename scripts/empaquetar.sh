@@ -6,7 +6,7 @@ set -euo pipefail
 ENTORNO="${1:?pruebas o produccion}"
 case "$ENTORNO" in
   pruebas) URL_API="https://staging.tumbite.com" ;;
-  produccion) URL_API="https://tumbite.com" ;;
+  produccion) URL_API="https://divoox.com" ;; # C-TUMBITE-REDIRIGE: la marca vive en divoox.com
   *) echo "Entorno desconocido: $ENTORNO" >&2; exit 1 ;;
 esac
 export URL_API
@@ -34,3 +34,6 @@ if [ "$ENTORNO" = pruebas ]; then node scripts/sin-indexar.mjs "$SALIDA"; fi
 echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' >"$SALIDA/yadominios.json"
 echo "$ENTORNO" >"$SALIDA/.entorno"
 node scripts/verificar-paquete.mjs "$SALIDA" "$ENTORNO" "$COMMIT"
+# C-TUMBITE-REDIRIGE: al final, ya revisado. Las páginas pasan a «_paginas/» para que la plataforma
+# no las sirva sin el servidor (que es quien manda tumbite.com a divoox.com con 301).
+node scripts/paginas-por-servidor.mjs "$SALIDA"
