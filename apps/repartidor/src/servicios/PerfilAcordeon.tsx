@@ -25,6 +25,7 @@ import { Verificacion } from '../Verificacion';
 import { POR_SERVICIO } from '../viajes/AltaPasajeros';
 import { MiCarro } from '../viajes/MiCarro';
 import { MiMoto } from '../viajes/MiMoto';
+import { AgregarVehiculo } from '../vehiculo/AgregarVehiculo';
 import { IMG } from '../piezas/recursos';
 import { fotoSirveDeAvatar, nombreServicio, ordenarServicios, type ServicioPanel } from './logica';
 import { textosServicios } from './textos';
@@ -229,7 +230,9 @@ export function PerfilAcordeon({
   const t = textosServicios(idioma);
   const [seccion, setSeccion] = useState<'vehiculo' | 'documentos' | null>(inicial);
   const [tarjeta, setTarjeta] = useState<string | null>(null);
-  const [abierto, setAbierto] = useState<'identidad' | 'moto' | 'carro' | 'reparto' | null>(null);
+  const [abierto, setAbierto] = useState<
+    'identidad' | 'moto' | 'carro' | 'reparto' | 'agregar' | null
+  >(null);
   const [menuVehiculo, setMenuVehiculo] = useState<string | null>(null);
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [papeles, setPapeles] = useState<Papeles | null>(null);
@@ -369,6 +372,14 @@ export function PerfilAcordeon({
           <Verificacion />
         ) : abierto === 'reparto' ? (
           <MisDatos />
+        ) : abierto === 'agregar' ? (
+          <AgregarVehiculo
+            servicios={servicios.map((x) => x.servicioId)}
+            alSalir={() => {
+              setAbierto(null);
+              void cargar();
+            }}
+          />
         ) : abierto === 'carro' ? (
           <MiCarro />
         ) : (
@@ -441,7 +452,6 @@ export function PerfilAcordeon({
   const verificados = filasPerfil.filter((f) => f.estado === 'aprobado').length;
 
   // ───── Los vehículos con sus papeles (pantalla 06) ─────
-  const ofrece = (tipo: 'moto' | 'carro') => servicios.some((s) => s.servicioId === tipo);
   const haceReparto = servicios.some(
     (s) => (s.servicioId === 'comida' || s.servicioId === 'envios') && s.estado !== 'agregar',
   );
@@ -637,6 +647,8 @@ export function PerfilAcordeon({
                       borderColor: COLOR.borde,
                       borderRadius: RADIO.l,
                       overflow: 'hidden',
+                      // C-AGREGA-TU-VEHICULO: en revisión no se edita: se ve en gris.
+                      backgroundColor: v.estado === 'en_revision' ? COLOR.superficie : undefined,
                     }}
                   >
                     <Pressable
@@ -670,6 +682,14 @@ export function PerfilAcordeon({
                           {v.id === activoId ? (
                             <Text style={{ color: COLOR.exito, fontSize: 13 }}>
                               {'  '}· {t.vehiculoEnUso}
+                            </Text>
+                          ) : null}
+                          {v.estado === 'en_revision' ? (
+                            <Text
+                              testID={`vehiculo-en-revision-${v.tipo}`}
+                              style={{ color: COLOR.textoSuave, fontSize: 13 }}
+                            >
+                              {'  '}· {t.enRevisionVehiculo}
                             </Text>
                           ) : null}
                         </Text>
@@ -835,16 +855,16 @@ export function PerfilAcordeon({
                   </View>
                 );
               })}
-              {ofrece('moto') && !vehiculos.some((v) => v.tipo === 'moto') ? (
-                <BotonSubir texto={t.agregarMoto} icono="add" alTocar={() => setAbierto('moto')} />
-              ) : null}
-              {ofrece('carro') && !vehiculos.some((v) => v.tipo === 'carro') ? (
+              {/* C-AGREGA-TU-VEHICULO: UNA sola entrada para todos los conductores (Comida, Envíos,
+                  Moto y Carro): con qué vas a trabajar, sus datos y sus fotos, en un solo recorrido. */}
+              <View testID="agregar-vehiculo-boton">
                 <BotonSubir
-                  texto={t.agregarCarro}
+                  texto={t.agregaTuVehiculo}
                   icono="add"
-                  alTocar={() => setAbierto('carro')}
+                  fuerte
+                  alTocar={() => setAbierto('agregar')}
                 />
-              ) : null}
+              </View>
               {/* Los datos de reparto de Comida y Envíos (ID, vehículo, licencia y seguro). Tramo 1:
                   solo a quien hace Comida o Envíos (al de Moto con pasajero le parecía otro registro). */}
               {haceReparto ? (

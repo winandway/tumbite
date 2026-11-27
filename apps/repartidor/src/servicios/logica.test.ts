@@ -127,7 +127,8 @@ describe('la tarjeta según el servidor', () => {
     expect(destinoDePaso('carro', 'identidad', 'perfil')).toBe('identidad');
     expect(destinoDePaso('carro', 'seguro_vehiculo', 'vehiculo')).toBe('alta-carro');
     expect(destinoDePaso('moto', 'antecedentes_pasajeros', 'perfil')).toBe('alta-moto');
-    expect(destinoDePaso('envios', 'seguro_vehiculo', 'vehiculo')).toBe('datos-reparto');
+    expect(destinoDePaso('envios', 'seguro_vehiculo', 'vehiculo')).toBe('agregar-vehiculo');
+    expect(destinoDePaso('envios', 'licencia', 'perfil')).toBe('datos-reparto');
     expect(destinoDePaso('envios', 'antecedentes', 'perfil')).toBe('identidad');
   });
 });

@@ -395,11 +395,11 @@ export const POR_SERVICIO = {
 };
 
 /** La cámara del teléfono para la pieza común «Tomar foto» (C-CAMARA-EN-TODA-SUBIDA). */
-const CAMARA = {
+export const CAMARA = {
   pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
   tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 }),
 };
-const deArchivos = async () => {
+export const deArchivos = async () => {
   const r = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     // En el iPhone, la versión compatible (JPEG): el servidor no guarda HEIC.

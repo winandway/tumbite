@@ -199,7 +199,8 @@ export function textoBloque(
  * Adónde lleva cada paso que falta en «Agregar un servicio»: la identidad a «Documentos»; lo del
  * vehículo y los papeles de pasajeros al alta de Moto o Carro; el resto, a los datos de reparto.
  */
-export type Destino = 'identidad' | 'alta-moto' | 'alta-carro' | 'datos-reparto';
+export type Destino =
+  'identidad' | 'alta-moto' | 'alta-carro' | 'agregar-vehiculo' | 'datos-reparto';
 export function destinoDePaso(
   servicioId: string,
   requisito: string,
@@ -209,6 +210,8 @@ export function destinoDePaso(
   if (servicioId === 'moto') return 'alta-moto';
   if (servicioId === 'carro') return 'alta-carro';
   if (grupo === 'perfil' && requisito.startsWith('antecedentes')) return 'identidad';
+  // C-AGREGA-TU-VEHICULO: el vehículo de Comida y Envíos se agrega en su recorrido único.
+  if (grupo === 'vehiculo') return 'agregar-vehiculo';
   return 'datos-reparto';
 }
 

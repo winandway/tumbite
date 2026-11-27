@@ -18,6 +18,7 @@ import {
 import { MisDatos } from '../MisDatos';
 import { Verificacion } from '../Verificacion';
 import { AltaPasajeros } from '../viajes/AltaPasajeros';
+import { AgregarVehiculo } from '../vehiculo/AgregarVehiculo';
 import { IMG } from '../piezas/recursos';
 import {
   destinoDePaso,
@@ -43,6 +44,27 @@ type Papel = {
   motivo?: string;
 };
 type Requisitos = { verificados: Papel[]; faltan: Papel[] };
+
+/**
+ * C-AGREGA-TU-VEHICULO: sin el vehículo de Moto o Carro, el paso abre «Agrega tu vehículo» (datos y
+ * fotos en un solo recorrido); con el vehículo ya guardado, sus papeles y su aprobación (AltaPasajeros).
+ */
+function AltaODatos({ servicio, alSalir }: { servicio: 'moto' | 'carro'; alSalir: () => void }) {
+  const { api } = useSesion();
+  const [tiene, setTiene] = useState<boolean | null>(null);
+  useEffect(() => {
+    api
+      .pedir<{ vehiculos: { tipo: string }[] }>('GET', '/datos/conductor/vehiculos')
+      .then((r) => setTiene(r.vehiculos.some((x) => x.tipo === servicio)))
+      .catch(() => setTiene(true));
+  }, [api, servicio]);
+  if (tiene === null) return null;
+  return tiene ? (
+    <AltaPasajeros servicio={servicio} />
+  ) : (
+    <AgregarVehiculo servicios={[servicio]} alSalir={alSalir} />
+  );
+}
 
 export function AgregarServicio({
   servicio,
@@ -129,10 +151,24 @@ export function AgregarServicio({
         />
         {abierto === 'identidad' ? (
           <Verificacion />
-        ) : abierto === 'alta-moto' ? (
-          <AltaPasajeros servicio="moto" />
-        ) : abierto === 'alta-carro' ? (
-          <AltaPasajeros servicio="carro" />
+        ) : abierto === 'agregar-vehiculo' ? (
+          <AgregarVehiculo
+            servicios={[servicio.servicioId]}
+            alSalir={() => {
+              setAbierto(null);
+              void cargar();
+              alCambiar();
+            }}
+          />
+        ) : abierto === 'alta-moto' || abierto === 'alta-carro' ? (
+          <AltaODatos
+            servicio={abierto === 'alta-moto' ? 'moto' : 'carro'}
+            alSalir={() => {
+              setAbierto(null);
+              void cargar();
+              alCambiar();
+            }}
+          />
         ) : (
           <MisDatos />
         )}

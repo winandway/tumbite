@@ -12,25 +12,34 @@ import {
   useSesion,
   Text,
   CampoFecha,
+  COLOR,
+  FUENTE,
+  Icono,
+  LETRA,
+  RADIO,
 } from '@tumbite/movil';
+import { AgregarVehiculo } from './vehiculo/AgregarVehiculo';
 
 const T = {
   es: {
     tuId: 'Tu ID de conductor',
     idAyuda: 'Dáselo a soporte si tienes un problema: con él te encontramos al instante.',
     vehiculo: 'Tu vehículo',
+    sinVehiculo: 'Agrégalo con sus datos y fotos.',
+    agregaTuVehiculo: 'Agrega tu vehículo',
+    estados: {
+      registrado: 'Sin enviar',
+      en_revision: 'En revisión',
+      aprobado: 'Aprobado',
+      rechazado: 'Hay que corregir',
+    } as Record<string, string>,
     tipos: {
       carro: 'Carro',
       moto: 'Moto',
       scooter: 'Scooter',
       bicicleta: 'Bicicleta',
       a_pie: 'A pie',
-    },
-    marca: 'Marca',
-    modelo: 'Modelo',
-    anio: 'Año',
-    color: 'Color',
-    placa: 'Placa',
+    } as Record<string, string>,
     licencia: 'Tu licencia de conducir',
     licenciaNumero: 'Número de licencia',
     licenciaEstado: 'Estado o país que la emitió',
@@ -46,18 +55,21 @@ const T = {
     tuId: 'Your driver ID',
     idAyuda: 'Give it to support if you have a problem: it lets us find you instantly.',
     vehiculo: 'Your vehicle',
+    sinVehiculo: 'Add it with its details and photos.',
+    agregaTuVehiculo: 'Add your vehicle',
+    estados: {
+      registrado: 'Not sent',
+      en_revision: 'Under review',
+      aprobado: 'Approved',
+      rechazado: 'Needs a fix',
+    } as Record<string, string>,
     tipos: {
       carro: 'Car',
       moto: 'Motorbike',
       scooter: 'Scooter',
       bicicleta: 'Bicycle',
       a_pie: 'On foot',
-    },
-    marca: 'Make',
-    modelo: 'Model',
-    anio: 'Year',
-    color: 'Color',
-    placa: 'Plate',
+    } as Record<string, string>,
     licencia: 'Your driver’s license',
     licenciaNumero: 'License number',
     licenciaEstado: 'Issuing state or country',
@@ -71,6 +83,9 @@ const T = {
       'Only you and the Divoox team can see this. Your bank details go in Stripe, never here.',
   },
 };
+
+type VehiculoResumen = { tipo: string; marca: string; modelo: string; estado: string };
+const de = (m: Record<string, string>, k: string) => new Map(Object.entries(m)).get(k);
 
 const INICIAL = {
   vehiculoTipo: '',
@@ -98,6 +113,9 @@ export function MisDatos() {
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [agregando, setAgregando] = useState(false);
+  const [vehiculos, setVehiculos] = useState<VehiculoResumen[]>([]);
+  const [version, setVersion] = useState(0);
   const b = useBorrador({
     formulario: 'datos-repartidor',
     cuenta: usuario?.id,
@@ -124,6 +142,14 @@ export function MisDatos() {
       .catch(() => {});
   }, [api, cargarBase]);
 
+  // «Tu vehículo»: el que tiene guardado en el servidor (el último que no se retiró).
+  useEffect(() => {
+    api
+      .pedir<{ vehiculos: VehiculoResumen[] }>('GET', '/datos/conductor/vehiculos')
+      .then((r) => setVehiculos(r.vehiculos))
+      .catch(() => {});
+  }, [api, version]);
+  const actual = vehiculos.at(-1) ?? null;
   const v = b.valores;
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
   const campo = (clave: keyof typeof INICIAL, etiqueta: string, extra: object = {}) => (
@@ -166,6 +192,16 @@ export function MisDatos() {
     }
   }
 
+  if (agregando)
+    return (
+      <AgregarVehiculo
+        alSalir={() => {
+          setAgregando(false);
+          setVersion((x) => x + 1);
+        }}
+      />
+    );
+
   return (
     <View>
       <View style={[e.tarjeta, { backgroundColor: C.secundario }]}>
@@ -179,41 +215,46 @@ export function MisDatos() {
         <Text style={{ color: '#BDBDBD', fontSize: 13 }}>{t.idAyuda}</Text>
       </View>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+      {/* C-AGREGA-TU-VEHICULO: el vehículo ya NO se escribe aquí (eran datos sueltos y no creaban el
+          vehículo real). Esta tarjeta abre «Agrega tu vehículo» o dice cuál tiene y en qué está. */}
       <Text style={estilo.sub}>{t.vehiculo}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-        {Object.entries(t.tipos).map(([valor, nombre]) => (
-          <Pressable
-            key={valor}
-            onPress={() => b.cambiar('vehiculoTipo', valor)}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: v.vehiculoTipo === valor }}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: v.vehiculoTipo === valor ? C.secundario : '#D6D8DC',
-              backgroundColor: v.vehiculoTipo === valor ? C.secundario : '#FFFFFF',
-            }}
-          >
-            <Text
-              style={{ color: v.vehiculoTipo === valor ? '#FFFFFF' : C.texto, fontWeight: '700' }}
-            >
-              {nombre}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-      {v.vehiculoTipo && v.vehiculoTipo !== 'a_pie' ? (
-        <>
-          {campo('marca', t.marca)}
-          {campo('modelo', t.modelo)}
-          {campo('anio', t.anio, { tipo: 'anioVehiculo' })}
-          {campo('color', t.color)}
-          {conMotor ? campo('placa', t.placa, { tipo: 'placa' }) : null}
-        </>
-      ) : null}
-      {conMotor ? (
+      <Pressable
+        testID="misdatos-tu-vehiculo"
+        onPress={() => setAgregando(true)}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          borderWidth: 1,
+          borderColor: COLOR.borde,
+          borderRadius: RADIO.l,
+          padding: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          marginBottom: 10,
+          backgroundColor: pressed ? COLOR.superficie : COLOR.fondo,
+          shadowColor: '#000',
+          shadowOpacity: 0.06,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 1,
+        })}
+      >
+        <Icono nombre="car-outline" tamano={22} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 16 }}>
+            {actual ? (de(t.tipos, actual.tipo) ?? actual.tipo) : t.agregaTuVehiculo}
+          </Text>
+          <Text style={LETRA.secundario}>
+            {actual
+              ? [actual.marca, actual.modelo, de(t.estados, actual.estado) ?? actual.estado]
+                  .filter(Boolean)
+                  .join(' · ')
+              : t.sinVehiculo}
+          </Text>
+        </View>
+        <Icono nombre="chevron-forward" tamano={20} color={COLOR.textoSuave} />
+      </Pressable>
+      {conMotor || !v.vehiculoTipo ? (
         <>
           <Text style={estilo.sub}>{t.licencia}</Text>
           {campo('licenciaNumero', t.licenciaNumero, { autoCapitalize: 'characters' })}
