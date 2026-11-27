@@ -199,11 +199,16 @@ app.use('/datos/*', async (c, next) => {
   } catch {
     ctx = null; // en las pruebas no hay contexto de ejecución
   }
-  if (ctx) {
-    const ejecucion = ctx;
-    c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
-  }
-  await next();
+  if (!ctx) return next();
+  const ejecucion = ctx;
+  c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
+  // C-COBRO-SEGUNDO-PLANO (26 nov 2026): si el cliente se va (recarga la pantalla, pierde la señal),
+  // Cloudflare cancela la petición y solo deja seguir lo que está bajo waitUntil. Una entrega, un viaje
+  // o una cancelación que ya empezó a mover dinero (captura, reembolso, transferencia) no puede
+  // quedar a medias por eso: la petición entera se registra con waitUntil y termina igual.
+  const trabajo = next();
+  ejecucion.waitUntil(trabajo.catch(() => undefined));
+  await trabajo;
 });
 // C-PRESUPUESTO-VUELTA-PRUEBAS: las pruebas automáticas contra el sitio de pruebas tienen tope
 // de filas por vuelta y por día; en producción no hace nada.

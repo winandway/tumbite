@@ -7482,3 +7482,15 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Subido:** Divoox el 26 nov; Driver el 26 nov apenas Google publicó la 0.1.79 (se quitó su candado play-en-revision); Restaurants sin cambio.
 - **Pruebas:** `scripts/marca/lamina-play.test.mjs` (proyecto `marca` de vitest). Rojo comprobado: con el color de las tres apps en negro, fallan tres de las cinco.
 - **Qué NO tocar:** no escribir colores de fondo en el generador; no subir piezas de `capturas-tiendas-con-titulo/` sin pasar por `imagenes-google-play.mjs`.
+
+## C-COBRO-SEGUNDO-PLANO (26 nov 2026) — el dinero que ya empezó a moverse no depende de que la pantalla espere — todos los países
+
+- **Qué se rompió:** en el sitio de pruebas, el recorrido de comida recargó la pantalla justo después de «Entregado en el local» y dos cobros quedaron «capturando» (pedidos a412e2f2… y c68d0b68…). La conciliación «de hoy» salió en rojo en toda pasada.
+- **Causa real:** en Cloudflare, cuando el cliente se va (recarga, pierde la señal), la petición se cancela y solo sigue lo registrado con `waitUntil` (hasta 30 s; documentación de `ctx.waitUntil`). La captura en Stripe corría dentro de la petición: al cortarse, la liquidación quedaba reclamada a medias. En producción la rescataba el reloj a los cinco minutos; en pruebas el reloj está en pausa. Los viajes con tarjeta no tenían ni ese rescate: si «terminar» se cortaba entre el cambio de estado y la captura, el reintento respondía «ya terminado» sin cobrar y la autorización vencía.
+- **Qué se hizo:**
+  1. `apps/servidor/src/app.ts`: toda petición bajo `/datos` se registra entera con `waitUntil` (cubre entregar, recoger, terminar y cancelar viajes, reembolsos y transferencias).
+  2. Entrega a domicilio y en el local: el cobro va enseguida del lote, antes de referidos y avisos; el reintento «ya entregado» empuja `liquidar` (que reclama: nunca cobra dos veces).
+  3. Viajes: `capturarCobroViaje` pregunta a Stripe si la captura falla y anota lo de verdad cobrado; el reintento de «terminar» cobra si la autorización sigue abierta; tarea crítica nueva del reloj `cobros_viaje` (`cobrarViajesTerminados`).
+  4. Panel de dinero: «Reintentar ahora» acepta la liquidación «capturando» vencida (la lista ya la mostraba y el botón respondía 404). Es el mismo `liquidar` del reloj.
+- **Candado en código:** `apps/servidor/src/cobroSegundoPlano.test.ts` (siete pruebas). Simula el corte: Stripe retiene la captura, la prueba se va sin esperar la respuesta y deja seguir solo lo registrado con `waitUntil`. Comprobado en ROJO sin el arreglo (cuatro rojas con «capturando», reloj de viajes y respuesta perdida; la del panel con 404).
+- **Qué NO tocar:** no quitar el `waitUntil` de la petición entera en `app.ts`; no volver a poner la captura después de los avisos; no cambiar las claves de idempotencia `captura-…` ni `capturar-viaje-…`.

@@ -27,6 +27,12 @@ export function mundo(
   // La selfie de control al azar se apaga en las pruebas (cada prueba la enciende si la necesita).
   const extra = { BUCKET: crearAlmacenPruebas().bucket, SELFIE_CONTROL_SIEMPRE: '0', ...extraDado };
   let ip = 0;
+  // C-COBRO-SEGUNDO-PLANO: un contexto de ejecución de mentira (su waitUntil), para simular que el
+  // cliente se va a mitad de la petición. Sin él, las peticiones corren sin contexto (como siempre).
+  let contexto: ExecutionContext | undefined;
+  const usarContexto = (c: ExecutionContext | undefined) => {
+    contexto = c;
+  };
   // Cada mundo con su propia red de mentira: el límite de intentos vive en memoria y, si no,
   // las pruebas de un mismo archivo chocaban entre sí.
   const red = Math.floor(Math.random() * 200) + 20;
@@ -48,6 +54,7 @@ export function mundo(
       `${origen}${ruta}`,
       { method: metodo, headers, body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo) },
       { DB: DBapp, ...extra },
+      contexto,
     );
     const datos = (await res.json().catch(() => ({}))) as any;
     return { res, datos, estado: res.status };
@@ -101,6 +108,7 @@ export function mundo(
         body: FOTO_PRUEBA as BodyInit,
       },
       { DB: DBapp, ...extra },
+      contexto,
     );
     return { res, datos: (await res.json().catch(() => ({}))) as any, estado: res.status };
   }
@@ -172,6 +180,7 @@ export function mundo(
     ubicar,
     envejecerGps,
     abrir,
+    usarContexto,
   };
 }
 

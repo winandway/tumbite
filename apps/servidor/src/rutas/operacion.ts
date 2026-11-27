@@ -186,6 +186,7 @@ import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
 import { crearTicket } from './tickets';
 import { anotarRechazoConectar, origenDePeticion } from '../rastro';
+import { cobrarViajesTerminados } from '../viajesCobro';
 import {
   abrirPase,
   enviarSms,
@@ -3028,8 +3029,14 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       .prepare("SELECT 1 FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado = 'entregado'")
       .bind(id, u.id)
       .first();
-    if (ya)
+    if (ya) {
+      // C-COBRO-SEGUNDO-PLANO: el reintento también empuja el cobro si quedó pendiente (liquidar
+      // reclama la liquidación: si ya se cobró o alguien la está cobrando, no hace nada).
+      await liquidar(c.env, db, id).catch((e: unknown) =>
+        console.error('entrega repetida: el cobro queda para el reloj', id, e),
+      );
       return c.json({ ok: true, yaEntregado: true, url: `/datos/pedidos/${id}/evidencia/entrega` });
+    }
     throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
   }
   // Mayoría de edad: si algún plato lo exige, solo en mano y con el documento revisado.
@@ -3272,12 +3279,13 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
     throw e;
   }
+  // C-COBRO-SEGUNDO-PLANO: el cobro va primero, enseguida del lote (lo demás no lo hace esperar).
+  await liquidar(c.env, db, id).catch((e: unknown) =>
+    console.error('entrega: el cobro queda para el reloj', id, e),
+  );
   // C-REFERIDOS: si era el primer pedido de un amigo invitado, quien lo invitó recibe su crédito.
   await premiarReferidoDelPedido(db, id).catch((e: unknown) =>
     console.error('referidos: crédito de quien invitó', id, e),
-  );
-  await liquidar(c.env, db, id).catch((e: unknown) =>
-    console.error('entrega: el cobro queda para el reloj', id, e),
   );
   if (modo === 'ausente') await cerrarComoAusente(c.env, db, id, u, nota);
   else {
@@ -3488,6 +3496,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   { nombre: 'platos_vuelven', critica: false, correr: (_env, db) => volverPlatosAgotados(db) },
   // C-COBRO-AL-ENTREGAR: termina los cobros de entregas que Stripe no pudo capturar en el momento.
   { nombre: 'liquidaciones', critica: true, correr: (env, db) => liquidarPendientes(env, db) },
+  // C-COBRO-SEGUNDO-PLANO: el viaje con tarjeta terminado cuyo cobro quedó abierto se cobra aquí.
+  { nombre: 'cobros_viaje', critica: true, correr: (env, db) => cobrarViajesTerminados(env, db) },
   // C-AUTORIZACION-VENCIDA: avisa al equipo de dinero, UNA vez por pedido, cuando un pedido abierto
   // lleva 96 horas con la tarjeta autorizada sin capturar (antes de que Stripe la suelte). Como
   // mucho 25 filas de bitácora por vuelta; una vuelta sin pedidos nuevos no escribe nada.
@@ -4016,12 +4026,13 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
     if (esEntregaRepetida(e)) throw new ErrorDatos('Este pedido ya se entregó.', undefined, 409);
     throw e;
   }
+  // C-COBRO-SEGUNDO-PLANO: el cobro va primero, enseguida del lote (lo demás no lo hace esperar).
+  await liquidar(c.env, db, id).catch((e: unknown) =>
+    console.error('recogida: el cobro queda para el reloj', id, e),
+  );
   // C-REFERIDOS: si era el primer pedido de un amigo invitado, quien lo invitó recibe su crédito.
   await premiarReferidoDelPedido(db, id).catch((e: unknown) =>
     console.error('referidos: crédito de quien invitó', id, e),
-  );
-  await liquidar(c.env, db, id).catch((e: unknown) =>
-    console.error('recogida: el cobro queda para el reloj', id, e),
   );
   await avisarAlCliente(c.env, db, id, (i) => AVISOS.entregado(i));
   return c.json({ ok: true });

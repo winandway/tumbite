@@ -221,17 +221,28 @@ export async function capturarCobroViaje(
   const monto = Math.min(total, Number(f.autorizado));
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('No pudimos cobrar el viaje en este momento.', undefined, 503);
-  await stripe.post(
-    `/payment_intents/${f.stripe_pago}/capture`,
-    { amount_to_capture: monto },
-    `capturar-viaje-${operacionId}`,
-  );
+  // C-COBRO-SEGUNDO-PLANO: si la captura ya se hizo y la respuesta se perdió (corte, reintento con
+  // la clave vencida), se le pregunta a Stripe y se anota lo que de verdad cobró: nunca dos veces.
+  let cobrado = monto;
+  try {
+    await stripe.post(
+      `/payment_intents/${f.stripe_pago}/capture`,
+      { amount_to_capture: monto },
+      `capturar-viaje-${operacionId}`,
+    );
+  } catch (e) {
+    const pi = await stripe
+      .get<{ status?: string; amount_received?: number }>(`/payment_intents/${f.stripe_pago}`)
+      .catch(() => null);
+    if (pi?.status !== 'succeeded') throw e;
+    cobrado = Number(pi.amount_received ?? monto);
+  }
   await db.batch([
     db
       .prepare(
         "UPDATE cobros_viaje SET estado = 'capturado', capturado = ?, actualizado_en = datetime('now') WHERE operacion_id = ? AND estado = 'autorizado'",
       )
-      .bind(monto, operacionId),
+      .bind(cobrado, operacionId),
     // Lo que pagó el pasajero va entero al conductor (la comisión ya salió de su prepago).
     db
       .prepare(
@@ -241,12 +252,44 @@ export async function capturarCobroViaje(
       .bind(
         nuevoId(),
         conductorId,
-        monto,
+        cobrado,
         `viaje-tarjeta-${operacionId}`,
         `viaje-tarjeta-${operacionId}`,
       ),
   ]);
-  return monto;
+  return cobrado;
+}
+
+/**
+ * C-COBRO-SEGUNDO-PLANO (tarea crítica del reloj): un viaje con tarjeta que terminó hace más de cinco
+ * minutos y sigue con la autorización abierta se quedó sin cobrar (la petición de «terminar» se
+ * cortó entre el cambio de estado y la captura). Se cobra por el mismo camino que al terminar: la
+ * clave de idempotencia y la consulta a Stripe impiden cobrar dos veces.
+ */
+export async function cobrarViajesTerminados(env: Env, db: D1Database) {
+  const { results } = await db
+    .prepare(
+      `SELECT v.operacion_id, o.conductor_id, v.total_final_centavos AS total
+         FROM cobros_viaje c JOIN viajes v ON v.operacion_id = c.operacion_id
+         JOIN operaciones o ON o.id = c.operacion_id
+        WHERE c.estado = 'autorizado' AND v.estado = 'terminado' AND v.metodo_pago = 'tarjeta'
+          AND COALESCE(v.total_final_centavos, 0) > 0 AND o.conductor_id IS NOT NULL
+          AND v.terminado_en < datetime('now', '-5 minutes')
+        LIMIT 25`,
+    )
+    .all<{ operacion_id: string; conductor_id: string; total: number }>();
+  let cobrados = 0;
+  let fallidos = 0;
+  for (const r of results) {
+    try {
+      await capturarCobroViaje(env, db, r.operacion_id, r.conductor_id, Number(r.total));
+      cobrados++;
+    } catch (e) {
+      fallidos++;
+      console.error('viajes: el reloj no pudo cobrar el viaje terminado', r.operacion_id, e);
+    }
+  }
+  return { revisados: results.length, cobrados, fallidos };
 }
 
 /** Al cancelar o quedarse sin conductor: cobra solo el cargo, o anula la autorización. */
