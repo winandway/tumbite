@@ -3234,6 +3234,26 @@ CREATE TABLE IF NOT EXISTS rutas_precio_zona (
 );
 CREATE INDEX IF NOT EXISTS rutas_precio_zona_buscar ON rutas_precio_zona(zona_id, servicio_id) WHERE activa = 1;
 
+-- C-LUGARES-PROPIOS (27 nov 2026, Richard): los lugares que la ciudad conoce por su nombre y que Google
+-- no tiene o pone mal («KM 9», «Pedeca»). El equipo los carga en el panel: nombre, otros nombres (JSON,
+-- «km9», «kilómetro 9»), el punto puesto a mano en el mapa y, si tiene, la ruta del tabulador que da su
+-- precio. El buscador de destino los pone primero, solo en su ciudad. Nunca se borran: se apagan.
+CREATE TABLE IF NOT EXISTS lugares_propios (
+  id TEXT PRIMARY KEY,
+  zona_id TEXT NOT NULL,
+  nombre TEXT NOT NULL,
+  otros_nombres TEXT NOT NULL DEFAULT '[]',
+  lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  ruta_id TEXT,
+  activo INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+  creado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_por TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS lugares_propios_ciudad ON lugares_propios(zona_id) WHERE activo = 1;
+
 CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
   id TEXT PRIMARY KEY,
   cliente_id TEXT NOT NULL REFERENCES usuarios(id),
