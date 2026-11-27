@@ -19,6 +19,8 @@ export const TIPOS_COMERCIO = [
   'mascotas',
   'belleza',
   'tienda',
+  // C-MERCHANT-TIPO (27 nov 2026): «Otro» para lo que no cabe en ninguno; sale en «Más».
+  'otro',
 ] as const;
 export type TipoComercio = (typeof TIPOS_COMERCIO)[number];
 
@@ -40,7 +42,8 @@ export const NOMBRES_COMERCIO: Record<TipoComercio, { es: string; en: string }> 
   ferreteria: { es: 'Ferretería', en: 'Hardware store' },
   mascotas: { es: 'Tienda de mascotas', en: 'Pet store' },
   belleza: { es: 'Belleza y cuidado personal', en: 'Beauty and personal care' },
-  tienda: { es: 'Otra tienda', en: 'Other store' },
+  tienda: { es: 'Tienda', en: 'Store' },
+  otro: { es: 'Otro', en: 'Other' },
 };
 
 export const UNIDADES_TAMANO = [

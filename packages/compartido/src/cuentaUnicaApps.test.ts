@@ -6,7 +6,7 @@ import { textosActivarPapel } from './appDeCuenta';
 
 /**
  * C-CUENTA-UNICA (24 nov 2026, Richard; todos los países). La app de clientes y Driver dicen que saben
- * ofrecer el papel que falta (cabecera x-cuenta-unica). Divoox Restaurants NO, a propósito: tiene un
+ * ofrecer el papel que falta (cabecera x-cuenta-unica). Divoox Merchant NO, a propósito: tiene un
  * caso abierto con Apple y su app y la cuenta de revisión «Divoox Review Kitchen» se comportan igual
  * que hoy. Comprobado en rojo quitando el filtro por app de la cabecera.
  */

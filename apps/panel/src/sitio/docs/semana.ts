@@ -227,7 +227,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'rest-cuenta-cobro',
             'es',
-            'El inicio de la app del restaurante con «Cuenta para recibir tus ventas»: el titular, el banco, el teléfono y el documento, y el botón «Cambiar cuenta».',
+            'El inicio de la app Divoox Merchant con «Cuenta para recibir tus ventas»: el titular, el banco, el teléfono y el documento, y el botón «Cambiar cuenta».',
             'Tu pago móvil, donde te pagan tus clientes.',
           ),
           foto(
@@ -485,22 +485,22 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
         capturas: [
           {
             src: '/docs/recorrido-restapp-pedidos-en.webp',
-            alt: 'The Orders tab of the restaurant app with the orders in progress and the recent ones.',
+            alt: 'The Orders tab of the Divoox Merchant app with the orders in progress and the recent ones.',
             pie: 'Every order, with its items and its total.',
           },
           {
             src: '/docs/recorrido-restapp-listo-en.webp',
-            alt: 'The restaurant app with an order marked ready, waiting for the driver.',
+            alt: 'The Divoox Merchant app with an order marked ready, waiting for the driver.',
             pie: 'Ready: the driver comes to pick it up.',
           },
           {
             src: '/docs/recorrido-restapp-nuevo-en.webp',
-            alt: 'The restaurant app with a new order waiting to be accepted.',
+            alt: 'The Divoox Merchant app with a new order waiting to be accepted.',
             pie: 'Orders arrive already paid in the app.',
           },
           {
             src: '/docs/recorrido-restapp-preparando-en.webp',
-            alt: 'The restaurant app with an accepted order being prepared and the button to mark it ready.',
+            alt: 'The Divoox Merchant app with an accepted order being prepared and the button to mark it ready.',
             pie: 'You accept, prepare and mark the order ready.',
           },
         ],
@@ -523,12 +523,12 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           'Not in the United States. Orders are paid by card in the app and your restaurant doesn’t keep a prepaid balance.',
         explicacion: [
           'In the United States your restaurant has no balance to top up: customers pay by card in the app and what you see in your app are your orders and your sales.',
-          'A restaurant balance exists only in countries where customers pay the restaurant directly. There, the restaurant’s app shows its balance and its current fee, which is free to start; when there is a fee, it comes out of the balance once per order, when the restaurant confirms the payment arrived.',
+          'A restaurant balance exists only in countries where customers pay the restaurant directly. There, the Divoox Merchant app shows its balance and its current fee, which is free to start; when there is a fee, it comes out of the balance once per order, when the restaurant confirms the payment arrived.',
         ],
         capturas: [
           {
             src: '/docs/recorrido-restapp-estadisticas-en.webp',
-            alt: 'The Statistics screen of the restaurant app with the sales of the period.',
+            alt: 'The Statistics screen of the Divoox Merchant app with the sales of the period.',
             pie: 'Your sales, in the Statistics tab.',
           },
         ],
@@ -536,7 +536,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           'Do I need to top up a balance to receive orders?',
           'Where do I see my restaurant’s sales?',
         ],
-        pasos: ['Open your restaurant app.', 'Tap “Statistics” to see your sales.'],
+        pasos: ['Open the Divoox Merchant app.', 'Tap “Statistics” to see your sales.'],
       },
     ],
   },

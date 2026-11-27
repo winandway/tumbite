@@ -40,10 +40,10 @@ const T = {
       },
       {
         app: 'restaurantes',
-        nombre: 'Divoox Restaurants',
-        para: 'Para tu restaurante',
+        nombre: 'Divoox Merchant',
+        para: 'Para comercios',
         texto:
-          'Recibe los pedidos con alarma, acéptalos, márcalos listos para el repartidor y pausa los platos que se acaban.',
+          'Recibe los pedidos con alarma, acéptalos, márcalos listos para el repartidor y pausa lo que se agota.',
       },
     ],
   },
@@ -78,10 +78,10 @@ const T = {
       },
       {
         app: 'restaurantes',
-        nombre: 'Divoox Restaurants',
-        para: 'For your restaurant',
+        nombre: 'Divoox Merchant',
+        para: 'For businesses',
         texto:
-          'Get orders with an alert, accept them, mark them ready for the driver, and pause items when they run out.',
+          'Get orders with an alert, accept them, mark them ready for the driver, and pause what runs out.',
       },
     ],
   },

@@ -162,7 +162,7 @@ export function Acceso({
   const [acepto, setAcepto] = useState(false);
   const v = b.valores;
   // C-CUENTA-UNICA: solo la app de clientes y Driver ofrecen el papel que falta con la misma cuenta.
-  // Divoox Restaurants (rolRegistro «restaurante») no lo manda y se comporta como siempre.
+  // Divoox Merchant (rolRegistro «restaurante») no lo manda y se comporta como siempre.
   const papelApp = rolRegistro === 'cliente' || rolRegistro === 'repartidor' ? rolRegistro : null;
   const porActivar = papelApp && modo === 'entrar' && error?.codigo === CODIGO_PAPEL_POR_ACTIVAR;
   // C-RASTRO: los pasos de antes de crear la cuenta, una vez por aparato (solo un contador).

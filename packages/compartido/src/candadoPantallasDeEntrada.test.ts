@@ -69,7 +69,7 @@ describe('C-RESTAURANTE-DESDE-EL-TELEFONO y C-AYUDA-A-LA-VISTA', () => {
     expect(textos).not.toMatch(
       /solo entras|accounts are created at|se crean en divoox\.com\/panel/i,
     );
-    expect(textos).toContain("crearCuentaRestaurante: 'Crear cuenta de restaurante'");
+    expect(textos).toContain("crearCuentaRestaurante: 'Crear cuenta de comercio'");
     const inicio = leer('apps/restaurante/src/Inicio.tsx');
     expect(sinComentarios(inicio)).not.toMatch(/en divoox\.com\/panel para empezar/);
     expect(inicio).toContain("abrirPanel(api, URL_SERVIDOR, '/panel')");

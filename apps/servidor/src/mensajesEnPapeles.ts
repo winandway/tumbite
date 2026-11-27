@@ -5,7 +5,7 @@ import { MENSAJES_EN_CUENTA_UNICA } from './mensajesEnCuentaUnica';
 const APP_EN = new Map<AppDeCelular, string>([
   ['cliente', 'this app'],
   ['repartidor', 'Divoox Driver'],
-  ['restaurante', 'Divoox Restaurants'],
+  ['restaurante', 'Divoox Merchant'],
 ]);
 const CUENTA_EN = new Map<AppDeCelular, string>([
   ['cliente', 'a Divoox customer account'],
@@ -15,7 +15,7 @@ const CUENTA_EN = new Map<AppDeCelular, string>([
 const SIGUE_EN = new Map<AppDeCelular, string>([
   ['cliente', 'Your customer account stays the same in the Divoox app.'],
   ['repartidor', 'Your driver account stays the same in Divoox Driver.'],
-  ['restaurante', 'Your restaurant stays the same in Divoox Restaurants.'],
+  ['restaurante', 'Your restaurant stays the same in Divoox Merchant.'],
 ]);
 const QUE_HACER_EN = new Map<AppDeCelular, string>([
   [

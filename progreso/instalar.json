@@ -19,7 +19,7 @@
         },
         {
           "id": "web-restaurante",
-          "titulo": "Divoox Restaurants",
+          "titulo": "Divoox Merchant",
           "para": "Recibir los pedidos del restaurante.",
           "url": "https://staging.tumbite.com/restaurant/"
         }
@@ -43,7 +43,7 @@
         },
         {
           "id": "apk-restaurante",
-          "titulo": "Divoox Restaurants PRUEBAS",
+          "titulo": "Divoox Merchant PRUEBAS",
           "para": "App del restaurante.",
           "url": "https://expo.dev/artifacts/eas/xrLukUF-cnfqXGiyP_nQuqMlb-R2EjTmyJinbN4A8T4.apk"
         }
@@ -67,7 +67,7 @@
         },
         {
           "id": "play-restaurante",
-          "titulo": "Divoox Restaurants",
+          "titulo": "Divoox Merchant",
           "para": "Restaurante, en Google Play.",
           "url": "https://play.google.com/store/apps/details?id=com.windoce.tumbite.restaurants"
         }

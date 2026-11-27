@@ -36,7 +36,7 @@ const T = {
         {
           id: 'restaurants',
           img: '/docs/recorrido-restapp-nuevo-es.webp',
-          alt: 'Pantalla real de la app del restaurante con un pedido nuevo y el tiempo para aceptarlo',
+          alt: 'Pantalla real de la app Divoox Merchant con un pedido nuevo y el tiempo para aceptarlo',
           titulo: 'Si tienes un restaurante',
           puntos: [
             'Pagas hasta la mitad de comisión que en otras plataformas: 7,5 %, 12,5 % o 15 % según tu plan.',
@@ -180,7 +180,7 @@ const T = {
         {
           id: 'restaurants',
           img: '/docs/recorrido-restapp-nuevo-en.webp',
-          alt: 'Real restaurant app screen with a new order and the time to accept it',
+          alt: 'Real Divoox Merchant app screen with a new order and the time to accept it',
           titulo: 'If you own a restaurant',
           puntos: [
             'Pay up to half the commission of other platforms: 7.5%, 12.5%, or 15% depending on your plan.',

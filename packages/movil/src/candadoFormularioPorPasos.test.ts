@@ -45,7 +45,7 @@ describe('C-FORMULARIO-POR-PASOS', () => {
     expect(acceso.match(/pasoDeCasilla\(PASOS_REGISTRO/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
   });
 
-  it('Divoox Restaurants (caso abierto con Apple) conserva su formulario de siempre', () => {
+  it('Divoox Merchant (caso abierto con Apple) conserva su formulario de siempre', () => {
     expect(acceso).not.toMatch(/porPasos = [^;]*restaurante/);
   });
 

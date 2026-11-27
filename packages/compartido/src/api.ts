@@ -120,7 +120,7 @@ export function crearApi(op: OpcionesApi) {
     const app = op.app?.();
     if (app) headers['x-tumbite-app'] = app;
     // C-CUENTA-UNICA: la app de clientes y Driver (desde esta versión) saben ofrecer el papel que
-    // falta con la misma cuenta. Divoox Restaurants no lo dice y el servidor la trata como siempre.
+    // falta con la misma cuenta. Divoox Merchant no lo dice y el servidor la trata como siempre.
     if (app && /^(cliente|repartidor)\//.test(app)) headers['x-cuenta-unica'] = '1';
     const aparato = op.aparato?.();
     if (aparato) headers['x-aparato'] = aparato;

@@ -7,6 +7,7 @@ import {
   correoEjemplo,
   enIdioma,
   formatearMonto,
+  palabrasComercio,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -65,7 +66,7 @@ const T = {
     cobrosAyuda: 'El alta y los retiros los maneja Stripe, en su página segura.',
     equipo: 'Equipo',
     correo: 'Correo del miembro',
-    correoAyuda: 'Tiene que tener ya una cuenta de restaurante en Divoox.',
+    correoAyuda: 'Tiene que tener ya una cuenta de comercio en Divoox.',
     rol: 'Rol',
     roles: { dueno: 'Dueño', manager: 'Manager', staff: 'Staff' } as Record<string, string>,
     agregar: 'Agregar al equipo',
@@ -101,7 +102,7 @@ const T = {
     cobrosAyuda: 'Stripe handles payout setup and withdrawals on its secure page.',
     equipo: 'Team',
     correo: 'Member email',
-    correoAyuda: 'They need an existing Divoox restaurant account.',
+    correoAyuda: 'They need an existing Divoox business account.',
     rol: 'Role',
     roles: { dueno: 'Owner', manager: 'Manager', staff: 'Staff' } as Record<string, string>,
     agregar: 'Add to team',
@@ -187,6 +188,7 @@ type Rest = {
   lat: number | null;
   lng: number | null;
   imagen: string | null;
+  tipoComercio?: string;
 };
 const INICIAL_REST = {
   nombre: '',
@@ -247,9 +249,11 @@ function MiRestauranteApp({ t }: { t: Textos }) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
+  // C-MERCHANT-PALABRAS: un comercio ve «Mi comercio», «Nombre del comercio»…; el restaurante, lo de siempre.
+  const w = palabrasComercio(rest?.tipoComercio, idioma);
   return (
     <View testID="app-mi-restaurante">
-      <Titulo texto={t.restaurante} />
+      <Titulo texto={w.miNegocio} />
       <AvisoBorrador
         visible={b.recuperado}
         idioma={idioma}
@@ -259,12 +263,12 @@ function MiRestauranteApp({ t }: { t: Textos }) {
       {rest ? (
         <Tarjeta>
           <Campo
-            etiqueta={t.nombre}
+            etiqueta={w.nombreNegocio}
             value={v.nombre}
             onChangeText={(x) => b.cambiar('nombre', x)}
           />
           <Campo
-            etiqueta={t.telefono}
+            etiqueta={w.telefonoNegocio}
             value={v.telefono}
             keyboardType="phone-pad"
             onChangeText={(x) => b.cambiar('telefono', x)}
@@ -282,7 +286,7 @@ function MiRestauranteApp({ t }: { t: Textos }) {
             onChangeText={(x) => b.cambiar('descripcionEn', x)}
           />
           <Campo
-            etiqueta={t.prep}
+            etiqueta={w.prep}
             value={v.tiempoPrepMin}
             keyboardType="number-pad"
             onChangeText={(x) => b.cambiar('tiempoPrepMin', x.replace(/\D/g, ''))}

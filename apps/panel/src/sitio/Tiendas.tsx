@@ -51,14 +51,14 @@ export const TEXTOS_TIENDAS = {
     zona: 'Descargas',
     cliente: 'Divoox en Google Play',
     driver: 'Divoox Driver en Google Play',
-    restaurantes: 'Divoox Restaurants en Google Play',
+    restaurantes: 'Divoox Merchant en Google Play',
   },
   en: {
     app: 'Get the app',
     zona: 'Downloads',
     cliente: 'Get Divoox on Google Play',
     driver: 'Get Divoox Driver on Google Play',
-    restaurantes: 'Get Divoox Restaurants on Google Play',
+    restaurantes: 'Get Divoox Merchant on Google Play',
   },
 };
 

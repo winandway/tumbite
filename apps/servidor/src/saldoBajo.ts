@@ -74,12 +74,12 @@ export const AVISOS_SALDO = {
     return i === 'en'
       ? {
           titulo: 'Your balance is running low',
-          cuerpo: `${alcanza} Tap “Top up balance” in Divoox Restaurants so you keep receiving orders.`,
+          cuerpo: `${alcanza} Tap “Top up balance” in Divoox Merchant so you keep receiving orders.`,
           canal: 'dinero',
         }
       : {
           titulo: 'Tu saldo está por acabarse',
-          cuerpo: `${alcanza} Toca «Recargar saldo» en Divoox Restaurants para seguir recibiendo pedidos.`,
+          cuerpo: `${alcanza} Toca «Recargar saldo» en Divoox Merchant para seguir recibiendo pedidos.`,
           canal: 'dinero',
         };
   },

@@ -25,7 +25,7 @@ export const CODIGO_CUENTA_DE_OTRA_APP = 'cuenta_de_otra_app';
 const NOMBRE_APP = new Map<AppDeCelular, string>([
   ['cliente', 'la app de Divoox'],
   ['repartidor', 'Divoox Driver'],
-  ['restaurante', 'Divoox Restaurants'],
+  ['restaurante', 'Divoox Merchant'],
 ]);
 const CUENTA = new Map<AppDeCelular, string>([
   ['cliente', 'una cuenta de cliente'],
@@ -35,7 +35,7 @@ const CUENTA = new Map<AppDeCelular, string>([
 const SIGUE = new Map<AppDeCelular, string>([
   ['cliente', 'Tu cuenta de cliente sigue igual en la app de Divoox.'],
   ['repartidor', 'Tu cuenta de conductor sigue igual en Divoox Driver.'],
-  ['restaurante', 'Tu restaurante sigue igual en Divoox Restaurants.'],
+  ['restaurante', 'Tu restaurante sigue igual en Divoox Merchant.'],
 ]);
 const QUE_HACER = new Map<AppDeCelular, string>([
   [

@@ -201,7 +201,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   en: {
     titulo: 'Privacy Policy',
     actualizado: FECHA_PRIVACIDAD.en,
-    intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox for Restaurants, the web dashboard, and ${SITIO}.`,
+    intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox Merchant, the web dashboard, and ${SITIO}.`,
     secciones: [
       {
         titulo: '1. Who we are and how to reach us',
@@ -800,7 +800,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
     titulo: 'Delete your Divoox account',
     actualizado: FECHA_BORRAR.en,
     accion: { texto: 'Delete my account now', href: '/panel/settings' },
-    intro: `Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by ${EMPRESA}. You don’t need the app installed.`,
+    intro: `Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox Merchant), by ${EMPRESA}. You don’t need the app installed.`,
     secciones: [
       {
         id: 'how',

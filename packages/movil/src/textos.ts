@@ -7,7 +7,7 @@ const es = {
   cuentaDe: {
     cliente: 'Cuenta de cliente: para pedir comida',
     repartidor: 'Cuenta de conductor: para trabajar con Divoox',
-    restaurante: 'Cuenta de restaurante: para recibir pedidos',
+    restaurante: 'Cuenta de comercio: para recibir pedidos',
   },
   aceptas: 'Acepto los',
   faltaAceptar: 'Marca la casilla para aceptar los términos y la política de privacidad.',
@@ -47,7 +47,7 @@ const es = {
   hola: 'Hola',
   rolEquivocado:
     'Esta cuenta no es de esta app. Descarga la app de Divoox que corresponde a tu cuenta.',
-  crearCuentaRestaurante: 'Crear cuenta de restaurante',
+  crearCuentaRestaurante: 'Crear cuenta de comercio',
   volverAEntrar: 'Volver a entrar',
   necesitasAyuda: '¿Necesitas ayuda?',
   terminosRestaurantes: 'Términos para restaurantes',
@@ -68,7 +68,7 @@ const en: T = {
   cuentaDe: {
     cliente: 'Customer account: to order food',
     repartidor: 'Driver account: to deliver with Divoox',
-    restaurante: 'Restaurant account: to receive orders',
+    restaurante: 'Business account: to receive orders',
   },
   aceptas: 'I agree to the',
   faltaAceptar: 'Check the box to accept the terms and the privacy policy.',
@@ -109,7 +109,7 @@ const en: T = {
   hola: 'Hi',
   rolEquivocado:
     'This account doesn’t belong to this app. Please download the Divoox app for your account type.',
-  crearCuentaRestaurante: 'Create a restaurant account',
+  crearCuentaRestaurante: 'Create a business account',
   volverAEntrar: 'Back to sign in',
   necesitasAyuda: 'Need help?',
   terminosRestaurantes: 'Restaurant Terms',

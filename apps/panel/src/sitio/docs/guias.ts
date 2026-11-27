@@ -1021,7 +1021,7 @@ const es: SeccionDocs[] = [
           'En el buscador, debajo de la barra, hay una fila de filtros: Vegetariano, Vegano, Sin gluten, Halal y Picante. Toca uno y Divoox te muestra los platos de tu ciudad que llevan esa marca, aunque no hayas escrito nada.',
           'Puedes combinar el filtro con lo que escribes: «pizza» con «Vegetariano» muestra solo las pizzas vegetarianas. En «Restaurantes» aparecen los que tienen al menos un plato con esa marca. Para quitar el filtro, tócalo otra vez.',
           'En el menú de cada restaurante, las marcas aparecen en verde debajo del nombre del plato, y también al abrir el plato.',
-          'Para restaurantes: al crear o editar un plato, en el panel o en la app del restaurante, marca las casillas que le correspondan. Puedes marcar varias. Si un plato deja de cumplir una marca, quítala en ese momento.',
+          'Para restaurantes: al crear o editar un plato, en el panel o en la app Divoox Merchant, marca las casillas que le correspondan. Puedes marcar varias. Si un plato deja de cumplir una marca, quítala en ese momento.',
           'Las marcas las pone cada restaurante. Si tienes una alergia, confírmalo siempre con el restaurante antes de pedir: una marca no reemplaza esa consulta.',
           'Calorías: si el restaurante las puso, las ves junto al precio de cada plato, por ejemplo «$12.00 · 520 cal». Para restaurantes: al crear o editar un plato, en el panel o en la app, escríbelas en «Calorías (opcional)»; déjala vacía si no las tienes. En Estados Unidos, la ley pide mostrarlas a las cadenas de 20 locales o más.',
         ],
@@ -1691,7 +1691,7 @@ const es: SeccionDocs[] = [
           'En «Pedidos», busca el pedido listo y toca los tres puntos.',
           'Toca «Pedir cancelación a soporte» y elige el motivo.',
           'Lee quién asume la comida, agrega un detalle si hace falta y toca «Enviar a soporte».',
-          'Espera el aviso: si se aprueba, el pedido queda cancelado y el cliente recibe su dinero. En la app del restaurante se hace igual, desde los tres puntos del pedido.',
+          'Espera el aviso: si se aprueba, el pedido queda cancelado y el cliente recibe su dinero. En la app Divoox Merchant se hace igual, desde los tres puntos del pedido.',
         ],
       },
       {
@@ -1750,8 +1750,8 @@ const es: SeccionDocs[] = [
         ],
         preguntas: ['¿Dónde veo mis reseñas?', '¿Puedo responder a un cliente?'],
         pasos: [
-          'Menú del panel → Reseñas, o en la app del restaurante: Más → Reseñas.',
-          'En la app del restaurante, la pestaña Más abre dentro de la app los datos del restaurante, las ganancias, el equipo y la configuración de tu cuenta (contraseña, cerrar sesión y borrar la cuenta).',
+          'Menú del panel → Reseñas, o en la app Divoox Merchant: Más → Reseñas.',
+          'En la app Divoox Merchant, la pestaña Más abre dentro de la app los datos del restaurante, las ganancias, el equipo y la configuración de tu cuenta (contraseña, cerrar sesión y borrar la cuenta).',
           'Toca «Responder» en la reseña (o escribe tu respuesta en la app) y publica.',
         ],
       },
@@ -1778,8 +1778,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/restaurante-app-prueba-nuevo-es.webp',
-            alt: 'El pedido de prueba en Inicio de la app del restaurante: «PRUEBA» con sus platos, el tiempo de preparación y «Aceptar pedido · 20 min».',
-            pie: 'En la app del restaurante, el pedido de prueba llega a Inicio como uno real.',
+            alt: 'El pedido de prueba en Inicio de la app Divoox Merchant: «PRUEBA» con sus platos, el tiempo de preparación y «Aceptar pedido · 20 min».',
+            pie: 'En la app Divoox Merchant, el pedido de prueba llega a Inicio como uno real.',
           },
           {
             src: '/docs/restaurante-app-prueba-listo-es.webp',
@@ -1793,7 +1793,7 @@ const es: SeccionDocs[] = [
           '¿El pedido de prueba se cobra o cuenta en mis ventas?',
         ],
         pasos: [
-          'En el panel, entra a Pedidos y toca «Enviar un pedido de prueba». En la app del restaurante, el botón está en Inicio, debajo de los pedidos nuevos.',
+          'En el panel, entra a Pedidos y toca «Enviar un pedido de prueba». En la app Divoox Merchant, el botón está en Inicio, debajo de los pedidos nuevos.',
           'Te llega un pedido marcado «PRUEBA» con uno o dos platos de tu menú, con la alarma de siempre.',
           'Acéptalo con el tiempo de preparación, imprime la comanda si usas impresora y toca «¡Listo!».',
           'Toca «Terminar la prueba». Listo: ya sabes cómo se ve un pedido de principio a fin.',
@@ -1819,8 +1819,8 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/restaurante-app-promociones-es.webp',
-            alt: 'Promociones en la app del restaurante: el tipo (porcentaje, envío gratis o gasta y ahorra), el descuento, el pedido mínimo, el máximo de pedidos y las fechas.',
-            pie: 'También la creas desde la app del restaurante: Más → Promociones.',
+            alt: 'Promociones en la app Divoox Merchant: el tipo (porcentaje, envío gratis o gasta y ahorra), el descuento, el pedido mínimo, el máximo de pedidos y las fechas.',
+            pie: 'También la creas desde la app Divoox Merchant: Más → Promociones.',
           },
           {
             src: '/docs/cliente-promo-lista-es.webp',
@@ -1844,7 +1844,7 @@ const es: SeccionDocs[] = [
           '¿Cómo pongo envío gratis en mi restaurante?',
         ],
         pasos: [
-          'En el panel, entra a Promociones. En la app del restaurante: Más → Promociones.',
+          'En el panel, entra a Promociones. En la app Divoox Merchant: Más → Promociones.',
           'Elige el tipo: porcentaje de descuento (del 1 al 50 %, con un máximo por pedido si quieres), envío gratis, o «gasta X y ahorra Y».',
           'Si quieres, pon un pedido mínimo y un máximo de pedidos. Elige cuándo empieza y cuándo termina.',
           'Toca «Crear promoción». Tus clientes ven la insignia en la lista de restaurantes, en tu página y en el carrito, y el descuento se aplica solo.',
@@ -1900,7 +1900,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Enciende un interruptor y cada pedido nuevo se acepta solo, con el tiempo sugerido, y el repartidor sale enseguida.',
         explicacion: [
-          'En la pantalla de Pedidos del panel, o en el Inicio de la app del restaurante, está «Aceptar pedidos automáticamente». Al encenderlo, cada pedido nuevo se acepta en cuanto el cliente paga, con el tiempo de preparación sugerido (el promedio real de tu cocina más los minutos de «Cocina ocupada»).',
+          'En la pantalla de Pedidos del panel, o en el Inicio de la app Divoox Merchant, está «Aceptar pedidos automáticamente». Al encenderlo, cada pedido nuevo se acepta en cuanto el cliente paga, con el tiempo de preparación sugerido (el promedio real de tu cocina más los minutos de «Cocina ocupada»).',
           'El aviso sonoro de pedido nuevo suena igual, para que tu equipo empiece a preparar. El cliente ve enseguida que aceptaste y buscamos repartidor sin esperar.',
           'Un pedido programado para más tarde se acepta solo cuando faltan 45 minutos para su hora. Si falta un producto y el cliente todavía no decidió qué hacer, el pedido espera a su respuesta.',
           'Puedes apagarlo cuando quieras, por ejemplo en las horas de más trabajo. Solo el dueño y los managers pueden cambiarlo.',
@@ -1917,7 +1917,7 @@ const es: SeccionDocs[] = [
           '¿Qué pasa con los pedidos programados si acepto automáticamente?',
         ],
         pasos: [
-          'Abre Pedidos en el panel o el Inicio en la app del restaurante.',
+          'Abre Pedidos en el panel o el Inicio en la app Divoox Merchant.',
           'Enciende «Aceptar pedidos automáticamente».',
           'Desde ahora, los pedidos nuevos entran directo a preparación.',
         ],
@@ -2030,7 +2030,7 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'restaurant-app',
-        titulo: 'La app del restaurante: pedidos, tiempos, código y tu menú',
+        titulo: 'La app Divoox Merchant: pedidos, tiempos, código y tu menú',
         resumen:
           'Desde el celular o la tableta del mostrador: la alarma te avisa de cada pedido nuevo, lo aceptas con su tiempo, sigues cada uno en cocina, muestras el código al repartidor y editas tu menú, con tus ventas del día, la semana y el mes.',
         explicacion: [
@@ -2044,7 +2044,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-restapp-nuevo-es.webp',
-            alt: 'Inicio de la app del restaurante: el restaurante abierto, los contadores de pedidos nuevos, en preparación y completados hoy, y un pedido nuevo con su reloj, el tiempo de preparación y el botón «Aceptar pedido».',
+            alt: 'Inicio de la app Divoox Merchant: el restaurante abierto, los contadores de pedidos nuevos, en preparación y completados hoy, y un pedido nuevo con su reloj, el tiempo de preparación y el botón «Aceptar pedido».',
             pie: 'Cada pedido nuevo llega con alarma y su tiempo sugerido.',
           },
           {
@@ -2059,17 +2059,17 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restapp-menu-es.webp',
-            alt: 'Mi menú en la app del restaurante: platos con precio, la marca «Activo» y los tres puntos para editar, agotar o eliminar.',
+            alt: 'Mi menú en la app Divoox Merchant: platos con precio, la marca «Activo» y los tres puntos para editar, agotar o eliminar.',
             pie: 'Tu menú, editable desde el celular.',
           },
           {
             src: '/docs/recorrido-restapp-estadisticas-es.webp',
-            alt: 'Estadísticas de la app del restaurante con ventas, pedidos, ticket promedio y lo que te queda, por día, semana y mes.',
+            alt: 'Estadísticas de la app Divoox Merchant con ventas, pedidos, ticket promedio y lo que te queda, por día, semana y mes.',
             pie: 'Cómo te va, de un vistazo.',
           },
           {
             src: '/docs/recorrido-restapp-pedidos-es.webp',
-            alt: 'Pestaña Pedidos de la app del restaurante, con filtros En preparación, Listos y Completados y un pedido en curso.',
+            alt: 'Pestaña Pedidos de la app Divoox Merchant, con filtros En preparación, Listos y Completados y un pedido en curso.',
             pie: 'En «Pedidos» ves los de las últimas 24 horas, filtrados por estado.',
           },
         ],
@@ -2079,7 +2079,7 @@ const es: SeccionDocs[] = [
           '¿Dónde veo cuánto vendí hoy?',
         ],
         pasos: [
-          'Entra a la app del restaurante con el mismo correo y contraseña del panel.',
+          'Entra a la app Divoox Merchant con el mismo correo y contraseña del panel.',
           'Cuando suene la alarma, revisa el pedido, elige el tiempo y toca «Aceptar pedido».',
           'Cuando esté listo, abre el pedido y toca «Marcar como listo».',
           'Muestra el código al repartidor y confirma la foto de la bolsa.',
@@ -2226,7 +2226,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restapp-recoger-pin-es.webp',
-            alt: 'Pedido para recoger en la app del restaurante: «El cliente lo recoge en el local», la casilla del PIN del cliente y el botón «Entregado al cliente».',
+            alt: 'Pedido para recoger en la app Divoox Merchant: «El cliente lo recoge en el local», la casilla del PIN del cliente y el botón «Entregado al cliente».',
             pie: 'En la app: escribe el PIN del cliente y toca «Entregado al cliente».',
           },
         ],
@@ -2250,7 +2250,7 @@ const es: SeccionDocs[] = [
           'En «Mi restaurante», abajo, está «Horario». Cada día puede tener uno o más turnos (por ejemplo, de 11:00 a 15:00 y de 18:00 a 23:00). Un turno puede terminar después de medianoche.',
           'Con el horario cargado, tu restaurante aparece abierto solo dentro de esos turnos y con el botón de recibir pedidos encendido. Si pausas con el botón, se cierra aunque sea tu horario.',
           'Fuera de horario, en la app el cliente ve «Abre hoy a las 6:00 p. m.» o «Abre mañana a las 11:00 a. m.», y no puede pedir hasta esa hora.',
-          'Si estás dentro de tu horario pero no tienes abierta la app ni el panel (o pausaste los pedidos), el cliente ve «No recibe pedidos ahora». Para recibir, deja abierta la app de Divoox Restaurants o el panel en tu computadora.',
+          'Si estás dentro de tu horario pero no tienes abierta la app ni el panel (o pausaste los pedidos), el cliente ve «No recibe pedidos ahora». Para recibir, deja abierta la app de Divoox Merchant o el panel en tu computadora.',
           'Sin horario cargado manda solo el botón: así funcionaba antes. La lista de activación del restaurante va a pedir el horario.',
         ],
         capturas: [
@@ -2308,7 +2308,7 @@ const es: SeccionDocs[] = [
           'Marca el plato que no tienes y el cliente decide en su app; y si vas atrasado, suma minutos antes de que salga el repartidor.',
         explicacion: [
           'En el pedido, abre los tres puntos y toca «Me falta un plato». Elige cuál y «Avisar al cliente». Al cliente le llega el aviso y decide: quitarlo (se le devuelve esa parte) o cancelar todo. Mientras decide, el pedido espera y el Manager no te cuenta ese tiempo.',
-          'Mientras el cliente decide, el botón «¡Listo!» desaparece de ese pedido y en su lugar ves el aviso «Avisamos al cliente que no tienes… Esperando su respuesta (máximo 5 minutos)…». No se puede marcar como listo hasta que el cliente responda, para que no prepares ni entregues un pedido cuyo plato todavía está en discusión. Cuando responde, vuelve el botón. Pasa igual en el panel y en la app del restaurante.',
+          'Mientras el cliente decide, el botón «¡Listo!» desaparece de ese pedido y en su lugar ves el aviso «Avisamos al cliente que no tienes… Esperando su respuesta (máximo 5 minutos)…». No se puede marcar como listo hasta que el cliente responda, para que no prepares ni entregues un pedido cuyo plato todavía está en discusión. Cuando responde, vuelve el botón. Pasa igual en el panel y en la app Divoox Merchant.',
           'Si el cliente lo quita, el pedido vuelve con el resto de los platos y lo aceptas (o lo marcas listo, si ya estaba aceptado) como siempre. Si no responde en 5 minutos, se quita solo.',
           'Si ya aceptaste y vas atrasado, toca «+5 min» mientras no haya salido un repartidor: así el repartidor llega a la hora correcta y el cliente ve la hora nueva. Cuando ya hay repartidor en camino, el tiempo no se cambia: avísale por la app.',
         ],
@@ -2377,17 +2377,17 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-app-restaurante-app-entrar-es.webp',
-            alt: 'Pantalla de entrar de la app Divoox Restaurants con el enlace «Crear cuenta de restaurante» y «¿Necesitas ayuda?».',
+            alt: 'Pantalla de entrar de la app Divoox Merchant con el enlace «Crear cuenta de restaurante» y «¿Necesitas ayuda?».',
             pie: 'Desde el celular: en la app, toca «Crear cuenta de restaurante».',
           },
           {
             src: '/docs/recorrido-app-restaurante-app-crear-cuenta-es.webp',
-            alt: 'Formulario «Crear cuenta» de la app Divoox Restaurants en el celular, con nombre, correo, celular y contraseña, y la flecha «Volver a entrar».',
+            alt: 'Formulario «Crear cuenta» de la app Divoox Merchant en el celular, con nombre, correo, celular y contraseña, y la flecha «Volver a entrar».',
             pie: 'Creas la cuenta en el teléfono, sin necesidad de una computadora.',
           },
           {
             src: '/docs/recorrido-app-restaurante-app-completar-es.webp',
-            alt: 'App Divoox Restaurants después de crear la cuenta, con el botón «Completar mi restaurante».',
+            alt: 'App Divoox Merchant después de crear la cuenta, con el botón «Completar mi restaurante».',
             pie: 'Al entrar, «Completar mi restaurante» abre tu ficha ahí mismo.',
           },
           {
@@ -2407,7 +2407,7 @@ const es: SeccionDocs[] = [
           '¿Cómo abro y cierro mi restaurante?',
         ],
         pasos: [
-          'Desde el celular: abre la app Divoox Restaurants, toca «Crear cuenta de restaurante» y crea tu cuenta con tu correo. Después toca «Completar mi restaurante». Desde la computadora: entra a divoox.com, toca «Panel» y crea tu cuenta ahí.',
+          'Desde el celular: abre la app Divoox Merchant, toca «Crear cuenta de restaurante» y crea tu cuenta con tu correo. Después toca «Completar mi restaurante». Desde la computadora: entra a divoox.com, toca «Panel» y crea tu cuenta ahí.',
           'En «Mi restaurante» completa el nombre, el tipo de comida, el teléfono y la dirección. Usa «Usar la ubicación de esta computadora» si estás en el local.',
           'Sube una foto de portada: una foto clara y con buena luz vende más. La reducimos solos para que cargue rápido.',
           'Guarda. Tu restaurante queda «en revisión»: nuestro equipo lo aprueba y te avisamos por correo.',
@@ -2592,7 +2592,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Si solo se acabó por hoy, abre los tres puntos del plato y elige «Agotado por hoy». El plato dice «Agotado hasta mañana» y vuelve solo a la medianoche de tu ciudad, sin que tengas que acordarte.',
           'Con el interruptor (o «Agotado sin fecha» en la app), el plato queda apagado hasta que tú lo vuelvas a encender.',
-          'Lo pueden hacer el dueño, los managers y el staff, desde el panel o desde la app del restaurante.',
+          'Lo pueden hacer el dueño, los managers y el staff, desde el panel o desde la app Divoox Merchant.',
         ],
       },
       {
@@ -2667,11 +2667,11 @@ const es: SeccionDocs[] = [
         id: 'print-tickets',
         titulo: 'Imprimir la comanda',
         resumen:
-          'Imprime cada pedido para la cocina, a mano o solo al aceptarlo, desde el panel o desde la app Divoox Restaurants en tu celular o tableta, con la impresora de tickets que ya usas.',
+          'Imprime cada pedido para la cocina, a mano o solo al aceptarlo, desde el panel o desde la app Divoox Merchant en tu celular o tableta, con la impresora de tickets que ya usas.',
         explicacion: [
           'En Pedidos, cada pedido aceptado o listo tiene el botón «Imprimir comanda».',
           'Si marcas «Imprimir la comanda al aceptar», cada vez que aceptes un pedido se abre la impresión sola. La preferencia queda guardada en ese equipo.',
-          'En la app Divoox Restaurants (celular o tableta) es igual: en Inicio enciende «Imprimir la comanda al aceptar» y, dentro de cada pedido aceptado o listo, toca «Imprimir comanda». Se imprime con la impresión del propio equipo: AirPrint en el iPhone y el iPad, y el servicio de impresión en Android, con la impresora que tengas emparejada.',
+          'En la app Divoox Merchant (celular o tableta) es igual: en Inicio enciende «Imprimir la comanda al aceptar» y, dentro de cada pedido aceptado o listo, toca «Imprimir comanda». Se imprime con la impresión del propio equipo: AirPrint en el iPhone y el iPad, y el servicio de impresión en Android, con la impresora que tengas emparejada.',
           'Con el interruptor encendido también salen solos los pedidos que se aceptan automáticamente.',
           'Para probarlo sin un cliente, toca «Enviar un pedido de prueba» en Inicio y acéptalo: la comanda sale igual que con un pedido real.',
           'La comanda trae arriba el nombre de tu restaurante y el número del pedido en grande; después, si es a domicilio, para recoger o un pedido de prueba, y si es programado; el nombre corto del cliente (nombre e inicial, para que el repartidor encuentre su bolsa); la hora del pedido y la hora a la que debe estar listo.',
@@ -2690,12 +2690,12 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/comanda-app-interruptor-es.webp',
-            alt: 'La app Divoox Restaurants en el celular, en Inicio, con el interruptor «Imprimir la comanda al aceptar» encendido.',
+            alt: 'La app Divoox Merchant en el celular, en Inicio, con el interruptor «Imprimir la comanda al aceptar» encendido.',
             pie: 'En la app, el interruptor está en Inicio y queda guardado en ese equipo.',
           },
           {
             src: '/docs/comanda-app-boton-es.webp',
-            alt: 'Un pedido aceptado en la app Divoox Restaurants con el botón «Imprimir comanda».',
+            alt: 'Un pedido aceptado en la app Divoox Merchant con el botón «Imprimir comanda».',
             pie: 'Dentro del pedido aceptado o listo, «Imprimir comanda» la vuelve a imprimir.',
           },
           {
@@ -2717,7 +2717,7 @@ const es: SeccionDocs[] = [
           '¿Mi papel es de 58 mm, también sirve?',
         ],
         pasos: [
-          'Abre Pedidos en el panel, o Inicio en la app Divoox Restaurants.',
+          'Abre Pedidos en el panel, o Inicio en la app Divoox Merchant.',
           'En el panel, elige el ancho de tu papel (80 o 58 mm) y, en Chrome o Edge, toca «Conectar impresora (USB)» y elige tu impresora.',
           'Toca «Imprimir prueba» para comprobar que sale bien.',
           'Enciende «Imprimir la comanda al aceptar» o toca «Imprimir comanda» en un pedido aceptado.',
@@ -2760,7 +2760,7 @@ const es: SeccionDocs[] = [
           'Más abajo, los platos que más se venden y el tiempo real de tu cocina comparado con el que prometes al aceptar. Si cocinas más rápido de lo que prometes, tus clientes reciben antes y te califican mejor.',
           'Al final, tus horas y días fuertes de los últimos 30 días, en la hora de tu ciudad: así sabes cuándo reforzar la cocina. Y tus clientes: cuántos son nuevos, cuántos repiten y cuántos pedidos se cancelaron.',
           'También ves cuántos pedidos tuvieron un problema (un plato que faltó, vino equivocado o llegó dañado), qué porcentaje de tus pedidos salió sin problemas y cuánto se les devolvió a los clientes en el mes. Es la mejor pista para revisar el armado de las bolsas.',
-          'Lo mismo lo ves en la app del restaurante, en Estadísticas.',
+          'Lo mismo lo ves en la app Divoox Merchant, en Estadísticas.',
           'Al final del tablero del panel está «Descargar tus pedidos»: eliges desde y hasta qué fecha y te llevas una planilla con cada pedido (fecha, estado, artículos, lo que vendiste, la comisión y lo que recibes), lista para Excel, Numbers o Google Sheets y para tu contador. No lleva datos de tus clientes. La descargan el dueño y los managers.',
         ],
         capturas: [
@@ -5326,7 +5326,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Una sola cuenta de Divoox para pedir, conducir y tener tu restaurante, con el mismo correo y la misma contraseña. Se crea en un minuto.',
         explicacion: [
-          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien conduce o reparte se registra en la app Divoox Driver.',
+          'En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. Los restaurantes y comercios crean su cuenta en la app Divoox Merchant o en el panel web. Quien conduce o reparte se registra en la app Divoox Driver.',
           'Tu cuenta es una sola. Si ya eres conductor y quieres pedir, entra a la app de Divoox con tu mismo correo y tu misma contraseña: la app te ofrece «Activar mi cuenta de cliente». Si ya pides y quieres conducir, entra a Divoox Driver igual y toca «Empezar mi registro de conductor». Lo explicamos en «Una cuenta para todo».',
           'En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. En la app de Divoox y en Divoox Driver vas paso a paso, una pregunta por pantalla, como en las apps grandes: «¿Cómo te llamas?», «¿Cuál es tu correo?», «¿Cuál es tu celular?», «Crea tu contraseña» y «Último paso». Arriba ves cuántos pasos te faltan en una barra verde, y abajo tienes «Atrás» y «Siguiente».',
           'Si algo falta o está mal, el paso no avanza: la casilla se marca en rojo con lo que pasa a su lado, y junto al botón te decimos qué revisar. Si se te cierra la pantalla a mitad de camino, al volver estás en el mismo paso y con todo lo que habías escrito (menos la contraseña, que por tu seguridad nunca se guarda).',
@@ -5444,7 +5444,7 @@ const es: SeccionDocs[] = [
         resumen:
           'Sin pasar por la tienda: abre Divoox en Chrome o en Safari, agrégalo a tu pantalla de inicio y se abre a pantalla completa, como una app.',
         explicacion: [
-          'Las tres apps de Divoox también funcionan en el navegador del celular: Divoox para pedir (divoox.com/app), Divoox Driver para repartir (divoox.com/driver) y Divoox Restaurants para tu restaurante (divoox.com/restaurant). Sirve para quien tiene iPhone mientras Apple revisa las apps, y para quien prefiere no instalar nada desde la tienda.',
+          'Las tres apps de Divoox también funcionan en el navegador del celular: Divoox para pedir (divoox.com/app), Divoox Driver para repartir (divoox.com/driver) y Divoox Merchant para tu restaurante (divoox.com/restaurant). Sirve para quien tiene iPhone mientras Apple revisa las apps, y para quien prefiere no instalar nada desde la tienda.',
           'Al agregarla a tu pantalla de inicio queda con su nombre, su ícono y su color, y se abre a pantalla completa, sin la barra del navegador. Entras con la misma cuenta de siempre.',
           'Avisos al celular: instalada desde el navegador, Divoox también te avisa con la app cerrada, si lo permites. El restaurante ve la explicación al abrir su sesión, el repartidor al conectarse y el cliente después de hacer su pedido: toca «Activar avisos» y acepta la ventana del celular. Nunca te lo pedimos sin que toques el botón.',
           'En Android (Chrome) los avisos funcionan en el navegador o con la app agregada a la pantalla de inicio. En iPhone (iOS 16.4 o superior) solo funcionan con Divoox agregada a la pantalla de inicio y abierta desde ese ícono: en Safari, sin agregarla, no existen, y la app te lo explica en una línea. Si dijiste que no, los vuelves a encender en la configuración del sitio (el candado junto a la dirección) o, en iPhone, en Configuración, Notificaciones, Divoox.',
@@ -5463,12 +5463,12 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-instalar-restaurante-navegador-es.webp',
-            alt: 'La app Divoox Restaurants abierta en el navegador del celular, en la pantalla para entrar con el correo y la contraseña del restaurante.',
-            pie: 'Divoox Restaurants, para recibir los pedidos de tu restaurante.',
+            alt: 'La app Divoox Merchant abierta en el navegador del celular, en la pantalla para entrar con el correo y la contraseña del restaurante.',
+            pie: 'Divoox Merchant, para recibir los pedidos de tu restaurante.',
           },
           {
             src: '/docs/recorrido-avisos-web-android-es.webp',
-            alt: 'La app Divoox Restaurants en el navegador con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
+            alt: 'La app Divoox Merchant en el navegador con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
             pie: 'Antes de pedir el permiso, la app explica para qué son los avisos. La ventana del celular sale solo al tocar «Activar avisos».',
           },
           {
@@ -5478,7 +5478,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-web-avisos-restaurante-computadora-es.webp',
-            alt: 'El panel de Divoox Restaurants abierto en una computadora con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
+            alt: 'El panel de Divoox Merchant abierto en una computadora con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
             pie: 'En la computadora del restaurante, la misma tarjeta: los avisos llegan aunque la pestaña esté cerrada.',
           },
           {
@@ -5712,7 +5712,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-version-restaurante-app-es.webp',
-            alt: 'Final de «Más» en la app de restaurantes de Divoox, con la línea gris «Versión … · commit» debajo de «Cerrar sesión».',
+            alt: 'Final de «Más» en la app Divoox Merchant, con la línea gris «Versión … · commit» debajo de «Cerrar sesión».',
             pie: 'Restaurantes: al final de «Más».',
           },
         ],
@@ -6702,7 +6702,7 @@ const en: SeccionDocs[] = [
           'In search, right below the search bar, there’s a row of filters: Vegetarian, Vegan, Gluten-free, Halal, and Spicy. Tap one and Divoox shows the dishes in your city with that label, even if you haven’t typed anything.',
           'You can combine a filter with what you type: “pizza” plus “Vegetarian” shows only vegetarian pizzas. Under “Restaurants” you’ll see the ones with at least one dish carrying that label. To clear the filter, tap it again.',
           'On each restaurant’s menu, labels appear in green under the dish name, and again when you open the dish.',
-          'For restaurants: when you create or edit a dish, in the dashboard or the restaurant app, check the labels that apply. You can check several. If a dish no longer meets a label, remove it right away.',
+          'For restaurants: when you create or edit a dish, in the dashboard or the Divoox Merchant app, check the labels that apply. You can check several. If a dish no longer meets a label, remove it right away.',
           'Each restaurant sets its own labels. If you have an allergy, always confirm with the restaurant before ordering: a label doesn’t replace that conversation.',
           'Calories: if the restaurant added them, you see them next to each dish’s price, for example “$12.00 · 520 cal”. For restaurants: when you create or edit a dish, in the dashboard or the app, enter them under “Calories (optional)”; leave it empty if you don’t have them. In the United States, the law requires chains with 20 or more locations to show them.',
         ],
@@ -7364,7 +7364,7 @@ const en: SeccionDocs[] = [
           'In “Orders,” find the ready order and tap the three dots.',
           'Tap “Ask support to cancel” and choose the reason.',
           'Read who covers the food, add a detail if needed and tap “Send to support.”',
-          'Wait for the notice: if approved, the order is canceled and the customer is refunded. It works the same in the restaurant app, from the order’s three dots.',
+          'Wait for the notice: if approved, the order is canceled and the customer is refunded. It works the same in the Divoox Merchant app, from the order’s three dots.',
         ],
       },
       {
@@ -7423,8 +7423,8 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['Where do I see my reviews?', 'Can I reply to a customer?'],
         pasos: [
-          'Panel menu → Reviews, or in the restaurant app: More → Reviews.',
-          'In the restaurant app, the More tab opens your restaurant details, earnings, team and account settings (password, sign out and delete account) right inside the app.',
+          'Panel menu → Reviews, or in the Divoox Merchant app: More → Reviews.',
+          'In the Divoox Merchant app, the More tab opens your restaurant details, earnings, team and account settings (password, sign out and delete account) right inside the app.',
           'Tap “Reply” on the review (or type your reply in the app) and publish.',
         ],
       },
@@ -7451,8 +7451,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/restaurante-app-prueba-nuevo-en.webp',
-            alt: 'The test order on Home in the restaurant app: “TEST” with its items, the prep time, and “Accept order · 20 min.”',
-            pie: 'In the restaurant app, the test order lands on Home just like a real one.',
+            alt: 'The test order on Home in the Divoox Merchant app: “TEST” with its items, the prep time, and “Accept order · 20 min.”',
+            pie: 'In the Divoox Merchant app, the test order lands on Home just like a real one.',
           },
           {
             src: '/docs/restaurante-app-prueba-listo-en.webp',
@@ -7466,7 +7466,7 @@ const en: SeccionDocs[] = [
           'Is the test order charged or counted in my sales?',
         ],
         pasos: [
-          'In the dashboard, go to Orders and tap “Send a test order.” In the restaurant app, the button is on Home, below new orders.',
+          'In the dashboard, go to Orders and tap “Send a test order.” In the Divoox Merchant app, the button is on Home, below new orders.',
           'An order marked “TEST” arrives with one or two items from your menu, with the usual alarm.',
           'Accept it with a prep time, print the ticket if you use a printer, and tap “Ready!”',
           'Tap “Finish the test.” Done: now you know what an order looks like from start to finish.',
@@ -7493,8 +7493,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/restaurante-app-promociones-en.webp',
-            alt: 'Promotions in the restaurant app: the type (percentage off, free delivery, or spend and save), the discount, the minimum order, the maximum orders, and the dates.',
-            pie: 'You can also create it from the restaurant app: More → Promotions.',
+            alt: 'Promotions in the Divoox Merchant app: the type (percentage off, free delivery, or spend and save), the discount, the minimum order, the maximum orders, and the dates.',
+            pie: 'You can also create it from the Divoox Merchant app: More → Promotions.',
           },
           {
             src: '/docs/cliente-promo-lista-en.webp',
@@ -7518,7 +7518,7 @@ const en: SeccionDocs[] = [
           'How do I offer free delivery from my restaurant?',
         ],
         pasos: [
-          'In the dashboard, go to Promotions. In the restaurant app: More → Promotions.',
+          'In the dashboard, go to Promotions. In the Divoox Merchant app: More → Promotions.',
           'Pick the type: percentage off (1% to 50%, with a per-order maximum if you want), free delivery, or “spend X, save Y.”',
           'If you want, set a minimum order and a maximum number of orders. Choose when it starts and ends.',
           'Tap “Create promotion.” Customers see the badge in the restaurant list, on your page, and in the cart, and the discount applies automatically.',
@@ -7574,7 +7574,7 @@ const en: SeccionDocs[] = [
         resumen:
           'Turn on one switch and every new order is accepted with the suggested time, and a driver is sent right away.',
         explicacion: [
-          'On the Orders screen in the dashboard, or on Home in the restaurant app, you’ll find “Accept orders automatically”. When it’s on, every new order is accepted as soon as the customer pays, with the suggested prep time (your kitchen’s real average plus any “Busy kitchen” minutes).',
+          'On the Orders screen in the dashboard, or on Home in the Divoox Merchant app, you’ll find “Accept orders automatically”. When it’s on, every new order is accepted as soon as the customer pays, with the suggested prep time (your kitchen’s real average plus any “Busy kitchen” minutes).',
           'The new-order sound still plays so your team starts cooking. The customer sees right away that you accepted, and we look for a driver without waiting.',
           'An order scheduled for later is accepted automatically 45 minutes before its time. If an item is missing and the customer hasn’t decided what to do yet, the order waits for their answer.',
           'You can turn it off anytime, for example during your busiest hours. Only the owner and managers can change it.',
@@ -7591,7 +7591,7 @@ const en: SeccionDocs[] = [
           'What happens to scheduled orders when auto-accept is on?',
         ],
         pasos: [
-          'Open Orders in the dashboard or Home in the restaurant app.',
+          'Open Orders in the dashboard or Home in the Divoox Merchant app.',
           'Turn on “Accept orders automatically”.',
           'From now on, new orders go straight to preparation.',
         ],
@@ -7698,7 +7698,7 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'restaurant-app',
-        titulo: 'The restaurant app: orders, timing, the pickup code, and your menu',
+        titulo: 'The Divoox Merchant app: orders, timing, the pickup code, and your menu',
         resumen:
           'From the counter phone or tablet: the alarm tells you about every new order, you accept it with its prep time, follow each one in the kitchen, show the code to the driver, and edit your menu, with your sales for today, the week, and the month.',
         explicacion: [
@@ -7712,7 +7712,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-restapp-nuevo-en.webp',
-            alt: 'Restaurant app home: the restaurant open, counters for new, preparing, and completed today, and a new order with its timer, the prep time, and the “Accept order” button.',
+            alt: 'Divoox Merchant app home: the restaurant open, counters for new, preparing, and completed today, and a new order with its timer, the prep time, and the “Accept order” button.',
             pie: 'Every new order arrives with an alarm and a suggested time.',
           },
           {
@@ -7727,17 +7727,17 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restapp-menu-en.webp',
-            alt: 'My menu in the restaurant app: dishes with price, the “Active” tag, and the three dots to edit, mark sold out, or delete.',
+            alt: 'My menu in the Divoox Merchant app: dishes with price, the “Active” tag, and the three dots to edit, mark sold out, or delete.',
             pie: 'Your menu, editable from your phone.',
           },
           {
             src: '/docs/recorrido-restapp-estadisticas-en.webp',
-            alt: 'Restaurant app stats with sales, orders, average ticket, and what you keep, by day, week, and month.',
+            alt: 'Divoox Merchant app stats with sales, orders, average ticket, and what you keep, by day, week, and month.',
             pie: 'How you’re doing, at a glance.',
           },
           {
             src: '/docs/recorrido-restapp-pedidos-en.webp',
-            alt: 'The Orders tab of the restaurant app, with In progress, Ready and Completed filters and an order in progress.',
+            alt: 'The Orders tab of the Divoox Merchant app, with In progress, Ready and Completed filters and an order in progress.',
             pie: 'In “Orders” you see the last 24 hours, filtered by status.',
           },
         ],
@@ -7747,7 +7747,7 @@ const en: SeccionDocs[] = [
           'Where can I see how much I sold today?',
         ],
         pasos: [
-          'Sign in to the restaurant app with the same email and password you use for the dashboard.',
+          'Sign in to the Divoox Merchant app with the same email and password you use for the dashboard.',
           'When the alarm rings, review the order, choose the time, and tap “Accept order.”',
           'When it’s ready, open the order and tap “Mark as ready.” If you flagged a missing item, the button comes back once the customer answers.',
           'Show the code to the driver and confirm the photo of the bag.',
@@ -7894,7 +7894,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restapp-recoger-pin-en.webp',
-            alt: 'A pickup order in the restaurant app: “Customer picks up in store,” the customer PIN box and the “Handed to the customer” button.',
+            alt: 'A pickup order in the Divoox Merchant app: “Customer picks up in store,” the customer PIN box and the “Handed to the customer” button.',
             pie: 'In the app: type the customer’s PIN and tap “Handed to the customer.”',
           },
         ],
@@ -7918,7 +7918,7 @@ const en: SeccionDocs[] = [
           'Under “My restaurant,” at the bottom, is “Hours.” Each day can have one or more shifts (for example, 11:00 to 15:00 and 18:00 to 23:00). A shift can end after midnight.',
           'With hours set, your restaurant shows as open only within those shifts and with the take-orders button on. If you pause with the button, you’re closed even during your hours.',
           'Outside your hours, customers see “Opens today at 6:00 PM” or “Opens tomorrow at 11:00 AM” in the app, and can’t order until then.',
-          'If you’re within your hours but don’t have the app or the panel open (or you paused orders), customers see “Not taking orders right now”. To receive orders, keep the Divoox Restaurants app or the panel open on your computer.',
+          'If you’re within your hours but don’t have the app or the panel open (or you paused orders), customers see “Not taking orders right now”. To receive orders, keep the Divoox Merchant app or the panel open on your computer.',
           'Without hours set, only the button applies: that’s how it worked before. The restaurant activation checklist will ask for hours.',
         ],
         capturas: [
@@ -7976,7 +7976,7 @@ const en: SeccionDocs[] = [
           'Flag the item you’re out of and the customer decides in their app; and if you’re running late, add minutes before the driver leaves.',
         explicacion: [
           'On the order, open the three dots and tap “I’m out of an item.” Pick which one and “Notify the customer.” The customer gets a notice and decides: remove it (that part is refunded) or cancel everything. While they decide, the order waits and the Manager doesn’t count that time against you.',
-          'While the customer decides, the “Ready!” button disappears from that order and you see the notice “We told the customer you’re out of …. Waiting for their answer (up to 5 minutes)…”. You can’t mark it ready until they answer, so you never prepare or hand off an order whose item is still being decided. When they answer, the button comes back. It works the same in the panel and in the restaurant app.',
+          'While the customer decides, the “Ready!” button disappears from that order and you see the notice “We told the customer you’re out of …. Waiting for their answer (up to 5 minutes)…”. You can’t mark it ready until they answer, so you never prepare or hand off an order whose item is still being decided. When they answer, the button comes back. It works the same in the panel and in the Divoox Merchant app.',
           'If the customer removes it, the order comes back with the remaining items and you accept it as usual. If they don’t answer in 5 minutes, it’s removed automatically.',
           'If you already accepted and you’re running late, tap “+5 min” as long as no driver has left: the driver then arrives at the right time and the customer sees the new time. Once a driver is on the way, the time can’t change: let them know in the app.',
         ],
@@ -8045,17 +8045,17 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-app-restaurante-app-entrar-en.webp',
-            alt: 'Sign-in screen of the Divoox Restaurants app with the “Create a restaurant account” link and “Need help?”.',
+            alt: 'Sign-in screen of the Divoox Merchant app with the “Create a restaurant account” link and “Need help?”.',
             pie: 'From your phone: in the app, tap “Create a restaurant account.”',
           },
           {
             src: '/docs/recorrido-app-restaurante-app-crear-cuenta-en.webp',
-            alt: '“Create account” form in the Divoox Restaurants app on a phone, with name, email, mobile phone and password, and the “Back to sign in” arrow.',
+            alt: '“Create account” form in the Divoox Merchant app on a phone, with name, email, mobile phone and password, and the “Back to sign in” arrow.',
             pie: 'You create the account on your phone. No computer needed.',
           },
           {
             src: '/docs/recorrido-app-restaurante-app-completar-en.webp',
-            alt: 'The Divoox Restaurants app right after creating the account, with the “Complete my restaurant” button.',
+            alt: 'The Divoox Merchant app right after creating the account, with the “Complete my restaurant” button.',
             pie: 'Once you’re in, “Complete my restaurant” opens your profile right there.',
           },
           {
@@ -8075,7 +8075,7 @@ const en: SeccionDocs[] = [
           'How do I open and close my restaurant?',
         ],
         pasos: [
-          'From your phone: open the Divoox Restaurants app, tap “Create a restaurant account” and sign up with your email. Then tap “Complete my restaurant.” From a computer: go to divoox.com, tap “Dashboard,” and create your account there.',
+          'From your phone: open the Divoox Merchant app, tap “Create a restaurant account” and sign up with your email. Then tap “Complete my restaurant.” From a computer: go to divoox.com, tap “Dashboard,” and create your account there.',
           'Under Account → “My details and vehicle” → “Start delivering” you see the four steps and which one is missing: your details and vehicle, your ID and photo, the background check, and your payout account. Each step opens with a tap.',
           'In “My restaurant,” fill in the name, cuisine, phone, and address. Use “Use this computer’s location” if you’re at the restaurant.',
           'Upload a cover photo: a clear, well-lit photo sells more. We shrink it for you so it loads fast.',
@@ -8261,7 +8261,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'If it ran out just for today, open the item’s three dots and choose “Sold out for today”. The item shows “Sold out until tomorrow” and comes back on its own at midnight in your city, so you don’t have to remember.',
           'With the switch (or “Sold out until I turn it on” in the app), the item stays off until you turn it back on.',
-          'The owner, managers and staff can all do this, from the dashboard or the restaurant app.',
+          'The owner, managers and staff can all do this, from the dashboard or the Divoox Merchant app.',
         ],
       },
       {
@@ -8302,7 +8302,7 @@ const en: SeccionDocs[] = [
           'Every order has its traffic light: green is on time, yellow is running late, and red needs attention now. Next to it you see how long ago it came in and why it’s late.',
           'If nobody accepts an order, we alert you on your phone at 1 and 3 minutes. At 6 we cancel it and refund the customer: an order canceled in time beats a customer left waiting.',
           'If you can’t take an order, open the three dots and choose “Reject order.” The customer gets a full refund.',
-          'You can also use the Divoox restaurant app on a tablet or phone: same alarm, same orders.',
+          'You can also use the Divoox Merchant app on a tablet or phone: same alarm, same orders.',
         ],
       },
       {
@@ -8335,11 +8335,11 @@ const en: SeccionDocs[] = [
         id: 'print-tickets',
         titulo: 'Print kitchen tickets',
         resumen:
-          'Print each order for the kitchen, by hand or automatically when you accept it, from the panel or from the Divoox Restaurants app on your phone or tablet, with the receipt printer you already use.',
+          'Print each order for the kitchen, by hand or automatically when you accept it, from the panel or from the Divoox Merchant app on your phone or tablet, with the receipt printer you already use.',
         explicacion: [
           'In Orders, every accepted or ready order has a “Print ticket” button.',
           'If you check “Print the ticket when accepting”, printing opens every time you accept an order. The setting is saved on that device.',
-          'The Divoox Restaurants app (phone or tablet) works the same way: on Home, turn on “Print the ticket when accepting” and, inside any accepted or ready order, tap “Print ticket”. It prints with the device’s own printing: AirPrint on iPhone and iPad, and the print service on Android, with the printer you have paired.',
+          'The Divoox Merchant app (phone or tablet) works the same way: on Home, turn on “Print the ticket when accepting” and, inside any accepted or ready order, tap “Print ticket”. It prints with the device’s own printing: AirPrint on iPhone and iPad, and the print service on Android, with the printer you have paired.',
           'With the switch on, orders accepted automatically print too.',
           'To try it without a customer, tap “Send a test order” on Home and accept it: the ticket prints just like a real order.',
           'At the top, the ticket shows your restaurant’s name and the order number in large type; then whether it’s delivery, pickup or a test order, and whether it’s scheduled; the customer’s short name (first name and initial, so the driver finds the right bag); the time of the order and the time it should be ready.',
@@ -8358,12 +8358,12 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/comanda-app-interruptor-en.webp',
-            alt: 'The Divoox Restaurants app on a phone, on Home, with the “Print the ticket when accepting” switch turned on.',
+            alt: 'The Divoox Merchant app on a phone, on Home, with the “Print the ticket when accepting” switch turned on.',
             pie: 'In the app, the switch is on Home and is saved on that device.',
           },
           {
             src: '/docs/comanda-app-boton-en.webp',
-            alt: 'An accepted order in the Divoox Restaurants app with the “Print ticket” button.',
+            alt: 'An accepted order in the Divoox Merchant app with the “Print ticket” button.',
             pie: 'Inside an accepted or ready order, “Print ticket” prints it again.',
           },
           {
@@ -8385,7 +8385,7 @@ const en: SeccionDocs[] = [
           'My paper is 58 mm. Does it work?',
         ],
         pasos: [
-          'Open Orders in the panel, or Home in the Divoox Restaurants app.',
+          'Open Orders in the panel, or Home in the Divoox Merchant app.',
           'In the panel, choose your paper width (80 or 58 mm) and, in Chrome or Edge, tap “Connect printer (USB)” and pick your printer.',
           'Tap “Print test” to check that it prints well.',
           'Turn on “Print the ticket when accepting” or tap “Print ticket” on an accepted order.',
@@ -8428,7 +8428,7 @@ const en: SeccionDocs[] = [
           'Further down, your best-selling items and your real kitchen time compared with the time you promise when accepting. Cook faster than you promise and customers get their food sooner and rate you higher.',
           'At the bottom, your busiest hours and days over the last 30 days, in your city’s time, so you know when to staff up. And your customers: how many are new, how many come back, and how many orders were canceled.',
           'You also see how many orders had an issue (an item missing, wrong or damaged), what share of your orders went out without issues, and how much was refunded to customers this month. It’s the best clue for checking how bags are packed.',
-          'You see the same in the restaurant app, under Stats.',
+          'You see the same in the Divoox Merchant app, under Stats.',
           'At the bottom of the dashboard in the web panel is “Download your orders”: pick a start and end date and get a spreadsheet with every order (date, status, items, what you sold, the commission and what you receive), ready for Excel, Numbers or Google Sheets and for your accountant. It doesn’t include your customers’ details. The owner and managers can download it.',
         ],
         capturas: [
@@ -8991,7 +8991,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-restapp-cobro-repartidor-en.webp',
-            alt: 'Restaurant app with an order paid in hand: “Charge the driver” with the amount and whether the driver already recorded the payment.',
+            alt: 'Divoox Merchant app with an order paid in hand: “Charge the driver” with the amount and whether the driver already recorded the payment.',
             pie: 'The restaurant sees how much to charge you and whether you recorded the payment.',
           },
           {
@@ -10105,7 +10105,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/recorrido-restapp-fotos-del-pedido-en.webp',
-            alt: 'Restaurant app: order “Delivered to the customer” with the two thumbnails “At pickup” and “At drop-off.”',
+            alt: 'Divoox Merchant app: order “Delivered to the customer” with the two thumbnails “At pickup” and “At drop-off.”',
             pie: 'In the app: the delivered order with both photos.',
           },
           {
@@ -10981,7 +10981,7 @@ const en: SeccionDocs[] = [
         resumen:
           'One Divoox account to order, drive and run your restaurant, with the same email and password. It takes a minute.',
         explicacion: [
-          'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
+          'Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants and other businesses create their account in the Divoox Merchant app or in the web dashboard. Drivers sign up in the Divoox Driver app.',
           'You have just one account. If you already drive and want to order, sign in to the Divoox app with the same email and password: the app offers “Activate my customer account.” If you already order and want to drive, sign in to Divoox Driver the same way and tap “Start my driver sign-up.” We explain it in “One account for everything.”',
           'All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. In the Divoox app and in Divoox Driver you go step by step, one question per screen, like in the big apps: “What’s your name?”, “What’s your email?”, “What’s your mobile number?”, “Create your password,” and “Last step.” A green bar at the top shows how many steps are left, and “Back” and “Next” are at the bottom.',
           'If something is missing or wrong, the step doesn’t move on: the field turns red with what happened right next to it, and next to the button we tell you what to check. If the screen closes halfway, when you come back you’re on the same step with everything you typed (except your password, which we never save, for your security).',
@@ -11099,7 +11099,7 @@ const en: SeccionDocs[] = [
         resumen:
           'No app store needed: open Divoox in Chrome or Safari, add it to your Home Screen, and it opens full screen, like an app.',
         explicacion: [
-          'All three Divoox apps also work in your phone’s browser: Divoox to order (divoox.com/app), Divoox Driver to deliver (divoox.com/driver), and Divoox Restaurants for your restaurant (divoox.com/restaurant). It’s handy on iPhone while Apple reviews the apps, and for anyone who’d rather not install from a store.',
+          'All three Divoox apps also work in your phone’s browser: Divoox to order (divoox.com/app), Divoox Driver to deliver (divoox.com/driver), and Divoox Merchant for your restaurant (divoox.com/restaurant). It’s handy on iPhone while Apple reviews the apps, and for anyone who’d rather not install from a store.',
           'Once it’s on your Home Screen, it has its own name, icon, and color, and it opens full screen, without the browser bar. You sign in with the same account as always.',
           'Notifications: installed from the browser, Divoox can also notify you with the app closed, if you allow it. Restaurants see the explanation when they sign in, drivers when they go online, and customers after placing an order: tap “Turn on notifications” and accept your phone’s prompt. We never ask until you tap the button.',
           'On Android (Chrome), notifications work in the browser or with the app on your Home Screen. On iPhone (iOS 16.4 or later), they only work with Divoox added to your Home Screen and opened from that icon: in Safari, without adding it, they don’t exist, and the app tells you so in one line. If you said no, turn them back on in the site settings (the lock next to the address) or, on iPhone, in Settings, Notifications, Divoox.',
@@ -11118,12 +11118,12 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-instalar-restaurante-navegador-en.webp',
-            alt: 'The Divoox Restaurants app open in a phone browser, on the sign-in screen with the restaurant’s email and password.',
-            pie: 'Divoox Restaurants, to get your restaurant’s orders.',
+            alt: 'The Divoox Merchant app open in a phone browser, on the sign-in screen with the restaurant’s email and password.',
+            pie: 'Divoox Merchant, to get your restaurant’s orders.',
           },
           {
             src: '/docs/recorrido-avisos-web-android-en.webp',
-            alt: 'The Divoox Restaurants app in the browser with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
+            alt: 'The Divoox Merchant app in the browser with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
             pie: 'Before asking for permission, the app explains what notifications are for. Your phone’s prompt only appears when you tap “Turn on notifications.”',
           },
           {
@@ -11133,7 +11133,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-web-avisos-restaurante-computadora-en.webp',
-            alt: 'The Divoox Restaurants panel open on a computer with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
+            alt: 'The Divoox Merchant panel open on a computer with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
             pie: 'On the restaurant’s computer, the same card: notifications arrive even with the tab closed.',
           },
           {
@@ -11367,7 +11367,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/recorrido-version-restaurante-app-en.webp',
-            alt: 'Bottom of “More” in the Divoox restaurant app, with the gray “Version … · commit” line below “Sign out.”',
+            alt: 'Bottom of “More” in the Divoox Merchant app, with the gray “Version … · commit” line below “Sign out.”',
             pie: 'Restaurants: at the bottom of “More.”',
           },
         ],

@@ -181,7 +181,7 @@ const paginas = [
     <div class="tresc">
       ${cuenta('App Divoox · cliente', rev('cliente')[0], rev('cliente')[1], 'App Divoox')}
       ${cuenta('App Divoox Driver', rev('repartidor')[0], rev('repartidor')[1], 'App Divoox Driver')}
-      ${cuenta('App Divoox Restaurants', rev('restaurante')[0], rev('restaurante')[1], 'App Divoox Restaurants')}
+      ${cuenta('App Divoox Merchant', rev('restaurante')[0], rev('restaurante')[1], 'App Divoox Merchant')}
     </div>
     <div class="tresc chico">
       <ul class="check"><li>Ver los restaurantes de Novi.</li><li>Entrar a un menú y armar un carrito.</li><li>Dirección, mapa y propina. <b>No pagar.</b></li></ul>

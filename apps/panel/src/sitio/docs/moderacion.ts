@@ -120,7 +120,7 @@ export const GUIAS_MODERACION: Record<Idioma, PorSeccion> = {
           '¿El cliente sabe que reporté su reseña?',
         ],
         pasos: [
-          'Abre «Reseñas» en tu panel o en la app del restaurante.',
+          'Abre «Reseñas» en tu panel o en la app Divoox Merchant.',
           'Debajo de la reseña, toca «Reportar».',
           'Elige el motivo, escribe una nota si quieres y toca «Enviar reporte».',
         ],
@@ -258,7 +258,7 @@ export const GUIAS_MODERACION: Record<Idioma, PorSeccion> = {
           'Does the customer know I reported their review?',
         ],
         pasos: [
-          'Open “Reviews” in your dashboard or in the restaurant app.',
+          'Open “Reviews” in your dashboard or in the Divoox Merchant app.',
           'Under the review, tap “Report.”',
           'Pick a reason, add a note if you want and tap “Send report.”',
         ],

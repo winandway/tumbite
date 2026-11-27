@@ -27,7 +27,7 @@ const T = {
     tituloRestaurante: 'Quiero traer Divoox a mi ciudad',
     introCliente: 'Dinos tu ciudad. Te escribimos el día que Divoox llegue.',
     introRestaurante:
-      'Cuéntanos de tu restaurante y tu ciudad. Abrimos primero donde más restaurantes nos lo piden.',
+      'Cuéntanos de tu negocio y tu ciudad. Abrimos primero donde más comercios nos lo piden.',
     correo: 'Correo electrónico',
     avisamosA: 'Te avisamos a {correo}.',
     ciudad: 'Ciudad y país',
@@ -45,7 +45,7 @@ const T = {
     tituloRestaurante: 'Bring Divoox to my city',
     introCliente: 'Tell us your city. We’ll write to you the day Divoox arrives.',
     introRestaurante:
-      'Tell us about your restaurant and your city. We open first where the most restaurants ask.',
+      'Tell us about your business and your city. We open first where the most businesses ask.',
     correo: 'Email',
     avisamosA: 'We’ll notify you at {correo}.',
     ciudad: 'City and country',

@@ -59,6 +59,7 @@ export * from './mapas';
 export * from './flexCobro';
 export * from './lugares';
 export * from './tiendas';
+export * from './palabrasComercio';
 export * from './entregaMostrada';
 export * from './programado';
 export * from './rendimiento';

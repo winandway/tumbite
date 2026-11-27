@@ -4,7 +4,7 @@ import type { Idioma } from '@tumbite/compartido';
 const es = {
   restaurante: 'Restaurante',
   iniciaSesion: 'Inicia sesión',
-  accede: 'Accede al panel de tu restaurante',
+  accede: 'Accede al panel de tu negocio',
   contadores: { nuevos: 'Pedidos nuevos', preparando: 'En preparación', hoy: 'Completados hoy' },
   nuevoPedido: 'Nuevo pedido',
   enCocina: 'En cocina y por salir',
@@ -100,7 +100,7 @@ type T = typeof es;
 const en: T = {
   restaurante: 'Restaurant',
   iniciaSesion: 'Sign in',
-  accede: 'Access your restaurant’s dashboard',
+  accede: 'Access your business dashboard',
   contadores: { nuevos: 'New orders', preparando: 'Preparing', hoy: 'Completed today' },
   nuevoPedido: 'New order',
   enCocina: 'In the kitchen and going out',

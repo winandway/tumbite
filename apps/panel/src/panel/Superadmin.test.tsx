@@ -134,7 +134,7 @@ describe('superadmin', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Server errors')).toBeInTheDocument();
     // C-APP-SIN-CIERRES: el fallo de la app se ve con su app y su pantalla, y se puede filtrar.
-    expect(screen.getByText('Restaurant app · /equipo')).toBeInTheDocument();
+    expect(screen.getByText('Divoox Merchant app · /equipo')).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText('Source'), 'restaurante');
     expect(screen.queryByText('D1_ERROR: prueba')).not.toBeInTheDocument();
     expect(screen.getByText('d.map is not a function')).toBeInTheDocument();

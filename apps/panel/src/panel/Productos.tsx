@@ -15,6 +15,7 @@ import {
 import { Campo } from './CampoClave';
 import { pedir } from './api';
 import { SubirFoto } from './SubirFoto';
+import { ExcelIlegible, xlsxACsv } from './flex/excel';
 
 /**
  * Tiendas · Fase 1 en el panel (C-TIENDAS-CATALOGO): el comercio elige su tipo y sube su catálogo,
@@ -23,9 +24,11 @@ import { SubirFoto } from './SubirFoto';
  */
 const T = {
   es: {
-    titulo: 'Productos de tu tienda',
+    titulo: 'Tu catálogo',
+    excelGrande: 'Ese archivo es muy grande (hasta 5 MB y 5000 filas). Divídelo en dos.',
+    excelIlegible: 'No pudimos leer ese Excel. Guárdalo como .xlsx o CSV y vuelve a subirlo.',
     ayuda:
-      'Sube aquí tu catálogo. Todavía no se muestra al público: así, el día del lanzamiento tus productos ya están en Divoox.',
+      'Sube aquí tus productos, uno por uno o con una planilla de Excel o CSV. Tus clientes los ven en Divoox cuando tu comercio está abierto en tu ciudad.',
     tipo: 'Tipo de negocio',
     guardarTipo: 'Guardar el tipo',
     tipoGuardado: 'Tipo de negocio guardado.',
@@ -68,9 +71,11 @@ const T = {
     agregado: 'Producto guardado.',
   },
   en: {
-    titulo: 'Your store products',
+    titulo: 'Your catalog',
+    excelGrande: 'That file is too big (up to 5 MB and 5,000 rows). Split it in two.',
+    excelIlegible: 'We couldn’t read that Excel file. Save it as .xlsx or CSV and upload it again.',
     ayuda:
-      'Upload your catalog here. It isn’t shown to the public yet: this way, on launch day your products are already on Divoox.',
+      'Add your products here, one by one or with an Excel or CSV spreadsheet. Customers see them on Divoox when your store is open in your city.',
     tipo: 'Business type',
     guardarTipo: 'Save type',
     tipoGuardado: 'Business type saved.',
@@ -305,6 +310,19 @@ export function Productos({ idioma }: { idioma: Idioma }) {
   async function leerArchivo(f: File | undefined) {
     if (!f) return;
     setPrevia(null);
+    setError('');
+    // C-MERCHANT-CATALOGO: un Excel (.xlsx) se convierte al mismo CSV en el navegador.
+    if (/\.xlsx$/i.test(f.name)) {
+      try {
+        setCsv(xlsxACsv(new Uint8Array(await f.arrayBuffer())));
+      } catch (x) {
+        setCsv('');
+        setError(
+          x instanceof ExcelIlegible && x.motivo === 'grande' ? t.excelGrande : t.excelIlegible,
+        );
+      }
+      return;
+    }
     setCsv(await f.text());
   }
 
@@ -366,7 +384,7 @@ export function Productos({ idioma }: { idioma: Idioma }) {
           <span>{t.archivo}</span>
           <input
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(e) => void leerArchivo(e.target.files?.[0])}
           />
         </label>

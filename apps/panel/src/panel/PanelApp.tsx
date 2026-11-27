@@ -335,6 +335,23 @@ export function PanelApp({ ruta }: { ruta: string }) {
       .then((r) => setFlotaDisponible(r?.disponible === true))
       .catch(() => setFlotaDisponible(false));
   }, [usuario]);
+  // C-MERCHANT-PALABRAS: el tipo de negocio decide si el menú dice «Menú» o «Catálogo».
+  const [tipoComercio, setTipoComercio] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (usuario?.rol !== 'restaurante') return;
+    const leerTipo = () =>
+      void pedir<{ restaurante: { tipoComercio?: string } | null }>('GET', '/datos/mi-restaurante')
+        .then((r) =>
+          setTipoComercio(
+            r.restaurante ? (r.restaurante.tipoComercio ?? 'restaurante') : undefined,
+          ),
+        )
+        .catch(() => setTipoComercio(undefined));
+    leerTipo();
+    // Al guardar «Mi comercio» con otro tipo, el menú cambia enseguida.
+    window.addEventListener('divoox:tipo-comercio', leerTipo);
+    return () => window.removeEventListener('divoox:tipo-comercio', leerTipo);
+  }, [usuario]);
   // El admin siempre trabaja bajo su dirección secreta: /panel y las rutas viejas lo llevan ahí.
   useEffect(() => {
     if (!baseAdmin || baseAdmin === '/panel') return;
@@ -366,7 +383,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
     : esAdmin
       ? filtrarMenu(gruposAdmin(t, idioma, raizAdmin, ruta, !enProduccion()), permisos.puedeVer)
       : esRestaurante
-        ? gruposRestaurante(t, idioma, ruta, flotaDisponible)
+        ? gruposRestaurante(t, idioma, ruta, flotaDisponible, tipoComercio)
         : gruposCuenta(t, idioma, ruta, miFranquicia);
 
   // C-CAMPANA-SE-VACIA: la campana (lo que llegó y si ya lo vio, guardado por cuenta en el servidor).

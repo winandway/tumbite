@@ -128,7 +128,7 @@ describe('C-CUENTA-UNICA: la misma cuenta en la app de clientes y en Driver', ()
     expect(r.datos.error).toContain('Entra con tu misma contraseña');
   });
 
-  it('Divoox Restaurants no cambia: una cuenta de cliente sigue sin entrar ahí, y la del restaurante entra como hoy', async () => {
+  it('Divoox Merchant no cambia: una cuenta de cliente sigue sin entrar ahí, y la del restaurante entra como hoy', async () => {
     const p = await preparar();
     const cliente = await p.nueva('cliente');
     const r = await p.entrar(cliente.correo, app('restaurante'), {

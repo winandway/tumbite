@@ -43,6 +43,8 @@ import {
   type OpcionMas,
   ESPERA_MAXIMA_CRITICA_MS,
   type VistaPagoComida,
+  conMenu,
+  palabrasComercio,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -63,6 +65,7 @@ import {
 } from '@tumbite/movil';
 import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
+import { Catalogo } from './Catalogo';
 import { Mas } from './Mas';
 import { PantallaMas } from './MasPantallas';
 import { Promociones } from './Promociones';
@@ -192,8 +195,8 @@ const T = {
     pedido: 'Pedido',
     estados: { entregado: 'Entregado', cancelado: 'Cancelado' } as Record<string, string>,
     sinRest:
-      'Tu cuenta ya está creada. Falta completar los datos de tu restaurante: nombre, dirección, horario y menú. Lo haces aquí mismo, desde el teléfono.',
-    completarRest: 'Completar mi restaurante',
+      'Tu cuenta ya está creada. Falta completar los datos de tu negocio: el tipo de negocio, el nombre, la dirección, el horario y tu menú o catálogo. Lo haces aquí mismo, desde el teléfono.',
+    completarRest: 'Completar mi negocio',
     yaLoComplete: 'Ya lo completé',
     tiempo: '¿En cuánto estará listo?',
     sugerido: 'sugerido',
@@ -265,8 +268,8 @@ const T = {
     pedido: 'Order',
     estados: { entregado: 'Delivered', cancelado: 'Canceled' } as Record<string, string>,
     sinRest:
-      'Your account is created. Next, complete your restaurant’s details: name, address, hours and menu. You can do it right here, from your phone.',
-    completarRest: 'Complete my restaurant',
+      'Your account is created. Next, complete your business details: business type, name, address, hours and your menu or catalog. You can do it right here, from your phone.',
+    completarRest: 'Complete my business',
     yaLoComplete: 'I’ve completed it',
     tiempo: 'Ready in how long?',
     sugerido: 'suggested',
@@ -1462,7 +1465,12 @@ export function Inicio() {
   ) : vista === 'pedidos' ? (
     vistaPedidos
   ) : vista === 'menu' ? (
-    <MiMenu platos={platos} recargar={cargar} moneda={rest?.moneda ?? 'USD'} />
+    // C-MERCHANT-CATALOGO: el restaurante ve su menú de platos; los demás comercios, su catálogo.
+    conMenu(rest?.tipoComercio) ? (
+      <MiMenu platos={platos} recargar={cargar} moneda={rest?.moneda ?? 'USD'} />
+    ) : (
+      <Catalogo moneda={rest?.moneda ?? 'USD'} />
+    )
   ) : vista === 'estadisticas' ? (
     <Estadisticas />
   ) : vista === 'mas' ? (
@@ -1525,6 +1533,7 @@ export function Inicio() {
       </ScrollView>
       <BarraInferior
         idioma={idioma}
+        etiquetaMenu={palabrasComercio(rest?.tipoComercio, idioma).menu}
         activa={vista}
         aviso={nuevos.length}
         alTocar={(p) => {

@@ -29,7 +29,7 @@ const APPS = [
   {
     id: 'restaurante',
     tienda: '6829108322',
-    nombre: 'Divoox Restaurants',
+    nombre: 'Divoox Merchant',
     para: 'La app del restaurante: recibir y preparar pedidos.',
   },
 ];

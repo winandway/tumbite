@@ -27,7 +27,7 @@
     },
     {
       "id": "restaurante",
-      "nombre": "Divoox Restaurants",
+      "nombre": "Divoox Merchant",
       "para": "La app del restaurante: recibir y preparar pedidos.",
       "android": {
         "url": "https://expo.dev/artifacts/eas/zadu4EB_WhVCK9DZ9SXncdjMdjmOViNxF6jthV5xW6U.apk",
@@ -79,7 +79,7 @@
     },
     {
       "id": "restaurante",
-      "nombre": "Divoox Restaurants",
+      "nombre": "Divoox Merchant",
       "para": "La app del restaurante: recibir y preparar pedidos.",
       "android": {
         "url": "https://expo.dev/artifacts/eas/M62x2lFLQEbKDWU8oYYoJK0lZNYZglDE3QLIGZ_K7WA.apk",

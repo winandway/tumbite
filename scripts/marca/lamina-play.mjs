@@ -59,11 +59,11 @@ export const LAMINAS = [
     app: 'restaurante',
     carpeta: 'Divoox Restaurants (restaurante)',
     paquete: 'com.windoce.tumbite.restaurants',
-    nombre: 'Divoox Restaurants',
-    etiqueta: ['FOR RESTAURANTS', 'PARA RESTAURANTES'],
+    nombre: 'Divoox Merchant',
+    etiqueta: ['FOR BUSINESSES', 'PARA COMERCIOS'],
     resalte: '#F20D20',
     rotulo: '#F20D20',
-    frase: ['Orders for *your restaurant*', 'Pedidos para *tu restaurante*'],
+    frase: ['Orders for *your business*', 'Pedidos para *tu comercio*'],
   },
 ];
 

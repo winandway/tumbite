@@ -321,14 +321,18 @@ export function BarraInferior({
   activa,
   alTocar,
   aviso = 0,
+  etiquetaMenu,
 }: {
   idioma: Idioma;
   activa: Pestana;
   alTocar: (p: Pestana) => void;
   aviso?: number;
+  /** C-MERCHANT-PALABRAS: «Catálogo» en una tienda; sin ella, «Menú». */
+  etiquetaMenu?: string;
 }) {
   const t = textosRest(idioma);
-  const nombre = (p: Pestana) => new Map(Object.entries(t.nav) as [Pestana, string][]).get(p) ?? p;
+  const nav = etiquetaMenu ? { ...t.nav, menu: etiquetaMenu } : t.nav;
+  const nombre = (p: Pestana) => new Map(Object.entries(nav) as [Pestana, string][]).get(p) ?? p;
   return (
     <BarraPestanas
       activa={activa}

@@ -192,7 +192,7 @@ const T = {
     roles: {
       cliente: 'Cliente (app Divoox)',
       repartidor: 'Repartidor (Divoox Driver)',
-      restaurante: 'Restaurante (Divoox Restaurants)',
+      restaurante: 'Restaurante (Divoox Merchant)',
     },
     franquicias: 'Franquicias',
     vendidas: 'Vendidas',
@@ -274,7 +274,7 @@ const T = {
       servidor: 'Server',
       cliente: 'Customer app',
       repartidor: 'Driver app',
-      restaurante: 'Restaurant app',
+      restaurante: 'Divoox Merchant app',
     },
     cuando: 'When',
     ruta: 'Where',
@@ -300,7 +300,7 @@ const T = {
     roles: {
       cliente: 'Customer (Divoox app)',
       repartidor: 'Driver (Divoox Driver)',
-      restaurante: 'Restaurant (Divoox Restaurants)',
+      restaurante: 'Restaurant (Divoox Merchant)',
     },
     franquicias: 'Franchises',
     vendidas: 'Sold',

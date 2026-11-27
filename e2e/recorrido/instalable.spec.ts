@@ -8,7 +8,7 @@ import { expect, test } from './fixtures';
 const APPS = [
   { base: '/app', nombre: 'Divoox', color: '#F20D20' },
   { base: '/driver', nombre: 'Divoox Driver', color: '#1F4D69' },
-  { base: '/restaurant', nombre: 'Divoox Restaurants', color: '#101010' },
+  { base: '/restaurant', nombre: 'Divoox Merchant', color: '#101010' },
 ] as const;
 
 for (const a of APPS) {

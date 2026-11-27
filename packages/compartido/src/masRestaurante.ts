@@ -60,7 +60,18 @@ export function opcionesMasRestaurante(
   idioma: Idioma,
   op: { tienda?: boolean } = {},
 ): { titulo: string; opciones: OpcionMas[] }[] {
-  const t = idioma === 'en' ? T.en : T.es;
+  const base = idioma === 'en' ? T.en : T.es;
+  // C-MERCHANT-PALABRAS: una tienda ve «Tu comercio» y «Datos del comercio», nunca «restaurante».
+  const t = op.tienda
+    ? {
+        ...base,
+        local: idioma === 'en' ? 'Your store' : 'Tu comercio',
+        restaurante:
+          idioma === 'en'
+            ? (['Store info', 'Name, address, photos and payouts'] as const)
+            : (['Datos del comercio', 'Nombre, dirección, fotos y cobros'] as const),
+      }
+    : base;
   const pre = idioma === 'en' ? '' : '/es';
   const textos = new Map<string, readonly [string, string]>([
     ['restaurante', t.restaurante],

@@ -54,7 +54,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { createElement } from 'react';
-import type { Idioma } from '@tumbite/compartido';
+import { type Idioma, conMenu, palabrasComercio } from '@tumbite/compartido';
 import type { TEXTOS_PANEL } from '../textos';
 
 /**
@@ -376,8 +376,12 @@ export function gruposRestaurante(
   idioma: Idioma,
   ruta: string,
   conFlota: boolean,
+  /** C-MERCHANT-PALABRAS: con el tipo, el restaurante ve «Menú» y la tienda «Catálogo» (nunca los dos). */
+  tipoComercio?: string,
 ): GrupoMenu[] {
   const g = titulosGrupo(idioma);
+  const w = tipoComercio === undefined ? null : palabrasComercio(tipoComercio, idioma);
+  const textos = w ? { ...t.menuRest, restaurant: w.miNegocio, products: w.menu } : t.menuRest;
   return [
     ...armar(
       [
@@ -386,10 +390,14 @@ export function gruposRestaurante(
         [g.dinero, ['earnings']],
         [g.crecer, ['promotions', 'ads', 'gifts', 'reviews']],
       ],
-      t.menuRest,
+      textos,
       '/panel',
       ruta,
-      (clave) => clave === 'fleet' && !conFlota,
+      (clave) =>
+        (clave === 'fleet' && !conFlota) ||
+        (tipoComercio !== undefined &&
+          ((clave === 'menu' && !conMenu(tipoComercio)) ||
+            (clave === 'products' && conMenu(tipoComercio)))),
     ),
     ajustes(t, idioma, ruta),
   ];

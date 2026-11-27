@@ -8,6 +8,10 @@ import {
   type Usuario,
   almacenNavegador,
   enIdioma,
+  esTipoComercio,
+  nombreTipoComercio,
+  palabrasComercio,
+  TIPOS_ALTA,
   useBorrador,
   textoActivacion,
 } from '@tumbite/compartido';
@@ -53,6 +57,9 @@ const T = {
     },
     sinUbicacion: 'Sin ubicación: los clientes no verán la distancia.',
     foto: 'Foto de portada del restaurante',
+    tipo: '¿Qué tipo de negocio tienes?',
+    tipoAyuda: 'Con esto sabemos dónde te buscan tus clientes y qué palabras ves en tu app.',
+    tipoFalta: 'Elige el tipo de negocio.',
   },
   en: {
     titulo: 'My restaurant',
@@ -86,6 +93,10 @@ const T = {
     },
     sinUbicacion: 'No location: customers won’t see the distance.',
     foto: 'Restaurant cover photo',
+    tipo: 'What kind of business do you have?',
+    tipoAyuda:
+      'This tells us where your customers look for you and which words you see in your app.',
+    tipoFalta: 'Choose your business type.',
   },
 };
 
@@ -100,6 +111,8 @@ const INICIAL = {
   lat: '',
   lng: '',
   imagen: '',
+  // C-MERCHANT-TIPO: vacío a propósito. Un comercio nuevo elige su tipo; nunca nace restaurante solo.
+  tipoComercio: '',
 };
 
 export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) {
@@ -135,6 +148,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
             lat: x.lat == null ? '' : String(x.lat),
             lng: x.lng == null ? '' : String(x.lng),
             imagen: x.imagen ?? '',
+            tipoComercio: x.tipoComercio ?? 'restaurante',
           });
         } else if (usuario.correo.endsWith('@negocio.divoox.invalid'))
           // C-CUENTA-UNICA-RESTAURANTE: el restaurante nuevo de una persona arranca con lo ya
@@ -160,6 +174,12 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
     e.preventDefault();
     setError(null);
     setAviso('');
+    // C-MERCHANT-TIPO: sin tipo no se crea el comercio (ni se manda al servidor).
+    if (!esTipoComercio(v.tipoComercio)) {
+      setError({ mensaje: t.tipoFalta, campo: 'tipoComercio' });
+      document.getElementById('tipo-negocio')?.scrollIntoView?.({ block: 'center' });
+      return;
+    }
     try {
       const r = await pedir<{ restaurante: Restaurante; cobertura?: string }>(
         'PUT',
@@ -175,10 +195,12 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           lat: v.lat === '' ? null : Number(v.lat),
           lng: v.lng === '' ? null : Number(v.lng),
           imagen: v.imagen || null,
+          tipoComercio: v.tipoComercio,
         },
       );
       setRest(r.restaurante);
       setCobertura(r.cobertura ?? '');
+      window.dispatchEvent(new Event('divoox:tipo-comercio'));
       const x = r.restaurante;
       cargar({
         nombre: x.nombre,
@@ -191,6 +213,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         lat: x.lat == null ? '' : String(x.lat),
         lng: x.lng == null ? '' : String(x.lng),
         imagen: x.imagen ?? '',
+        tipoComercio: x.tipoComercio ?? 'restaurante',
       });
       setAviso(t.guardado);
     } catch (x) {
@@ -229,11 +252,16 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
   }
 
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
+  // C-MERCHANT-PALABRAS: el texto sigue al tipo elegido (antes de elegir, palabras de comercio).
+  const w = palabrasComercio(
+    v.tipoComercio || rest?.tipoComercio || (rest ? 'restaurante' : 'otro'),
+    idioma,
+  );
   if (!cargado) return null;
 
   return (
     <section>
-      <h1>{t.titulo}</h1>
+      <h1>{w.miNegocio}</h1>
       {rest && (
         <div className={`estado estado-${rest.estado}`}>
           <span>{t.estados[rest.estado]}</span>
@@ -274,31 +302,69 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
         </p>
       )}
       <form onSubmit={guardar} className="formulario" noValidate>
+        <fieldset
+          id="tipo-negocio"
+          className="tipos-negocio"
+          aria-invalid={errorDe('tipoComercio') ? true : undefined}
+          aria-describedby="tipo-negocio-ayuda"
+        >
+          <legend>{t.tipo}</legend>
+          <p id="tipo-negocio-ayuda" className="suave">
+            {t.tipoAyuda}
+          </p>
+          <div className="tipos-negocio-lista">
+            {TIPOS_ALTA.map((tipo) => (
+              <label key={tipo} className="opcion tipo-negocio">
+                <input
+                  type="radio"
+                  name="tipoComercio"
+                  value={tipo}
+                  checked={v.tipoComercio === tipo}
+                  onChange={() => b.cambiar('tipoComercio', tipo)}
+                />
+                <span>{nombreTipoComercio(tipo, idioma)}</span>
+              </label>
+            ))}
+            {/* Un tipo que no está en la lista corta del alta (p. ej. «Farmacia» de antes o
+                «Mascotas» puesto por Divoox) se muestra igual, marcado, para no perderlo. */}
+            {v.tipoComercio && !(TIPOS_ALTA as readonly string[]).includes(v.tipoComercio) ? (
+              <label className="opcion tipo-negocio">
+                <input type="radio" name="tipoComercio" value={v.tipoComercio} checked readOnly />
+                <span>{nombreTipoComercio(v.tipoComercio, idioma)}</span>
+              </label>
+            ) : null}
+          </div>
+          {errorDe('tipoComercio') ? (
+            <p className="error-campo" role="alert">
+              {errorDe('tipoComercio')}
+            </p>
+          ) : null}
+        </fieldset>
         <SubirFoto
-          etiqueta={t.foto}
+          etiqueta={w.fotoNegocio}
           valor={v.imagen}
           cambiar={(url) => b.cambiar('imagen', url)}
           idioma={idioma}
         />
         <Campo
-          etiqueta={t.nombre}
+          etiqueta={w.nombreNegocio}
           valor={v.nombre}
           cambiar={(x) => b.cambiar('nombre', x)}
-          placeholder={t.nombre}
+          placeholder={w.nombreNegocio}
           error={errorDe('nombre')}
         />
         <Campo
-          etiqueta={t.categoria}
+          etiqueta={w.categoria}
           valor={v.categoria}
           cambiar={(x) => b.cambiar('categoria', x)}
-          placeholder={t.categoria}
+          placeholder={w.categoria}
         />
         <Campo
-          etiqueta={t.telefono}
+          etiqueta={w.telefonoNegocio}
           tipo="tel"
           valor={v.telefono}
           cambiar={(x) => b.cambiar('telefono', x)}
-          placeholder={t.telefono}
+          placeholder={w.telefonoNegocio}
         />
         <div className="campo">
           {/* C-DIRECCION-SUGERENCIAS: la dirección real del local, con su punto en el mapa. */}
@@ -333,7 +399,7 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           placeholder={t.descEn}
         />
         <Campo
-          etiqueta={t.prep}
+          etiqueta={w.prep}
           tipo="number"
           valor={v.tiempoPrepMin}
           cambiar={(x) => b.cambiar('tiempoPrepMin', x)}

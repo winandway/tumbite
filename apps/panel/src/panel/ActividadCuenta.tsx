@@ -107,7 +107,7 @@ const T = {
     apps: {
       cliente: 'App de clientes',
       repartidor: 'Divoox Driver',
-      restaurante: 'App de restaurantes',
+      restaurante: 'App Divoox Merchant',
     },
     plataformas: {
       android: 'Android',
@@ -191,7 +191,11 @@ const T = {
       comida: 'food',
       envios: 'deliveries',
     },
-    apps: { cliente: 'Customer app', repartidor: 'Divoox Driver', restaurante: 'Restaurant app' },
+    apps: {
+      cliente: 'Customer app',
+      repartidor: 'Divoox Driver',
+      restaurante: 'Divoox Merchant app',
+    },
     plataformas: {
       android: 'Android',
       ios: 'iPhone',

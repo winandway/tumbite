@@ -1,6 +1,7 @@
 import type { Activacion } from './activacion';
 import type { PromocionRestaurante } from './promociones';
 import { z } from 'zod';
+import { TIPOS_COMERCIO } from './tiendas';
 
 /** Restaurantes y platos. Los textos que ve el público van en español e inglés. */
 
@@ -30,6 +31,9 @@ export const esquemaMiRestaurante = z.object({
   lng: z.number().min(-180).max(180).nullable().default(null),
   tiempoPrepMin: z.number().int().min(5).max(120).default(20),
   imagen: foto,
+  // C-MERCHANT-TIPO: el tipo de negocio. Obligatorio al crear (lo exige el servidor); al editar,
+  // sin él se queda el que tenía. Los restaurantes de antes quedaron como «restaurante».
+  tipoComercio: z.enum(TIPOS_COMERCIO, { error: 'Elige el tipo de negocio.' }).optional(),
 });
 export type DatosMiRestaurante = z.input<typeof esquemaMiRestaurante>;
 

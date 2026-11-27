@@ -23,7 +23,7 @@ const comun = `
 DEMO ACCOUNTS (one per app; all three are confirmed and work in production):
 - Customer app (Divoox): ${cuentas.cliente}
 - Driver app (Divoox Driver): ${cuentas.repartidor}
-- Restaurant app (Divoox Restaurants): ${cuentas.restaurante}
+- Restaurant app (Divoox Merchant): ${cuentas.restaurante}
 
 EXTERNAL SERVICES: Stripe (card payments and driver payouts), Google Maps Platform (address suggestions and maps on Android), Apple Maps (maps on iPhone), Expo push notification service (order updates), Cloudflare Turnstile (bot protection on sign-in), Checkr (driver background checks in the United States, only when the driver starts it). Our own servers host the accounts, orders and data. The app does not use any AI service to deliver its core features.
 
@@ -73,8 +73,8 @@ PERMISSIONS: camera (order photos, code scanning, verification photos); location
 REGIONS: the app is the same everywhere. Currency, payment methods and some onboarding steps (such as the document deadline) depend on the account's region; the app does not list regions.
 
 Support: go@windoce.com. Developer: Windoce LLC`,
-  // Divoox Restaurants
-  6829108322: `PURPOSE AND AUDIENCE: Divoox Restaurants is for restaurant owners and staff who sell on the Divoox marketplace. It lets them receive and manage delivery orders from a phone or tablet, like DoorDash Merchant or Uber Eats Manager.
+  // Divoox Merchant
+  6829108322: `PURPOSE AND AUDIENCE: Divoox Merchant is for merchants (restaurants, grocery and other stores) and their staff who sell on the Divoox marketplace. It lets them receive and manage delivery orders from a phone or tablet, like DoorDash Merchant or Uber Eats Manager.
 
 HOW TO USE IT: 1) Sign in with the restaurant demo account below. 2) The Orders tab shows new orders; the restaurant accepts them and marks them ready for the driver. 3) My menu lets the restaurant edit dishes, prices and availability. 4) Hours sets opening hours and pauses; Reviews shows customer ratings; Stats shows sales by hour. 5) More opens the restaurant profile, earnings, team and settings. Restaurants do not pay inside the app; their earnings are paid out with Stripe.
 ${comun}`,

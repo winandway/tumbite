@@ -11,7 +11,7 @@ import {
 
 /**
  * C-APP-DE-PRUEBAS-VISIBLE (15 nov 2026) — todos los países. Richard perdió una hora de pruebas en
- * Novi: su Android tenía Divoox Restaurants de la tienda (habla con el sitio real) y él entraba
+ * Novi: su Android tenía Divoox Merchant de la tienda (habla con el sitio real) y él entraba
  * con la cuenta de prueba. La pantalla decía «no coinciden» y nada indicaba a qué sitio estaba
  * conectada la app. Las apps no corren en vitest: se prueba la lógica y se mira el código.
  */

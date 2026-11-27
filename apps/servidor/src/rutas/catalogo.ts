@@ -869,19 +869,22 @@ catalogo.put('/mi-restaurante', async (c) => {
     celda,
     areaId,
   ];
+  // C-MERCHANT-TIPO: el tipo lo elige quien crea el comercio (el alta del panel no deja seguir sin
+  // elegirlo). Al editar, sin tipo se queda el que tenía: nunca se vuelve «restaurante» solo. Sin tipo
+  // al crear (guiones y pruebas de siempre, que crean restaurantes) queda restaurante.
   if (actual) {
     await db
       .prepare(
-        'UPDATE restaurantes SET nombre=?, descripcion_es=?, descripcion_en=?, categoria=?, telefono=?, direccion=?, lat=?, lng=?, tiempo_prep_min=?, imagen=?, zona_id=?, geohash=?, area_id=? WHERE id=?',
+        'UPDATE restaurantes SET nombre=?, descripcion_es=?, descripcion_en=?, categoria=?, telefono=?, direccion=?, lat=?, lng=?, tiempo_prep_min=?, imagen=?, zona_id=?, geohash=?, area_id=?, tipo_comercio=COALESCE(?, tipo_comercio) WHERE id=?',
       )
-      .bind(...valores, actual.id)
+      .bind(...valores, d.tipoComercio ?? null, actual.id)
       .run();
   } else {
     await db
       .prepare(
-        'INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, tiempo_prep_min, imagen, zona_id, geohash, area_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO restaurantes (id, dueno_id, nombre, descripcion_es, descripcion_en, categoria, telefono, direccion, lat, lng, tiempo_prep_min, imagen, zona_id, geohash, area_id, tipo_comercio) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
       )
-      .bind(nuevoId(), u.id, ...valores)
+      .bind(nuevoId(), u.id, ...valores, d.tipoComercio ?? 'restaurante')
       .run();
     await avisoRestauranteNuevoAlAdmin(c.env, {
       restaurante: d.nombre,

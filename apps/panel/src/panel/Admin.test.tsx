@@ -130,6 +130,8 @@ describe('mi restaurante', () => {
         : { restaurante: null },
     );
     render(<MiRestaurante usuario={usuario} idioma="es" />);
+    // C-MERCHANT-TIPO: el alta pide el tipo de negocio primero.
+    await userEvent.click(await screen.findByRole('radio', { name: 'Restaurante' }));
     await userEvent.type(await screen.findByLabelText('Nombre del restaurante'), 'Nuevo');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(await screen.findByText('Escribe la dirección del restaurante.')).toBeInTheDocument();

@@ -1060,6 +1060,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Escribe el nombre del plato.', 'Enter the item name.'],
   ['Escribe el nombre del restaurante.', 'Enter the restaurant name.'],
+  ['Elige el tipo de negocio.', 'Choose your business type.'],
   ['Escribe el número de tu licencia.', 'Enter your license number.'],
   ['Escribe la póliza de tu seguro.', 'Enter your insurance policy number.'],
   [

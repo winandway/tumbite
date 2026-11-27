@@ -105,7 +105,7 @@ const ES: Tres = {
       '¿Me avisan antes de que se acabe mi saldo?',
     ],
     pasos: [
-      'Permite los avisos de Divoox Restaurants la primera vez que abras la app.',
+      'Permite los avisos de Divoox Merchant la primera vez que abras la app.',
       'Deja el volumen del celular alto: el pedido nuevo suena como alarma.',
       'Toca un aviso para abrir ese pedido.',
       'Cuando te llegue «Tu saldo está por acabarse», toca «Recargar saldo».',
@@ -210,7 +210,7 @@ const EN: Tres = {
       'Will I be notified before my balance runs out?',
     ],
     pasos: [
-      'Allow Divoox Restaurants notifications the first time you open the app.',
+      'Allow Divoox Merchant notifications the first time you open the app.',
       'Keep your phone’s volume up: a new order rings like an alarm.',
       'Tap a notification to open that order.',
       'When you get “Your balance is running low,” tap “Top up balance.”',

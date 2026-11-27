@@ -214,7 +214,7 @@ const REST_ES = {
   recargaEnviar: 'Enviar recarga',
   recargaEnviada: 'Recibimos tu recarga. Nuestro equipo la revisa y te acredita el saldo.',
   recargasApagadas: 'Las recargas todavía no están disponibles en tu país.',
-  recargaEnApp: 'Para recargar, abre la app Divoox Restaurants: ahí envías tu comprobante.',
+  recargaEnApp: 'Para recargar, abre la app Divoox Merchant: ahí envías tu comprobante.',
   recargasLista: 'Tus recargas',
   estadoRecarga: { pendiente: 'En revisión', acreditada: 'Acreditada', rechazada: 'Rechazada' },
 };
@@ -287,7 +287,7 @@ const REST_EN: typeof REST_ES = {
   recargaEnviar: 'Send top-up',
   recargaEnviada: 'We got your top-up. Our team reviews it and credits your balance.',
   recargasApagadas: 'Top-ups are not available in your country yet.',
-  recargaEnApp: 'To top up, open the Divoox Restaurants app: you send your receipt there.',
+  recargaEnApp: 'To top up, open the Divoox Merchant app: you send your receipt there.',
   recargasLista: 'Your top-ups',
   estadoRecarga: { pendiente: 'In review', acreditada: 'Credited', rechazada: 'Rejected' },
 };
