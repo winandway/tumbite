@@ -80,6 +80,7 @@ import {
   Pildora,
   Tarjeta,
 } from './piezas/ui';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 type Pedido = {
   /** C-CANCELAR-LISTO: estado de la última solicitud de cancelación a soporte, si hubo. */
@@ -1310,6 +1311,7 @@ export function Inicio() {
         {p.estado === 'listo' && p.entrega === 'recoger' ? (
           <Tarjeta>
             <TextInput
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               value={pinLocal}
               onChangeText={(x) => setPinLocal(x.replace(/\D/g, '').slice(0, 4))}
               placeholder={t.pinCliente}

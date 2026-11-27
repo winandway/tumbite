@@ -69,6 +69,7 @@ import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas'
 import { IMG_COMIDA } from '../../comida/recursos';
 import { textosComida } from '../../comida/textos';
 import { conCuenta } from '../../ConCuenta';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 type Pedido = {
   id: string;
@@ -1570,6 +1571,7 @@ function SeguirPedido() {
                 )}
                 {estRest > 0 ? (
                   <TextInput
+                    placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                     value={comentario}
                     onChangeText={(x) => setComentario(x.slice(0, 500))}
                     placeholder={t.comentario}

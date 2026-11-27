@@ -4,6 +4,7 @@ import { type Idioma, formatearMonto } from '@tumbite/compartido';
 import { useSesion, Text } from '@tumbite/movil';
 import { textosTiendas } from './textos';
 import type { ProductoTienda } from './tipos';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 export type ReemplazoElegido = { platoId: string; nombreEs: string; nombreEn: string };
 
@@ -68,6 +69,7 @@ export function ElegirReemplazo({
       ) : (
         <>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={q}
             onChangeText={setQ}
             placeholder={tt.buscarReemplazo}

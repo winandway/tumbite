@@ -757,6 +757,28 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Qué NO tocar:** no ofrecer activar papeles a la app de Restaurants; no borrar todas las sesiones al entrar a Driver (solo las de conductor); no mezclar libros al unir; no quitar los disparadores `cu_*`; no poner claves foráneas a las tablas nuevas (cada una cobra lecturas en cada borrado de usuarios).
 - **Al publicar:** subir las capturas de la ayuda interna (`cuenta-unica-*`) con `node scripts/docs/subir-ayuda-interna.mjs` y las grandes de Docs con `node scripts/docs/subir-capturas-grandes.mjs`; compilar cliente y Driver.
 
+## C-ALTA-CONGELADA · El alta de conductor no cambia de aspecto ni de orden (27 nov 2026, orden de Richard y del responsable de Tucaní, por Gerencia) — todos los países
+
+- **Por qué:** en Tucaní no se pudo registrar a nadie: «tú la actualizas y lo cambias, cuando yo voy a entrar hay un nuevo cambio… no soy capaz de meterlos». Richard: «déjala tal cual hasta que podamos meter a la gente».
+- **La regla:** las pantallas del alta de conductor (crear cuenta, verificar el celular, papeles, cara, vehículo y moto, plazo) NO cambian de aspecto ni de orden. Solo se arreglan fallos, y ningún arreglo mueve botones ni cambia textos aprendidos. Un cambio necesita el permiso de Gerencia ANTES, y se anota aquí quién lo autorizó. Falta escribirla en el CLAUDE.md del proyecto: Richard tiene que pedirlo directo, no por otra sesión.
+- **Candado:** `apps/repartidor/src/altaCongelada.test.ts` guarda los textos visibles de `packages/movil/src/Acceso.tsx`, `apps/repartidor/src/ConfirmarTelefono.tsx` y `apps/repartidor/src/viajes/AltaPasajeros.tsx`, y el orden de las casillas de «Tu moto» (marca, modelo, año, color, placa). Visto en ROJO cambiando «Guardar mi moto». Con permiso de Gerencia se actualiza la foto con `npx vitest run apps/repartidor/src/altaCongelada.test.ts -u`. No mide colores ni tamaños.
+- **Cambios ya autorizados por Gerencia el 27 nov:** C-CASILLA-CON-SU-TIPO (nombre arriba de cada casilla y su aviso debajo) y C-CASILLA-SE-LEE.
+
+## C-CASILLA-SE-LEE · El texto de fondo de toda casilla se lee en cualquier Android (27 nov 2026, emergencia de Tucaní) — todos los países · necesita compilar las tres apps
+
+- **Qué pasó:** en Divoox Driver, en «Agregar un servicio → Tu moto», Richard y el responsable de Tucaní veían cinco casillas vacías, sin nombre, y el botón «Guardar mi moto». Un mototaxista no pudo terminar su alta.
+- **Causa real:** desde que se hizo la pantalla (13 nov, 70ec806bcc), el nombre de cada casilla (Marca, Modelo, Año, Color, Placa) era SOLO el texto de fondo, sin `placeholderTextColor`. Android lo pinta con el color del tema del teléfono, y en equipos con modo oscuro forzado sale casi blanco sobre blanco. No lo borró ningún commit: depende del teléfono, y en el emulador de pruebas se veía. Las fotos de la moto no se quitaron: salen después de «Guardar mi moto», en «Papeles de la moto». Veintiún casillas de las tres apps tenían el mismo fallo.
+- **Qué se hizo:** `COLOR_TEXTO_DE_FONDO` (#6B7078) en `packages/movil/src/tokens.ts`, y TODA casilla `<TextInput>` de cliente, Driver, Restaurants y la pieza común lo lleva. El nombre arriba de cada casilla de «Tu moto» lo trae C-CASILLA-CON-SU-TIPO.
+- **Cómo se comprueba:** `npx vitest run packages/movil/src/casillaSeLee.test.ts` recorre cada `<TextInput>` de las tres apps y falla si alguno no tiene `placeholderTextColor`. Visto en ROJO quitándolo de «Tu moto».
+- **Qué NO tocar:** no poner una casilla nueva sin `placeholderTextColor`. Mejor usar `Campo` de `ui.tsx`, que lleva el nombre arriba.
+
+## C-PUBLICAR-SIN-ESPERAR · Producción no se queda atrás por cambios seguidos en main (27 nov 2026, emergencia de Tucaní) — todos los países
+
+- **Qué pasó:** producción se quedó en 81788de durante horas. Cada versión verificada se saltaba («main ya va en …, que se publica al terminar su verificación») porque llegaba otro cambio antes de que la verificación de 50 minutos terminara. El arreglo del registro de conductores esperó por eso.
+- **Qué se hizo (`.github/workflows/publicar.yml`, paso «revisar»):** se lee el commit que sirve producción (`/datos/version`) y se compara con la versión verificada. Si esta trae todo lo de producción y más (compare `ahead`), se publica aunque main vaya adelante. Nunca una en rojo: solo corre con la verificación en verde o, a mano, con la última verde. Nunca una más vieja que la que ya sirve producción (`behind`/`identical` no publica). Sin poder leer producción, la regla de antes: solo la punta.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/publicarSeRecupera.test.ts`. Visto en ROJO con el flujo anterior.
+- **Qué NO tocar:** no volver a exigir que la versión sea la punta de main; no quitar la comparación con producción (sin ella, una verificación vieja que termina tarde bajaría producción).
+
 ## C-CUENTA-UNICA-CELULAR y C-CUENTA-UNICA-COMERCIO · El cliente se hace conductor (y al revés) con su misma cuenta, también con el mismo celular, y el comercio usa su cuenta personal (27 nov 2026, emergencia de Gerencia) — todos los países · sale con el servidor; el botón «Entrar» bajo el aviso del celular necesita app nueva (cliente y Driver)
 
 - **Qué pasó:** un mototaxista real de Tucaní se registró en la app de clientes el 23 nov. El 27 nov abrió Divoox Driver 0.1.80 y al registrarse vio «Ya tienes una cuenta de Divoox con este correo. Entra con tu misma contraseña». No la recordaba (tres «contraseña incorrecta») y en «Olvidé mi contraseña» mandó la casilla vacía. Visto en `intentos_acceso`. La cuenta única ya funcionaba; faltaba decirle por dónde salir.

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invitó a este conductor
@@ -94,6 +95,7 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
         conEnlace ? (
           <View style={[e.tarjeta, { gap: 8 }]}>
             <TextInput
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               value={enlace}
               onChangeText={setEnlace}
               placeholder="https://divoox.com/driver/join/…"

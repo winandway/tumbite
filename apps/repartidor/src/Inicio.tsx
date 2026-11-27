@@ -205,6 +205,7 @@ import {
   SegmentadoDriver,
   AvisoLugarCuenta,
 } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
 const CAMARA = {
@@ -1936,6 +1937,7 @@ export function Inicio() {
           <Text style={{ color: '#666B73', fontSize: 13, marginTop: 6 }}>{t.escribirCodigo}</Text>
           <FilaConBoton>
             <TextInput
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               value={codigo}
               onChangeText={(x) => setCodigo(x.toUpperCase().slice(0, 4))}
               placeholder="A1B2"
@@ -2623,6 +2625,7 @@ export function Inicio() {
                 {prepago.recargasPuntoVenta ? (
                   <>
                     <TextInput
+                      placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                       value={codigoRecarga}
                       onChangeText={setCodigoRecarga}
                       placeholder={tg.prepago.codigo}
@@ -3249,6 +3252,7 @@ export function Inicio() {
                 testID="codigo-comida-a-la-vista"
               >
                 <TextInput
+                  placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                   testID="pedido-pin-entrega"
                   value={pinEntrega}
                   onChangeText={(x) => setPinEntrega(x.replace(/\D/g, '').slice(0, 4))}
@@ -3417,6 +3421,7 @@ export function Inicio() {
                     <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
                     <Text style={{ color: '#666B73', fontSize: 13 }}>{t.motivo}</Text>
                     <TextInput
+                      placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                       value={motivo}
                       onChangeText={setMotivo}
                       placeholder={t.motivo}
@@ -3502,6 +3507,7 @@ export function Inicio() {
                                 {t.sinGpsAyuda}
                               </Text>
                               <TextInput
+                                placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                                 value={motivoGps}
                                 onChangeText={setMotivoGps}
                                 placeholder={t.sinGpsAyuda}
@@ -3617,6 +3623,7 @@ export function Inicio() {
                                 {!pagoMovilActivo ? (
                                   <>
                                     <TextInput
+                                      placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                                       value={montoCobro}
                                       onChangeText={setMontoCobro}
                                       placeholder={tg.pedido.recibi}
@@ -3744,6 +3751,7 @@ export function Inicio() {
                               ))}
                             </View>
                             <TextInput
+                              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                               value={ultimos4}
                               onChangeText={(x) => setUltimos4(x.replace(/\D/g, '').slice(0, 4))}
                               placeholder={tg.edad.ultimos4}
@@ -3753,6 +3761,7 @@ export function Inicio() {
                             />
                             <TextInput
                               {...tecladoDe('nombre')}
+                              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                               value={nombreRecibe}
                               onChangeText={(x) => setNombreRecibe(x.slice(0, 80))}
                               placeholder={tg.edad.nombre}
@@ -3818,6 +3827,7 @@ export function Inicio() {
                         ) : (
                           <>
                             <TextInput
+                              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                               value={nota}
                               onChangeText={setNota}
                               placeholder={t.dondeLoDejas}

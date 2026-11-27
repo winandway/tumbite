@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
 import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 /**
  * C-TELEFONO-VUELTA (D8, 1 nov 2026, como DoorDash al volver a la app): tras 14 días sin
@@ -71,6 +72,7 @@ export function ConfirmarTelefono({
         <>
           <Text style={{ color: C.exito, fontWeight: '600', marginBottom: 6 }}>{t.enviado}</Text>
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={codigo}
             onChangeText={(x) => setCodigo(x.replace(/\D/g, '').slice(0, 6))}
             placeholder="000000"

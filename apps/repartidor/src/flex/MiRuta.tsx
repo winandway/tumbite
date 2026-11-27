@@ -91,6 +91,7 @@ import {
   tonoRuta,
 } from './piezas';
 import { TEXTOS_RUTA } from './textos';
+import { COLOR_TEXTO_DE_FONDO } from '@tumbite/movil';
 
 type Api = {
   pedir<T>(
@@ -760,6 +761,7 @@ function MiRutaContenido({
   const entradaManual = (alEnviar: (c: string) => void) => (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
       <TextInput
+        placeholderTextColor={COLOR_TEXTO_DE_FONDO}
         value={codigo}
         onChangeText={setCodigo}
         placeholder={t.escribirCodigo}
@@ -2273,6 +2275,7 @@ function DetalleParada({
               <Boton texto={t.escanearParada} logistica alTocar={() => void abrirEscanerParada()} />
               <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                 <TextInput
+                  placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                   value={codigoParada}
                   onChangeText={setCodigoParada}
                   placeholder={t.escribirCodigo}
@@ -2513,6 +2516,7 @@ function DetalleParada({
                 <View style={{ gap: 6 }}>
                   <Text style={{ color: GRIS }}>{t.pinAyuda}</Text>
                   <TextInput
+                    placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                     value={pin}
                     onChangeText={(x) => setPin(x.replace(/\D/g, '').slice(0, 4))}
                     keyboardType="number-pad"
@@ -2562,6 +2566,7 @@ function DetalleParada({
             ) : null}
             <TextInput
               {...tecladoDe('nombre')}
+              placeholderTextColor={COLOR_TEXTO_DE_FONDO}
               value={recibio}
               onChangeText={setRecibio}
               placeholder={cobroPendiente ? t.quienPaga : t.quienRecibio}
@@ -2602,6 +2607,7 @@ function DetalleParada({
                 ))}
                 <Text style={{ fontWeight: '800' }}>{t.montoCobrado}</Text>
                 <TextInput
+                  placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                   value={montoTexto}
                   onChangeText={setMontoTexto}
                   placeholder={t.montoCobrado}
@@ -2611,6 +2617,7 @@ function DetalleParada({
                 />
                 {(METODOS_CON_REFERENCIA as readonly string[]).includes(metodo) ? (
                   <TextInput
+                    placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                     value={referenciaPago}
                     onChangeText={setReferenciaPago}
                     placeholder={t.referenciaPago}
@@ -2622,6 +2629,7 @@ function DetalleParada({
                 <Text style={{ fontWeight: '800' }}>{t.cedulaRecibe}</Text>
                 <TextInput
                   {...tecladoDe('documento')}
+                  placeholderTextColor={COLOR_TEXTO_DE_FONDO}
                   value={cedula}
                   onChangeText={setCedula}
                   placeholder="V-12345678"
@@ -2758,6 +2766,7 @@ function DetalleParada({
             </Pressable>
           ))}
           <TextInput
+            placeholderTextColor={COLOR_TEXTO_DE_FONDO}
             value={obs}
             onChangeText={setObs}
             placeholder={t.observaciones}
