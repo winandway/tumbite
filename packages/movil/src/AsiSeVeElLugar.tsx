@@ -112,7 +112,8 @@ export function AsiSeVeElLugar({
       </ScrollView>
       <Modal
         visible={!!grande}
-        animationType="fade"
+        animationType="slide"
+        presentationStyle="pageSheet"
         onRequestClose={() => setGrande(null)}
         testID={`${testID}-grande`}
       >

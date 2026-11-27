@@ -160,9 +160,14 @@ describe('Mi ruta: escanear en la parada y «Parada actual» (como Amazon Flex)'
     );
   });
   it('«Parada actual» va fija abajo, fuera de lo que se desplaza (C-FLEX-PARADA-ACTUAL)', () => {
-    expect(miRuta).toContain('testID="parada-actual"');
+    // C-BOTON-SOBRE-BARRA: «Mi ruta» entrega el botón y Inicio lo pinta en la acción fija (AccionFija,
+    // que se dibuja en el ancla sobre la barra de abajo, fuera de lo que se desplaza).
+    expect(miRuta).toContain('t.paradaActual');
     expect(inicio).toContain('ponerPie={setPieFlex}');
-    expect(inicio).toMatch(/<\/ScrollView>\s*\{pieFlex\}/);
+    expect(inicio).toContain(
+      '{pieFlex ? <AccionFija testID="parada-actual">{pieFlex}</AccionFija> : null}',
+    );
+    expect(inicio).toContain('<AnclaAccionFija');
   });
 });
 

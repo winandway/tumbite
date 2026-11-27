@@ -15,7 +15,15 @@ import {
   enIdioma,
   nombreFotoMedicion,
 } from '@tumbite/compartido';
-import { Boton, C, Text, achicarFotoEvidencia, e } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  CASILLA_EN_FILA,
+  FilaConBoton,
+  Text,
+  achicarFotoEvidencia,
+  e,
+} from '@tumbite/movil';
 import { AccionFija } from '../piezas/AccionFija';
 import { Mapa } from '../piezas/Mapa';
 import { type LecturaGps, estadoGps } from './estoyAquiLogica';
@@ -407,9 +415,6 @@ function Medir({
                   key={tipo}
                   testID={`foto-${tipo}`}
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
                     padding: 12,
                     borderRadius: 12,
                     borderWidth: 1,
@@ -417,20 +422,19 @@ function Medir({
                     backgroundColor: '#fff',
                   }}
                 >
-                  <Text style={{ flex: 1, fontWeight: '700' }}>
-                    {`${i + 1}. ${nombreFotoMedicion(tipo, idioma === 'en' ? 'en' : 'es')}`}
-                  </Text>
-                  {lista ? (
-                    <Text style={{ color: '#1E7B34', fontWeight: '700' }}>{t.lista}</Text>
-                  ) : null}
-                  <Boton
-                    texto={lista ? t.otraVez2 : t.tomar}
-                    enFila
-                    secundario={lista}
-                    exito={!lista}
-                    cargando={subiendo === tipo}
-                    alTocar={() => void foto(tipo)}
-                  />
+                  <FilaConBoton>
+                    <Text style={[CASILLA_EN_FILA, { fontWeight: '700' }]}>
+                      {`${i + 1}. ${nombreFotoMedicion(tipo, idioma === 'en' ? 'en' : 'es')}${lista ? ` · ${t.lista}` : ''}`}
+                    </Text>
+                    <Boton
+                      texto={lista ? t.otraVez2 : t.tomar}
+                      enFila
+                      secundario={lista}
+                      exito={!lista}
+                      cargando={subiendo === tipo}
+                      alTocar={() => void foto(tipo)}
+                    />
+                  </FilaConBoton>
                 </View>
               );
             })}
