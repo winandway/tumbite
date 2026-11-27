@@ -3,8 +3,8 @@
 # Richard). La lanza cada noche a las 2:00 la tarea de la Mac (launchd, ver instalar-tarea.sh), dentro de la
 # copia fija del robot. Hace, en orden y sin parar si uno falla:
 #   1. compila Driver y la app de clientes contra el SITIO DE PRUEBAS e instala en el iPhone simulado;
-#   2. robot de las apps (Maestro), 3. robot del panel (Playwright), 4. examen de Camila;
-#   5. el parte para Gerencia en ~/Gerencia/partes/ACEPTACION-<fecha>.md.
+#   2. robot de las apps (Maestro), 3. robot del panel (Playwright), 4. examen de Camila,
+#   5. los destinos del tabulador en el buscador; 6. el parte para Gerencia en ~/Gerencia/partes/ACEPTACION-<fecha>.md.
 # Tope: a las 5:00 se corta lo que siga corriendo y el parte dice qué no alcanzó.
 # Solo el sitio de pruebas, solo cuentas de prueba, cero dinero, nada a las tiendas.
 set -uo pipefail
@@ -51,5 +51,8 @@ fi
 con_tope "robot de las apps" node scripts/aceptacion/apps.mjs
 con_tope "robot del panel" node scripts/aceptacion/panel.mjs
 con_tope "examen de Camila" node scripts/aceptacion/camila.mjs
+# Los 83 destinos del tabulador de El Vigía en el buscador (P2 completa). El guion ya espera entre
+# búsquedas por el tope de 40 por minuto: no se le quita esa espera.
+con_tope "destinos del tabulador" node scripts/aceptacion/destinos.mjs
 node scripts/aceptacion/parte.mjs
 echo "== termina $(date)"

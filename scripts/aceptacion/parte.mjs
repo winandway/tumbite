@@ -16,6 +16,7 @@ const SECCIONES = [
   ['apps', 'Apps (conductor y pasajero, en el iPhone simulado)'],
   ['panel', 'Panel de control'],
   ['camila', 'Examen de Camila'],
+  ['destinos', 'Destinos del tabulador de El Vigía en el buscador'],
 ];
 
 const icono = (e) => (e === 'verde' ? '🟢' : e === 'rojo' ? '🔴' : '⚪');
