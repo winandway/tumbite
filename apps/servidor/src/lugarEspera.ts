@@ -83,6 +83,30 @@ export async function zonaDeLugar(
   return { id: z.id, nombre: z.nombre, pais: z.pais.toUpperCase() };
 }
 
+/**
+ * C-LUGAR-CLIENTE-CON-SERVICIO (27 nov 2026) — todos los países. La zona que le da servicio a un
+ * CLIENTE que vive en ese punto: la misma regla que su inicio (`zonaPara`: la zona activa que cubre el
+ * punto), de su país. Sin las exclusiones del conductor (zona interna de pruebas, zona de revisión): si
+ * el inicio le muestra restaurantes, el aviso no puede decirle «todavía no hay servicio».
+ */
+export async function zonaDelCliente(
+  db: D1Database,
+  lugar: Pick<LugarCuenta, 'pais' | 'lat' | 'lng'>,
+): Promise<ZonaDeLugar | null> {
+  const c = await cobertura(db, lugar.lat, lugar.lng);
+  if (c.estado !== 'dentro' || !c.zona) return null;
+  if (c.zona.pais.toUpperCase() !== lugar.pais) return null;
+  return { id: c.zona.id, nombre: c.zona.nombre, pais: c.zona.pais.toUpperCase() };
+}
+
+/** La zona de una cuenta según su papel: el conductor con su regla, el cliente con la de su inicio. */
+export const zonaSegunRol = (
+  db: D1Database,
+  rol: string,
+  lugar: Pick<LugarCuenta, 'pais' | 'lat' | 'lng'>,
+  produccion: boolean,
+) => (rol === 'cliente' ? zonaDelCliente(db, lugar) : zonaDeLugar(db, lugar, produccion));
+
 type FilaLugar = {
   rol: string;
   lugar_pais: string | null;
@@ -167,7 +191,7 @@ export async function respuestaLugar(
     const real = await zonaRealDe(db, usuarioId);
     zona = real ? { id: real.zonaId, nombre: real.nombre } : null;
   } else if (lugar) {
-    const z = await zonaDeLugar(db, lugar, produccion);
+    const z = await zonaSegunRol(db, l?.rol ?? 'cliente', lugar, produccion);
     zona = z ? { id: z.id, nombre: z.nombre } : null;
   }
   return {
@@ -190,7 +214,7 @@ export async function aplicarLugar(
   lugar: LugarCuenta,
   produccion: boolean,
 ): Promise<ZonaDeLugar | null> {
-  const zona = await zonaDeLugar(db, lugar, produccion);
+  const zona = await zonaSegunRol(db, usuario.rol, lugar, produccion);
   if (usuario.rol === 'repartidor') {
     const real = await zonaRealDe(db, usuario.id);
     if (zona && zona.id !== real?.zonaId) {

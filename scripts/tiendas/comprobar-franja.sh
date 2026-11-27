@@ -26,7 +26,15 @@ con_limite 180 "$ADB" install "$TMP/universal.apk" >/dev/null
 con_limite 30 "$ADB" shell pm grant "$PAQ" android.permission.ACCESS_FINE_LOCATION 2>/dev/null || true
 con_limite 30 "$ADB" shell pm grant "$PAQ" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
 con_limite 30 "$ADB" shell am start -n "$PAQ/.MainActivity" >/dev/null
-pantalla() { con_limite 40 "$ADB" shell uiautomator dump /sdcard/franja.xml >/dev/null 2>&1 || true; con_limite 20 "$ADB" shell cat /sdcard/franja.xml 2>/dev/null || true; }
+# C-FRANJA-LECTURA-FRESCA (27 nov 2026): el archivo de la lectura anterior se borra antes de leer. Si
+# Android no logra leer la pantalla (pasa con una animación que nunca para), «uiautomator dump» falla
+# y antes se leía el archivo VIEJO: la pantalla de entrar de OTRA app (o de una versión anterior) podía
+# dar por buena una subida. Además, la lectura solo cuenta si es de ESTE paquete.
+pantalla() {
+  con_limite 20 "$ADB" shell rm -f /sdcard/franja.xml >/dev/null 2>&1 || true
+  con_limite 40 "$ADB" shell uiautomator dump /sdcard/franja.xml >/dev/null 2>&1 || true
+  con_limite 20 "$ADB" shell cat /sdcard/franja.xml 2>/dev/null | grep "package=\"$PAQ\"" || true
+}
 tocar() {
   local caja; caja=$(pantalla | grep -o "text=\"$1\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" | head -1 | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' || true)
   [ -z "$caja" ] && return 1
