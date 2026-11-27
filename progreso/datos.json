@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-27T09:15-05:00",
+  "actualizado": "2026-11-27T12:45-05:00",
   "version": "fe71f3f",
   "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
@@ -561,6 +561,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-27",
+      "titulo": "Un cliente se hace conductor con su misma cuenta, también con el mismo celular",
+      "texto": "Un mototaxista de Tucaní tenía cuenta de cliente y no podía seguir en Divoox Driver. Driver ya le ofrecía su misma cuenta; lo frenó no recordar la contraseña. Ahora el aviso dice cómo entrar y que el código llega por WhatsApp con «¿Olvidaste tu contraseña?». Con el mismo celular y otro correo, Driver ya no abre una segunda cuenta: lleva a entrar con la que ya tiene. En Divoox Restaurants, quien ya tiene su cuenta registra su restaurante con ella en «Mis restaurantes». Para todos los países."
+    },
     {
       "fecha": "2026-11-27",
       "titulo": "El aviso «todavía no hay servicio» ya no sale donde sí hay servicio",
