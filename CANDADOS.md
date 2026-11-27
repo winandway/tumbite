@@ -10,6 +10,19 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Prueba (rojo comprobado el 27 nov 2026, volviendo a la regla vieja):** `packages/compartido/src/casillas.test.ts`, `packages/movil/src/candadoCasillaConSuTipo.test.ts` y `apps/servidor/src/rutas/casillasServidor.test.ts`. Robot nocturno: línea A10 del robot del panel (`e2e/aceptacion/panel/panel.spec.ts`), que intenta cada noche en pruebas un correo y números en el nombre, letras en el celular, símbolos en la placa y un año de 1985.
 - **Qué NO tocar:** nunca validar un nombre, celular, placa o año a mano en una pantalla o ruta: se usa la pieza. `nombre`/`nombreCompleto` es SOLO para personas (un restaurante, una línea o un producto pueden llevar números). No relajar la regla para que pase un dato de prueba: se corrige el dato. Las pantallas del alta de conductor están congeladas en orden y textos: aquí solo se agregó validación, avisos e íconos.
 
+## C-BOTON-SOBRE-BARRA · La acción principal de cada hoja de Driver va fija arriba de la barra de abajo (27 nov 2026, encargo de Gerencia) — todos los países · app Driver
+
+- **Qué se rompió:** durante una entrega de comida, en la hoja «Order #… · Directions», el botón verde principal «Scan the restaurant’s code» quedaba DEBAJO de la barra de pestañas de abajo y el conductor no lo podía tocar.
+- **Causa real:** la acción principal de cada paso vivía en medio del contenido desplazable de la hoja, sin un lugar propio respetado por la barra de abajo ni por el área segura del teléfono (en iPhone la barra tampoco dejaba libre la rayita de inicio). Lo que decidía si se veía era el largo del contenido y el teléfono, no una regla.
+- **Qué se hizo (una pieza única):**
+  - `apps/repartidor/src/piezas/accionFijaLogica.ts`: `colocarAccionFija` (la acción va a «alto de la barra + área segura» del borde de abajo; mientras la barra no se midió, su alto de diseño, 64), `accionTapadaPorBarra` y `accionDelPedido` (la ÚNICA acción fija del pedido de comida: llegar → escanear el código → foto de recogida → cómo llegar → en la puerta, foto y «Desliza para completar» o la entrega en mano).
+  - `apps/repartidor/src/piezas/AccionFija.tsx`: `<AccionFija>` envuelve la acción donde siempre estuvo; `<AnclaAccionFija>` (hija directa de la pantalla, fuera del desplazable) la pinta fija con esas cuentas; `<EspacioAccionFija>` deja al final del contenido el alto de la acción para que nada quede escondido detrás. Fuera de una zona, la acción se pinta en su lugar.
+  - `apps/repartidor/src/piezas/BarraInferior.tsx`: deja libre el área segura de abajo (en Android llega en cero: SobreLosBotones ya la descontó) y avisa su alto (`alMedir`).
+  - Usan la pieza: el lienzo de `Inicio.tsx` (pedido de comida, viajes) y «Mi ruta» de Flex (con el fondo oscuro de logística); `viajes/ViajeActivo.tsx` (Llegué, iniciar, parada, seguir, terminar o entregar, y «Listo» del cierre), `flex/MiRuta.tsx` («Parada actual», «Ya estacioné» y «Desliza para finalizar», una sola a la vez) y `mediciones/PuntosPorMedir.tsx` («Estoy aquí»).
+- **Candado (comprobado en rojo):** `apps/repartidor/src/piezas/accionFijaLogica.test.ts` (17 pruebas). Exige, en teléfonos chicos y grandes (Android con botones y con gestos, iPhone SE y Pro Max, letra grande), que la acción nunca quede por debajo del borde de arriba de la barra; que sin medir se use el alto de diseño (y que sea el `ALTO.barraInferior` de los tokens); cuál es la acción del pedido en cada estado; y que el lienzo, «Mi ruta», viajes, Flex y «Estoy aquí» usen la pieza, con el ancla fuera del desplazable y antes de la barra. En rojo: con la acción en el borde de la pantalla (8 fallan), sin sumar el área segura (5 fallan) y con «Escanear» otra vez dentro de la hoja (1 falla).
+- **Cómo comprobar:** `npx vitest run --project apps apps/repartidor/src/piezas/accionFijaLogica.test.ts`. En pantalla: un pedido de comida listo con el conductor ya en el restaurante (guion de la hoja de pruebas en el simulador local, ver la bitácora del 27 nov) y el emulador de Android en tamaño grande y chico (`adb shell wm size 720x1280` y `wm density 320`): «Scan the restaurant’s code» se ve entero arriba de la barra y el contenido pasa por detrás.
+- **Qué NO tocar:** no volver a poner la acción principal de una hoja suelta dentro del desplazable; no pintar `AnclaAccionFija` dentro del `ScrollView`; no quitar el área segura de `BarraInferior`; una sola acción fija por paso (`accionDelPedido` y las condiciones de Flex); no tocar `colocarAccionFija` sin su prueba.
+
 ## C-HABILITAR-IGUAL-LETRERO · «Habilitar» usa la misma regla del plazo de papeles que el letrero de la ficha (27 nov 2026, caso real de Richard en Verificaciones, conductor de El Vigía) — todos los países con plazo (hoy Venezuela y Perú) · base, servidor y panel
 
 - **Qué fallaba:** la ficha decía «Habilitación para Moto: Habilitado por su plazo · No le falta nada» (papeles «En plazo · quedan 29 días») y al tocar «Habilitar para Moto» salía «Todavía no se puede habilitar. Le falta: Historial de manejo, Licencia de moto». El letrero usaba la regla con el plazo (`evaluarServicio` con la gracia) y el botón chocaba con los disparadores `habilitaciones_exigen_requisitos(_alta)`, que no conocían el plazo.
@@ -7784,6 +7797,40 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Candados:** `apps/servidor/src/lugaresPropios.test.ts` (cada destino por su nombre y por cada otro nombre sale primero; un lugar de El Vigía nunca sale en Caracas; la caché lee una vez; la semilla no pisa al equipo; el robot lee los 83). Comprobados en rojo quitando los otros nombres y cambiando la ciudad de la búsqueda. Robot nocturno: `scripts/aceptacion/destinos.mjs` (línea P2 completa, los 83 cada noche en el sitio de pruebas).
 - **Cómo comprobar:** `/datos/salud` sin errores; en el sitio de pruebas `node scripts/aceptacion/destinos.mjs` da 83 de 83; en el panel, Viajes · Emergencias y tarifas → Lugares propios → El Vigía.
 - **Qué NO tocar:** no buscar lugares propios fuera de la ciudad de la persona; no escribir en la base al buscar; los ids de sugerencia `lp~` y `tab~` (las apps los mandan a `/lugares/punto`).
+
+## C-ESTOY-AQUI — medir los lugares propios en la calle con Driver y aprobarlos en el panel (27 nov 2026) — todas las ciudades, primer uso El Vigía (Venezuela)
+
+- **Qué faltaba:** nueve lugares de El Vigía se pusieron desde el mapa, sobre la carretera, y no había forma propia de medirlos en la calle: se dependía de copiar a mano una ubicación de WhatsApp.
+- **Qué se hizo:** tablas `mediciones_tareas`, `mediciones_tarea_lugares`, `mediciones_tarea_asignados` y `mediciones_lugar` (`schema.sql`); servidor `apps/servidor/src/medicionesLugares.ts` (panel `/admin/mediciones*`, Driver `/conductor/mediciones*`); reglas compartidas `packages/compartido/src/medicionLugares.ts` (precisión 15 m, tope de 5 km); panel «Medir lugares en la calle» (`MedicionesLugares.tsx`, debajo de Lugares propios); Driver «Puntos por medir» en el perfil (`apps/repartidor/src/mediciones/`), visible solo con una tarea asignada.
+- **Candados (comprobados en rojo, uno por uno):** `apps/servidor/src/medicionesLugares.test.ts` y `apps/repartidor/src/mediciones/estoyAquiLogica.test.ts`:
+  1. sin aprobación no cambia nada (medir solo guarda la medición pendiente; aprobar es el único camino que mueve el lugar y su ruta, una sola vez, y no si el lugar cambió desde que se midió);
+  2. precisión mínima (el servidor rechaza peor que 15 m y la base tiene un CHECK; la app solo muestra «Estoy aquí» con 15 m o menos y explica qué hacer si no);
+  3. un lugar nunca sale de su ciudad (una tarea es de una ciudad; ni medir ni aprobar mueven un lugar más de 300 m, ver C-ESTOY-AQUI-300; la ciudad del lugar no cambia);
+  4. solo los asignados ven y miden (a los demás, 404; al reasignar o cerrar deja de verse).
+- **Cómo comprobar:** en el panel, Viajes → «Medir lugares en la calle» → El Vigía; en Driver, Perfil → «Puntos por medir» con una cuenta asignada.
+- **Qué NO tocar:** no mover `lugares_propios` desde `/conductor/mediciones`; no subir el CHECK de `precision_m`; no mostrar la tarea a quien no está en `mediciones_tarea_asignados`.
+
+### C-ESTOY-AQUI-300 — «Estoy aquí» solo a menos de 300 m del punto (Richard, 27 nov 2026) — todas las ciudades
+
+- **Qué se pidió:** el botón se activa solo cerca del punto guardado (300 m o menos) y con 15 m de precisión o mejor. Antes el tope era de 5 km.
+- **Qué se hizo:** una sola regla, `RADIO_ESTOY_AQUI_M = 300` en `packages/compartido/src/medicionLugares.ts`, usada en Driver (`estoyAquiLogica.ts`: lejos → botón gris «Acércate al punto (faltan 420 m)»; sin precisión → botón gris «Esperando precisión (25 m)»), en el servidor al medir (422 «Acércate al punto…») y al aprobar (409).
+- **Candado (comprobado en rojo con el radio en 5000):** `estoyAquiLogica.test.ts` («C-ESTOY-AQUI-300») y `medicionesLugares.test.ts` (medir a 420 m → 422).
+- **Qué NO tocar:** no volver a un tope en kilómetros; no dibujar «Estoy aquí» activo fuera del radio; un botón apagado siempre dice en su texto qué falta.
+
+### C-TRES-FOTOS — tres fotos obligatorias por medición, solo con la cámara (Richard, 27 nov 2026) — todas las ciudades
+
+- **Qué se pidió:** cada punto lleva tres fotos obligatorias (entrada o fachada; letrero o algo reconocible; vista desde la calle), tomadas con la cámara, cada una con su hora y coordenadas. Antes había una foto opcional (`foto_clave`, retirada antes de publicar).
+- **Qué se hizo:** tabla `mediciones_fotos` (una fila por tipo y medición, `UNIQUE (medicion_id, tipo)`: volver a tomarla la reemplaza). Subida `POST /datos/conductor/mediciones/medicion/:id/fotos/:tipo` con el GPS y la hora en cabeceras `x-foto-*` (nunca en la dirección): se rechaza sin GPS, vieja (más de 10 min), del futuro o a más de 300 m del punto medido. La foto se guarda limpia (sin datos ocultos). Driver abre solo la cámara (`launchCameraAsync`, sin galería). Aprobar sin las tres → 409 «Faltan fotos: …»; el panel deja «Aprobar» apagado y dice cuáles faltan. Borrar la cuenta borra sus fotos.
+- **Candado (comprobado en rojo quitando la exigencia):** `medicionesLugares.test.ts` (aprobar sin fotos y con dos → 409; las tres reglas de la subida) y `MedicionesLugares.test.tsx` (botón apagado con el texto).
+- **Qué NO tocar:** no aprobar sin las tres; no aceptar fotos de la galería; no mover el GPS de la foto a la dirección de la petición.
+
+### C-FOTOS-PUBLICAS — «Así se ve el lugar» con las fotos aprobadas (Richard, 27 nov 2026) — todas las ciudades
+
+- **Qué se pidió:** las fotos aprobadas se ven en la app de clientes y en Driver cuando ese lugar propio es la recogida o el destino; el equipo puede quitar cualquiera.
+- **Qué se hizo:** al aprobar, las fotos de esa medición pasan a `publica = 1` y las de una medición anterior del mismo lugar dejan de verse (siempre la más nueva). `GET /datos/lugares/asi-se-ve?lat&lng` busca el lugar propio activo a 40 m o menos con fotos públicas (solo lee); `GET /datos/lugares/fotos/:id` sirve solo públicas y no quitadas. Panel: sección «Así se ve el lugar (fotos en las apps)» con «Quitar de las apps» en el menú de tres puntos (`POST /datos/admin/mediciones/fotos/:id/quitar`). Pieza única `packages/movil/src/AsiSeVeElLugar.tsx`, en `ViajeEnCurso.tsx` (cliente: recogida mientras llega el conductor, destino hasta terminar) y `ViajeActivo.tsx` (Driver: el punto al que va).
+- **Candado (comprobado en rojo dejando las fotos sin publicar al aprobar):** `medicionesLugares.test.ts` (pendiente no se ve; aprobada se ve en orden; lejos del lugar no; quitada → 404).
+- **Privacidad:** son fotos de un lugar público tomadas por el equipo; no llevan datos de personas. Pedir al medidor que no fotografíe caras ni placas (va en sus instrucciones).
+- **Qué NO tocar:** no servir fotos pendientes ni rechazadas; no quitar el filtro `quitada_en IS NULL`.
 
 ## C-DESLIZAR-RECIBE-EL-TOQUE — el recorrido desliza solo cuando el pulgar recibe el toque y espera la respuesta real (27 nov 2026) — todos los países
 

@@ -60,3 +60,4 @@ export * from './driverKit';
 export * from './TarjetaChatViaje';
 export * from './SelectorLugar';
 export * from './LugarCuenta';
+export * from './AsiSeVeElLugar';

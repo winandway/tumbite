@@ -2906,6 +2906,69 @@ const es: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'points-to-measure',
+        titulo: 'Puntos por medir: confirma un lugar con «Estoy aquí»',
+        resumen:
+          'Si el equipo de Divoox te pide confirmar lugares en la calle, te aparecen en «Puntos por medir». Vas a cada uno, en el punto exacto tocas «Estoy aquí» y tomas tres fotos del lugar con la cámara. El equipo revisa cada medición antes de cambiar el mapa.',
+        explicacion: [
+          'Cuando el equipo te asigna lugares para medir, te llega un aviso y en Driver, en tu Perfil, aparece «Puntos por medir» con cuántos te faltan. Solo lo ve quien fue asignado.',
+          'Toca un lugar y verás el mapa con tu ubicación y el punto que tiene guardado ahora. Ve hasta el sitio exacto donde se deja al pasajero: la entrada, la parada o el letrero que usa la gente.',
+          '«Estoy aquí» solo se activa cuando estás a 300 metros o menos del punto. Más lejos, el botón queda gris y te dice cuánto te falta, por ejemplo «Acércate al punto (faltan 420 m)».',
+          'Ya cerca, el botón necesita que tu GPS tenga 15 metros de precisión o menos. Si todavía no, queda gris con «Esperando precisión» y la precisión de ahora: espera unos segundos al aire libre, lejos de techos y edificios altos.',
+          'Al tocar «Estoy aquí» se guardan tu ubicación, la precisión y la hora. Enseguida tomas las tres fotos del lugar, que son obligatorias: la entrada o fachada, el letrero o algo reconocible, y la vista desde la calle. Se toman con la cámara en ese momento (no desde la galería) y cada una guarda dónde y cuándo la tomaste.',
+          'En las fotos sale solo el lugar: evita caras de personas y placas de carros. Si una no quedó bien, toca «Tomar otra».',
+          'Con las tres fotos, la pantalla dice «Medición y tres fotos enviadas». Sin las tres, el equipo no puede aprobarla y en tu lista el lugar dice «Faltan fotos» hasta que las tomes.',
+          'Tu medición no cambia el mapa sola: el equipo la revisa y la aprueba. Al aprobarla, tus fotos se ven en la app de clientes y en Driver como «Así se ve el lugar», para que pasajeros y conductores reconozcan el punto. Si te piden medirlo otra vez, el lugar dice «Medir otra vez» con el motivo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/puntos-por-medir-lista-es.webp',
+            alt: 'Puntos por medir en Divoox Driver: una tarea con sus lugares y el estado de cada uno, Por medir, Enviada o Aprobada.',
+            pie: 'Tus lugares por medir y cómo va cada uno. Los lugares de la imagen son de ejemplo.',
+          },
+          {
+            src: '/docs/estoy-aqui-lejos-es.webp',
+            alt: 'Pantalla de un lugar con el mapa y el botón gris «Acércate al punto (faltan 420 m)»: Estoy aquí se activa a 300 metros o menos.',
+            pie: 'Lejos del punto, el botón queda gris y te dice cuánto falta.',
+          },
+          {
+            src: '/docs/estoy-aqui-esperar-es.webp',
+            alt: 'Pantalla de un lugar con el aviso de precisión y el botón gris «Esperando precisión (40 m)».',
+            pie: 'Cerca, pero con poca precisión: espera unos segundos al aire libre.',
+          },
+          {
+            src: '/docs/estoy-aqui-listo-es.webp',
+            alt: 'Pantalla de un lugar con la precisión en verde y el botón Estoy aquí.',
+            pie: 'A 300 m o menos y con 15 m de precisión aparece «Estoy aquí».',
+          },
+          {
+            src: '/docs/estoy-aqui-fotos-es.webp',
+            alt: 'Las tres fotos del lugar: entrada o fachada ya lista, y letrero o algo reconocible y vista desde la calle con el botón Tomar foto.',
+            pie: 'Las tres fotos son obligatorias y se toman con la cámara.',
+          },
+          {
+            src: '/docs/estoy-aqui-enviada-es.webp',
+            alt: 'Mensaje en verde: Medición y tres fotos enviadas. El equipo la revisa antes de cambiar el mapa.',
+            pie: 'Con las tres fotos, la medición queda enviada.',
+          },
+        ],
+        preguntas: [
+          '¿Qué es «Puntos por medir»?',
+          '¿Por qué no me sale el botón «Estoy aquí»?',
+          '¿Por qué el botón «Estoy aquí» está gris?',
+          '¿Tengo que tomar las tres fotos?',
+          '¿Mi medición cambia el mapa al momento?',
+        ],
+        pasos: [
+          'Abre Perfil → «Puntos por medir».',
+          'Toca el lugar y ve hasta el punto exacto donde se deja al pasajero.',
+          'A 300 m o menos, espera a que la precisión llegue a 15 m o menos y toca «Estoy aquí».',
+          'Toma las tres fotos con «Tomar foto»: entrada o fachada, letrero o algo reconocible, y vista desde la calle. Sin caras ni placas.',
+          'Cuando diga «Medición y tres fotos enviadas», toca «Volver a la lista» y sigue con el próximo.',
+        ],
+        nota: 'Solo ves los lugares que el equipo te asignó. Cada medición la revisa el equipo antes de cambiar el mapa, y solo se aprueba con sus tres fotos.',
+      },
+      {
         id: 'invite-drivers-and-teams',
         titulo: 'Invita conductores y arma tu equipo: gana saldo por cada uno',
         resumen:
@@ -8579,6 +8642,69 @@ const en: SeccionDocs[] = [
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
+      {
+        id: 'points-to-measure',
+        titulo: 'Points to measure: confirm a place with «I’m here»',
+        resumen:
+          'If the Divoox team asks you to check places on the street, they show up in «Points to measure». Go to each one, tap «I’m here» at the exact spot and take three photos of the place with the camera. The team reviews every measurement before changing the map.',
+        explicacion: [
+          'When the team assigns you places to measure, you get a notification and, in Driver, your Profile shows «Points to measure» with how many are left. Only assigned drivers see it.',
+          'Tap a place to see the map with your location and the point it has saved now. Go to the exact spot where riders get dropped off: the entrance, the stop or the sign people use.',
+          '«I’m here» only turns on when you are within 300 meters of the point. Farther away, the button stays gray and tells you how far you have to go, for example «Get closer to the point (420 m to go)».',
+          'Once you are close, the button needs your GPS accuracy to be 15 meters or better. If it isn’t yet, it stays gray with «Waiting for accuracy» and the current accuracy: wait a few seconds outdoors, away from roofs and tall buildings.',
+          'Tapping «I’m here» saves your location, the accuracy and the time. Right after, you take the three photos of the place, which are required: the entrance or front, the sign or a landmark, and the view from the street. They are taken with the camera at that moment (not from the gallery) and each one keeps where and when you took it.',
+          'Only the place should be in the photos: avoid people’s faces and license plates. If one didn’t come out well, tap «Retake».',
+          'With all three photos, the screen says «Measurement and three photos sent». Without all three, the team can’t approve it and your list shows «Photos missing» for that place until you take them.',
+          'Your measurement doesn’t change the map by itself: the team reviews and approves it. Once approved, your photos show in the customer app and in Driver as «What the place looks like», so riders and drivers recognize the spot. If they ask you to measure it again, the place says «Measure again» with the reason.',
+        ],
+        capturas: [
+          {
+            src: '/docs/puntos-por-medir-lista-en.webp',
+            alt: 'Points to measure in Divoox Driver: a task with its places and the status of each one, To measure, Sent or Approved.',
+            pie: 'Your places to measure and how each one is going. The places in the image are examples.',
+          },
+          {
+            src: '/docs/estoy-aqui-lejos-en.webp',
+            alt: 'A place screen with the map and the gray button «Get closer to the point (420 m to go)»: I’m here turns on within 300 meters.',
+            pie: 'Far from the point, the button stays gray and tells you how far is left.',
+          },
+          {
+            src: '/docs/estoy-aqui-esperar-en.webp',
+            alt: 'A place screen with the accuracy notice and the gray button «Waiting for accuracy (40 m)».',
+            pie: 'Close, but with low accuracy: wait a few seconds outdoors.',
+          },
+          {
+            src: '/docs/estoy-aqui-listo-en.webp',
+            alt: 'A place screen with the accuracy in green and the I’m here button.',
+            pie: 'Within 300 m and with 15 m accuracy, «I’m here» appears.',
+          },
+          {
+            src: '/docs/estoy-aqui-fotos-en.webp',
+            alt: 'The three photos of the place: entrance or front already done, and sign or a landmark and view from the street with the Take photo button.',
+            pie: 'All three photos are required and taken with the camera.',
+          },
+          {
+            src: '/docs/estoy-aqui-enviada-en.webp',
+            alt: 'Green message: Measurement and three photos sent. The team reviews it before changing the map.',
+            pie: 'With all three photos, the measurement is sent.',
+          },
+        ],
+        preguntas: [
+          'What is «Points to measure»?',
+          'Why don’t I see the «I’m here» button?',
+          'Why is the «I’m here» button gray?',
+          'Do I have to take all three photos?',
+          'Does my measurement change the map right away?',
+        ],
+        pasos: [
+          'Open Profile → «Points to measure».',
+          'Tap the place and go to the exact spot where riders get dropped off.',
+          'Within 300 m, wait until accuracy reaches 15 m or better and tap «I’m here».',
+          'Take the three photos with «Take photo»: entrance or front, sign or a landmark, and view from the street. No faces or license plates.',
+          'When it says «Measurement and three photos sent», tap «Back to the list» and go to the next one.',
+        ],
+        nota: 'You only see the places the team assigned to you. The team reviews each measurement before changing the map, and it is only approved with its three photos.',
+      },
       {
         id: 'invite-drivers-and-teams',
         titulo: 'Invite drivers and build your team: earn balance for each one',

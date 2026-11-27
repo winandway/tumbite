@@ -61,6 +61,7 @@ import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
 const Boton = (p: Parameters<typeof BotonBase>[0]) => <BotonBase oscuro {...p} />;
+import { AccionFija } from '../piezas/AccionFija';
 import type { Punto } from '../piezas/mapaWeb';
 import { Firma } from './Firma';
 import { MapaRuta, type PuntoRuta } from './MapaRuta';
@@ -638,9 +639,8 @@ function MiRutaContenido({
     if (!ponerPie) return;
     ponerPie(
       idPie ? (
-        <View style={{ padding: 12, backgroundColor: FONDO }} testID="parada-actual">
-          <Boton texto={`${t.paradaActual} →`} logistica alTocar={() => setParadaId(idPie)} />
-        </View>
+        // C-BOTON-SOBRE-BARRA: Inicio lo pinta fijo sobre la barra de abajo (AccionFija).
+        <Boton texto={`${t.paradaActual} →`} logistica alTocar={() => setParadaId(idPie)} />
       ) : null,
     );
   }, [idPie, ponerPie, t.paradaActual]);
@@ -2422,22 +2422,24 @@ function DetalleParada({
           ) : null}
           {parada.estado === 'pendiente' ? (
             // C-PASOS-DESLIZANDO: «Ya estacioné» se desliza (un toque no lo marca).
-            <Deslizar
-              texto={t.deslizarLlegue}
-              confirmar={t.confirmarLlegue}
-              testID="flex-llegue-parada"
-              alTerminar={() =>
-                ubicacion().then((q) =>
-                  encolar({
-                    tipo: 'llegada',
-                    rutaId: ruta.id,
-                    paradaId: parada.id,
-                    ruta: `${base}/llegada`,
-                    cuerpo: q ?? {},
-                  }),
-                )
-              }
-            />
+            <AccionFija testID="accion-fija-flex-llegue">
+              <Deslizar
+                texto={t.deslizarLlegue}
+                confirmar={t.confirmarLlegue}
+                testID="flex-llegue-parada"
+                alTerminar={() =>
+                  ubicacion().then((q) =>
+                    encolar({
+                      tipo: 'llegada',
+                      rutaId: ruta.id,
+                      paradaId: parada.id,
+                      ruta: `${base}/llegada`,
+                      cuerpo: q ?? {},
+                    }),
+                  )
+                }
+              />
+            </AccionFija>
           ) : null}
           <View style={[tarjeta, { gap: 10 }]}>
             <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>
@@ -2695,11 +2697,22 @@ function DetalleParada({
                 </Pressable>
               ))}
             </View>
-            <Deslizar
-              texto={t.deslizarFinalizar}
-              confirmar={t.confirmarFinalizar}
-              alTerminar={() => void entregar()}
-            />
+            {/* C-BOTON-SOBRE-BARRA: una sola acción fija; antes de estacionar es «Ya estacioné». */}
+            {parada.estado === 'pendiente' ? (
+              <Deslizar
+                texto={t.deslizarFinalizar}
+                confirmar={t.confirmarFinalizar}
+                alTerminar={() => void entregar()}
+              />
+            ) : (
+              <AccionFija testID="accion-fija-flex-finalizar">
+                <Deslizar
+                  texto={t.deslizarFinalizar}
+                  confirmar={t.confirmarFinalizar}
+                  alTerminar={() => void entregar()}
+                />
+              </AccionFija>
+            )}
             <Boton
               texto={t.registrarIncidenciaBoton}
               secundario
