@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-27T15:25-05:00",
+  "actualizado": "2026-11-27T16:40-05:00",
   "version": "fe71f3f",
   "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
@@ -563,13 +563,13 @@
   "bitacora": [
     {
       "fecha": "2026-11-27",
-      "titulo": "Recupera tu cuenta por WhatsApp o por correo",
-      "texto": "«¿Olvidaste tu contraseña?» ahora pide el celular o el correo y manda un código de 6 números por WhatsApp (recomendado) o por correo. Si no llega, se pide por SMS o por correo con un toque. El código vence a los 5 minutos y sirve una sola vez; nunca se dice si una cuenta existe; al cambiar la contraseña se cierran las sesiones abiertas y se avisa por el otro canal. Funciona en la web, el panel y las tres apps sin actualizarlas. Guía en Docs en español e inglés con capturas. Publicado y comprobado en vivo."
+      "titulo": "Verificaciones: habilitar por plazo, la moto en la ficha y WhatsApp en inglés y en EE. UU.",
+      "texto": "Cuatro arreglos en la ficha de Verificaciones, para todos los conductores. El botón «Habilitar» usa la misma regla del plazo de treinta días que el letrero y dice hasta cuándo tiene para sus papeles; al vencer, el reparto le vuelve a exigir todo. El vehículo se ve en la ficha aunque ya esté aprobado, con su estado, placa, fotos y botones. El aviso de WhatsApp «lo que te falta» sale en el idioma de la cuenta con selector Español / English; la plantilla en inglés está en revisión de Meta y mientras tanto se puede mandar en español. WhatsApp quedó encendido en Estados Unidos con los mismos topes que Venezuela."
     },
     {
       "fecha": "2026-11-27",
-      "titulo": "Verificaciones: habilitar por plazo, la moto en la ficha y WhatsApp en inglés y en EE. UU.",
-      "texto": "Cuatro arreglos en la ficha de Verificaciones, para todos los conductores. El botón «Habilitar» usa la misma regla del plazo de treinta días que el letrero y dice hasta cuándo tiene para sus papeles; al vencer, el reparto le vuelve a exigir todo. El vehículo se ve en la ficha aunque ya esté aprobado, con su estado, placa, fotos y botones. El aviso de WhatsApp «lo que te falta» sale en el idioma de la cuenta con selector Español / English; la plantilla en inglés está en revisión de Meta y mientras tanto se puede mandar en español. WhatsApp quedó encendido en Estados Unidos con los mismos topes que Venezuela."
+      "titulo": "Recupera tu cuenta por WhatsApp o por correo",
+      "texto": "«¿Olvidaste tu contraseña?» ahora pide el celular o el correo y manda un código de 6 números por WhatsApp (recomendado) o por correo. Si no llega, se pide por SMS o por correo con un toque. El código vence a los 5 minutos y sirve una sola vez; nunca se dice si una cuenta existe; al cambiar la contraseña se cierran las sesiones abiertas y se avisa por el otro canal. Funciona en la web, el panel y las tres apps sin actualizarlas. Guía en Docs en español e inglés con capturas. Publicado y comprobado en vivo."
     },
     {
       "fecha": "2026-11-27",
