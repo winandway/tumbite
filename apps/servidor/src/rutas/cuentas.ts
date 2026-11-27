@@ -105,7 +105,7 @@ import {
 } from '../cuentaPais';
 import { unirLineaQueEspera } from '../lineas';
 import { asignarCiudadElegida } from '../ciudadConductor';
-import { leerLugarDeFuera, zonaDeLugar } from '../lugarEspera';
+import { leerLugarDeFuera, zonaSegunRol } from '../lugarEspera';
 import {
   algunSmsEncendido,
   anularCodigoAnterior,
@@ -461,7 +461,8 @@ cuentas.post('/registro', async (c) => {
   // elegirla en Driver). Si no, la cuenta se crea igual y queda en espera de su ciudad. Con lugar, la
   // ubicación de la red ya no decide (la persona dijo dónde vive).
   const produccion = entornoDeHost(new URL(c.req.url).host) === 'produccion';
-  const zonaLugar = lugar ? await zonaDeLugar(db, lugar, produccion) : null;
+  // C-LUGAR-CLIENTE-CON-SERVICIO: el cliente, con la regla de su inicio; el conductor, con la suya.
+  const zonaLugar = lugar ? await zonaSegunRol(db, rol, lugar, produccion) : null;
   const zonaCuenta =
     rol === 'repartidor'
       ? (invitacion?.zonaId ??

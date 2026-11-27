@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-27T04:03-05:00",
+  "actualizado": "2026-11-27T09:15-05:00",
   "version": "fe71f3f",
   "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
@@ -561,6 +561,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-27",
+      "titulo": "El aviso «todavía no hay servicio» ya no sale donde sí hay servicio",
+      "texto": "A un cliente que vive en una ciudad que su inicio sí atiende ya no le sale el aviso de espera: el aviso y el inicio usan ahora la misma regla. Lo vio la cuenta de revisión de Google en Novi; publicado y comprobado en vivo con esa cuenta. El botón «Terminar entregas y volver al centro» de Flex funciona (comprobado con video); lo que fallaba era la lectura de pantalla de la prueba, y esa misma falla se cerró en la revisión que corre antes de cada subida a Google Play. La cocina de revisión, que había quedado cerrada, está abierta otra vez."
+    },
+    {
+      "fecha": "2026-11-27",
+      "titulo": "Driver 0.1.80 y Divoox 0.1.67 enviadas a Google Play",
+      "texto": "Las dos apps llevan el registro desde cualquier ciudad con «¿Dónde vives?» y «Otro país», el Saldo Divoox con el regalo de bienvenida, la licencia de una cara y los lugares propios en el buscador. Compiladas en la Mac, aprobadas por el auditor de tiendas, probadas en el teléfono simulado (Maracaibo y «Otro país») y con la ficha de Seguridad de los datos al día. Apple: nada, por el caso abierto."
+    },
     {
       "fecha": "2026-11-27",
       "titulo": "Los 83 destinos de El Vigía, primero en el buscador",

@@ -31,7 +31,7 @@
     "tarifas": "ok",
     "viajes": "ok",
     "tabuladorVigia": "ok",
-    "panicoZonas": "error",
+    "panicoZonas": "ok",
     "comidaPaises": "ok",
     "pagoComida": "ok",
     "tiempoReal": "pendiente",
@@ -56,5 +56,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-27T04:44:16.781157+00:00"
+  "medido": "2026-11-27T14:10:29.765753+00:00"
 }
