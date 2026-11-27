@@ -182,9 +182,10 @@ for (const idioma of ['en', 'es'] as const) {
     await ctx.close();
   });
 
-  // C-MENSAJES-ACCESO (24 nov 2026, decisión de Richard): con un correo sin cuenta, «olvidé mi
-  // contraseña» ya no finge que mandó algo: dice que no hay cuenta y ofrece crearla.
-  test(`olvidé mi contraseña con un correo sin cuenta lo dice y ofrece crearla (${idioma})`, async ({
+  // C-RECUPERAR-WHATSAPP (27 nov 2026) reemplaza a C-MENSAJES-ACCESO: «Recupera tu cuenta» nunca
+  // revela si una cuenta existe. Con un correo sin cuenta: ofrece crearla en la misma pantalla y, al
+  // pedir el código, dice «si la cuenta existe…» (como con una que sí existe).
+  test(`olvidé mi contraseña con un correo sin cuenta ofrece crearla y no revela nada (${idioma})`, async ({
     browser,
   }) => {
     const es = idioma === 'es';
@@ -196,10 +197,16 @@ for (const idioma of ['en', 'es'] as const) {
     await ctx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), idioma);
     const p = await ctx.newPage();
     await p.goto(`${es ? '/es' : ''}/forgot-password`);
-    await p.getByRole('textbox').first().fill('nombre@ejemplo.com');
-    await p.getByRole('button', { name: es ? 'Mandarme el enlace' : 'Send me the link' }).click();
     await expect(p.getByTestId('olvide-sin-cuenta')).toBeVisible({ timeout: 20_000 });
     await expect(p.getByTestId('accion-crear')).toBeVisible();
+    await p.getByRole('button', { name: es ? 'Con mi correo' : 'With my email' }).click();
+    await p.getByRole('textbox').first().fill('nombre@ejemplo.com');
+    await p.getByRole('radio', { name: es ? /Por correo/ : /By email/ }).check();
+    await p.getByRole('button', { name: es ? 'Mandarme el código' : 'Send me the code' }).click();
+    await expect(p.getByTestId('olvide-aviso')).toContainText(
+      es ? 'Si la cuenta existe' : 'If the account exists',
+      { timeout: 20_000 },
+    );
     if (CAPTURAS) {
       mkdirSync(join(RAIZ, 'docs', 'capturas', 'recorrido'), { recursive: true });
       await p.screenshot({
