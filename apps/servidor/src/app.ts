@@ -328,6 +328,9 @@ app.use('/datos/*', (c, next) =>
 app.use('/datos/cuentas/entrar', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/registro', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
+// C-RECUPERAR-WHATSAPP: pedir el código y escribirlo también llevan su límite por red.
+app.use('/datos/cuentas/recuperar/codigo', limiteIntentosPersistente(5, 60_000));
+app.use('/datos/cuentas/recuperar/verificar', limiteIntentosPersistente(10, 60_000));
 // C-INTENTOS-ACCESO: el aviso de un fallo que pasó en el teléfono (en memoria: el límite no escribe).
 app.use('/datos/cuentas/intento', limiteIntentos(10, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));

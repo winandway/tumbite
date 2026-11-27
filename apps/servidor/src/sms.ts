@@ -127,7 +127,13 @@ export async function twilio(
  * La baja (STOP/HELP/START) la maneja Twilio en el número gratuito por defecto: no hay webhook de
  * entrada propio; Twilio bloquea el envío a quien respondió STOP (error 21610).
  */
-export const SMS_PEDIDOS_POR_LA_PERSONA: ReadonlySet<string> = new Set(['codigo_telefono']);
+// C-RECUPERAR-WHATSAPP: el código para recuperar la cuenta lo pide la persona; el aviso de «se cambió
+// tu contraseña» es un aviso de seguridad de su propia cuenta (transaccional, uno por cambio).
+export const SMS_PEDIDOS_POR_LA_PERSONA: ReadonlySet<string> = new Set([
+  'codigo_telefono',
+  'codigo_recuperar',
+  'aviso_clave_cambiada',
+]);
 export const SMS_A_TERCEROS: ReadonlySet<string> = new Set([
   'regalo_destinatario',
   'envio_destinatario',

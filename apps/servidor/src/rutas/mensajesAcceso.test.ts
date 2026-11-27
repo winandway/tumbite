@@ -169,8 +169,10 @@ describe('C-MENSAJES-ACCESO: los escudos siguen delante', () => {
   });
 });
 
-describe('C-MENSAJES-ACCESO: recuperar dice si no hay cuenta (nunca un «ya te llegó» falso)', () => {
-  it('correo sin cuenta: 404 con «No hay ninguna cuenta con ese correo»; con cuenta, el enlace sale', async () => {
+// C-RECUPERAR-WHATSAPP (27 nov 2026, Richard por Gerencia): recuperar YA NO dice si hay cuenta (reemplaza
+// al «sin cuenta se dice» del 24 nov). La pantalla ofrece «Crear cuenta» siempre; el equipo lo ve por dentro.
+describe('C-RECUPERAR-WHATSAPP: recuperar responde igual con o sin cuenta', () => {
+  it('correo sin cuenta y correo con cuenta: la misma respuesta', async () => {
     const p = await preparar();
     const sin = await p.m.llamar(
       'POST',
@@ -179,12 +181,6 @@ describe('C-MENSAJES-ACCESO: recuperar dice si no hay cuenta (nunca un «ya te l
       undefined,
       ES,
     );
-    expect(sin.estado).toBe(404);
-    expect(sin.datos).toMatchObject({
-      error: 'No hay ninguna cuenta con ese correo.',
-      codigo: 'correo_sin_cuenta',
-      campo: 'correo',
-    });
     const con = await p.m.llamar(
       'POST',
       '/datos/cuentas/recuperar',
@@ -192,8 +188,9 @@ describe('C-MENSAJES-ACCESO: recuperar dice si no hay cuenta (nunca un «ya te l
       undefined,
       ES,
     );
+    expect(sin.estado).toBe(200);
     expect(con.estado).toBe(200);
-    expect(con.datos.ok).toBe(true);
+    expect(sin.datos).toEqual(con.datos);
   });
 });
 

@@ -118,6 +118,13 @@ import {
   respaldoPorSms,
 } from '../telefonoVuelta';
 import { telefonoE164 } from '../sms';
+import {
+  MENSAJE_SI_EXISTE,
+  MINUTOS_CODIGO_RECUPERAR,
+  avisarClaveCambiada,
+  pedirCodigoRecuperar,
+  verificarCodigoRecuperar,
+} from '../recuperarCodigo';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
 const esquemaRecuperar = z.object({
@@ -307,6 +314,7 @@ function anotarFallos(accion: AccionIntento) {
 cuentas.use('/registro', anotarFallos('registro'));
 cuentas.use('/entrar', anotarFallos('entrar'));
 cuentas.use('/recuperar', anotarFallos('recuperar'));
+cuentas.use('/recuperar/*', anotarFallos('recuperar'));
 
 /**
  * C-INTENTOS-ACCESO: lo que falló EN EL TELÉFONO y nunca llegó a ser una petición de alta (casillas
@@ -923,11 +931,24 @@ cuentas.post('/recuperar', async (c) => {
     );
     return c.json({ ok: true });
   }
-  // C-MENSAJES-ACCESO: sin cuenta se dice (antes respondía «listo» y la persona esperaba un enlace
-  // que nunca iba a llegar). El escudo y el límite por red siguen delante.
+  // C-RECUPERAR-WHATSAPP (27 nov 2026, Richard por Gerencia): NUNCA se dice si el correo tiene cuenta;
+  // la respuesta es la misma. La pantalla ofrece «Crear cuenta» siempre (así nadie espera un enlace que
+  // no va a llegar sin saber qué hacer). El correo sin cuenta sigue sumando al freno por red.
   if (!fila) {
     await sumarSinCuentaRed(db, c.req.header('cf-connecting-ip'));
-    throw new ErrorDatos(MENSAJE_CORREO_SIN_CUENTA, 'correo', 404, CODIGO_CORREO_SIN_CUENTA);
+    // C-INTENTOS-ACCESO: el equipo sigue viendo a quien se cae (solo por dentro; la persona no).
+    await anotarIntento(
+      db,
+      {
+        accion: 'recuperar',
+        paso: 'servidor',
+        correo: d.correo,
+        codigo: CODIGO_CORREO_SIN_CUENTA,
+        detalle: null,
+      },
+      origenDePeticion(c.req),
+    );
+    return c.json({ ok: true });
   }
   {
     const token = nuevoToken();
@@ -982,6 +1003,7 @@ cuentas.post('/restablecer', async (c) => {
         .bind(await hashClave(d.clave), u.id),
       db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id),
     ]);
+    await avisarClaveCambiada(c.env, db, u.id, c.req.header('cf-connecting-ip'));
     return c.json({ ok: true });
   }
   const d = await leerCuerpo(c, esquemaRestablecer);
@@ -1005,8 +1027,76 @@ cuentas.post('/restablecer', async (c) => {
     db.prepare("UPDATE recuperaciones SET usada_en = datetime('now') WHERE id = ?").bind(id),
     // Se cierran todas las sesiones viejas: si alguien tenía la cuenta abierta, queda fuera.
     db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(r.usuario_id),
+    // C-RECUPERAR-WHATSAPP: los demás pases de esta cuenta dejan de servir.
+    db
+      .prepare(
+        "UPDATE recuperaciones SET usada_en = datetime('now') WHERE usuario_id = ? AND usada_en IS NULL",
+      )
+      .bind(r.usuario_id),
   ]);
+  // C-RECUPERAR-WHATSAPP: queda en la auditoría y se avisa por el otro canal.
+  await avisarClaveCambiada(c.env, db, r.usuario_id, c.req.header('cf-connecting-ip'));
   return c.json({ ok: true });
+});
+
+/**
+ * C-RECUPERAR-WHATSAPP (27 nov 2026): recuperar la cuenta con un código. La persona escribe su celular
+ * o su correo y elige cómo recibirlo (WhatsApp, recomendado; correo; o SMS si WhatsApp no le llega).
+ * La respuesta es SIEMPRE la misma, exista o no la cuenta.
+ */
+const esquemaRecuperarCodigo = z.object({
+  identificador: z
+    .string()
+    .trim()
+    .min(3, { error: 'Escribe tu número de celular o tu correo.' })
+    .max(120),
+  paisTelefono: z.string().trim().toUpperCase().length(2).optional(),
+  canal: z.enum(['whatsapp', 'sms', 'correo']).default('whatsapp'),
+  idioma: z.enum(['es', 'en']).default('es'),
+});
+const esquemaRecuperarVerificar = z.object({
+  identificador: z.string().trim().min(3).max(120),
+  paisTelefono: z.string().trim().toUpperCase().length(2).optional(),
+  codigo: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, { error: 'El código tiene 6 números.' }),
+  idioma: z.enum(['es', 'en']).default('es'),
+});
+
+cuentas.post('/recuperar/codigo', async (c) => {
+  await escudo(c);
+  const d = await leerCuerpo(c, esquemaRecuperarCodigo);
+  const db = base(c);
+  await exigirRedSinPausa(db, c.req.header('cf-connecting-ip'));
+  let segundoPlano: ((p: Promise<unknown>) => void) | undefined;
+  try {
+    const ctx = c.executionCtx;
+    segundoPlano = (p) => ctx.waitUntil(p);
+  } catch {
+    // Sin contexto (pruebas): se manda en la misma petición.
+  }
+  await pedirCodigoRecuperar(
+    c.env,
+    db,
+    d,
+    { ip: c.req.header('cf-connecting-ip'), ipPais: c.req.header('cf-ipcountry') },
+    segundoPlano,
+  );
+  return c.json({
+    ok: true,
+    mensaje: MENSAJE_SI_EXISTE[d.idioma],
+    venceEnMinutos: MINUTOS_CODIGO_RECUPERAR,
+  });
+});
+
+cuentas.post('/recuperar/verificar', async (c) => {
+  const d = await leerCuerpo(c, esquemaRecuperarVerificar);
+  const cuentasAbiertas = await verificarCodigoRecuperar(base(c), d, {
+    ip: c.req.header('cf-connecting-ip'),
+    ipPais: c.req.header('cf-ipcountry'),
+  });
+  return c.json({ ok: true, cuentas: cuentasAbiertas });
 });
 
 cuentas.post('/salir', async (c) => {
