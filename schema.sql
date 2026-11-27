@@ -125,6 +125,42 @@ CREATE TABLE IF NOT EXISTS recuperaciones (
 );
 CREATE INDEX IF NOT EXISTS recuperaciones_usuario ON recuperaciones(usuario_id, creada_en);
 
+-- C-RECUPERAR-WHATSAPP (27 nov 2026): recuperar la cuenta con un código por WhatsApp, SMS o correo.
+-- Nada guarda el celular ni el correo escrito: solo su huella. El código, solo su hash.
+CREATE TABLE IF NOT EXISTS codigos_recuperacion (
+  id TEXT PRIMARY KEY,
+  identificador_hash TEXT NOT NULL,
+  canal TEXT NOT NULL,
+  usuarios TEXT NOT NULL,
+  codigo_hash TEXT NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  usado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS codigos_recuperacion_huella ON codigos_recuperacion(identificador_hash, creado_en);
+-- Topes: 3 envíos por hora por lo escrito y por destino, exista o no la cuenta.
+CREATE TABLE IF NOT EXISTS envios_recuperacion (
+  id TEXT PRIMARY KEY,
+  identificador_hash TEXT NOT NULL,
+  destino_hash TEXT,
+  ip TEXT,
+  canal TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS envios_recuperacion_huella ON envios_recuperacion(identificador_hash, creado_en);
+CREATE INDEX IF NOT EXISTS envios_recuperacion_destino ON envios_recuperacion(destino_hash, creado_en);
+-- Auditoría de cada recuperación (pedido, código enviado, bueno o malo, tope, contraseña cambiada).
+CREATE TABLE IF NOT EXISTS auditoria_recuperacion (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT,
+  identificador_hash TEXT,
+  canal TEXT,
+  evento TEXT NOT NULL,
+  ip TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS auditoria_recuperacion_usuario ON auditoria_recuperacion(usuario_id, creado_en);
+
 CREATE TABLE IF NOT EXISTS restaurantes (
   id TEXT PRIMARY KEY,
   dueno_id TEXT NOT NULL UNIQUE REFERENCES usuarios(id),

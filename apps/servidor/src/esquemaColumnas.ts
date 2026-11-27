@@ -90,6 +90,33 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "expira_en",
     "usada_en"
   ],
+  "codigos_recuperacion": [
+    "id",
+    "identificador_hash",
+    "canal",
+    "usuarios",
+    "codigo_hash",
+    "intentos",
+    "creado_en",
+    "usado_en"
+  ],
+  "envios_recuperacion": [
+    "id",
+    "identificador_hash",
+    "destino_hash",
+    "ip",
+    "canal",
+    "creado_en"
+  ],
+  "auditoria_recuperacion": [
+    "id",
+    "usuario_id",
+    "identificador_hash",
+    "canal",
+    "evento",
+    "ip",
+    "creado_en"
+  ],
   "restaurantes": [
     "id",
     "dueno_id",

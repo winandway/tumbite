@@ -55,8 +55,18 @@ const QUE_HACER = new Map<AppDeCelular, string>([
  */
 export function mensajeCuentaDeOtraApp(cuenta: AppDeCelular, app: AppDeCelular): string {
   const donde = app === 'cliente' ? 'esta app' : NOMBRE_APP.get(app);
-  return `Este correo ya es de ${CUENTA.get(cuenta)} de Divoox y no sirve en ${donde}. ${QUE_HACER.get(app)} ${SIGUE.get(cuenta)}`;
+  // C-CUENTA-UNICA-COMERCIO (27 nov 2026): la persona con cuenta de cliente o de conductor registra su
+  // restaurante con ESA misma cuenta (Mis restaurantes), nunca con un correo nuevo.
+  const que =
+    app === 'restaurante' && esPapelDePersona(cuenta)
+      ? QUE_HACER_PERSONA_COMERCIO
+      : QUE_HACER.get(app);
+  return `Este correo ya es de ${CUENTA.get(cuenta)} de Divoox y no sirve en ${donde}. ${que} ${SIGUE.get(cuenta)}`;
 }
+
+/** C-CUENTA-UNICA-COMERCIO: lo que hace en Restaurants quien ya tiene su cuenta personal. */
+export const QUE_HACER_PERSONA_COMERCIO =
+  'Para registrar tu restaurante con esta misma cuenta, entra en divoox.com/panel con este correo y tu contraseña y toca «Mis restaurantes».';
 
 /**
  * C-CUENTA-UNICA (24 nov 2026, Richard; todos los países). Una persona, una cuenta, varios papeles:

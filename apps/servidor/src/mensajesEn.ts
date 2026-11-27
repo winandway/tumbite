@@ -1087,6 +1087,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe tu contraseña.', 'Enter your password.'],
   ['Escribe tu nombre.', 'Enter your name.'],
   ['Escribe un correo válido.', 'Enter a valid email.'],
+  ['Escribe tu número de celular o tu correo.', 'Enter your cell phone number or your email.'],
   ['Ese cliente no existe.', 'That customer doesn’t exist.'],
   ['Esa cuenta no existe o ya está borrada.', 'That account doesn’t exist or was already deleted.'],
   // C-RASTRO: el embudo del registro (panel del equipo).

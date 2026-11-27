@@ -461,6 +461,9 @@ export async function borrarCuenta(
     db.prepare('DELETE FROM envios_codigo_telefono WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
+    // C-RECUPERAR-WHATSAPP: sus códigos para recuperar la cuenta y su rastro de recuperaciones.
+    db.prepare('DELETE FROM codigos_recuperacion WHERE instr(usuarios, ?) > 0').bind(u.id),
+    db.prepare('DELETE FROM auditoria_recuperacion WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
     // C-BORRADO-ESQUEMA: su correo en la lista de correos que rebotaron.
     db.prepare('DELETE FROM correos_rebotados WHERE correo = ?').bind(u.correo),

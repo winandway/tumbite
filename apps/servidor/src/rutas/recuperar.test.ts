@@ -66,13 +66,14 @@ describe('recuperar la contraseña por correo', () => {
     expect(otra.estado).toBe(410);
   });
 
-  // C-MENSAJES-ACCESO (24 nov 2026, decisión de Richard): sin cuenta se dice, en vez de un «listo» falso.
-  it('con un correo que no existe lo dice y no manda nada', async () => {
+  // C-RECUPERAR-WHATSAPP (27 nov 2026, Richard por Gerencia): nunca se dice si el correo tiene cuenta
+  // (reemplaza al «sin cuenta se dice» del 24 nov); la pantalla ofrece «Crear cuenta» siempre.
+  it('con un correo que no existe responde igual y no manda nada', async () => {
     const enviados = buzon();
     const m = mundo(ENV);
     const r = await m.llamar('POST', '/datos/cuentas/recuperar', { correo: 'nadie@ejemplo.com' });
-    expect(r.estado).toBe(404);
-    expect(r.datos.codigo).toBe('correo_sin_cuenta');
+    expect(r.estado).toBe(200);
+    expect(r.datos).toEqual({ ok: true });
     expect(enviados).toHaveLength(0);
   });
 

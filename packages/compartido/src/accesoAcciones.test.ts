@@ -20,6 +20,7 @@ describe('qué botón acompaña a cada error', () => {
   });
   it('al crear cuenta con un correo que ya la tiene → «Entrar»', () => {
     expect(accionDeError('correo_con_cuenta', 'registro')).toBe('entrar');
+    expect(accionDeError('telefono_con_cuenta', 'registro')).toBe('entrar');
     expect(textoAccionAcceso('entrar', 'en')).toBe('Sign in');
   });
   it('lo demás (o un servidor viejo sin código) no pone botón', () => {
