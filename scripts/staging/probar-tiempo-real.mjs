@@ -17,7 +17,11 @@ for (const [k, v] of Object.entries({
     console.error(`Falta ${k}.`);
     process.exit(1);
   }
-if (!/staging\.tumbite\.com|tumbite-pruebas/.test(URL_PRUEBAS)) {
+if (
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    URL_PRUEBAS,
+  )
+) {
   console.error('Solo se corre contra el sitio de pruebas.');
   process.exit(1);
 }

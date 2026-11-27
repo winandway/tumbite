@@ -1,0 +1,206 @@
+{
+  "anuncios": {
+    "centavosPorPedido": 0,
+    "maxEnLista": 2
+  },
+  "fin_recargas:US": {
+    "activas": true,
+    "minimo": 500,
+    "maximo": 100000,
+    "sugeridos": [1000, 2000, 5000, 10000],
+    "automaticaPermitida": true
+  },
+  "ganar_por_tiempo": {
+    "centavosHora": 0,
+    "centavosMilla": 0
+  },
+  "pago_pico": {
+    "centavos": 0,
+    "presupuestoDiaCentavos": 0
+  },
+  "pais:US": {
+    "moneda": "USD",
+    "decimales": 2,
+    "efectivoActivo": false,
+    "transferenciaRepartidorActiva": false,
+    "recargasPuntoVentaActivas": false,
+    "recargasStripeActivas": false,
+    "comisionPb": null,
+    "cargoFijo": 0,
+    "topeEfectivoDiario": null,
+    "umbralDeudaCliente": 0,
+    "recargaMin": 1,
+    "recargaStripeMin": null,
+    "recargaMax": 1000000000,
+    "recargasSemanaMax": 20,
+    "comisionPuntoPb": 0,
+    "tarifas": null,
+    "propinasPb": null,
+    "plazoPapeles": {
+      "dias": 0,
+      "paraEmpezar": [],
+      "exentos": [],
+      "asistente": false,
+      "aprobacionAutomatica": false
+    },
+    "papelesPais": {
+      "activa": false,
+      "papeles": [
+        {
+          "tipo": "registro",
+          "donde": "vehiculo",
+          "servicios": ["moto"],
+          "es": "Registro o título del vehículo",
+          "en": "Vehicle registration or title",
+          "vence": false,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "seguro",
+          "donde": "vehiculo",
+          "servicios": ["moto"],
+          "es": "Seguro del vehículo",
+          "en": "Vehicle insurance",
+          "vence": true,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "seguro_pasajeros",
+          "donde": "vehiculo",
+          "servicios": ["moto"],
+          "es": "Seguro que cubre a los pasajeros",
+          "en": "Rider coverage insurance",
+          "vence": true,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "foto_frente",
+          "donde": "vehiculo",
+          "servicios": ["moto"],
+          "es": "Foto del vehículo de frente",
+          "en": "Front photo of the vehicle",
+          "vence": false,
+          "foto": true,
+          "frena": false
+        },
+        {
+          "tipo": "foto_placa",
+          "donde": "vehiculo",
+          "servicios": ["moto"],
+          "es": "Foto de la placa",
+          "en": "Photo of the license plate",
+          "vence": false,
+          "foto": true,
+          "frena": false
+        },
+        {
+          "tipo": "registro",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Registro o título del vehículo",
+          "en": "Vehicle registration or title",
+          "vence": false,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "seguro",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Seguro del vehículo",
+          "en": "Vehicle insurance",
+          "vence": true,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "seguro_pasajeros",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Seguro que cubre a los pasajeros",
+          "en": "Rider coverage insurance",
+          "vence": true,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "inspeccion",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Inspección del vehículo",
+          "en": "Vehicle inspection",
+          "vence": true,
+          "foto": true,
+          "frena": true
+        },
+        {
+          "tipo": "foto_frente",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Foto del vehículo de frente",
+          "en": "Front photo of the vehicle",
+          "vence": false,
+          "foto": true,
+          "frena": false
+        },
+        {
+          "tipo": "foto_placa",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Foto de la placa",
+          "en": "Photo of the license plate",
+          "vence": false,
+          "foto": true,
+          "frena": false
+        },
+        {
+          "tipo": "foto_interior",
+          "donde": "vehiculo",
+          "servicios": ["carro"],
+          "es": "Foto del interior",
+          "en": "Photo of the interior",
+          "vence": false,
+          "foto": true,
+          "frena": false
+        }
+      ]
+    },
+    "comidaPagoRestaurante": false,
+    "comidaComisionEnvioPb": 0,
+    "pagoComida": {
+      "minutosConductor": 10,
+      "minutosPagar": 15,
+      "avisoConfirmar1": 2,
+      "avisoConfirmar2": 5,
+      "minutosConfirmar": 10
+    },
+    "saldoRestaurante": {
+      "recargasActivas": false,
+      "minimo": 100,
+      "maximo": 100000,
+      "instruccionesEs": "",
+      "instruccionesEn": ""
+    },
+    "topes": null
+  },
+  "plus": {
+    "centavosMes": 0,
+    "minimoSubtotal": 1200,
+    "servicioDescuentoPct": 50
+  },
+  "promociones_restaurante": {
+    "encendidas": true
+  },
+  "quejas": {
+    "reembolsoAuto": false,
+    "topeCentavos": 1500
+  },
+  "tarjetas_regalo": {
+    "activas": false,
+    "minimo": 1500,
+    "maximo": 50000
+  }
+}

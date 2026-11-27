@@ -12,7 +12,12 @@ import { expect, test } from './fixtures';
  */
 const STAGING = Boolean(process.env.RECORRIDO_URL);
 test.skip(!STAGING, 'solo en el sitio de pruebas (Stripe en modo prueba de verdad)');
-if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRIDO_URL ?? ''))
+if (
+  STAGING &&
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    process.env.RECORRIDO_URL ?? '',
+  )
+)
   throw new Error('Esta prueba solo corre contra el sitio de pruebas.');
 
 const HOJA = [

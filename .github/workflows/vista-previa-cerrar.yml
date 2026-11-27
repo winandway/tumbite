@@ -1,0 +1,30 @@
+name: vista-previa-cerrar
+# C-VISTA-PREVIA-RAMA (26 nov 2026): al borrar una rama «fase-*» se borran su worker y su base aparte
+# (divoox-preview-<rama>). Nunca otra base: el guion se niega con la de producción o la del sitio
+# compartido. A mano también se puede cerrar la de cualquier rama.
+on:
+  delete:
+  workflow_dispatch:
+    inputs:
+      rama:
+        description: 'Rama cuya vista previa se cierra (fase-…)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  cerrar:
+    if: ${{ vars.VISTA_PREVIA_POR_RAMA == 'si' && (github.event_name == 'workflow_dispatch' || (github.event.ref_type == 'branch' && startsWith(github.event.ref, 'fase-'))) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Borrar el worker y la base de la vista previa
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN_VISTAS_PREVIAS }}
+          STRIPE_SECRET_KEY_PRUEBA: ${{ secrets.STRIPE_SECRET_KEY_PRUEBA }}
+          STRIPE_PUBLISHABLE_KEY_PRUEBA: ${{ secrets.STRIPE_PUBLISHABLE_KEY_PRUEBA }}
+          RAMA: ${{ github.event.inputs.rama || github.event.ref }}
+        run: node scripts/vista-previa/vista-previa.mjs cerrar "$RAMA"

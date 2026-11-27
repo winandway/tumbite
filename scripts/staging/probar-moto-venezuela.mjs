@@ -20,7 +20,9 @@ import { pedirConReintento } from './pedirConReintento.mjs';
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? '').replace(/\/$/, '');
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(URL_PRUEBAS);
 if (
-  !/^https:\/\/(staging\.tumbite\.com|tumbite-pruebas\.sitios\.dev)$/.test(URL_PRUEBAS) &&
+  !/^https:\/\/(staging\.tumbite\.com|tumbite-pruebas\.sitios\.dev|divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev)$/.test(
+    URL_PRUEBAS,
+  ) &&
   !LOCAL
 ) {
   console.error(
@@ -673,6 +675,23 @@ try {
   // efectivo y saldo parcial + Pago Móvil (en mano solo el resto). El saldo del pasajero es fijo
   // (zz-mtve-c) y no se borra: se mide contra lo que tenía. Si el conductor llegó al tope diario de
   // viajes con saldo (antifraude, 10 en 24 h), eso también es el freno funcionando: se avisa y sigue.
+  // C-VISTA-PREVIA-RAMA (26 nov 2026): esta parte mide la comisión del prepago, así que exige que en
+  // la ciudad Moto la pague el conductor. Eso lo deja la semilla del tabulador, que en una base nueva
+  // corre en el arranque siguiente a crear la ciudad (a veces a mitad de esta vuelta). Se fija aquí y
+  // el «finally» lo devuelve a lo que había.
+  quienPagaMotoAntes =
+    ok(await equipo('GET', '/datos/admin/finanzas/quien-paga'), 'leer quién paga').reglas.find(
+      (r) => r.pais === 'VE' && r.ciudad === CIUDAD.id && r.servicio === 'moto',
+    )?.valor ?? 'del_pais';
+  ok(
+    await equipo('PUT', '/datos/admin/finanzas/quien-paga', {
+      pais: 'VE',
+      ciudad: CIUDAD.id,
+      servicio: 'moto',
+      valor: 'conductor',
+    }),
+    'Moto en la ciudad la paga el conductor',
+  );
   await saldoDivooxEnVivo();
 
   // 8. C-QUIEN-PAGA-VIAJES: la palanca, en la ciudad de la vuelta (el resto del país no se toca), con
@@ -680,10 +699,6 @@ try {
   // C-QUIEN-PAGA-SERVICIO: la regla de Moto de la ciudad manda sobre la de todos (en El Vigía la
   // semilla del tabulador la deja en «conductor»): la palanca se mueve en la de Moto y al final vuelve
   // a lo que había (nunca se borra la regla del tabulador).
-  quienPagaMotoAntes =
-    ok(await equipo('GET', '/datos/admin/finanzas/quien-paga'), 'leer quién paga').reglas.find(
-      (r) => r.pais === 'VE' && r.ciudad === CIUDAD.id && r.servicio === 'moto',
-    )?.valor ?? 'del_pais';
   for (const valor of ['cliente', 'mitad']) {
     ok(
       await equipo('PUT', '/datos/admin/finanzas/quien-paga', {

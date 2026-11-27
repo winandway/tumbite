@@ -25,7 +25,10 @@ describe('C-PUBLICAR-SE-RECUPERA', () => {
   });
   it('«pruebas-rama» vuelve a llamar a «publicar» al terminar, pase o falle', () => {
     const y = leer('pruebas-rama.yml');
-    expect(y).toMatch(/republicar:\n\s+needs: pruebas\n\s+if: \$\{\{ always\(\) \}\}/);
+    // C-VISTA-PREVIA-RAMA: con la vista previa por rama encendida, este flujo (y su republicar) se apaga.
+    expect(y).toMatch(
+      /republicar:\n\s+needs: pruebas\n\s+if: \$\{\{ always\(\) && vars\.VISTA_PREVIA_POR_RAMA != 'si' \}\}/,
+    );
     expect(y).toContain('gh workflow run publicar.yml');
     expect(y).toMatch(/permissions:\n\s+contents: write\n\s+actions: write/);
   });

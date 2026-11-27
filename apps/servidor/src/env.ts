@@ -284,6 +284,11 @@ export interface Env extends Variables {
    * variable del panel: la pone (y la quita) `marcarSitioDePruebas` en cada petición según el dominio.
    */
   SITIO_DE_PRUEBAS?: string;
+  /**
+   * C-VISTA-PREVIA-RAMA: el nombre de la base D1 de la vista previa de una rama («divoox-preview-…»).
+   * Lo pone el guion de vistas previas; en producción y en el sitio compartido no existe.
+   */
+  VISTA_PREVIA_BASE?: string;
 }
 
 export function revisarEnv(env: Record<string, unknown>) {

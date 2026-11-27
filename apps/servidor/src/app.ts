@@ -184,7 +184,13 @@ import { saludAutorizaciones } from './autorizacionVencida';
 import { saludRutas } from './rutaPorCalles';
 import { saludLlegada } from './llegadaEstimada';
 
+import { candadoVistaPrevia } from './vistaPrevia';
+
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+// C-VISTA-PREVIA-RAMA: una vista previa por rama solo atiende con SU base aparte (nunca producción
+// ni el sitio de pruebas compartido). Va primero: antes de cualquier lectura o escritura.
+app.use('*', candadoVistaPrevia);
 
 // C-DOMINIO-DIVOOX: las páginas viven en divoox.com; la API sigue respondiendo en los dos.
 app.use('*', async (c, next) => {

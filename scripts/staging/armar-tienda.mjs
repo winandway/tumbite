@@ -10,7 +10,9 @@ import { execSync } from 'node:child_process';
 import { pedirConReintento } from './pedirConReintento.mjs';
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? 'https://staging.tumbite.com').replace(/\/$/, '');
-if (!/^https:\/\/staging\./.test(URL_PRUEBAS)) {
+if (
+  !/^https:\/\/(staging\.|divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$)/.test(URL_PRUEBAS)
+) {
   console.error('PARADA: esto solo corre contra el sitio de pruebas (staging).');
   process.exit(1);
 }

@@ -10,7 +10,9 @@ import { pedirConReintento } from './pedirConReintento.mjs';
 // Uso: URL_PRUEBAS=https://staging.tumbite.com ADMIN_CORREO=… ADMIN_CLAVE=… DUENO_CORREO=… DUENO_CLAVE=… node scripts/staging/probar-billetera-flex.mjs
 
 const URL_PRUEBAS = (process.env.URL_PRUEBAS ?? '').replace(/\/$/, '');
-if (!/^https:\/\/staging\./.test(URL_PRUEBAS)) {
+if (
+  !/^https:\/\/(staging\.|divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$)/.test(URL_PRUEBAS)
+) {
   console.error('PARADA: esto solo corre contra el sitio de pruebas (staging).');
   process.exit(1);
 }

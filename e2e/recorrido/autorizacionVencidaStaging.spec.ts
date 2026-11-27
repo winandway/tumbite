@@ -40,7 +40,12 @@ test.afterAll(async () => {
   test.setTimeout(90_000);
   await esperarVentanaLibre();
 });
-if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRIDO_URL ?? ''))
+if (
+  STAGING &&
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    process.env.RECORRIDO_URL ?? '',
+  )
+)
   throw new Error('Esta prueba solo corre contra el sitio de pruebas.');
 
 type EstadoAutorizacion = {

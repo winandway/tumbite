@@ -7,7 +7,11 @@ if (!base || !secreto) {
   console.error('Faltan URL_PRUEBAS o RELOJ_SECRETO.');
   process.exit(1);
 }
-if (!/staging\.tumbite\.com|tumbite-pruebas/.test(base)) {
+if (
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    base,
+  )
+) {
   console.error('Solo se corre contra el sitio de pruebas.');
   process.exit(1);
 }

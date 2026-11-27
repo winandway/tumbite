@@ -1,0 +1,162 @@
+name: vista-previa-rama
+# C-VISTA-PREVIA-RAMA (26 nov 2026): cada rama «fase-*» se prueba en SU propio sitio de pruebas
+# (divoox-preview-<rama>.windoce1.workers.dev) con SU propia base D1, creada y sembrada sola.
+# Nunca toca producción ni el sitio de pruebas compartido (staging.tumbite.com): no hay ningún paso
+# que empuje a yapanel-pruebas ni a yapanel-build, y el candado del servidor y del guion lo impiden.
+# Ramas distintas corren a la vez; dos empujes de la MISMA rama: el nuevo reemplaza al viejo.
+# Se enciende con la variable del repositorio VISTA_PREVIA_POR_RAMA=si (y entonces «pruebas-rama» se
+# apaga: la fila compartida queda solo para main). Guía: docs/VISTAS-PREVIAS-POR-RAMA.md.
+on:
+  push:
+    branches: ['fase-*']
+  workflow_dispatch:
+
+concurrency:
+  group: vista-previa-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    if: ${{ vars.VISTA_PREVIA_POR_RAMA == 'si' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      VERSION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+      - run: npm run audit
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2 (fijado al commit)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # C-ENTORNOS-SEPARADOS: el paquete de pruebas es el que va a la vista previa; el de producción
+      # solo se arma y se revisa (no se publica), para probar que sale limpio.
+      - name: Paquete de PRUEBAS (revisado)
+        run: bash scripts/empaquetar.sh pruebas
+      - name: Paquete de PRODUCCIÓN (solo se revisa, no se publica)
+        run: bash scripts/empaquetar.sh produccion
+      - name: Abrir la vista previa de esta rama (su worker y su base aparte)
+        id: vp
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN_VISTAS_PREVIAS }}
+          STRIPE_SECRET_KEY_PRUEBA: ${{ secrets.STRIPE_SECRET_KEY_PRUEBA }}
+          STRIPE_PUBLISHABLE_KEY_PRUEBA: ${{ secrets.STRIPE_PUBLISHABLE_KEY_PRUEBA }}
+        run: node scripts/vista-previa/vista-previa.mjs abrir "${{ github.ref_name }}"
+      - name: Semáforo — la vista previa sirve esta versión y responde 200
+        env:
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          SEMAFORO_INTENTOS: '20'
+          SEMAFORO_PAUSA: '6'
+        run: bash scripts/semaforo.sh "${{ steps.vp.outputs.url }}" "${VERSION:0:7}"
+        timeout-minutes: 10
+      - name: Viaje de Moto de punta a punta (C-MOTO-SOLO-PRUEBAS)
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+        run: node scripts/staging/probar-moto.mjs
+      - name: Moto en Venezuela de punta a punta (alta, recarga, efectivo, pago móvil, sin saldo)
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-moto-venezuela.mjs
+      - name: Agente Divoox de punta a punta
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-agente-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-agente.mjs
+      - name: Regalo con viaje real de punta a punta (C-REGALO-VIAJE-REAL)
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+        run: node scripts/staging/probar-regalo-viaje-real.mjs
+      - name: Comida en Venezuela de punta a punta (El Vigía, efectivo, pago móvil, sin saldo, cancelación)
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-comida-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-comida-venezuela.mjs
+      # Lo que cobra con tarjeta necesita las llaves de Stripe de MODO PRUEBA de la vista previa
+      # (secretos STRIPE_SECRET_KEY_PRUEBA y STRIPE_PUBLISHABLE_KEY_PRUEBA). Sin ellas se dice en rojo.
+      - name: Sin llaves de Stripe de prueba — los pasos con tarjeta NO se probaron
+        if: ${{ !cancelled() && steps.vp.outputs.stripe != 'si' }}
+        run: |
+          echo "::error::La vista previa no tiene llaves de Stripe de modo prueba: Perú con tarjeta, Carro con tarjeta, las pruebas S, el recorrido de Comida y la conciliación NO se probaron en esta rama."
+          exit 1
+      - name: Ica, Perú, de punta a punta (recarga con tarjeta de prueba en soles, efectivo, Yape, Plin)
+        if: ${{ !cancelled() && steps.vp.outputs.stripe == 'si' }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-peru-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-moto-peru.mjs
+      - name: Carro de punta a punta (El Vigía, reserva, Detroit con tarjeta de prueba y propina)
+        if: ${{ !cancelled() && steps.vp.outputs.stripe == 'si' }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-carro-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-carro.mjs
+      - name: Pruebas S de la Fase 0 (S2–S5, S7, S11)
+        if: ${{ !cancelled() && steps.vp.outputs.stripe == 'si' }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-staging.mjs
+      - name: Recorrido completo de Comida (Stripe en modo prueba)
+        if: ${{ !cancelled() && steps.vp.outputs.stripe == 'si' }}
+        env:
+          RECORRIDO_URL: ${{ steps.vp.outputs.url }}
+          RECORRIDO_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          npx playwright install --with-deps chromium || npx playwright install chromium
+          npx playwright test -c playwright.recorrido-staging.config.ts
+      - name: Filas que leyó y escribió esta vuelta (presupuesto)
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/cuenta-vuelta.mjs
+      - name: Rescatar cobros cortados con las tareas de dinero del reloj (C-COBRO-SEGUNDO-PLANO)
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+        run: node scripts/staging/rescatar-cobros.mjs
+      - name: Conciliación de saldos contra Stripe (modo prueba)
+        if: ${{ !cancelled() && steps.vp.outputs.stripe == 'si' }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+        run: node scripts/staging/conciliar-staging.mjs
+      - name: Guardar capturas y rastro del recorrido si falló
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: recorrido-vista-previa
+          path: test-results/
+          retention-days: 7
+      - name: Dónde quedó la vista previa
+        if: ${{ always() && steps.vp.outputs.url != '' }}
+        run: |
+          echo "::notice::Vista previa de ${{ github.ref_name }}: ${{ steps.vp.outputs.url }} (base ${{ steps.vp.outputs.base }}, abierta en ${{ steps.vp.outputs.segundos }} s)"

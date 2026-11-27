@@ -35,7 +35,12 @@ const RAIZ = join(__dirname, '..', '..');
  * la ruta de diagnóstico del sitio de pruebas (solo existe allí). Nunca contra producción.
  */
 const STAGING = Boolean(process.env.RECORRIDO_URL);
-if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRIDO_URL ?? ''))
+if (
+  STAGING &&
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    process.env.RECORRIDO_URL ?? '',
+  )
+)
   throw new Error('El recorrido remoto solo corre contra el sitio de pruebas.');
 const DATOS = (
   STAGING

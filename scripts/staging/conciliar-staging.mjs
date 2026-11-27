@@ -3,7 +3,13 @@ import { pedirConReintento } from './pedirConReintento.mjs';
 // por dentro y cada cobro coincide con Stripe (modo prueba). Corre desde GitHub con el secreto.
 const base = process.env.URL_PRUEBAS;
 const secreto = process.env.RELOJ_SECRETO;
-if (!base || !secreto || !/staging\.tumbite\.com|tumbite-pruebas/.test(base)) {
+if (
+  !base ||
+  !secreto ||
+  !/staging\.tumbite\.com|tumbite-pruebas|^https:\/\/divoox-preview-[a-z0-9-]+\.windoce1\.workers\.dev$/.test(
+    base,
+  )
+) {
   console.error('Solo contra el sitio de pruebas, con URL_PRUEBAS y RELOJ_SECRETO.');
   process.exit(1);
 }
