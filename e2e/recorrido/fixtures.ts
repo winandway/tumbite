@@ -91,6 +91,25 @@ async function avisoIaContestado(c: BrowserContext) {
     },
   );
 }
+/**
+ * C-RECORRIDO-PREGUNTA-LUGAR (26 nov 2026): las cuentas que los guiones crean por la API no dicen dónde
+ * viven, y al abrir la app les sale «¿Dónde vives?» (PreguntaLugar) encima de todo: tumbaba cada
+ * recorrido que no era del registro. En el arnés esa pregunta cuenta como ya hecha (la marca
+ * `divoox.lugar-preguntado.<cuenta>` del teléfono), como el aviso de IA de arriba. La prueba que mira
+ * la pregunta de verdad pone `globalThis.__preguntaLugarDeVerdad = true` en su contexto.
+ */
+async function preguntaLugarHecha(c: BrowserContext) {
+  await c.addInitScript(() => {
+    const leer = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (this: Storage, k: string) {
+      const v = leer.call(this, k);
+      const deVerdad = (globalThis as { __preguntaLugarDeVerdad?: boolean })
+        .__preguntaLugarDeVerdad;
+      if (v === null && !deVerdad && k.startsWith('divoox.lugar-preguntado.')) return '1';
+      return v;
+    };
+  });
+}
 function contextoReintentado(c: BrowserContext): BrowserContext {
   const nueva = c.newPage.bind(c);
   c.newPage = async () => conNavegacionReintentada(await nueva());
@@ -103,6 +122,7 @@ export const test = base.extend<object, { browser: Browser }>({
   },
   page: async ({ page }, usar) => {
     await avisoIaContestado(page.context());
+    await preguntaLugarHecha(page.context());
     await usar(conNavegacionReintentada(page));
   },
   browser: [
@@ -111,6 +131,7 @@ export const test = base.extend<object, { browser: Browser }>({
       browser.newContext = async (opciones) => {
         const c = await nuevo(opciones);
         await avisoIaContestado(c);
+        await preguntaLugarHecha(c);
         return contextoReintentado(c);
       };
       await usar(browser);

@@ -96,6 +96,7 @@ import { AlarmaPanico } from './AlarmaPanico';
 import { SuperViajesFijos } from './SuperViajesFijos';
 import { SuperViaje } from './SuperViaje';
 import { SuperEmbudo } from './SuperEmbudo';
+import { SuperEsperaCiudad } from './SuperEsperaCiudad';
 import { SuperConfiguracion } from './SuperConfiguracion';
 import { ProveedorHorario } from './horario';
 import { SuperMoto } from './SuperMoto';
@@ -221,6 +222,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
   // C-RASTRO: el embudo del registro.
   if (sub === '/signups') return <SuperEmbudo idioma={idioma} />;
+  // C-REGISTRO-TODO-EL-PAIS: cuántos esperan en cada ciudad sin zona abierta.
+  if (sub === '/city-waitlist') return <SuperEsperaCiudad base={base} idioma={idioma} />;
   if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;
   if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;

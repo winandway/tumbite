@@ -1,4 +1,5 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test';
+import { celularDePrueba } from './celularDePrueba';
 
 /**
  * C-REGISTRO-PAUSADO (3 nov 2026): en el sitio de pruebas el registro admite 10 cuentas por minuto
@@ -13,10 +14,22 @@ const MIOS = 5;
 const hechos: number[] = [];
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * C-CELULAR-DE-GUION-REINTENTO (26 nov 2026, pasada 45878257110, LAN-2a): el celular de guion sale al
+ * azar y las cuentas del sitio de pruebas se quedan; además el servidor compara las diez últimas cifras
+ * con los teléfonos viejos sin país. De vez en cuando el número ya tenía cuenta y el registro contestaba
+ * 409 «Ese teléfono ya tiene una cuenta», tumbando una prueba que no tenía nada que ver. Si el número
+ * es de guion (lo hizo `celularDePrueba`, «+1» y diez cifras) y choca, se saca otro y se reintenta.
+ */
+const DE_GUION = /^\+1\d{10}$/;
+const choqueDeCelular = async (r: APIResponse) =>
+  r.status() === 409 && /tel[eé]fono|phone/i.test(await r.text());
+
 export async function registrarPausado(
   request: APIRequestContext,
-  data: Record<string, unknown>,
+  datos: Record<string, unknown>,
 ): Promise<APIResponse> {
+  let data = datos;
   for (let intento = 1; ; intento++) {
     for (;;) {
       const ahora = Date.now();
@@ -26,6 +39,15 @@ export async function registrarPausado(
     }
     hechos.push(Date.now());
     const r = await request.post('/datos/cuentas/registro', { data });
+    if (
+      intento < 4 &&
+      typeof data.telefono === 'string' &&
+      DE_GUION.test(data.telefono) &&
+      (await choqueDeCelular(r))
+    ) {
+      data = { ...data, telefono: celularDePrueba() };
+      continue;
+    }
     if (r.status() !== 429 || intento >= 4) return r;
     await dormir(20_000);
   }

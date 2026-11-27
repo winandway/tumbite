@@ -24,6 +24,8 @@ import {
   llaveBorrador,
   pasoDeCasilla,
   pasoVigente,
+  lugarDeBorrador,
+  LUGAR_OTRO_PAIS,
   type CasillaRegistro,
   type FalloCasilla,
   type PasoDeFormulario,
@@ -48,6 +50,8 @@ import { RevisaTusDatos } from './RevisaTusDatos';
 import { SelectorPaisTelefono, usePaisSugerido } from './SelectorPaisTelefono';
 import { useInvitacionLider } from './invitacionLider';
 import { ActivarPapel } from './ActivarPapel';
+import { SelectorLugar } from './SelectorLugar';
+import { marcarOtroPais } from './LugarCuenta';
 
 const INICIAL = {
   nombre: '',
@@ -62,6 +66,8 @@ const INICIAL = {
   paisTelefono: '',
   // C-FORMULARIO-POR-PASOS: el paso del registro en el que iba (vuelve al reabrir).
   pasoRegistro: '',
+  // C-REGISTRO-TODO-EL-PAIS: dónde vive (País → Estado → Ciudad), como texto JSON del lugar elegido.
+  lugar: '',
 };
 
 /**
@@ -218,6 +224,8 @@ export function Acceso({
   // Las casillas del registro, en el orden de la pantalla (también el de «Revisa tus datos»).
   const casillasRegistro: CasillaRegistro[] = [
     'nombre',
+    // C-REGISTRO-TODO-EL-PAIS: clientes y Driver dicen dónde viven (cualquier ciudad del país).
+    ...(porPasos ? (['lugar'] as const) : []),
     'correo',
     'telefono',
     'invitacion',
@@ -229,6 +237,7 @@ export function Acceso({
     'correo',
     'clave',
     ...(registro ? ['nombre', 'telefono', 'invitacion'] : []),
+    ...(registro && porPasos ? ['lugar'] : []),
     ...(registro && pideCumple ? ['fechaNacimiento'] : []),
   ];
 
@@ -431,11 +440,15 @@ export function Acceso({
         // C-TELEFONO-AL-REGISTRARSE: esta app trae la pantalla del código por SMS.
         verificaTelefono: true,
         ...(v.invitacion.trim() ? { invitacion: v.invitacion.trim().toUpperCase() } : {}),
+        // C-REGISTRO-TODO-EL-PAIS: dónde vive. La cuenta se crea SIEMPRE, haya zona o no.
+        ...(porPasos && lugarDeBorrador(v.lugar) ? { lugar: lugarDeBorrador(v.lugar) } : {}),
       });
       if (!rolesPermitidos.includes(sesion.usuario.rol)) {
         setError({ mensaje: t.rolEquivocado });
         return;
       }
+      // C-REGISTRO-OTRO-PAIS: dijo «Otro país»; al entrar no se le vuelve a preguntar dónde vive.
+      if (porPasos && v.lugar === LUGAR_OTRO_PAIS) marcarOtroPais(sesion.usuario.id);
       await b.limpiar();
       await alEntrar(sesion.token, sesion.usuario);
     } catch (x) {
@@ -588,6 +601,20 @@ export function Acceso({
       />
     </>
   ) : null;
+  // C-REGISTRO-TODO-EL-PAIS: «Dónde vives», con el catálogo completo del país (nunca las zonas).
+  const campoLugar =
+    registro && porPasos ? (
+      <SelectorLugar
+        valor={lugarDeBorrador(v.lugar)}
+        alElegir={(l) => cambiar('lugar', JSON.stringify(l))}
+        otroPais={v.lugar === LUGAR_OTRO_PAIS}
+        alElegirOtroPais={() => cambiar('lugar', LUGAR_OTRO_PAIS)}
+        idioma={idioma}
+        paisSugerido={paisSugerido}
+        error={errorDe('lugar')}
+        testID="registro-lugar"
+      />
+    ) : null;
   const campoInvitacion = registro ? (
     <Campo
       etiqueta={t.invitacion}
@@ -817,6 +844,13 @@ export function Acceso({
         ),
       },
       {
+        clave: 'lugar',
+        casillas: ['lugar'],
+        titulo: tp.lugar,
+        ayuda: tp.lugarAyuda,
+        contenido: campoLugar,
+      },
+      {
         clave: 'correo',
         casillas: ['correo'],
         titulo: tp.correo,
@@ -954,6 +988,7 @@ export function Acceso({
 /** C-FORMULARIO-POR-PASOS: los pasos del registro (cliente y Driver), en orden. */
 const PASOS_REGISTRO: readonly PasoDeFormulario[] = [
   { clave: 'nombre', casillas: ['nombre', 'fechaNacimiento'] },
+  { clave: 'lugar', casillas: ['lugar'] },
   { clave: 'correo', casillas: ['correo'] },
   { clave: 'celular', casillas: ['telefono'] },
   { clave: 'clave', casillas: ['clave'] },
@@ -964,6 +999,8 @@ const PASOS_REGISTRO: readonly PasoDeFormulario[] = [
 const TEXTOS_PASOS_REGISTRO = {
   es: {
     nombre: '¿Cómo te llamas?',
+    lugar: '¿Dónde vives?',
+    lugarAyuda: 'Elige tu país, tu estado y tu ciudad o pueblo.',
     correo: '¿Cuál es tu correo?',
     correoAyuda: 'Ahí te mandamos el enlace para activar tu cuenta.',
     celular: '¿Cuál es tu celular?',
@@ -975,6 +1012,8 @@ const TEXTOS_PASOS_REGISTRO = {
   },
   en: {
     nombre: 'What’s your name?',
+    lugar: 'Where do you live?',
+    lugarAyuda: 'Choose your country, your state, and your city or town.',
     correo: 'What’s your email?',
     correoAyuda: 'We’ll send the link to activate your account there.',
     celular: 'What’s your mobile number?',

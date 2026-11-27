@@ -1,5 +1,6 @@
 import { cuentasQueReciben, esPagoACelular, perfilPasajeros } from '@tumbite/compartido';
 import type { Env } from './env';
+import { ZONA_REAL_SQL } from './cuentaPais';
 import { comisionTipicaComida } from './internacional/cobroDirecto';
 import { saldoLibro } from './internacional/libro';
 import { leerConfigPais } from './internacional/paises';
@@ -51,6 +52,24 @@ export type Falta = {
 
 const MOTORIZADOS = new Set(['carro', 'moto', 'scooter']);
 const PASAJEROS = new Set(['moto', 'carro']);
+/**
+ * C-REGISTRO-TODO-EL-PAIS (26 nov 2026; Venezuela y Estados Unidos): lo único que se le dice a quien
+ * ESPERA su ciudad. Es lo de su registro (lo que deja su cuenta lista para el día que abramos); lo de
+ * recibir carreras hoy (servicio, aprobación, encendido, saldo, pago móvil, ubicación, conectarse) no
+ * aplica: en su ciudad todavía no hay viajes, y decírselo lo contradecía.
+ */
+const FALTAS_EN_ESPERA: ReadonlySet<ClaveFalta> = new Set<ClaveFalta>([
+  'cara',
+  'telefono',
+  'sin_vehiculo',
+  'sin_placa',
+  'vehiculo_rechazado',
+  'vehiculo_sin_enviar',
+  'vehiculo_en_revision',
+  'vehiculo_sin_activar',
+  'papeles_sin_enviar',
+]);
+
 /** El orden en que se elige «el» vehículo cuando no tiene uno activo. */
 const RANGO_VEHICULO = ['aprobado', 'en_revision', 'registrado', 'rechazado'];
 
@@ -69,6 +88,8 @@ export async function queTeFalta(
   env?: Env,
 ): Promise<{
   recibeViajes: boolean;
+  /** C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre (sin zona real y con dónde vive). */
+  enEspera: boolean;
   faltas: Falta[];
   /** El vehículo que se mira (el activo o el mejor que tenga): lo usa la barra de activación. */
   vehiculo: { id: string; tipo: string; estado: string; activo: boolean } | null;
@@ -104,6 +125,14 @@ export async function queTeFalta(
           "SELECT tipo, pais FROM cuentas_cobro WHERE usuario_id = ? AND activa = 1 AND activa_desde <= datetime('now')",
         )
         .bind(id),
+      // C-REGISTRO-TODO-EL-PAIS: ¿espera su ciudad? (sin zona real y con dónde vive). Va por la cuenta,
+      // no por la ficha de conductor: recién registrado todavía puede no tenerla.
+      db
+        .prepare(
+          `SELECT ${ZONA_REAL_SQL} IS NULL AND u.lugar_pais IS NOT NULL AS en_espera
+             FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?`,
+        )
+        .bind(id),
     ]),
   ]);
   const f = filas[0]?.results.at(0) as
@@ -127,7 +156,10 @@ export async function queTeFalta(
   const cuentas = (filas[2]?.results ?? []) as { tipo: string; pais: string }[];
   const faltas: Falta[] = [];
   const poner = (x: Falta) => faltas.push(x);
-  const pais = f?.pais ?? g.pais ?? 'US';
+  const enEspera =
+    Number((filas[3]?.results.at(0) as { en_espera: number } | undefined)?.en_espera) === 1;
+  // En espera, su país es el de donde vive (el de su fila sería el de la ciudad por defecto).
+  const pais = (enEspera ? g.pais : f?.pais) ?? g.pais ?? 'US';
   const perfil = perfilPasajeros(pais);
 
   // 1. La cara, donde su país la pide para empezar (la tarjeta de la cara).
@@ -230,8 +262,10 @@ export async function queTeFalta(
   // «Recibe viajes» = la misma regla del reparto (C-EN-LINEA-DE-VERDAD), con la ubicación reciente que
   // el reparto exige para ofrecer (C-BARRA-IGUAL-REPARTO): conectado con la señal de hace horas no recibe.
   return {
-    recibeViajes: Boolean(f && Number(f.elegible) && Number(f.ubicacion)) && !soloComidaVacia,
-    faltas,
+    recibeViajes:
+      !enEspera && Boolean(f && Number(f.elegible) && Number(f.ubicacion)) && !soloComidaVacia,
+    enEspera,
+    faltas: enEspera ? faltas.filter((x) => FALTAS_EN_ESPERA.has(x.clave)) : faltas,
     vehiculo: elegido
       ? { id: elegido.id, tipo: elegido.tipo, estado: elegido.estado, activo: elegido === activo }
       : null,

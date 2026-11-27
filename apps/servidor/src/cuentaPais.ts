@@ -41,6 +41,18 @@ export const ZONA_REAL_SQL = zonaRealSql();
  */
 export const ZONA_CONDUCTOR_SQL = `COALESCE(${ZONA_REAL_SQL}, r.zona_id, 'US-FL-MIAMI')`;
 
+/**
+ * C-REGISTRO-TODO-EL-PAIS (25 nov 2026; Venezuela y Estados Unidos): el PAÍS con que se decide algo
+ * del conductor (sus papeles, su perfil de pasajeros, su edad mínima, su plazo). El de su zona real; si
+ * todavía no tiene (cuenta en espera de su ciudad), el país donde vive (`usuarios.lugar_pais`); y solo
+ * sin ninguna de las dos, el de su fila (lo de siempre). `z` es el alias de la zona ya unida con
+ * ZONA_CONDUCTOR_SQL. Así al de Maracaibo se le piden los papeles de Venezuela aunque Maracaibo no
+ * tenga zona, sin inventarle una ciudad: sigue sin ID y sin viajes hasta que abra su ciudad.
+ */
+export const paisConLugarSql = (z = 'z', r = 'r', u = 'u') =>
+  `COALESCE(CASE WHEN ${zonaRealSql(r, u)} IS NULL THEN ${u}.lugar_pais END, ${z}.pais)`;
+export const PAIS_CONDUCTOR_SQL = paisConLugarSql();
+
 export type ZonaReal = {
   zonaId: string;
   pais: string;
@@ -174,9 +186,18 @@ export async function invitacionQueEspera(
   return f ? { id: f.id, zonaId: f.zona_id, pais: f.pais.toUpperCase() } : null;
 }
 
-/** El país de la cuenta (su zona real), o null si todavía no se sabe. */
+/**
+ * El país de la cuenta (su zona real; si no tiene, el país donde vive según su lugar), o null si
+ * todavía no se sabe.
+ */
 export async function paisDeCuenta(db: D1Database, usuarioId: string): Promise<string | null> {
-  return (await zonaRealDe(db, usuarioId))?.pais ?? null;
+  const real = (await zonaRealDe(db, usuarioId))?.pais;
+  if (real) return real;
+  const f = await db
+    .prepare('SELECT lugar_pais FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ lugar_pais: string | null }>();
+  return f?.lugar_pais ? f.lugar_pais.toUpperCase() : null;
 }
 
 export class TelefonoInvalido extends Error {

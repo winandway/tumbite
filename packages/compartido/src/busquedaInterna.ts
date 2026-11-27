@@ -248,6 +248,8 @@ export const PANTALLAS_PREFERENCIAS = [
   'avisos',
   // C-ZONA-MUNICIPIO: el filtro por municipio de la lista de Zonas.
   'zonas',
+  // C-REGISTRO-TODO-EL-PAIS: el país, el estado y el «quién» de la lista de espera por ciudad.
+  'espera-ciudades',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [
@@ -271,6 +273,9 @@ export const CLAVES_PREFERENCIAS = [
   'municipio',
   // C-VERIFICACIONES-VEHICULOS: la lista de la pestaña «Vehículos» («en_revision» o «registrado»).
   'lista',
+  // C-REGISTRO-TODO-EL-PAIS: el país («VE», «US») y el estado del país («V», «CA») del lugar donde vive.
+  'pais',
+  'region',
 ] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;

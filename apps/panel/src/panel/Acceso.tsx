@@ -21,7 +21,10 @@ import {
   enIdioma,
   useBorrador,
   enIdiomaDireccion,
+  lugarDeBorrador,
+  LUGAR_OTRO_PAIS,
 } from '@tumbite/compartido';
+import { SelectorLugar } from '../SelectorLugar';
 import { api } from './api';
 import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
@@ -32,9 +35,18 @@ import { SugerenciaCorreo } from './SugerenciaCorreo';
 import { RevisaTusDatos } from './RevisaTusDatos';
 
 // C-TELEFONO-E164: `paisTelefono`, el país del celular (arranca en el país desde donde se abre).
-const INICIAL = { nombre: '', correo: '', telefono: '', clave: '', sms: false, paisTelefono: '' };
+// C-REGISTRO-TODO-EL-PAIS: `lugar`, dónde está (País → Estado → Ciudad), como texto JSON del lugar.
+const INICIAL = {
+  nombre: '',
+  correo: '',
+  telefono: '',
+  clave: '',
+  sms: false,
+  paisTelefono: '',
+  lugar: '',
+};
 /** Las casillas del registro web, en el orden de la pantalla y de «Revisa tus datos». */
-const CASILLAS: CasillaRegistro[] = ['nombre', 'correo', 'telefono', 'clave'];
+const CASILLAS: CasillaRegistro[] = ['nombre', 'lugar', 'correo', 'telefono', 'clave'];
 
 /**
  * Entrar y crear cuenta de restaurante o, desde el panel de empresas (C-FLEX-CUENTA-EMPRESA), de
@@ -191,6 +203,8 @@ export function Acceso({
         // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
         smsConsentimiento: v.sms,
         canal: 'web',
+        // C-REGISTRO-TODO-EL-PAIS: la cuenta se crea SIEMPRE, su ciudad tenga servicio o no.
+        ...(lugarDeBorrador(v.lugar) ? { lugar: lugarDeBorrador(v.lugar) } : {}),
       });
       await b.limpiar();
       alEntrar(sesion.usuario);
@@ -207,12 +221,14 @@ export function Acceso({
     fallos.find((f) => f.campo === campo)?.mensaje ??
     (error?.campo === campo ? error.mensaje : undefined);
   // El error de una casilla se va en cuanto la persona la corrige.
-  const cambiar = (campo: 'nombre' | 'correo' | 'telefono' | 'clave', valor: string) => {
+  const cambiar = (campo: 'nombre' | 'correo' | 'telefono' | 'clave' | 'lugar', valor: string) => {
     b.cambiar(campo, valor);
     setError((x) => (x?.campo === campo ? null : x));
     setFallos((f) => f.filter((x) => x.campo !== campo));
   };
   const revisar = modo === 'registro' && paso === 'revisar';
+  // Es la cuenta de un negocio: se pregunta dónde está el negocio (el mismo catálogo del país).
+  const etiquetaLugar = idioma === 'en' ? 'Your business’s city' : 'Ciudad de tu negocio';
 
   return (
     <main className="acceso">
@@ -250,6 +266,18 @@ export function Acceso({
               enfocar={enfocar === 'nombre'}
               placeholder={t.nombre}
               error={errorDe('nombre')}
+            />
+          )}
+          {modo === 'registro' && (
+            <SelectorLugar
+              valor={lugarDeBorrador(v.lugar)}
+              alElegir={(l) => cambiar('lugar', JSON.stringify(l))}
+              otroPais={v.lugar === LUGAR_OTRO_PAIS}
+              alElegirOtroPais={() => cambiar('lugar', LUGAR_OTRO_PAIS)}
+              idioma={idioma}
+              paisSugerido={v.paisTelefono}
+              etiqueta={etiquetaLugar}
+              error={errorDe('lugar')}
             />
           )}
           <Campo

@@ -172,7 +172,11 @@ describe('C-FOTO-CARA-A-LA-VISTA · nada importante queda fuera de pantalla', ()
     expect(inicio).toContain('registroIncompleto ? (');
     expect(inicio).toContain("'Más opciones'");
     expect(leer('..', 'servicios', 'PerfilAcordeon.tsx')).toContain('{haceReparto ? (');
-    // UN resumen grande de cuántos pasos faltan, con el primero como botón.
-    expect(leer('..', 'piezas', 'QueTeFalta.tsx')).toContain('pasos para empezar');
+    // UN resumen grande de cuántos pasos faltan, con el primero como botón (sus textos viven en
+    // `esperaCiudadTextos`, que también dice los de la cuenta en espera de su ciudad).
+    expect(leer('..', 'piezas', 'QueTeFalta.tsx')).toContain(
+      'resumenPasos(total, idioma, enEspera)',
+    );
+    expect(leer('..', 'piezas', 'esperaCiudadTextos.ts')).toContain('pasos para empezar');
   });
 });

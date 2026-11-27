@@ -15,6 +15,20 @@ import { MENSAJES_EN_PAGO_COMIDA } from './mensajesEnPagoComida';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): el lugar donde vive la cuenta y la espera de su ciudad.
+  [
+    'Tu cuenta quedó creada. En tu ciudad todavía no hay viajes; te avisamos apenas abramos. Mientras tanto, ya puedes subir tus papeles.',
+    'Your account is set up. There are no trips in your city yet; we’ll let you know as soon as we open. In the meantime, you can upload your documents.',
+  ],
+  [
+    'Elige tu país, tu estado y tu ciudad de la lista.',
+    'Choose your country, state, and city from the list.',
+  ],
+  ['Elige una ciudad de la lista.', 'Choose a city from the list.'],
+  [
+    'Este conductor ya tiene su ciudad. Para cambiársela usa «Cambiar ciudad» en su ficha.',
+    'This driver already has a city. To change it, use “Change city” on their profile.',
+  ],
   // C-REGRESO-PASAJERO (25 nov 2026): «Voy de regreso a mi ciudad».
   [
     'Todavía no tienes una ciudad base. Conéctate una vez en tu ciudad o pídesela a soporte.',
@@ -1493,6 +1507,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t confirm you’re a person. Reload the page and try again.',
   ],
   ['No pudimos leer los datos enviados.', 'We couldn’t read the information sent.'],
+  ['Ese «desde» no es un número de cuenta.', 'That “from” value is not an account number.'],
   [
     'Primero toma la foto de la entrega en la puerta.',
     'First take the delivery photo at the door.',

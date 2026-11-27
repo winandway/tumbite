@@ -18,6 +18,15 @@ import { cobertura, leerPoligono, recalcularAreasCiudad } from '../territorio';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { pasarEsperaAlAbrir } from '../lugarEspera';
+import { entornoDeHost } from '@tumbite/compartido';
+
+/** C-REGISTRO-TODO-EL-PAIS: al abrir una zona o cambiar sus áreas, los que esperan en ella pasan solos. */
+const pasarLosQueEsperan = (
+  c: { env: Env; req: { url: string } },
+  db: D1Database,
+  zonaId: string,
+) => pasarEsperaAlAbrir(c.env, db, zonaId, entornoDeHost(new URL(c.req.url).host) === 'produccion');
 
 /** «Pueblo en pueblo»: cada ciudad es una zona. Todo lo operativo se filtra por zona. */
 export const ZONA_INICIAL = 'US-FL-MIAMI';
@@ -186,7 +195,8 @@ zonas.put('/admin/zonas', async (c) => {
       )
       .bind(elegido.nombre, elegido.pcode, d.id)
       .run();
-  return c.json({ ok: true });
+  const espera = d.activa ? await pasarLosQueEsperan(c, base(c), d.id) : null;
+  return c.json({ ok: true, espera });
 });
 
 zonas.patch('/admin/zonas/:id', async (c) => {
@@ -257,7 +267,8 @@ zonas.patch('/admin/zonas/:id', async (c) => {
   if (!r.meta.changes) throw new ErrorDatos('Esa zona no existe.', undefined, 404);
   // C-PANICO-CENTRAL: el canario de responsables se vuelve a mirar con el cambio.
   olvidarSaludPanico();
-  return c.json({ ok: true });
+  const espera = d.activa ? await pasarLosQueEsperan(c, base(c), c.req.param('id')) : null;
+  return c.json({ ok: true, espera });
 });
 
 // ───────────────────────── Cobertura pública (C-TERRITORIO) ─────────────────────────
@@ -451,8 +462,9 @@ zonas.post('/admin/zonas/:id/areas', async (c) => {
     )
     .run();
   await recalcularAreasCiudad(db, zonaId);
+  const espera = d.estado === 'activa' ? await pasarLosQueEsperan(c, db, zonaId) : null;
   const f = await db.prepare(`${SELECT_AREA} WHERE a.id = ?`).bind(id).first<FilaAreaAdmin>();
-  return c.json({ area: f ? aAreaAdmin(f) : null }, 201);
+  return c.json({ area: f ? aAreaAdmin(f) : null, espera }, 201);
 });
 
 zonas.patch('/admin/areas/:id', async (c) => {
@@ -488,6 +500,7 @@ zonas.patch('/admin/areas/:id', async (c) => {
     )
     .run();
   await recalcularAreasCiudad(db, a.zona_id);
+  const espera = estado === 'activa' ? await pasarLosQueEsperan(c, db, a.zona_id) : null;
   const f = await db.prepare(`${SELECT_AREA} WHERE a.id = ?`).bind(a.id).first<FilaAreaAdmin>();
-  return c.json({ area: f ? aAreaAdmin(f) : null });
+  return c.json({ area: f ? aAreaAdmin(f) : null, espera });
 });

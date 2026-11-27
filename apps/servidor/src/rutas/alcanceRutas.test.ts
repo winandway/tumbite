@@ -250,6 +250,10 @@ const LISTAS_DE_NUMEROS = [
   'GET /admin/kyc/miniaturas-faltantes',
   // C-RASTRO: contadores con el alcance en la consulta (prueba propia en rastro.test.ts).
   'GET /admin/embudo',
+  // C-REGISTRO-TODO-EL-PAIS: las cuentas en espera no tienen zona: con alcance limitado se ven solo las
+  // de sus países (por dónde viven); por ciudades o por servicio, ninguna (en la consulta).
+  'GET /admin/espera-ciudades',
+  'GET /admin/espera-ciudades/personas',
   // C-INTENTOS-ACCESO: los buenos con el alcance en la consulta; los fallidos (sin cuenta, sin zona) solo
   // con alcance total.
   'GET /admin/accesos',

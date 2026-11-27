@@ -699,9 +699,13 @@ const SQL_CANDIDATOS = (zonas: string[]) => `
     FROM usuarios u
     LEFT JOIN repartidores r ON r.usuario_id = u.id
     JOIN zonas z ON z.id = ${zonaRealSql()}
-   WHERE u.rol = ?1 AND u.creado_en >= ?2 AND u.es_prueba = 0 AND u.activo = 1
+   WHERE u.rol = ?1 AND u.es_prueba = 0 AND u.activo = 1
+     -- C-REGISTRO-TODO-EL-PAIS: también quien esperaba su ciudad y acaba de pasar a su zona (aunque su
+     -- cuenta sea vieja): para él la ventana empieza el día que abrimos su ciudad. Cada parte por su índice.
+     AND u.id IN (SELECT id FROM usuarios WHERE rol = ?1 AND creado_en >= ?2
+                  UNION SELECT id FROM usuarios WHERE rol = ?1 AND lugar_paso_en >= ?2 AND lugar_paso_en IS NOT NULL)
      AND z.id IN (${zonas.map((_, i) => `?${i + 4}`).join(',')})
-   ORDER BY u.creado_en DESC LIMIT ?3`;
+   ORDER BY max(u.creado_en, COALESCE(u.lugar_paso_en, '')) DESC LIMIT ?3`;
 
 type FilaCandidato = {
   id: string;

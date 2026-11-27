@@ -19,7 +19,7 @@ import {
   serviciosAbiertos,
   serviciosDelInicio,
 } from '@tumbite/compartido';
-import { AvisoCorreo, C, almacenTelefono, useSesion, Text } from '@tumbite/movil';
+import { AvisoCorreo, AvisoLugarCuenta, C, almacenTelefono, useSesion, Text } from '@tumbite/movil';
 import { EntrarInvitado } from './inicio/EntrarInvitado';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
@@ -305,6 +305,8 @@ export function Inicio() {
             direccion={direccion}
             alTocar={() => setCambiandoDireccion(true)}
           />
+          {/* C-REGISTRO-TODO-EL-PAIS: si en su ciudad todavía no hay servicio, se dice una vez. */}
+          <AvisoLugarCuenta rol="cliente" estilo={{ marginTop: 12 }} />
           <View style={{ marginTop: 12 }}>
             <Buscador idioma={idioma} alTocar={() => router.push('/search')} />
           </View>

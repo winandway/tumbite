@@ -496,6 +496,11 @@ h1 {
   color: #0d7a3a;
   font-weight: 600;
 }
+/* Ámbar: algo que sigue pendiente y se reintenta solo (ni éxito ni problema). */
+.aviso-ambar {
+  color: #7a4b00;
+  font-weight: 600;
+}
 /* C-ALERGIAS: el pedido de alergias del cliente, resaltado en rojo de problema. */
 .alergia {
   display: block;

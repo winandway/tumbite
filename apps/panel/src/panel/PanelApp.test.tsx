@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { elegirCiudad, respuestaCatalogo } from '../pruebasLugar';
 import userEvent from '@testing-library/user-event';
 import { PanelApp } from './PanelApp';
 
@@ -15,6 +16,9 @@ function servidor(respuestas: Record<string, () => Response>) {
   const llamadas: string[] = [];
   vi.stubGlobal('fetch', async (url: string) => {
     llamadas.push(url);
+    // C-REGISTRO-TODO-EL-PAIS: el catálogo de lugares de verdad.
+    const catalogo = respuestaCatalogo(url);
+    if (catalogo) return catalogo;
     const r = Object.entries(respuestas).find(([ruta]) => url.endsWith(ruta));
     return r ? r[1]() : new Response('{}', { status: 404 });
   });
@@ -86,6 +90,7 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     render(<PanelApp ruta="/panel" />);
     await userEvent.click(await screen.findByText(/Crea tu cuenta/));
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Rosa Prueba');
+    await elegirCiudad('mara', 'Maracaibo');
     await userEvent.type(screen.getByLabelText('Correo'), 'rosa@correo.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'una-clave-larga');
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
