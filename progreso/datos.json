@@ -374,6 +374,14 @@
       "para": "Los archivos están en Documentos, Entregas, Divoox, «android para auditor». Hace falta el dictamen del auditor de tiendas y una prueba en un Android real: oferta de cliente fijo con Driver en segundo plano y pantalla apagada (que suene), foto del conductor al pasajero y la campana.",
       "destraba": "Subir las dos apps a Google Play con todo lo de la primera carrera real.",
       "numero": 41
+    },
+    {
+      "id": "search-console-cambio-direccion",
+      "prioridad": "media",
+      "titulo": "Google Search Console: avisar a Google que tumbite.com se mudó a divoox.com",
+      "para": "Con tu cuenta de Google (la que verificó los dos dominios), en Search Console, propiedad tumbite.com, Ajustes, Cambio de dirección: elegir divoox.com, tocar Validar y actualizar, y Confirmar el cambio. Las páginas de tumbite.com ya llevan a divoox.com; esto hace que Google pase los resultados más rápido.",
+      "numero": 42,
+      "destraba": "Que Google cambie más rápido los resultados de tumbite.com por divoox.com."
     }
   ],
   "terceros": [
@@ -553,6 +561,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-27",
+      "titulo": "tumbite.com lleva a divoox.com y sale de Google",
+      "texto": "Quien entra a cualquier página de tumbite.com llega a la misma página en divoox.com, con un aviso permanente que Google entiende. Las apps viejas y los avisos de pago siguen funcionando igual en tumbite.com, pero ya no aparecen en el buscador. Falta un paso de Richard en Search Console para que Google cambie los resultados más rápido (Progreso 42)."
+    },
     {
       "fecha": "2026-11-27",
       "titulo": "El cobro ya no se corta si la pantalla se recarga",
@@ -1443,5 +1456,5 @@
       ]
     }
   ],
-  "siguienteProgreso": 42
+  "siguienteProgreso": 43
 }

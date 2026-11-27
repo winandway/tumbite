@@ -16,3 +16,26 @@ Pregunta de Richard: ¿hay que dejar dos mapas del sitio (con y sin «www») o b
 ## Conclusión
 
 Basta con el de https://divoox.com/sitemap.xml. Borrar el de «www» no quita ninguna página de Google; dejarlo tampoco hace daño, solo repite la lista.
+
+## Cambio de dirección: tumbite.com → divoox.com (27 nov 2026, C-TUMBITE-REDIRIGE)
+
+Lo vio Richard: al buscar «divoox» salía tumbite.com/app («Sign in to order - Divoox»). Causa real: la
+plataforma servía las páginas fijas sin pasar por el servidor, así que el 301 de C-DOMINIO-DIVOOX solo
+corría en las rutas sin archivo (por ejemplo /panel). Arreglo: las páginas viajan en `_paginas/` y las
+sirve siempre el servidor, que manda todo tumbite.com a la misma ruta en divoox.com con 301. La API y los
+avisos siguen respondiendo en tumbite.com con `X-Robots-Tag: noindex`.
+
+- tumbite.com ya está verificado en Search Console (registro TXT `google-site-verification` en su DNS).
+- El mapa del sitio solo lista https://divoox.com (también el que se sirve en tumbite.com/sitemap.xml).
+- Google: «Use the Change of Address tool when moving your site from one domain to another» y exige
+  301 de cada página antigua a su equivalente nuevo — Search Console Help, «Change of Address tool»
+  (support.google.com/webmasters/answer/9370220).
+
+**Paso de Richard (su cuenta de Google, la que verificó los dos dominios):**
+
+1. Abrir https://search.google.com/search-console/settings/change-address?resource_id=sc-domain:tumbite.com
+2. En «Select the new site», elegir **divoox.com**.
+3. Tocar **Validate & update**. Las cuatro comprobaciones deben salir en verde (los 301 ya están en vivo).
+4. Tocar **Confirm move**.
+
+Google tarda semanas en pasar los resultados; mientras tanto, quien entra a tumbite.com cae en divoox.com.

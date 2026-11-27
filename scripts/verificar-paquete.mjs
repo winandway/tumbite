@@ -53,7 +53,9 @@ const SECRETOS = [
 ];
 // La DIRECCIÓN del sitio de pruebas (el nombre suelto sí aparece: así se reconoce cada entorno).
 const PRUEBAS = /https:\/\/(staging\.tumbite\.com|tumbite-pruebas\.sitios\.dev)/;
-const SERVIDOR_PRODUCCION = /["'`]https:\/\/tumbite\.com["'`]|https:\/\/tumbite\.com\/datos/;
+// C-TUMBITE-REDIRIGE: producción se construye con divoox.com (tumbite.com sigue valiendo en paquetes viejos).
+const SERVIDOR_PRODUCCION =
+  /["'`]https:\/\/(divoox|tumbite)\.com["'`]|https:\/\/(divoox|tumbite)\.com\/datos/;
 const SERVIDOR_PRUEBAS = /["'`]https:\/\/staging\.tumbite\.com["'`]/;
 
 for (const a of archivos) {

@@ -3,7 +3,7 @@ name: publicar
 # 1) yapanel-pruebas → el sitio tumbite-pruebas (su propia base y almacén).
 # 2) Si la variable URL_PRUEBAS está puesta, se espera a que pruebas sirva esta versión y
 #    responda 200 en las rutas críticas. Solo entonces:
-# 3) yapanel-build → tumbite.com (producción). YaDominios Cloud republica solo cada rama.
+# 3) yapanel-build → divoox.com (producción; tumbite.com redirige). YaDominios Cloud republica solo cada rama.
 on:
   workflow_run:
     workflows: [verify]
