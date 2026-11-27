@@ -235,7 +235,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
 CREATE INDEX IF NOT EXISTS pedidos_cliente ON pedidos(cliente_id, creado_en);
 CREATE INDEX IF NOT EXISTS pedidos_restaurante ON pedidos(restaurante_id, estado);
 CREATE INDEX IF NOT EXISTS pedidos_estado ON pedidos(estado);
-CREATE INDEX IF NOT EXISTS pedidos_sesion ON pedidos(stripe_sesion);
+-- pedidos_sesion: retirado el 26 nov 2026 (C-INDICES-SIN-USO; ninguna consulta lo usa, ver apps/servidor/src/indicesRetirados.ts).
 -- C-LECTURAS-SALUD: solo los pedidos con cobro en mano (efectivo o transferencia). Los de tarjeta no
 -- entran en el índice y no pagan ninguna escritura de más; la bandeja del canario lee solo estos.
 CREATE INDEX IF NOT EXISTS pedidos_cobro_en_mano ON pedidos(cobro_estado) WHERE metodo_pago != 'tarjeta';
@@ -1059,7 +1059,7 @@ CREATE TABLE IF NOT EXISTS retiros (
   CHECK (estado != 'confirmado' OR stripe_transferencia IS NOT NULL)
 );
 CREATE INDEX IF NOT EXISTS retiros_usuario ON retiros(usuario_id, creado_en);
-CREATE INDEX IF NOT EXISTS retiros_por_procesar ON retiros(proximo_intento_en) WHERE estado IN ('pendiente', 'reintentar', 'enviando');
+-- retiros_por_procesar: retirado el 26 nov 2026 (C-INDICES-SIN-USO; ninguna consulta lo usa, ver apps/servidor/src/indicesRetirados.ts).
 CREATE UNIQUE INDEX IF NOT EXISTS retiros_transferencia ON retiros(stripe_transferencia) WHERE stripe_transferencia IS NOT NULL;
 -- La devolución de un retiro rechazado existe UNA sola vez en el libro.
 CREATE UNIQUE INDEX IF NOT EXISTS movimientos_retiro_revertido ON movimientos(referencia) WHERE referencia LIKE 'retiro-revertido:%';
@@ -1366,7 +1366,7 @@ CREATE TABLE IF NOT EXISTS vehiculo_documentos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS vehiculo_documentos_vehiculo ON vehiculo_documentos(vehiculo_id, tipo, estado);
-CREATE INDEX IF NOT EXISTS vehiculo_documentos_vence ON vehiculo_documentos(vence_en) WHERE estado = 'aprobado';
+-- vehiculo_documentos_vence: retirado el 26 nov 2026 (C-INDICES-SIN-USO; ninguna consulta lo usa, ver apps/servidor/src/indicesRetirados.ts).
 -- Un documento nuevo del mismo tipo reemplaza al anterior (queda el historial, no se borra).
 CREATE TRIGGER IF NOT EXISTS vehiculo_documentos_reemplaza
 AFTER INSERT ON vehiculo_documentos
@@ -3069,7 +3069,7 @@ CREATE TABLE IF NOT EXISTS miembros_restaurante (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (restaurante_id, usuario_id)
 );
-CREATE INDEX IF NOT EXISTS miembros_restaurante_usuario ON miembros_restaurante(usuario_id);
+-- miembros_restaurante_usuario: retirado el 26 nov 2026 (C-INDICES-SIN-USO; ninguna consulta lo usa, ver apps/servidor/src/indicesRetirados.ts).
 -- Una persona pertenece a UN solo equipo (19 oct 2026): la base lo garantiza aunque dos altas lleguen
 -- a la vez. Comprobado antes de agregarlo: ninguna persona estaba en dos equipos (producción y pruebas).
 CREATE UNIQUE INDEX IF NOT EXISTS miembros_restaurante_una_persona ON miembros_restaurante(usuario_id);
@@ -3428,7 +3428,7 @@ CREATE TABLE IF NOT EXISTS catalogo_productos (
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (comercio_id, sku)
 );
-CREATE INDEX IF NOT EXISTS catalogo_productos_barras ON catalogo_productos(comercio_id, codigo_barras);
+-- catalogo_productos_barras: retirado el 26 nov 2026 (C-INDICES-SIN-USO; ninguna consulta lo usa, ver apps/servidor/src/indicesRetirados.ts).
 CREATE INDEX IF NOT EXISTS catalogo_productos_categoria ON catalogo_productos(comercio_id, categoria1);
 CREATE TABLE IF NOT EXISTS catalogo_ofertas (
   comercio_id TEXT NOT NULL REFERENCES restaurantes(id),
@@ -4107,7 +4107,7 @@ CREATE TABLE IF NOT EXISTS invitaciones_flota (
   respondida_en TEXT
 );
 CREATE INDEX IF NOT EXISTS invitaciones_flota_restaurante ON invitaciones_flota(restaurante_id, estado);
-CREATE INDEX IF NOT EXISTS invitaciones_flota_correo ON invitaciones_flota(correo_canonico, estado);
+-- invitaciones_flota_correo: retirado el 26 nov 2026 (C-INDICES-SIN-USO; ninguna consulta lo usa, ver apps/servidor/src/indicesRetirados.ts).
 
 -- C-CANCELAR-LISTO (10 nov 2026): el restaurante pide a soporte cancelar un pedido ya listo.
 CREATE TABLE IF NOT EXISTS solicitudes_cancelacion (
