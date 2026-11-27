@@ -125,7 +125,7 @@ describe('C-CUENTA-UNICA: la misma cuenta en la app de clientes y en Driver', ()
     );
     expect(r.estado).toBe(409);
     expect(r.datos.codigo).toBe('correo_con_cuenta');
-    expect(r.datos.error).toContain('Entra con tu misma contraseña');
+    expect(r.datos.error).toContain('usa tu misma contraseña');
   });
 
   it('Divoox Restaurants no cambia: una cuenta de cliente sigue sin entrar ahí, y la del restaurante entra como hoy', async () => {
@@ -631,5 +631,98 @@ describe('C-CUENTA-UNICA-UNIR: el resumen cuenta lo que de verdad se movió', ()
       quedaron: { contactos_confianza: 1 },
     });
     expect(JSON.stringify(errores)).toContain('no se pudieron mover');
+  });
+});
+
+/**
+ * C-CUENTA-UNICA-CELULAR y C-CUENTA-UNICA-COMERCIO (27 nov 2026, emergencia de Gerencia). Un mototaxista
+ * real de Tucaní se registró en la app de clientes y al abrir Driver solo veía «ya existe». Con el mismo
+ * celular y otro correo, Driver le abría una SEGUNDA cuenta. Una persona, una cuenta: con el mismo
+ * correo o el mismo celular, la otra app lleva a entrar con la cuenta que ya tiene.
+ */
+describe('C-CUENTA-UNICA-CELULAR: mismo correo y mismo celular, nunca una cuenta duplicada', () => {
+  const registrar = (
+    p: Awaited<ReturnType<typeof preparar>>,
+    rol: 'cliente' | 'repartidor',
+    correo: string,
+    telefono: string,
+  ) =>
+    p.m.llamar(
+      'POST',
+      '/datos/cuentas/registro',
+      { nombre: 'Persona Dos', correo, clave: CLAVE, rol, telefono },
+      undefined,
+      app(rol),
+    );
+
+  for (const [desde, hacia] of [
+    ['cliente', 'repartidor'],
+    ['repartidor', 'cliente'],
+  ] as const) {
+    it(`un ${desde} se hace ${hacia} con su misma cuenta (mismo correo y mismo celular)`, async () => {
+      const p = await preparar();
+      const tel = '+584241234567';
+      const yo = await p.nueva(desde, tel);
+      const antes = await p.cuantas();
+      // Mismo correo: «Ya tienes una cuenta de Divoox», con la salida por el código del celular.
+      const conCorreo = await registrar(p, hacia, yo.correo, tel);
+      expect(conCorreo.estado).toBe(409);
+      expect(conCorreo.datos.codigo).toBe('correo_con_cuenta');
+      expect(conCorreo.datos.error).toContain('Ya tienes una cuenta de Divoox con este correo');
+      expect(conCorreo.datos.error).toContain('¿Olvidaste tu contraseña?');
+      // Mismo celular con OTRO correo: tampoco abre una segunda cuenta.
+      const conCelular = await registrar(p, hacia, `otro-${Date.now()}@ejemplo.com`, tel);
+      expect(conCelular.estado).toBe(409);
+      expect(conCelular.datos.codigo).toBe('telefono_con_cuenta');
+      expect(conCelular.datos.campo).toBe('telefono');
+      expect(conCelular.datos.error).toContain('Ya tienes una cuenta de Divoox con este celular');
+      expect(await p.cuantas()).toBe(antes);
+      // Entra con ella: se le agrega el papel y es la misma cuenta.
+      const ok = await p.entrar(yo.correo, app(hacia), {
+        activarPapel: true,
+        aceptaTerminosPapel: true,
+      });
+      expect(ok.estado).toBe(200);
+      expect(ok.datos.usuario.rol).toBe(hacia);
+      expect(ok.datos.usuario.id).toBe(yo.id);
+      expect(await p.cuantas()).toBe(antes);
+    });
+  }
+
+  it('un comercio tiene cuenta de cliente con el mismo correo y el mismo celular', async () => {
+    const p = await preparar();
+    const tel = '+584241234568';
+    const cliente = await p.nueva('cliente', tel);
+    // En Divoox Restaurants, el correo de cliente no abre otra cuenta: lo manda a «Mis restaurantes».
+    const enRestaurants = await p.m.llamar(
+      'POST',
+      '/datos/cuentas/registro',
+      { nombre: 'Cocina Uno', correo: cliente.correo, clave: CLAVE, rol: 'restaurante' },
+      undefined,
+      app('restaurante', false),
+    );
+    expect(enRestaurants.estado).toBe(409);
+    expect(enRestaurants.datos.codigo).toBe('cuenta_de_otra_app');
+    expect(enRestaurants.datos.error).toContain('Mis restaurantes');
+    expect(enRestaurants.datos.error).not.toContain('otro correo');
+    // Con esa misma cuenta (mismo correo, misma contraseña) registra su restaurante.
+    const web = await p.entrar(cliente.correo, { 'x-idioma': 'es' });
+    const negocio = await p.m.llamar(
+      'POST',
+      '/datos/cuentas/mis-restaurantes',
+      { nombre: 'Cocina Uno', aceptaTerminos: true },
+      web.datos.token as string,
+    );
+    expect(negocio.estado).toBe(201);
+    // Y sigue siendo cliente en la app de clientes.
+    const comoCliente = await p.entrar(cliente.correo, app('cliente'));
+    expect(comoCliente.estado).toBe(200);
+    expect(comoCliente.datos.usuario.id).toBe(cliente.id);
+    // Un restaurante de los de siempre (su propio correo) puede tener cuenta de cliente con su celular.
+    const telCocina = '+584241234569';
+    const cocina = await p.nueva('restaurante', telCocina);
+    expect(cocina.id).toBeTruthy();
+    const suCliente = await registrar(p, 'cliente', `dueno-${Date.now()}@ejemplo.com`, telCocina);
+    expect(suCliente.estado).toBe(201);
   });
 });

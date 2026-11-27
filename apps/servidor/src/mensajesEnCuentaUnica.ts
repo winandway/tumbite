@@ -1,7 +1,22 @@
 import { MENSAJE_PAPEL_POR_ACTIVAR } from '@tumbite/compartido';
+import { mensajeYaTienesCuenta } from './mensajesYaTienesCuenta';
 
 /** C-CUENTA-UNICA (24 nov 2026): los mensajes de la cuenta única en inglés (C-INGLES-PRINCIPAL). */
+const PARA_EN = new Map<string, string>([
+  ['repartidor', 'to sign up as a driver'],
+  ['cliente', 'to order with it'],
+  ['', 'to use it here too'],
+]);
+/** C-CUENTA-UNICA (27 nov 2026): «Ya tienes una cuenta de Divoox…» en inglés, por dato y por app. */
+const YA_TIENES_EN: [string, string][] = (['correo', 'telefono'] as const).flatMap((con) =>
+  (['repartidor', 'cliente', null] as const).map((papel): [string, string] => [
+    mensajeYaTienesCuenta(con, papel),
+    `You already have a Divoox account with this ${con === 'correo' ? 'email' : 'phone number'}. Sign in with it ${PARA_EN.get(papel ?? '')}: you don’t need another one. ${con === 'correo' ? 'Tap “Sign in” and use the same password.' : 'Tap “Sign in” and use that account’s email and password.'} Don’t remember it? Tap “Forgot your password?” and we’ll send you a code by WhatsApp or SMS.`,
+  ]),
+);
+
 export const MENSAJES_EN_CUENTA_UNICA: [string, string][] = [
+  ...YA_TIENES_EN,
   [
     MENSAJE_PAPEL_POR_ACTIVAR.get('cliente') ?? '',
     'You already have a Divoox account with this email. Activate your customer account to order with the same email and password.',
