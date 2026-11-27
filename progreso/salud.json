@@ -51,9 +51,10 @@
     "autorizaciones": "ok",
     "billeteras": "ok",
     "banners": "ok",
+    "esperaCiudades": "pendiente",
     "rutas": "ok",
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-26T22:22:43.969975+00:00"
+  "medido": "2026-11-27T04:44:16.781157+00:00"
 }
