@@ -173,6 +173,8 @@ export const esquemaEnv = z.object({
   META_WHATSAPP_PHONE_ID: z.string().optional(),
   META_WHATSAPP_VERSION: z.string().optional(),
   META_WHATSAPP_PLANTILLA: z.string().optional(),
+  /** C-RECUPERAR-WHATSAPP: plantilla de autenticación propia para recuperar la cuenta (vacía = la de siempre). */
+  META_WHATSAPP_PLANTILLA_RECUPERAR: z.string().optional(),
   /** Solo localhost (el simulador del recorrido); en producción se ignora. */
   META_WHATSAPP_API_URL: z.string().optional(),
   /**

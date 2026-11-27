@@ -364,15 +364,16 @@ describe('C-RECUPERAR-POR-CELULAR · la contraseña se recupera solo por un medi
 
   // C-MENSAJES-ACCESO (24 nov 2026, decisión de Richard): un correo sin cuenta se DICE (antes se
   // contestaba «ok» y la persona esperaba un enlace que nunca llegaba). No sale nada.
-  it('un correo que no tiene cuenta lo dice y no manda nada', async () => {
+  // C-RECUPERAR-WHATSAPP (27 nov 2026): ya no se dice si hay cuenta; la respuesta es la misma.
+  it('un correo que no tiene cuenta responde igual y no manda nada', async () => {
     const sms = espiarSms();
     const correos = espiarCorreos();
     const m = mundo({ ...TWILIO, ...YAD }, PRODUCCION);
     const r = await m.llamar('POST', '/datos/cuentas/recuperar', {
       correo: 'nadie@correo-real.com',
     });
-    expect(r.estado).toBe(404);
-    expect(r.datos.codigo).toBe('correo_sin_cuenta');
+    expect(r.estado).toBe(200);
+    expect(r.datos).toEqual({ ok: true });
     expect(sms).toHaveLength(0);
     expect(correos).toHaveLength(0);
   });

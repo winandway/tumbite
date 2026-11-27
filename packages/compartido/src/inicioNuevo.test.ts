@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BANNERS_RESPALDO,
+  CABECERAS_MARCA,
+  TOPES_BANNER,
+  cabeceraAbierta,
+  cabeceraDeMarca,
   SERVICIOS_INICIO,
   destinoDeBanner,
   leerBanner,
@@ -160,14 +163,110 @@ describe('banners del inicio (C-INICIO-BANNERS)', () => {
     });
   });
 
-  it('los banners de respaldo no prometen descuentos que no existen (solo la portada, sin código)', () => {
+  it('las cabeceras de marca no prometen descuentos que no existen (solo la portada, sin código)', () => {
     for (const idioma of ['es', 'en'] as const) {
-      const l = BANNERS_RESPALDO[idioma];
-      expect(l.length).toBe(3);
+      const l = CABECERAS_MARCA[idioma];
+      expect(l.length).toBe(10);
       for (const x of l) {
         expect(x.codigo).toBeNull();
-        expect(x.titulo).not.toMatch(/\$|%|gratis|free|descuento|off/i);
+        expect(x.titulo).not.toMatch(/\$|%|gratis|free|descuento|off|pronto|soon|beta/i);
+        // C-BANNER-SIN-CORTES: cabe en un teléfono de 360.
+        expect(x.titulo.length).toBeLessThanOrEqual(TOPES_BANNER.titulo);
       }
     }
+  });
+});
+
+/**
+ * C-CABECERAS-MARCA, C-CABECERA-SOLO-ABIERTOS y C-CABECERA-ROTA (27 nov 2026, orden de Richard vía
+ * Gerencia): diez cabeceras con todo lo que hace Divoox; solo las de servicios abiertos en la
+ * ciudad; y dos aperturas seguidas nunca repiten.
+ */
+describe('cabeceras de marca (C-CABECERAS-MARCA)', () => {
+  const TODOS = new Set([
+    'comida',
+    'mercado',
+    'farmacia',
+    'licores',
+    'carro',
+    'moto',
+    'envios',
+    'mas',
+  ]);
+
+  it('son diez, cada una con su imagen propia y el mismo orden en los dos idiomas', () => {
+    const es = CABECERAS_MARCA.es;
+    const en = CABECERAS_MARCA.en;
+    expect(es.map((c) => c.id)).toEqual(en.map((c) => c.id));
+    expect(new Set(es.map((c) => c.local)).size).toBe(10);
+    expect(es.map((c) => c.id).sort()).toEqual(
+      [
+        'marca-aliados',
+        'marca-billetera',
+        'marca-carro',
+        'marca-comida',
+        'marca-envios',
+        'marca-farmacia',
+        'marca-ferreteria',
+        'marca-licores',
+        'marca-mercado',
+        'marca-moto',
+      ].sort(),
+    );
+  });
+
+  it('C-CABECERA-SOLO-ABIERTOS: una cabecera de un servicio cerrado nunca sale', () => {
+    // El Vigía hoy: Moto, Carro y Envíos abiertos; Comida y las tiendas, no.
+    const vigia = new Set(['moto', 'carro', 'envios']);
+    const vistas = new Set<string>();
+    let ultima: string | null = null;
+    for (let i = 0; i < 40; i++) {
+      const c = cabeceraDeMarca('es', ultima, vigia);
+      expect(cabeceraAbierta(c, vigia)).toBe(true);
+      vistas.add(c.id);
+      ultima = c.id;
+    }
+    expect([...vistas].sort()).toEqual(
+      ['marca-aliados', 'marca-billetera', 'marca-carro', 'marca-envios', 'marca-moto'].sort(),
+    );
+    // Sin Carro en la ciudad, la de Carro no sale nunca (ni la de Comida sin restaurantes).
+    for (const c of CABECERAS_MARCA.es)
+      if (c.id === 'marca-carro' || c.id === 'marca-comida')
+        expect(cabeceraAbierta(c, new Set(['moto']))).toBe(false);
+  });
+
+  it('C-CABECERA-ROTA: dos aperturas seguidas no repiten, y todas tienen su turno', () => {
+    let ultima: string | null = null;
+    const vistas: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const c = cabeceraDeMarca('en', ultima, TODOS);
+      expect(c.id).not.toBe(ultima);
+      vistas.push(c.id);
+      ultima = c.id;
+    }
+    expect(new Set(vistas).size).toBe(10);
+  });
+
+  it('en una ciudad sin nada abierto sale la que no promete ningún servicio', () => {
+    const c = cabeceraDeMarca('es', null, new Set());
+    expect(c.id).toBe('marca-aliados');
+    expect(c.requiere).toEqual([]);
+    expect(cabeceraDeMarca('es', 'marca-aliados', new Set()).id).toBe('marca-aliados');
+  });
+
+  it('cada una lleva a su pantalla (las de un servicio, a ese servicio)', () => {
+    for (const c of CABECERAS_MARCA.es) {
+      if (c.destino?.tipo === 'servicio') expect(c.requiere).toEqual([c.destino.valor]);
+    }
+    const por = (id: string) => CABECERAS_MARCA.es.find((c) => c.id === id)!;
+    expect(destinoDeBanner(por('marca-billetera'))).toEqual({ pathname: '/gift-cards' });
+    expect(destinoDeBanner(por('marca-ferreteria'))).toEqual({
+      pathname: '/stores',
+      params: { servicio: 'mas' },
+    });
+    expect(destinoDeBanner(por('marca-carro'))).toEqual({
+      pathname: '/ride',
+      params: { servicio: 'carro' },
+    });
   });
 });

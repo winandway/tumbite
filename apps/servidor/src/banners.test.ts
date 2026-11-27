@@ -19,6 +19,7 @@ import type { Env } from './env';
 import { MODELO_BANNERS, ModeloNoAprobado, asegurarModeloBarato } from './modeloGuard';
 import { contarFilas } from './presupuestoFilas';
 import { mundo } from './pruebas/ayuda';
+import { serviciosPublicosEnZona } from './rutas/servicios';
 
 /**
  * C-BANNERS (17 nov 2026, Richard) — todos los países. El administrador de banners del inicio de la
@@ -258,17 +259,18 @@ describe('C-BANNERS · la ruta pública', () => {
     await publicar(
       await crear({
         zonas: [],
-        paises: ['US'],
+        paises: ['VE'],
         lugar: 'promociones',
         codigo: 'hola10',
-        destinoValor: 'comida',
+        // Moto: abierto en El Vigía (C-CABECERA-SOLO-ABIERTOS deja fuera lo cerrado en la ciudad).
+        destinoValor: 'moto',
       }),
     );
-    const r = await ver('lugar=promociones&ciudad=US-FL-MIAMI');
+    const r = await ver('lugar=promociones&ciudad=VE-MER-ELVIGIA');
     expect(r.datos.banners).toHaveLength(1);
     expect(r.datos.banners[0].codigo).toBe('HOLA10');
     expect(r.res.headers.get('cache-control')).toContain('max-age=60');
-    expect((await ver('lugar=promociones&ciudad=VE-MER-ELVIGIA')).datos.banners).toHaveLength(0);
+    expect((await ver('lugar=promociones&ciudad=US-FL-MIAMI')).datos.banners).toHaveLength(0);
   });
 
   it('fuera de fecha, pausado o editado después de publicar: no sale', async () => {
@@ -358,21 +360,31 @@ describe('C-BANNERS · la ruta pública', () => {
       ((await ver(`lugar=promociones&ciudad=${ciudad}`)).datos.banners as { id: string }[]).map(
         (b) => b.id,
       );
+    const comidaAbierta = (await serviciosPublicosEnZona(m.DB, 'VE-MER-ELVIGIA')).has('comida');
     const abierto = await ids('VE-MER-ELVIGIA');
-    // Donde moto no está encendido, o sin ciudad: el de moto no sale; el de comida sí.
+    // Donde moto no está encendido, o sin ciudad: el de moto no sale.
     const cerrado = await ids('US-FL-MIAMI');
     const sinCiudad = ((await ver('lugar=promociones')).datos.banners as { id: string }[]).map(
       (b) => b.id,
     );
-    expect(cerrado).toEqual([comida]);
-    expect(sinCiudad).toEqual([comida]);
-    expect(abierto.sort()).toEqual([moto, comida].sort());
+    expect(cerrado).not.toContain(moto);
+    // C-CABECERA-SOLO-ABIERTOS: sin ciudad no se promete ningún servicio, tampoco Comida.
+    expect(sinCiudad).toEqual([]);
+    expect(abierto).toContain(moto);
+    // Comida sale en El Vigía solo si Comida está abierta ahí (ya no pasa siempre).
+    expect(abierto.includes(comida)).toBe(comidaAbierta);
     // Se apaga moto en la ciudad: el anuncio deja de salir (en cuanto vence el minuto de memoria).
     await m.DB.prepare(
       "UPDATE servicios_zona SET estado = 'suspendido' WHERE servicio_id = 'moto' AND zona_id = 'VE-MER-ELVIGIA'",
     ).run();
     olvidarCacheBanners();
-    expect(await ids('VE-MER-ELVIGIA')).toEqual([comida]);
+    expect(await ids('VE-MER-ELVIGIA')).not.toContain(moto);
+    // Se apaga Comida en la ciudad: su anuncio tampoco sale.
+    await m.DB.prepare(
+      "UPDATE servicios_zona SET estado = 'suspendido' WHERE servicio_id = 'comida' AND zona_id = 'VE-MER-ELVIGIA'",
+    ).run();
+    olvidarCacheBanners();
+    expect(await ids('VE-MER-ELVIGIA')).not.toContain(comida);
   });
 
   it('segunServicio: regla pura', () => {
@@ -386,9 +398,12 @@ describe('C-BANNERS · la ruta pública', () => {
       b('cupon', 'HOLA'),
       b('servicio', 'carro'),
     ];
-    expect(segunServicio(l, new Set(['moto']))).toEqual([l[0], l[1], l[2]]);
-    expect(segunServicio(l, null)).toEqual([l[1], l[2]]);
-    expect(necesitaServicios([l[1]!, l[2]!])).toBe(false);
+    // C-CABECERA-SOLO-ABIERTOS: Comida cerrada no sale; abierta, sí.
+    expect(segunServicio(l, new Set(['moto']))).toEqual([l[0], l[2]]);
+    expect(segunServicio(l, new Set(['moto', 'comida']))).toEqual([l[0], l[1], l[2]]);
+    expect(segunServicio(l, null)).toEqual([l[2]]);
+    expect(necesitaServicios([l[2]!])).toBe(false);
+    expect(necesitaServicios([l[1]!])).toBe(true);
     expect(necesitaServicios(l)).toBe(true);
   });
 

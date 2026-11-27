@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  accionDeError,
+  datosPais,
+  soloNumerosTelefono,
   textoAccionAcceso,
   correoEjemplo,
   ErrorApi,
@@ -13,83 +14,161 @@ import {
 import { Icono } from '../sitio/Icono';
 import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
+import { PaisTelefono } from './PaisTelefono';
 import { api } from './api';
 import { Turnstile, reiniciarTurnstile } from './Turnstile';
 
 const T = {
   es: {
-    olvide: 'Olvidé mi contraseña',
-    olvideTexto: 'Escribe tu correo y te mandamos un enlace para crear una contraseña nueva.',
+    olvide: 'Recupera tu cuenta',
+    olvideTexto:
+      'Escribe tu celular o tu correo y te mandamos un código para crear una contraseña nueva.',
+    conCelular: 'Con mi celular',
+    conCorreo: 'Con mi correo',
+    celular: 'Celular',
     correo: 'Correo',
-    mandar: 'Mandarme el enlace',
-    // C-MENSAJES-ACCESO (24 nov 2026): ahora solo sale si la cuenta existe (si no, se dice).
-    mandado:
-      'Listo: te mandamos el enlace a ese correo. Revisa también la carpeta de spam. Vence en 30 minutos.',
-    sinCuentaApp: 'Si ya tienes la app de Divoox, ábrela y toca «Crear cuenta».',
-    // C-RECUPERAR-POR-CELULAR: si el correo todavía no está confirmado, el código va al celular.
-    codigoTitulo: '¿Te llegó un código al celular?',
-    codigoTexto:
-      'Si todavía no confirmaste tu correo, no te mandamos el enlace: te mandamos un código de 6 números por WhatsApp o SMS a tu celular confirmado. Escríbelo aquí con tu contraseña nueva. Vence en 10 minutos.',
+    comoRecibir: '¿Cómo quieres recibir el código?',
+    porWhatsapp: 'Por WhatsApp',
+    porWhatsappTexto: 'Llega al instante, con el botón «Copiar código».',
+    recomendado: 'Recomendado',
+    porCorreo: 'Por correo',
+    porCorreoTexto: 'Te lo mandamos a tu correo. Útil si estás fuera del país.',
+    mandar: 'Mandarme el código',
+    escribeCodigo: 'Escribe el código',
+    siExisteWhatsapp:
+      'Si la cuenta existe, te enviamos un código por WhatsApp al celular confirmado. Vence en 5 minutos.',
+    siExisteCorreo:
+      'Si la cuenta existe, te enviamos un código a su correo. Revisa también la carpeta de spam. Vence en 5 minutos.',
+    siExisteSms:
+      'Si la cuenta existe, te enviamos un código por SMS al celular confirmado. Vence en 5 minutos.',
     codigo: 'Código de 6 números',
+    verificar: 'Verificar el código',
+    noLlego: '¿No te llegó?',
+    pedirSms: 'Mándamelo por SMS',
+    pedirCorreo: 'Mándamelo por correo',
+    pedirWhatsapp: 'Mándamelo por WhatsApp',
+    cambiarDato: 'Escribir otro celular o correo',
+    elegirCuenta: '¿Qué cuenta quieres recuperar?',
+    elegirCuentaTexto: 'Ese celular está en más de una cuenta. Elige una.',
+    roles: {
+      cliente: 'Cuenta de cliente',
+      repartidor: 'Cuenta de Driver',
+      restaurante: 'Cuenta de restaurante',
+      empresa: 'Cuenta de empresa',
+    } as Record<string, string>,
+    otraCuenta: 'Cuenta de Divoox',
     nueva: 'Crea tu contraseña nueva',
     clave: 'Contraseña nueva',
     confirmar: 'Repite la contraseña',
     noCoinciden: 'Las dos contraseñas no son iguales.',
     guardar: 'Guardar contraseña',
     listo: 'Contraseña cambiada. Ya puedes entrar con la nueva.',
+    listoCodigo:
+      'Contraseña cambiada. Cerramos las sesiones que estaban abiertas y te avisamos por tu otro canal. Ya puedes entrar con la nueva.',
     entrar: 'Ir a entrar',
     sinToken: 'Este enlace está incompleto. Pide uno nuevo.',
     volver: 'Volver a entrar',
+    sinCuenta: '¿Todavía no tienes cuenta?',
+    sinCuentaApp: 'Si ya tienes la app de Divoox, ábrela y toca «Crear cuenta».',
     verClave: 'Ver la contraseña',
     ocultarClave: 'Ocultar la contraseña',
     enviando: 'Un momento…',
+    codigoIncompleto: 'El código tiene 6 números.',
   },
   en: {
-    olvide: 'Forgot my password',
-    olvideTexto: 'Enter your email and we’ll send you a link to create a new password.',
+    olvide: 'Recover your account',
+    olvideTexto:
+      'Enter your cell phone or your email and we’ll send you a code to create a new password.',
+    conCelular: 'With my cell phone',
+    conCorreo: 'With my email',
+    celular: 'Cell phone',
     correo: 'Email',
-    mandar: 'Send me the link',
-    mandado:
-      'Done: we sent the link to that email. Check your spam folder too. It expires in 30 minutes.',
-    sinCuentaApp: 'If you already have the Divoox app, open it and tap “Create account.”',
-    codigoTitulo: 'Did you get a code on your phone?',
-    codigoTexto:
-      'If you haven’t confirmed your email yet, we don’t send the link: we send a 6-digit code by WhatsApp or text to your confirmed cell phone. Enter it here with your new password. It expires in 10 minutes.',
+    comoRecibir: 'How do you want to get the code?',
+    porWhatsapp: 'By WhatsApp',
+    porWhatsappTexto: 'It arrives right away, with the “Copy code” button.',
+    recomendado: 'Recommended',
+    porCorreo: 'By email',
+    porCorreoTexto: 'We send it to your email. Handy if you’re abroad.',
+    mandar: 'Send me the code',
+    escribeCodigo: 'Enter the code',
+    siExisteWhatsapp:
+      'If the account exists, we sent a code by WhatsApp to its confirmed cell phone. It expires in 5 minutes.',
+    siExisteCorreo:
+      'If the account exists, we sent a code to its email. Check your spam folder too. It expires in 5 minutes.',
+    siExisteSms:
+      'If the account exists, we sent a code by text to its confirmed cell phone. It expires in 5 minutes.',
     codigo: '6-digit code',
+    verificar: 'Verify the code',
+    noLlego: 'Didn’t get it?',
+    pedirSms: 'Send it by text',
+    pedirCorreo: 'Send it by email',
+    pedirWhatsapp: 'Send it by WhatsApp',
+    cambiarDato: 'Use another cell phone or email',
+    elegirCuenta: 'Which account do you want to recover?',
+    elegirCuentaTexto: 'That cell phone is on more than one account. Choose one.',
+    roles: {
+      cliente: 'Customer account',
+      repartidor: 'Driver account',
+      restaurante: 'Restaurant account',
+      empresa: 'Business account',
+    } as Record<string, string>,
+    otraCuenta: 'Divoox account',
     nueva: 'Create your new password',
     clave: 'New password',
     confirmar: 'Repeat the password',
     noCoinciden: 'The two passwords don’t match.',
     guardar: 'Save password',
     listo: 'Password changed. You can sign in with the new one.',
+    listoCodigo:
+      'Password changed. We signed out the sessions that were open and let you know on your other channel. You can sign in with the new one.',
     entrar: 'Go to sign in',
     sinToken: 'This link is incomplete. Request a new one.',
     volver: 'Back to sign in',
+    sinCuenta: 'Don’t have an account yet?',
+    sinCuentaApp: 'If you already have the Divoox app, open it and tap “Create account.”',
     verClave: 'Show password',
     ocultarClave: 'Hide password',
     enviando: 'One moment…',
+    codigoIncompleto: 'The code has 6 digits.',
   },
 };
 
+type Canal = 'whatsapp' | 'sms' | 'correo';
+type Paso = 'inicio' | 'codigo';
+type CuentaAbierta = { pase: string; rol: string; nombre: string; correo: string | null };
+
 /**
- * Pide el enlace de recuperación. Lo escrito se guarda. C-MENSAJES-ACCESO (24 nov 2026, Richard): si el
- * correo no tiene cuenta se dice («No hay ninguna cuenta con ese correo») y se ofrece crearla; antes
- * decía «ya te llegó el enlace» y la persona esperaba un correo que nunca iba a llegar.
+ * C-RECUPERAR-WHATSAPP (27 nov 2026, orden de Richard por Gerencia) — todos los países. «¿Olvidaste tu
+ * contraseña?» de la web, el panel de negocios y las tres apps (que abren esta misma página): la persona
+ * escribe su celular o su correo, elige «Por WhatsApp» (recomendado, primero) o «Por correo», escribe el
+ * código y crea la contraseña nueva con el ojito. Si no le llegó, lo pide por SMS, por correo o por
+ * WhatsApp: nunca queda trabada. La pantalla NUNCA dice si la cuenta existe (el servidor tampoco) y
+ * ofrece «Crear cuenta» siempre. Lo escrito (dato, país, canal y paso) se guarda; el código y las
+ * contraseñas no.
  */
 export function Olvide({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const b = useBorrador({
-    formulario: 'olvide',
-    inicial: { correo: '' },
+    formulario: 'olvide-codigo',
+    inicial: {
+      via: 'celular' as 'celular' | 'correo',
+      telefono: '',
+      paisTelefono: '',
+      correo: '',
+      canal: 'whatsapp' as Canal,
+      paso: 'inicio' as Paso,
+    },
     almacen: almacenNavegador,
+    noBastan: ['via', 'paisTelefono', 'canal', 'paso'],
   });
-  const [estado, setEstado] = useState<'inicio' | 'enviando' | 'listo'>('inicio');
+  const v = b.valores;
+  const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
-  const [sinCuenta, setSinCuenta] = useState(false);
-  // El correo al que se pidió: el código del celular se comprueba con él.
-  const [pedido, setPedido] = useState('');
-  // C-TURNSTILE-LISTO: el escudo anti-robots también aquí (la web y las tres apps recuperan la clave
-  // en esta página). La clave pública la publica el servidor; vacía = apagado y no se pinta nada.
+  const [codigo, setCodigo] = useState('');
+  const [cuentas, setCuentas] = useState<CuentaAbierta[] | null>(null);
+  const [elegida, setElegida] = useState<CuentaAbierta | null>(null);
+  const [listo, setListo] = useState(false);
+  // C-TURNSTILE-LISTO: el escudo anti-robots (la clave pública la publica el servidor; vacía = apagado).
   const [turnstileSitio, setTurnstileSitio] = useState('');
   useEffect(() => {
     let vivo = true;
@@ -105,135 +184,306 @@ export function Olvide({ idioma }: { idioma: Idioma }) {
   }, []);
   // Desde el panel (restaurantes y empresas) se crea la cuenta ahí; desde las apps, en la app.
   const desdePanel = new URLSearchParams(window.location.search).get('desde') === 'panel';
+  const identificador = v.via === 'correo' ? v.correo.trim() : v.telefono.trim();
+  const datoBase = {
+    identificador,
+    ...(v.via === 'celular' && v.paisTelefono ? { paisTelefono: v.paisTelefono } : {}),
+    idioma,
+  };
 
-  async function enviar(e: React.FormEvent) {
-    e.preventDefault();
+  async function pedirCodigo(canal: Canal) {
     setError('');
-    setSinCuenta(false);
-    setEstado('enviando');
+    setEnviando(true);
     try {
-      await api.pedir('POST', '/datos/cuentas/recuperar', { correo: b.valores.correo, idioma });
-      setPedido(b.valores.correo);
-      await b.limpiar();
-      setEstado('listo');
+      await api.pedir('POST', '/datos/cuentas/recuperar/codigo', { ...datoBase, canal });
+      setCodigo('');
+      b.cambiar('canal', canal);
+      b.cambiar('paso', 'codigo');
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
-      setSinCuenta(
-        x instanceof ErrorApi && accionDeError(x.datos?.codigo, 'recuperar') === 'crear',
-      );
-      setEstado('inicio');
     } finally {
+      setEnviando(false);
       // El pase del escudo sirve una sola vez.
       reiniciarTurnstile();
     }
   }
 
+  async function verificar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (!/^\d{6}$/.test(codigo)) return setError(t.codigoIncompleto);
+    setEnviando(true);
+    try {
+      const r = await api.pedir<{ cuentas: CuentaAbierta[] }>(
+        'POST',
+        '/datos/cuentas/recuperar/verificar',
+        { ...datoBase, codigo },
+      );
+      setCuentas(r.cuentas);
+      if (r.cuentas.length === 1) setElegida(r.cuentas[0] ?? null);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  const crearCuenta = (
+    <div className="olvide-sin-cuenta" data-testid="olvide-sin-cuenta">
+      <span>{t.sinCuenta}</span>
+      <button
+        type="button"
+        className="enlace"
+        data-testid="accion-crear"
+        onClick={() => ir(desdePanel ? '/panel' : enIdiomaDireccion('/download', idioma))}
+      >
+        {textoAccionAcceso('crear', idioma)}
+      </button>
+      {desdePanel ? null : <p className="pista">{t.sinCuentaApp}</p>}
+    </div>
+  );
+
+  if (listo)
+    return (
+      <main className="acceso">
+        <h1>{t.olvide}</h1>
+        <div className="ld-form ld-form-listo" role="status" data-testid="recuperar-listo">
+          <Icono nombre="listo" tamano={40} />
+          <p>{t.listoCodigo}</p>
+          <button type="button" className="boton ancho" onClick={() => ir('/panel')}>
+            {t.entrar}
+          </button>
+        </div>
+      </main>
+    );
+
+  if (elegida)
+    return (
+      <main className="acceso">
+        <h1>{t.nueva}</h1>
+        <ClaveNueva
+          idioma={idioma}
+          pase={elegida.pase}
+          alTerminar={() => {
+            void b.limpiar();
+            setListo(true);
+          }}
+        />
+      </main>
+    );
+
+  if (cuentas && cuentas.length > 1)
+    return (
+      <main className="acceso">
+        <h1>{t.elegirCuenta}</h1>
+        <p>{t.elegirCuentaTexto}</p>
+        <div className="olvide-cuentas" data-testid="olvide-cuentas">
+          {cuentas.map((k) => (
+            <button
+              key={k.pase}
+              type="button"
+              className="olvide-cuenta"
+              onClick={() => setElegida(k)}
+            >
+              <strong>{t.roles[k.rol] ?? t.otraCuenta}</strong>
+              <span>{[k.nombre, k.correo].filter(Boolean).join(' · ')}</span>
+            </button>
+          ))}
+        </div>
+      </main>
+    );
+
+  if (v.paso === 'codigo' && identificador) {
+    const aviso =
+      v.canal === 'correo'
+        ? t.siExisteCorreo
+        : v.canal === 'sms'
+          ? t.siExisteSms
+          : t.siExisteWhatsapp;
+    const otros: Canal[] = (['whatsapp', 'sms', 'correo'] as const).filter(
+      (c) => c !== v.canal && (c !== 'sms' || v.via === 'celular' || v.canal === 'whatsapp'),
+    );
+    return (
+      <main className="acceso">
+        <h1>{t.escribeCodigo}</h1>
+        <p className="olvide-aviso" role="status" data-testid="olvide-aviso">
+          {aviso}
+        </p>
+        <form onSubmit={verificar} noValidate>
+          <Campo
+            etiqueta={t.codigo}
+            valor={codigo}
+            cambiar={(x) => setCodigo(x.replace(/\D/g, '').slice(0, 6))}
+            autoComplete="one-time-code"
+            modoTeclado="numeric"
+            error={error || undefined}
+          />
+          <button type="submit" className="boton ancho" disabled={enviando}>
+            {enviando ? t.enviando : t.verificar}
+          </button>
+        </form>
+        <div className="olvide-otra-via" data-testid="olvide-otra-via">
+          <p>{t.noLlego}</p>
+          <Turnstile sitio={turnstileSitio} idioma={idioma} />
+          {otros.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className="boton secundario ancho"
+              disabled={enviando}
+              onClick={() => void pedirCodigo(c)}
+            >
+              {c === 'sms' ? t.pedirSms : c === 'correo' ? t.pedirCorreo : t.pedirWhatsapp}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="enlace"
+          onClick={() => {
+            setError('');
+            b.cambiar('paso', 'inicio');
+          }}
+        >
+          {t.cambiarDato}
+        </button>
+        {crearCuenta}
+      </main>
+    );
+  }
+
   return (
     <main className="acceso">
       <h1>{t.olvide}</h1>
-      {estado === 'listo' ? (
-        <div className="ld-form ld-form-listo" role="status">
-          <Icono nombre="listo" tamano={40} />
-          <p>{t.mandado}</p>
-          <ConCodigo correo={pedido} idioma={idioma} />
-          <button type="button" className="enlace" onClick={() => ir('/panel')}>
-            {t.volver}
-          </button>
+      {b.recuperado ? (
+        <p className="aviso-borrador" role="note">
+          {idioma === 'en'
+            ? 'We restored what you were typing.'
+            : 'Recuperamos lo que estabas escribiendo.'}
+        </p>
+      ) : null}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void pedirCodigo(v.canal);
+        }}
+        noValidate
+      >
+        <p>{t.olvideTexto}</p>
+        <div className="olvide-via" role="tablist">
+          {(['celular', 'correo'] as const).map((x) => (
+            <button
+              key={x}
+              type="button"
+              role="tab"
+              aria-selected={v.via === x}
+              className={v.via === x ? 'activo' : ''}
+              onClick={() => {
+                setError('');
+                b.cambiar('via', x);
+              }}
+            >
+              {x === 'celular' ? t.conCelular : t.conCorreo}
+            </button>
+          ))}
         </div>
-      ) : (
-        <form onSubmit={enviar} noValidate>
-          <p>{t.olvideTexto}</p>
+        {v.via === 'celular' ? (
+          <>
+            <PaisTelefono
+              pais={v.paisTelefono}
+              alCambiar={(x) => b.cambiar('paisTelefono', x)}
+              idioma={idioma}
+            />
+            <Campo
+              etiqueta={t.celular}
+              tipo="tel"
+              valor={v.telefono}
+              cambiar={(x) => b.cambiar('telefono', soloNumerosTelefono(x))}
+              autoComplete="tel"
+              modoTeclado="tel"
+              placeholder={datosPais(v.paisTelefono)?.ejemploCelular ?? t.celular}
+              error={error || undefined}
+            />
+          </>
+        ) : (
           <Campo
             etiqueta={t.correo}
             tipo="email"
-            valor={b.valores.correo}
+            valor={v.correo}
             cambiar={(x) => b.cambiar('correo', x)}
             autoComplete="email"
             placeholder={correoEjemplo(idioma)}
             error={error || undefined}
           />
-          <Turnstile sitio={turnstileSitio} idioma={idioma} />
-          <button type="submit" className="boton ancho" disabled={estado === 'enviando'}>
-            {estado === 'enviando' ? t.enviando : t.mandar}
-          </button>
-          {sinCuenta ? (
-            <div data-testid="olvide-sin-cuenta">
-              <button
-                type="button"
-                className="boton secundario ancho"
-                data-testid="accion-crear"
-                onClick={() => ir(desdePanel ? '/panel' : enIdiomaDireccion('/download', idioma))}
-              >
-                {textoAccionAcceso('crear', idioma)}
-              </button>
-              {desdePanel ? null : <p className="pista">{t.sinCuentaApp}</p>}
-            </div>
-          ) : null}
-          <button type="button" className="enlace" onClick={() => ir('/panel')}>
-            {t.volver}
-          </button>
-        </form>
-      )}
+        )}
+        <fieldset className="olvide-canales">
+          <legend>{t.comoRecibir}</legend>
+          {(['whatsapp', 'correo'] as const).map((c) => (
+            <label key={c} className={v.canal === c ? 'olvide-canal activo' : 'olvide-canal'}>
+              <input
+                type="radio"
+                name="canal"
+                value={c}
+                checked={v.canal === c}
+                onChange={() => b.cambiar('canal', c)}
+              />
+              <span className="olvide-canal-texto">
+                <strong>
+                  {c === 'whatsapp' ? t.porWhatsapp : t.porCorreo}
+                  {c === 'whatsapp' ? (
+                    <em className="olvide-recomendado">{t.recomendado}</em>
+                  ) : null}
+                </strong>
+                <small>{c === 'whatsapp' ? t.porWhatsappTexto : t.porCorreoTexto}</small>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+        <Turnstile sitio={turnstileSitio} idioma={idioma} />
+        <button type="submit" className="boton ancho" disabled={enviando || !identificador}>
+          {enviando ? t.enviando : t.mandar}
+        </button>
+        <button type="button" className="enlace" onClick={() => ir('/panel')}>
+          {t.volver}
+        </button>
+      </form>
+      {crearCuenta}
     </main>
   );
 }
 
-/**
- * C-RECUPERAR-POR-CELULAR (23 nov 2026): la cuenta con el correo sin confirmar y el celular confirmado
- * recupera su contraseña con el código que llegó al celular (el enlace no va a un correo sin confirmar).
- * Las contraseñas nunca se guardan en borrador; el código tampoco.
- */
-function ConCodigo({ correo, idioma }: { correo: string; idioma: Idioma }) {
+/** La contraseña nueva con el pase que dio el código bueno. Las contraseñas nunca van al borrador. */
+function ClaveNueva({
+  idioma,
+  pase,
+  alTerminar,
+}: {
+  idioma: Idioma;
+  pase: string;
+  alTerminar: () => void;
+}) {
   const t = enIdioma(T, idioma);
-  const [codigo, setCodigo] = useState('');
   const [clave, setClave] = useState('');
   const [confirmar, setConfirmar] = useState('');
-  const [estado, setEstado] = useState<'inicio' | 'enviando' | 'listo'>('inicio');
+  const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     if (clave !== confirmar) return setError(t.noCoinciden);
-    setEstado('enviando');
+    setEnviando(true);
     try {
-      await api.pedir('POST', '/datos/cuentas/restablecer', {
-        correo,
-        codigo: codigo.trim(),
-        clave,
-      });
-      setEstado('listo');
+      await api.pedir('POST', '/datos/cuentas/restablecer', { token: pase, clave });
+      alTerminar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
-      setEstado('inicio');
+      setEnviando(false);
     }
   }
 
-  if (estado === 'listo')
-    return (
-      <div role="status" data-testid="restablecer-codigo-listo">
-        <p>{t.listo}</p>
-        <button type="button" className="boton" onClick={() => ir('/panel')}>
-          {t.entrar}
-        </button>
-      </div>
-    );
   return (
-    <form
-      onSubmit={enviar}
-      noValidate
-      className="restablecer-codigo"
-      data-testid="restablecer-codigo"
-    >
-      <h2>{t.codigoTitulo}</h2>
-      <p>{t.codigoTexto}</p>
-      <Campo
-        etiqueta={t.codigo}
-        valor={codigo}
-        cambiar={(x) => setCodigo(x.replace(/\D/g, '').slice(0, 6))}
-        autoComplete="one-time-code"
-        modoTeclado="numeric"
-      />
+    <form onSubmit={enviar} noValidate data-testid="olvide-clave-nueva">
       <CampoClave
         etiqueta={t.clave}
         valor={clave}
@@ -255,8 +505,8 @@ function ConCodigo({ correo, idioma }: { correo: string; idioma: Idioma }) {
           {error}
         </p>
       )}
-      <button type="submit" className="boton ancho" disabled={estado === 'enviando'}>
-        {estado === 'enviando' ? t.enviando : t.guardar}
+      <button type="submit" className="boton ancho" disabled={enviando}>
+        {enviando ? t.enviando : t.guardar}
       </button>
     </form>
   );
