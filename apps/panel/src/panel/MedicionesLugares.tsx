@@ -47,6 +47,7 @@ const T = {
       'Las fotos de las mediciones aprobadas se ven en la app de clientes y en Driver cuando el lugar es la recogida o el destino. Quita cualquiera que no deba verse.',
     sinPublicas: 'Todavía no hay fotos aprobadas en esta ciudad.',
     quitarFoto: 'Quitar de las apps',
+    opcionesFoto: 'Opciones de la foto',
     seguroQuitar: 'Esta foto deja de verse en la app de clientes y en Driver. ¿Quitarla?',
     quitada: 'Foto quitada de las apps.',
     aprobar: 'Aprobar',
@@ -118,6 +119,7 @@ const T = {
       'Photos from approved measurements show in the customer app and in Driver when the place is the pickup or the destination. Remove any that shouldn’t show.',
     sinPublicas: 'No approved photos in this city yet.',
     quitarFoto: 'Remove from the apps',
+    opcionesFoto: 'Photo options',
     seguroQuitar: 'This photo will stop showing in the customer app and in Driver. Remove it?',
     quitada: 'Photo removed from the apps.',
     aprobar: 'Approve',
@@ -727,7 +729,7 @@ export function MedicionesLugares({
                     {`${f.lugar} · ${nombreFotoMedicion(f.tipo, idioma === 'en' ? 'en' : 'es')}`}
                   </span>
                   <MenuTresPuntos
-                    etiqueta={t.opciones}
+                    etiqueta={t.opcionesFoto}
                     opciones={[
                       {
                         texto: t.quitarFoto,
