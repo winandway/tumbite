@@ -118,7 +118,7 @@ test('A1 conductor nuevo con papeles y moto en una pantalla', async () => {
       NOMBRE,
       'Papeles',
       'Licencia',
-      'Vehículo por revisar',
+      'Sus vehículos',
       `Placa: ${cond.placa}`,
       'Barra de activación',
     ])

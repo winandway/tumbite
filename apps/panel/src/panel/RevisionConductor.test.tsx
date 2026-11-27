@@ -372,7 +372,7 @@ describe('C-VERIFICACION-UNICA: todo lo de un conductor se decide en una sola pi
       ],
     });
     render(<RevisionConductor id="c1" base="/panel/control-x" idioma="es" />);
-    expect(await screen.findByText('Vehículo por revisar')).toBeTruthy();
+    expect(await screen.findByText('Sus vehículos')).toBeTruthy();
     const fila = await screen.findByTestId('moto-car1');
     expect(within(fila).getByText(/Carro · 6 plazas/)).toBeTruthy();
     expect(within(fila).getByText('Revisión del vehículo (inspección)')).toBeTruthy();
