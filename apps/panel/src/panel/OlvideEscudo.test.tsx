@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Olvide } from './Restablecer';
@@ -21,6 +21,7 @@ function servidor(sitio: string) {
 }
 
 describe('C-TURNSTILE-LISTO · el escudo en «Olvidé mi contraseña»', () => {
+  beforeEach(() => localStorage.clear());
   afterEach(() => {
     vi.unstubAllGlobals();
     localStorage.clear();
@@ -32,17 +33,19 @@ describe('C-TURNSTILE-LISTO · el escudo en «Olvidé mi contraseña»', () => {
     render(<Olvide idioma="es" />);
     expect(await screen.findByTestId('turnstile')).toBeInTheDocument();
     (window as { tumbitePase?: string }).tumbitePase = 'pase-de-prueba';
+    await userEvent.click(screen.getByRole('tab', { name: 'Con mi correo' }));
     await userEvent.type(screen.getByLabelText('Correo'), 'rosa@ejemplo.com');
-    await userEvent.click(screen.getByRole('button', { name: 'Mandarme el enlace' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Mandarme el código' }));
     await waitFor(() => expect(cabeceras).toEqual(['pase-de-prueba']));
   });
 
-  it('sin la clave no pinta nada y pide el enlace igual que hoy', async () => {
+  it('sin la clave no pinta nada y pide el código igual', async () => {
     const cabeceras = servidor('');
     render(<Olvide idioma="es" />);
+    await userEvent.click(screen.getByRole('tab', { name: 'Con mi correo' }));
     await userEvent.type(screen.getByLabelText('Correo'), 'rosa@ejemplo.com');
-    await userEvent.click(screen.getByRole('button', { name: 'Mandarme el enlace' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('te mandamos el enlace');
+    await userEvent.click(screen.getByRole('button', { name: 'Mandarme el código' }));
+    expect(await screen.findByTestId('olvide-aviso')).toHaveTextContent('Si la cuenta existe');
     expect(screen.queryByTestId('turnstile')).toBeNull();
     expect(cabeceras).toEqual([null]);
   });

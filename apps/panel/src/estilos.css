@@ -7932,3 +7932,138 @@ body.modo-tableta .cabecera {
   color: #666b73;
   font-size: 0.9rem;
 }
+
+/* C-RECUPERAR-WHATSAPP (27 nov 2026): «Recupera tu cuenta» por WhatsApp o correo. */
+.olvide-via {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 4px 0 16px;
+  background: #f1f1f1;
+  border-radius: 12px;
+}
+.olvide-via button {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 8px;
+  background: transparent;
+  color: #444;
+  cursor: pointer;
+}
+.olvide-via button.activo {
+  background: #fff;
+  color: #101010;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+.olvide-canales {
+  border: 0;
+  padding: 0;
+  margin: 4px 0 14px;
+  display: grid;
+  gap: 8px;
+}
+.olvide-canales legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+.olvide-canal {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #fff;
+}
+.olvide-canal.activo {
+  border-color: #101010;
+  box-shadow: 0 0 0 1px #101010;
+}
+.olvide-canal input {
+  margin-top: 3px;
+  accent-color: #101010;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.olvide-canal-texto {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.olvide-canal-texto strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.olvide-canal-texto small {
+  color: #666b73;
+  font-size: 0.85rem;
+}
+.olvide-recomendado {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: #101010;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.olvide-aviso {
+  background: #f6f6f6;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+}
+.olvide-otra-via {
+  margin-top: 18px;
+  border-top: 1px solid #e3e3e3;
+  padding-top: 12px;
+}
+.olvide-otra-via p {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+.olvide-sin-cuenta {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #e3e3e3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.olvide-sin-cuenta .pista {
+  flex-basis: 100%;
+  margin: 0;
+}
+.olvide-cuentas {
+  display: grid;
+  gap: 8px;
+}
+.olvide-cuenta {
+  font: inherit;
+  text-align: left;
+  display: grid;
+  gap: 2px;
+  padding: 14px;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.olvide-cuenta span {
+  color: #666b73;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
