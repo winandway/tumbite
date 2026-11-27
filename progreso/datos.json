@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-27T09:15-05:00",
+  "actualizado": "2026-11-27T15:30-05:00",
   "version": "fe71f3f",
   "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
@@ -210,7 +210,12 @@
       "titulo": "Montos para encender las funciones de crecimiento",
       "para": "Tarifa por hora de Ganar por tiempo, precio por pedido de los anuncios, cuota de Divoox Plus y montos de las tarjetas de regalo. Se ponen en el superadmin, en Rewards.",
       "destraba": "Encenderlas: ya están construidas y probadas.",
-      "docs": ["earn-by-time", "sponsored-listings", "divoox-plus", "gift-cards"]
+      "docs": [
+        "earn-by-time",
+        "sponsored-listings",
+        "divoox-plus",
+        "gift-cards"
+      ]
     },
     {
       "numero": 19,
@@ -219,7 +224,9 @@
       "titulo": "Probar la ruta de logística con las etiquetas impresas",
       "para": "Cargar y repartir la ruta de demostración en la calle.",
       "destraba": "Dar Divoox Flex por probado de punta a punta.",
-      "docs": ["flex-getting-started"]
+      "docs": [
+        "flex-getting-started"
+      ]
     },
     {
       "numero": 20,
@@ -228,7 +235,9 @@
       "titulo": "Elegir el país donde se encienden Mercado, Farmacia y Licores",
       "para": "Ya están construidas y la compra de prueba está hecha.",
       "destraba": "Encender las tiendas.",
-      "docs": ["shop-stores"]
+      "docs": [
+        "shop-stores"
+      ]
     },
     {
       "numero": 21,
@@ -253,7 +262,9 @@
       "titulo": "Comparación de caras con IA: proveedor y costo",
       "para": "Verificar que el repartidor es quien dice ser. El abogado aprueba el consentimiento.",
       "destraba": "La verificación automática de identidad.",
-      "docs": ["background-check-and-identity"]
+      "docs": [
+        "background-check-and-identity"
+      ]
     },
     {
       "numero": 24,
@@ -403,7 +414,11 @@
       "paises": "EE. UU.",
       "falta": "Compra real de 1 dólar, activar Stripe Connect y retiros, prueba en la calle y encender Miami en la web.",
       "quien": "Richard",
-      "docs": ["first-order", "ordering", "track-order"]
+      "docs": [
+        "first-order",
+        "ordering",
+        "track-order"
+      ]
     },
     {
       "nombre": "Logística (Divoox Flex)",
@@ -413,7 +428,12 @@
       "paises": "Todos",
       "falta": "Probar el bloque en la calle con las etiquetas y las apps de prueba nuevas.",
       "quien": "Richard",
-      "docs": ["flex-getting-started", "flex-routes", "flex-tracking", "flex-block"]
+      "docs": [
+        "flex-getting-started",
+        "flex-routes",
+        "flex-tracking",
+        "flex-block"
+      ]
     },
     {
       "nombre": "Envíos de A a B",
@@ -423,7 +443,9 @@
       "paises": "EE. UU. (Miami y Novi)",
       "falta": "Valor máximo, seguro del paquete y precio.",
       "quien": "Richard",
-      "docs": ["services"]
+      "docs": [
+        "services"
+      ]
     },
     {
       "nombre": "Mercado, Farmacia y Licores",
@@ -433,7 +455,11 @@
       "paises": "Todos",
       "falta": "Elegir el país y que se registren tiendas reales.",
       "quien": "Richard",
-      "docs": ["shop-stores", "store-catalog", "store-orders"]
+      "docs": [
+        "shop-stores",
+        "store-catalog",
+        "store-orders"
+      ]
     },
     {
       "nombre": "Moto y Carro",
@@ -443,7 +469,11 @@
       "paises": "Todos",
       "falta": "Permiso legal y seguro del pasajero. En Carro ya están las categorías, las paradas y la tarifa dinámica; faltan peajes y agregar paradas con tarjeta en pleno viaje.",
       "quien": "Richard",
-      "docs": ["ride-car", "ride-car-categories", "ride-car-stops"]
+      "docs": [
+        "ride-car",
+        "ride-car-categories",
+        "ride-car-stops"
+      ]
     },
     {
       "nombre": "Pagos al repartidor",
@@ -453,7 +483,11 @@
       "paises": "Todos",
       "falta": "Poner los montos en el superadmin.",
       "quien": "Richard",
-      "docs": ["rewards", "busy-areas", "earn-by-time"]
+      "docs": [
+        "rewards",
+        "busy-areas",
+        "earn-by-time"
+      ]
     },
     {
       "nombre": "Crecimiento",
@@ -463,7 +497,11 @@
       "paises": "EE. UU.",
       "falta": "Poner los precios. Plus y las tarjetas: mirar la hoja de pago en el celular antes de cobrar con dinero real.",
       "quien": "Richard",
-      "docs": ["sponsored-listings", "divoox-plus", "gift-cards"]
+      "docs": [
+        "sponsored-listings",
+        "divoox-plus",
+        "gift-cards"
+      ]
     },
     {
       "nombre": "Soporte",
@@ -473,7 +511,10 @@
       "paises": "Todos",
       "falta": "Poner los correos de soporte en las fichas de las tiendas cuando terminen las revisiones.",
       "quien": "Divoox",
-      "docs": ["support", "send-screenshot-to-support"]
+      "docs": [
+        "support",
+        "send-screenshot-to-support"
+      ]
     },
     {
       "nombre": "Identidad de repartidores",
@@ -483,7 +524,10 @@
       "paises": "Todos",
       "falta": "Proveedor de comparación de caras y cuenta de Checkr.",
       "quien": "Richard",
-      "docs": ["background-check-and-identity", "verify"]
+      "docs": [
+        "background-check-and-identity",
+        "verify"
+      ]
     },
     {
       "nombre": "Apps en las tiendas",
@@ -561,6 +605,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-27",
+      "titulo": "Verificaciones: habilitar por plazo, la moto en la ficha y WhatsApp en inglés y en EE. UU.",
+      "texto": "Cuatro arreglos en la ficha de Verificaciones, para todos los conductores. El botón «Habilitar» usa la misma regla del plazo de treinta días que el letrero y dice hasta cuándo tiene para sus papeles; al vencer, el reparto le vuelve a exigir todo. El vehículo se ve en la ficha aunque ya esté aprobado, con su estado, placa, fotos y botones. El aviso de WhatsApp «lo que te falta» sale en el idioma de la cuenta con selector Español / English; la plantilla en inglés está en revisión de Meta y mientras tanto se puede mandar en español. WhatsApp quedó encendido en Estados Unidos con los mismos topes que Venezuela."
+    },
+    {
+      "fecha": "2026-11-27",
+      "titulo": "Un cliente se hace conductor con su misma cuenta, también con el mismo celular",
+      "texto": "Un mototaxista de Tucaní tenía cuenta de cliente y no podía seguir en Divoox Driver. Driver ya le ofrecía su misma cuenta; lo frenó no recordar la contraseña. Ahora el aviso dice cómo entrar y que el código llega por WhatsApp con «¿Olvidaste tu contraseña?». Con el mismo celular y otro correo, Driver ya no abre una segunda cuenta: lleva a entrar con la que ya tiene. En Divoox Restaurants, quien ya tiene su cuenta registra su restaurante con ella en «Mis restaurantes». Para todos los países."
+    },
     {
       "fecha": "2026-11-27",
       "titulo": "El aviso «todavía no hay servicio» ya no sale donde sí hay servicio",
@@ -1158,7 +1212,9 @@
       "titulo": "Puerta de contacto en divoox.com",
       "texto": "Página «Contacto», botón «¿Preguntas?» en toda la web y formulario en Soporte: cada mensaje abre una conversación real con enlace privado. Nueva guía «¿Quién me paga y cuándo me llega?». La empresa aparece como Windoce, LLC, de Delaware con oficinas en Novi, Michigan.",
       "paises": "Todos",
-      "docs": ["who-pays-me"]
+      "docs": [
+        "who-pays-me"
+      ]
     },
     {
       "fecha": "2026-11-02",
@@ -1166,7 +1222,9 @@
       "titulo": "Brechas frente a los grandes",
       "texto": "GPS más estricto con aviso de ubicación simulada, edad mínima por estado y vehículo, licencia y seguro vigentes para repartir en carro o moto (apagado hasta encenderlo) y resumen anual 1099 en el superadmin (emisión apagada).",
       "paises": "EE. UU.",
-      "docs": ["verify"]
+      "docs": [
+        "verify"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1181,7 +1239,9 @@
       "titulo": "«Mis pedidos» renovado",
       "texto": "Foto del local, estado con color (verde si se entregó) y botones claros: «Ver recibo» y «Pedir otra vez».",
       "paises": "Todos",
-      "docs": ["my-orders-and-reorder"]
+      "docs": [
+        "my-orders-and-reorder"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1210,7 +1270,9 @@
       "titulo": "El mapa de zonas se ve antes de conectarse",
       "texto": "En Divoox Driver el mapa de zonas con más pedidos solo aparecía estando conectado. Ahora se ve antes, como en Dasher, que es cuando sirve para decidir adónde ir.",
       "paises": "Todos",
-      "docs": ["busy-areas"]
+      "docs": [
+        "busy-areas"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1247,7 +1309,9 @@
       "titulo": "Respuestas de soporte con plantillas nuevas",
       "texto": "El gerente de correo ya puede usar plantillas a partir de la número 10, como la de «cuándo sale la app».",
       "paises": "Todos",
-      "docs": ["support"]
+      "docs": [
+        "support"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1269,7 +1333,10 @@
       "titulo": "Divoox Plus y tarjetas de regalo",
       "texto": "Construidas, probadas con Stripe en modo prueba y publicadas apagadas.",
       "paises": "EE. UU.",
-      "docs": ["divoox-plus", "gift-cards"]
+      "docs": [
+        "divoox-plus",
+        "gift-cards"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1277,7 +1344,10 @@
       "titulo": "Anuncios patrocinados y Ganar por tiempo",
       "texto": "El restaurante paga solo por pedido que llega del anuncio; el repartidor puede cobrar por hora activa. Publicados apagados.",
       "paises": "Todos",
-      "docs": ["sponsored-listings", "earn-by-time"]
+      "docs": [
+        "sponsored-listings",
+        "earn-by-time"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1292,7 +1362,9 @@
       "titulo": "Logística ordenada de punta a punta",
       "texto": "Invitación de conductores, primeros pasos, menú por grupos y tutorial con pantallas reales.",
       "paises": "Todos",
-      "docs": ["flex-getting-started"]
+      "docs": [
+        "flex-getting-started"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1300,7 +1372,9 @@
       "titulo": "Mis casos de ayuda con capturas",
       "texto": "En las tres apps: el cliente, el repartidor y el restaurante ven sus casos y mandan capturas.",
       "paises": "Todos",
-      "docs": ["send-screenshot-to-support"]
+      "docs": [
+        "send-screenshot-to-support"
+      ]
     },
     {
       "fecha": "2026-11-01",
@@ -1462,7 +1536,9 @@
     },
     {
       "quien": "Franquicias",
-      "funciones": ["Panel de la franquicia con su territorio y su equipo"]
+      "funciones": [
+        "Panel de la franquicia con su territorio y su equipo"
+      ]
     },
     {
       "quien": "El equipo de Divoox",

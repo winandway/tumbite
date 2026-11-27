@@ -199,8 +199,16 @@ describe('C-WHATSAPP-FALTA: la plantilla', () => {
     expect(textoDePlantilla(def, 'Ana', 'enviar tu moto a revisión')).toBe(
       'Hola Ana 👋 Para que tu cuenta de Divoox Driver empiece a recibir carreras te falta: enviar tu moto a revisión. Entra a la app y complétalo. Si tienes dudas, responde a este mensaje.',
     );
-    // El inglés todavía no existe: a quien tiene la app en inglés no se le manda (no hay plantilla).
-    expect(PLANTILLAS_FALTA.en).toBeNull();
+    // C-WHATSAPP-FALTA-IDIOMAS: la traducción al inglés de EE. UU., con las mismas reglas de Meta.
+    const en = PLANTILLAS_FALTA.en!;
+    expect(en.nombre).toBe(def.nombre);
+    expect(en.idioma).toBe('en_US');
+    expect(en.categoria).toBe('UTILITY');
+    expect(en.cuerpo.startsWith('{{')).toBe(false);
+    expect(en.cuerpo.trimEnd().endsWith('}}')).toBe(false);
+    expect(en.cuerpo).not.toMatch(/\}\}\s*\{\{/);
+    expect(en.cuerpo).not.toMatch(/earn|offer|discount|promo|free|\$|USD/i);
+    expect(creacionEnMeta(en).components[0]!.example.body_text[0]).toHaveLength(2);
   });
 
   it('el paso exacto de su barra, en palabras y sin códigos', () => {
@@ -418,8 +426,8 @@ describe('C-WHATSAPP-FALTA: la vuelta del vigilante', () => {
     expect(await saludWhatsappFalta(s2.env, s2.m.DB)).toBe('tope');
   });
 
-  it('PAÍS: con Venezuela apagado no sale nada; Estados Unidos nace apagado', async () => {
-    expect(AJUSTES_WHATSAPP_FALTA_DE_FABRICA.paises.US).toBe(false);
+  it('PAÍS: con Venezuela apagado no sale nada; Estados Unidos nace encendido (C-WHATSAPP-PAIS)', async () => {
+    expect(AJUSTES_WHATSAPP_FALTA_DE_FABRICA.paises.US).toBe(true);
     const s = await escenario();
     const meta = simularMeta();
     await s.ajustarWhatsapp({ paises: { VE: false } });
@@ -674,5 +682,89 @@ describe('C-WHATSAPP-FALTA: revisión del 25 nov', () => {
       "SELECT COUNT(*) AS n FROM errores_servidor WHERE ruta = 'whatsapp/te-falta'",
     ).first<{ n: number }>();
     expect(Number(e?.n)).toBe(3);
+  });
+
+  it('C-WHATSAPP-FALTA-IDIOMAS: cuenta en inglés sin la plantilla en inglés aprobada nunca queda sin salida', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    await s.m.DB.prepare("UPDATE usuarios SET idioma = 'en' WHERE id = ?").bind(s.rep.id).run();
+    // Por defecto, su idioma: no sale, pero dice que en español sí se puede.
+    const vista = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
+      soloVista: true,
+    });
+    expect(vista.datos.vista.idioma).toBe('en');
+    expect(vista.datos.vista.idiomaCuenta).toBe('en');
+    expect(vista.datos.vista.motivo).toBe('idioma_sin_plantilla');
+    expect(vista.datos.vista.idiomas).toEqual({ es: true, en: false });
+    // El equipo elige español: sale, entero en español, con la plantilla española.
+    const es = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
+      confirmar: true,
+      idioma: 'es',
+    });
+    expect(es.datos.enviado).toBe(true);
+    expect(meta).toHaveLength(1);
+    expect(meta[0]!.idioma).toBe('es');
+    expect(meta[0]!.falta).toBe('tomarte la foto de la cara');
+  });
+
+  it('C-WHATSAPP-FALTA-IDIOMAS: con la de inglés aprobada sale en inglés, entero en inglés', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    await s.m.DB.prepare("UPDATE usuarios SET idioma = 'en' WHERE id = ?").bind(s.rep.id).run();
+    await guardarEstadoPlantilla(s.m.DB, PLANTILLA_FALTA_NOMBRE, 'en_US', {
+      estado: 'APPROVED',
+      categoria: 'UTILITY',
+      motivo: null,
+      fuente: 'meta',
+    });
+    const vista = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
+      soloVista: true,
+    });
+    expect(vista.datos.vista.idiomas).toEqual({ es: true, en: true });
+    expect(vista.datos.vista.texto).toBe(
+      'Hi Marina 👋 To start receiving trips with your Divoox Driver account, you still need to: take your face photo. Open the app to finish it. If you have any questions, reply to this message.',
+    );
+    const r = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
+      confirmar: true,
+    });
+    expect(r.datos.enviado).toBe(true);
+    expect(meta[0]!.idioma).toBe('en_US');
+    expect(meta[0]!.falta).toBe('take your face photo');
+  });
+
+  it('C-WHATSAPP-PAIS: el interruptor por país se respeta (EE. UU. apagado no sale, encendido sí)', async () => {
+    const s = await escenario();
+    const meta = simularMeta();
+    await s.ajustarWhatsapp({ paises: { VE: false, US: true } });
+    const no = await s.equipo('POST', `/datos/admin/camila/whatsapp/${s.rep.id}`, {
+      confirmar: true,
+    });
+    expect(no.datos.enviado).toBe(false);
+    expect(no.datos.motivo).toBe('pais_apagado');
+    expect(meta).toHaveLength(0);
+  });
+
+  it('C-WHATSAPP-PAIS: una cuenta de EE. UU. sin zona real (Miami de fábrica) no sale «apagado»: su celular dice su país', async () => {
+    const s = await escenario();
+    simularMeta();
+    const rep = await s.conductor('Mario Ejemplo', '+13055550123');
+    // Como las cuentas reales de Miami: la fila con la ciudad de fábrica y ninguna zona elegida.
+    await s.m.DB.batch([
+      s.m.DB.prepare(
+        "UPDATE repartidores SET zona_id = 'US-FL-MIAMI', ubicacion_en = NULL, ciudad_elegida_en = NULL WHERE usuario_id = ?",
+      ).bind(rep.id),
+      s.m.DB.prepare('UPDATE usuarios SET zona_id = NULL, lugar_pais = NULL WHERE id = ?').bind(
+        rep.id,
+      ),
+    ]);
+    await s.ajustarWhatsapp({ paises: { VE: true, US: true } });
+    const v = await s.equipo('POST', `/datos/admin/camila/whatsapp/${rep.id}`, { soloVista: true });
+    expect(v.datos.vista.motivo).not.toBe('pais_apagado');
+    // Y con EE. UU. apagado, sí lo dice (el interruptor se respeta).
+    await s.ajustarWhatsapp({ paises: { VE: true, US: false } });
+    const no = await s.equipo('POST', `/datos/admin/camila/whatsapp/${rep.id}`, {
+      soloVista: true,
+    });
+    expect(no.datos.vista.motivo).toBe('pais_apagado');
   });
 });

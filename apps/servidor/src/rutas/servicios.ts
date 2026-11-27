@@ -1735,8 +1735,9 @@ servicios.put('/admin/despacho-catalogo/:zona', async (c) => {
 
 servicios.get('/admin/vehiculos', async (c) => {
   exigir(c, 'admin');
-  const estado = z
+  const estadoPedido = z
     .enum([
+      'todos',
       'registrado',
       'en_revision',
       'aprobado',
@@ -1748,6 +1749,10 @@ servicios.get('/admin/vehiculos', async (c) => {
     .catch('en_revision')
     .parse(c.req.query('estado') ?? 'en_revision');
   const conductor = (c.req.query('conductor') ?? '').slice(0, 64);
+  // C-FICHA-VEHICULO-SIEMPRE (27 nov 2026, Richard: «no encuentro la moto»): en la ficha de UN
+  // conductor se piden todos sus vehículos, en cualquier estado (aprobado incluido). Sin conductor,
+  // «todos» no existe: la cola sigue con lo que espera revisión.
+  const estado = estadoPedido === 'todos' && !conductor ? 'en_revision' : estadoPedido;
   // C-VERIFICACIONES-VEHICULOS (25 nov 2026, Richard: «Verificaciones verifica TODO») — todos los
   // países. La pestaña «Vehículos» de Verificaciones: cuentas reales o de prueba, ciudad y buscador
   // (nombre, ID, placa, marca o modelo, desde la primera letra), con los totales de cada lista.
@@ -1791,11 +1796,11 @@ servicios.get('/admin/vehiculos', async (c) => {
                 (SELECT z.pais FROM repartidores r JOIN zonas z ON z.id = r.zona_id
                   WHERE r.usuario_id = v.conductor_id) AS pais
            FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
-          WHERE v.estado = ? AND ${filtros} ORDER BY v.actualizado_en LIMIT 100`,
+          WHERE (? = 'todos' OR v.estado = ?) AND ${filtros} ORDER BY v.actualizado_en LIMIT 100`,
       )
       // C-VERIFICACION-UNICA: con `conductor`, solo los de esa persona (su ficha en Verificaciones).
-      .bind(estado, ...valores)
-      .all<{ id: string; conductor_id: string }>(),
+      .bind(estado, estado, ...valores)
+      .all<{ id: string; conductor_id: string; estado: string }>(),
     // Los totales de las dos listas de la pestaña (lo que espera revisión y lo que quedó sin enviar).
     conductor
       ? null
@@ -1830,7 +1835,7 @@ servicios.get('/admin/vehiculos', async (c) => {
         ...v,
         documentos,
         // C-FICHA-VEHICULO-SIN-ENVIAR: lo que le falta a uno sin enviar para que el equipo lo apruebe.
-        ...(estado === 'registrado'
+        ...(v.estado === 'registrado'
           ? {
               faltaParaAprobar: faltaParaAprobarSinEnviar(
                 v as unknown as { tipo: string; placa: string | null; placa_estado: string | null },
@@ -2061,9 +2066,12 @@ async function faltantesParaHabilitar(db: Db, conductor: string, servicio: strin
     )
     .bind(servicio, conductor)
     .all<{ requisito: string }>();
-  // C-PLAZO-PAPELES: lo que el país del conductor declara exento no cuenta como faltante.
-  const { exentos } = await graciaDe(db, conductor);
-  return results.map((r) => r.requisito).filter((r) => !exentos.has(r));
+  // C-PLAZO-PAPELES y C-HABILITAR-IGUAL-LETRERO: lo exento no cuenta, y dentro de su plazo solo lo
+  // que su país pide «para empezar» (la misma regla del disparador, de la vista y del letrero).
+  return requisitosConGracia(
+    results.map((r) => r.requisito),
+    await graciaDe(db, conductor),
+  );
 }
 
 servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
@@ -2147,6 +2155,21 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     .prepare('SELECT * FROM habilitaciones WHERE conductor_id = ? AND servicio_id = ?')
     .bind(conductor, servicio)
     .first();
+  // C-HABILITAR-IGUAL-LETRERO: si se habilitó dentro de su plazo con papeles pendientes, se dice
+  // hasta cuándo tiene y qué le queda por subir (la regla entera, como si el plazo ya hubiera vencido).
+  let porPlazo: { venceEn: string | null; pendientes: string[] } | undefined;
+  if (d.estado === 'aprobada') {
+    const g = await graciaDe(db, conductor);
+    if (g.activa) {
+      const entero = await estadoDelConductor(db, conductor, false, Number.MAX_SAFE_INTEGER, {
+        sinPlazo: true,
+      });
+      const pendientes = (
+        entero.servicios.find((s) => s.servicioId === servicio)?.requisitosFaltantes ?? []
+      ).filter((r) => !g.exentos.has(r));
+      if (pendientes.length) porPlazo = { venceEn: g.venceEn, pendientes };
+    }
+  }
   // C-SALDO-CONDUCTOR: al aprobarlo, el regalo de arranque de su ciudad (una vez en la vida).
   if (d.estado === 'aprobada')
     await darRegaloConductorNuevo(db, conductor, c.env).catch((e: unknown) =>
@@ -2164,7 +2187,7 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
   );
   // C-BARRA-ACTIVACION: si esta decisión lo dejó listo para recibir carreras, se le avisa (una vez).
   if (d.estado === 'aprobada') await avisarSiQuedoActivo(c.env, db, conductor);
-  return c.json({ habilitacion: despues });
+  return c.json({ habilitacion: despues, ...(porPlazo ? { porPlazo } : {}) });
 });
 
 /** Requisitos que revisa una persona del equipo (licencia, edad, capacitación, casco…). */

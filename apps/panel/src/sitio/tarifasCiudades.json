@@ -46,6 +46,18 @@
               "idaVuelta": null
             },
             {
+              "lugar": "Cementerio Onia",
+              "ida": {
+                "dia": 100,
+                "noche": 130
+              },
+              "regreso": {
+                "dia": 100,
+                "noche": 130
+              },
+              "idaVuelta": null
+            },
+            {
               "lugar": "Centro",
               "ida": {
                 "dia": 100,
@@ -142,6 +154,18 @@
               "idaVuelta": null
             },
             {
+              "lugar": "Colinas de Buenos Aires",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
               "lugar": "La Motoza",
               "ida": {
                 "dia": 200,
@@ -170,6 +194,30 @@
         {
           "grupo": "Vía El Zulia",
           "lugares": [
+            {
+              "lugar": "Pedeca",
+              "ida": {
+                "dia": 200,
+                "noche": 260
+              },
+              "regreso": {
+                "dia": 200,
+                "noche": 260
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Caño Frío",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
             {
               "lugar": "El Taparo",
               "ida": {
@@ -231,10 +279,31 @@
               "idaVuelta": null
             },
             {
+              "lugar": "Cañito",
+              "ida": {
+                "dia": 500,
+                "noche": 650
+              },
+              "regreso": {
+                "dia": 500,
+                "noche": 650
+              },
+              "idaVuelta": null
+            },
+            {
               "lugar": "Caracolí",
               "ida": {
                 "dia": 1000,
                 "noche": 1300
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "KM 35",
+              "ida": {
+                "dia": 1500,
+                "noche": 1950
               },
               "regreso": null,
               "idaVuelta": null
@@ -320,6 +389,18 @@
               "idaVuelta": null
             },
             {
+              "lugar": "La Vega II",
+              "ida": {
+                "dia": 300,
+                "noche": 390
+              },
+              "regreso": {
+                "dia": 300,
+                "noche": 390
+              },
+              "idaVuelta": null
+            },
+            {
               "lugar": "Peaje Vía Mérida",
               "ida": {
                 "dia": 300,
@@ -366,6 +447,15 @@
               "ida": {
                 "dia": 1500,
                 "noche": 1950
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Alcabala La Victoria",
+              "ida": {
+                "dia": 2000,
+                "noche": 2600
               },
               "regreso": null,
               "idaVuelta": null
@@ -529,6 +619,30 @@
               "idaVuelta": null
             },
             {
+              "lugar": "Los Robles",
+              "ida": {
+                "dia": 400,
+                "noche": 520
+              },
+              "regreso": {
+                "dia": 400,
+                "noche": 520
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Aroa I",
+              "ida": {
+                "dia": 500,
+                "noche": 650
+              },
+              "regreso": {
+                "dia": 500,
+                "noche": 650
+              },
+              "idaVuelta": null
+            },
+            {
               "lugar": "Mucujepe",
               "ida": {
                 "dia": 500,
@@ -592,6 +706,15 @@
               "idaVuelta": null
             },
             {
+              "lugar": "El Chivo",
+              "ida": {
+                "dia": 2500,
+                "noche": 3250
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
               "lugar": "Tucaní",
               "ida": {
                 "dia": 3000,
@@ -636,6 +759,51 @@
                 "dia": 300,
                 "noche": 390
               },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "KM 12",
+              "ida": {
+                "dia": 400,
+                "noche": 520
+              },
+              "regreso": {
+                "dia": 400,
+                "noche": 520
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Carlos Andrés",
+              "ida": {
+                "dia": 500,
+                "noche": 650
+              },
+              "regreso": {
+                "dia": 500,
+                "noche": 650
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "KM 15",
+              "ida": {
+                "dia": 600,
+                "noche": 780
+              },
+              "regreso": {
+                "dia": 600,
+                "noche": 780
+              },
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Culebria",
+              "ida": {
+                "dia": 1000,
+                "noche": 1300
+              },
+              "regreso": null,
               "idaVuelta": null
             },
             {
@@ -702,6 +870,24 @@
               "idaVuelta": null
             },
             {
+              "lugar": "El Puerto",
+              "ida": {
+                "dia": 3500,
+                "noche": 4550
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
+              "lugar": "Aguas Clara",
+              "ida": {
+                "dia": 4500,
+                "noche": 5850
+              },
+              "regreso": null,
+              "idaVuelta": null
+            },
+            {
               "lugar": "San Juan de Colón",
               "ida": {
                 "dia": 4500,
@@ -733,7 +919,7 @@
         "hastaH": 6,
         "zonaHoraria": "America/Caracas"
       },
-      "actualizado": "2026-11-26"
+      "actualizado": "2026-11-27"
     }
   }
 }

@@ -1,9 +1,9 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
-import { alcanceEsTotal } from '@tumbite/compartido';
+import { alcanceEsTotal, paisUnicoDelCelular } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { accesoDe } from '../accesoInterno';
-import { zonaRealSql } from '../cuentaPais';
+import { PAIS_CONDUCTOR_SQL, ZONA_CONDUCTOR_SQL, zonaRealSql } from '../cuentaPais';
 import { ZONA_REVISION_TIENDAS } from '../panicoZona';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -21,6 +21,7 @@ import {
   enviarUno,
   esquemaAjustesWhatsappFalta,
   estadoCanal,
+  estadosCanal,
   evaluarUno,
   evaluarVarios,
   gastoDelDia,
@@ -82,12 +83,17 @@ const vistaDe = (e: Evaluacion) => ({
   motivo: e.motivo,
   delPaso: e.delPaso,
   ultimoEn: e.ultimoEn,
+  // C-WHATSAPP-FALTA-IDIOMAS: en qué idioma sale, el de su cuenta y cuáles se pueden mandar hoy.
+  idioma: e.persona.idioma,
+  idiomaCuenta: e.persona.idiomaCuenta ?? e.persona.idioma,
+  idiomas: e.idiomas,
 });
 
 whatsappFaltaRutas.get('/admin/camila/whatsapp', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
-  const canal = await estadoCanal(c.env, db);
+  const canales = await estadosCanal(c.env, db);
+  const canal = canales.es;
   const gasto = await gastoDelDia(db, canal.ajustes);
   const { results: zonas } = await db
     .prepare('SELECT id, nombre, pais FROM zonas WHERE activa = 1 ORDER BY pais, nombre LIMIT 300')
@@ -105,6 +111,15 @@ whatsappFaltaRutas.get('/admin/camila/whatsapp', async (c) => {
       cuerpo: def.cuerpo,
       ...canal.plantilla,
     },
+    // C-WHATSAPP-FALTA-IDIOMAS: la traducción en inglés de EE. UU., con su propio estado en Meta.
+    plantillaEn: {
+      nombre: PLANTILLAS_FALTA.en!.nombre,
+      idioma: PLANTILLAS_FALTA.en!.idioma,
+      categoriaPedida: PLANTILLA_FALTA_CATEGORIA,
+      cuerpo: PLANTILLAS_FALTA.en!.cuerpo,
+      listo: canales.en.listo,
+      ...canales.en.plantilla,
+    },
     ajustes: canal.ajustes,
     fabrica: AJUSTES_WHATSAPP_FALTA_DE_FABRICA,
     gasto,
@@ -120,6 +135,8 @@ const cuerpoAjustes = esquemaAjustesWhatsappFalta.extend({
       estado: z.enum(ESTADOS_PLANTILLA),
       /** La categoría que dice Meta. Sin ella, no se supone utilidad: no se envía. */
       categoria: z.enum(['UTILITY', 'MARKETING', 'AUTHENTICATION']).nullable().optional(),
+      /** C-WHATSAPP-FALTA-IDIOMAS: cuál de las dos traducciones (sin decirlo, la española). */
+      idioma: z.enum(['es', 'en']).optional(),
     })
     .optional(),
 });
@@ -129,7 +146,8 @@ whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
   exigirAlcanceTotal(c);
   const d = await leerCuerpo(c, cuerpoAjustes);
   const db = base(c);
-  const antes = await estadoCanal(c.env, db);
+  const idiomaPlantilla = d.plantilla?.idioma ?? 'es';
+  const antes = await estadoCanal(c.env, db, idiomaPlantilla);
   const { plantilla, ...ajustes } = d;
   const lotes = [];
   await guardarAjustesWhatsappFalta(db, ajustes);
@@ -142,7 +160,7 @@ whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
     plantilla &&
     (plantilla.estado !== antes.plantilla.estado || categoria !== antes.plantilla.categoria)
   ) {
-    const def = PLANTILLAS_FALTA.es!;
+    const def = (idiomaPlantilla === 'en' ? PLANTILLAS_FALTA.en : PLANTILLAS_FALTA.es)!;
     await guardarEstadoPlantilla(db, def.nombre, def.idioma, {
       estado: plantilla.estado,
       categoria,
@@ -174,9 +192,14 @@ whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
 async function personaDe(db: D1Database, id: string): Promise<Persona> {
   const u = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.idioma, u.rol, u.activo, z.pais
+      // C-WHATSAPP-PAIS (27 nov 2026, cuentas de Miami sin zona real): el país del conductor con la
+      // MISMA regla de sus papeles (zona real, o donde vive, o la de su fila); nunca «sin país».
+      // Sin zona real ni lugar, el código de su celular manda antes que la ciudad de fábrica de la fila.
+      `SELECT u.id, u.nombre, u.idioma, u.rol, u.activo, u.telefono,
+              ${PAIS_CONDUCTOR_SQL} AS pais,
+              (${zonaRealSql('r', 'u')} IS NULL AND u.lugar_pais IS NULL) AS sin_lugar
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
-         LEFT JOIN zonas z ON z.id = ${zonaRealSql('r', 'u')}
+         LEFT JOIN zonas z ON z.id = ${ZONA_CONDUCTOR_SQL}
         WHERE u.id = ?`,
     )
     .bind(id)
@@ -187,13 +210,15 @@ async function personaDe(db: D1Database, id: string): Promise<Persona> {
       rol: string;
       activo: number;
       pais: string | null;
+      telefono: string | null;
+      sin_lugar: number | null;
     }>();
   if (!u || !Number(u.activo)) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
   return {
     id: u.id,
     nombre: u.nombre,
     idioma: u.idioma === 'en' ? 'en' : 'es',
-    pais: u.pais,
+    pais: (Number(u.sin_lugar) === 1 ? paisUnicoDelCelular(u.telefono) : null) ?? u.pais,
     rol: u.rol,
   };
 }
@@ -201,13 +226,18 @@ async function personaDe(db: D1Database, id: string): Promise<Persona> {
 const cuerpoUno = z.object({
   soloVista: z.boolean().optional(),
   confirmar: z.boolean().optional(),
+  /** C-WHATSAPP-FALTA-IDIOMAS: el idioma que eligió el equipo (sin decirlo, el de su cuenta). */
+  idioma: z.enum(['es', 'en']).optional(),
 });
 
 whatsappFaltaRutas.post('/admin/camila/whatsapp/:id', async (c) => {
   const yo = exigir(c, 'admin');
   const d = await leerCuerpo(c, cuerpoUno);
   const db = base(c);
-  const p = await personaDe(db, c.req.param('id'));
+  const cuenta = await personaDe(db, c.req.param('id'));
+  const p: Persona = d.idioma
+    ? { ...cuenta, idioma: d.idioma, idiomaCuenta: cuenta.idioma }
+    : cuenta;
   if (d.soloVista || !d.confirmar) {
     const { evaluacion, canal, gasto } = await evaluarUno(c.env, db, p);
     return c.json({ vista: vistaDe(evaluacion), listo: canal.listo, motivo: canal.motivo, gasto });

@@ -224,10 +224,18 @@ describe('C-PAPELES-CONDUCTOR: en Venezuela los antecedentes los aprueba el equi
       .bind(c.vehiculo)
       .first<{ placa_estado: string }>();
     expect(placa?.placa_estado).toBe('VE');
-    // Sin papeles aprobados, la habilitación no pasa y el panel dice qué falta.
+    // Sin papeles aprobados y FUERA de su plazo, la habilitación no pasa y el panel dice qué falta.
+    // C-HABILITAR-IGUAL-LETRERO: dentro del plazo sí pasa (habilitarPorPlazo.test.ts).
+    const plazo = (sql: string) => e.m.DB.prepare(sql).bind(c.rep.id).run();
+    await plazo(
+      "UPDATE plazo_papeles SET vence_en = datetime('now', '-1 hour') WHERE conductor_id = ?",
+    );
     const antes = await c.equipo('PUT', `/datos/admin/habilitaciones/${c.rep.id}/moto`, {
       estado: 'aprobada',
     });
+    await plazo(
+      "UPDATE plazo_papeles SET vence_en = datetime('now', '+29 days') WHERE conductor_id = ?",
+    );
     expect(antes.estado).toBe(409);
     expect(antes.datos.requisitosFaltantes).toEqual(
       expect.arrayContaining(['historial_manejo', 'identidad']),

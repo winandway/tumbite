@@ -15,6 +15,7 @@ import { usePermisos } from './permisosPanel';
 import { AyudaAqui } from './AyudaAqui';
 import { LimitesPorMoneda } from './SuperAprobaciones';
 import { SaldoRegalosAutomaticos } from './SaldoRegalosAutomaticos';
+import { WhatsappFaltaAjustes } from './WhatsappFalta';
 
 const T = {
   es: {
@@ -156,6 +157,9 @@ export function SuperConfiguracion({
       ) : null}
       {/* C-SALDO-BIENVENIDA / C-SALDO-FIDELIDAD: los regalos automáticos del Saldo Divoox por ciudad. */}
       {base && puedeVer('dinero.ver') ? <SaldoRegalosAutomaticos idioma={idioma} /> : null}
+      {/* C-WHATSAPP-PAIS (27 nov 2026, Richard): el interruptor de WhatsApp por país también aquí, con
+          sus topes y el estado de cada plantilla (es la misma pieza de Recordatorios de registro). */}
+      {base && puedeVer('tickets.configurar') ? <WhatsappFaltaAjustes idioma={idioma} /> : null}
       <section className="tarjeta-form configuracion-horario" aria-labelledby="horario-titulo">
         <h2 id="horario-titulo">
           {t.horario}
