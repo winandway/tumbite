@@ -18,7 +18,12 @@ export function accionDeError(
   if (codigo === 'correo_sin_cuenta' && pantalla !== 'registro') return 'crear';
   if ((codigo === 'clave_incorrecta' || codigo === 'cuenta_bloqueada') && pantalla === 'entrar')
     return 'olvide';
-  if (codigo === 'correo_con_cuenta' && pantalla === 'registro') return 'entrar';
+  // C-CUENTA-UNICA-CELULAR: el celular de una cuenta que ya existe también lleva a «Entrar».
+  if (
+    (codigo === 'correo_con_cuenta' || codigo === 'telefono_con_cuenta') &&
+    pantalla === 'registro'
+  )
+    return 'entrar';
   return null;
 }
 
