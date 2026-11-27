@@ -199,7 +199,7 @@ for (const idioma of ['en', 'es'] as const) {
     await p.goto(`${es ? '/es' : ''}/forgot-password`);
     await expect(p.getByTestId('olvide-sin-cuenta')).toBeVisible({ timeout: 20_000 });
     await expect(p.getByTestId('accion-crear')).toBeVisible();
-    await p.getByRole('button', { name: es ? 'Con mi correo' : 'With my email' }).click();
+    await p.getByRole('tab', { name: es ? 'Con mi correo' : 'With my email' }).click();
     await p.getByRole('textbox').first().fill('nombre@ejemplo.com');
     await p.getByRole('radio', { name: es ? /Por correo/ : /By email/ }).check();
     await p.getByRole('button', { name: es ? 'Mandarme el código' : 'Send me the code' }).click();
