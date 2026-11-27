@@ -6,6 +6,9 @@ import { partirDireccion, sinPlusCode } from '@tumbite/compartido';
 import { zonaPara } from './zonas';
 import { ErrorDatos } from '../validar';
 
+const idiomaDe = (c: { req: { header: (n: string) => string | undefined } }) =>
+  (c.req.header('x-idioma') ?? 'es').startsWith('en') ? ('en' as const) : ('es' as const);
+
 /**
  * Divoox Flex (todos los países): búsqueda de direcciones con Google Places (API nueva), SIEMPRE por
  * el servidor para que la llave nunca viaje a una app ni a la web. Sin la llave GOOGLE_PLACES_KEY
@@ -47,7 +50,16 @@ lugares.get('/lugares/sugerencias', async (c) => {
       lng: z.coerce.number().min(-180).max(180).optional(),
     })
     .parse(c.req.query());
+  const db = base(c);
+  // C-DESTINO-TABULADOR (26 nov 2026, robot P2: en El Vigía «KM 9» traía lugares de Colombia, República
+  // Dominicana y Bolivia): la ciudad de la persona, por dónde está o, si la pantalla no lo manda, por
+  // la de su cuenta. Sus destinos del tabulador van primero, y Google busca solo en su país.
+  const ciudad = await ciudadDeLaPersona(db, c.get('usuario')?.id ?? null, q.lat, q.lng);
+  const delTabulador = ciudad ? await destinosDelTabulador(db, ciudad, q.q, idiomaDe(c)) : [];
+  if (!c.env.GOOGLE_PLACES_KEY && delTabulador.length) return c.json({ sugerencias: delTabulador });
   const k = llave(c.env);
+  // Con la ciudad de la persona, solo su país (la pantalla manda si trae el suyo: Flex).
+  const pais = q.pais ?? ciudad?.pais ?? null;
   // C-DIRECCION-SUGERENCIAS: con país en la pantalla (Flex de una empresa), solo ese país. Sin
   // país (la portada, la app del cliente) se busca en TODO el mundo y el país de la conexión solo
   // va primero: limitarlo escondía Venezuela a quien la buscaba desde EE. UU. (28 oct 2026).
@@ -56,15 +68,20 @@ lugares.get('/lugares/sugerencias', async (c) => {
   // C-DIRECCION-CERCA (29 oct 2026): las direcciones cercanas van primero, como en DoorDash y Uber
   // Eats. Si la pantalla no manda dónde está la persona, se usa la ciudad aproximada de su conexión
   // (la da Cloudflare en cada petición). Visto en el carrito: desde Miami salían Canadá y Ohio arriba.
+  // Cerca de ella: donde está si está en su ciudad; si no, el centro de su ciudad.
   const cerca =
-    q.lat != null && q.lng != null ? { lat: q.lat, lng: q.lng } : puntoDeLaConexion(c.req.raw);
+    q.lat != null && q.lng != null && (!ciudad || ciudad.aqui)
+      ? { lat: q.lat, lng: q.lng }
+      : ciudad
+        ? { lat: ciudad.lat, lng: ciudad.lng }
+        : puntoDeLaConexion(c.req.raw);
   const r = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': k },
     body: JSON.stringify({
       input: q.q,
-      ...(q.pais
-        ? { includedRegionCodes: [q.pais.toLowerCase()] }
+      ...(pais
+        ? { includedRegionCodes: [pais.toLowerCase()] }
         : deLaConexion
           ? { regionCode: deLaConexion.toLowerCase() }
           : {}),
@@ -87,6 +104,8 @@ lugares.get('/lugares/sugerencias', async (c) => {
   });
   if (!r?.ok) {
     if (r) console.error('lugares: Google respondió', r.status);
+    // Si Google falla, los destinos del tabulador igual salen.
+    if (delTabulador.length) return c.json({ sugerencias: delTabulador });
     throw new ErrorDatos(
       'No pudimos buscar la dirección. Marca el punto en el mapa.',
       undefined,
@@ -100,12 +119,13 @@ lugares.get('/lugares/sugerencias', async (c) => {
     distanceMeters?: number;
   };
   const d = (await r.json()) as { suggestions?: { placePrediction?: Prediccion }[] };
+  const deGoogle = (d.suggestions ?? [])
+    .map((x) => x.placePrediction)
+    .filter((x): x is Prediccion => Boolean(x?.placeId));
   return c.json({
-    sugerencias: (d.suggestions ?? [])
-      .map((x) => x.placePrediction)
-      .filter((x): x is Prediccion => Boolean(x?.placeId))
-      .slice(0, 6)
-      .map((x) => ({
+    sugerencias: [
+      ...delTabulador,
+      ...deGoogle.slice(0, Math.max(0, 6 - delTabulador.length)).map((x) => ({
         id: x.placeId,
         texto: sinPlusCode(x.text?.text ?? '') || (x.text?.text ?? ''),
         ...(x.structuredFormat?.mainText?.text
@@ -117,12 +137,31 @@ lugares.get('/lugares/sugerencias', async (c) => {
           : {}),
         ...(typeof x.distanceMeters === 'number' ? { distanciaM: x.distanceMeters } : {}),
       })),
+    ],
   });
 });
 
 /** El punto exacto de una sugerencia elegida. */
 lugares.get('/lugares/punto/:id', async (c) => {
   const id = c.req.param('id');
+  // C-DESTINO-TABULADOR: un destino del tabulador trae su punto de la base, sin llamar a Google.
+  if (id.startsWith(PREFIJO_TABULADOR)) {
+    const f = await base(c)
+      .prepare(
+        'SELECT hasta_lat, hasta_lng, hasta_nombre, zona_id FROM rutas_precio_zona WHERE id = ? AND activa = 1 AND revisar = 0',
+      )
+      .bind(id.slice(PREFIJO_TABULADOR.length))
+      .first<{ hasta_lat: number; hasta_lng: number; hasta_nombre: string; zona_id: string }>();
+    if (!f) throw new ErrorDatos('Esa dirección no existe.', undefined, 404);
+    const z0 = await base(c)
+      .prepare('SELECT nombre FROM zonas WHERE id = ?')
+      .bind(f.zona_id)
+      .first<{ nombre: string }>();
+    return c.json({
+      punto: { lat: Number(f.hasta_lat), lng: Number(f.hasta_lng) },
+      direccion: z0 ? `${f.hasta_nombre}, ${z0.nombre}` : f.hasta_nombre,
+    });
+  }
   if (!/^[A-Za-z0-9_-]{10,300}$/.test(id))
     throw new ErrorDatos('Esa dirección no existe.', undefined, 404);
   const sesion = c.req.query('sesion');
@@ -153,6 +192,116 @@ lugares.get('/lugares/punto/:id', async (c) => {
     direccion: sinPlusCode(d.formattedAddress ?? '') || (d.formattedAddress ?? ''),
   });
 });
+
+/** El id de una sugerencia del tabulador (no choca con los de Google, que no llevan «~»). */
+export const PREFIJO_TABULADOR = 'tab~';
+/** Cuántos destinos del tabulador van arriba como mucho. */
+export const TOPE_DESTINOS_TABULADOR = 3;
+
+type CiudadPersona = {
+  id: string;
+  nombre: string;
+  pais: string;
+  lat: number;
+  lng: number;
+  /** La persona está dentro de esa ciudad ahora (no es solo la de su cuenta). */
+  aqui?: boolean;
+};
+
+/**
+ * C-DESTINO-TABULADOR: la ciudad con servicio donde está la persona (por su ubicación) o, si la
+ * pantalla no la manda, la de su cuenta. Fuera de toda ciudad, ninguna (se busca como siempre).
+ */
+async function ciudadDeLaPersona(
+  db: D1Database,
+  usuarioId: string | null,
+  lat: number | undefined,
+  lng: number | undefined,
+): Promise<CiudadPersona | null> {
+  if (lat != null && lng != null) {
+    const z = await zonaPara(db, lat, lng);
+    if (z) return { id: z.id, nombre: z.nombre, pais: z.pais, lat: z.lat, lng: z.lng, aqui: true };
+  }
+  // Fuera de toda ciudad (o sin ubicación): la ciudad de su cuenta.
+  if (!usuarioId) return null;
+  return db
+    .prepare(
+      `SELECT z.id, z.nombre, z.pais, z.lat, z.lng FROM usuarios u
+         LEFT JOIN repartidores r ON r.usuario_id = u.id
+         JOIN zonas z ON z.id = COALESCE(r.zona_id, u.zona_id) AND z.activa = 1
+        WHERE u.id = ?`,
+    )
+    .bind(usuarioId)
+    .first<CiudadPersona>();
+}
+
+/** «Kilómetro 9», «km9», «K.M. 9» → «km 9», sin acentos ni mayúsculas. */
+const llanoLugar = (t: string) =>
+  t
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9ñ]+/g, ' ')
+    .replace(/\bkilometros?\b/g, 'km')
+    .replace(/\bk m\b/g, 'km')
+    .replace(/\bkm(\d)/g, 'km $1')
+    .trim();
+
+/**
+ * Los destinos del tabulador de esa ciudad que empiezan como lo escrito (cada palabra escrita es el
+ * comienzo de una palabra del lugar, en orden): «km 9» → KM 9; «vega» → La Vega I. Una lectura con
+ * el tope de la zona; no salen los apagados ni los marcados «revisar» (punto aproximado).
+ */
+async function destinosDelTabulador(
+  db: D1Database,
+  ciudad: CiudadPersona,
+  texto: string,
+  idioma: 'es' | 'en',
+) {
+  const buscado = llanoLugar(texto).split(' ').filter(Boolean);
+  if (!buscado.length) return [];
+  const { results } = await db
+    .prepare(
+      `SELECT id, hasta_nombre, desde_nombre FROM rutas_precio_zona
+        WHERE zona_id = ? AND activa = 1 AND revisar = 0 ORDER BY precio, hasta_nombre LIMIT 200`,
+    )
+    .bind(ciudad.id)
+    .all<{ id: string; hasta_nombre: string; desde_nombre: string | null }>();
+  const casa = (nombre: string) => {
+    // Cada palabra escrita, en orden, es el comienzo de una palabra del lugar.
+    let resto = llanoLugar(nombre).split(' ');
+    for (const b of buscado) {
+      const donde = resto.findIndex((p) => p.startsWith(b));
+      if (donde < 0) return false;
+      resto = resto.slice(donde + 1);
+    }
+    return true;
+  };
+  const vistos = new Set<string>();
+  const salida: { id: string; texto: string; principal: string; secundario: string }[] = [];
+  for (const f of results) {
+    const llave = llanoLugar(f.hasta_nombre);
+    if (vistos.has(llave) || !casa(f.hasta_nombre)) continue;
+    vistos.add(llave);
+    salida.push({
+      id: `${PREFIJO_TABULADOR}${f.id}`,
+      texto: `${f.hasta_nombre}, ${ciudad.nombre}`,
+      principal: f.hasta_nombre,
+      secundario:
+        idioma === 'en'
+          ? `${ciudad.nombre} · Local fixed price`
+          : `${ciudad.nombre} · Precio de la zona`,
+    });
+  }
+  // El que se escribió entero va primero («km 9» antes que «KM 90»).
+  const exacto = llanoLugar(texto);
+  return salida
+    .sort(
+      (a, b) =>
+        Number(llanoLugar(b.principal) === exacto) - Number(llanoLugar(a.principal) === exacto),
+    )
+    .slice(0, TOPE_DESTINOS_TABULADOR);
+}
 
 /** ¿Está encendida la búsqueda? (las pantallas muestran el buscador solo si sí). */
 lugares.get('/lugares/estado', (c) => c.json({ busqueda: Boolean(c.env.GOOGLE_PLACES_KEY) }));
