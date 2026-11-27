@@ -24,6 +24,8 @@ const SOPORTE = [
   'viajes',
   // C-LUGARES-PROPIOS: los lugares de la ciudad van con los precios del tabulador (viajes).
   'lugares-propios',
+  // C-ESTOY-AQUI: las tareas de medición de esos lugares y su aprobación.
+  'mediciones',
   'vehiculos',
   'habilitaciones',
   'solicitudes-franquicia',

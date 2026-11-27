@@ -265,6 +265,10 @@ export async function borrarCuenta(
     // C-CUPON-DIVOOX: los códigos de regalo que agregó. Los usos quedan (son contabilidad) y solo
     // guardan huellas del teléfono y del aparato, nunca el número.
     db.prepare('DELETE FROM cupones_divoox_guardados WHERE cliente_id = ?').bind(u.id),
+    // C-ESTOY-AQUI: sus tareas de medición asignadas y sus mediciones (llevan su GPS y su foto). Las
+    // aprobadas ya movieron el lugar; queda el registro del equipo en auditoria_admin.
+    db.prepare('DELETE FROM mediciones_tarea_asignados WHERE conductor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM mediciones_lugar WHERE conductor_id = ?').bind(u.id),
     // C-VIAJES-FIJOS (16 nov 2026): sus conductores de confianza (y si es conductor, sus clientes
     // fijos) y sus viajes fijos: direcciones de casa, escuela y trabajo, el nombre y el PIN del menor.
     db

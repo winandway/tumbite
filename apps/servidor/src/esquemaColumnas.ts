@@ -2020,6 +2020,48 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "actualizado_por",
     "actualizado_en"
   ],
+  "mediciones_tareas": [
+    "id",
+    "zona_id",
+    "titulo",
+    "nota",
+    "estado",
+    "creada_por",
+    "creada_en",
+    "cerrada_por",
+    "cerrada_en"
+  ],
+  "mediciones_tarea_lugares": [
+    "tarea_id",
+    "lugar_id",
+    "orden"
+  ],
+  "mediciones_tarea_asignados": [
+    "tarea_id",
+    "conductor_id",
+    "asignado_por",
+    "asignado_en"
+  ],
+  "mediciones_lugar": [
+    "id",
+    "tarea_id",
+    "lugar_id",
+    "zona_id",
+    "conductor_id",
+    "lat",
+    "lng",
+    "precision_m",
+    "tomada_en",
+    "recibida_en",
+    "antes_lat",
+    "antes_lng",
+    "distancia_m",
+    "foto_clave",
+    "estado",
+    "revisada_por",
+    "revisada_en",
+    "motivo"
+  ],
   "cotizaciones_viaje": [
     "id",
     "cliente_id",

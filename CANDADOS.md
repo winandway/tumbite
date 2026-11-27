@@ -7723,6 +7723,18 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Cómo comprobar:** `/datos/salud` sin errores; en el sitio de pruebas `node scripts/aceptacion/destinos.mjs` da 83 de 83; en el panel, Viajes · Emergencias y tarifas → Lugares propios → El Vigía.
 - **Qué NO tocar:** no buscar lugares propios fuera de la ciudad de la persona; no escribir en la base al buscar; los ids de sugerencia `lp~` y `tab~` (las apps los mandan a `/lugares/punto`).
 
+## C-ESTOY-AQUI — medir los lugares propios en la calle con Driver y aprobarlos en el panel (27 nov 2026) — todas las ciudades, primer uso El Vigía (Venezuela)
+
+- **Qué faltaba:** nueve lugares de El Vigía se pusieron desde el mapa, sobre la carretera, y no había forma propia de medirlos en la calle: se dependía de copiar a mano una ubicación de WhatsApp.
+- **Qué se hizo:** tablas `mediciones_tareas`, `mediciones_tarea_lugares`, `mediciones_tarea_asignados` y `mediciones_lugar` (`schema.sql`); servidor `apps/servidor/src/medicionesLugares.ts` (panel `/admin/mediciones*`, Driver `/conductor/mediciones*`); reglas compartidas `packages/compartido/src/medicionLugares.ts` (precisión 15 m, tope de 5 km); panel «Medir lugares en la calle» (`MedicionesLugares.tsx`, debajo de Lugares propios); Driver «Puntos por medir» en el perfil (`apps/repartidor/src/mediciones/`), visible solo con una tarea asignada.
+- **Candados (comprobados en rojo, uno por uno):** `apps/servidor/src/medicionesLugares.test.ts` y `apps/repartidor/src/mediciones/estoyAquiLogica.test.ts`:
+  1. sin aprobación no cambia nada (medir solo guarda la medición pendiente; aprobar es el único camino que mueve el lugar y su ruta, una sola vez, y no si el lugar cambió desde que se midió);
+  2. precisión mínima (el servidor rechaza peor que 15 m y la base tiene un CHECK; la app solo muestra «Estoy aquí» con 15 m o menos y explica qué hacer si no);
+  3. un lugar nunca sale de su ciudad (una tarea es de una ciudad; ni medir ni aprobar mueven un lugar más de 5 km; la ciudad del lugar no cambia);
+  4. solo los asignados ven y miden (a los demás, 404; al reasignar o cerrar deja de verse).
+- **Cómo comprobar:** en el panel, Viajes → «Medir lugares en la calle» → El Vigía; en Driver, Perfil → «Puntos por medir» con una cuenta asignada.
+- **Qué NO tocar:** no mover `lugares_propios` desde `/conductor/mediciones`; no subir el CHECK de `precision_m`; no mostrar la tarea a quien no está en `mediciones_tarea_asignados`.
+
 ## C-DESLIZAR-RECIBE-EL-TOQUE — el recorrido desliza solo cuando el pulgar recibe el toque y espera la respuesta real (27 nov 2026) — todos los países
 
 - **Qué pasaba:** en la verificación de main, el paso «desconectar al conductor después de rechazar una oferta» caía a veces (en 3f9de33, tres veces seguidas; antes, de vez en cuando en 72d3c05, y se relanzaba). El rastro mostró que el deslizador no estaba ocupado ni desactivado, pero el gesto nunca mandó nada al servidor: justo después de cerrar la oferta, en las máquinas de GitHub algo tapaba el pulgar y el arrastre caía encima de otra cosa. En la Mac pasaba siempre.

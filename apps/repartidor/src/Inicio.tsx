@@ -104,6 +104,7 @@ import { textosDriver } from './piezas/textos';
 import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
 import { MiEquipo } from './grandes/MiEquipo';
+import { PuntosPorMedir, porMedir } from './mediciones/PuntosPorMedir';
 import { MiLinea } from './grandes/MiLinea';
 import { AsiTeVen } from './grandes/AsiTeVen';
 import { CobrarEfectivo } from './grandes/CobrarEfectivo';
@@ -707,12 +708,32 @@ export function Inicio() {
     | 'clientesFijos'
     | 'miEquipo'
     | 'miLinea'
+    | 'puntosPorMedir'
     | 'asiTeVen'
     | 'ayuda'
     | 'papeles'
     | 'vehiculo'
     | 'cuenta'
   >('inicio');
+  // C-ESTOY-AQUI: cuántas tareas de medición tiene asignadas (el renglón solo sale si tiene alguna).
+  const [medicion, setMedicion] = useState<{ tareas: number; faltan: number }>({
+    tareas: 0,
+    faltan: 0,
+  });
+  useEffect(() => {
+    if (vista !== 'inicio') return;
+    let vivo = true;
+    api
+      .pedir<{ tareas: Parameters<typeof porMedir>[0] }>('GET', '/datos/conductor/mediciones')
+      .then((r) => {
+        const lista = Array.isArray(r?.tareas) ? r.tareas : [];
+        if (vivo) setMedicion({ tareas: lista.length, faltan: porMedir(lista) });
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, vista]);
   // C-REDISENO-DRIVER: la pestaña de abajo desde la que se abrió una pantalla (a dónde vuelve «‹»).
   const [ultimaPestana, setUltimaPestana] = useState<Pestana>('inicio');
   const [hojaDestino, setHojaDestino] = useState(false);
@@ -2603,6 +2624,9 @@ export function Inicio() {
     );
   // C-LINEAS-TAXI: su línea de taxi o mototaxi, las solicitudes y su equipo.
   if (vista === 'miLinea') return lienzo('perfil', <MiLinea api={api} idioma={idioma} />);
+  // C-ESTOY-AQUI: los lugares que el equipo le pidió medir en la calle.
+  if (vista === 'puntosPorMedir')
+    return lienzo('perfil', <PuntosPorMedir api={api} idioma={idioma} />);
   // C-PERFIL-CONDUCTOR: «Así te ven los pasajeros» y «Completar mi perfil».
   if (vista === 'asiTeVen')
     return lienzo('perfil', <AsiTeVen api={api} idioma={idioma} />, false, true);
@@ -2925,6 +2949,16 @@ export function Inicio() {
               )}
             </>
           ) : null}
+          {medicion.tareas > 0
+            ? fila(
+                idioma === 'en' ? 'Points to measure' : 'Puntos por medir',
+                () => setVista('puntosPorMedir'),
+                false,
+                idioma === 'en'
+                  ? `${medicion.faltan} ${medicion.faltan === 1 ? 'place' : 'places'} to check on the street`
+                  : `${medicion.faltan} ${medicion.faltan === 1 ? 'lugar' : 'lugares'} por confirmar en la calle`,
+              )
+            : null}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(
