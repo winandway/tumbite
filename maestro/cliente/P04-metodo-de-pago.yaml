@@ -1,0 +1,58 @@
+# linea: P4
+# titulo: La pantalla «Método de pago» muestra Saldo Divoox, Pago Móvil y Efectivo
+# app: cliente
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+- runFlow:
+    file: ../comun/entrar.yaml
+    env:
+      CORREO: ${CORREO_DEMO_CLIENTE}
+      CLAVE: ${CLAVE_DEMO_CLIENTE}
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      id: "servicio-moto"
+    timeout: 45000
+- tapOn:
+    id: "servicio-moto"
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      id: "moto-destino"
+    timeout: 30000
+- tapOn:
+    id: "moto-destino"
+- inputText: "Plaza Bolívar El Vigía"
+- extendedWaitUntil:
+    visible:
+      text: "(?i).*El Vig[ií]a.*"
+    timeout: 20000
+# El primero que coincide es la propia casilla de búsqueda: se toca el primer resultado.
+- tapOn:
+    text: "(?i).*El Vig[ií]a.*"
+    index: 1
+# Con el destino puesto, el botón de abajo pasa de «Pedir moto» a «Continuar» (ya hay precio).
+- extendedWaitUntil:
+    visible:
+      text: "Continue|Continuar"
+    timeout: 45000
+# «Continuar» abre la pantalla «Método de pago».
+- tapOn:
+    text: "Continue|Continuar"
+- extendedWaitUntil:
+    visible:
+      text: ".*(Payment method|Método de pago).*"
+    timeout: 20000
+- assertVisible:
+    text: ".*(Divoox Balance|Saldo Divoox|Divoox balance).*"
+- assertVisible:
+    text: ".*(Cash|Efectivo).*"
+- assertVisible:
+    text: ".*Pago Móvil.*"
+- assertVisible:
+    text: "Bs\\..*"

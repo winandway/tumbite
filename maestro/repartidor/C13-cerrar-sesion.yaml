@@ -1,0 +1,45 @@
+# linea: C13
+# titulo: Cerrar sesión sale de verdad; al volver a abrir pide entrar, sin el aviso falso de «recuperamos»
+# app: repartidor
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+- runFlow:
+    file: ../comun/entrar.yaml
+    env:
+      CORREO: ${CORREO_DEMO_CONDUCTOR}
+      CLAVE: ${CLAVE_DEMO_CONDUCTOR}
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      text: "Account|Cuenta"
+    timeout: 45000
+- tapOn:
+    text: "Account|Cuenta"
+    index: -1
+- scrollUntilVisible:
+    element:
+      id: "cuenta-salir"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "cuenta-salir"
+- extendedWaitUntil:
+    visible:
+      id: "ir-a-crear-cuenta|registro-por-pasos|ya-tengo-cuenta-arriba"
+    timeout: 20000
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "ir-a-crear-cuenta|registro-por-pasos|ya-tengo-cuenta-arriba"
+    timeout: 45000
+- assertNotVisible:
+    text: "Home|Inicio"
+# Sin haber escrito nada, no puede salir «Recuperamos lo que estabas escribiendo» (C6).
+- assertNotVisible:
+    text: "We restored what you were typing.*|Recuperamos lo que estabas escribiendo.*"

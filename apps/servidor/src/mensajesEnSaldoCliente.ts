@@ -72,4 +72,44 @@ export const MENSAJES_EN_SALDO_CLIENTE: [string, string][] = [
     'Tu Saldo Divoox cambió mientras borrábamos tu cuenta. No se borró nada: vuelve a intentarlo.',
     'Your Divoox Balance changed while we were deleting your account. Nothing was deleted: try again.',
   ],
+  // C-SALDO-LOTES, C-SALDO-BIENVENIDA, C-SALDO-MASIVO y C-SALDO-FIDELIDAD (26 nov 2026).
+  ['Un regalo vence en 365 días como mucho.', 'A gift expires in 365 days at most.'],
+  ['Escribe un número válido.', 'Enter a valid number.'],
+  ['Ese número está fuera de lo permitido.', 'That number is outside the allowed range.'],
+  ['Ese regalo pasa el máximo de Divoox.', 'That gift is over the Divoox maximum.'],
+  ['Escribe el tope de 24 horas.', 'Enter the 24-hour limit.'],
+  ['Escribe cada cuántos viajes se regala.', 'Enter how many rides earn a gift.'],
+  ['Escribe cuántos regalos por persona al mes.', 'Enter how many gifts per person each month.'],
+  [
+    'Para encenderla, el presupuesto tiene que alcanzar al menos para un regalo.',
+    'To turn it on, the budget has to cover at least one gift.',
+  ],
+  [
+    'Escribe el motivo de la carga (para la auditoría).',
+    'Write the reason for the batch (for the audit log).',
+  ],
+  ['La vigencia va de 1 a 365 días.', 'The gift lasts from 1 to 365 days.'],
+  [
+    'Ese monto pasa el tope por cliente de la carga masiva.',
+    'That amount is over the per-customer limit for bulk gifts.',
+  ],
+  ['Ningún cliente cumple esos filtros.', 'No customers match those filters.'],
+  ['Ese total pasa el tope por carga masiva.', 'That total is over the bulk gift limit.'],
+  [
+    'El total escrito no coincide con el de la lista de ahora. Revisa la vista previa y escríbelo otra vez.',
+    'The total you typed doesn’t match the current list. Check the preview and type it again.',
+  ],
+  ['Esa carga no existe.', 'That batch doesn’t exist.'],
+  [
+    'Esa carga ya no está en curso. Actualiza la pantalla.',
+    'That batch is no longer in progress. Refresh the screen.',
+  ],
+  [
+    'Esa carga pasa tu tope de cargas masivas de 24 horas. Hazla más pequeña o espera a mañana.',
+    'That batch is over your 24-hour bulk gift limit. Make it smaller or wait until tomorrow.',
+  ],
+  [
+    'Esa carga pasa el tope de cargas masivas de 24 horas del equipo. Hazla más pequeña o espera a mañana.',
+    'That batch is over the team’s 24-hour bulk gift limit. Make it smaller or wait until tomorrow.',
+  ],
 ];

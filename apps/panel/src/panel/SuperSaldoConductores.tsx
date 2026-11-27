@@ -55,9 +55,14 @@ const T = {
     tope: (m: string) => `Tope fijo de Divoox: hasta ${m} por carga.`,
     regaloTitulo: 'Regalo de arranque para conductores nuevos',
     regaloAyuda:
-      'Al aprobar a un conductor nuevo de esta ciudad, recibe este saldo una sola vez. Cuando se gasta el presupuesto, se apaga solo.',
+      'Cada conductor que se registre en esta ciudad desde que lo enciendas recibe este saldo una sola vez, solo, al quedar listo para trabajar. Quien ya estaba registrado no lo recibe. Si el tope del día se llena, el siguiente lo recibe al día siguiente. Cuando se gasta el presupuesto, se apaga solo.',
     regaloMonto: 'Saldo de regalo por conductor (dólares)',
     regaloPresupuesto: 'Presupuesto total (dólares)',
+    regaloTope: 'Tope por día en la ciudad (dólares, cada 24 horas)',
+    regaloVigencia: 'Vence si no lo usa (días)',
+    regaloSinLimite: 'Vacío = sin límite',
+    hoy: 'Últimas 24 horas',
+    desde: (f: string) => `Encendido desde ${f}`,
     regaloActivo: 'Encendido',
     regaloGuardar: 'Guardar el regalo de arranque',
     dado: 'Entregado',
@@ -104,9 +109,14 @@ const T = {
     tope: (m: string) => `Fixed Divoox limit: up to ${m} per top-up.`,
     regaloTitulo: 'Starter gift for new drivers',
     regaloAyuda:
-      'When a new driver in this city is approved, they get this balance once. When the budget is used up, it turns off on its own.',
+      'Every driver who signs up in this city after you turn it on gets this balance once, automatically, when they are ready to drive. Drivers who were already signed up do not get it. If the daily cap fills up, the next driver gets it the following day. When the budget is used up, it turns off on its own.',
     regaloMonto: 'Gift balance per driver (dollars)',
     regaloPresupuesto: 'Total budget (dollars)',
+    regaloTope: 'Daily cap for the city (dollars, every 24 hours)',
+    regaloVigencia: 'Expires if unused (days)',
+    regaloSinLimite: 'Empty = no limit',
+    hoy: 'Last 24 hours',
+    desde: (f: string) => `On since ${f}`,
     regaloActivo: 'On',
     regaloGuardar: 'Save the starter gift',
     dado: 'Given',
@@ -147,6 +157,10 @@ type Datos = {
     dado: number;
     restante: number;
     conductores: number;
+    topeDiario: number | null;
+    vigenciaDias: number | null;
+    dadoUltimas24h: number;
+    encendidoEn: string | null;
   }[];
   topes: { cargaMaxima: number; regaloNuevoMaximo: number; presupuestoRegaloNuevoMaximo: number };
 };
@@ -490,6 +504,8 @@ function RegaloArranque({
     inicial: {
       monto: regalo ? String(regalo.monto / 100) : '',
       presupuesto: regalo ? String(regalo.presupuesto / 100) : '',
+      topeDiario: regalo?.topeDiario != null ? String(regalo.topeDiario / 100) : '',
+      vigenciaDias: regalo?.vigenciaDias != null ? String(regalo.vigenciaDias) : '',
       activo: regalo?.activo ?? false,
     },
     almacen: almacenNavegador,
@@ -501,6 +517,10 @@ function RegaloArranque({
       await pedir('PUT', `/datos/admin/regalo-conductor-nuevo/${zonaId}`, {
         monto: aCentavos(b.valores.monto),
         presupuesto: aCentavos(b.valores.presupuesto),
+        topeDiario: b.valores.topeDiario.trim() ? aCentavos(b.valores.topeDiario) : null,
+        vigenciaDias: b.valores.vigenciaDias.trim()
+          ? Math.round(Number(b.valores.vigenciaDias))
+          : null,
         activo: b.valores.activo,
       });
       await b.limpiar();
@@ -525,6 +545,21 @@ function RegaloArranque({
             {t.dado}: {dinero(regalo.dado)} · {t.queda}: {dinero(regalo.restante)} ·{' '}
             {t.recibieron(regalo.conductores)}
           </p>
+          {regalo.topeDiario != null ? (
+            <p>
+              {t.hoy}: {dinero(regalo.dadoUltimas24h)} / {dinero(regalo.topeDiario)}
+            </p>
+          ) : null}
+          {regalo.activo && regalo.encendidoEn ? (
+            <p className="pista">
+              {t.desde(
+                new Date(`${regalo.encendidoEn.replace(' ', 'T')}Z`).toLocaleString(
+                  idioma === 'es' ? 'es' : 'en-US',
+                  { dateStyle: 'medium', timeStyle: 'short' },
+                ),
+              )}
+            </p>
+          ) : null}
         </>
       ) : null}
       <AvisoBorrador
@@ -553,6 +588,30 @@ function RegaloArranque({
             step="1"
             value={b.valores.presupuesto}
             onChange={(e) => b.cambiar('presupuesto', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          {t.regaloTope}
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="1"
+            placeholder={t.regaloSinLimite}
+            value={b.valores.topeDiario}
+            onChange={(e) => b.cambiar('topeDiario', e.target.value)}
+          />
+        </label>
+        <label className="campo">
+          {t.regaloVigencia}
+          <input
+            type="number"
+            inputMode="numeric"
+            min="1"
+            step="1"
+            placeholder={t.regaloSinLimite}
+            value={b.valores.vigenciaDias}
+            onChange={(e) => b.cambiar('vigenciaDias', e.target.value)}
           />
         </label>
         <label className="casilla-fila">

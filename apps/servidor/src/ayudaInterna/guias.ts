@@ -1426,6 +1426,8 @@ const saldoClientes: Record<IdiomaAyuda, Guia> = {
       'Cada carga queda en el libro del saldo con tu nombre y en la auditoría, y al cliente le llega el aviso «Tienes X de Saldo Divoox». El libro no se borra ni se cambia: una corrección es otro movimiento.',
       'Al pedir, el saldo se aparta; si el viaje se cancela o no hay conductor, vuelve entero. Al terminar, Divoox le paga al conductor lo que cubrió el saldo (va a sus ganancias, como un regalo).',
       'Viajes en revisión: si no se pudo comprobar que el viaje fue real, el pago al conductor espera. Apruébalo para pagarle, o recházalo y el saldo vuelve al cliente.',
+      'Vencimiento: al cargar un regalo puedes poner en cuántos días vence (vacío = no vence). El prepago nunca vence. La ficha del cliente muestra de qué está hecho su saldo (cada regalo y su prepago, cuánto queda y cuándo vence) y los movimientos «Venció el regalo».',
+      'Para dar saldo a muchos clientes a la vez usa «Carga masiva de Saldo Divoox» (abajo en esta misma pantalla); para darlo solo a cada cliente nuevo, «Regalos automáticos» en Configuración.',
     ],
     capturas: [
       capSaldoCliente(
@@ -1467,6 +1469,8 @@ const saldoClientes: Record<IdiomaAyuda, Guia> = {
       'Every top-up goes into the balance ledger under your name and into the audit log, and the customer gets the notice “You have X of Divoox Balance.” The ledger is never deleted or edited: a correction is another entry.',
       'When they request, the balance is set aside; if the ride is canceled or no driver is found, it all goes back. When the ride ends, Divoox pays the driver what the balance covered (it goes to their earnings, like a gift).',
       'Rides under review: if we couldn’t confirm the ride was real, the driver’s payment waits. Approve it to pay them, or decline it and the balance goes back to the customer.',
+      'Expiration: when you add a gift you can set how many days until it expires (blank = it doesn’t expire). A prepayment never expires. The customer’s file shows what their balance is made of (each gift and their prepayment, what’s left and when it expires) and the “Gift expired” entries.',
+      'To give balance to many customers at once use “Bulk Divoox Balance gift” (further down on this same screen); to give it only to each new customer, “Automatic gifts” in Configuration.',
     ],
     capturas: [
       capSaldoCliente(
@@ -1493,6 +1497,152 @@ const saldoClientes: Record<IdiomaAyuda, Guia> = {
       'Enter the amount, choose the reason and, for a prepayment, the reference; tap “Review the top-up.”',
       'Read the summary and tap “Confirm the top-up.”',
       'For a ride under review, write a note and approve or decline.',
+    ],
+  },
+};
+
+// ───────────── Regalos automáticos y carga masiva del Saldo Divoox (C-SALDO-BIENVENIDA, 26 nov 2026) ─────────────
+
+const saldoRegalosAuto: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'customer-balance-auto-gifts',
+    titulo: 'Regalos automáticos de Saldo Divoox: bienvenida y por viajes',
+    resumen:
+      'Cómo dar Saldo Divoox solo, por ciudad, sin cargarlo a mano: el regalo de bienvenida a cada cliente nuevo y el regalo cada cierto número de viajes, con su presupuesto y sus topes.',
+    explicacion: [
+      'Está en Configuración, en «Regalos automáticos de Saldo Divoox». Cada regla es de una ciudad y nace APAGADA: nadie recibe nada hasta que la enciendas.',
+      'Bienvenida: «<Ciudad>: X de Saldo Divoox a cada cliente nuevo». Se acredita una sola vez, cuando el cliente confirma su celular con el código por SMS. Una por persona, por número y por aparato: si el mismo celular o el mismo teléfono ya la recibió con otra cuenta, no se repite y queda una alerta para el equipo.',
+      'Si la cuenta no tiene ciudad al confirmar el celular (lo normal en un cliente), la bienvenida se decide en su primera cotización, con la ciudad de ese viaje.',
+      'Por viajes: «cada N viajes, M de Saldo Divoox». Solo cuentan los viajes que se comprobaron como reales. Tiene presupuesto del mes y un tope de regalos por persona al mes.',
+      'Presupuesto: cada regla muestra lo gastado y lo disponible. Lo gastado es lo entregado menos lo que venció sin usarse. Cuando el presupuesto (o el tope de 24 horas de la bienvenida) no alcanza para un regalo más, ese cliente no lo recibe y queda una alerta. Nunca se pasa, aunque muchos confirmen a la vez.',
+      'Vencimiento: el regalo vence a los días que pongas (30 por defecto). El cliente recibe un aviso 3 días antes y el día que vence. El prepago del cliente nunca vence.',
+      'Al pagar un viaje con saldo, primero se usa el regalo que vence antes, después el regalo sin fecha y al final lo que el cliente prepagó. Al conductor se le paga como siempre (solo viaje real).',
+      'Cada cambio de una regla queda en la auditoría con tu nombre.',
+    ],
+    capturas: [
+      capSaldoCliente(
+        'regalos-auto',
+        'es',
+        'Bloque «Regalos automáticos de Saldo Divoox» en Configuración con una regla de bienvenida encendida, lo gastado y lo disponible.',
+        'Cada ciudad con su regla, su presupuesto y su estado.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo le doy saldo de bienvenida a cada cliente nuevo de una ciudad?',
+      '¿Por qué un cliente nuevo no recibió la bienvenida?',
+      '¿Cómo regalo saldo cada cierto número de viajes?',
+    ],
+    pasos: [
+      'Abre Configuración y baja a «Regalos automáticos de Saldo Divoox».',
+      'En «Crear o cambiar una regla», elige el tipo y la ciudad.',
+      'Escribe el regalo por cliente, los días hasta que vence, el presupuesto y el tope.',
+      'Marca «Encendida» solo cuando quieras que empiece, y toca «Guardar la regla».',
+    ],
+  },
+  en: {
+    id: 'customer-balance-auto-gifts',
+    titulo: 'Automatic Divoox Balance gifts: welcome and for rides',
+    resumen:
+      'How to give Divoox Balance automatically, by city, without adding it by hand: the welcome gift for every new customer and the gift every so many rides, with their budget and limits.',
+    explicacion: [
+      'It’s in Configuration, under “Automatic Divoox Balance gifts.” Each rule belongs to a city and starts OFF: nobody gets anything until you turn it on.',
+      'Welcome: “<City>: X of Divoox Balance to every new customer.” It’s given once, when the customer confirms their mobile number with the SMS code. One per person, per number and per device: if the same number or the same phone already got it with another account, it isn’t repeated and the team gets an alert.',
+      'If the account has no city when they confirm their number (usual for a customer), the welcome gift is decided at their first quote, with that ride’s city.',
+      'For rides: “every N rides, M of Divoox Balance.” Only rides confirmed as real count. It has a monthly budget and a limit of gifts per person each month.',
+      'Budget: each rule shows what’s spent and what’s available. Spent is what was given minus what expired unused. When the budget (or the welcome gift’s 24-hour limit) can’t cover one more gift, that customer doesn’t get it and an alert is recorded. It’s never exceeded, even if many confirm at once.',
+      'Expiration: the gift expires after the days you set (30 by default). The customer gets a notice 3 days before and on the day it expires. A customer’s prepayment never expires.',
+      'When a ride is paid with balance, the gift that expires first is used first, then gifts with no date, and the customer’s prepayment last. The driver is paid as always (real rides only).',
+      'Every rule change is recorded in the audit log under your name.',
+    ],
+    capturas: [
+      capSaldoCliente(
+        'regalos-auto',
+        'en',
+        'The “Automatic Divoox Balance gifts” block in Configuration with a welcome rule on, its spent and available budget.',
+        'Each city with its rule, its budget and its status.',
+      ),
+    ],
+    preguntas: [
+      'How do I give a welcome balance to every new customer in a city?',
+      'Why didn’t a new customer get the welcome gift?',
+      'How do I give balance every so many rides?',
+    ],
+    pasos: [
+      'Open Configuration and scroll to “Automatic Divoox Balance gifts.”',
+      'In “Create or change a rule,” choose the type and the city.',
+      'Enter the gift per customer, the days until it expires, the budget and the limit.',
+      'Check “On” only when you want it to start, and tap “Save the rule.”',
+    ],
+  },
+};
+
+const saldoCargaMasiva: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'customer-balance-bulk-gift',
+    titulo: 'Carga masiva de Saldo Divoox: regalar a muchos clientes de una vez',
+    resumen:
+      'Cómo elegir clientes con filtros, ver la vista previa, confirmar con el total escrito y seguir el avance de una carga masiva de Saldo Divoox.',
+    explicacion: [
+      'Está en «Saldo de clientes» (menú de Dinero), en «Carga masiva de Saldo Divoox». Sirve para regalar saldo a muchos clientes sin cargarlos uno por uno, por ejemplo al abrir una ciudad.',
+      'Filtros: ciudad, registrados entre dos fechas, con al menos o como mucho cierto número de viajes (0 en «como mucho» = sin viajes) y solo con el celular confirmado.',
+      'La vista previa dice cuántos clientes son, el total y la lista por páginas. Si cambias un filtro o el monto, vuelve a verla.',
+      'Para confirmar hay que ESCRIBIR el total. Si la lista cambió entre la vista previa y la confirmación, el sistema no deja seguir y pide verla otra vez.',
+      'La carga corre por tandas y muestra su avance. Si cierras la ventana, el sistema la sigue solo. Repetirla no le acredita dos veces a nadie, y nunca pasa del total confirmado. Los clientes que se registran después de confirmar no entran.',
+      'Cada cliente recibe un aviso. El regalo vence en los días que pongas y se gasta antes que el prepago del cliente.',
+      'Topes: por cliente, por carga y de 24 horas (lo que reparte cada persona del equipo y todo el equipo). Se cambian en «Topes de la carga masiva» sin pasar el máximo de Divoox. Si una carga llega al tope de 24 horas, se frena sin saltarse a nadie y sigue sola cuando vuelve a haber cupo. La carga queda en la auditoría y en el libro con tu nombre, el motivo y los filtros.',
+    ],
+    capturas: [
+      capSaldoCliente(
+        'masiva',
+        'es',
+        'Carga masiva con los filtros, la vista previa (clientes y total) y la casilla para escribir el total.',
+        'Revisa la vista previa y escribe el total para confirmar.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo le regalo saldo a todos los clientes de una ciudad?',
+      '¿Qué pasa si se corta la carga masiva?',
+      '¿Puedo regalar solo a los clientes sin viajes?',
+    ],
+    pasos: [
+      'Abre «Saldo de clientes» en el menú de Dinero y baja a «Carga masiva de Saldo Divoox».',
+      'Elige los filtros, el monto por cliente, los días hasta que vence y el motivo.',
+      'Toca «Ver la vista previa» y revisa cuántos clientes son y el total.',
+      'Escribe el total y toca «Cargar … a … clientes». Espera a que el avance termine.',
+    ],
+  },
+  en: {
+    id: 'customer-balance-bulk-gift',
+    titulo: 'Bulk Divoox Balance gift: give balance to many customers at once',
+    resumen:
+      'How to choose customers with filters, see the preview, confirm by typing the total and follow the progress of a bulk Divoox Balance gift.',
+    explicacion: [
+      'It’s in “Customer balances” (Money menu), under “Bulk Divoox Balance gift.” Use it to give balance to many customers without adding it one by one, for example when a city opens.',
+      'Filters: city, signed up between two dates, with at least or at most a number of rides (0 in “at most” = no rides) and only with a confirmed mobile number.',
+      'The preview shows how many customers, the total and the list page by page. If you change a filter or the amount, see it again.',
+      'To confirm you have to TYPE the total. If the list changed between the preview and the confirmation, the system won’t continue and asks you to see it again.',
+      'The batch runs in rounds and shows its progress. If you close the window, the system keeps going on its own. Repeating it never gives anyone a gift twice, and it never goes over the confirmed total. Customers who sign up after you confirm aren’t included.',
+      'Each customer gets a notice. The gift expires after the days you set and is used before the customer’s prepayment.',
+      'Limits: per customer, per batch and over 24 hours (what each team member and the whole team give out). Change them in “Bulk gift limits” without going over the Divoox maximum. If a batch reaches the 24-hour limit, it pauses without skipping anyone and continues on its own when there’s room again. The batch is recorded in the audit log and the ledger under your name, with the reason and the filters.',
+    ],
+    capturas: [
+      capSaldoCliente(
+        'masiva',
+        'en',
+        'Bulk gift with the filters, the preview (customers and total) and the box to type the total.',
+        'Check the preview and type the total to confirm.',
+      ),
+    ],
+    preguntas: [
+      'How do I give balance to every customer in a city?',
+      'What happens if a bulk gift gets cut off?',
+      'Can I give balance only to customers with no rides?',
+    ],
+    pasos: [
+      'Open “Customer balances” in the Money menu and scroll to “Bulk Divoox Balance gift.”',
+      'Choose the filters, the amount per customer, the days until it expires and the reason.',
+      'Tap “See the preview” and check how many customers and the total.',
+      'Type the total and tap “Give … to … customers.” Wait for the progress to finish.',
     ],
   },
 };
@@ -2120,7 +2270,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'En «Saldo de conductores» eliges la ciudad y ves cuántos conductores hay, cuántos están activos (conectados o con carreras en los últimos 7 días), cuántos no tienen saldo, y el saldo, lo apartado, las ganancias y las carreras de cada uno.',
       'Cargar saldo a mano: toca «Cargar saldo» en su fila, escribe el monto, elige el motivo («Regalo de arranque», «Pagó por pago móvil» o «Corrección del equipo») y, si hay, la referencia del banco. Toca «Revisar la carga», lee el resumen y toca «Confirmar la carga». Queda en el libro con tu nombre.',
       'Topes: hasta 50 dólares por carga (fijo en el código). Si con esa carga pasas tu límite del día, no se mueve nada: queda en «Para aprobar» para que otra persona del equipo la firme.',
-      'Regalo de arranque: en la misma pantalla, por ciudad, pones cuánto saldo recibe cada conductor nuevo y el presupuesto total, y lo enciendes. Cada conductor lo recibe una sola vez, al aprobarlo. Al gastarse el presupuesto se apaga solo.',
+      'Regalo de arranque: en la misma pantalla, por ciudad, pones cuánto saldo recibe cada conductor nuevo, el presupuesto total, el tope por día (cada 24 horas) y los días que vale si no lo usa, y lo enciendes. Lo reciben solo las cuentas que se registran desde que lo enciendes: quien ya estaba registrado no lo recibe. Le llega solo, una vez, al aprobarlo o al conectarse por primera vez con permiso para trabajar. Si el tope del día está lleno, lo recibe al conectarse cuando vuelva a caber. Al vencer se le retira solo lo que no usó, nunca su dinero. Cada cambio queda en la auditoría con tu nombre. Al gastarse el presupuesto se apaga solo.',
     ],
     capturas: [
       capSaldo(
@@ -2146,7 +2296,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'Busca al conductor y toca «Cargar saldo».',
       'Escribe el monto, elige el motivo y la referencia si la hay; toca «Revisar la carga».',
       'Lee el resumen y toca «Confirmar la carga».',
-      'Para el regalo de arranque, llena el monto y el presupuesto abajo, marca «Encendido» y guarda.',
+      'Para el regalo de arranque, llena el monto, el presupuesto, el tope por día y los días de vigencia abajo, marca «Encendido» y guarda.',
     ],
   },
   en: {
@@ -2161,7 +2311,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'In “Driver balances” you pick the city and see how many drivers there are, how many are active (online or with trips in the last 7 days), how many have no balance, and each one’s balance, amount set aside, earnings and trips.',
       'Top up by hand: tap “Top up” on their row, enter the amount, choose the reason and, if there is one, the bank reference. Tap “Review the top-up,” read the summary and tap “Confirm the top-up.” It’s recorded in the ledger under your name.',
       'Limits: up to 50 dollars per top-up (fixed in the code). If that top-up takes you over your daily limit, nothing moves: it waits in “To approve” for another team member to sign off.',
-      'Starter gift: on the same screen, per city, set how much balance each new driver gets and the total budget, and turn it on. Each driver gets it once, when approved. When the budget runs out, it turns off on its own.',
+      'Starter gift: on the same screen, per city, set how much balance each new driver gets, the total budget, the daily cap (every 24 hours) and how many days it lasts if unused, and turn it on. Only accounts that sign up after you turn it on get it: drivers who were already signed up don’t. It arrives on its own, once, when they are approved or the first time they go online with permission to drive. If the daily cap is full, they get it when they go online once it fits again. When it expires, only the unused part is removed, never their own money. Every change is logged in the audit with your name. When the budget runs out, it turns off on its own.',
     ],
     capturas: [
       capSaldo(
@@ -2187,7 +2337,7 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
       'Find the driver and tap “Top up.”',
       'Enter the amount, choose the reason and add the reference if there is one; tap “Review the top-up.”',
       'Read the summary and tap “Confirm the top-up.”',
-      'For the starter gift, fill in the amount and budget below, check “On” and save.',
+      'For the starter gift, fill in the amount, budget, daily cap and days it lasts below, check “On” and save.',
     ],
   },
 };
@@ -3595,6 +3745,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(regalosDivoox),
         de(saldoConductores),
         de(saldoClientes),
+        de(saldoCargaMasiva),
+        de(saldoRegalosAuto),
         de(saldoRestaurantes),
         de(quienPagaViajes),
         // Lugares propios de tu ciudad (Viajes · Emergencias y tarifas).

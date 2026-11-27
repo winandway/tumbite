@@ -14,6 +14,7 @@ import { Enlace } from '../Enlace';
 import { usePermisos } from './permisosPanel';
 import { AyudaAqui } from './AyudaAqui';
 import { LimitesPorMoneda } from './SuperAprobaciones';
+import { SaldoRegalosAutomaticos } from './SaldoRegalosAutomaticos';
 
 const T = {
   es: {
@@ -153,6 +154,8 @@ export function SuperConfiguracion({
       {base && miId && puedeVer('dinero.ver') ? (
         <LimitesPorMoneda idioma={idioma} miId={miId} />
       ) : null}
+      {/* C-SALDO-BIENVENIDA / C-SALDO-FIDELIDAD: los regalos automáticos del Saldo Divoox por ciudad. */}
+      {base && puedeVer('dinero.ver') ? <SaldoRegalosAutomaticos idioma={idioma} /> : null}
       <section className="tarjeta-form configuracion-horario" aria-labelledby="horario-titulo">
         <h2 id="horario-titulo">
           {t.horario}

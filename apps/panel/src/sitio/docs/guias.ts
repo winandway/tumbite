@@ -2958,7 +2958,7 @@ const es: SeccionDocs[] = [
           'Sin saldo para la comisión no te llegan carreras. Cuando te queda poco, la app te avisa.',
           'Tu saldo para comisiones está a la vista en el inicio de Divoox Driver: en verde cuando te alcanza y en rojo, con el aviso, cuando se está acabando. Tócalo para ir a Ganancias y recargar.',
           'Para recargar: compra un código en un punto de venta autorizado y canjéalo en Ganancias, «Saldo para comisiones». También puedes pagarle al equipo de Divoox de tu ciudad por pago móvil: el equipo te carga el saldo y lo ves en «Cargas y regalos de saldo».',
-          'Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez.',
+          'Al registrarte, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Te llega solo, una sola vez, cuando tu cuenta queda lista para trabajar, y lo ves en tu saldo con la fecha en que vence. El regalo se usa primero; si no lo usas antes de esa fecha, lo que quede sin usar se retira. Tu propio dinero nunca se toca.',
           'Si tu pasajero usó un regalo de Divoox, te paga menos en mano y Divoox te paga la diferencia en tus ganancias. Desde Ganancias puedes pasarlo a tu saldo con «Pasar a mi saldo», o Divoox te lo paga por pago móvil.',
         ],
         capturas: [
@@ -8625,7 +8625,7 @@ const en: SeccionDocs[] = [
           'Without balance for the commission you don’t get trips. When you’re running low, the app tells you.',
           'Your balance for fees is always on the Divoox Driver home screen: green when you have enough, and red with a notice when it’s running low. Tap it to go to Earnings and top up.',
           'To top up: buy a code at an authorized sales point and redeem it under Earnings, “Balance for fees.” The Divoox team in your city can also add balance for you, and you see it under “Balance top-ups and gifts.”',
-          'When you start, Divoox may give you a starter gift: balance for your first trips. It’s given only once.',
+          'When you sign up, Divoox may give you a starter gift: balance for your first trips. It arrives on its own, only once, when your account is ready to drive, and you see it in your balance with its expiration date. The gift is used first; if you don’t use it by that date, whatever is left of it is removed. Your own money is never touched.',
           'If your rider used a Divoox gift, they pay you less in person and Divoox pays you the difference in your earnings. From Earnings you can move it to your balance with “Move to my balance,” or Divoox pays it out to you.',
         ],
         capturas: [

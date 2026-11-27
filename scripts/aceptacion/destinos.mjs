@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable security/detect-non-literal-fs-filename -- guion local: archivos fijos del repositorio y la carpeta de la corrida */
 /**
  * Robot nocturno, línea P2 completa (C-LUGARES-PROPIOS, 27 nov 2026, Gerencia por Richard): cada noche
  * busca TODOS los destinos del tabulador de El Vigía en el buscador de destino del sitio de pruebas,

@@ -24,6 +24,9 @@ export const TOPES_SALDO = {
   presupuestoRegaloNuevoMaximo: 30_000,
 } as const;
 
+/** C-REGALO-CONDUCTOR-TOPE-VENCE: lo más que puede durar el regalo de arranque sin usarse. */
+export const VIGENCIA_REGALO_MAXIMA_DIAS = 365;
+
 /**
  * C-TOPES-SALDO-MONEDA (19 nov 2026 — Perú). Los topes son un freno contra errores, y un freno
  * escrito en centavos de dólar no vale igual en otra moneda: 5.000 céntimos son solo 50 soles. Cada
@@ -150,11 +153,16 @@ export async function cargarSaldoConductor(
 
 const SQL_DADO =
   "(SELECT COALESCE(SUM(c.monto), 0) FROM cargas_saldo_conductor c WHERE c.tipo = 'regalo_nuevo' AND c.zona_id = g.zona_id)";
+/** C-REGALO-CONDUCTOR-TOPE-VENCE: lo regalado en la ciudad en las últimas 24 horas. */
+const SQL_DADO_24H =
+  "(SELECT COALESCE(SUM(c.monto), 0) FROM cargas_saldo_conductor c WHERE c.tipo = 'regalo_nuevo' AND c.zona_id = g.zona_id AND c.creado_en > datetime('now', '-1 day'))";
 
 /**
- * Al aprobarse un conductor: si su ciudad tiene el regalo de arranque encendido y le queda
- * presupuesto, recibe el saldo UNA vez en la vida (índice único). La misma sentencia comprueba el
- * presupuesto; el último puede recibir menos (lo que queda). Devuelve el monto dado o 0.
+ * Al aprobarse un conductor (o la primera vez que se conecta con permiso para trabajar): si su ciudad
+ * tiene el regalo de arranque encendido y le queda presupuesto, recibe el saldo UNA vez en la vida
+ * (índice único). La misma sentencia comprueba el presupuesto (el último puede recibir menos, lo que
+ * queda) y el tope del día de la ciudad (C-REGALO-CONDUCTOR-TOPE-VENCE): si hoy ya no cabe el regalo
+ * entero, espera; se le da al conectarse cuando vuelva a caber. Devuelve el monto dado o 0.
  */
 export async function darRegaloConductorNuevo(
   db: D1Database,
@@ -170,25 +178,43 @@ export async function darRegaloConductorNuevo(
   }
   const g = await db
     .prepare(
-      `SELECT g.monto, g.presupuesto, ${SQL_DADO} AS dado FROM regalo_conductor_nuevo g WHERE g.zona_id = ? AND g.activo = 1`,
+      `SELECT g.monto, g.presupuesto, g.tope_diario, ${SQL_DADO} AS dado, ${SQL_DADO_24H} AS dado_24h,
+              EXISTS (SELECT 1 FROM cargas_saldo_conductor c WHERE c.conductor_id = ?2 AND c.tipo = 'regalo_nuevo') AS ya,
+              (SELECT u.creado_en FROM usuarios u WHERE u.id = ?2) >= COALESCE(g.encendido_en, g.actualizado_en) AS nuevo
+         FROM regalo_conductor_nuevo g WHERE g.zona_id = ?1 AND g.activo = 1`,
     )
-    .bind(cuenta.zonaId)
-    .first<{ monto: number; presupuesto: number; dado: number }>();
-  if (!g) return 0;
+    .bind(cuenta.zonaId, conductorId)
+    .first<{
+      monto: number;
+      presupuesto: number;
+      tope_diario: number | null;
+      dado: number;
+      dado_24h: number;
+      ya: number;
+      nuevo: number | null;
+    }>();
+  // Solo conductores NUEVOS: cuentas creadas desde que la ciudad encendió el regalo. Encenderlo no
+  // le regala a quien ya estaba registrado.
+  if (!g || Number(g.ya) === 1 || Number(g.nuevo) !== 1) return 0;
   const monto = Math.min(
     Number(g.monto),
     topesSaldoDe(cuenta.moneda).regaloNuevoMaximo,
     Number(g.presupuesto) - Number(g.dado),
   );
   if (monto <= 0) return 0;
+  // El tope del día no parte el regalo: o cabe entero hoy, o espera.
+  if (g.tope_diario != null && Number(g.dado_24h) + monto > Number(g.tope_diario)) return 0;
   const id = nuevoId();
   const [ins] = await db.batch([
     db
       .prepare(
-        `INSERT OR IGNORE INTO cargas_saldo_conductor (id, conductor_id, zona_id, pais, moneda, monto, tipo, motivo)
-         SELECT ?1, ?2, g.zona_id, ?3, ?4, ?5, 'regalo_nuevo', 'Regalo de arranque de Divoox'
+        `INSERT OR IGNORE INTO cargas_saldo_conductor (id, conductor_id, zona_id, pais, moneda, monto, tipo, motivo, vence_en)
+         SELECT ?1, ?2, g.zona_id, ?3, ?4, ?5, 'regalo_nuevo', 'Regalo de arranque de Divoox',
+                CASE WHEN g.vigencia_dias IS NULL THEN NULL ELSE datetime('now', '+' || g.vigencia_dias || ' days') END
            FROM regalo_conductor_nuevo g
-          WHERE g.zona_id = ?6 AND g.activo = 1 AND ${SQL_DADO} + ?5 <= g.presupuesto`,
+          WHERE g.zona_id = ?6 AND g.activo = 1 AND ${SQL_DADO} + ?5 <= g.presupuesto
+            AND (SELECT u.creado_en FROM usuarios u WHERE u.id = ?2) >= COALESCE(g.encendido_en, g.actualizado_en)
+            AND (g.tope_diario IS NULL OR ${SQL_DADO_24H} + ?5 <= g.tope_diario)`,
       )
       .bind(id, conductorId, cuenta.pais, cuenta.moneda, monto, cuenta.zonaId),
     db
@@ -222,8 +248,8 @@ export async function darRegaloConductorNuevo(
 export async function leerRegalosConductorNuevo(db: D1Database) {
   const { results } = await db
     .prepare(
-      `SELECT g.zona_id, g.monto, g.presupuesto, g.activo, ${SQL_DADO} AS dado,
-              (SELECT COUNT(*) FROM cargas_saldo_conductor c WHERE c.tipo = 'regalo_nuevo' AND c.zona_id = g.zona_id) AS conductores
+      `SELECT g.zona_id, g.monto, g.presupuesto, g.activo, g.tope_diario, g.vigencia_dias, g.encendido_en, ${SQL_DADO} AS dado,
+              ${SQL_DADO_24H} AS dado_24h, (SELECT COUNT(*) FROM cargas_saldo_conductor c WHERE c.tipo = 'regalo_nuevo' AND c.zona_id = g.zona_id) AS conductores
          FROM regalo_conductor_nuevo g`,
     )
     .all<{
@@ -231,7 +257,11 @@ export async function leerRegalosConductorNuevo(db: D1Database) {
       monto: number;
       presupuesto: number;
       activo: number;
+      tope_diario: number | null;
+      vigencia_dias: number | null;
+      encendido_en: string | null;
       dado: number;
+      dado_24h: number;
       conductores: number;
     }>();
   return results.map((r) => ({
@@ -242,12 +272,26 @@ export async function leerRegalosConductorNuevo(db: D1Database) {
     dado: Number(r.dado),
     restante: Math.max(0, Number(r.presupuesto) - Number(r.dado)),
     conductores: Number(r.conductores),
+    topeDiario: r.tope_diario == null ? null : Number(r.tope_diario),
+    vigenciaDias: r.vigencia_dias == null ? null : Number(r.vigencia_dias),
+    dadoUltimas24h: Number(r.dado_24h),
+    encendidoEn: r.encendido_en,
   }));
 }
 
 export async function guardarRegaloConductorNuevo(
   db: D1Database,
-  p: { zonaId: string; monto: number; presupuesto: number; activo: boolean; autorId: string },
+  p: {
+    zonaId: string;
+    monto: number;
+    presupuesto: number;
+    activo: boolean;
+    autorId: string;
+    /** C-REGALO-CONDUCTOR-TOPE-VENCE: null = sin tope del día. */
+    topeDiario?: number | null;
+    /** null = el regalo no vence. */
+    vigenciaDias?: number | null;
+  },
 ) {
   const zona = await db
     .prepare('SELECT id, moneda FROM zonas WHERE id = ?')
@@ -273,6 +317,22 @@ export async function guardarRegaloConductorNuevo(
         .first<{ s: number }>()
     )?.s ?? 0,
   );
+  const topeDiario = p.topeDiario ?? null;
+  const vigenciaDias = p.vigenciaDias ?? null;
+  if (topeDiario != null && topeDiario < p.monto)
+    throw new ErrorDatos(
+      'El tope del día tiene que alcanzar al menos para un regalo entero.',
+      'topeDiario',
+      422,
+    );
+  if (topeDiario != null && topeDiario > p.presupuesto)
+    throw new ErrorDatos('El tope del día no puede pasar el presupuesto.', 'topeDiario', 422);
+  if (vigenciaDias != null && (vigenciaDias < 1 || vigenciaDias > VIGENCIA_REGALO_MAXIMA_DIAS))
+    throw new ErrorDatos(
+      `La vigencia va de 1 a ${VIGENCIA_REGALO_MAXIMA_DIAS} días.`,
+      'vigenciaDias',
+      422,
+    );
   if (p.presupuesto < dado)
     throw new ErrorDatos(
       'El presupuesto no puede quedar por debajo de lo que ya se gastó y está apartado.',
@@ -285,15 +345,44 @@ export async function guardarRegaloConductorNuevo(
       'presupuesto',
       409,
     );
+  const antes = (await leerRegalosConductorNuevo(db)).find((r) => r.zonaId === p.zonaId) ?? null;
   await db
     .prepare(
-      `INSERT INTO regalo_conductor_nuevo (zona_id, monto, presupuesto, activo, actualizado_por) VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO regalo_conductor_nuevo (zona_id, monto, presupuesto, activo, actualizado_por, tope_diario, vigencia_dias, encendido_en)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(zona_id) DO UPDATE SET monto = excluded.monto, presupuesto = excluded.presupuesto,
-         activo = excluded.activo, actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now')`,
+         activo = excluded.activo, actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now'),
+         tope_diario = excluded.tope_diario, vigencia_dias = excluded.vigencia_dias,
+         encendido_en = CASE WHEN excluded.activo = 0 THEN NULL
+                             WHEN regalo_conductor_nuevo.activo = 1 THEN regalo_conductor_nuevo.encendido_en
+                             ELSE datetime('now') END`,
     )
-    .bind(p.zonaId, p.monto, p.presupuesto, p.activo ? 1 : 0, p.autorId)
+    .bind(
+      p.zonaId,
+      p.monto,
+      p.presupuesto,
+      p.activo ? 1 : 0,
+      p.autorId,
+      topeDiario,
+      vigenciaDias,
+      p.activo ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null,
+    )
     .run();
-  return (await leerRegalosConductorNuevo(db)).find((r) => r.zonaId === p.zonaId);
+  const despues = (await leerRegalosConductorNuevo(db)).find((r) => r.zonaId === p.zonaId);
+  // Cada cambio del regalo (monto, presupuesto, tope, vigencia, encendido) queda con su autor.
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(
+      p.autorId,
+      'regalo_conductor_nuevo',
+      `regalo-conductor-nuevo:${p.zonaId}`,
+      JSON.stringify(antes),
+      JSON.stringify(despues ?? null),
+    )
+    .run();
+  return despues;
 }
 
 // ───────────────────── Vista de conductores por ciudad ─────────────────────

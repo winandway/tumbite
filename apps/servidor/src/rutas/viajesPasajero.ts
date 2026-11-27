@@ -58,6 +58,8 @@ import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, hayConductorQueRecibe, repartirOperaciones } from '../operaciones';
 import { apartarSaldoViaje, liberarSaldoViaje, saldoDeCliente } from '../saldoCliente';
+import { DIAS_VENCE_PRONTO, detalleSaldo } from '../saldoLotes';
+import { bienvenidaPendiente } from '../saldoRegalos';
 import {
   comisionConductor,
   devolverReservasViaje,
@@ -838,10 +840,26 @@ export async function cotizarParaCliente(
   // C-SALDO-CLIENTE: el Saldo Divoox disponible, solo donde el país lo tiene encendido y el viaje es
   // en su moneda (dólares). La pantalla «Método de pago» hace la cuenta en vivo con `cuentaConSaldo`.
   const perfil = perfilPasajeros(zona.pais);
-  const saldoDivoox =
-    perfil.saldoDivoox && fila.moneda === MONEDA_SALDO_DIVOOX
-      ? { disponible: await saldoDeCliente(db, clienteId), moneda: MONEDA_SALDO_DIVOOX }
-      : null;
+  const conSaldo = perfil.saldoDivoox && fila.moneda === MONEDA_SALDO_DIVOOX;
+  // C-SALDO-BIENVENIDA: quien confirmó su celular sin ciudad recibe aquí la bienvenida de la ciudad de
+  // ESTE viaje (la calcula el servidor), si la tiene encendida. Una lectura por llave si no hay nada.
+  if (conSaldo) await bienvenidaPendiente(env, db, { clienteId, zonaId: zona.id, aparato });
+  // C-SALDO-LOTES: lo disponible, cuánto es regalo y cuánto prepago, y el regalo que vence pronto.
+  const detalle = conSaldo ? await detalleSaldo(db, clienteId) : null;
+  const pronto = Date.now() + DIAS_VENCE_PRONTO * 86_400_000;
+  const saldoDivoox = detalle
+    ? {
+        disponible: detalle.disponible,
+        moneda: MONEDA_SALDO_DIVOOX,
+        regalo: detalle.regalo,
+        prepago: detalle.prepago,
+        vencePronto:
+          detalle.proximoVence &&
+          Date.parse(`${detalle.proximoVence.venceEn.replace(' ', 'T')}Z`) <= pronto
+            ? detalle.proximoVence
+            : null,
+      }
+    : null;
   // C-PAGO-MOVIL-DISPONIBLE: Pago Móvil solo si en la zona hay un conductor conectado y habilitado
   // para este servicio con su Pago Móvil cargado (una lectura con LIMIT 1). Si no, la opción sale
   // apagada con «Aún no disponible para este viaje», nunca una ventana de error.

@@ -2,7 +2,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { CotizacionViaje } from '@tumbite/compartido';
-import { decisionDePago, metodoDisponible } from './decisionPago';
+import {
+  decisionDePago,
+  lineaOrigenSaldo,
+  lineaRegaloPorVencer,
+  metodoDisponible,
+} from './decisionPago';
 
 /**
  * C-METODO-PAGO-PANTALLA y C-SALDO-CLIENTE (25 nov 2026, Venezuela): la pantalla «Método de pago»
@@ -179,5 +184,37 @@ describe('C-VIGIA-SALDO-CIRCUITO: de noche, «Método de pago» cobra el total c
     expect(fuente).toContain('Incluye la tarifa nocturna (+${pct} %)');
     expect(fuente).toContain('Includes the night fare (+${pct}%)');
     expect(leer('PedirMoto.tsx')).toContain('testID="moto-tarifa-nocturna"');
+  });
+});
+
+describe('C-SALDO-LOTES: la tarjeta del Saldo Divoox dice lo que vence pronto', () => {
+  it('una línea discreta con el regalo que vence y su fecha, en los dos idiomas; sin nada por vencer, nada', () => {
+    const conVence = cot({
+      saldoDivoox: {
+        disponible: 500,
+        moneda: 'USD',
+        regalo: 300,
+        prepago: 200,
+        vencePronto: { monto: 300, venceEn: '2026-11-28 15:00:00' },
+      },
+    }).saldoDivoox;
+    expect(lineaRegaloPorVencer(conVence, 'es', 'America/Caracas')).toMatch(
+      /^Incluye \S*3[.,]00\S* de regalo que vence el 28 nov$/,
+    );
+    expect(lineaRegaloPorVencer(conVence, 'en', 'America/Caracas')).toMatch(
+      /^Includes \$3\.00 gift that expires on Nov 28$/,
+    );
+    expect(lineaOrigenSaldo(conVence, 'es')).toMatch(/^Regalo .*3[.,]00.* · Prepagado .*2[.,]00/);
+    expect(lineaOrigenSaldo(conVence, 'en')).toMatch(/^Gift \$3\.00 · Prepaid \$2\.00$/);
+    // Todo regalo sin fecha cercana: no se dice nada de más.
+    const sinVence = cot({
+      saldoDivoox: { disponible: 300, moneda: 'USD', regalo: 300, prepago: 0, vencePronto: null },
+    }).saldoDivoox;
+    expect(lineaRegaloPorVencer(sinVence, 'es')).toBeNull();
+    expect(lineaOrigenSaldo(sinVence, 'es')).toBeNull();
+    // La pantalla de pago las usa.
+    const pantalla = leer('MetodoPago.tsx');
+    expect(pantalla).toContain('pago-saldo-vence');
+    expect(pantalla).toContain('pago-saldo-origen');
   });
 });

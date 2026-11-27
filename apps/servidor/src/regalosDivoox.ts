@@ -89,7 +89,7 @@ export async function huellaAparato(valor: string | null | undefined): Promise<s
   return `a:${await sha256(`aparato:${v}`)}`;
 }
 
-async function huellaTelefono(tel: string | null | undefined): Promise<string | null> {
+export async function huellaTelefono(tel: string | null | undefined): Promise<string | null> {
   const t = telefonoCanonico(tel ?? '');
   return t ? `t:${await sha256(`telefono:${t}`)}` : null;
 }

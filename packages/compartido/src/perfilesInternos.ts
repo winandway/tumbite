@@ -54,6 +54,8 @@ const FINANZAS = [
   'conductores-ciudad',
   // C-SALDO-CLIENTE: el Saldo Divoox de los clientes.
   'saldo-clientes',
+  // C-SALDO-BIENVENIDA / C-SALDO-MASIVO: los regalos automáticos del Saldo Divoox.
+  'saldo-regalos',
   // C-REFERIDOS-EQUIPOS: los programas de referidos y los equipos.
   'referidos-programas',
   'equipos',

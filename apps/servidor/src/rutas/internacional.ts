@@ -1,4 +1,5 @@
 import { avisarSaldoRecargado } from '../avisoSaldo';
+import { regaloVigenteConductor, vencerRegaloConductor } from '../regaloConductorVence';
 import { anotarCambioDinero } from './dinero';
 import { cargasDeConductor } from '../saldoConductores';
 import { porCobrarRegalos, regalosEnRevision } from '../regalosDivoox';
@@ -327,6 +328,8 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     )
     .bind(u.id)
     .all<Record<string, unknown>>();
+  // C-REGALO-CONDUCTOR-TOPE-VENCE: el regalo de arranque vencido sale antes de mostrar el saldo.
+  await vencerRegaloConductor(db, u.id);
   const disponible = await saldoLibro(db, u.id, 'prepago', pais, moneda);
   // C-SALDO-CARRERAS: «te alcanza para unas N carreras» (saldo ÷ comisión de un viaje típico).
   const zona = await db
@@ -347,6 +350,8 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     decimales: cfg.decimales,
     disponible,
     reservado: await saldoLibro(db, u.id, 'reservado', pais, moneda),
+    // C-REGALO-CONDUCTOR-TOPE-VENCE: cuánto del saldo es regalo de arranque y cuándo vence.
+    regaloArranque: await regaloVigenteConductor(db, u.id),
     comisionTipica,
     carrerasAlcanzan: carreras,
     saldoBajo: carreras != null && carreras < CARRERAS_SALDO_BAJO,

@@ -18,5 +18,37 @@
       }
     ]
   },
-  "ciudades": {}
+  "ciudades": {
+    "VE": {
+      "el-vigia": [
+        {
+          "id": "moto",
+          "es": "Moto",
+          "en": "Moto"
+        },
+        {
+          "id": "carro",
+          "es": "Carro",
+          "en": "Car"
+        },
+        {
+          "id": "envios",
+          "es": "Envíos",
+          "en": "Delivery"
+        }
+      ],
+      "tucani": [
+        {
+          "id": "moto",
+          "es": "Moto",
+          "en": "Moto"
+        },
+        {
+          "id": "envios",
+          "es": "Envíos",
+          "en": "Delivery"
+        }
+      ]
+    }
+  }
 }

@@ -69,6 +69,7 @@ import {
   soltarSaldoConductor,
   tomarSaldoConductor,
 } from '../saldoCliente';
+import { contarViajeFidelidad } from '../saldoRegalos';
 import { aparatoDe } from './regalosDivoox';
 import { SQL_TARIFA_SERVICIO } from '../finanzas/quienPaga';
 import {
@@ -755,6 +756,9 @@ viajes.post(
           await revisarReferidos(db, quien).catch((e: unknown) =>
             console.error('viajes: premio de referidos', e),
           );
+      // C-SALDO-FIDELIDAD: el viaje real cuenta para el regalo por viajes de su ciudad (si está
+      // encendido; nace apagado). Nunca frena el cierre.
+      await contarViajeFidelidad(c.env, db, { operacionId: id, conductorId: u.id });
       // C-BS-REFERENCIA y C-BS-EN-MANO: en la pantalla de cobro, lo cobrado en mano en bolívares con
       // la tasa del viaje (si no se fijó al cotizar, se fija ahora); queda guardado con él. Con
       // tarjeta no hay nada en mano: ni bolívares ni monto guardado.

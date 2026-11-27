@@ -1,0 +1,20 @@
+# linea: P1
+# titulo: El pasajero crea su cuenta con el celular y ve los servicios
+# app: cliente
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: allow
+- runFlow: ../comun/registro.yaml
+- runFlow: ../comun/permisos.yaml
+- extendedWaitUntil:
+    visible:
+      id: "servicio-.*"
+    timeout: 45000
+- assertVisible:
+    id: "servicio-moto"
+- assertNotVisible:
+    id: "acceso-error"

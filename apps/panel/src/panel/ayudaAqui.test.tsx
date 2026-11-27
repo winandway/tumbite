@@ -29,6 +29,9 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperRegalosDivoox.tsx', 'create-divoox-gift-code'],
   ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
   ['SuperSaldoClientes.tsx', 'customer-balance-top-up'],
+  // C-SALDO-MASIVO y C-SALDO-BIENVENIDA
+  ['SaldoCargaMasiva.tsx', 'customer-balance-bulk-gift'],
+  ['SaldoRegalosAutomaticos.tsx', 'customer-balance-auto-gifts'],
   ['RecargasRestaurantesAdmin.tsx', 'restaurant-balance-top-ups'],
   ['QuienPagaViajes.tsx', 'who-pays-ride-fee'],
   ['ComidaQuienPaga.tsx', 'food-who-pays-what'],

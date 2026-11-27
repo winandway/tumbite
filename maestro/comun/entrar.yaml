@@ -1,0 +1,29 @@
+# Entrar con una cuenta que ya existe (CORREO y CLAVE vienen del flujo que la llama).
+appId: ${APP_ID}
+---
+# La app de clientes abre en el inicio sin cuenta: primero «Entrar».
+- extendedWaitUntil:
+    visible:
+      text: "Sign in|Entrar"
+    timeout: 60000
+- tapOn:
+    text: "^Sign in$|^Entrar$"
+    index: 0
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "ir-a-crear-cuenta|registro-por-pasos"
+    timeout: 60000
+- tapOn:
+    id: "ya-tengo-cuenta-arriba|ya-tengo-cuenta"
+    optional: true
+- tapOn:
+    text: "email@example.com|correo@ejemplo.com"
+- inputText: ${CORREO}
+- tapOn:
+    text: "Password|Contraseña"
+    index: 1
+- inputText: ${CLAVE}
+- tapOn:
+    text: "Sign in|Entrar"
+    index: -1

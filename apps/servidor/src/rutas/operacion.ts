@@ -1,4 +1,4 @@
-import { TAREA_SALDO_CLIENTES } from '../saldoCliente';
+import { TAREA_SALDO_CLIENTES, TAREA_SALDO_LOTES } from '../saldoCliente';
 import { insistirPanicos } from '../panicoZona';
 import { revisarSaldoBajo } from '../saldoBajo';
 import { avisarPasoComida } from '../avisosComida';
@@ -144,6 +144,7 @@ import { rellenarDatosDocumento } from '../edadYDocumento';
 import { releerCedula } from './verificacionConductor';
 import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { darRegaloConductorNuevo } from '../saldoConductores';
+import { vencerRegaloConductor } from '../regaloConductorVence';
 import { correrPlazoPapeles } from './verificacionConductor';
 import {
   type MotivoSinComida,
@@ -1597,6 +1598,17 @@ operacion.post('/repartidor/conectar', async (c) => {
     throw d.conectado ? await anotarRechazoConectar(db, u.id, e, origenDePeticion(c.req)) : e;
   });
   if (d.conectado) await encenderTodosSiNinguno(db, u.id);
+  // C-REGALO-CONDUCTOR-TOPE-VENCE: pasó todas las puertas, así que puede trabajar. Si todavía no tiene
+  // el regalo de arranque de su ciudad (porque el tope del día estaba lleno cuando lo aprobaron), se
+  // le da ahora; y si el suyo ya venció sin usarse, se retira. Las dos son una vez en la vida.
+  if (d.conectado) {
+    await darRegaloConductorNuevo(db, u.id, c.env).catch((e: unknown) =>
+      console.error('saldo: regalo de arranque al conectarse', e),
+    );
+    await vencerRegaloConductor(db, u.id).catch((e: unknown) =>
+      console.error('saldo: vencimiento del regalo de arranque', e),
+    );
+  }
   // C-SERVICIO-SIN-OFERTA: si lo único que puede hacer es Comida y su zona no tiene restaurantes, se
   // le dice la verdad en la respuesta (Driver 0.1.69 muestra `avisoComida` al conectarse) y su panel
   // no lo muestra «esperando pedidos» de Comida.
@@ -3626,6 +3638,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   TAREA_REGALOS,
   // C-SALDO-CLIENTE: devuelve el Saldo Divoox de los viajes que no se hicieron y cierra los cortados.
   TAREA_SALDO_CLIENTES,
+  // C-SALDO-LOTES (cada hora): lo vencido y los avisos de vencimiento.
+  TAREA_SALDO_LOTES,
   // C-REFERIDOS-EQUIPOS: los premios de referidos que ya se ganaron y los vencidos.
   TAREA_REFERIDOS,
   // C-CAMILA-APRENDE: los lunes arma la lista semanal de lo que Camila no supo (una vez por semana).

@@ -1,0 +1,28 @@
+# Pantalla «Permite los permisos» y los avisos del sistema (ubicación, avisos, cámara).
+appId: ${APP_ID}
+---
+- runFlow: sin-avisos-sistema.yaml
+- tapOn:
+    text: "I’m ready|Estoy listo|Listo"
+    optional: true
+- repeat:
+    times: 4
+    commands:
+      - tapOn:
+          text: "Allow While Using App|Allow|Permitir al usar la app|Permitir"
+          optional: true
+# «Cómo revisamos tus documentos»: el robot da el permiso, como la mayoría de los conductores. Se toca
+# SOLO la casilla (tocar también su texto la marca y la desmarca) y después «Aceptar y continuar».
+- runFlow:
+    when:
+      visible:
+        id: "aviso-ia"
+    commands:
+      - tapOn:
+          id: "aviso-ia-casilla"
+      - extendedWaitUntil:
+          visible:
+            id: "aviso-ia-boton-listo"
+          timeout: 10000
+      - tapOn:
+          id: "aviso-ia-aceptar"

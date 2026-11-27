@@ -239,3 +239,122 @@ describe('C-REGALO-HEREDADO: un regalo ya acreditado en el saldo con la versión
     ).toBe(0);
   });
 });
+
+/**
+ * C-REGALO-CONDUCTOR-TOPE-VENCE (26 nov 2026, Richard: 5 USD a cada conductor nuevo, solos al
+ * registrarse; 50 USD al día por ciudad; 30 días si no se usan).
+ */
+describe('C-REGALO-CONDUCTOR-TOPE-VENCE: tope del día, solo nuevos y vencimiento', () => {
+  const encender = (
+    e: Awaited<ReturnType<typeof mundo>>['e'],
+    cuerpo: Record<string, unknown> = {},
+  ) =>
+    e.m.llamar(
+      'PUT',
+      `/datos/admin/regalo-conductor-nuevo/${EL_VIGIA.id}`,
+      {
+        monto: 500,
+        presupuesto: 30_000,
+        activo: true,
+        topeDiario: 1_000,
+        vigenciaDias: 30,
+        ...cuerpo,
+      },
+      e.admin.token,
+    );
+
+  it('el tope del día no se pasa; el que quedó afuera lo recibe cuando vuelve a caber', async () => {
+    const { e, conductor } = await mundo();
+    const g = await encender(e);
+    expect(g.estado).toBe(200);
+    expect(g.datos.regalo).toMatchObject({
+      topeDiario: 1_000,
+      vigenciaDias: 30,
+      dadoUltimas24h: 0,
+    });
+    const a = await conductor('Ana');
+    const b = await conductor('Beto');
+    const c = await conductor('Carla');
+    expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(500);
+    expect(await darRegaloConductorNuevo(e.m.DB, b.id)).toBe(500);
+    // Hoy ya no cabe un regalo entero: espera, no recibe la mitad.
+    expect(await darRegaloConductorNuevo(e.m.DB, c.id)).toBe(0);
+    expect(await saldoLibro(e.m.DB, c.id, 'prepago', 'VE', 'USD')).toBe(0);
+    // Pasa el día: al volver a intentarlo (al conectarse) le llega.
+    await e.m.DB.prepare(
+      "UPDATE cargas_saldo_conductor SET creado_en = datetime('now', '-2 days') WHERE tipo = 'regalo_nuevo'",
+    ).run();
+    expect(await darRegaloConductorNuevo(e.m.DB, c.id)).toBe(500);
+    // El regalo guarda su vencimiento: 30 días.
+    const v = await e.m.DB.prepare(
+      'SELECT CAST(julianday(vence_en) - julianday(creado_en) + 0.5 AS INTEGER) AS dias FROM cargas_saldo_conductor WHERE conductor_id = ?',
+    )
+      .bind(c.id)
+      .first<{ dias: number }>();
+    expect(v?.dias).toBe(30);
+    // Tope del día por debajo de un regalo: el panel no lo deja.
+    expect((await encender(e, { topeDiario: 100 })).estado).toBe(422);
+  });
+
+  it('encenderlo no le regala a quien ya estaba registrado; cada cambio queda auditado', async () => {
+    const { e, conductor } = await mundo();
+    const viejo = await conductor('Viejo');
+    await e.m.DB.prepare("UPDATE usuarios SET creado_en = datetime('now', '-3 days') WHERE id = ?")
+      .bind(viejo.id)
+      .run();
+    expect((await encender(e)).estado).toBe(200);
+    const nuevo = await conductor('Nuevo');
+    expect(await darRegaloConductorNuevo(e.m.DB, viejo.id)).toBe(0);
+    expect(await darRegaloConductorNuevo(e.m.DB, nuevo.id)).toBe(500);
+    const aud = await e.m.DB.prepare(
+      "SELECT actor_id, despues_json FROM auditoria_admin WHERE accion = 'regalo_conductor_nuevo' AND objeto = ?",
+    )
+      .bind(`regalo-conductor-nuevo:${EL_VIGIA.id}`)
+      .first<{ actor_id: string; despues_json: string }>();
+    expect(aud?.actor_id).toBe(e.admin.id);
+    expect(JSON.parse(aud?.despues_json ?? '{}')).toMatchObject({ monto: 500, topeDiario: 1_000 });
+  });
+
+  it('al vencer se retira solo lo que no usó, nunca su propio dinero; una vez', async () => {
+    const { vencerRegaloConductor } = await import('../regaloConductorVence');
+    const { reservarComision } = await import('../internacional/libro');
+    const { e, conductor } = await mundo();
+    await encender(e);
+    const a = await conductor('Ana');
+    const b = await conductor('Beto');
+    expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(500);
+    expect(await darRegaloConductorNuevo(e.m.DB, b.id)).toBe(500);
+    // Ana usa 200 en comisiones y recarga 1.000 de su bolsillo.
+    await e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('u1', ?1, 'prepago', 'VE', 'USD', -200, 'reserva_comision', 'r-u1'), ('r1', ?1, 'prepago', 'VE', 'USD', 1000, 'recarga', 'r-r1')",
+    )
+      .bind(a.id)
+      .run();
+    // Antes de los 30 días no pasa nada, y la app le dice cuánto le queda del regalo y hasta cuándo.
+    expect(await vencerRegaloConductor(e.m.DB, a.id)).toBe(false);
+    const { regaloVigenteConductor } = await import('../regaloConductorVence');
+    expect(await regaloVigenteConductor(e.m.DB, a.id)).toMatchObject({ monto: 300 });
+    expect((await regaloVigenteConductor(e.m.DB, b.id))?.monto).toBe(500);
+    expect(await saldoLibro(e.m.DB, a.id, 'prepago', 'VE', 'USD')).toBe(1_300);
+    await e.m.DB.prepare(
+      "UPDATE cargas_saldo_conductor SET vence_en = datetime('now', '-1 minute') WHERE tipo = 'regalo_nuevo'",
+    ).run();
+    expect(await vencerRegaloConductor(e.m.DB, a.id)).toBe(true);
+    // Quedaban 300 del regalo: salen esos 300 y se queda con sus 1.000.
+    expect(await saldoLibro(e.m.DB, a.id, 'prepago', 'VE', 'USD')).toBe(1_000);
+    expect(await regaloVigenteConductor(e.m.DB, a.id)).toBeNull();
+    expect(await vencerRegaloConductor(e.m.DB, a.id)).toBe(false);
+    expect(await saldoLibro(e.m.DB, a.id, 'prepago', 'VE', 'USD')).toBe(1_000);
+    // Beto no lo usó: al ir a apartar una comisión, el regalo vencido sale primero y no le alcanza.
+    expect(
+      await reservarComision(e.m.DB, {
+        pedidoId: 'p-x',
+        repartidorId: b.id,
+        pais: 'VE',
+        moneda: 'USD',
+        monto: 100,
+      }),
+    ).toBe(false);
+    expect(await saldoLibro(e.m.DB, b.id, 'prepago', 'VE', 'USD')).toBe(0);
+  });
+});

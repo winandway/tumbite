@@ -1,0 +1,113 @@
+# Registro por pasos de Driver o de la app de clientes (pieza Acceso de packages/movil), con una cuenta
+# del robot: correo «.test» (el sitio de pruebas no pide código de celular) y celular con su código de
+# país (+58 Venezuela, +1 EE. UU.), según la ciudad de la corrida.
+# El iPhone simulado corre con el teclado físico conectado (lo pone noche.sh): el teclado de la
+# pantalla no aparece y no tapa «Siguiente».
+appId: ${APP_ID}
+---
+# La app de clientes abre en el inicio sin cuenta: primero «Crea tu cuenta».
+- extendedWaitUntil:
+    visible:
+      text: "New here\\? Create your account|¿Eres nuevo\\?.*|.*Crea tu cuenta.*|Create account|Sign in"
+    timeout: 60000
+- tapOn:
+    text: "New here\\? Create your account|¿Eres nuevo\\?.*Crea tu cuenta.*"
+    optional: true
+# Driver puede abrir en «Entrar» o directo en «Crear cuenta».
+- extendedWaitUntil:
+    visible:
+      id: "ir-a-crear-cuenta|registro-por-pasos"
+    timeout: 60000
+- tapOn:
+    id: "ir-a-crear-cuenta"
+    optional: true
+# Paso 1: nombre
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-nombre"
+    timeout: 15000
+- tapOn:
+    text: "Full name|Nombre completo"
+    index: 1
+- inputText: ${NOMBRE_NUEVO}
+- scrollUntilVisible:
+    element:
+      id: "pasos-siguiente"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "pasos-siguiente"
+# Paso 2: correo
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-correo"
+    timeout: 15000
+- tapOn:
+    text: "email@example.com|correo@ejemplo.com"
+- inputText: ${CORREO_NUEVO}
+- scrollUntilVisible:
+    element:
+      id: "pasos-siguiente"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "pasos-siguiente"
+# Paso 3: celular, escrito con su código de país
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-celular"
+    timeout: 15000
+- tapOn:
+    text: "Mobile phone|Celular"
+    index: 1
+- inputText: "${CELULAR_NUEVO}"
+- scrollUntilVisible:
+    element:
+      id: "pasos-siguiente"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "pasos-siguiente"
+# Paso 4: contraseña
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-clave"
+    timeout: 15000
+- tapOn:
+    text: "Password|Contraseña"
+    index: 1
+- inputText: ${CLAVE_NUEVA}
+- scrollUntilVisible:
+    element:
+      id: "pasos-siguiente"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "pasos-siguiente"
+# Paso final: términos y continuar
+- extendedWaitUntil:
+    visible:
+      id: "pasos-paso-final"
+    timeout: 15000
+- tapOn:
+    id: "registro-acepto"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "registro-continuar"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "registro-continuar"
+# Revisa tus datos → Crear mi cuenta
+- extendedWaitUntil:
+    visible:
+      id: "revisa-tus-datos"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "crear-mi-cuenta"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "crear-mi-cuenta"

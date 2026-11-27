@@ -788,16 +788,18 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "preguntas": [
    "¿Cómo consigo Saldo Divoox?",
    "¿Qué pasa con mi saldo si cancelo el viaje?",
-   "¿Puedo usar el saldo en una reserva?"
+   "¿Puedo usar el saldo en una reserva?",
+   "¿Cuándo vence mi regalo de Saldo Divoox?",
+   "¿Qué se usa primero, el regalo o lo que pagué?"
   ],
   "pasos": [
    "Pide tu viaje y toca «Continuar».",
-   "En la tarjeta «Saldo Divoox», deja el interruptor encendido.",
+   "En la tarjeta «Saldo Divoox», deja el interruptor encendido y mira si tienes un regalo por vencer.",
    "Mira cuánto usas y cuánto te queda por pagar.",
    "Si queda algo por pagar, elige Pago Móvil o efectivo.",
    "Toca «Solicitar»."
   ],
-  "cuerpo": "Tu Saldo Divoox lo carga nuestro equipo: una carrera de regalo, una recarga de regalo o lo que pagaste por adelantado. Cuando te cargamos saldo, te llega un aviso con el monto. En «Método de pago» ves tu saldo disponible en dólares y en bolívares, con el logo de Divoox. Con el interruptor encendido, primero se descuenta tu regalo de código (si tienes) y después tu saldo, hasta donde alcance. Si el saldo cubre todo el viaje, no pagas nada en mano. Si no alcanza, la pantalla te dice cuánto usas y cuánto te queda por pagar, y eliges si el resto va por Pago Móvil o en efectivo. El saldo se separa al pedir. Si cancelas, o si no encontramos conductor, vuelve completo a tu cuenta. Por ahora se usa en los viajes de ahora, no en las reservas."
+  "cuerpo": "Tu Saldo Divoox puede ser un regalo de Divoox (por ejemplo, el regalo de bienvenida que te llega al confirmar tu celular, si tu ciudad lo tiene) o lo que pagaste por adelantado. Cuando te llega saldo, recibes un aviso con el monto. Los regalos de Divoox tienen fecha de vencimiento; lo que pagaste por adelantado no vence nunca. En «Método de pago» ves cuánto es regalo y cuánto es tuyo, y la línea «Incluye … de regalo que vence el …» cuando un regalo está por vencer. Te avisamos 3 días antes y el día que vence. Al pagar con saldo, primero se usa el regalo que vence antes, después los demás regalos y al final lo que pagaste por adelantado. Si un viaje no se hace, cada parte vuelve a donde estaba. En «Método de pago» ves tu saldo disponible en dólares y en bolívares, con el logo de Divoox. Con el interruptor encendido, primero se descuenta tu regalo de código (si tienes) y después tu saldo, hasta donde alcance. Si el saldo cubre todo el viaje, no pagas nada en mano. Si no alcanza, la pantalla te dice cuánto usas y cuánto te queda por pagar, y eliges si el resto va por Pago Móvil o en efectivo. El saldo se separa al pedir. Si cancelas, o si no encontramos conductor, vuelve completo a tu cuenta. Por ahora se usa en los viajes de ahora, no en las reservas."
  },
  {
   "idioma": "es",
@@ -3609,7 +3611,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "On “Payment method,” choose cash or card.",
    "Tap “Request.”"
   ],
-  "cuerpo": "In some countries, our team can add Divoox Balance to your account (a gift ride, a gift top-up or a prepayment), and you use it on the “Payment method” screen. Divoox Balance isn’t used in the United States, so you won’t see it on your “Payment method” screen. Here you pay each ride with cash or card. Promo codes still work the same way: add them in your account and they’re applied to your next eligible ride."
+  "cuerpo": "In some countries, our team can add Divoox Balance to your account (a gift ride, a gift top-up or a prepayment), and you use it on the “Payment method” screen. Divoox Balance isn’t used in the United States, so you won’t see it on your “Payment method” screen. Here you pay each ride with cash or card. Promo codes still work the same way: add them in your account and they’re applied to your next eligible ride. Where Divoox Balance is available, gifts from Divoox (like a welcome gift when you confirm your mobile number) have an expiration date, while a prepayment never expires. Gifts that expire first are used first, and you get a notice 3 days before a gift expires and on the day it expires."
  },
  {
   "idioma": "en",
@@ -4067,7 +4069,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Accept the trip: the commission is set aside. When you finish, it’s charged.",
    "If you have gifts to collect, tap “Move to my balance.”"
   ],
-  "cuerpo": "You have two wallets. Your “balance” is the money you top up to pay the Divoox commission. Your “earnings” are what Divoox owes you, for example what your riders’ gifts cover. The rider pays you the full trip in person. Divoox never touches that money. What you collect in hand is added to your total for today, the week and the month under Earnings, in dollars and, where it applies, with what you received in local currency. Below it you see each trip collected in hand. Where riders can pay you by transfer from their phone, add your details under Earnings, “Where riders pay you”. The rider sees them when they choose that way to pay. When you accept a trip, the Divoox commission is set aside from your balance. When you finish, it’s charged. If the trip is canceled, doesn’t happen or you drop it, what was set aside goes back to your balance in full. It’s never charged twice. The commission is a percentage of the trip price. For example, with a 10% commission, a 2.00-dollar trip takes off 0.20. Under Earnings, “Balance for fees,” you see how much you have and how many trips it covers. Without balance for the commission you don’t get trips. When you’re running low, the app tells you. Your balance for fees is always on the Divoox Driver home screen: green when you have enough, and red with a notice when it’s running low. Tap it to go to Earnings and top up. To top up: buy a code at an authorized sales point and redeem it under Earnings, “Balance for fees.” The Divoox team in your city can also add balance for you, and you see it under “Balance top-ups and gifts.” When you start,…"
+  "cuerpo": "You have two wallets. Your “balance” is the money you top up to pay the Divoox commission. Your “earnings” are what Divoox owes you, for example what your riders’ gifts cover. The rider pays you the full trip in person. Divoox never touches that money. What you collect in hand is added to your total for today, the week and the month under Earnings, in dollars and, where it applies, with what you received in local currency. Below it you see each trip collected in hand. Where riders can pay you by transfer from their phone, add your details under Earnings, “Where riders pay you”. The rider sees them when they choose that way to pay. When you accept a trip, the Divoox commission is set aside from your balance. When you finish, it’s charged. If the trip is canceled, doesn’t happen or you drop it, what was set aside goes back to your balance in full. It’s never charged twice. The commission is a percentage of the trip price. For example, with a 10% commission, a 2.00-dollar trip takes off 0.20. Under Earnings, “Balance for fees,” you see how much you have and how many trips it covers. Without balance for the commission you don’t get trips. When you’re running low, the app tells you. Your balance for fees is always on the Divoox Driver home screen: green when you have enough, and red with a notice when it’s running low. Tap it to go to Earnings and top up. To top up: buy a code at an authorized sales point and redeem it under Earnings, “Balance for fees.” The Divoox team in your city can also add balance for you, and you see it under “Balance top-ups and gifts.” When you sign up…"
  },
  {
   "idioma": "en",
