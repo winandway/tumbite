@@ -1416,6 +1416,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Los pagos con tarjeta todavía no están activados.', 'Card payments aren’t turned on yet.'],
   ['No pudimos cobrar el viaje en este momento.', 'We couldn’t charge the ride right now.'],
   [
+    'La autorización del viaje venció o se anuló.',
+    'The ride’s card authorization expired or was canceled.',
+  ],
+  [
     'Ese reemplazo no está disponible en tu tienda. Elige otro producto.',
     'That replacement isn’t available in your store. Pick another product.',
   ],

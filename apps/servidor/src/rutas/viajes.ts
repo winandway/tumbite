@@ -685,7 +685,12 @@ viajes.post(
     if (nombre === 'terminar') {
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
       // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).
-      if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
+      // C-COBRO-SEGUNDO-PLANO: si Stripe falla, el viaje se termina igual (regalo y cierre incluidos)
+      // y la tarea «cobros_viaje» del reloj lo cobra después.
+      if (totalFinal != null)
+        await capturarCobroViaje(c.env, db, id, u.id, totalFinal).catch((e: unknown) =>
+          console.error('viajes: el cobro al terminar queda para el reloj', id, e),
+        );
       // C-CUPON-DIVOOX: lo que cubre el regalo se cierra y se le acredita al conductor; él cobra en
       // mano solo el resto.
       // C-REGALO-VIAJE-REAL: solo se acredita si el viaje fue real; si no, queda en revisión (el

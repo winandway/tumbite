@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { liquidarPendientes } from './liquidaciones';
 import { TAREAS_RELOJ } from './rutas/operacion';
-import { capturarCobroViaje } from './viajesCobro';
+import { capturarCobroViaje, soltarCobroViaje } from './viajesCobro';
 
 /**
  * C-COBRO-SEGUNDO-PLANO (26 nov 2026, todos los países). Visto en el sitio de pruebas: el recorrido de
@@ -18,7 +18,9 @@ import { capturarCobroViaje } from './viajesCobro';
 
 function stripeFalso() {
   const pi = { id: 'pi_1', status: 'requires_capture', amount_received: 0 };
-  const guardadas = new Map<string, string>();
+  const guardadas = new Map<string, Response>();
+  let dar500 = 0;
+  let getRoto = false;
   const capturas: number[] = [];
   let retener = false;
   let retenida = false;
@@ -28,7 +30,15 @@ function stripeFalso() {
     const metodo = String(init?.method ?? 'GET');
     const clave = (init?.headers as Record<string, string> | undefined)?.['idempotency-key'] ?? '';
     if (/\/payment_intents\/pi_1\/capture$/.test(u) && metodo === 'POST') {
-      if (clave && guardadas.has(clave)) return new Response(guardadas.get(clave), { status: 200 });
+      if (clave && guardadas.has(clave)) return guardadas.get(clave)!.clone();
+      if (dar500 > 0) {
+        dar500--;
+        const r = new Response(JSON.stringify({ error: { message: 'Stripe interno' } }), {
+          status: 500,
+        });
+        if (clave) guardadas.set(clave, r.clone());
+        return r;
+      }
       if (retener) {
         retener = false;
         retenida = true;
@@ -42,10 +52,20 @@ function stripeFalso() {
       pi.status = 'succeeded';
       pi.amount_received = monto;
       capturas.push(monto);
-      const cuerpo = JSON.stringify({ ...pi });
-      if (clave) guardadas.set(clave, cuerpo);
-      return new Response(cuerpo, { status: 200 });
+      const r = new Response(JSON.stringify({ ...pi }), { status: 200 });
+      if (clave) guardadas.set(clave, r.clone());
+      return r;
     }
+    if (/\/payment_intents\/pi_1\/cancel$/.test(u) && metodo === 'POST') {
+      if (pi.status !== 'requires_capture')
+        return new Response(JSON.stringify({ error: { message: `status ${pi.status}` } }), {
+          status: 400,
+        });
+      pi.status = 'canceled';
+      return new Response(JSON.stringify({ ...pi }), { status: 200 });
+    }
+    if (/\/payment_intents\/pi_1$/.test(u) && metodo === 'GET' && getRoto)
+      throw new Error('red: sin respuesta');
     if (/\/payment_intents\/pi_1$/.test(u) && metodo === 'GET')
       return new Response(JSON.stringify({ ...pi }), { status: 200 });
     return new Response(JSON.stringify({ data: [] }), { status: 200 });
@@ -57,6 +77,13 @@ function stripeFalso() {
       retener = true;
     },
     estaRetenida: () => retenida,
+    dar500: (veces = 1) => {
+      dar500 = veces;
+    },
+    romperConsulta: () => {
+      getRoto = true;
+    },
+    pi,
     soltar: () => soltar?.(),
   };
 }
@@ -240,7 +267,7 @@ describe('cobro al entregar en segundo plano (C-COBRO-SEGUNDO-PLANO)', () => {
 
 describe('viaje con tarjeta terminado y sin cobrar (C-COBRO-SEGUNDO-PLANO)', () => {
   /** Siembra un viaje terminado hace diez minutos con la autorización todavía abierta. */
-  async function viajeSinCobrar(m: ReturnType<typeof mundo>, op: string) {
+  async function viajeSinCobrar(m: ReturnType<typeof mundo>, op: string, estado = 'terminado') {
     const cliente = await m.cuenta('cliente', 'Pasajero de prueba');
     const cond = await m.cuenta('repartidor', 'Conductor de prueba');
     await m.DB.prepare(
@@ -251,12 +278,12 @@ describe('viaje con tarjeta terminado y sin cobrar (C-COBRO-SEGUNDO-PLANO)', () 
     await m.DB.prepare(
       `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultima_clave, origen_lat, origen_lng, origen_direccion,
          destino_lat, destino_lng, destino_direccion, pin_recogida, metodo_pago, total_final_centavos, terminado_en)
-       VALUES (?, 'terminado', 'conductor', ?, 25.76, -80.19, 'Origen de prueba', 25.78, -80.2, 'Destino de prueba', '4321', 'tarjeta', 1100, datetime('now', '-10 minutes'))`,
+       VALUES (?, ?, 'conductor', ?, 25.76, -80.19, 'Origen de prueba', 25.78, -80.2, 'Destino de prueba', '4321', 'tarjeta', 1100, datetime('now', '-10 minutes'))`,
     )
-      .bind(op, `terminar:${op}`)
+      .bind(op, estado, `paso:${op}`)
       .run();
     await m.DB.prepare(
-      "INSERT INTO cobros_viaje (operacion_id, stripe_pago, autorizado, estado) VALUES (?, 'pi_1', 1200, 'autorizado')",
+      "INSERT INTO cobros_viaje (operacion_id, stripe_pago, autorizado, estado, actualizado_en) VALUES (?, 'pi_1', 1200, 'autorizado', datetime('now', '-20 minutes'))",
     )
       .bind(op)
       .run();
@@ -311,6 +338,97 @@ describe('viaje con tarjeta terminado y sin cobrar (C-COBRO-SEGUNDO-PLANO)', () 
     expect(await cobro(m, 'op-corte-2')).toMatchObject({ estado: 'capturado', capturado: 1100 });
     expect(await abonado(m, 'op-corte-2')).toBe(1100);
     expect(st.capturas).toEqual([1100]);
+  });
+
+  it('Stripe guardó un 500 con la clave del viaje: se reintenta con clave nueva y se cobra una vez', async () => {
+    const st = stripeFalso();
+    vi.stubGlobal('fetch', st.fetchFalso);
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', ADMIN_CORREOS: '' });
+    const cond = await viajeSinCobrar(m, 'op-500');
+    st.dar500();
+    const env = { STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    await capturarCobroViaje(env, m.DB, 'op-500', cond.id, 1100);
+    expect(await cobro(m, 'op-500')).toMatchObject({ estado: 'capturado', capturado: 1100 });
+    expect(st.capturas).toEqual([1100]);
+  });
+
+  it('cancelar después de un cargo que Stripe ya cobró sin anotarse: se anota el cargo, no una anulación', async () => {
+    const st = stripeFalso();
+    vi.stubGlobal('fetch', st.fetchFalso);
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', ADMIN_CORREOS: '' });
+    await viajeSinCobrar(m, 'op-cargo', 'cancelado');
+    await fetch('https://api.stripe.com/v1/payment_intents/pi_1/capture', {
+      method: 'POST',
+      headers: { 'idempotency-key': 'cargo-cortado' },
+      body: 'amount_to_capture=300',
+    });
+    const env = { STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    expect(await soltarCobroViaje(env, m.DB, 'op-cargo', 0)).toBe(300);
+    expect(await cobro(m, 'op-cargo')).toMatchObject({ estado: 'capturado', capturado: 300 });
+    expect(st.capturas).toEqual([300]);
+  });
+
+  it('el reloj cierra las autorizaciones de viajes cancelados: anota lo cobrado y anula la del viaje sin conductor', async () => {
+    const st = stripeFalso();
+    vi.stubGlobal('fetch', st.fetchFalso);
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', ADMIN_CORREOS: '' });
+    await viajeSinCobrar(m, 'op-sin-cond', 'sin_conductor');
+    const tarea = TAREAS_RELOJ.find((t) => t.nombre === 'cobros_viaje')!;
+    await tarea.correr({ STRIPE_SECRET_KEY: 'sk_test_x' } as never, m.DB);
+    expect((await cobro(m, 'op-sin-cond'))?.estado).toBe('anulado');
+    expect(st.pi.status).toBe('canceled');
+    expect(st.capturas).toEqual([]);
+  });
+
+  it('bordes: autorización vencida, Stripe caído dos veces, consulta rota y viajes cerrados ya cobrados o con cargo posible', async () => {
+    const st = stripeFalso();
+    vi.stubGlobal('fetch', st.fetchFalso);
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', ADMIN_CORREOS: '' });
+    const env = { STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    const tarea = TAREAS_RELOJ.find((t) => t.nombre === 'cobros_viaje')!;
+    // Stripe da 500 en los dos intentos: lanza y el viaje sigue autorizado para el reloj.
+    const cond = await viajeSinCobrar(m, 'op-caido');
+    st.dar500(2);
+    await expect(capturarCobroViaje(env, m.DB, 'op-caido', cond.id, 1100)).rejects.toThrow();
+    expect((await cobro(m, 'op-caido'))?.estado).toBe('autorizado');
+    // Sin poder consultar a Stripe: tampoco se inventa nada.
+    st.dar500(1);
+    st.romperConsulta();
+    await expect(capturarCobroViaje(env, m.DB, 'op-caido', cond.id, 1100)).rejects.toThrow();
+    // El cerrado que el reloj no puede consultar queda contado como fallido.
+    await viajeSinCobrar(m, 'op-cerrado-roto', 'cancelado');
+    expect(await tarea.correr(env, m.DB)).toMatchObject({ fallidos: 2 });
+    expect(st.capturas).toEqual([]);
+  });
+
+  it('el reloj: autorización vencida (no cobra), cancelado ya cobrado (anota el cargo), no se presentó autorizado (no adivina)', async () => {
+    const st = stripeFalso();
+    vi.stubGlobal('fetch', st.fetchFalso);
+    const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', ADMIN_CORREOS: '' });
+    const env = { STRIPE_SECRET_KEY: 'sk_test_x' } as never;
+    const tarea = TAREAS_RELOJ.find((t) => t.nombre === 'cobros_viaje')!;
+    await viajeSinCobrar(m, 'op-no-show', 'no_show');
+    expect(await tarea.correr(env, m.DB)).toMatchObject({ cerradosAnotados: 0 });
+    expect((await cobro(m, 'op-no-show'))?.estado).toBe('autorizado');
+    // El cargo se cobró en Stripe y nadie lo anotó: el reloj lo anota.
+    await fetch('https://api.stripe.com/v1/payment_intents/pi_1/capture', {
+      method: 'POST',
+      headers: { 'idempotency-key': 'cargo-sin-anotar' },
+      body: 'amount_to_capture=250',
+    });
+    expect(await tarea.correr(env, m.DB)).toMatchObject({ cerradosAnotados: 1 });
+    expect(await cobro(m, 'op-no-show')).toMatchObject({ estado: 'capturado', capturado: 250 });
+    // Un terminado cuya autorización ya se anuló: no se cobra y queda para el equipo.
+    const m2 = mundo({ STRIPE_SECRET_KEY: 'sk_test_x', ADMIN_CORREOS: '' });
+    const cond2 = await viajeSinCobrar(m2, 'op-vencido');
+    st.pi.status = 'canceled';
+    await expect(capturarCobroViaje(env, m2.DB, 'op-vencido', cond2.id, 1100)).rejects.toThrow(
+      /venció/,
+    );
+    // Cargo al cancelar con la autorización ya anulada: queda anulado, sin cargo.
+    await viajeSinCobrar(m2, 'op-cargo-vencido', 'cancelado');
+    expect(await soltarCobroViaje(env, m2.DB, 'op-cargo-vencido', 300)).toBe(0);
+    expect((await cobro(m2, 'op-cargo-vencido'))?.estado).toBe('anulado');
   });
 });
 
