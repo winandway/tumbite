@@ -1229,6 +1229,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "drivers/points-to-measure",
+  "titulo": "Puntos por medir: confirma un lugar con «Estoy aquí»",
+  "resumen": "Si el equipo de Divoox te pide confirmar lugares en la calle, te aparecen en «Puntos por medir». Vas a cada uno y, en el punto exacto, tocas «Estoy aquí». El equipo revisa cada medición antes de cambiar el mapa.",
+  "preguntas": [
+   "¿Qué es «Puntos por medir»?",
+   "¿Por qué no me sale el botón «Estoy aquí»?",
+   "¿Tengo que tomar foto?",
+   "¿Mi medición cambia el mapa al momento?"
+  ],
+  "pasos": [
+   "Abre Perfil → «Puntos por medir».",
+   "Toca el lugar y ve hasta el punto exacto donde se deja al pasajero.",
+   "Espera a que la precisión llegue a 15 m o menos y toca «Estoy aquí».",
+   "Si quieres, toca «Tomar foto del lugar». Luego «Volver a la lista» y sigue con el próximo."
+  ],
+  "cuerpo": "Cuando el equipo te asigna lugares para medir, te llega un aviso y en Driver, en tu Perfil, aparece «Puntos por medir» con cuántos te faltan. Solo lo ve quien fue asignado. Toca un lugar y verás el mapa con tu ubicación y el punto que tiene guardado ahora. Ve hasta el sitio exacto donde se deja al pasajero: la entrada, la parada o el letrero que usa la gente. El botón «Estoy aquí» aparece cuando tu GPS tiene 15 metros de precisión o menos. Si todavía no, la pantalla te dice la precisión de ahora: espera unos segundos al aire libre, lejos de techos y edificios altos, o acércate al lugar. Al tocar «Estoy aquí» se guardan tu ubicación, la precisión y la hora. Si quieres, toma una foto del lugar (la entrada, el letrero o la parada): ayuda al equipo a aprobarla. Tu medición no cambia el mapa sola: el equipo la revisa y la aprueba. Si te piden medirlo otra vez, el lugar dice «Medir otra vez» con el motivo."
+ },
+ {
+  "idioma": "es",
   "ruta": "drivers/invite-drivers-and-teams",
   "titulo": "Invita conductores y arma tu equipo: gana saldo por cada uno",
   "resumen": "Con tu código o tu enlace invitas a otros conductores. Cuando tu invitado completa sus primeras carreras, ganas saldo. Si eres líder de una línea, tu equipo queda unido a ti y ves cuántos están registrados, aprobados y activos.",
@@ -4034,6 +4053,25 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "When they arrive, check that their photo, vehicle, and plate match and tell them your code."
   ],
   "cuerpo": "As soon as a driver accepts your ride, their profile appears on the ride screen with the label “Your driver”: their photo, first name, arrival time, and their vehicle with its color and license plate. If they have a track record, you see how many trips they’ve done, their rating, and how long they’ve been with Divoox. If they’re new, it says “New to Divoox”: you’ll never see zeros or an empty rating. The green ring and the “Identity verified” badge mean Divoox checked their identity. “Vehicle verified” means we checked the vehicle. They only show if they really are verified. If the driver added them, you also see their fleet, the languages they speak, and something short about them. You only see what you need to recognize them: never their last name, phone number, or email. Below the profile is your code to start the ride: you tell it to your driver when they pick you up."
+ },
+ {
+  "idioma": "en",
+  "ruta": "drivers/points-to-measure",
+  "titulo": "Points to measure: confirm a place with «I’m here»",
+  "resumen": "If the Divoox team asks you to check places on the street, they show up in «Points to measure». Go to each one and, at the exact spot, tap «I’m here». The team reviews every measurement before changing the map.",
+  "preguntas": [
+   "What is «Points to measure»?",
+   "Why don’t I see the «I’m here» button?",
+   "Do I have to take a photo?",
+   "Does my measurement change the map right away?"
+  ],
+  "pasos": [
+   "Open Profile → «Points to measure».",
+   "Tap the place and go to the exact spot where riders get dropped off.",
+   "Wait until accuracy reaches 15 m or better and tap «I’m here».",
+   "If you want, tap «Take a photo of the place». Then «Back to the list» and go to the next one."
+  ],
+  "cuerpo": "When the team assigns you places to measure, you get a notification and, in Driver, your Profile shows «Points to measure» with how many are left. Only assigned drivers see it. Tap a place to see the map with your location and the point it has saved now. Go to the exact spot where riders get dropped off: the entrance, the stop or the sign people use. The «I’m here» button appears when your GPS accuracy is 15 meters or better. If it isn’t yet, the screen shows the current accuracy: wait a few seconds outdoors, away from roofs and tall buildings, or move closer. Tapping «I’m here» saves your location, the accuracy and the time. If you want, take a photo of the place (the entrance, the sign or the stop): it helps the team approve it. Your measurement doesn’t change the map by itself: the team reviews and approves it. If they ask you to measure it again, the place says «Measure again» with the reason."
  },
  {
   "idioma": "en",

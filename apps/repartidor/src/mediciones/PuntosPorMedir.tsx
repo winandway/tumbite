@@ -149,16 +149,14 @@ export function PuntosPorMedir({ api, idioma }: { api: Api; idioma: Idioma }) {
     );
 
   return (
-    <View style={{ gap: 12 }} testID="puntos-por-medir">
+    <View style={{ gap: 12, padding: 16 }} testID="puntos-por-medir">
       <Text style={[e.titulo]}>{t.titulo}</Text>
       <Text style={{ color: C.secundario }}>{t.ayuda}</Text>
       {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
       {tareas && !tareas.length ? <Text>{t.vacio}</Text> : null}
       {(tareas ?? []).map((ta) => (
         <View key={ta.id} style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '700', fontSize: 17 }}>
-            {ta.titulo} · {ta.ciudad}
-          </Text>
+          <Text style={{ fontWeight: '700', fontSize: 17 }}>{ta.titulo}</Text>
           {ta.nota ? <Text style={{ color: C.secundario }}>{ta.nota}</Text> : null}
           {ta.lugares.map((l) => {
             const estado = l.medicion?.estado ?? 'sin';
@@ -221,21 +219,33 @@ function Medir({
   const [hecha, setHecha] = useState<string | null>(null);
   const [fotoLista, setFotoLista] = useState(false);
   const vigia = useRef<Location.LocationSubscription | null>(null);
+  const relectura = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const empezar = useCallback(async () => {
     const p = await Location.requestForegroundPermissionsAsync();
     setPermiso(p.granted);
     if (!p.granted) return;
+    // Como el resto de Driver (C-LATIDO-UBICACION): cada lectura se marca con el reloj del teléfono al
+    // recibirla; la hora que trae el GPS puede venir corrida y dejaría la lectura por «vieja».
+    const anotar = (pos: Location.LocationObject) =>
+      setLectura({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        precisionM: pos.coords.accuracy,
+        hora: Date.now(),
+      });
+    const leer = () =>
+      void Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest })
+        .then(anotar)
+        .catch(() => undefined);
+    leer();
+    // Quieto en el punto, el GPS puede no avisar nada nuevo: se vuelve a leer cada 5 s.
+    if (relectura.current) clearInterval(relectura.current);
+    relectura.current = setInterval(leer, 5000);
     vigia.current?.remove();
     vigia.current = await Location.watchPositionAsync(
       { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 0 },
-      (pos) =>
-        setLectura({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          precisionM: pos.coords.accuracy,
-          hora: pos.timestamp || Date.now(),
-        }),
+      anotar,
     );
   }, []);
   useEffect(() => {
@@ -246,6 +256,7 @@ function Medir({
       clearTimeout(primero);
       clearInterval(reloj);
       vigia.current?.remove();
+      if (relectura.current) clearInterval(relectura.current);
     };
   }, [empezar]);
 
@@ -305,7 +316,7 @@ function Medir({
       : '';
 
   return (
-    <View style={{ gap: 12 }} testID="medir-lugar">
+    <View style={{ gap: 12, padding: 16 }} testID="medir-lugar">
       <Text style={[e.titulo]}>{lugar.nombre}</Text>
       <Text style={{ color: C.secundario }}>{tarea.titulo}</Text>
       {rechazo && !hecha ? <Text style={{ color: C.primario }}>{rechazo}</Text> : null}

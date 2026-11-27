@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ErrorApi,
   type Idioma,
@@ -12,6 +12,8 @@ import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { MapaFicha } from './FichaPiezas';
+import { elegirMapaWeb } from '@tumbite/compartido/src/mapaWebGoogle';
+import { seguirTemaEnLeaflet } from '@tumbite/compartido/src/temaMapa';
 
 /**
  * C-ESTOY-AQUI (27 nov 2026) — todas las ciudades. «Medir lugares en la calle»: el equipo arma una
@@ -189,6 +191,81 @@ const horaLocal = (sql: string, idioma: Idioma) => {
         timeStyle: 'short',
       });
 };
+
+type P = { lat: number; lng: number };
+
+/**
+ * Sin la llave del mapa de Google (servidor local, otra dirección), los dos puntos van en OpenStreetMap:
+ * el guardado en gris y el medido en rojo, con la línea entre ellos. Siempre se ven los dos.
+ */
+function MapaDosPuntosLibre({
+  antes,
+  medido,
+  etiquetas,
+}: {
+  antes: P;
+  medido: P;
+  etiquetas: [string, string];
+}) {
+  const caja = useRef<HTMLDivElement>(null);
+  // Una clave de texto: el mapa se rehace solo si cambian los puntos (no en cada dibujo).
+  const clave = JSON.stringify([antes, medido, etiquetas]);
+  useEffect(() => {
+    const [a0, m0, e0] = JSON.parse(clave) as [P, P, [string, string]];
+    let vivo = true;
+    let quitar: (() => void) | null = null;
+    void (async () => {
+      const L = await import('leaflet');
+      await import('leaflet/dist/leaflet.css');
+      if (!vivo || !caja.current || typeof L.map !== 'function') return;
+      const m = L.map(caja.current, { zoomControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(m);
+      const puntos: [P, string, string][] = [
+        [a0, '#666B73', e0[0]],
+        [m0, '#F20D20', e0[1]],
+      ];
+      for (const [p, color, texto] of puntos)
+        L.circleMarker([p.lat, p.lng], {
+          radius: 9,
+          color: '#fff',
+          weight: 2,
+          fillColor: color,
+          fillOpacity: 1,
+        })
+          .bindTooltip(texto, { permanent: true, direction: 'top' })
+          .addTo(m);
+      L.polyline(
+        [
+          [a0.lat, a0.lng],
+          [m0.lat, m0.lng],
+        ],
+        { color: '#101010', weight: 2, dashArray: '6 6' },
+      ).addTo(m);
+      m.fitBounds(
+        L.latLngBounds([
+          [a0.lat, a0.lng],
+          [m0.lat, m0.lng],
+        ]).pad(0.6),
+        { maxZoom: 18 },
+      );
+      m.on('unload', seguirTemaEnLeaflet(m, m0));
+      window.setTimeout(() => m.invalidateSize(), 200);
+      quitar = () => m.remove();
+    })();
+    return () => {
+      vivo = false;
+      quitar?.();
+    };
+  }, [clave]);
+  return (
+    <div ref={caja} data-testid="medicion-mapa-libre" style={{ height: 240, borderRadius: 12 }} />
+  );
+}
+
+const LLAVE_MAPA = (import.meta.env.VITE_GOOGLE_MAPS_WEB_KEY as string | undefined) ?? '';
 
 const mensaje = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
 
@@ -456,6 +533,13 @@ export function MedicionesLugares({
               >
                 {t.detalle(m.conductor, m.precisionM, horaLocal(m.tomadaEn, idioma))}
               </span>
+              {elegirMapaWeb({ llave: LLAVE_MAPA }) !== 'google' ? (
+                <MapaDosPuntosLibre
+                  antes={m.antes}
+                  medido={{ lat: m.lat, lng: m.lng }}
+                  etiquetas={[t.guardado, t.medido]}
+                />
+              ) : null}
               <MapaFicha
                 idioma={idioma}
                 etiqueta={t.medicionNueva(m.lugar, distanciaLegible(m.distanciaM, idioma))}

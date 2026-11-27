@@ -19,6 +19,7 @@ import { fichaConductor } from './fichaConductor';
 import { whatsappFalta } from './whatsappFalta';
 import { esperaCiudad } from './esperaCiudad';
 import { lugaresCiudad } from './lugaresCiudad';
+import { medirLugares } from './medirLugares';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -3751,6 +3752,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(quienPagaViajes),
         // Lugares propios de tu ciudad (Viajes · Emergencias y tarifas).
         de(lugaresCiudad),
+        // Medir lugares en la calle con Driver (C-ESTOY-AQUI).
+        de(medirLugares),
         de(comidaQuienPaga),
         de(primerRestauranteVe),
         de(abrirPeru),

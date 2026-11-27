@@ -721,7 +721,7 @@ export function Inicio() {
     faltan: 0,
   });
   useEffect(() => {
-    if (vista !== 'inicio') return;
+    if (vista !== 'inicio' && vista !== 'cuenta') return;
     let vivo = true;
     api
       .pedir<{ tareas: Parameters<typeof porMedir>[0] }>('GET', '/datos/conductor/mediciones')
@@ -2626,7 +2626,7 @@ export function Inicio() {
   if (vista === 'miLinea') return lienzo('perfil', <MiLinea api={api} idioma={idioma} />);
   // C-ESTOY-AQUI: los lugares que el equipo le pidió medir en la calle.
   if (vista === 'puntosPorMedir')
-    return lienzo('perfil', <PuntosPorMedir api={api} idioma={idioma} />);
+    return lienzo('cuenta', <PuntosPorMedir api={api} idioma={idioma} />);
   // C-PERFIL-CONDUCTOR: «Así te ven los pasajeros» y «Completar mi perfil».
   if (vista === 'asiTeVen')
     return lienzo('perfil', <AsiTeVen api={api} idioma={idioma} />, false, true);
@@ -2835,6 +2835,7 @@ export function Inicio() {
           (faltas ?? []).filter((f) => f.quien === 'conductor' && f.clave !== 'desconectado').length
         }
         alPapeles={() => abrirPapeles('datos')}
+        puntosPorMedir={medicion.tareas > 0 ? medicion.faltan : null}
         alIr={(v) => {
           if (v === 'ayuda') setAyudaEnChat(false);
           setVista(v);
@@ -2949,16 +2950,6 @@ export function Inicio() {
               )}
             </>
           ) : null}
-          {medicion.tareas > 0
-            ? fila(
-                idioma === 'en' ? 'Points to measure' : 'Puntos por medir',
-                () => setVista('puntosPorMedir'),
-                false,
-                idioma === 'en'
-                  ? `${medicion.faltan} ${medicion.faltan === 1 ? 'place' : 'places'} to check on the street`
-                  : `${medicion.faltan} ${medicion.faltan === 1 ? 'lugar' : 'lugares'} por confirmar en la calle`,
-              )
-            : null}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(
