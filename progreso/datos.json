@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-27T15:25-05:00",
+  "actualizado": "2026-11-27T16:40-05:00",
   "version": "fe71f3f",
   "ahora": "24 nov, madrugada: la primera carrera real quedó completa (Moto, efectivo, calificada) y esta noche se publicó todo lo que salió de esa prueba. El panel ya tiene una sola Verificación por conductor con su barra de activación y números verdaderos en la ficha; la campana se vacía al leerla; Comida, tiendas y Envíos solo se ofrecen donde hay quien los atienda; al conductor con vehículo aprobado se le encienden solos los servicios que su vehículo permite; el aviso de un cliente fijo ya lo dice en el título y cada aviso queda guardado. Driver 0.1.70 y la app de clientes 0.1.61 de Android están compiladas en la Mac, sin subir, esperando al auditor de tiendas.",
   "proximo": [
@@ -563,18 +563,23 @@
   "bitacora": [
     {
       "fecha": "2026-11-27",
+      "titulo": "El teclado ya no tapa la casilla y «Agrega tu vehículo» nuevo",
+      "texto": "Para todos los países. Al escribir, la casilla activa queda siempre arriba del teclado, en Android y en iPhone; llega con la próxima compilación de las apps. La moto escrita en «Datos para Comida y Envíos» ahora queda como vehículo de verdad, y a quien ya la había guardado así se le creó sola. En Driver hay una sola entrada, «Agrega tu vehículo»: eliges el tipo con su foto, escribes los datos con el nombre arriba de cada casilla, tomas la foto del frente y de la placa, y queda «en revisión»."
+    },
+    {
+      "fecha": "2026-11-27",
       "titulo": "Cada casilla acepta solo su tipo de dato: nombre, celular, correo, placa y año",
       "texto": "Arreglo para todos los países, sin costo. En «Nombre y apellido» ya no entra un correo, números ni símbolos, y se piden las dos palabras. En el celular las letras no entran. La placa va en mayúsculas y sin símbolos, y el año del vehículo va de 1990 al año que viene. El aviso sale debajo de la casilla, en palabras; «Siguiente» no avanza con un error y nunca se borra lo escrito. Las casillas del alta llevan un ícono pequeño (persona, teléfono, sobre, carro, calendario) y «Tu moto» muestra el nombre de cada casilla. La misma regla vive en el servidor, así que también protege a quien tenga una app vieja. El robot de cada noche intenta los datos malos. Las apps lo reciben en su próxima compilación."
     },
     {
       "fecha": "2026-11-27",
-      "titulo": "Recupera tu cuenta por WhatsApp o por correo",
-      "texto": "«¿Olvidaste tu contraseña?» ahora pide el celular o el correo y manda un código de 6 números por WhatsApp (recomendado) o por correo. Si no llega, se pide por SMS o por correo con un toque. El código vence a los 5 minutos y sirve una sola vez; nunca se dice si una cuenta existe; al cambiar la contraseña se cierran las sesiones abiertas y se avisa por el otro canal. Funciona en la web, el panel y las tres apps sin actualizarlas. Guía en Docs en español e inglés con capturas. Publicado y comprobado en vivo."
+      "titulo": "Verificaciones: habilitar por plazo, la moto en la ficha y WhatsApp en inglés y en EE. UU.",
+      "texto": "Cuatro arreglos en la ficha de Verificaciones, para todos los conductores. El botón «Habilitar» usa la misma regla del plazo de treinta días que el letrero y dice hasta cuándo tiene para sus papeles; al vencer, el reparto le vuelve a exigir todo. El vehículo se ve en la ficha aunque ya esté aprobado, con su estado, placa, fotos y botones. El aviso de WhatsApp «lo que te falta» sale en el idioma de la cuenta con selector Español / English; la plantilla en inglés está en revisión de Meta y mientras tanto se puede mandar en español. WhatsApp quedó encendido en Estados Unidos con los mismos topes que Venezuela."
     },
     {
       "fecha": "2026-11-27",
-      "titulo": "Verificaciones: habilitar por plazo, la moto en la ficha y WhatsApp en inglés y en EE. UU.",
-      "texto": "Cuatro arreglos en la ficha de Verificaciones, para todos los conductores. El botón «Habilitar» usa la misma regla del plazo de treinta días que el letrero y dice hasta cuándo tiene para sus papeles; al vencer, el reparto le vuelve a exigir todo. El vehículo se ve en la ficha aunque ya esté aprobado, con su estado, placa, fotos y botones. El aviso de WhatsApp «lo que te falta» sale en el idioma de la cuenta con selector Español / English; la plantilla en inglés está en revisión de Meta y mientras tanto se puede mandar en español. WhatsApp quedó encendido en Estados Unidos con los mismos topes que Venezuela."
+      "titulo": "Recupera tu cuenta por WhatsApp o por correo",
+      "texto": "«¿Olvidaste tu contraseña?» ahora pide el celular o el correo y manda un código de 6 números por WhatsApp (recomendado) o por correo. Si no llega, se pide por SMS o por correo con un toque. El código vence a los 5 minutos y sirve una sola vez; nunca se dice si una cuenta existe; al cambiar la contraseña se cierran las sesiones abiertas y se avisa por el otro canal. Funciona en la web, el panel y las tres apps sin actualizarlas. Guía en Docs en español e inglés con capturas. Publicado y comprobado en vivo."
     },
     {
       "fecha": "2026-11-27",
