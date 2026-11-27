@@ -6,10 +6,14 @@ import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import {
   type Api,
   ErrorApi,
+  FOTOS_MEDICION,
   type Idioma,
   PRECISION_MEDICION_M,
+  RADIO_ESTOY_AQUI_M,
+  type TipoFotoMedicion,
   distanciaLegible,
   enIdioma,
+  nombreFotoMedicion,
 } from '@tumbite/compartido';
 import { Boton, C, Text, achicarFotoEvidencia, e } from '@tumbite/movil';
 import { AccionFija } from '../piezas/AccionFija';
@@ -18,21 +22,24 @@ import { type LecturaGps, estadoGps } from './estoyAquiLogica';
 
 /**
  * C-ESTOY-AQUI (27 nov 2026) — todas las ciudades. «Puntos por medir»: los lugares que el equipo le
- * asignó al conductor. Al llegar a cada uno toca «Estoy aquí»: se guardan su GPS y la precisión
- * (nunca peor que 15 m: si no, la pantalla le pide esperar o acercarse) y, si quiere, una foto del
- * lugar. La medición la revisa el equipo; el lugar no cambia hasta que la aprueban.
+ * asignó al conductor. A menos de 300 m del punto y con 15 m de precisión o mejor toca «Estoy aquí»
+ * (C-ESTOY-AQUI-300: antes, el botón queda gris y dice cuánto falta); se guardan su GPS y la
+ * precisión. Después toma las TRES fotos obligatorias con la cámara (C-TRES-FOTOS: entrada o
+ * fachada, letrero o algo reconocible, vista desde la calle), cada una con su GPS y su hora. La
+ * medición la revisa el equipo; el lugar no cambia hasta que la aprueban.
  */
 const T = {
   es: {
     titulo: 'Puntos por medir',
     ayuda:
-      'Ve a cada lugar y, cuando estés en el punto exacto donde se deja al pasajero, toca «Estoy aquí». El equipo revisa cada medición antes de cambiar el mapa.',
+      'Ve a cada lugar y, cuando estés en el punto exacto donde se deja al pasajero, toca «Estoy aquí» y toma las tres fotos. El equipo revisa cada medición antes de cambiar el mapa.',
     vacio: 'No tienes puntos por medir ahora.',
     estados: {
       sin: 'Por medir',
       pendiente: 'Enviada',
       aprobada: 'Aprobada',
       rechazada: 'Medir otra vez',
+      fotos: 'Faltan fotos',
     },
     volver: 'Volver a la lista',
     yo: 'Tú',
@@ -43,13 +50,19 @@ const T = {
     buscando: 'Buscando tu ubicación…',
     esperar: (p: number) =>
       `Precisión: ${p >= 999 ? 'sin dato' : `${p} m`}. Espera unos segundos al aire libre o acércate al lugar, hasta ${PRECISION_MEDICION_M} m o menos.`,
-    lejos: (d: string) => `Estás a ${d} del punto. Ve al lugar para medirlo.`,
+    lejos: `«Estoy aquí» se activa a ${RADIO_ESTOY_AQUI_M} m o menos del punto. Ve al lugar.`,
+    acercate: (d: string) => `Acércate al punto (faltan ${d})`,
+    esperando: (p: number) => `Esperando precisión (${p >= 999 ? 'sin dato' : `${p} m`})`,
     listo: (p: number, d: string) => `Precisión: ${p} m · a ${d} del punto guardado`,
     estoyAqui: 'Estoy aquí',
-    enviada: 'Medición enviada. El equipo la revisa antes de cambiar el mapa.',
-    foto: 'Tomar foto del lugar (opcional)',
-    fotoAyuda: 'La entrada, el letrero o la parada: ayuda al equipo a aprobarla.',
-    fotoLista: 'Foto enviada.',
+    fotosTitulo: 'Ahora, las tres fotos del lugar',
+    fotosAyuda:
+      'Son obligatorias y se toman con la cámara aquí mismo. Sin las tres, el equipo no puede aprobar la medición.',
+    tomar: 'Tomar foto',
+    otraVez2: 'Tomar otra',
+    lista: 'Lista',
+    sinUbicacion: 'Espera a que el teléfono tenga tu ubicación y toma la foto otra vez.',
+    enviada: 'Medición y tres fotos enviadas. El equipo la revisa antes de cambiar el mapa.',
     permisoCamara: 'Activa la cámara en los ajustes del teléfono para tomar la foto.',
     motivo: (m: string) => `El equipo pidió medirlo otra vez: ${m}`,
     otraVez: 'El equipo pidió medirlo otra vez.',
@@ -57,13 +70,14 @@ const T = {
   en: {
     titulo: 'Points to measure',
     ayuda:
-      'Go to each place and, when you are at the exact spot where riders get dropped off, tap «I’m here». The team reviews every measurement before changing the map.',
+      'Go to each place and, when you are at the exact spot where riders get dropped off, tap «I’m here» and take the three photos. The team reviews every measurement before changing the map.',
     vacio: 'You have no points to measure right now.',
     estados: {
       sin: 'To measure',
       pendiente: 'Sent',
       aprobada: 'Approved',
       rechazada: 'Measure again',
+      fotos: 'Photos missing',
     },
     volver: 'Back to the list',
     yo: 'You',
@@ -74,13 +88,19 @@ const T = {
     buscando: 'Finding your location…',
     esperar: (p: number) =>
       `Accuracy: ${p >= 999 ? 'no data' : `${p} m`}. Wait a few seconds outdoors or move closer, to ${PRECISION_MEDICION_M} m or less.`,
-    lejos: (d: string) => `You’re ${d} from the point. Go to the place to measure it.`,
+    lejos: `«I’m here» turns on within ${RADIO_ESTOY_AQUI_M} m of the point. Go to the place.`,
+    acercate: (d: string) => `Get closer to the point (${d} to go)`,
+    esperando: (p: number) => `Waiting for accuracy (${p >= 999 ? 'no data' : `${p} m`})`,
     listo: (p: number, d: string) => `Accuracy: ${p} m · ${d} from the saved point`,
     estoyAqui: 'I’m here',
-    enviada: 'Measurement sent. The team reviews it before changing the map.',
-    foto: 'Take a photo of the place (optional)',
-    fotoAyuda: 'The entrance, the sign or the stop: it helps the team approve it.',
-    fotoLista: 'Photo sent.',
+    fotosTitulo: 'Now, the three photos of the place',
+    fotosAyuda:
+      'They are required and taken with the camera right here. Without all three, the team can’t approve the measurement.',
+    tomar: 'Take photo',
+    otraVez2: 'Retake',
+    lista: 'Done',
+    sinUbicacion: 'Wait until your phone has your location and take the photo again.',
+    enviada: 'Measurement and three photos sent. The team reviews it before changing the map.',
     permisoCamara: 'Turn on the camera in your phone settings to take the photo.',
     motivo: (m: string) => `The team asked to measure it again: ${m}`,
     otraVez: 'The team asked to measure it again.',
@@ -91,16 +111,24 @@ type Medicion = {
   id: string;
   estado: 'pendiente' | 'aprobada' | 'rechazada';
   motivo: string | null;
+  /** C-TRES-FOTOS: las que todavía faltan (en una pendiente). */
+  faltanFotos?: TipoFotoMedicion[];
 };
+
+/** El estado que se ve en la lista: una enviada sin sus tres fotos dice «Faltan fotos». */
+const estadoVisible = (m: Medicion | null) =>
+  !m ? 'sin' : m.estado === 'pendiente' && m.faltanFotos?.length ? 'fotos' : m.estado;
 type Lugar = { id: string; nombre: string; lat: number; lng: number; medicion: Medicion | null };
 type Tarea = { id: string; titulo: string; nota: string; ciudad: string; lugares: Lugar[] };
 
 /** El texto de cada estado (sin índice libre: solo los cuatro conocidos). */
 function textoEstado(
-  x: { sin: string; pendiente: string; aprobada: string; rechazada: string },
-  estado: 'sin' | 'pendiente' | 'aprobada' | 'rechazada',
+  x: { sin: string; pendiente: string; aprobada: string; rechazada: string; fotos: string },
+  estado: 'sin' | 'pendiente' | 'aprobada' | 'rechazada' | 'fotos',
 ) {
   switch (estado) {
+    case 'fotos':
+      return x.fotos;
     case 'pendiente':
       return x.pendiente;
     case 'aprobada':
@@ -117,7 +145,10 @@ const mensaje = (x: unknown) => (x instanceof ErrorApi ? x.message : String(x));
 /** Cuántos lugares asignados quedan por medir (para el renglón del perfil). */
 export const porMedir = (tareas: Tarea[]) =>
   tareas.reduce(
-    (s, t) => s + t.lugares.filter((l) => !l.medicion || l.medicion.estado === 'rechazada').length,
+    (s, t) =>
+      s +
+      t.lugares.filter((l) => ['sin', 'rechazada', 'fotos'].includes(estadoVisible(l.medicion)))
+        .length,
     0,
   );
 
@@ -160,7 +191,7 @@ export function PuntosPorMedir({ api, idioma }: { api: Api; idioma: Idioma }) {
           <Text style={{ fontWeight: '700', fontSize: 17 }}>{ta.titulo}</Text>
           {ta.nota ? <Text style={{ color: C.secundario }}>{ta.nota}</Text> : null}
           {ta.lugares.map((l) => {
-            const estado = l.medicion?.estado ?? 'sin';
+            const estado = estadoVisible(l.medicion);
             const verde = estado === 'aprobada' || estado === 'pendiente';
             return (
               <Pressable
@@ -184,7 +215,11 @@ export function PuntosPorMedir({ api, idioma }: { api: Api; idioma: Idioma }) {
                 <Text
                   style={{
                     fontWeight: '700',
-                    color: verde ? '#1E7B34' : estado === 'rechazada' ? C.primario : C.secundario,
+                    color: verde
+                      ? '#1E7B34'
+                      : estado === 'rechazada' || estado === 'fotos'
+                        ? C.primario
+                        : C.secundario,
                   }}
                 >
                   {textoEstado(t.estados, estado)}
@@ -217,8 +252,16 @@ function Medir({
   const [ahora, setAhora] = useState(() => Date.now());
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
-  const [hecha, setHecha] = useState<string | null>(null);
-  const [fotoLista, setFotoLista] = useState(false);
+  // Una medición enviada antes que todavía no tiene sus tres fotos se retoma aquí mismo.
+  const [hecha, setHecha] = useState<string | null>(
+    lugar.medicion?.estado === 'pendiente' && lugar.medicion.faltanFotos?.length
+      ? lugar.medicion.id
+      : null,
+  );
+  const [faltan, setFaltan] = useState<TipoFotoMedicion[]>(
+    lugar.medicion?.faltanFotos?.length ? lugar.medicion.faltanFotos : [...FOTOS_MEDICION],
+  );
+  const [subiendo, setSubiendo] = useState<TipoFotoMedicion | null>(null);
   const vigia = useRef<Location.LocationSubscription | null>(null);
   const relectura = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -281,6 +324,7 @@ function Medir({
         },
       );
       setHecha(r.medicion.id);
+      setFaltan([...FOTOS_MEDICION]);
     } catch (x) {
       setError(mensaje(x));
     } finally {
@@ -288,7 +332,8 @@ function Medir({
     }
   }
 
-  async function foto() {
+  /** C-TRES-FOTOS: una foto con la cámara (nunca de la galería), con el GPS y la hora de ahora. */
+  async function foto(tipo: TipoFotoMedicion) {
     if (!hecha) return;
     setError('');
     try {
@@ -297,15 +342,37 @@ function Medir({
       const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
       const a = r.canceled ? null : r.assets[0];
       if (!a) return;
-      setEnviando(true);
+      // La ubicación de ESTE momento (la que sigue la pantalla, si es reciente).
+      const aqui =
+        lectura && ahora - lectura.hora < 60_000
+          ? lectura
+          : await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High })
+              .then((pos) => ({
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                precisionM: pos.coords.accuracy,
+                hora: Date.now(),
+              }))
+              .catch(() => null);
+      if (!aqui) return setError(t.sinUbicacion);
+      setSubiendo(tipo);
       const uri = await achicarFotoEvidencia(a, manipulateAsync, SaveFormat.JPEG);
       const blob = await (await fetch(uri)).blob();
-      await api.subirFoto(blob, `/datos/conductor/mediciones/medicion/${hecha}/foto`);
-      setFotoLista(true);
+      const resp = (await api.subirFotoCon<{ faltan?: TipoFotoMedicion[] }>(
+        blob,
+        `/datos/conductor/mediciones/medicion/${hecha}/fotos/${tipo}`,
+        {
+          'x-foto-lat': String(aqui.lat),
+          'x-foto-lng': String(aqui.lng),
+          ...(aqui.precisionM ? { 'x-foto-precision': String(Math.round(aqui.precisionM)) } : {}),
+          'x-foto-hora': String(Math.round(aqui.hora)),
+        },
+      )) ?? { faltan: undefined };
+      setFaltan(Array.isArray(resp.faltan) ? resp.faltan : faltan.filter((x) => x !== tipo));
     } catch (x) {
       setError(mensaje(x));
     } finally {
-      setEnviando(false);
+      setSubiendo(null);
     }
   }
 
@@ -329,17 +396,50 @@ function Medir({
         direccionDestino={lugar.nombre}
       />
       {hecha ? (
-        <>
-          <Text style={{ color: '#1E7B34', fontWeight: '700' }}>{t.enviada}</Text>
-          {fotoLista ? (
-            <Text style={{ color: '#1E7B34' }}>{t.fotoLista}</Text>
-          ) : (
-            <>
-              <Text style={{ color: C.secundario }}>{t.fotoAyuda}</Text>
-              <Boton texto={t.foto} secundario cargando={enviando} alTocar={() => void foto()} />
-            </>
-          )}
-        </>
+        faltan.length ? (
+          <View style={{ gap: 10 }} testID="tres-fotos">
+            <Text style={{ fontWeight: '700', fontSize: 17 }}>{t.fotosTitulo}</Text>
+            <Text style={{ color: C.secundario }}>{t.fotosAyuda}</Text>
+            {FOTOS_MEDICION.map((tipo, i) => {
+              const lista = !faltan.includes(tipo);
+              return (
+                <View
+                  key={tipo}
+                  testID={`foto-${tipo}`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#D6D8DC',
+                    backgroundColor: '#fff',
+                  }}
+                >
+                  <Text style={{ flex: 1, fontWeight: '700' }}>
+                    {`${i + 1}. ${nombreFotoMedicion(tipo, idioma === 'en' ? 'en' : 'es')}`}
+                  </Text>
+                  {lista ? (
+                    <Text style={{ color: '#1E7B34', fontWeight: '700' }}>{t.lista}</Text>
+                  ) : null}
+                  <Boton
+                    texto={lista ? t.otraVez2 : t.tomar}
+                    enFila
+                    secundario={lista}
+                    exito={!lista}
+                    cargando={subiendo === tipo}
+                    alTocar={() => void foto(tipo)}
+                  />
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text testID="medicion-enviada" style={{ color: '#1E7B34', fontWeight: '700' }}>
+            {t.enviada}
+          </Text>
+        )
       ) : estado.tipo === 'sin-permiso' ? (
         <>
           <Text>{t.sinPermiso}</Text>
@@ -348,13 +448,22 @@ function Medir({
       ) : estado.tipo === 'buscando' ? (
         <Text testID="gps-buscando">{t.buscando}</Text>
       ) : estado.tipo === 'esperar' ? (
-        <Text testID="gps-esperar" style={{ fontWeight: '700' }}>
-          {t.esperar(estado.precisionM)}
-        </Text>
+        <>
+          <Text testID="gps-esperar">{t.esperar(estado.precisionM)}</Text>
+          <AccionFija testID="accion-fija-estoy-aqui">
+            <BotonGris texto={t.esperando(estado.precisionM)} testID="estoy-aqui-esperando" />
+          </AccionFija>
+        </>
       ) : estado.tipo === 'lejos' ? (
-        <Text testID="gps-lejos" style={{ fontWeight: '700' }}>
-          {t.lejos(distanciaLegible(estado.metros, idioma))}
-        </Text>
+        <>
+          <Text testID="gps-lejos">{t.lejos}</Text>
+          <AccionFija testID="accion-fija-estoy-aqui">
+            <BotonGris
+              texto={t.acercate(distanciaLegible(estado.metros, idioma))}
+              testID="estoy-aqui-lejos"
+            />
+          </AccionFija>
+        </>
       ) : (
         <>
           <Text testID="gps-listo" style={{ color: '#1E7B34', fontWeight: '700' }}>
@@ -374,6 +483,35 @@ function Medir({
       )}
       {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
       <Boton texto={t.volver} secundario alTocar={volver} />
+    </View>
+  );
+}
+
+/**
+ * C-ESTOY-AQUI-300: «Estoy aquí» apagado, en gris, y su propio texto dice qué falta («Acércate al
+ * punto (faltan 420 m)»). Nunca un botón apagado mudo.
+ */
+function BotonGris({ texto, testID }: { texto: string; testID: string }) {
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityRole="button"
+      accessibilityState={{ disabled: true }}
+      accessibilityLabel={texto}
+      style={{
+        minHeight: 52,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#E4E6EA',
+      }}
+    >
+      <Text style={{ color: '#5B6069', fontWeight: '700', fontSize: 16, textAlign: 'center' }}>
+        {texto}
+      </Text>
     </View>
   );
 }

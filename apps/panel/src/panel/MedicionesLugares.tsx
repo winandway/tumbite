@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ErrorApi,
+  FOTOS_MEDICION,
   type Idioma,
+  type TipoFotoMedicion,
   almacenNavegador,
   distanciaLegible,
   enIdioma,
   llanoLugar,
+  nombreFotoMedicion,
   useBorrador,
 } from '@tumbite/compartido';
 import { api } from './api';
@@ -35,7 +38,17 @@ const T = {
       `Tomada por ${quien} · precisión ${Math.round(precision)} m · ${cuando}`,
     guardado: 'Punto guardado',
     medido: 'Punto medido',
-    verFoto: 'Ver la foto del lugar',
+    fotos: 'Las tres fotos del lugar',
+    falta: 'Falta',
+    faltanFotos: (cuales: string) =>
+      `Faltan fotos: ${cuales}. No se puede aprobar sin las tres; pide al conductor que las tome en el lugar.`,
+    publicas: 'Así se ve el lugar (fotos en las apps)',
+    publicasAyuda:
+      'Las fotos de las mediciones aprobadas se ven en la app de clientes y en Driver cuando el lugar es la recogida o el destino. Quita cualquiera que no deba verse.',
+    sinPublicas: 'Todavía no hay fotos aprobadas en esta ciudad.',
+    quitarFoto: 'Quitar de las apps',
+    seguroQuitar: 'Esta foto deja de verse en la app de clientes y en Driver. ¿Quitarla?',
+    quitada: 'Foto quitada de las apps.',
     aprobar: 'Aprobar',
     rechazar: 'Rechazar',
     seguroAprobar: (lugar: string) =>
@@ -96,7 +109,17 @@ const T = {
       `Taken by ${quien} · accuracy ${Math.round(precision)} m · ${cuando}`,
     guardado: 'Saved point',
     medido: 'Measured point',
-    verFoto: 'See the photo of the place',
+    fotos: 'The three photos of the place',
+    falta: 'Missing',
+    faltanFotos: (cuales: string) =>
+      `Missing photos: ${cuales}. It can’t be approved without all three; ask the driver to take them at the place.`,
+    publicas: 'What the place looks like (photos in the apps)',
+    publicasAyuda:
+      'Photos from approved measurements show in the customer app and in Driver when the place is the pickup or the destination. Remove any that shouldn’t show.',
+    sinPublicas: 'No approved photos in this city yet.',
+    quitarFoto: 'Remove from the apps',
+    seguroQuitar: 'This photo will stop showing in the customer app and in Driver. Remove it?',
+    quitada: 'Photo removed from the apps.',
     aprobar: 'Approve',
     rechazar: 'Reject',
     seguroAprobar: (lugar: string) =>
@@ -158,7 +181,9 @@ type Medicion = {
   tomadaEn: string;
   antes: { lat: number; lng: number };
   distanciaM: number;
-  conFoto: boolean;
+  /** C-TRES-FOTOS: las fotos tomadas y las que faltan. */
+  fotos: { id: string; tipo: TipoFotoMedicion; publica: boolean; quitada: boolean }[];
+  faltanFotos: TipoFotoMedicion[];
   estado: 'pendiente' | 'aprobada' | 'rechazada';
   motivo: string | null;
 };
@@ -412,6 +437,16 @@ export function MedicionesLugares({
     () => (tareas ?? []).flatMap((x) => x.mediciones.filter((m) => m.estado === 'pendiente')),
     [tareas],
   );
+  // C-FOTOS-PUBLICAS: las fotos que hoy se ven en las apps (de mediciones aprobadas, sin quitar).
+  const publicas = useMemo(
+    () =>
+      (tareas ?? []).flatMap((x) =>
+        x.mediciones.flatMap((m) =>
+          m.fotos.filter((f) => f.publica && !f.quitada).map((f) => ({ ...f, lugar: m.lugar })),
+        ),
+      ),
+    [tareas],
+  );
   const lugaresVisibles = useMemo(() => {
     const q = llanoLugar(busca);
     if (q.length < 2) return lugares;
@@ -560,15 +595,66 @@ export function MedicionesLugares({
                   { texto: t.medido, color: '#F20D20' },
                 ]}
               />
-              {m.conFoto ? (
-                <p style={{ margin: '8px 0' }}>
-                  <a
-                    href={`/datos/admin/mediciones/medicion/${m.id}/foto`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t.verFoto}
-                  </a>
+              <p style={{ margin: '10px 0 6px', fontWeight: 600 }}>{t.fotos}</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {FOTOS_MEDICION.map((tipo) => {
+                  const f = m.fotos.find((x) => x.tipo === tipo);
+                  const nombre = nombreFotoMedicion(tipo, idioma === 'en' ? 'en' : 'es');
+                  return f ? (
+                    <a
+                      key={tipo}
+                      href={`/datos/admin/mediciones/fotos/${f.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ width: 120, textDecoration: 'none', color: 'inherit' }}
+                    >
+                      <img
+                        src={`/datos/admin/mediciones/fotos/${f.id}`}
+                        alt={nombre}
+                        style={{
+                          width: 120,
+                          height: 90,
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                          border: '1px solid #2a2a2a',
+                        }}
+                      />
+                      <span style={{ display: 'block', fontSize: 12 }}>{nombre}</span>
+                    </a>
+                  ) : (
+                    <div
+                      key={tipo}
+                      style={{
+                        width: 120,
+                        height: 90,
+                        borderRadius: 8,
+                        border: '1px dashed #666B73',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        fontSize: 12,
+                        color: '#666B73',
+                        padding: 4,
+                      }}
+                    >
+                      {`${t.falta}: ${nombre}`}
+                    </div>
+                  );
+                })}
+              </div>
+              {m.faltanFotos.length ? (
+                <p
+                  style={{ color: '#C20A1A', margin: '8px 0' }}
+                  data-testid="medicion-faltan-fotos"
+                >
+                  {t.faltanFotos(
+                    m.faltanFotos
+                      .map((x) =>
+                        nombreFotoMedicion(x, idioma === 'en' ? 'en' : 'es').toLowerCase(),
+                      )
+                      .join(', '),
+                  )}
                 </p>
               ) : null}
               {rechazando === m.id ? (
@@ -598,6 +684,7 @@ export function MedicionesLugares({
                     type="button"
                     className="boton"
                     data-testid="medicion-aprobar"
+                    disabled={m.faltanFotos.length > 0}
                     onClick={() => aprobar(m)}
                   >
                     {t.aprobar}
@@ -617,6 +704,49 @@ export function MedicionesLugares({
               )}
             </article>
           ))}
+
+          <h3>{t.publicas}</h3>
+          <p style={{ color: '#666B73' }}>{t.publicasAyuda}</p>
+          {!publicas.length ? <p>{t.sinPublicas}</p> : null}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {publicas.map((f) => (
+              <div key={f.id} style={{ width: 150 }} data-testid="foto-publica">
+                <img
+                  src={`/datos/admin/mediciones/fotos/${f.id}`}
+                  alt={`${f.lugar}: ${nombreFotoMedicion(f.tipo, idioma === 'en' ? 'en' : 'es')}`}
+                  style={{
+                    width: 150,
+                    height: 110,
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    border: '1px solid #2a2a2a',
+                  }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ flex: 1, fontSize: 13, overflowWrap: 'anywhere' }}>
+                    {`${f.lugar} · ${nombreFotoMedicion(f.tipo, idioma === 'en' ? 'en' : 'es')}`}
+                  </span>
+                  <MenuTresPuntos
+                    etiqueta={t.opciones}
+                    opciones={[
+                      {
+                        texto: t.quitarFoto,
+                        peligro: true,
+                        alTocar: () => {
+                          if (!window.confirm(t.seguroQuitar)) return;
+                          void hacer(
+                            () =>
+                              api.pedir('POST', `/datos/admin/mediciones/fotos/${f.id}/quitar`, {}),
+                            t.quitada,
+                          );
+                        },
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
 
           <h3>{t.tareas}</h3>
           {!tareas.length ? <p>{t.sinTareas}</p> : null}

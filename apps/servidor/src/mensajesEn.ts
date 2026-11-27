@@ -2306,6 +2306,16 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Ese lugar no está en esta tarea.', 'That place isn’t in this task.'],
   [
+    'La foto llegó sin tu ubicación. Activa la ubicación y tómala otra vez.',
+    'The photo arrived without your location. Turn on location and take it again.',
+  ],
+  [
+    'Esa foto es vieja. Tómala otra vez en el lugar.',
+    'That photo is old. Take it again at the place.',
+  ],
+  ['Toma la foto en el lugar que mediste.', 'Take the photo at the place you measured.'],
+  ['Esa foto no existe.', 'That photo doesn’t exist.'],
+  [
     'La hora de tu teléfono no está bien. Corrígela y vuelve a intentar.',
     'Your phone’s time is wrong. Fix it and try again.',
   ],

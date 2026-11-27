@@ -2083,11 +2083,26 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "antes_lat",
     "antes_lng",
     "distancia_m",
-    "foto_clave",
     "estado",
     "revisada_por",
     "revisada_en",
     "motivo"
+  ],
+  "mediciones_fotos": [
+    "id",
+    "medicion_id",
+    "lugar_id",
+    "conductor_id",
+    "tipo",
+    "clave",
+    "lat",
+    "lng",
+    "precision_m",
+    "tomada_en",
+    "recibida_en",
+    "publica",
+    "quitada_por",
+    "quitada_en"
   ],
   "cotizaciones_viaje": [
     "id",

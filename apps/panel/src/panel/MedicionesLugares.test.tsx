@@ -31,7 +31,12 @@ const TAREAS = {
           tomadaEn: '2026-11-27 13:00:00',
           antes: { lat: 8.6, lng: -71.7 },
           distanciaM: 140,
-          conFoto: true,
+          fotos: [
+            { id: 'f1', tipo: 'entrada', publica: false, quitada: false },
+            { id: 'f2', tipo: 'letrero', publica: false, quitada: false },
+            { id: 'f3', tipo: 'calle', publica: false, quitada: false },
+          ],
+          faltanFotos: [],
           estado: 'pendiente',
           motivo: null,
         },
@@ -91,7 +96,8 @@ describe('C-ESTOY-AQUI en el panel', () => {
     const tarjeta = await screen.findByTestId('medicion-pendiente');
     expect(tarjeta.textContent).toContain('Medición nueva: KM 9, movido 140 m');
     expect(tarjeta.textContent).toContain('precisión 6 m');
-    expect(within(tarjeta).getByText('Ver la foto del lugar')).toBeTruthy();
+    expect(within(tarjeta).getByAltText('Letrero o algo reconocible')).toBeTruthy();
+    expect(within(tarjeta).queryByTestId('medicion-faltan-fotos')).toBeNull();
     // Sin confirmar, no se llama a aprobar.
     await userEvent.click(within(tarjeta).getByTestId('medicion-aprobar'));
     expect(llamadas.some((l) => l.url.endsWith('/aprobar'))).toBe(false);
@@ -101,6 +107,29 @@ describe('C-ESTOY-AQUI en el panel', () => {
     );
     expect(confirmar).toHaveBeenCalledTimes(2);
     expect(screen.getByTestId('medicion-tarea').textContent).toContain('1 de 2 lugares medidos');
+  });
+
+  it('C-TRES-FOTOS: sin las tres fotos, «Aprobar» queda apagado y dice cuáles faltan', async () => {
+    const m0 = TAREAS.tareas[0]!.mediciones[0]!;
+    const antes = { fotos: m0.fotos, faltanFotos: m0.faltanFotos };
+    Object.assign(m0, { fotos: [m0.fotos[0]], faltanFotos: ['letrero', 'calle'] });
+    try {
+      const llamadas = servidor();
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      render(<MedicionesLugares idioma="es" zonas={ZONAS} />);
+      await userEvent.selectOptions(screen.getByTestId('medicion-ciudad'), 'VE-MER-ELVIGIA');
+      const tarjeta = await screen.findByTestId('medicion-pendiente');
+      expect(within(tarjeta).getByTestId('medicion-faltan-fotos').textContent).toContain(
+        'letrero o algo reconocible, vista desde la calle',
+      );
+      expect(within(tarjeta).getByText('Falta: Vista desde la calle')).toBeTruthy();
+      const boton = within(tarjeta).getByTestId('medicion-aprobar') as HTMLButtonElement;
+      expect(boton.disabled).toBe(true);
+      await userEvent.click(boton);
+      expect(llamadas.some((l) => l.url.endsWith('/aprobar'))).toBe(false);
+    } finally {
+      Object.assign(m0, antes);
+    }
   });
 
   it('crea una tarea con los lugares y los conductores elegidos', async () => {

@@ -54,6 +54,7 @@ const deArchivosEntrega = async () => {
 import { TEXTOS_VIAJE } from './textos';
 import { Mapa } from '../piezas/Mapa';
 import { TarjetaRecogida } from '../piezas/FotosPuerta';
+import { AsiSeVeElLugar } from '@tumbite/movil';
 import { textoOfertaConfianza } from './agendaFijos';
 
 type Api = {
@@ -747,6 +748,8 @@ export function ViajeActivo({
         <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
           <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
         </View>
+        {/* C-FOTOS-PUBLICAS: si el punto al que va es un lugar propio medido, sus fotos aprobadas. */}
+        <AsiSeVeElLugar punto={{ lat: punto.lat, lng: punto.lng }} idioma={idioma} />
         {/* C-FOTO-RECOGIDA: la foto de la entrada del pasajero, solo mientras va a recoger. */}
         {!esEnvio ? (
           <TarjetaRecogida operacionId={viaje.id} estado={viaje.estado} idioma={idioma} />

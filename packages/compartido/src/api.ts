@@ -251,8 +251,13 @@ export function crearApi(op: OpcionesApi) {
    * C-VERIFICACION-ASISTENTE: sube una foto y devuelve TODO lo que contestó el servidor (el
    * asistente de papeles necesita lo que vio la IA al momento: `ia.color` y `ia.aviso`).
    */
-  async function subirFotoCon<T>(foto: Blob, ruta: string): Promise<T> {
-    return (await enviarFoto(foto, ruta, {})) as T;
+  async function subirFotoCon<T>(
+    foto: Blob,
+    ruta: string,
+    /** Cabeceras de más (C-TRES-FOTOS: el GPS y la hora de la foto, x-foto-*). */
+    cabeceras: Record<string, string> = {},
+  ): Promise<T> {
+    return (await enviarFoto(foto, ruta, cabeceras)) as T;
   }
 
   type RespuestaFoto = { url?: string; adjunto?: string; error?: string; campo?: string };

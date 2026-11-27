@@ -7766,10 +7766,32 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Candados (comprobados en rojo, uno por uno):** `apps/servidor/src/medicionesLugares.test.ts` y `apps/repartidor/src/mediciones/estoyAquiLogica.test.ts`:
   1. sin aprobación no cambia nada (medir solo guarda la medición pendiente; aprobar es el único camino que mueve el lugar y su ruta, una sola vez, y no si el lugar cambió desde que se midió);
   2. precisión mínima (el servidor rechaza peor que 15 m y la base tiene un CHECK; la app solo muestra «Estoy aquí» con 15 m o menos y explica qué hacer si no);
-  3. un lugar nunca sale de su ciudad (una tarea es de una ciudad; ni medir ni aprobar mueven un lugar más de 5 km; la ciudad del lugar no cambia);
+  3. un lugar nunca sale de su ciudad (una tarea es de una ciudad; ni medir ni aprobar mueven un lugar más de 300 m, ver C-ESTOY-AQUI-300; la ciudad del lugar no cambia);
   4. solo los asignados ven y miden (a los demás, 404; al reasignar o cerrar deja de verse).
 - **Cómo comprobar:** en el panel, Viajes → «Medir lugares en la calle» → El Vigía; en Driver, Perfil → «Puntos por medir» con una cuenta asignada.
 - **Qué NO tocar:** no mover `lugares_propios` desde `/conductor/mediciones`; no subir el CHECK de `precision_m`; no mostrar la tarea a quien no está en `mediciones_tarea_asignados`.
+
+### C-ESTOY-AQUI-300 — «Estoy aquí» solo a menos de 300 m del punto (Richard, 27 nov 2026) — todas las ciudades
+
+- **Qué se pidió:** el botón se activa solo cerca del punto guardado (300 m o menos) y con 15 m de precisión o mejor. Antes el tope era de 5 km.
+- **Qué se hizo:** una sola regla, `RADIO_ESTOY_AQUI_M = 300` en `packages/compartido/src/medicionLugares.ts`, usada en Driver (`estoyAquiLogica.ts`: lejos → botón gris «Acércate al punto (faltan 420 m)»; sin precisión → botón gris «Esperando precisión (25 m)»), en el servidor al medir (422 «Acércate al punto…») y al aprobar (409).
+- **Candado (comprobado en rojo con el radio en 5000):** `estoyAquiLogica.test.ts` («C-ESTOY-AQUI-300») y `medicionesLugares.test.ts` (medir a 420 m → 422).
+- **Qué NO tocar:** no volver a un tope en kilómetros; no dibujar «Estoy aquí» activo fuera del radio; un botón apagado siempre dice en su texto qué falta.
+
+### C-TRES-FOTOS — tres fotos obligatorias por medición, solo con la cámara (Richard, 27 nov 2026) — todas las ciudades
+
+- **Qué se pidió:** cada punto lleva tres fotos obligatorias (entrada o fachada; letrero o algo reconocible; vista desde la calle), tomadas con la cámara, cada una con su hora y coordenadas. Antes había una foto opcional (`foto_clave`, retirada antes de publicar).
+- **Qué se hizo:** tabla `mediciones_fotos` (una fila por tipo y medición, `UNIQUE (medicion_id, tipo)`: volver a tomarla la reemplaza). Subida `POST /datos/conductor/mediciones/medicion/:id/fotos/:tipo` con el GPS y la hora en cabeceras `x-foto-*` (nunca en la dirección): se rechaza sin GPS, vieja (más de 10 min), del futuro o a más de 300 m del punto medido. La foto se guarda limpia (sin datos ocultos). Driver abre solo la cámara (`launchCameraAsync`, sin galería). Aprobar sin las tres → 409 «Faltan fotos: …»; el panel deja «Aprobar» apagado y dice cuáles faltan. Borrar la cuenta borra sus fotos.
+- **Candado (comprobado en rojo quitando la exigencia):** `medicionesLugares.test.ts` (aprobar sin fotos y con dos → 409; las tres reglas de la subida) y `MedicionesLugares.test.tsx` (botón apagado con el texto).
+- **Qué NO tocar:** no aprobar sin las tres; no aceptar fotos de la galería; no mover el GPS de la foto a la dirección de la petición.
+
+### C-FOTOS-PUBLICAS — «Así se ve el lugar» con las fotos aprobadas (Richard, 27 nov 2026) — todas las ciudades
+
+- **Qué se pidió:** las fotos aprobadas se ven en la app de clientes y en Driver cuando ese lugar propio es la recogida o el destino; el equipo puede quitar cualquiera.
+- **Qué se hizo:** al aprobar, las fotos de esa medición pasan a `publica = 1` y las de una medición anterior del mismo lugar dejan de verse (siempre la más nueva). `GET /datos/lugares/asi-se-ve?lat&lng` busca el lugar propio activo a 40 m o menos con fotos públicas (solo lee); `GET /datos/lugares/fotos/:id` sirve solo públicas y no quitadas. Panel: sección «Así se ve el lugar (fotos en las apps)» con «Quitar de las apps» en el menú de tres puntos (`POST /datos/admin/mediciones/fotos/:id/quitar`). Pieza única `packages/movil/src/AsiSeVeElLugar.tsx`, en `ViajeEnCurso.tsx` (cliente: recogida mientras llega el conductor, destino hasta terminar) y `ViajeActivo.tsx` (Driver: el punto al que va).
+- **Candado (comprobado en rojo dejando las fotos sin publicar al aprobar):** `medicionesLugares.test.ts` (pendiente no se ve; aprobada se ve en orden; lejos del lugar no; quitada → 404).
+- **Privacidad:** son fotos de un lugar público tomadas por el equipo; no llevan datos de personas. Pedir al medidor que no fotografíe caras ni placas (va en sus instrucciones).
+- **Qué NO tocar:** no servir fotos pendientes ni rechazadas; no quitar el filtro `quitada_en IS NULL`.
 
 ## C-DESLIZAR-RECIBE-EL-TOQUE — el recorrido desliza solo cuando el pulgar recibe el toque y espera la respuesta real (27 nov 2026) — todos los países
 

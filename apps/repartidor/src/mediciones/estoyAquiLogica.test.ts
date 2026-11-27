@@ -23,7 +23,12 @@ describe('C-ESTOY-AQUI: el botón sale solo con la precisión mínima', () => {
     expect(estadoGps(null, KM9, true, ahora).tipo).toBe('buscando');
     expect(estadoGps(leer(5, 0.0005, ahora - 31_000), KM9, true, ahora).tipo).toBe('buscando');
   });
-  it('a más de 5 km del lugar, le dice que está lejos', () => {
+  it('C-ESTOY-AQUI-300: a más de 300 m del punto, lejos (con los metros); a 300 m o menos, listo', () => {
+    // 0,0027° de latitud ≈ 300 m; 0,0038° ≈ 420 m.
+    expect(estadoGps(leer(5, 0.0038), KM9, true, ahora)).toMatchObject({ tipo: 'lejos' });
+    const lejos = estadoGps(leer(5, 0.0038), KM9, true, ahora);
+    expect(lejos.tipo === 'lejos' && lejos.metros).toBeGreaterThan(400);
+    expect(estadoGps(leer(5, 0.0027), KM9, true, ahora).tipo).toBe('listo');
     expect(estadoGps(leer(5, 0.06), KM9, true, ahora).tipo).toBe('lejos');
   });
 });

@@ -3333,13 +3333,35 @@ CREATE TABLE IF NOT EXISTS mediciones_lugar (
   antes_lat REAL NOT NULL,
   antes_lng REAL NOT NULL,
   distancia_m INTEGER NOT NULL CHECK (distancia_m >= 0),
-  foto_clave TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
   revisada_por TEXT,
   revisada_en TEXT,
   motivo TEXT
 );
 CREATE INDEX IF NOT EXISTS mediciones_lugar_tarea ON mediciones_lugar(tarea_id, estado);
+-- C-TRES-FOTOS (Richard, 27 nov 2026): las tres fotos obligatorias de cada medición (entrada o fachada,
+-- letrero o algo reconocible, vista desde la calle), tomadas con la cámara y cada una con su hora y su
+-- GPS. Volver a tomar una la reemplaza. C-FOTOS-PUBLICAS: al aprobar la medición pasan a públicas
+-- («Así se ve el lugar» en la app de clientes y en Driver); el equipo puede quitar cualquiera.
+CREATE TABLE IF NOT EXISTS mediciones_fotos (
+  id TEXT PRIMARY KEY,
+  medicion_id TEXT NOT NULL,
+  lugar_id TEXT NOT NULL,
+  conductor_id TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('entrada', 'letrero', 'calle')),
+  clave TEXT NOT NULL,
+  lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
+  precision_m REAL,
+  tomada_en TEXT NOT NULL,
+  recibida_en TEXT NOT NULL DEFAULT (datetime('now')),
+  publica INTEGER NOT NULL DEFAULT 0 CHECK (publica IN (0, 1)),
+  quitada_por TEXT,
+  quitada_en TEXT,
+  UNIQUE (medicion_id, tipo)
+);
+CREATE INDEX IF NOT EXISTS mediciones_fotos_lugar ON mediciones_fotos(lugar_id, publica);
+CREATE INDEX IF NOT EXISTS mediciones_fotos_conductor ON mediciones_fotos(conductor_id);
 CREATE INDEX IF NOT EXISTS mediciones_lugar_conductor ON mediciones_lugar(conductor_id);
 
 CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
