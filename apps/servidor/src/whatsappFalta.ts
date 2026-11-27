@@ -3,7 +3,7 @@ import { momentoEn } from '@tumbite/compartido';
 import { z } from 'zod';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
-import { zonaRealSql } from './cuentaPais';
+import { paisConLugarSql, zonaRealSql } from './cuentaPais';
 import { guardarError } from './errores';
 import { ZONA_REVISION_TIENDAS } from './panicoZona';
 import { type Activacion, barraActivacion } from './activacion';
@@ -463,7 +463,9 @@ export async function consentimientos(
          SELECT u.id, u.telefono, u.telefono_verificado_en AS verificado, ct.canal, ct.telefono AS tel_codigo,
                 (SELECT s.entrega FROM sms_enviados s WHERE s.referencia = ct.referencia AND ct.referencia IS NOT NULL LIMIT 1) AS entrega,
                 EXISTS (SELECT 1 FROM rezagados_bajas b WHERE b.usuario_id = u.id) AS baja,
-                (SELECT z.pais FROM zonas z WHERE z.id = ${zonaRealSql('rp', 'u')}) AS pais,
+                -- C-WHATSAPP-PAIS: el país con la misma regla de sus papeles (para escribir su número).
+                (SELECT ${paisConLugarSql('z', 'rp', 'u')} FROM zonas z
+                  WHERE z.id = COALESCE(${zonaRealSql('rp', 'u')}, rp.zona_id, 'US-FL-MIAMI')) AS pais,
                 ${zonaRealSql('rp', 'u')} AS zona, ${SQL_CUENTA_INTERNA('u')} AS interna
            FROM ids JOIN usuarios u ON u.id = ids.id
            LEFT JOIN codigos_telefono ct ON ct.usuario_id = u.id

@@ -1,9 +1,9 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
-import { alcanceEsTotal } from '@tumbite/compartido';
+import { alcanceEsTotal, paisUnicoDelCelular } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { accesoDe } from '../accesoInterno';
-import { zonaRealSql } from '../cuentaPais';
+import { PAIS_CONDUCTOR_SQL, ZONA_CONDUCTOR_SQL, zonaRealSql } from '../cuentaPais';
 import { ZONA_REVISION_TIENDAS } from '../panicoZona';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -192,9 +192,14 @@ whatsappFaltaRutas.put('/admin/camila/whatsapp', async (c) => {
 async function personaDe(db: D1Database, id: string): Promise<Persona> {
   const u = await db
     .prepare(
-      `SELECT u.id, u.nombre, u.idioma, u.rol, u.activo, z.pais
+      // C-WHATSAPP-PAIS (27 nov 2026, cuentas de Miami sin zona real): el país del conductor con la
+      // MISMA regla de sus papeles (zona real, o donde vive, o la de su fila); nunca «sin país».
+      // Sin zona real ni lugar, el código de su celular manda antes que la ciudad de fábrica de la fila.
+      `SELECT u.id, u.nombre, u.idioma, u.rol, u.activo, u.telefono,
+              ${PAIS_CONDUCTOR_SQL} AS pais,
+              (${zonaRealSql('r', 'u')} IS NULL AND u.lugar_pais IS NULL) AS sin_lugar
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
-         LEFT JOIN zonas z ON z.id = ${zonaRealSql('r', 'u')}
+         LEFT JOIN zonas z ON z.id = ${ZONA_CONDUCTOR_SQL}
         WHERE u.id = ?`,
     )
     .bind(id)
@@ -205,13 +210,15 @@ async function personaDe(db: D1Database, id: string): Promise<Persona> {
       rol: string;
       activo: number;
       pais: string | null;
+      telefono: string | null;
+      sin_lugar: number | null;
     }>();
   if (!u || !Number(u.activo)) throw new ErrorDatos('Esa cuenta no existe.', undefined, 404);
   return {
     id: u.id,
     nombre: u.nombre,
     idioma: u.idioma === 'en' ? 'en' : 'es',
-    pais: u.pais,
+    pais: (Number(u.sin_lugar) === 1 ? paisUnicoDelCelular(u.telefono) : null) ?? u.pais,
     rol: u.rol,
   };
 }

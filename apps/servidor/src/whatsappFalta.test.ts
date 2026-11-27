@@ -743,4 +743,28 @@ describe('C-WHATSAPP-FALTA: revisión del 25 nov', () => {
     expect(no.datos.motivo).toBe('pais_apagado');
     expect(meta).toHaveLength(0);
   });
+
+  it('C-WHATSAPP-PAIS: una cuenta de EE. UU. sin zona real (Miami de fábrica) no sale «apagado»: su celular dice su país', async () => {
+    const s = await escenario();
+    simularMeta();
+    const rep = await s.conductor('Mario Ejemplo', '+13055550123');
+    // Como las cuentas reales de Miami: la fila con la ciudad de fábrica y ninguna zona elegida.
+    await s.m.DB.batch([
+      s.m.DB.prepare(
+        "UPDATE repartidores SET zona_id = 'US-FL-MIAMI', ubicacion_en = NULL, ciudad_elegida_en = NULL WHERE usuario_id = ?",
+      ).bind(rep.id),
+      s.m.DB.prepare('UPDATE usuarios SET zona_id = NULL, lugar_pais = NULL WHERE id = ?').bind(
+        rep.id,
+      ),
+    ]);
+    await s.ajustarWhatsapp({ paises: { VE: true, US: true } });
+    const v = await s.equipo('POST', `/datos/admin/camila/whatsapp/${rep.id}`, { soloVista: true });
+    expect(v.datos.vista.motivo).not.toBe('pais_apagado');
+    // Y con EE. UU. apagado, sí lo dice (el interruptor se respeta).
+    await s.ajustarWhatsapp({ paises: { VE: true, US: false } });
+    const no = await s.equipo('POST', `/datos/admin/camila/whatsapp/${rep.id}`, {
+      soloVista: true,
+    });
+    expect(no.datos.vista.motivo).toBe('pais_apagado');
+  });
 });

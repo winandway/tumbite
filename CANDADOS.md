@@ -27,10 +27,12 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 
 ## C-WHATSAPP-PAIS · El interruptor de WhatsApp por país se respeta; Venezuela y Estados Unidos encendidos (27 nov 2026, Richard en Gerencia) — Venezuela y EE. UU. · servidor y panel (Configuración)
 
-- **Qué fallaba:** «WhatsApp está apagado para el país de su ciudad» en una cuenta de Miami: Estados Unidos nacía apagado.
+- **Qué fallaba:** «WhatsApp está apagado para el país de su ciudad» en una cuenta de Miami. Dos causas: Estados Unidos nacía apagado, y las cuentas de Miami sin zona real (la fila con la ciudad de fábrica) salían «sin país», que el panel decía como «apagado» aunque el país estuviera encendido.
+- **Causa de la segunda:** `personaDe` (`apps/servidor/src/rutas/whatsappFalta.ts`) tomaba el país SOLO de la zona real. Ahora usa la misma regla de los papeles (`PAIS_CONDUCTOR_SQL`: zona real, o donde vive) y, sin ninguna de las dos, el código de su celular (`paisUnicoDelCelular`) antes que la ciudad de fábrica. El número para Meta se escribe con ese mismo país (`consentimientos`).
 - **Qué se hizo:** de fábrica `paises: { VE: true, US: true }`, con los mismos topes (uno cada 24 horas por persona, tres por paso, 150 al día y 3 USD al día entre todos). En producción y en pruebas se encendió con el panel (queda en la auditoría). El interruptor se ve también en Configuración (`WhatsappFaltaAjustes`, la misma pieza de Recordatorios de registro). Costo de Meta por mensaje de utilidad (tarifa del 1 oct 2026): EE. UU. 0,0034 USD, Venezuela 0,0113 USD.
-- **Prueba:** `apps/servidor/src/whatsappFalta.test.ts` («el interruptor por país se respeta» y «Estados Unidos nace encendido»).
+- **Prueba (rojo comprobado):** `apps/servidor/src/whatsappFalta.test.ts` («el interruptor por país se respeta», «Estados Unidos nace encendido» y «una cuenta de EE. UU. sin zona real no sale apagado»).
 - **Qué NO tocar:** un país apagado nunca recibe, ni a mano.
+
 ## C-CABECERAS-MARCA, C-CABECERA-SOLO-ABIERTOS, C-CABECERA-ROTA y C-MOTO-SERIA · Diez cabeceras de marca que rotan, solo de servicios abiertos, y la moto de trabajo en vez de la Vespa (27 nov 2026, orden de Richard vía Gerencia) — todos los países · app de clientes (web ya; teléfonos en la próxima compilación), servidor, Driver (íconos)
 
 - **Qué pidió:** que la cabecera del inicio muestre todo lo que hace Divoox (moto, carro, comida, mercado, farmacia, licores, ferretería, envíos, saldo, comercios aliados), una distinta cada vez que se abre, y una moto seria, no «la motico que parece una Vespa».
