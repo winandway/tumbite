@@ -347,7 +347,11 @@ dinero.post('/admin/liquidaciones/:id/reintentar', async (c) => {
   const id = c.req.param('id');
   const r = await db
     .prepare(
-      "UPDATE liquidaciones SET estado = 'reintentar', proximo_en = NULL, actualizado_en = datetime('now') WHERE pedido_id = ? AND estado IN ('revision', 'reintentar', 'pendiente')",
+      // C-COBRO-SEGUNDO-PLANO: también la que quedó «capturando» a medias (la lista la muestra tras
+      // dos horas). liquidar pregunta primero a Stripe en un reintento: si ya cobró, solo lo anota.
+      `UPDATE liquidaciones SET estado = 'reintentar', proximo_en = NULL, actualizado_en = datetime('now')
+        WHERE pedido_id = ? AND (estado IN ('revision', 'reintentar', 'pendiente')
+          OR (estado = 'capturando' AND actualizado_en < datetime('now', '-5 minutes')))`,
     )
     .bind(id)
     .run();

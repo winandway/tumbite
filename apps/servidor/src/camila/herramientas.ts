@@ -3,12 +3,13 @@ import { nuevoId } from '../cripto';
 import { enviarCorreo } from '../correo';
 import { correosEquipo } from '../avisosEquipo';
 import { saldoLibro } from '../internacional/libro';
+import { saldoDeCliente } from '../saldoCliente';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { graciaDe } from '../plazoPapeles';
 import { estadoDelConductor } from '../rutas/servicios';
 import { formatearMonto } from '@tumbite/compartido';
-import { buscarGuias, respuestaDeGuia } from './buscadorDocs';
-import { buscarAprobadas, buscarEnDocs, enlaceGuia } from './conocimiento';
+import { buscarGuias, datoDeGuia } from './buscadorDocs';
+import { buscarAprobadas, buscarEnDocs, enlaceGuia, normalizar } from './conocimiento';
 import { TOPE_CORREOS_CASO_DIA, contarDelDia, gastoDeHoy, hoy } from './modelo';
 import type { AjustesCamila, Persona } from './memoria';
 import { contadorDelLider } from './lideres';
@@ -76,7 +77,7 @@ const REQUISITOS: Record<string, [string, string]> = {
   inspeccion_vehiculo: ['la inspección del vehículo', 'the vehicle inspection'],
   casco_pasajero: ['el casco para el pasajero', 'the rider helmet'],
 };
-const requisito = (r: string, i: IdiomaCamila) => {
+export const requisito = (r: string, i: IdiomaCamila) => {
   const par = new Map(Object.entries(REQUISITOS)).get(r);
   return par ? (i === 'en' ? par[1] : par[0]) : r.replace(/_/g, ' ');
 };
@@ -177,7 +178,84 @@ export async function estadoCuenta(c: Contexto): Promise<ResultadoHerramienta> {
   };
 }
 
+/**
+ * C-CAMILA-PAPEL (26 nov 2026, examen de aceptación: a un pasajero se le contestó «saldo para
+ * comisiones 0,00») — todos los países. Con quién habla Camila lo dice el papel de la conversación:
+ * la app desde la que escribe (clientes o Driver) y, si no se sabe, el papel principal de su cuenta.
+ * A un pasajero nunca se le habla del saldo para comisiones, de ganancias ni de papeles de conductor;
+ * a un conductor en Driver, nunca del Saldo Divoox de pasajero. Cada herramienta mira SOLO la cuenta
+ * de quien escribe y solo lo de su papel.
+ */
+export type Papel = 'pasajero' | 'conductor' | 'otro' | 'visitante';
+export const papelDe = (c: Pick<Contexto, 'rol' | 'persona'>): Papel =>
+  !c.persona.usuario_id
+    ? 'visitante'
+    : c.rol === 'repartidor'
+      ? 'conductor'
+      : c.rol === 'cliente'
+        ? 'pasajero'
+        : 'otro';
+
+/** El papel de la conversación: manda la app desde la que escribe; si no se sabe, el de su cuenta. */
+export function rolDeLaConversacion(
+  rolDeLaCuenta: Contexto['rol'],
+  app: string | null | undefined,
+): Contexto['rol'] {
+  // Solo un conductor puede estar además en la app de clientes; nadie «sube» de papel por la cabecera.
+  if (rolDeLaCuenta === 'repartidor' && /^cliente\b/i.test(app ?? '')) return 'cliente';
+  return rolDeLaCuenta ?? null;
+}
+
+const HABLA_DE_CONDUCIR =
+  /\b(conductor\w*|conducir|manejar|manejo|trabajar|trabajo|repartir|repartidor\w*|mototaxista|taxista|driver|drive|driving|courier)\b/;
+
+/**
+ * C-CAMILA-PAPEL: las guías de Docs para quien pregunta. A un pasajero no se le contesta con las
+ * guías del conductor (su «saldo» es el Saldo Divoox, no el saldo para comisiones), salvo que
+ * pregunte por trabajar como conductor.
+ */
+export function guiasPara(c: Pick<Contexto, 'rol' | 'persona' | 'idioma'>, texto: string, max = 3) {
+  const papel = papelDe(c);
+  const guias = buscarGuias(
+    texto,
+    c.idioma,
+    max + 3,
+    papel === 'conductor' ? 'drivers' : 'ordering',
+  );
+  const sinConductor = papel === 'pasajero' && !HABLA_DE_CONDUCIR.test(normalizar(texto));
+  return (sinConductor ? guias.filter((g) => !g.guia.ruta.startsWith('drivers/')) : guias).slice(
+    0,
+    max,
+  );
+}
+
+/** El Saldo Divoox del PASAJERO que escribe (su crédito para pagar viajes). Nada de conductor. */
+export async function saldoDivoox(c: Contexto): Promise<ResultadoHerramienta> {
+  if (!c.persona.usuario_id)
+    return {
+      ok: false,
+      texto: t(
+        c.idioma,
+        'Para ver tu saldo necesito saber que la cuenta es tuya. Entra al chat desde la app de Divoox con tu cuenta.',
+        'To see your balance I need to know the account is yours. Open the chat from the Divoox app with your account.',
+      ),
+    };
+  c.guias = ['ordering/divoox-balance'];
+  const saldo = await saldoDeCliente(c.db, c.persona.usuario_id);
+  return {
+    ok: true,
+    texto: t(
+      c.idioma,
+      `Tu Saldo Divoox hoy: ${formatearMonto(saldo, 'USD', 'es')}. Es crédito para pagar tus viajes: lo ves en la app, en «Método de pago», y lo carga nuestro equipo.\n${enlaceGuia('ordering/divoox-balance', 'es')}`,
+      `Your Divoox Balance today: ${formatearMonto(saldo, 'USD', 'en')}. It is credit to pay for your rides: you see it in the app, under “Payment method,” and our team adds it.\n${enlaceGuia('ordering/divoox-balance', 'en')}`,
+    ),
+    datos: { saldo, moneda: 'USD' },
+  };
+}
+
 export async function explicarSaldo(c: Contexto): Promise<ResultadoHerramienta> {
+  // C-CAMILA-PAPEL: a quien no es conductor nunca se le contesta con el saldo para comisiones.
+  if (papelDe(c) !== 'conductor') return saldoDivoox(c);
   const docs = buscarEnDocs('saldo comision', c.idioma, 1)[0];
   c.guias = ['drivers/driver-balance'];
   const base = `${docs?.texto ?? ''}\n${enlaceGuia('drivers/driver-balance', c.idioma)}`;
@@ -327,7 +405,7 @@ export async function buscarRespuesta(c: Contexto, tema: string): Promise<Result
   const q = `${tema} ${c.pregunta}`;
   const aprobadas = await buscarAprobadas(c.db, q, c.idioma);
   // Todas las guías públicas de Docs (cliente y conductor), primero las que le tocan a quien pregunta.
-  const guias = buscarGuias(q, c.idioma, 3, c.rol === 'repartidor' ? 'drivers' : 'ordering');
+  const guias = guiasPara(c, q, 3);
   if (guias.length) c.guias = guias.map((g) => g.guia.ruta);
   if (!aprobadas.length && !guias.length)
     return {
@@ -338,7 +416,7 @@ export async function buscarRespuesta(c: Contexto, tema: string): Promise<Result
     ok: true,
     texto: [
       ...aprobadas.map((e) => e.texto),
-      ...guias.map((g) => `${g.guia.titulo}\n${respuestaDeGuia(g.guia, c.idioma, 6)}`),
+      ...guias.map((g) => datoDeGuia(g.guia, q, c.idioma)),
     ].join('\n\n'),
   };
 }
@@ -393,6 +471,11 @@ export const HERRAMIENTAS_MODELO: Herramienta[] = [
       'Explica el saldo para comisiones y la comisión (según Docs) y dice el saldo de la persona que escribe.',
   },
   {
+    name: 'mi_saldo_divoox',
+    description:
+      'Dice el Saldo Divoox (crédito para pagar viajes) del PASAJERO que escribe. Úsala siempre que un pasajero pregunte por su saldo o su dinero en la app.',
+  },
+  {
     name: 'dar_regalo_arranque',
     description:
       'Da el regalo de arranque a la persona que escribe si le corresponde. El monto lo fija Divoox; nunca se elige.',
@@ -432,7 +515,39 @@ export const HERRAMIENTAS_MODELO: Herramienta[] = [
   },
 ];
 
+/** Lo que solo tiene sentido para un conductor, y lo que solo tiene sentido para un pasajero. */
+const SOLO_CONDUCTOR = new Set([
+  'estado_cuenta',
+  'explicar_saldo',
+  'dar_regalo_arranque',
+  'mi_equipo',
+]);
+const SOLO_PASAJERO = new Set(['mi_saldo_divoox']);
+const DE_VISITANTE = new Set(['buscar_respuesta', 'no_se', 'abrir_caso', 'reportar_fallo']);
+
+/**
+ * C-CAMILA-PAPEL: las herramientas que ve el modelo según con quién habla. Un pasajero no recibe
+ * ninguna herramienta de conductor (ni el modelo puede llamarla: `ejecutar` lo niega igual).
+ */
+export function herramientasPara(c: Pick<Contexto, 'rol' | 'persona' | 'enChat'>): Herramienta[] {
+  const papel = papelDe(c);
+  return HERRAMIENTAS_MODELO.filter((h) =>
+    papel === 'visitante'
+      ? DE_VISITANTE.has(h.name)
+      : papel === 'conductor'
+        ? !SOLO_PASAJERO.has(h.name)
+        : !SOLO_CONDUCTOR.has(h.name),
+  ).filter((h) => c.enChat || h.name !== 'reportar_fallo');
+}
+
 export async function ejecutar(c: Contexto, nombre: string, args: Record<string, unknown> = {}) {
+  // C-CAMILA-PAPEL: aunque el modelo la pida, una herramienta que no es del papel de quien escribe no corre.
+  if (!herramientasPara({ ...c, enChat: true }).some((h) => h.name === nombre))
+    return {
+      ok: false,
+      texto:
+        'Esa herramienta no corresponde a la persona con la que hablas. No le des datos de conductor a un pasajero ni al revés.',
+    };
   const valores = new Map(Object.entries(args));
   const texto = (k: string) => {
     const v = valores.get(k);
@@ -443,6 +558,8 @@ export async function ejecutar(c: Contexto, nombre: string, args: Record<string,
       return estadoCuenta(c);
     case 'explicar_saldo':
       return explicarSaldo(c);
+    case 'mi_saldo_divoox':
+      return saldoDivoox(c);
     case 'dar_regalo_arranque':
       return darRegaloArranque(c);
     case 'abrir_caso':

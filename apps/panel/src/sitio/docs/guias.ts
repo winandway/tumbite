@@ -16,6 +16,7 @@ import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
 import { FOTO_CARA_PUBLICADA, GUIAS_FOTO_CARA } from './fotoCara';
 import { CUENTA_UNICA_PUBLICADA, GUIAS_CUENTA_UNICA } from './cuentaUnica';
+import { conRegistroCiudad } from './registroCiudad';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -11492,7 +11493,8 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   });
   // C-AYUDA-INTERNA (16 nov 2026, Richard): Docs es solo para clientes y terceros. Las guías del
   // panel de operaciones (el superadmin) viven en la ayuda interna «?», no aquí.
-  return base;
+  // C-REGISTRO-TODO-EL-PAIS: «Cómo registrarte desde cualquier ciudad», con sus capturas reales.
+  return conRegistroCiudad(base, idioma);
 }
 
 export const DOCS: Record<Idioma, SeccionDocs[]> = {

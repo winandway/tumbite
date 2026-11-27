@@ -229,7 +229,7 @@ export async function avisosSuperadmin(
       `SELECT 'sin_zona' AS tipo, u.id, u.nombre AS titulo, u.creado_en AS en, 0 AS resuelto
        FROM usuarios u JOIN repartidores d ON d.usuario_id = u.id
        WHERE u.rol = 'repartidor' AND u.creado_en >= ${desde} AND u.activo = 1 AND u.es_prueba = 0
-         AND ${zonaRealSql('d', 'u')} IS NULL${conductorD.sql}
+         AND ${zonaRealSql('d', 'u')} IS NULL AND u.lugar_id IS NULL${conductorD.sql}
        ORDER BY u.creado_en DESC LIMIT ${POR_TIPO}`,
       conductorD.valores,
     ],

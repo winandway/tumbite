@@ -1,5 +1,5 @@
 import { Insignia } from './diseno/Insignia';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ESTADOS_AREA,
   ErrorApi,
@@ -14,6 +14,8 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { EditorArea } from './EditorArea';
 import { pedir } from './api';
+import { PasarEspera } from './PasarEspera';
+import { type PasoEspera, pasoDeRespuesta } from './esperaCiudad';
 
 /** Las áreas de cobertura de una ciudad (C-TERRITORIO): dibujarlas, publicarlas y pausarlas. */
 type Area = {
@@ -99,6 +101,10 @@ export function AreasCiudad({
   const [areas, setAreas] = useState<Area[]>([]);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
+  // C-REGISTRO-TODO-EL-PAIS: cuántos de la lista de espera pasaron a la zona al guardar el área.
+  const [pasaron, setPasaron] = useState<{ paso: PasoEspera; vez: number } | null>(null);
+  // Cada respuesta nueva arranca el aviso de cero (la clave de la pieza).
+  const vueltas = useRef(0);
   const [editando, setEditando] = useState<{ id: string; poligono: Poligono } | null>(null);
   const b = useBorrador({
     formulario: `area-nueva-${zona.id}`,
@@ -120,8 +126,12 @@ export function AreasCiudad({
 
   async function cambiarArea(id: string, cambio: Record<string, unknown>) {
     setError('');
+    setPasaron(null);
     try {
-      await pedir('PATCH', `/datos/admin/areas/${id}`, cambio);
+      const paso = pasoDeRespuesta(
+        await pedir<unknown>('PATCH', `/datos/admin/areas/${id}`, cambio),
+      );
+      setPasaron(paso ? { paso, vez: (vueltas.current += 1) } : null);
       setEditando(null);
       await cargar();
     } catch (x) {
@@ -133,14 +143,17 @@ export function AreasCiudad({
     e.preventDefault();
     setError('');
     setAviso('');
+    setPasaron(null);
     try {
-      await pedir('POST', `/datos/admin/zonas/${zona.id}/areas`, {
+      const r = await pedir<unknown>('POST', `/datos/admin/zonas/${zona.id}/areas`, {
         nombre: nueva.nombre,
         estado: nueva.estado,
         prioridad: Number(nueva.prioridad) || 0,
         aperturaPrevista: nueva.apertura || null,
         poligono: nueva.poligono,
       });
+      const paso = pasoDeRespuesta(r);
+      setPasaron(paso ? { paso, vez: (vueltas.current += 1) } : null);
       setAviso(t.guardada);
       await b.limpiar();
       await cargar();
@@ -269,6 +282,15 @@ export function AreasCiudad({
           cambiar={(p) => b.cambiar('poligono', p)}
           idioma={idioma}
         />
+        {pasaron ? (
+          <PasarEspera
+            key={pasaron.vez}
+            zonaId={zona.id}
+            idioma={idioma}
+            inicial={pasaron.paso}
+            conBoton={false}
+          />
+        ) : null}
         {aviso && (
           <p className="ok" role="status">
             {aviso}

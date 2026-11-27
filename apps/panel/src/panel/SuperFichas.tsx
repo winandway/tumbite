@@ -6,6 +6,7 @@ import { ImportarMenu } from './ImportarMenu';
 import {
   ErrorApi,
   type Idioma,
+  type LugarCuenta,
   enIdioma,
   formatearMonto,
   formatearTotales,
@@ -26,6 +27,8 @@ import {
   HistorialCorreo,
 } from './CorregirCorreo';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
+import { PonerCiudadCuenta } from './PonerCiudadCuenta';
+import { FiltroLugar, InsigniaLugar, lugarCorto } from './LugarCuentaPanel';
 import { CiudadBaseConductor } from './CiudadBaseConductor';
 import { EnviarMensaje } from './EnviarMensaje';
 import { usePermisos } from './permisosPanel';
@@ -88,11 +91,15 @@ const T = {
     enLinea: 'En línea',
     fueraLinea: 'Desconectado',
     sinZona: 'Sin zona',
+    // C-REGISTRO-TODO-EL-PAIS: «Sin zona» se parte en dos: espera su ciudad, o no dijo dónde vive.
+    enEspera: 'En espera de su ciudad',
+    sinCiudad: 'Sin ciudad',
+    vive: 'Dónde vive',
     avisoSinZona: (n: number) =>
       n === 1
-        ? 'Hay 1 conductor sin zona: no sabemos su ciudad. Ábrelo y, en sus tres puntos, toca «Cambiar ciudad».'
-        : `Hay ${n} conductores sin zona: no sabemos su ciudad. Ábrelos y, en sus tres puntos, toca «Cambiar ciudad».`,
-    verSinZona: 'Ver los que no tienen zona',
+        ? 'Hay 1 conductor sin ciudad: no dijo dónde vive. Ábrelo y, en sus tres puntos, toca «Poner su ciudad».'
+        : `Hay ${n} conductores sin ciudad: no dijeron dónde viven. Ábrelos y, en sus tres puntos, toca «Poner su ciudad».`,
+    verSinZona: 'Ver los que no tienen ciudad',
     conectadoSinViajes: 'Conectado, todavía no recibe viajes',
     // C-QUE-TE-FALTA: lo mismo que ve el conductor en Driver, dicho para el equipo.
     faltas: {
@@ -240,11 +247,14 @@ const T = {
     enLinea: 'Online',
     fueraLinea: 'Offline',
     sinZona: 'No zone',
+    enEspera: 'Waiting for their city',
+    sinCiudad: 'No city',
+    vive: 'Lives in',
     avisoSinZona: (n: number) =>
       n === 1
-        ? 'There is 1 driver with no zone: we don’t know their city. Open them and, in the three-dot menu, tap “Change city”.'
-        : `There are ${n} drivers with no zone: we don’t know their city. Open them and, in the three-dot menu, tap “Change city”.`,
-    verSinZona: 'See the ones with no zone',
+        ? 'There is 1 driver with no city: they never said where they live. Open them and, in the three-dot menu, tap “Set their city”.'
+        : `There are ${n} drivers with no city: they never said where they live. Open them and, in the three-dot menu, tap “Set their city”.`,
+    verSinZona: 'See the ones with no city',
     conectadoSinViajes: 'Connected, can’t get trips yet',
     faltas: {
       desconectado: 'They need to go online.',
@@ -365,6 +375,8 @@ const T_SUSPENDER = {
     mas: 'Más acciones de la cuenta',
     borrarCuenta: 'Borrar la cuenta',
     cambiarCiudad: 'Cambiar ciudad',
+    // C-REGISTRO-TODO-EL-PAIS: País → Estado → Ciudad de una cuenta que no dijo dónde vive.
+    ponerCiudad: 'Poner su ciudad',
     ciudadBase: 'Ciudad base',
     enviarMensaje: 'Enviar mensaje',
     confirmarBorrar:
@@ -385,6 +397,7 @@ const T_SUSPENDER = {
     mas: 'More account actions',
     borrarCuenta: 'Delete the account',
     cambiarCiudad: 'Change city',
+    ponerCiudad: 'Set their city',
     ciudadBase: 'Home city',
     enviarMensaje: 'Send message',
     confirmarBorrar:
@@ -421,6 +434,7 @@ function BotonSuspender({
   const t = enIdioma(T_SUSPENDER, idioma);
   const [error, setError] = useState('');
   const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
+  const [poniendoCiudad, setPoniendoCiudad] = useState(false);
   // C-REGRESO-PASAJERO: la ciudad base (a la que vuelve con «Voy de regreso»).
   const [cambiandoBase, setCambiandoBase] = useState(false);
   const [escribiendo, setEscribiendo] = useState(false);
@@ -493,6 +507,7 @@ function BotonSuspender({
               : []),
             ...(ciudad !== undefined
               ? [
+                  { texto: t.ponerCiudad, alTocar: () => setPoniendoCiudad(true) },
                   { texto: t.cambiarCiudad, alTocar: () => setCambiandoCiudad(true) },
                   { texto: t.ciudadBase, alTocar: () => setCambiandoBase(true) },
                 ]
@@ -538,6 +553,18 @@ function BotonSuspender({
           alCambiar={(texto) => {
             setCambiandoBase(false);
             setAviso(texto);
+          }}
+        />
+      ) : null}
+      {poniendoCiudad && ciudad !== undefined ? (
+        <PonerCiudadCuenta
+          id={id}
+          idioma={idioma}
+          alCerrar={() => setPoniendoCiudad(false)}
+          alGuardar={(texto) => {
+            setPoniendoCiudad(false);
+            setAviso(texto);
+            recargar();
           }}
         />
       ) : null}
@@ -634,8 +661,18 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   const [q0] = useState(consulta);
   // «estado» guarda el filtro de papeles de la lista de conductores (C-PLAZO-PAPELES).
   // C-CUENTA-PRUEBA: «Cuentas: reales» por defecto, recordado como los demás filtros.
-  const pref = usePreferencias(clave, { zona: '', estado: '', cuentas: 'reales' });
+  // C-REGISTRO-TODO-EL-PAIS: «pais» y «region» son el país y el estado donde VIVE la persona.
+  const pref = usePreferencias(clave, {
+    zona: '',
+    estado: '',
+    cuentas: 'reales',
+    pais: '',
+    region: '',
+  });
   const cuentas = pref.valores.cuentas || 'reales';
+  const lugarPais =
+    pref.valores.pais === 'VE' || pref.valores.pais === 'US' ? pref.valores.pais : '';
+  const lugarEstado = lugarPais ? (pref.valores.region ?? '') : '';
   // Un enlace con ?zona= (desde Ciudades) manda en esta visita, sin cambiar lo guardado.
   const [zonaDeEnlace, setZonaDeEnlace] = useState<string | null>(q0.get('zona') || null);
   const zona = zonaDeEnlace ?? pref.valores.zona ?? '';
@@ -652,10 +689,21 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   // C-SIN-ZONA-VISIBLE: cuántas cuentas reales siguen sin ciudad (solo conductores).
   const [sinZona, setSinZona] = useState(0);
   const pedirPagina = useCallback(
-    async (despues: string | null, texto: string, z: string, pl: string, cu: string) => {
+    async (
+      despues: string | null,
+      texto: string,
+      z: string,
+      pl: string,
+      cu: string,
+      lp: string,
+      le: string,
+    ) => {
       const p = new URLSearchParams();
       p.set('cuentas', cu);
       if (z) p.set('zona', z);
+      // C-REGISTRO-TODO-EL-PAIS: país y estado donde vive (contrato del servidor: `pais`, `estado`).
+      if (lp) p.set('pais', lp);
+      if (le) p.set('estado', le);
       if (pl) p.set('plazo', pl);
       if (texto) p.set('q', texto);
       if (despues) p.set('despues', despues);
@@ -664,6 +712,8 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
         const nuevas = (new Map(Object.entries(r)).get(clave) ?? []) as T[];
         setFilas((viejas) => (despues ? [...(viejas ?? []), ...nuevas] : nuevas));
         setSiguiente((r.siguiente as string | null) ?? null);
+        // C-REGISTRO-TODO-EL-PAIS: el servidor cuenta en `sinZona` solo a los que no dijeron dónde
+        // viven (los que esperan su ciudad no son un pendiente del equipo).
         if (typeof r.sinZona === 'number') setSinZona(r.sinZona);
         setError('');
       } catch (e) {
@@ -674,8 +724,8 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
   );
   // Al abrir, al cambiar la ciudad y cuando llegan los filtros guardados: la primera página.
   useEffect(() => {
-    void pedirPagina(null, textoActual.current, zona, plazo, cuentas);
-  }, [pedirPagina, zona, plazo, cuentas]);
+    void pedirPagina(null, textoActual.current, zona, plazo, cuentas, lugarPais, lugarEstado);
+  }, [pedirPagina, zona, plazo, cuentas, lugarPais, lugarEstado]);
   return {
     zona,
     setZona: (z: string) => {
@@ -684,6 +734,12 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
     },
     cuentas,
     setCuentas: (v: string) => pref.cambiar('cuentas', v),
+    lugarPais,
+    lugarEstado,
+    setLugar: (pais: string, estado: string) => {
+      pref.cambiar('pais', pais);
+      pref.cambiar('region', estado);
+    },
     plazo,
     setPlazo: (v: string) => {
       setPlazoDeEnlace(null);
@@ -701,8 +757,8 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
       setPlazoDeEnlace(null);
       pref.restablecer();
     },
-    buscar: () => void pedirPagina(null, q, zona, plazo, cuentas),
-    mas: () => void pedirPagina(siguiente, q, zona, plazo, cuentas),
+    buscar: () => void pedirPagina(null, q, zona, plazo, cuentas, lugarPais, lugarEstado),
+    mas: () => void pedirPagina(siguiente, q, zona, plazo, cuentas, lugarPais, lugarEstado),
   };
 }
 
@@ -723,7 +779,14 @@ export function SelectorCiudad({
   return (
     <select value={zona} onChange={(e) => cambiar(e.target.value)} aria-label={t.ciudad}>
       <option value="">{t.todas}</option>
-      {conSinZona ? <option value="sin_zona">{t.sinZona}</option> : null}
+      {conSinZona ? (
+        <>
+          {/* C-REGISTRO-TODO-EL-PAIS: «sin_zona» = no dijo dónde vive (tarea del equipo, la que cuenta
+              el número del menú); «en_espera» = dijo dónde vive y su ciudad todavía no abre. */}
+          <option value="sin_zona">{t.sinCiudad}</option>
+          <option value="en_espera">{t.enEspera}</option>
+        </>
+      ) : null}
       {x?.ciudades.map((z) => (
         <option key={z.id} value={z.id}>
           {z.nombre} ({z.repartidores + z.clientes})
@@ -738,6 +801,9 @@ type FilaRep = {
   codigo: string;
   /** C-SIN-ZONA-VISIBLE: sin ciudad real todavía. */
   sinZona?: boolean;
+  /** C-REGISTRO-TODO-EL-PAIS: dónde vive (null = no lo dijo) y si espera que abramos su ciudad. */
+  lugar?: LugarCuenta | null;
+  enEspera?: boolean;
   nombre: string;
   esPrueba?: boolean;
   correo: string;
@@ -763,6 +829,12 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
       <h1>{t.repartidores}</h1>
       <div className="super-busqueda" role="search">
         <SelectorCiudad zona={b.zona} cambiar={b.setZona} idioma={idioma} conSinZona />
+        <FiltroLugar
+          pais={b.lugarPais}
+          estado={b.lugarEstado}
+          cambiar={b.setLugar}
+          idioma={idioma}
+        />
         <FiltroCuentas valor={b.cuentas} cambiar={b.setCuentas} idioma={idioma} />
         <FiltroPapeles valor={b.plazo} cambiar={b.setPlazo} idioma={idioma} />
         <input
@@ -801,6 +873,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
               <tr>
                 <th>{t.id}</th>
                 <th>{t.nombre}</th>
+                <th>{t.vive}</th>
                 <th>{t.vehiculo}</th>
                 <th>{t.licencia}</th>
                 <th>{t.seguro}</th>
@@ -819,7 +892,10 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
                   <td>
                     <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
                     {r.nombre} <EtiquetaPrueba si={r.esPrueba} idioma={idioma} />
-                    {r.sinZona ? <Insignia tono="pendiente">{t.sinZona}</Insignia> : null}
+                  </td>
+                  <td>
+                    {r.lugar ? lugarCorto(r.lugar) : r.sinZona ? null : '—'}{' '}
+                    <InsigniaLugar fila={r} idioma={idioma} />
                   </td>
                   <td>
                     {t.vehiculos[r.vehiculo] ?? r.vehiculo} {r.placa}
@@ -953,6 +1029,9 @@ type Repartidor = {
   codigosAnteriores?: string[];
   /** C-SIN-ZONA-VISIBLE: todavía no se sabe su ciudad. */
   sinZona?: boolean;
+  /** C-REGISTRO-TODO-EL-PAIS: dónde vive y si espera que abramos su ciudad. */
+  lugar?: LugarCuenta | null;
+  enEspera?: boolean;
   puntos: number;
   ubicacion: { lat: number; lng: number; cuando: string | null } | null;
   datos: {
@@ -1101,7 +1180,14 @@ export function SuperRepartidor({
         />{' '}
         {r.conectado ? (r.recibeViajes === false ? t.conectadoSinViajes : t.enLinea) : t.fueraLinea}
         {' · '}
-        {r.sinZona ? t.sinZona : r.ciudad}
+        {r.sinZona || r.enEspera ? (
+          <>
+            {r.lugar ? lugarCorto(r.lugar) : null} <InsigniaLugar fila={r} idioma={idioma} />
+          </>
+        ) : (
+          r.ciudad
+        )}
+        {!r.sinZona && !r.enEspera && r.lugar ? ` · ${t.vive}: ${lugarCorto(r.lugar)}` : ''}
         {r.linea ? ` · ${(r.linea.rol === 'lider' ? t.liderDe : t.miembroDe)(r.linea.nombre)}` : ''}
       </p>
       {r.recibeViajes === false && r.falta ? (

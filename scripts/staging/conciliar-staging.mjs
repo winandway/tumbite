@@ -20,7 +20,16 @@ const r = await pedirConReintento(`${base}/datos/interno/diagnostico/conciliacio
     'x-reloj-secreto': secreto,
     ...(process.env.VUELTA_PRUEBAS ? { 'x-vuelta-pruebas': process.env.VUELTA_PRUEBAS } : {}),
   },
-  body: '{}',
+  // C-COBRO-SEGUNDO-PLANO: con PEDIDOS («id1,id2») se concilian solo esos (por ejemplo, de otro día).
+  body: JSON.stringify(
+    process.env.PEDIDOS
+      ? {
+          pedidos: process.env.PEDIDOS.split(',')
+            .map((x) => x.trim())
+            .filter(Boolean),
+        }
+      : {},
+  ),
 });
 const d = await r.json().catch(() => ({}));
 for (const c of d.casos ?? [])

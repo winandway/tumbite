@@ -281,10 +281,13 @@ const vehiculoEnPalabras = (tipo: string | null | undefined) =>
  * a él. Lo que le toca al equipo, o nada, devuelve null (no se le escribe). Pieza pura.
  */
 export function faltaDeBarra(
-  b: Pick<Activacion, 'listo' | 'recibiendo' | 'siguiente' | 'pasos' | 'vehiculo'>,
+  b: Pick<Activacion, 'listo' | 'recibiendo' | 'siguiente' | 'pasos' | 'vehiculo' | 'enEspera'>,
   o: { pais: string | null; appVieja: boolean },
 ): { clave: FaltaWhatsapp; texto: string } | null {
   if (b.recibiendo) return null;
+  // C-REGISTRO-TODO-EL-PAIS: la plantilla dice «para que tu cuenta empiece a recibir carreras te
+  // falta…»; a quien espera su ciudad eso es falso aunque lo complete. Al abrir su ciudad sí le llega.
+  if (b.enEspera) return null;
   // Con la app vieja no puede dar ningún otro paso: esto va primero.
   if (o.appVieja) return { clave: 'actualizar', texto: 'actualizar la app Divoox Driver' };
   const veh = vehiculoEnPalabras(b.vehiculo?.tipo);

@@ -10,6 +10,8 @@ import {
   pasoQueNoFrena,
 } from '@tumbite/compartido';
 import { AyudaAqui } from './AyudaAqui';
+import { FiltroEstadoLugar } from './LugarCuentaPanel';
+import { ciudadEscrita } from './esperaCiudad';
 import { CampoFecha } from './CampoFecha';
 import { pedir } from './api';
 import { Insignia } from './diseno/Insignia';
@@ -29,6 +31,19 @@ type Embudo = {
   porPais: { pais: string; cuentas: number }[];
   /** C-FOTO-CARA-A-LA-VISTA: dónde se traban (un servidor de antes no lo manda). */
   hitos?: { hito: string; motivo: string; personas: number }[];
+  /**
+   * C-REGISTRO-TODO-EL-PAIS: dónde viven las cuentas del período (País → Estado → Ciudad), con
+   * cuántas esperan su ciudad, y cuántas no dijeron dónde viven. Un servidor de antes no lo manda.
+   */
+  porLugar?: {
+    pais: string;
+    estado: string;
+    ciudad: string;
+    lugarId: string;
+    personas: number;
+    enEspera: number;
+  }[];
+  sinLugar?: number;
 };
 type Zona = { id: string; nombre: string; pais: string };
 
@@ -61,6 +76,13 @@ const T = {
     hitos: 'Dónde se traban (foto de la cara y conexión)',
     hitosAyuda:
       'De las mismas cuentas: cuántas personas vieron, abrieron o sufrieron cada cosa al menos una vez.',
+    porLugar: 'Dónde viven',
+    porLugarAyuda:
+      '«En espera de su ciudad» no es un error: su cuenta está creada y pasa sola a la zona el día que abramos ahí.',
+    ciudad: 'Ciudad',
+    enEspera: 'En espera de su ciudad',
+    sinLugar: (n: number) =>
+      `${n} ${n === 1 ? 'cuenta no dijo' : 'cuentas no dijeron'} dónde vive${n === 1 ? '' : 'n'} (sin ciudad).`,
   },
   en: {
     titulo: 'Sign-up funnel',
@@ -90,6 +112,13 @@ const T = {
     hitos: 'Where they get stuck (face photo and going online)',
     hitosAyuda:
       'For the same accounts: how many people saw, opened or hit each thing at least once.',
+    porLugar: 'Where they live',
+    porLugarAyuda:
+      '“Waiting for their city” is not an error: their account exists and moves into the zone on its own the day we open there.',
+    ciudad: 'City',
+    enEspera: 'Waiting for their city',
+    sinLugar: (n: number) =>
+      `${n} ${n === 1 ? 'account' : 'accounts'} never said where they live (no city).`,
   },
 };
 
@@ -124,12 +153,14 @@ export function dondeSeQuedanMas(pasos: { paso: string; seQuedan: number | null 
 export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   // La app y la zona elegidas se recuerdan por empleado (C-FILTROS-GUARDADOS).
-  const pref = usePreferencias('embudo', { servicio: 'repartidor', zona: '' });
+  // C-REGISTRO-TODO-EL-PAIS: «region» es el estado donde VIVE (solo con Venezuela o Estados Unidos).
+  const pref = usePreferencias('embudo', { servicio: 'repartidor', zona: '', region: '' });
   const app = pref.valores.servicio === 'cliente' ? 'cliente' : 'repartidor';
   const zona = pref.valores.zona ?? '';
   const [desde, setDesde] = useState(() => iso(new Date(Date.now() - 29 * 86_400_000)));
   const [hasta, setHasta] = useState(() => iso(new Date()));
   const [pais, setPais] = useState('');
+  const lugarEstado = pais === 'VE' || pais === 'US' ? (pref.valores.region ?? '') : '';
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [res, setRes] = useState<{ consulta: string; x?: Embudo; error?: string } | null>(null);
   useEffect(() => {
@@ -139,7 +170,7 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
   }, []);
   const consulta = `app=${app}&desde=${desde}&hasta=${hasta}${pais ? `&pais=${pais}` : ''}${
     zona ? `&zona=${encodeURIComponent(zona)}` : ''
-  }`;
+  }${lugarEstado ? `&estado=${lugarEstado}` : ''}`;
   useEffect(() => {
     if (!pref.listo) return;
     let vivo = true;
@@ -201,6 +232,14 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
             ))}
           </select>
         </label>
+        {pais === 'VE' || pais === 'US' ? (
+          <FiltroEstadoLugar
+            pais={pais}
+            estado={lugarEstado}
+            cambiar={(e) => pref.cambiar('region', e)}
+            idioma={idioma}
+          />
+        ) : null}
       </div>
       {error ? <p role="alert">{error}</p> : null}
       {!x && !error ? <p role="status">…</p> : null}
@@ -278,6 +317,37 @@ export function SuperEmbudo({ idioma }: { idioma: Idioma }) {
               </li>
             ))}
           </ul>
+        </>
+      ) : null}
+      {x?.porLugar?.length || x?.sinLugar ? (
+        <>
+          <h2>{t.porLugar}</h2>
+          <p className="ficha-nota">{t.porLugarAyuda}</p>
+          {x.porLugar?.length ? (
+            <div className="tabla-ancha">
+              <table className="tabla" data-testid="embudo-por-lugar">
+                <thead>
+                  <tr>
+                    <th scope="col">{t.ciudad}</th>
+                    <th scope="col">{t.cuentas}</th>
+                    <th scope="col">{t.enEspera}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {x.porLugar.map((l) => (
+                    <tr key={l.lugarId} data-lugar={l.lugarId}>
+                      <td>{ciudadEscrita(l)}</td>
+                      <td>{l.personas}</td>
+                      <td>
+                        {l.enEspera > 0 ? <Insignia tono="pendiente">{l.enEspera}</Insignia> : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {x.sinLugar ? <p data-testid="embudo-sin-lugar">{t.sinLugar(x.sinLugar)}</p> : null}
         </>
       ) : null}
       {/* C-INTENTOS-ACCESO: quién intentó crear cuenta o entrar, y dónde se cayó. */}

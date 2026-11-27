@@ -10,6 +10,7 @@ import {
   registrarAtrapaFallos,
   useFuentesDivoox,
   HojaFoto,
+  PreguntaLugar,
 } from '@tumbite/movil';
 import { AbrirAvisos } from '../AbrirAvisos';
 import { CarritoProvider } from '../carrito';
@@ -54,6 +55,8 @@ export default function Raiz() {
           <StatusBar style="dark" />
           {/* C-MIRAR-SIN-CUENTA: sin cuenta se mira; cada pantalla de la cuenta la pide (ConCuenta). */}
           <AbrirAvisos />
+          {/* C-REGISTRO-TODO-EL-PAIS: la cuenta vieja sin ciudad la elige una vez. */}
+          <PreguntaLugar rol="cliente" />
           {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
           <SobreLosBotones>
             <Stack screenOptions={{ headerShown: false }} />

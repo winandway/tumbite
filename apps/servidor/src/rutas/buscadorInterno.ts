@@ -25,6 +25,10 @@ import {
   servicioIdDeOperacion,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
+import { ESTADOS_US, ESTADOS_VE, lugarEscrito, sinAcentos } from '@tumbite/compartido';
+import { LUGAR_CIUDAD_PLANA } from '../esquemaLugar';
+import { lugarDeFila } from '../lugarEspera';
+import { zonaRealSql } from '../cuentaPais';
 import { TELEFONO_DIEZ } from '../esquema';
 import {
   CON_TELEFONO,
@@ -197,6 +201,38 @@ async function idsDeCuentas(
           tope,
         ),
       );
+  }
+  // C-REGISTRO-TODO-EL-PAIS: por la ciudad donde vive (desde la primera letra, sin acentos) y por el
+  // nombre de su estado («zulia», «califor»): por sus índices parciales, solo cuentas con lugar.
+  if (b.nombre && rol !== 'restaurante') {
+    const [desde, hasta] = rangoPrefijo(b.nombre);
+    consultas.push(
+      todas(
+        db,
+        `SELECT id FROM usuarios WHERE rol = ? AND ${LUGAR_CIUDAD_PLANA} >= ? AND ${LUGAR_CIUDAD_PLANA} < ? AND lugar_id IS NOT NULL AND ${SIN_BORRADAS} LIMIT ?`,
+        rol,
+        desde,
+        hasta,
+        tope,
+      ),
+    );
+    if (b.nombre.length >= 3)
+      for (const [pais, e] of [
+        ...ESTADOS_VE.map((x) => ['VE', x] as const),
+        ...ESTADOS_US.map((x) => ['US', x] as const),
+      ]
+        .filter(([, x]) => sinAcentos(x.nombre).startsWith(b.nombre!))
+        .slice(0, 3))
+        consultas.push(
+          todas(
+            db,
+            `SELECT id FROM usuarios WHERE rol = ? AND lugar_pais = ? AND lugar_estado = ? AND lugar_id IS NOT NULL AND ${SIN_BORRADAS} LIMIT ?`,
+            rol,
+            pais,
+            e.codigo,
+            tope,
+          ),
+        );
   }
   if (b.telefono) {
     const d = b.telefono;
@@ -547,6 +583,8 @@ async function grupoCuentas(
     db,
     `SELECT u.id, u.nombre, u.correo, u.telefono, u.activo, u.correo_confirmado_en,
         z.nombre AS ciudad, d.codigo, x.placa, x.vehiculo_tipo, k.estado AS kyc,
+        u.lugar_pais, u.lugar_estado, u.lugar_municipio, u.lugar_ciudad, u.lugar_id, u.lugar_lat, u.lugar_lng,
+        ${rol === 'repartidor' ? `${zonaRealSql('d', 'u')} IS NULL` : '1'} AS sin_zona_real,
         ${
           rol === 'repartidor'
             ? "EXISTS (SELECT 1 FROM conductor_documentos cd WHERE cd.conductor_id = u.id AND cd.estado = 'pendiente')"
@@ -581,7 +619,11 @@ async function grupoCuentas(
           .filter(Boolean)
           .join(' · '),
         estado,
-        ciudad: texto(f.ciudad),
+        // C-REGISTRO-TODO-EL-PAIS: sin ciudad real, la ciudad donde vive (nunca el Miami por defecto).
+        ciudad: (() => {
+          const lugar = lugarDeFila(f as never);
+          return Number(f.sin_zona_real) === 1 && lugar ? lugarEscrito(lugar) : texto(f.ciudad);
+        })(),
         enlace: `/${rol === 'cliente' ? 'customers' : 'drivers'}/${id}`,
         coincide,
         // C-BUSCADOR-SECCIONES: el acceso directo a sus papeles (la verificación de ESA persona).

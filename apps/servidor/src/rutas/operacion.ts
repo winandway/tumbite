@@ -2,7 +2,8 @@ import { TAREA_SALDO_CLIENTES } from '../saldoCliente';
 import { insistirPanicos } from '../panicoZona';
 import { revisarSaldoBajo } from '../saldoBajo';
 import { avisarPasoComida } from '../avisosComida';
-import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
+import { ZONA_CONDUCTOR_SQL, ZONA_REAL_SQL } from '../cuentaPais';
+import { CODIGO_EN_ESPERA_CIUDAD, MENSAJE_EN_ESPERA_CIUDAD } from '../lugarEspera';
 import { LIMPIEZA_AVISOS_ENVIADOS } from '../avisosGuardados';
 import {
   TAREA_CAMILA_LIMPIEZA,
@@ -186,6 +187,7 @@ import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
 import { crearTicket } from './tickets';
 import { anotarRechazoConectar, origenDePeticion } from '../rastro';
+import { cobrarViajesTerminados } from '../viajesCobro';
 import {
   abrirPase,
   enviarSms,
@@ -1635,6 +1637,19 @@ export async function conectarRepartidor(
   if (d.conectado && d.lat != null && d.lng != null)
     await fijarZonaPorUbicacion(db, u.id, d.lat, d.lng);
   if (d.conectado) await alSaberseLaCiudad(c.env, db, u.id);
+  // C-REGISTRO-TODO-EL-PAIS (25 nov 2026): quien espera su ciudad (dijo dónde vive y ahí todavía no
+  // hay zona) no se conecta: sin ciudad abierta no hay viajes. Se le dice eso, no un error raro.
+  if (d.conectado && !(await esRevisor(c, u.correo))) {
+    const espera = await db
+      .prepare(
+        `SELECT 1 FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
+          WHERE u.id = ? AND u.lugar_id IS NOT NULL AND ${ZONA_REAL_SQL} IS NULL`,
+      )
+      .bind(u.id)
+      .first();
+    if (espera)
+      throw new ErrorDatos(MENSAJE_EN_ESPERA_CIUDAD, 'ciudad', 409, CODIGO_EN_ESPERA_CIUDAD);
+  }
   const gracia = d.conectado ? await graciaDe(db, u.id) : null;
   if (
     gracia?.activa &&
@@ -3028,8 +3043,14 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       .prepare("SELECT 1 FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado = 'entregado'")
       .bind(id, u.id)
       .first();
-    if (ya)
+    if (ya) {
+      // C-COBRO-SEGUNDO-PLANO: el reintento también empuja el cobro si quedó pendiente (liquidar
+      // reclama la liquidación: si ya se cobró o alguien la está cobrando, no hace nada).
+      await liquidar(c.env, db, id).catch((e: unknown) =>
+        console.error('entrega repetida: el cobro queda para el reloj', id, e),
+      );
       return c.json({ ok: true, yaEntregado: true, url: `/datos/pedidos/${id}/evidencia/entrega` });
+    }
     throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
   }
   // Mayoría de edad: si algún plato lo exige, solo en mano y con el documento revisado.
@@ -3272,12 +3293,13 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       throw new ErrorDatos('Este pedido ya cambió de estado.', undefined, 409);
     throw e;
   }
+  // C-COBRO-SEGUNDO-PLANO: el cobro va primero, enseguida del lote (lo demás no lo hace esperar).
+  await liquidar(c.env, db, id).catch((e: unknown) =>
+    console.error('entrega: el cobro queda para el reloj', id, e),
+  );
   // C-REFERIDOS: si era el primer pedido de un amigo invitado, quien lo invitó recibe su crédito.
   await premiarReferidoDelPedido(db, id).catch((e: unknown) =>
     console.error('referidos: crédito de quien invitó', id, e),
-  );
-  await liquidar(c.env, db, id).catch((e: unknown) =>
-    console.error('entrega: el cobro queda para el reloj', id, e),
   );
   if (modo === 'ausente') await cerrarComoAusente(c.env, db, id, u, nota);
   else {
@@ -3488,6 +3510,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   { nombre: 'platos_vuelven', critica: false, correr: (_env, db) => volverPlatosAgotados(db) },
   // C-COBRO-AL-ENTREGAR: termina los cobros de entregas que Stripe no pudo capturar en el momento.
   { nombre: 'liquidaciones', critica: true, correr: (env, db) => liquidarPendientes(env, db) },
+  // C-COBRO-SEGUNDO-PLANO: el viaje con tarjeta terminado cuyo cobro quedó abierto se cobra aquí.
+  { nombre: 'cobros_viaje', critica: true, correr: (env, db) => cobrarViajesTerminados(env, db) },
   // C-AUTORIZACION-VENCIDA: avisa al equipo de dinero, UNA vez por pedido, cuando un pedido abierto
   // lleva 96 horas con la tarjeta autorizada sin capturar (antes de que Stripe la suelte). Como
   // mucho 25 filas de bitácora por vuelta; una vuelta sin pedidos nuevos no escribe nada.
@@ -4016,12 +4040,13 @@ operacion.post('/restaurante/pedidos/:id/entregado-local', async (c) => {
     if (esEntregaRepetida(e)) throw new ErrorDatos('Este pedido ya se entregó.', undefined, 409);
     throw e;
   }
+  // C-COBRO-SEGUNDO-PLANO: el cobro va primero, enseguida del lote (lo demás no lo hace esperar).
+  await liquidar(c.env, db, id).catch((e: unknown) =>
+    console.error('recogida: el cobro queda para el reloj', id, e),
+  );
   // C-REFERIDOS: si era el primer pedido de un amigo invitado, quien lo invitó recibe su crédito.
   await premiarReferidoDelPedido(db, id).catch((e: unknown) =>
     console.error('referidos: crédito de quien invitó', id, e),
-  );
-  await liquidar(c.env, db, id).catch((e: unknown) =>
-    console.error('recogida: el cobro queda para el reloj', id, e),
   );
   await avisarAlCliente(c.env, db, id, (i) => AVISOS.entregado(i));
   return c.json({ ok: true });

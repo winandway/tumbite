@@ -79,6 +79,8 @@ const es = {
     'customer-balance': 'Saldo de clientes',
     // C-RASTRO: el embudo del registro.
     signups: 'Embudo de registro',
+    // C-REGISTRO-TODO-EL-PAIS: cuántos esperan en cada ciudad sin zona abierta.
+    'city-waitlist': 'Espera por ciudad',
     agents: 'Agentes',
     referrals: 'Referidos y equipos',
     lines: 'Líneas de taxi y mototaxi',
@@ -185,6 +187,7 @@ const en: T = {
     'driver-balance': 'Driver balances',
     'customer-balance': 'Customer balances',
     signups: 'Sign-up funnel',
+    'city-waitlist': 'Waitlist by city',
     agents: 'Agents',
     referrals: 'Referrals and teams',
     lines: 'Taxi and mototaxi lines',

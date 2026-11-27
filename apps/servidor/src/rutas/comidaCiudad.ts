@@ -1,3 +1,4 @@
+import { pasarEsperaAlAbrir } from '../lugarEspera';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -123,5 +124,7 @@ comidaCiudad.post('/admin/comida/ciudades', async (c) => {
   });
   await anotarCambioDinero(db, admin.id, `config-pais:${pais}`, antes, config);
   const estado = await encenderServicioEnZona(c, admin.id, 'comida', d.zona.id, d.motivo);
+  // C-REGISTRO-TODO-EL-PAIS: los que esperan en esta ciudad pasan solos (nunca frena la apertura).
+  await pasarEsperaAlAbrir(c.env, db, d.zona.id, entornoDe(c.req.url) === 'produccion');
   return c.json({ zona: { id: d.zona.id, pais, moneda }, config, estado }, 201);
 });

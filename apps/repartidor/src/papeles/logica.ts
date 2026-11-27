@@ -6,6 +6,7 @@ import {
   hormaDePaso,
   textosDePaso,
 } from '@tumbite/compartido';
+import { textoCara } from '../piezas/esperaCiudadTextos';
 
 /**
  * C-ASISTENTE-DRIVER (20 nov 2026, Richard: «que sean como unas hormas, y cada foto que tome tenga
@@ -248,7 +249,12 @@ export type TarjetaPapeles = {
   accion: string;
 };
 
-export function tarjetaPapeles(v: Verificacion | null, idioma: Idioma): TarjetaPapeles | null {
+export function tarjetaPapeles(
+  v: Verificacion | null,
+  idioma: Idioma,
+  /** C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre (la cara deja la cuenta lista, no «empieza»). */
+  enEspera = false,
+): TarjetaPapeles | null {
   if (!v || !v.asistente) return null;
   const en = idioma === 'en';
   const aprobados = v.papeles.filter((p) => p.estado === 'aprobado').length;
@@ -272,6 +278,12 @@ export function tarjetaPapeles(v: Verificacion | null, idioma: Idioma): TarjetaP
         ? 'The time to upload your documents ended. Upload what’s missing and you’ll get trips again once they’re approved.'
         : 'Se acabó el plazo para subir tus papeles. Sube lo que falta y vuelves a recibir viajes en cuanto se aprueben.',
       accion: en ? 'Upload my documents' : 'Subir mis papeles',
+    };
+  if (!v.perfil.tieneCara && v.plazo.paraEmpezar.includes('cara') && enEspera)
+    return {
+      tono: 'aviso',
+      ...textoCara(idioma, true),
+      accion: en ? 'Take my photo' : 'Tomar mi foto',
     };
   if (!v.perfil.tieneCara && v.plazo.paraEmpezar.includes('cara'))
     return {

@@ -56,6 +56,7 @@ jobs:
         run: node scripts/vista-previa/vista-previa.mjs abrir "${{ github.ref_name }}"
       - name: Semáforo — la vista previa sirve esta versión y responde 200
         env:
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
           SEMAFORO_INTENTOS: '20'
           SEMAFORO_PAUSA: '6'
         run: bash scripts/semaforo.sh "${{ steps.vp.outputs.url }}" "${VERSION:0:7}"
@@ -136,6 +137,12 @@ jobs:
           RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
           VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/cuenta-vuelta.mjs
+      - name: Rescatar cobros cortados con las tareas de dinero del reloj (C-COBRO-SEGUNDO-PLANO)
+        if: ${{ !cancelled() }}
+        env:
+          URL_PRUEBAS: ${{ steps.vp.outputs.url }}
+          RELOJ_SECRETO: ${{ steps.vp.outputs.reloj }}
+        run: node scripts/staging/rescatar-cobros.mjs
       - name: Conciliación de saldos contra Stripe (modo prueba)
         if: ${{ !cancelled() && steps.vp.outputs.stripe == 'si' }}
         env:

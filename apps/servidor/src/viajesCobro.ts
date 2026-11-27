@@ -205,6 +205,48 @@ export async function autorizacionViaje(
   return op;
 }
 
+type EstadoPago = { status?: string; amount_received?: number };
+type ClienteStripe = NonNullable<ReturnType<typeof crearStripe>>;
+
+/**
+ * C-COBRO-SEGUNDO-PLANO: hace una operación de Stripe (capturar o anular) sin quedar a ciegas. Si
+ * falla, le pregunta a Stripe cómo quedó el pago: ya cobrado («succeeded») o ya anulado («canceled»)
+ * se devuelve tal cual, para anotarlo. Si sigue autorizado, reintenta UNA vez con clave nueva (una
+ * clave con un 500 guardado devolvería ese 500 durante 24 horas); es seguro porque un pago se captura
+ * o se anula una sola vez. Devuelve el estado final del pago, o lanza si no se pudo.
+ */
+async function operarConStripe(
+  stripe: ClienteStripe,
+  pi: string,
+  ruta: 'capture' | 'cancel',
+  datos: Record<string, string | number>,
+  clave: string,
+): Promise<EstadoPago> {
+  const estado = () =>
+    stripe.get<EstadoPago>(`/payment_intents/${pi}`).catch((e: unknown) => {
+      console.error('viajes: no se pudo consultar el pago en Stripe', pi, e);
+      return null;
+    });
+  try {
+    return await stripe.post<EstadoPago>(`/payment_intents/${pi}/${ruta}`, datos, clave);
+  } catch (e) {
+    const antes = await estado();
+    if (antes?.status === 'succeeded' || antes?.status === 'canceled') return antes;
+    if (antes?.status !== 'requires_capture') throw e;
+    try {
+      return await stripe.post<EstadoPago>(
+        `/payment_intents/${pi}/${ruta}`,
+        datos,
+        `${clave}-r${Date.now()}`,
+      );
+    } catch (e2) {
+      const despues = await estado();
+      if (despues?.status === 'succeeded' || despues?.status === 'canceled') return despues;
+      throw e2;
+    }
+  }
+}
+
 /** Al terminar: captura lo que corresponde (nunca más de lo autorizado) y paga al conductor. */
 export async function capturarCobroViaje(
   env: Env,
@@ -221,17 +263,24 @@ export async function capturarCobroViaje(
   const monto = Math.min(total, Number(f.autorizado));
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('No pudimos cobrar el viaje en este momento.', undefined, 503);
-  await stripe.post(
-    `/payment_intents/${f.stripe_pago}/capture`,
+  // C-COBRO-SEGUNDO-PLANO: si la captura ya se hizo y la respuesta se perdió (corte, reintento con
+  // la clave vencida), se le pregunta a Stripe y se anota lo que de verdad cobró: nunca dos veces.
+  const pago = await operarConStripe(
+    stripe,
+    f.stripe_pago,
+    'capture',
     { amount_to_capture: monto },
     `capturar-viaje-${operacionId}`,
   );
+  if (pago.status === 'canceled')
+    throw new ErrorDatos('La autorización del viaje venció o se anuló.', undefined, 409);
+  const cobrado = Number(pago.amount_received ?? monto);
   await db.batch([
     db
       .prepare(
         "UPDATE cobros_viaje SET estado = 'capturado', capturado = ?, actualizado_en = datetime('now') WHERE operacion_id = ? AND estado = 'autorizado'",
       )
-      .bind(monto, operacionId),
+      .bind(cobrado, operacionId),
     // Lo que pagó el pasajero va entero al conductor (la comisión ya salió de su prepago).
     db
       .prepare(
@@ -241,12 +290,72 @@ export async function capturarCobroViaje(
       .bind(
         nuevoId(),
         conductorId,
-        monto,
+        cobrado,
         `viaje-tarjeta-${operacionId}`,
         `viaje-tarjeta-${operacionId}`,
       ),
   ]);
-  return monto;
+  return cobrado;
+}
+
+/**
+ * C-COBRO-SEGUNDO-PLANO (tarea crítica del reloj): un viaje con tarjeta que terminó hace más de cinco
+ * minutos y sigue con la autorización abierta se quedó sin cobrar (la petición de «terminar» se
+ * cortó entre el cambio de estado y la captura). Se cobra por el mismo camino que al terminar: la
+ * clave de idempotencia y la consulta a Stripe impiden cobrar dos veces.
+ */
+export async function cobrarViajesTerminados(env: Env, db: D1Database) {
+  const { results } = await db
+    .prepare(
+      `SELECT v.operacion_id, o.conductor_id, v.total_final_centavos AS total
+         FROM cobros_viaje c JOIN viajes v ON v.operacion_id = c.operacion_id
+         JOIN operaciones o ON o.id = c.operacion_id
+        WHERE c.estado = 'autorizado' AND v.estado = 'terminado' AND v.metodo_pago = 'tarjeta'
+          AND COALESCE(v.total_final_centavos, 0) > 0 AND o.conductor_id IS NOT NULL
+          AND v.terminado_en < datetime('now', '-5 minutes')
+        LIMIT 25`,
+    )
+    .all<{ operacion_id: string; conductor_id: string; total: number }>();
+  let cobrados = 0;
+  let fallidos = 0;
+  for (const r of results) {
+    try {
+      await capturarCobroViaje(env, db, r.operacion_id, r.conductor_id, Number(r.total));
+      cobrados++;
+    } catch (e) {
+      fallidos++;
+      console.error('viajes: el reloj no pudo cobrar el viaje terminado', r.operacion_id, e);
+    }
+  }
+  // Los cerrados sin terminar (cancelado, no se presentó, sin conductor) con la autorización abierta:
+  // se anota lo que Stripe dice. El que sigue autorizado y no lleva cargo (sin conductor) se anula; el
+  // que podía llevar cargo lo marca la conciliación (regla 4) para el equipo: nunca se adivina un cargo.
+  const { results: cerrados } = await db
+    .prepare(
+      `SELECT c.operacion_id, c.stripe_pago, v.estado
+         FROM cobros_viaje c JOIN viajes v ON v.operacion_id = c.operacion_id
+        WHERE c.estado = 'autorizado' AND v.estado IN ('cancelado', 'no_show', 'sin_conductor')
+          AND c.actualizado_en < datetime('now', '-10 minutes')
+        LIMIT 25`,
+    )
+    .all<{ operacion_id: string; stripe_pago: string; estado: string }>();
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  let cerradosAnotados = 0;
+  for (const r of stripe ? cerrados : []) {
+    try {
+      const pago = await stripe!.get<EstadoPago>(`/payment_intents/${r.stripe_pago}`);
+      if (pago.status === 'succeeded')
+        await anotarCargo(db, r.operacion_id, Number(pago.amount_received ?? 0));
+      else if (pago.status === 'canceled') await anotarAnulado(db, r.operacion_id);
+      else if (r.estado === 'sin_conductor') await soltarCobroViaje(env, db, r.operacion_id, 0);
+      else continue;
+      cerradosAnotados++;
+    } catch (e) {
+      fallidos++;
+      console.error('viajes: el reloj no pudo cerrar la autorización', r.operacion_id, e);
+    }
+  }
+  return { revisados: results.length + cerrados.length, cobrados, cerradosAnotados, fallidos };
 }
 
 /** Al cancelar o quedarse sin conductor: cobra solo el cargo, o anula la autorización. */
@@ -264,37 +373,71 @@ export async function soltarCobroViaje(
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) return 0;
   if (cargo > 0 && f.estado === 'autorizado') {
-    const monto = Math.min(cargo, Number(f.autorizado));
-    await stripe.post(
-      `/payment_intents/${f.stripe_pago}/capture`,
-      { amount_to_capture: monto },
+    const pedido = Math.min(cargo, Number(f.autorizado));
+    // C-COBRO-SEGUNDO-PLANO: lo anotado es lo que Stripe de verdad cobró.
+    const pago = await operarConStripe(
+      stripe,
+      f.stripe_pago,
+      'capture',
+      { amount_to_capture: pedido },
       `cargo-viaje-${operacionId}`,
     );
-    await db.batch([
-      db
-        .prepare(
-          "UPDATE cobros_viaje SET estado = 'capturado', capturado = ?, actualizado_en = datetime('now') WHERE operacion_id = ?",
-        )
-        .bind(monto, operacionId),
-      // C-CARGO-AL-AFECTADO: el cargo es del conductor al que le cancelaron (o esperó en vano).
-      db
-        .prepare(
-          `INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
-           SELECT ?, o.conductor_id, ?, 'entrega', ? FROM operaciones o
-            WHERE o.id = ? AND o.conductor_id IS NOT NULL
-              AND NOT EXISTS (SELECT 1 FROM movimientos WHERE referencia = ?)`,
-        )
-        .bind(
-          nuevoId(),
-          monto,
-          `cargo-viaje-${operacionId}`,
-          operacionId,
-          `cargo-viaje-${operacionId}`,
-        ),
-    ]);
+    if (pago.status === 'canceled') return anotarAnulado(db, operacionId);
+    const monto = Number(pago.amount_received ?? pedido);
+    await anotarCargo(db, operacionId, monto);
     return monto;
   }
-  await stripe.post(`/payment_intents/${f.stripe_pago}/cancel`, {}, `anular-viaje-${operacionId}`);
+  if (f.estado === 'autorizado') {
+    // C-COBRO-SEGUNDO-PLANO: si un intento anterior ya había cobrado el cargo, se anota en vez de
+    // fingir una anulación (nunca se pierde el cargo del conductor).
+    const pago = await operarConStripe(
+      stripe,
+      f.stripe_pago,
+      'cancel',
+      {},
+      `anular-viaje-${operacionId}`,
+    );
+    if (pago.status === 'succeeded') {
+      const monto = Number(pago.amount_received ?? 0);
+      await anotarCargo(db, operacionId, monto);
+      return monto;
+    }
+  } else
+    await stripe.post(
+      `/payment_intents/${f.stripe_pago}/cancel`,
+      {},
+      `anular-viaje-${operacionId}`,
+    );
+  return anotarAnulado(db, operacionId);
+}
+
+/** El cargo cobrado de la autorización: queda capturado y va al conductor afectado. */
+async function anotarCargo(db: D1Database, operacionId: string, monto: number) {
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE cobros_viaje SET estado = 'capturado', capturado = ?, actualizado_en = datetime('now') WHERE operacion_id = ?",
+      )
+      .bind(monto, operacionId),
+    // C-CARGO-AL-AFECTADO: el cargo es del conductor al que le cancelaron (o esperó en vano).
+    db
+      .prepare(
+        `INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
+         SELECT ?, o.conductor_id, ?, 'entrega', ? FROM operaciones o
+          WHERE o.id = ? AND o.conductor_id IS NOT NULL
+            AND NOT EXISTS (SELECT 1 FROM movimientos WHERE referencia = ?)`,
+      )
+      .bind(
+        nuevoId(),
+        monto,
+        `cargo-viaje-${operacionId}`,
+        operacionId,
+        `cargo-viaje-${operacionId}`,
+      ),
+  ]);
+}
+
+async function anotarAnulado(db: D1Database, operacionId: string) {
   await db
     .prepare(
       "UPDATE cobros_viaje SET estado = 'anulado', actualizado_en = datetime('now') WHERE operacion_id = ?",

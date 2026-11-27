@@ -20,9 +20,10 @@ import { codigoCiudad } from './superadmin';
 import { porCobrarRegalos } from '../regalosDivoox';
 import { entornoDeHost } from '@tumbite/compartido';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
-import { alSaberseLaCiudad, fijarZonaPorUbicacion } from '../ciudadConductor';
+import { alSaberseLaCiudad, asignarCiudadElegida, fijarZonaPorUbicacion } from '../ciudadConductor';
 import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
 import { listaEncendidaDelConductor } from '../papelesPais';
+import { respuestaLugar } from '../lugarEspera';
 import {
   CLAVE_EDADES,
   EDAD_MAXIMA_PERMITIDA,
@@ -86,6 +87,8 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       .all<{ id: string; nombre: string; pais: string }>(),
     listaEncendidaDelConductor(db, u.id),
   ]);
+  // C-REGISTRO-TODO-EL-PAIS: quien espera su ciudad ve SU ciudad («Maracaibo, Zulia»), no Miami.
+  const lugar = await respuestaLugar(db, u.id, enProduccion(c));
   // C-PAPELES-POR-PAIS: con la lista de su país ENCENDIDA, lo que se pide y cómo se llama lo manda el
   // servidor (Driver pinta esos nombres). Apagada, la respuesta es exactamente la de siempre.
   const deLista = encendida
@@ -97,7 +100,12 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       }
     : null;
   return c.json({
-    ciudad: { id: donde.zona_id, nombre: donde.nombre, pais: donde.pais },
+    ciudad: lugar.enEspera
+      ? { id: '', nombre: lugar.lugarEscrito ?? donde.nombre, pais: donde.pais }
+      : { id: donde.zona_id, nombre: donde.nombre, pais: donde.pais },
+    lugar: lugar.lugar,
+    lugarEscrito: lugar.lugarEscrito,
+    enEspera: lugar.enEspera,
     ciudades,
     cambioCiudad: {
       elegida: Boolean(eleccion?.ciudad_elegida_en),
@@ -206,7 +214,9 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
     // por EE. UU. Sin ningún dato, la de siempre (Miami, EE. UU.).
     const cuenta = await db
       .prepare(
-        `SELECT z.pais,
+        // C-REGISTRO-TODO-EL-PAIS: sin ninguna ciudad real, el país donde vive (no el de Miami).
+        `SELECT CASE WHEN u.zona_id IS NULL AND NOT EXISTS (SELECT 1 FROM repartidores r WHERE r.usuario_id = u.id AND r.ubicacion_en IS NOT NULL)
+                  THEN COALESCE(u.lugar_pais, z.pais) ELSE z.pais END AS pais,
            (EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = u.id AND k.estado = 'aprobado')
             OR EXISTS (SELECT 1 FROM cumplimientos cu WHERE cu.conductor_id = u.id AND cu.estado = 'aprobado')) AS aprobado
           FROM usuarios u JOIN zonas z ON z.id = COALESCE(u.zona_id,
@@ -236,18 +246,7 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
         429,
       );
   }
-  await db.batch([
-    db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(zona.id, u.id),
-    db
-      .prepare(
-        // C-REGRESO-PASAJERO: la ciudad que elige es también su ciudad base (a la que vuelve).
-        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en, zona_base_id) VALUES (?1, ?2, datetime('now'), ?2)
-         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, ciudad_elegida_en = excluded.ciudad_elegida_en,
-           zona_base_id = excluded.zona_base_id`,
-      )
-      .bind(u.id, zona.id),
-  ]);
-  await alSaberseLaCiudad(c.env, db, u.id);
+  await asignarCiudadElegida(c.env, db, u.id, zona.id);
   return c.json({ zonaId: zona.id });
 });
 
@@ -334,7 +333,9 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
   )
     throw new ErrorDatos('Esa ciudad no está en tu zona de trabajo.', 'zonaId', 403);
   const antes = await paisDelConductor(db, id);
-  if (antes.zona_id === zona.id) {
+  // C-REGISTRO-TODO-EL-PAIS: quien espera su ciudad en otro país (fila en Miami por defecto, lugar en
+  // Venezuela) no «confirma» Miami: es un cambio de país y va por el camino de abajo.
+  if (antes.zona_id === zona.id && antes.pais === (zona.pais ?? 'US').toUpperCase()) {
     // C-CONTADORES-DE-TAREA (23 nov 2026): un conductor «sin zona» cae en la ciudad por defecto. Si de
     // verdad vive ahí, el equipo tiene que poder CONFIRMARLA (antes decía «Ya está en esa ciudad» y el
     // número de «Repartidores» no bajaba nunca). Se confirma sin cambiarle el código.
@@ -351,7 +352,9 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
           "UPDATE repartidores SET ciudad_elegida_en = datetime('now') WHERE usuario_id = ? AND ciudad_elegida_en IS NULL",
         )
         .bind(id),
-      db.prepare('UPDATE usuarios SET zona_id = ?1 WHERE id = ?2').bind(zona.id, id),
+      db
+        .prepare('UPDATE usuarios SET zona_id = ?1, lugar_espera = NULL WHERE id = ?2')
+        .bind(zona.id, id),
       db
         .prepare(
           `INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json)
@@ -463,7 +466,7 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
         .bind(zona.id, codigo, id),
       db
         .prepare(
-          'UPDATE usuarios SET zona_id = ?1 WHERE id = ?2 AND EXISTS (SELECT 1 FROM repartidores WHERE usuario_id = ?2 AND codigo = ?3)',
+          'UPDATE usuarios SET zona_id = ?1, lugar_espera = NULL WHERE id = ?2 AND EXISTS (SELECT 1 FROM repartidores WHERE usuario_id = ?2 AND codigo = ?3)',
         )
         .bind(zona.id, id, codigo),
       // C-ID-DEL-PAIS: el ID viejo sigue encontrándose en el buscador.
@@ -575,7 +578,7 @@ conductorPapeles.get('/admin/papeles-conductor', async (c) => {
     .prepare(
       `SELECT d.id, d.conductor_id AS conductorId, u.nombre AS conductor, d.tipo, d.estado, d.motivo,
               d.vence_en AS venceEn, d.creado_en AS creadoEn,
-              (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL}) AS pais
+              COALESCE(CASE WHEN ${zonaRealSql('r', 'u')} IS NULL THEN u.lugar_pais END, (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL})) AS pais
          FROM conductor_documentos d JOIN usuarios u ON u.id = d.conductor_id
          LEFT JOIN repartidores r ON r.usuario_id = d.conductor_id
         WHERE d.estado = ? AND (? = '' OR d.conductor_id = ?)${alc.sql} ORDER BY d.creado_en LIMIT 100`,
