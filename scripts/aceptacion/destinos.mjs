@@ -40,7 +40,10 @@ const fecha =
   process.env.ACEPTACION_FECHA ||
   new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Detroit' }).format(new Date());
 
-async function buscar(url, q) {
+/** 1,6 s entre búsquedas: 83 destinos quedan por debajo del tope de 40 por minuto. */
+const PAUSA_MS = 1600;
+
+async function buscar(url, q, intento = 1) {
   const p = new URLSearchParams({
     q,
     lat: String(CENTRO_EL_VIGIA.lat),
@@ -50,6 +53,12 @@ async function buscar(url, q) {
     headers: { 'x-idioma': 'es' },
     signal: AbortSignal.timeout(15_000),
   });
+  // El buscador admite 40 búsquedas por minuto por persona (app.ts): si se pasa, espera y repite.
+  if (r.status === 429 && intento < 3) {
+    const s = Number(r.headers.get('retry-after')) || 60;
+    await new Promise((ok) => setTimeout(ok, s * 1000));
+    return buscar(url, q, intento + 1);
+  }
   if (!r.ok) throw new Error(`el buscador respondió ${r.status}`);
   return (await r.json()).sugerencias ?? [];
 }
@@ -67,6 +76,7 @@ async function principal() {
       estado: 'rojo',
       motivo: '',
     };
+    if (lineas.length) await new Promise((ok) => setTimeout(ok, PAUSA_MS));
     try {
       const s = await buscar(url, d.nombre);
       const primero = s[0];
