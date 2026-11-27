@@ -46,7 +46,7 @@ const CIUDADES = {
     lider: 'Andrés Ejemplo',
     codigo: 'EJEMPLO01',
     enlace: 'https://divoox.com/es/join/EJEMPLO01',
-    miembros: ['Carlos R.', 'Ana M.', 'Luis P.'],
+    miembros: ['Carlos Rivas', 'Ana Morales', 'Luis Pérez'],
     tel: '+58414777',
   },
   en: {
@@ -62,7 +62,7 @@ const CIUDADES = {
     lider: 'Alex Sample',
     codigo: 'SAMPLE001',
     enlace: 'https://divoox.com/join/SAMPLE001',
-    miembros: ['Michael B.', 'Sarah K.', 'David L.'],
+    miembros: ['Michael Brown', 'Sarah King', 'David Lee'],
     tel: '+1248777',
   },
 } as const;

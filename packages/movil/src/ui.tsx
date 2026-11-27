@@ -196,7 +196,10 @@ export function Campo({
             alCambiar ? (x: string) => alCambiar(tipo ? alEscribir(tipo, x) : x) : undefined
           }
           onBlur={(ev) => {
-            setTocado(true);
+            // C-CASILLA-CON-SU-TIPO: el aviso propio sale un instante DESPUÉS de salir de la casilla. Si
+            // saliera de inmediato, empujaría hacia abajo el botón que se está tocando («Siguiente») y
+            // ese toque se perdería (visto en el recorrido del 27 nov 2026).
+            setTimeout(() => setTocado(true), 250);
             props.onBlur?.(ev);
           }}
           // Lo que se lee en voz alta puede llevar más contexto que la etiqueta visible

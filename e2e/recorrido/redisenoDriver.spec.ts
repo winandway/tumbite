@@ -275,7 +275,7 @@ for (const idioma of ['es', 'en'] as const)
       await foto(p, t, '07-inicio-conectado', idioma, 'driver-rediseno-conectado');
 
       // La oferta: etiqueta del servicio, reloj, lo que gana en verde, tres datos y la ruta.
-      const cli = await cuenta('cliente', 'Pasajera');
+      const cli = await cuenta('cliente', 'Pasajera Prueba');
       const cot = await request.post('/datos/viajes/cotizar', {
         headers: h(cli.token),
         data: { servicio: 'carro', origen: ORIGEN, destino: DESTINO },

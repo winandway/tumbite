@@ -294,13 +294,12 @@ for (const idioma of ['es', 'en'] as const)
     await fotoDesde(p, 'falta-servicio', `${SALIDA}/servicios-agregar-falta-${idioma}.png`);
     await p.getByRole('button', { name: /^(Empezar|Start)/ }).click();
     await expect(p.getByRole('button', { name: t.volver })).toBeVisible({ timeout: 20_000 });
-    // El paso abre el alta del carro que ya existía (sus datos y, al guardarlo, sus fotos).
-    const tuCarro = p.getByText(idioma === 'en' ? 'Your car' : 'Tu carro', { exact: true });
-    await expect(tuCarro).toBeVisible({ timeout: 20_000 });
-    await tuCarro.evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    // C-AGREGA-TU-VEHICULO: el paso abre «Agrega tu vehículo» (tipo, datos y fotos en el mismo flujo).
+    await expect(p.getByTestId('agregar-vehiculo')).toBeVisible({ timeout: 20_000 });
     await p.waitForTimeout(300);
     await foto('agregar-paso');
-    await p.getByRole('button', { name: t.volver }).click();
+    // «Agrega tu vehículo» también tiene su «Atrás»: la flecha de arriba es la primera.
+    await p.getByRole('button', { name: t.volver }).first().click();
     await p.getByRole('button', { name: t.volver }).first().click();
     await expect(estado).toBeVisible({ timeout: 20_000 });
 

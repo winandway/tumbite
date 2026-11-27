@@ -204,7 +204,7 @@ for (const idioma of ['es', 'en'] as const)
       lat: ORIGEN.lat - 0.3 * KM,
       lng: ORIGEN.lng,
     });
-    const cli = await cuenta('cliente', en ? 'Sam Rider' : 'Pasajera');
+    const cli = await cuenta('cliente', en ? 'Sam Rider' : 'Pasajera Prueba');
     const cot = await request.post('/datos/viajes/cotizar', {
       headers: h(cli.token),
       // Direcciones de ejemplo en el idioma de la captura (C-CAPTURAS-POR-IDIOMA).

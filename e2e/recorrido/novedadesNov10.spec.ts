@@ -177,7 +177,7 @@ for (const idioma of ['es', 'en'] as const)
       data: { abierto: true },
     });
     expect(abierto.ok(), await abierto.text()).toBe(true);
-    const cliente = await cuenta('cliente', en ? 'Customer' : 'Cliente', 'cliente');
+    const cliente = await cuenta('cliente', en ? 'Sample Customer' : 'Cliente Prueba', 'cliente');
     const pedido = await request.post('/datos/pedidos', {
       headers: con(cliente.token),
       data: {

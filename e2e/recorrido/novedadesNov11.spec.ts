@@ -109,7 +109,7 @@ for (const idioma of ['es', 'en'] as const)
       data: { abierto: true },
     });
     expect(abierto.ok(), await abierto.text()).toBe(true);
-    const cliente = await cuenta('cliente', en ? 'Customer' : 'Cliente', 'cliente');
+    const cliente = await cuenta('cliente', en ? 'Sample Customer' : 'Cliente Prueba', 'cliente');
 
     // ───────── C-LISTO-SIN-AJUSTE: «Me falta un plato» en un pedido aceptado ─────────
     const pedido = await request.post('/datos/pedidos', {
@@ -201,7 +201,7 @@ for (const idioma of ['es', 'en'] as const)
     await foto(cli, 'cliente-carrito-cambio');
 
     // ───────── C-PIN-SIN-FOTO: la entrega en mano con PIN, en la app del repartidor ─────────
-    const rep = await cuenta('repartidor', en ? 'Driver' : 'Repartidor', 'rep');
+    const rep = await cuenta('repartidor', en ? 'Sample Driver' : 'Repartidor Prueba', 'rep');
     const mano = await request.post('/datos/pedidos', {
       headers: con(cliente.token),
       data: {
