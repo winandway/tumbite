@@ -1,3 +1,5 @@
+import { saludEspera } from './lugarEspera';
+import { lugarCuenta } from './rutas/lugarCuenta';
 import { saludTabuladorVigia } from './semillaTabuladorVigia';
 import { disparadoresPresentes } from './canarioLecturas';
 import { presupuestoVueltaPruebas, saludVueltasPruebas } from './vueltaPruebas';
@@ -199,11 +201,16 @@ app.use('/datos/*', async (c, next) => {
   } catch {
     ctx = null; // en las pruebas no hay contexto de ejecución
   }
-  if (ctx) {
-    const ejecucion = ctx;
-    c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
-  }
-  await next();
+  if (!ctx) return next();
+  const ejecucion = ctx;
+  c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
+  // C-COBRO-SEGUNDO-PLANO (26 nov 2026): si el cliente se va (recarga la pantalla, pierde la señal),
+  // Cloudflare cancela la petición y solo deja seguir lo que está bajo waitUntil. Una entrega, un viaje
+  // o una cancelación que ya empezó a mover dinero (captura, reembolso, transferencia) no puede
+  // quedar a medias por eso: la petición entera se registra con waitUntil y termina igual.
+  const trabajo = next();
+  ejecucion.waitUntil(trabajo.catch(() => undefined));
+  await trabajo;
 });
 // C-PRESUPUESTO-VUELTA-PRUEBAS: las pruebas automáticas contra el sitio de pruebas tienen tope
 // de filas por vuelta y por día; en producción no hace nada.
@@ -637,6 +644,15 @@ app.get('/datos/salud', async (c) => {
       // Los banners del inicio no tumban el sitio: si no se pudo leer, «atrasado» (sin 503).
       return 'atrasado' as const;
     });
+  // C-REGISTRO-TODO-EL-PAIS: el último paso de los que esperan su ciudad a una zona abierta (una
+  // lectura por clave). Rojo si el último falló; no tumba el sitio (es de operación).
+  const espera = c.env.DB
+    ? await saludEspera(c.env.DB).catch((e: unknown) => {
+        console.error('salud: espera', e);
+        return { estado: 'error' as const, ultimoPaso: null };
+      })
+    : null;
+  if (espera) piezas.esperaCiudades = espera.estado;
   const rutas = await saludRutas(c.env, c.env.DB).catch((e: unknown) => {
     console.error('salud: rutas', e);
     return { estado: 'error' as const, consultasHoy: 0, tope: 0 };
@@ -683,6 +699,7 @@ app.get('/datos/salud', async (c) => {
           }
         : null,
       correoEntrante,
+      esperaCiudades: espera?.ultimoPaso ?? null,
       ultimoRespaldo: fechaRespaldo,
       version: VERSION_SERVIDOR,
     },
@@ -853,6 +870,8 @@ fijarAppCiudad(app);
 app.route('/datos', servicios);
 app.route('/datos', avisameServicio);
 app.route('/datos', conductorPapeles);
+// C-REGISTRO-TODO-EL-PAIS: el lugar donde vive la cuenta y la lista de espera por ciudad.
+app.route('/datos', lugarCuenta);
 app.route('/datos', activacion);
 app.route('/datos', verificacionConductor);
 app.route('/datos', serviciosConectados);

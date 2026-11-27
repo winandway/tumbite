@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Acceso } from './Acceso';
+import { elegirCiudad, respuestaCatalogo } from '../pruebasLugar';
 
 /**
  * C-FLEX-CUENTA-EMPRESA (1 nov 2026): quien entra por el panel de empresas (Divoox Flex) crea una
@@ -14,6 +15,8 @@ describe('C-FLEX-CUENTA-EMPRESA', () => {
   async function registrar(tipo?: 'empresa', conSms = false) {
     const cuerpos: Record<string, unknown>[] = [];
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const catalogo = respuestaCatalogo(url);
+      if (catalogo) return catalogo;
       if (String(url).includes('/registro')) {
         cuerpos.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
         return new Response(
@@ -26,6 +29,7 @@ describe('C-FLEX-CUENTA-EMPRESA', () => {
     render(<Acceso idioma="es" alEntrar={() => undefined} tipo={tipo} />);
     await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await elegirCiudad('mara', 'Maracaibo');
     await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-segura-1');
     // La primera casilla es la de términos; la de SMS va aparte (C-SMS-CONSENTIMIENTO).
@@ -86,6 +90,8 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
   function servidor() {
     const cuerpos: Record<string, unknown>[] = [];
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const catalogo = respuestaCatalogo(url);
+      if (catalogo) return catalogo;
       if (String(url).includes('/registro')) {
         cuerpos.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
         return new Response(
@@ -102,6 +108,7 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
     render(<Acceso idioma="es" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Crea tu cuenta/ }));
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
+    await elegirCiudad('mara', 'Maracaibo');
     await userEvent.type(screen.getByLabelText('Correo'), correo);
     await userEvent.type(screen.getByLabelText('Celular'), '305-555-0100');
     await userEvent.click(screen.getAllByRole('checkbox')[0]!);
@@ -178,6 +185,10 @@ describe('C-REVISA-TUS-DATOS: la cuenta se crea solo desde «Revisa tus datos»'
     render(<Acceso idioma="en" alEntrar={() => undefined} />);
     await userEvent.click(screen.getByRole('button', { name: /Create|New here/ }));
     await userEvent.type(screen.getByLabelText('Your name'), 'Sam Taylor');
+    await userEvent.click(screen.getByTestId('registro-lugar'));
+    await userEvent.click(screen.getByRole('button', { name: /United States/ }));
+    await userEvent.type(screen.getByTestId('selector-lugar-buscar'), 'novi');
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Novi/ }))[0]!);
     await userEvent.type(screen.getByLabelText('Email'), 'sam@example.com');
     await userEvent.type(screen.getByLabelText('Password'), 'safe-password-1');
     await userEvent.click(screen.getAllByRole('checkbox')[0]!);
@@ -241,7 +252,7 @@ describe('C-MENSAJES-ACCESO: el error de entrar trae su botón', () => {
     await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
     await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(screen.getByTestId('registro-revisar-casillas').textContent).toBe(
-      'Revisa lo marcado en rojo: Nombre, Contraseña.',
+      'Revisa lo marcado en rojo: Nombre, Ciudad, Contraseña.',
     );
   });
 });

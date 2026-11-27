@@ -8,7 +8,13 @@ import { TEXTOS } from './textos';
 import { sqlLocalTexto } from './sqlLocal';
 import { celularDePrueba } from './celularDePrueba';
 import { cruzarPuertaCelular } from './puertaCelular';
-import { aceptarTerminos, enPaso } from './registroPorPasos';
+import {
+  aceptarTerminos,
+  elegirLugar,
+  enPaso,
+  OTRO_PAIS,
+  type LugarDePrueba,
+} from './registroPorPasos';
 
 /**
  * C-RECORRIDO-INTERNACIONAL (19 oct 2026): el cobro en mano en PESOS y en BOLÍVARES, de punta a
@@ -88,6 +94,8 @@ const PAISES = [
       lng: -74.0836,
     },
     casa: { latitude: 4.6551, longitude: -74.0812 },
+    // Colombia no está en el catálogo de «¿Dónde vives?»: «Otro país» y la ciudad sale del GPS.
+    lugar: OTRO_PAIS,
     idioma: 'es' as const,
     plato: 25_000, // 25 000 pesos (ficticio)
     escribir: (n: number) => String(n),
@@ -106,6 +114,13 @@ const PAISES = [
       lng: -66.9036,
     },
     casa: { latitude: 10.4823, longitude: -66.9011 },
+    lugar: {
+      pais: 'VE',
+      estado: 'A',
+      buscar: 'caracas',
+      lugarId: 'gn:3646738',
+      nombre: 'Caracas',
+    } as LugarDePrueba,
     idioma: 'en' as const,
     plato: 1_250_00, // 1250,00 bolívares (ficticio)
     escribir: (n: number) => (n / 100).toFixed(2),
@@ -319,6 +334,10 @@ for (const P of PAISES) {
           })
           .then(async (c) => {
             await c.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), P.idioma);
+            // C-REGISTRO-OTRO-PAIS: aquí se mira la pregunta «¿Dónde vives?» de verdad.
+            await c.addInitScript(() => {
+              (globalThis as { __preguntaLugarDeVerdad?: boolean }).__preguntaLugarDeVerdad = true;
+            });
             return c;
           });
 
@@ -328,6 +347,8 @@ for (const P of PAISES) {
       await rep.goto('/driver/');
       await rep.getByText(L.appCrear).click();
       await (await enPaso(rep, rep.getByLabel(L.nombreCompleto))).fill('Repartidor Prueba');
+      await rep.getByTestId('pasos-siguiente').click();
+      await elegirLugar(rep, P.lugar); // C-REGISTRO-TODO-EL-PAIS · C-REGISTRO-OTRO-PAIS
       await (await enPaso(rep, rep.getByLabel(L.correo))).fill(correo('repartidor'));
       // Un teléfono por cuenta y por corrida (C-IDENTIDAD-UNICA).
       await (await enPaso(rep, rep.getByLabel(L.celular))).fill(celularDePrueba());
@@ -345,6 +366,11 @@ for (const P of PAISES) {
       sqlLocalTexto(
         `INSERT OR IGNORE INTO kyc (usuario_id, selfie) SELECT id, 'kyc/selfie' FROM usuarios WHERE correo = '${correo('repartidor')}'`,
       );
+      // C-REGISTRO-OTRO-PAIS: quien dijo «Otro país» no vuelve a ver «¿Dónde vives?» al entrar.
+      if (P.lugar === OTRO_PAIS) {
+        await expect(rep.getByTestId('pregunta-lugar').filter({ visible: true })).toHaveCount(0);
+        await expect(rep.getByTestId('aviso-lugar-cuenta')).toHaveCount(0);
+      }
       const conectar = () => deslizar(rep, 'conectarme');
       await conectar();
       await expect(rep.getByRole('button', { name: L.tomarSelfie })).toBeVisible({

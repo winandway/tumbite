@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import type { Api, Idioma } from '@tumbite/compartido';
 import { Boton, COLOR, FUENTE, Icono, Text } from '@tumbite/movil';
 import { TarjetaCara } from '../papeles/TusPapeles';
+import { resumenPasos } from './esperaCiudadTextos';
 import { type AccionFalta, type FaltaServidor, primeraFalta } from './queTeFaltaLogica';
 
 /**
@@ -18,6 +19,7 @@ export function QueTeFalta({
   faltas,
   alAccion,
   cuerpos,
+  enEspera = false,
 }: {
   api: Api;
   idioma: Idioma;
@@ -29,30 +31,39 @@ export function QueTeFalta({
    * cuenta de pago móvil (`sin_pago_movil`).
    */
   cuerpos?: Partial<Record<string, ReactNode>>;
+  /**
+   * C-REGISTRO-TODO-EL-PAIS: su ciudad todavía no abre. Los pasos son para dejar la cuenta lista
+   * («Deja tu cuenta lista»), nunca «para empezar» hoy.
+   */
+  enEspera?: boolean;
 }) {
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
-  const p = primeraFalta(faltas, idioma);
+  const p = primeraFalta(faltas, idioma, enEspera);
   if (!p) return null;
   const { aviso, falta, despues } = p;
-  const en = idioma === 'en';
   // Tramo 1 (encargo de Gerencia, 23 nov): UN resumen grande de cuántos pasos le faltan, y debajo el
-  // primero, con su botón.
+  // primero, con su botón. En espera, el resumen dice para qué son («Deja tu cuenta lista»).
   const total = despues + 1;
+  const resumen = resumenPasos(total, idioma, enEspera);
   const titulo = (
-    <Text
-      testID="falta-resumen"
-      accessibilityRole="header"
-      style={{ fontFamily: FUENTE.titulo, fontSize: 20, lineHeight: 26 }}
-    >
-      {en
-        ? total === 1
-          ? '1 step left to get started'
-          : `${total} steps left to get started`
-        : total === 1
-          ? 'Te falta 1 paso para empezar'
-          : `Te faltan ${total} pasos para empezar`}
-    </Text>
+    <View style={{ gap: 4 }}>
+      <Text
+        testID="falta-resumen"
+        accessibilityRole="header"
+        style={{ fontFamily: FUENTE.titulo, fontSize: 20, lineHeight: 26 }}
+      >
+        {resumen.titulo}
+      </Text>
+      {resumen.nota ? (
+        <Text
+          testID="falta-resumen-nota"
+          style={{ color: COLOR.textoSuave, fontSize: 14, lineHeight: 20 }}
+        >
+          {resumen.nota}
+        </Text>
+      ) : null}
+    </View>
   );
   const nota = null;
 
@@ -60,7 +71,12 @@ export function QueTeFalta({
     return (
       <View testID="que-te-falta" style={{ gap: 8 }}>
         {titulo}
-        <TarjetaCara api={api} idioma={idioma} alTomar={() => void alAccion('cara', falta)} />
+        <TarjetaCara
+          api={api}
+          idioma={idioma}
+          enEspera={enEspera}
+          alTomar={() => void alAccion('cara', falta)}
+        />
         {nota}
       </View>
     );

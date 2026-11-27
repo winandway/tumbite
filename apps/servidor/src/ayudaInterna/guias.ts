@@ -17,6 +17,7 @@ import { papelesDelPais, plazoPapeles } from './papeles';
 import { menuPorUso, verificacionUnica } from './activacion';
 import { fichaConductor } from './fichaConductor';
 import { whatsappFalta } from './whatsappFalta';
+import { esperaCiudad } from './esperaCiudad';
 
 export type IdiomaAyuda = 'es' | 'en';
 export type CapturaAyuda = { archivo: string; alt: string; pie: string };
@@ -3726,6 +3727,8 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
         de(cambiarCiudad),
+        // C-REGISTRO-TODO-EL-PAIS: la lista de espera por ciudad y «Poner su ciudad».
+        de(esperaCiudad),
         de(corregirCorreo),
         de(unirCuentas),
         de(plazoPapeles),

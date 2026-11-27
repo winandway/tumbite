@@ -1,5 +1,13 @@
 import { Image, View } from 'react-native';
-import { Acceso, C, PantallaCarga, PuertaTelefono, useSesion, Text } from '@tumbite/movil';
+import {
+  Acceso,
+  C,
+  PantallaCarga,
+  PreguntaLugar,
+  PuertaTelefono,
+  useSesion,
+  Text,
+} from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 
@@ -46,6 +54,8 @@ export default function Entrada() {
   return usuario ? (
     <PuertaTelefono key={usuario.id}>
       <Inicio />
+      {/* C-REGISTRO-TODO-EL-PAIS: la cuenta vieja sin ciudad la elige una vez, sin perder nada. */}
+      <PreguntaLugar rol="repartidor" />
     </PuertaTelefono>
   ) : (
     // C-ACCESO-CON-CABECERA (26 nov 2026, Richard): «Entrar» sigue en el azul petróleo del arranque.

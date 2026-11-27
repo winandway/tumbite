@@ -24,6 +24,7 @@ import {
   LifeBuoy,
   MessagesSquare,
   Map as IconoMapa,
+  MapPin,
   MapPinned,
   Megaphone,
   Navigation,
@@ -106,6 +107,8 @@ export const ICONOS_MENU = {
   reports: ChartColumn,
   // C-RASTRO: el embudo del registro.
   signups: Filter,
+  // C-REGISTRO-TODO-EL-PAIS: la lista de espera por ciudad.
+  'city-waitlist': MapPin,
   team: UserCog,
   pilot: FlaskConical,
   'test-city': Building,
@@ -313,7 +316,8 @@ export const ORDEN_MENU_ADMIN = (g: ReturnType<typeof titulosGrupo>): [string, s
       'signup-reminders',
     ],
   ],
-  [g.personas, ['drivers', 'customers', 'restaurants', 'lines', 'signups']],
+  // C-REGISTRO-TODO-EL-PAIS: «Espera por ciudad» es un dato para decidir dónde abrir, sin número.
+  [g.personas, ['drivers', 'customers', 'restaurants', 'lines', 'signups', 'city-waitlist']],
   [
     g.dinero,
     [

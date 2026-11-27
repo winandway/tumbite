@@ -102,6 +102,7 @@ jobs:
       - name: Semáforo — pruebas debe servir esta versión y responder 200
         if: ${{ vars.URL_PRUEBAS != '' }}
         env:
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
           YAD_LLAVE_SITIO: ${{ secrets.YAD_LLAVE_PRUEBAS }}
         run: bash scripts/semaforo.sh "${{ vars.URL_PRUEBAS }}" "${VERSION:0:7}" yapanel-pruebas
         timeout-minutes: 50

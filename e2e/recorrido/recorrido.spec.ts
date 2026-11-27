@@ -8,7 +8,7 @@ import { type BrowserContext, type Locator, type Page, devices, expect, test } f
 import { TEXTOS } from './textos';
 import { cruzarPuertaCelular } from './puertaCelular';
 import { sqlLocal } from './sqlLocal';
-import { aceptarTerminos, enPaso } from './registroPorPasos';
+import { aceptarTerminos, elegirLugar, enPaso } from './registroPorPasos';
 
 /**
  * C-CONTADORES-DE-TAREA (23 nov 2026): con pedidos por aceptar, el ítem «Pedidos» del menú del
@@ -330,6 +330,7 @@ for (const idioma of ['en', 'es'] as const) {
       await enPaso(panel, panel.getByLabel(L.celular))
     ).fill(tel(idioma === 'en' ? '3055550100' : '3055550110'));
     await (await enPaso(panel, panel.getByLabel(L.clave, { exact: true }))).fill(DATOS.clave);
+    await elegirLugar(panel); // «¿Dónde vives?»: Miami (C-REGISTRO-TODO-EL-PAIS)
     await foto(panel, 'restaurante-registro');
     await panel.getByRole('checkbox').first().check(); // acepta los términos
     // C-REVISA-TUS-DATOS: «Continuar» abre «Revisa tus datos»; la cuenta se crea con «Crear mi cuenta».

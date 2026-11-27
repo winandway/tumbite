@@ -25,6 +25,7 @@ import {
   estadoPapel,
   useSesion,
   Text,
+  TarjetaMiLugar,
 } from '@tumbite/movil';
 
 /**
@@ -430,7 +431,6 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   // C-QUE-TE-FALTA: el error de una casilla (la placa) va debajo de ella, no arriba de todo.
   const [errorCampo, setErrorCampo] = useState<{ campo: string; texto: string } | null>(null);
   const [subiendo, setSubiendo] = useState('');
-  const [verCiudades, setVerCiudades] = useState(false);
   // C-CARRO-CATEGORIAS: cuántos años admite Comfort en el país del conductor.
   const [aniosComfort, setAniosComfort] = useState<number | null>(null);
   const [seguroEnPlazo, setSeguroEnPlazo] = useState(false);
@@ -593,49 +593,14 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       {error && !errorEn ? <Text style={{ color: ROJO_ERROR }}>{error}</Text> : null}
 
       {papeles ? (
-        <View style={e.tarjeta}>
-          <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.ciudad}</Text>
-          <Text style={{ fontWeight: '800', color: C.secundario }}>{papeles.ciudad.nombre}</Text>
-          {papeles.cambioCiudad?.puedeCambiar !== false ? (
-            <Pressable
-              onPress={() => setVerCiudades((x) => !x)}
-              accessibilityRole="button"
-              hitSlop={8}
-            >
-              <Text style={{ textDecorationLine: 'underline', color: C.secundario, marginTop: 4 }}>
-                {tc.cambiarCiudad}
-              </Text>
-            </Pressable>
-          ) : null}
-          {papeles.cambioCiudad?.elegida ? (
-            <Text style={{ color: '#666B73', fontSize: 12, marginTop: 4 }}>{tc.reglaCiudad}</Text>
-          ) : null}
-          {verCiudades
-            ? papeles.ciudades.map((z) => (
-                <Pressable
-                  key={z.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: z.id === papeles.ciudad.id }}
-                  onPress={() =>
-                    void hacer(async () => {
-                      await api.pedir('PUT', '/datos/conductor/ciudad', { zonaId: z.id });
-                      setVerCiudades(false);
-                    })
-                  }
-                  style={{ paddingVertical: 8 }}
-                >
-                  <Text
-                    style={{
-                      color: C.secundario,
-                      fontWeight: z.id === papeles.ciudad.id ? '800' : '400',
-                    }}
-                  >
-                    {z.nombre}
-                  </Text>
-                </Pressable>
-              ))
-            : null}
-        </View>
+        // C-REGISTRO-TODO-EL-PAIS: su ciudad real («Maracaibo, Zulia») y el cambio con el selector del
+        // país entero; ya no la lista de zonas abiertas.
+        <TarjetaMiLugar
+          respaldo={papeles.ciudad.nombre}
+          puedeCambiar={papeles.cambioCiudad?.puedeCambiar !== false}
+          nota={papeles.cambioCiudad?.elegida ? tc.reglaCiudad : undefined}
+          alCambiar={() => void cargar()}
+        />
       ) : null}
 
       <View style={e.tarjeta}>

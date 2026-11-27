@@ -9,7 +9,7 @@ import {
   topeCodigosDia,
 } from '../telefonoVuelta';
 import { presupuestoWhatsappDia, whatsappEncendido } from '../whatsapp';
-import { ZONA_CONDUCTOR_SQL } from '../cuentaPais';
+import { ZONA_CONDUCTOR_SQL, zonaRealSql } from '../cuentaPais';
 import { guardarFoto } from '../fotoLimpia';
 import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { avisarVerificacionLista } from '../avisoVerificacion';
@@ -589,7 +589,7 @@ async function crucesDePagina(db: D1Database, ids: string[]) {
     .prepare(
       `SELECT u.id, u.rol, u.nombre, u.fecha_nacimiento AS fecha, d.nombre AS leido, d.numero,
               d.licencia_numero AS licencia, d.vence,
-              (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL}) AS pais
+              COALESCE(CASE WHEN ${zonaRealSql('r', 'u')} IS NULL THEN u.lugar_pais END, (SELECT z.pais FROM zonas z WHERE z.id = ${ZONA_CONDUCTOR_SQL})) AS pais
          FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
          LEFT JOIN datos_documento d ON d.usuario_id = u.id
         WHERE u.id IN (${ids.map(() => '?').join(',')})`,

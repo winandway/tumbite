@@ -1,0 +1,155 @@
+/* C-REGISTRO-TODO-EL-PAIS: «Dónde vives» (País → Estado → Ciudad). Borde fino, sin franjas de color. */
+.selector-lugar-casilla {
+  font: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+.selector-lugar-casilla:focus-visible {
+  outline: 2px solid var(--primario);
+  border-color: transparent;
+}
+.selector-lugar-casilla[aria-invalid='true'] {
+  border-color: #c4001d;
+}
+.selector-lugar-vacio {
+  color: #6b7078;
+}
+.selector-lugar-accion {
+  color: #666b73;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.selector-lugar-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(16, 16, 16, 0.35);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px 16px;
+}
+.selector-lugar-ventana {
+  background: #fff;
+  border: 1px solid #e6e7ea;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.selector-lugar-cabeza {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e6e7ea;
+}
+.selector-lugar-cabeza h2 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+.selector-lugar-ruta {
+  margin: 2px 0 0;
+  color: #666b73;
+  font-size: 0.85rem;
+}
+.selector-lugar-volver {
+  font: inherit;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  border: 0;
+  background: #f6f6f6;
+  cursor: pointer;
+}
+.selector-lugar-buscar {
+  font: inherit;
+  display: block;
+  width: auto;
+  margin: 12px 16px 0;
+  padding: 12px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+}
+.selector-lugar-buscar:focus {
+  outline: 2px solid var(--primario);
+  border-color: transparent;
+}
+.selector-lugar-lista {
+  overflow-y: auto;
+  padding: 8px 16px 16px;
+}
+.selector-lugar-fila {
+  font: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid #e6e7ea;
+  background: none;
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+.selector-lugar-fila:hover,
+.selector-lugar-fila.activo {
+  background: #f6f6f6;
+}
+.selector-lugar-doble {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+}
+.selector-lugar-doble small {
+  color: #666b73;
+}
+.selector-lugar-fila mark {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}
+.selector-lugar-subtitulo {
+  margin: 12px 0 0;
+  color: #666b73;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.selector-lugar-nota {
+  color: #666b73;
+  margin: 12px 0;
+}
+.selector-lugar-noencuentro {
+  display: block;
+  margin: 16px 0 0;
+}
+.selector-lugar-credito {
+  color: #6b7078;
+  font-size: 0.7rem;
+  margin: 16px 0 0;
+}
+/* C-REGISTRO-OTRO-PAIS: la línea bajo la casilla cuando eligió «Otro país». */
+.selector-lugar-ayuda {
+  color: #666b73;
+  font-size: 0.85rem;
+  margin: 6px 0 0;
+}

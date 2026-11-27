@@ -199,8 +199,8 @@ export const CONOCIMIENTO_DOCS: readonly EntradaDocs[] = [
       'verify',
       'identity',
     ],
-    es: 'Para verificar tu identidad: en la app, menú de arriba a la izquierda, «Mis datos y vehículo». Elige tu documento, toma la foto del frente y la del reverso (que se lean bien, sin reflejos) y la foto de tu cara de frente, con buena luz, sin gorra ni lentes oscuros. Toca «Enviar para revisión»: te avisamos por correo cuando esté aprobada o qué foto repetir. Si vas en moto, también escribes tu licencia y tu seguro con su vencimiento.',
-    en: 'To verify your identity: in the app, top-left menu, “My details and vehicle.” Choose your document, take the photo of the front and the back (clear, no glare) and a photo of your face, facing forward, with good light, no cap or dark glasses. Tap “Send for review”: we email you when it is approved or which photo to retake. If you ride a motorcycle, you also enter your license and insurance with their expiration dates.',
+    es: 'Para verificar tu identidad: en la app, menú de arriba a la izquierda, «Mis datos y vehículo». Elige tu documento y toma las fotos que la app te pide (el frente y, donde tu país lo pide, el reverso; que se lean bien, sin reflejos) y la foto de tu cara de frente, con buena luz, sin gorra ni lentes oscuros. Toca «Enviar para revisión»: te avisamos por correo cuando esté aprobada o qué foto repetir. Si vas en moto, también escribes tu licencia y tu seguro con su vencimiento.',
+    en: 'To verify your identity: in the app, top-left menu, “My details and vehicle.” Choose your document and take the photos the app asks for (the front and, where your country requires it, the back; clear, no glare) and a photo of your face, facing forward, with good light, no cap or dark glasses. Tap “Send for review”: we email you when it is approved or which photo to retake. If you ride a motorcycle, you also enter your license and insurance with their expiration dates.',
   },
   {
     id: 'hablar-con-soporte',

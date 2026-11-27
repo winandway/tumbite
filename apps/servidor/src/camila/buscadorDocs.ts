@@ -521,3 +521,42 @@ export function respuestaDeGuia(g: GuiaPublica, idioma: IdiomaCamila, pasos = 4)
     enlaceDeGuia(g.ruta, idioma),
   ].join('\n');
 }
+
+/**
+ * C-CAMILA-CUERPO-DE-LA-GUIA (26 nov 2026, examen de aceptación) — todos los países. El dato está en
+ * el cuerpo de la guía, no solo en su resumen: «también puedes pagarle al equipo por pago móvil»,
+ * «verificamos tu identidad, tu licencia y los papeles de tu moto». Las frases del cuerpo que más
+ * tienen que ver con la pregunta van al modelo junto al resumen y los pasos, en el orden de la guía.
+ */
+export function pasajesDeGuia(g: GuiaPublica, pregunta: string, max = 3): string[] {
+  const consulta = new Set(raices(pregunta));
+  if (!consulta.size) return [];
+  const { rareza } = indiceDe(g.idioma);
+  const frases = g.cuerpo
+    .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡«])/)
+    .map((f) => f.trim())
+    .filter((f) => f.length > 20);
+  return frases
+    .map((frase, i) => ({
+      frase,
+      i,
+      puntos: [...new Set(raices(frase))]
+        .filter((r) => consulta.has(r))
+        .reduce((n, r) => n + (rareza.get(r) ?? 1), 0),
+    }))
+    .filter((x) => x.puntos > 0)
+    .sort((a, b) => b.puntos - a.puntos || a.i - b.i)
+    .slice(0, max)
+    .sort((a, b) => a.i - b.i)
+    .map((x) => x.frase.slice(0, 420));
+}
+
+/** Lo que el modelo recibe de una guía: título, resumen, pasos y las frases del cuerpo que vienen al caso. */
+export function datoDeGuia(g: GuiaPublica, pregunta: string, idioma: IdiomaCamila) {
+  const pasajes = pasajesDeGuia(g, pregunta);
+  return `${g.titulo}\n${respuestaDeGuia(g, idioma, 6)}${
+    pasajes.length
+      ? `\n${idioma === 'en' ? 'The guide also says' : 'La guía también dice'}: ${pasajes.join(' ')}`
+      : ''
+  }`;
+}

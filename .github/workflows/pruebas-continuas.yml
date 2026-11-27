@@ -54,6 +54,9 @@ jobs:
           name: pruebas-continuas
           path: test-results/
           retention-days: 7
+      - name: Rescatar cobros cortados con las tareas de dinero del reloj (C-COBRO-SEGUNDO-PLANO)
+        if: ${{ !cancelled() }}
+        run: node scripts/staging/rescatar-cobros.mjs
       - name: Conciliación de saldos contra Stripe (modo prueba)
         if: ${{ !cancelled() }}
         run: node scripts/staging/conciliar-staging.mjs

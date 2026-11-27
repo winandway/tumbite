@@ -30,6 +30,7 @@ import {
 } from './esquemaPlazo';
 import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
+import { INDICES_LUGAR, LUGAR_COLUMNAS } from './esquemaLugar';
 import { SQL_CANDIDATOS_LLEGA_SOLO, repararLlegaSoloARevision } from './reparacionLlegaSolo';
 import { SQL_CANDIDATOS_VEHICULO_ACTIVO, repararVehiculoActivo } from './reparacionVehiculoActivo';
 import {
@@ -466,6 +467,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['sesiones', 'actua_como', 'TEXT'],
   ['dispositivos', 'app', 'TEXT'],
   ['puentes_sesion', 'papel', 'TEXT'],
+  // C-REGISTRO-TODO-EL-PAIS (25 nov 2026; Venezuela y Estados Unidos): dónde VIVE la persona (País →
+  // Estado → Ciudad del catálogo, `packages/compartido/src/lugarCuenta.ts`). `lugar_espera` = 1
+  // mientras su ciudad no tiene una zona abierta (lista de espera de su ciudad); vuelve a 0 cuando
+  // recibe su zona. Sin valor, todo sigue como hoy (cuentas viejas: la app se lo pide).
+  ...LUGAR_COLUMNAS,
   // C-SALDO-CLIENTE (25 nov 2026, Venezuela): cuánto del viaje cubre el Saldo Divoox del pasajero
   // (apartado al pedir, ajustado al terminar, 0 si el viaje no se hizo). Todas las pantallas lo leen.
   ['viajes', 'saldo_divoox', 'INTEGER NOT NULL DEFAULT 0'],
@@ -537,6 +543,8 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
   // C-BUSCADOR-SERIO (15 nov 2026): los índices del buscador del superadmin (buscadorSql.ts).
   ...INDICES_BUSCADOR,
+  // C-REGISTRO-TODO-EL-PAIS: el lugar donde vive la persona (esquemaLugar.ts).
+  ...INDICES_LUGAR,
   // C-INVITAR-LIDER-UN-PASO: la página del enlace personal busca la invitación por su token.
   'CREATE UNIQUE INDEX IF NOT EXISTS invitaciones_lider_token ON invitaciones_lider(token) WHERE token IS NOT NULL',
   // C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026): los reclamos de un pedido y de un viaje

@@ -12,6 +12,10 @@ on:
         description: 'Nombre (o parte) de la prueba del recorrido'
         required: true
         default: 'recorrido completo de un pedido \(es\)'
+      pedidos:
+        description: 'Opcional (C-COBRO-SEGUNDO-PLANO): ids de pedidos separados por coma para conciliar SOLO esos contra Stripe en modo prueba, en vez de correr el recorrido'
+        required: false
+        default: ''
   push:
     branches: ['suelto-*']
 
@@ -27,7 +31,15 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci
+      - name: Conciliar solo los pedidos pedidos contra Stripe (modo prueba)
+        if: ${{ inputs.pedidos != '' && inputs.pedidos != null }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          PEDIDOS: ${{ inputs.pedidos }}
+        run: node scripts/staging/conciliar-staging.mjs
       - name: Una sola prueba del recorrido en el sitio de pruebas (Stripe en modo prueba)
+        if: ${{ inputs.pedidos == '' || inputs.pedidos == null }}
         env:
           RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
           RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}

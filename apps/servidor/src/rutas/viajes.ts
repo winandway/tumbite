@@ -652,6 +652,7 @@ viajes.post(
       // Reintento. C-BS-EN-MANO: si «terminar» se cortó antes de responder, aquí se rellena lo
       // cobrado en mano y se devuelve lo mismo que en el cierre.
       if (op.estado === paso.hacia && nombre === 'terminar') {
+        await cobrarTerminarRepetido(c.env, db, id, u.id); // C-COBRO-SEGUNDO-PLANO
         const cobro = await cobroEnManoDeViaje(db, id);
         return c.json({
           ok: true,
@@ -685,7 +686,12 @@ viajes.post(
     if (nombre === 'terminar') {
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
       // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).
-      if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
+      // C-COBRO-SEGUNDO-PLANO: si Stripe falla, el viaje se termina igual (regalo y cierre incluidos)
+      // y la tarea «cobros_viaje» del reloj lo cobra después.
+      if (totalFinal != null)
+        await capturarCobroViaje(c.env, db, id, u.id, totalFinal).catch((e: unknown) =>
+          console.error('viajes: el cobro al terminar queda para el reloj', id, e),
+        );
       // C-CUPON-DIVOOX: lo que cubre el regalo se cierra y se le acredita al conductor; él cobra en
       // mano solo el resto.
       // C-REGALO-VIAJE-REAL: solo se acredita si el viaje fue real; si no, queda en revisión (el
@@ -938,6 +944,21 @@ viajes.post('/conductor/operaciones/:id/emergencia', async (c) => {
  * copiada) + lo que el pasajero debía de viajes anteriores (se cobra ahora y queda saldado), y la
  * comisión apartada pasa a Divoox. Todo idempotente: repetir «terminar» no cobra dos veces.
  */
+/**
+ * C-COBRO-SEGUNDO-PLANO: si el primer «terminar» se cortó antes de cobrar la tarjeta, el reintento
+ * la cobra (solo si la autorización sigue abierta; la clave de Stripe impide cobrar dos veces).
+ */
+async function cobrarTerminarRepetido(env: Env, db: D1Database, id: string, conductorId: string) {
+  const fin = await db
+    .prepare('SELECT total_final_centavos AS t FROM viajes WHERE operacion_id = ?')
+    .bind(id)
+    .first<{ t: number | null }>();
+  if (fin?.t != null && fin.t > 0)
+    await capturarCobroViaje(env, db, id, conductorId, Number(fin.t)).catch((e: unknown) =>
+      console.error('viajes: el cobro del reintento queda para el reloj', id, e),
+    );
+}
+
 async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: string) {
   const db = base(c);
   const f = await db

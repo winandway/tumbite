@@ -219,7 +219,9 @@ describe('C-VERIFICACIONES-BANDEJA · la bandeja del superadmin', () => {
       'us-zzn',
       '#US-ZZN-000012',
       '000012',
-      correo.slice(0, 12).toUpperCase(),
+      // La parte entera antes de la arroba: los correos de prueba llevan un número al azar y sus
+      // primeros caracteres pueden coincidir con los de otra cuenta (la prueba caía de vez en cuando).
+      (correo.split('@')[0] as string).toUpperCase(),
       '555-0142',
       '3135550142',
       'ciudad nor',

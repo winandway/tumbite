@@ -19,6 +19,7 @@ import {
   liquidarPendientes,
   sentenciaLiquidacion,
 } from '../liquidaciones';
+import { cobrarViajesTerminados } from '../viajesCobro';
 import { saldoRetirable } from '../retiros';
 import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
 import { sentencias } from '../migraciones/sentencias';
@@ -1338,6 +1339,22 @@ diagnostico.post('/interno/diagnostico/vuelta', async (c) => {
   const { id } = (await c.req.json().catch(() => ({}))) as { id?: string };
   if (!c.env.DB) throw new ErrorDatos('Sin base.', undefined, 503);
   return c.json(await cuentaVuelta(c.env.DB, String(id ?? '')));
+});
+
+/**
+ * C-COBRO-SEGUNDO-PLANO: en el sitio de pruebas el reloj está en pausa (RELOJ_PRUEBAS_EN_PAUSA), así
+ * que un cobro cortado a medias no lo retoma nadie. La pasada lo llama antes de conciliar: corre las
+ * MISMAS tareas de dinero del reloj (liquidaciones y cobros de viajes), con Stripe en modo prueba.
+ */
+diagnostico.post('/interno/diagnostico/rescatar-cobros', async (c) => {
+  if (!(c.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const db = base(c);
+  return c.json({
+    ok: true,
+    liquidaciones: await liquidarPendientes(c.env, db),
+    viajes: await cobrarViajesTerminados(c.env, db),
+  });
 });
 
 diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
