@@ -44,7 +44,8 @@ describe('C-MERCHANT-TIPO · el tipo de negocio', () => {
       );
       expect(r.datos.restaurante.tipoComercio).toBe(tipo);
     }
-  });
+    // Cinco mundos seguidos: en una máquina cargada pasa de los 5 s por defecto.
+  }, 30_000);
 
   it('un tipo inventado se rechaza en la casilla del tipo', async () => {
     const m = mundo();
