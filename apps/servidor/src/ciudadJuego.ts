@@ -411,7 +411,8 @@ async function armarRestaurante(ctx: Ctx, secreto: string, i: number, centro: Pu
 
 async function armarRepartidor(ctx: Ctx, secreto: string, k: number, centro: Punto) {
   // C-CASILLA-CON-SU-TIPO: el nombre no lleva dígitos.
-  const nombre = `Moto Robot ${['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis', 'Siete', 'Ocho', 'Nueve', 'Diez'][k] ?? 'Extra'}`;
+  const orden = ['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis', 'Siete', 'Ocho', 'Nueve', 'Diez'];
+  const nombre = `Moto Robot ${orden.at(k) ?? 'Extra'}`;
   const cuenta = await cuentaRobot(ctx, secreto, 'repartidor', k + 1, nombre);
   const r: Robot = { rol: 'repartidor', nombre, ...cuenta };
   // La foto de control de la semana: sin cámara no tiene sentido (el simulador hace lo mismo).
