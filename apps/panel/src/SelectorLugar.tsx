@@ -283,7 +283,7 @@ function VentanaLugar({
             s.consulta.trim() &&
             !s.cargando &&
             !lista.length &&
-            !s.estados.length && (
+            !s.estadosCoinciden && (
               <p className="selector-lugar-nota">{t.sinResultados(s.consulta.trim())}</p>
             )}
           {s.paso === 'estado' && s.pais && (

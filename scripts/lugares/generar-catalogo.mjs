@@ -192,3 +192,6 @@ const cajas = escribirCajas(
 );
 console.log(`Cajas de ${cajas} estados en packages/compartido/src/cajasEstados.ts`);
 console.log(`Listo: ${totalArchivos} archivos, ${Math.round(totalBytes / 1024)} KB en ${SALIDA}`);
+// C-LUGARES-ALIAS: los nombres que usa la gente para lugares que GeoNames junta (Puerto Ordaz…).
+const { aplicarAlias } = await import('./alias.mjs');
+aplicarAlias();

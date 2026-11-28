@@ -292,7 +292,7 @@ export function PanelSelectorLugar({
         s.consulta.trim() &&
         !s.cargando &&
         !s.resultados.length &&
-        !s.estados.length ? (
+        !s.estadosCoinciden ? (
           <Text style={{ color: COLOR.textoSuave, paddingVertical: 12 }}>
             {t.sinResultados(s.consulta.trim())}
           </Text>

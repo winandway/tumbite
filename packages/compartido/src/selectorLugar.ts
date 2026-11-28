@@ -154,6 +154,20 @@ export function buscarEstados(pais: PaisConCatalogo, consulta: string): readonly
 }
 
 /**
+ * C-LUGARES-ALIAS (27 nov 2026): los estados bajo «O elige tu estado». Nunca una lista vacía: si lo
+ * escrito no es un estado («Puerto Or»), salen todos (`coinciden: false`).
+ */
+export function estadosParaMostrar(
+  pais: PaisConCatalogo,
+  consulta: string,
+): { estados: readonly EstadoDelPais[]; coinciden: boolean } {
+  const filtrados = buscarEstados(pais, consulta);
+  return filtrados.length
+    ? { estados: filtrados, coinciden: true }
+    : { estados: estadosDelPais(pais), coinciden: false };
+}
+
+/**
  * El estado del selector. `alElegir` recibe el lugar listo para mandar al servidor (contrato de
  * lugarCuenta.ts). Arranca en el país sugerido (o en elegir país si no hay uno con catálogo).
  */
@@ -186,7 +200,11 @@ export function useSelectorLugar(op: {
       paso === 'municipio' ? buscarMunicipios(municipiosDelEstado(fuente.lugares), consulta) : [],
     [fuente.lugares, consulta, paso],
   );
-  const estados = pais && paso === 'estado' ? buscarEstados(pais, consulta) : [];
+  // C-LUGARES-ALIAS (27 nov 2026): «O elige tu estado» nunca queda vacío. Si lo escrito no es un estado
+  // («Puerto Or»), se muestran todos para que la persona siga por su estado.
+  const lista = pais && paso === 'estado' ? estadosParaMostrar(pais, consulta) : null;
+  const estados = lista?.estados ?? [];
+  const estadosCoinciden = lista?.coinciden ?? false;
 
   return {
     paso,
@@ -196,6 +214,7 @@ export function useSelectorLugar(op: {
     resultados,
     municipios,
     estados,
+    estadosCoinciden,
     cargando: fuente.cargando,
     fallo: fuente.fallo,
     reintentar: fuente.reintentar,

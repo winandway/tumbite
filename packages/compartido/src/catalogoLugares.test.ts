@@ -15,7 +15,7 @@ import { ESTADOS_US, ESTADOS_VE, leerLugarCuenta, type PaisConCatalogo } from '.
 import { esquemaRegistro } from './esquemas';
 import { CAJAS_ESTADOS } from './cajasEstados';
 import { lugarEnSuEstado } from './lugarEnSuEstado';
-import { buscarEstados, paisesParaElegir } from './selectorLugar';
+import { buscarEstados, estadosParaMostrar, paisesParaElegir } from './selectorLugar';
 import { filasParaRevisar, validarRegistro } from './revisarRegistro';
 
 /**
@@ -317,5 +317,56 @@ describe('C-REGISTRO-TODO-EL-PAIS: el punto del lugar tiene que caer en su estad
         lng: 0,
       }),
     ).toBe(false);
+  });
+});
+
+/**
+ * C-LUGARES-ALIAS (27 nov 2026, emergencia de Bolívar): en Divoox Driver, «Puerto Ordaz» no salía,
+ * «Puerto Or» vaciaba la lista y «O elige tu estado» quedaba en blanco. Las ciudades abiertas en el
+ * panel tienen que encontrarse por el nombre que usa la gente, en el índice nacional y en su estado.
+ */
+describe('C-LUGARES-ALIAS: las ciudades abiertas se encuentran por su nombre de uso', () => {
+  // Ciudades abiertas en el panel el 27 nov 2026 (Bolívar y Mérida), más los nombres de uso.
+  const ABIERTAS_VE: [string, string, string][] = [
+    ['Puerto Ordaz', 'F', 'Ciudad Guayana'],
+    ['San Félix', 'F', 'Ciudad Guayana'],
+    ['Unare', 'F', 'Ciudad Guayana'],
+    ['Alta Vista', 'F', 'Ciudad Guayana'],
+    ['Ciudad Guayana', 'F', 'Ciudad Guayana'],
+    ['Upata', 'F', 'Upata'],
+    ['Ciudad Bolívar', 'F', 'Ciudad Bolívar'],
+    ['Caicara del Orinoco', 'F', 'Caicara del Orinoco'],
+    ['El Callao', 'F', 'El Callao'],
+    ['El Palmar', 'F', 'El Palmar'],
+    ['Guasipati', 'F', 'Guasipati'],
+    ['Maripa', 'F', 'Maripa'],
+    ['Santa Elena de Uairén', 'F', 'Santa Elena de Uairén'],
+    ['Tumeremo', 'F', 'Tumeremo'],
+    ['Ciudad Piar', 'F', 'Ciudad Piar'],
+    ['El Vigía', 'L', 'El Vigía'],
+    ['Tucaní', 'L', 'Tucaní'],
+  ];
+  const idDe = (lugares: LugarCatalogo[], ciudad: string) =>
+    lugares.find((l) => l.ciudad === ciudad)?.lugarId;
+  const estadoVE = (e: string) => delEstado('VE', e);
+  for (const [nombre, estado, ciudad] of ABIERTAS_VE) {
+    it(`«${nombre}» sale al escribirlo y al escribir parte, en el país y en su estado`, () => {
+      const enEstado = estadoVE(estado);
+      const nacional = principales('VE');
+      for (const lista of [enEstado, nacional]) {
+        for (const q of [nombre, nombre.slice(0, Math.max(4, nombre.length - 3))]) {
+          const r = buscarLugares(lista, q).map((x) => x.lugar.ciudad);
+          expect(r, `«${q}»`).toContain(nombre);
+        }
+      }
+      // El alias es la misma ciudad del catálogo (mismo id): el servidor la ubica en la misma zona.
+      const alias = enEstado.find((l) => l.ciudad === nombre);
+      expect(alias?.lugarId).toBe(idDe(enEstado, ciudad));
+    });
+  }
+  it('«O elige tu estado» nunca queda vacío: si lo escrito no es un estado, salen todos', () => {
+    expect(estadosParaMostrar('VE', 'Puerto Or').estados).toEqual(ESTADOS_VE);
+    expect(estadosParaMostrar('VE', 'Puerto Or').coinciden).toBe(false);
+    expect(estadosParaMostrar('VE', 'Bolív').estados.map((e) => e.codigo)).toEqual(['F']);
   });
 });
