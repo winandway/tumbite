@@ -78,6 +78,11 @@ const ESTADOS_US =
     ' ',
   );
 const FUERA = new Set(['PPLX', 'PPLH', 'PPLQ', 'PPLW', 'PPLCH']);
+// C-LUGARES-COMPLETOS (28 nov 2026, Richard): en Venezuela SÍ entran los barrios y sectores (PPLX):
+// la gente escribe «Unare» o «Castillito», no «Ciudad Guayana». Los nombres alternos de este volcado
+// NO entran: no dicen su idioma y traen ruido («ma la kai bo», «Puerto Ordasas»). Los de uso diario
+// van curados en alias.mjs; los alternos en español saldrán de alternateNamesV2 (pendiente).
+const FUERA_VE = new Set(['PPLH', 'PPLQ', 'PPLW', 'PPLCH']);
 const CABECERAS = new Set(['PPLA', 'PPLA2', 'PPLC']);
 
 function bajar(nombre) {
@@ -112,7 +117,7 @@ async function leerPais(pais) {
   for await (const linea of lector) {
     const c = linea.split('\t');
     const [id, nombre, , , lat, lng, clase, codigo, , , a1, a2, , , pob] = c;
-    if (clase !== 'P' || FUERA.has(codigo)) continue;
+    if (clase !== 'P' || (pais === 'VE' ? FUERA_VE : FUERA).has(codigo)) continue;
     const poblacion = Number(pob) || 0;
     const estado = pais === 'VE' ? VE_ADMIN1[a1] : ESTADOS_US.includes(a1) ? a1 : null;
     if (!estado) continue;
@@ -141,7 +146,11 @@ const COMPROBAR = {
 
 let totalBytes = 0;
 let totalArchivos = 0;
-for (const pais of ['VE', 'US']) {
+// --solo VE: regenera un solo país (no hace falta bajar el volcado de Estados Unidos).
+const SOLO = process.argv.includes('--solo')
+  ? process.argv[process.argv.indexOf('--solo') + 1]
+  : null;
+for (const pais of SOLO ? [SOLO] : ['VE', 'US']) {
   const porEstado = await leerPais(pais);
   const dir = join(SALIDA, pais);
   mkdirSync(dir, { recursive: true });
@@ -183,7 +192,7 @@ for (const pais of ['VE', 'US']) {
 writeFileSync(
   join(SALIDA, 'ATRIBUCION.txt'),
   'Lugares poblados de Venezuela y Estados Unidos: GeoNames (https://www.geonames.org), licencia CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).\n' +
-    'Filtrados y compactados por Divoox (sin barrios ni lugares abandonados, coordenadas a 3 decimales).\n',
+    'Filtrados y compactados por Divoox (Venezuela con barrios y sectores, y los sectores de uso diario de las ciudades abiertas; sin lugares abandonados; coordenadas a 3 decimales).\n',
 );
 // Las cajas de los estados (coordenadas falsas), desde lo recién escrito.
 const cajas = escribirCajas(

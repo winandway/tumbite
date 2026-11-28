@@ -11,7 +11,13 @@ import {
   resaltar,
   type LugarCatalogo,
 } from './catalogoLugares';
-import { ESTADOS_US, ESTADOS_VE, leerLugarCuenta, type PaisConCatalogo } from './lugarCuenta';
+import {
+  ESTADOS_US,
+  ESTADOS_VE,
+  leerLugarCuenta,
+  sinAcentos,
+  type PaisConCatalogo,
+} from './lugarCuenta';
 import { esquemaRegistro } from './esquemas';
 import { CAJAS_ESTADOS } from './cajasEstados';
 import { lugarEnSuEstado } from './lugarEnSuEstado';
@@ -346,10 +352,8 @@ describe('C-LUGARES-ALIAS: las ciudades abiertas se encuentran por su nombre de 
     ['El Vigía', 'L', 'El Vigía'],
     ['Tucaní', 'L', 'Tucaní'],
   ];
-  const idDe = (lugares: LugarCatalogo[], ciudad: string) =>
-    lugares.find((l) => l.ciudad === ciudad)?.lugarId;
   const estadoVE = (e: string) => delEstado('VE', e);
-  for (const [nombre, estado, ciudad] of ABIERTAS_VE) {
+  for (const [nombre, estado] of ABIERTAS_VE) {
     it(`«${nombre}» sale al escribirlo y al escribir parte, en el país y en su estado`, () => {
       const enEstado = estadoVE(estado);
       const nacional = principales('VE');
@@ -359,9 +363,6 @@ describe('C-LUGARES-ALIAS: las ciudades abiertas se encuentran por su nombre de 
           expect(r, `«${q}»`).toContain(nombre);
         }
       }
-      // El alias es la misma ciudad del catálogo (mismo id): el servidor la ubica en la misma zona.
-      const alias = enEstado.find((l) => l.ciudad === nombre);
-      expect(alias?.lugarId).toBe(idDe(enEstado, ciudad));
     });
   }
   it('«O elige tu estado» nunca queda vacío: si lo escrito no es un estado, salen todos', () => {
@@ -369,4 +370,62 @@ describe('C-LUGARES-ALIAS: las ciudades abiertas se encuentran por su nombre de 
     expect(estadosParaMostrar('VE', 'Puerto Or').coinciden).toBe(false);
     expect(estadosParaMostrar('VE', 'Bolív').estados.map((e) => e.codigo)).toEqual(['F']);
   });
+});
+
+/**
+ * C-LUGARES-COMPLETOS (28 nov 2026, Richard): la lista de Venezuela lleva los barrios y sectores
+ * (PPLX de GeoNames), los nombres alternos y los sectores de los tabuladores. Cada sector conocido de
+ * una ciudad abierta sale al buscarlo en su estado y su punto cae en esa ciudad (menos de 20 km del
+ * centro), así el servidor lo ubica en su zona.
+ */
+describe('C-LUGARES-COMPLETOS: los sectores de las ciudades abiertas salen y llevan a su ciudad', () => {
+  const CENTROS: Record<string, [string, number, number]> = {
+    guayana: ['F', 8.296, -62.711],
+    vigia: ['L', 8.622, -71.651],
+  };
+  const SECTORES: [string, keyof typeof CENTROS][] = [
+    ...[
+      'Puerto Ordaz',
+      'San Félix',
+      'Unare',
+      'Alta Vista',
+      'Castillito',
+      'Villa Asia',
+      'Los Olivos',
+      'Campo B',
+      'Villa Colombia',
+      'Cuchivero',
+      'Villa Alianza',
+      'Campo A',
+      'Cachamay',
+      'Chilemex',
+      'Las Américas',
+      'Core 8',
+      'Guaiparo',
+      'Vista al Sol',
+      'Matanzas',
+      'El Roble',
+      'Dalla Costa',
+      'UD-145',
+      'Moscú',
+      'Las Malvinas',
+      'Chirica',
+    ].map((n): [string, 'guayana'] => [n, 'guayana']),
+    ...['12 de Octubre', 'Doce de Octubre', 'La Blanca', 'La Vega I', 'La Vega II'].map(
+      (n): [string, 'vigia'] => [n, 'vigia'],
+    ),
+  ];
+  const km = (a: number, b: number, c: number, d: number) =>
+    Math.hypot((a - c) * 111, (b - d) * 111 * Math.cos((a * Math.PI) / 180));
+  for (const [nombre, ciudad] of SECTORES) {
+    it(`«${nombre}» sale y cae en su ciudad`, () => {
+      const [estado, lat, lng] = CENTROS[ciudad]!;
+      const r = buscarLugares(delEstado('VE', estado), nombre).filter(
+        (x) =>
+          sinAcentos(x.lugar.ciudad) === sinAcentos(nombre) &&
+          km(x.lugar.lat, x.lugar.lng, lat, lng) < 20,
+      );
+      expect(r.length, nombre).toBeGreaterThan(0);
+    });
+  }
 });
