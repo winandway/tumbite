@@ -41,8 +41,20 @@ tocar() {
   set -- $(echo "$caja" | tr '[],' '   ')
   con_limite 20 "$ADB" shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
 }
+# C-FRANJA-AVISO-SISTEMA (28 nov 2026): el aviso «precisión de la ubicación» es de los servicios de
+# Google (otro paquete) y tapaba la pantalla de la app de clientes: se cierra con «No, gracias».
+cerrarAvisoSistema() {
+  local caja
+  con_limite 20 "$ADB" shell rm -f /sdcard/sistema.xml >/dev/null 2>&1 || true
+  con_limite 40 "$ADB" shell uiautomator dump /sdcard/sistema.xml >/dev/null 2>&1 || true
+  caja=$(con_limite 20 "$ADB" shell cat /sdcard/sistema.xml 2>/dev/null | grep -o 'text="\(No thanks\|No, gracias\)"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' | head -1 | grep -o '\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]' || true)
+  [ -z "$caja" ] && return 1
+  set -- $(echo "$caja" | tr '[],' '   ')
+  con_limite 20 "$ADB" shell input tap $(( ($1+$3)/2 )) $(( ($2+$4)/2 ))
+}
 VISTA=""
 for _ in $(seq 1 20); do
+  cerrarAvisoSistema || true
   X="$(pantalla)"
   # El emulador puede estar en español o en inglés (19 nov 2026: en inglés no se reconocía la pantalla).
   if echo "$X" | grep -q 'text="Contraseña"\|text="Password"'; then VISTA="$X"; break; fi
